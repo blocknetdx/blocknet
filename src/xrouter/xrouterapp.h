@@ -7,7 +7,7 @@
 #include "xrouterpacket.h"
 #include "util/xroutererror.h"
 #include "validationstate.h"
-#include "xbridge/xbridgedef.h"
+#include "xrouterdef.h"
 #include "net.h"
 
 #include <memory>
@@ -67,7 +67,7 @@ public:
      * @return
      */
     bool stop();
-    
+
     /**
      * @brief load xbridge.conf to get connection to xwallets
      * @param argc
@@ -75,21 +75,21 @@ public:
      * @return true if successful
      */
     bool init(int argc, char *argv[]);
-    
+
     /**
      * @brief load the connector (class used to communicate with other chains)
      * @param conn
-     * @return 
+     * @return
      */
-    void addConnector(const xbridge::WalletConnectorPtr & conn);
-    
+    void addConnector(const WalletConnectorXRouterPtr & conn);
+
     /**
      * @brief return the connector (class used to communicate with other chains) for selected chain
      * @param currency chain code (BTC, LTC etc)
-     * @return 
+     * @return
      */
-    xbridge::WalletConnectorPtr connectorByCurrency(const std::string & currency) const;
-    
+    WalletConnectorXRouterPtr connectorByCurrency(const std::string & currency) const;
+
 
     /**
      * @brief send packet from client side with the selected command
@@ -101,14 +101,14 @@ public:
      * @return reply from service node
      */
     std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="", std::string confirmations="");
-    
+
     /**
      * @brief returns block count (highest tree) in the selected chain
      * @param currency chain code (BTC, LTC etc)
      * @return json reply of getblockcount
      */
     std::string getBlockCount(const std::string & currency, const std::string & confirmations);
-    
+
     /**
      * @brief returns block hash for given block number
      * @param currency chain code (BTC, LTC etc)
@@ -116,7 +116,7 @@ public:
      * @return json reply of getblockhash
      */
     std::string getBlockHash(const std::string & currency, const std::string & blockId, const std::string & confirmations);
-    
+
     /**
      * @brief returns block data by hash
      * @param currency chain code (BTC, LTC etc)
@@ -124,7 +124,7 @@ public:
      * @return json reply of getblock
      */
     std::string getBlock(const std::string & currency, const std::string & blockHash, const std::string & confirmations);
-    
+
     /**
      * @brief returns transaction by hash (requires tx idnex on server side)
      * @param currency chain code (BTC, LTC etc)
@@ -132,7 +132,7 @@ public:
      * @return json reply of decoderawtransaction
      */
     std::string getTransaction(const std::string & currency, const std::string & hash, const std::string & confirmations);
-    
+
     /**
      * @brief returns all blocks starting from given number
      * @param currency chain code (BTC, LTC etc)
@@ -140,7 +140,7 @@ public:
      * @return json array with block data
      */
     std::string getAllBlocks(const std::string & currency, const std::string & number, const std::string & confirmations);
-    
+
     /**
      * @brief returns transactions belonging to account after given block
      * @param currency chain code (BTC, LTC etc)
@@ -149,7 +149,7 @@ public:
      * @return json array of transaction data
      */
     std::string getAllTransactions(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
-    
+
     /**
      * @brief returns balance for given account
      * @param currency chain code (BTC, LTC etc)
@@ -157,7 +157,7 @@ public:
      * @return balance (float converted to string)
      */
     std::string getBalance(const std::string & currency, const std::string & account, const std::string & confirmations);
-    
+
     /**
      * @brief returns balance cange since given block number
      * @param currency chain code (BTC, LTC etc)
@@ -166,7 +166,7 @@ public:
      * @return balance change (float converted to string)
      */
     std::string getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
-    
+
     /**
      * @brief returns all transactions using bloom filter
      * @param currency chain code (BTC, LTC etc)
@@ -175,26 +175,26 @@ public:
      * @return balance change (float converted to string)
      */
     std::string getTransactionsBloomFilter(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
-    
+
     /**
      * @brief fetches the reply to the giver request
      * @param id UUID of the query
-     * @return 
+     * @return
      */
     std::string getReply(const std::string & id);
-    
+
     /**
      * @brief sends raw transaction to the given chain
      * @param currency chain code (BTC, LTC etc)
      * @param transaction raw signed transaction
-     * @return 
+     * @return
      */
     std::string sendTransaction(const std::string & currency, const std::string & transaction);
-    
+
     /**
      * @brief gets an account for comission payment
      * @param node service node
-     * @return 
+     * @return
      */
     std::string getPaymentAddress(CNode* node);
 
@@ -202,87 +202,87 @@ public:
     /**
      * @brief process GetBlockCount call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetBlockCount(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetBlockHash call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetBlockHash(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetBlock call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetBlock(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetTransaction call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetTransaction(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetAllBlocks call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetAllBlocks(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetAllTransactions call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetAllTransactions(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetBalance call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetBalance(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetBalanceUpdate call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetBalanceUpdate(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetBalanceUpdate call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetTransactionsBloomFilter(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process SendTransaction call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processSendTransaction(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process GetPaymentAddress call on service node side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processGetPaymentAddress(XRouterPacketPtr packet);
-    
+
     /**
      * @brief process reply from service node on *client* side
      * @param packet Xrouter packet received over the network
-     * @return 
+     * @return
      */
     bool processReply(XRouterPacketPtr packet);
-    
+
     //
     /**
      * @brief sendPacket send packet btadcast to xrouter network
@@ -306,7 +306,7 @@ public:
      * @param currency chain id
      * @param confirmations number of packets to send and wait for reply (result is decided by majority vote)
      * @param timeout time period to wait
-     * @return 
+     * @return
      */
     std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations=3, int timeout=300000);
 

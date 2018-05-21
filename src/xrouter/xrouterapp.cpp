@@ -12,13 +12,16 @@
 #include "script/standard.h"
 #include "util/xutil.h"
 #include "wallet.h"
-#include "xrouterrpc.h"
 #include "bloom.h"
 
 #include "xbridge/xkey.h"
 #include "xbridge/util/settings.h"
 #include "xbridge/xbridgewallet.h"
 #include "xbridge/xbridgewalletconnector.h"
+
+#include "xrouterconnector.h"
+#include "xrouterconnectorbtc.h"
+#include "xrouterconnectoreth.h"
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
@@ -52,9 +55,9 @@ class App::Impl
     friend class App;
 
     mutable boost::mutex                                        m_connectorsLock;
-    xbridge::Connectors                                         m_connectors;
-    xbridge::ConnectorsAddrMap                                  m_connectorAddressMap;
-    xbridge::ConnectorsCurrencyMap                              m_connectorCurrencyMap;
+    xrouter::Connectors                                         m_connectors;
+    xrouter::ConnectorsAddrMap                                  m_connectorAddressMap;
+    xrouter::ConnectorsCurrencyMap                              m_connectorCurrencyMap;
 
 protected:
     /**
@@ -133,7 +136,7 @@ bool App::init(int argc, char *argv[])
         s.parseCmdLine(argc, argv);
         std::cout << "Finished loading config" << path << std::endl;
     }
-    
+
     return true;
 }
 
@@ -185,25 +188,15 @@ bool App::Impl::start()
                     continue;
                 }
 
-                xbridge::WalletConnectorPtr conn;
-                if (wp.method == "ETHER")
+                xrouter::WalletConnectorXRouterPtr conn;
+                if ((wp.method == "ETH") || (wp.method == "ETHER"))
                 {
-                    //LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
-                    // session.reset(new XBridgeSessionEthereum(wp));
+                    conn.reset(new EthWalletConnectorXRouter);
+                    *conn = wp;
                 }
                 else if ((wp.method == "BTC") || (wp.method == "BLOCK"))
                 {
                     conn.reset(new BtcWalletConnectorXRouter);
-                    *conn = wp;
-                }
-                else if (wp.method == "BCC")
-                {
-                    conn.reset(new BccWalletConnectorXRouter);
-                    *conn = wp;
-                }
-                else if (wp.method == "SYS")
-                {
-                    conn.reset(new SysWalletConnectorXRouter);
                     *conn = wp;
                 }
                 else
@@ -212,11 +205,6 @@ bool App::Impl::start()
                     *conn = wp;
                 }
                 if (!conn)
-                {
-                    continue;
-                }
-
-                if (!conn->init())
                 {
                     continue;
                 }
@@ -249,14 +237,14 @@ bool App::Impl::stop()
     return true;
 }
 
-void App::addConnector(const xbridge::WalletConnectorPtr & conn)
+void App::addConnector(const WalletConnectorXRouterPtr & conn)
 {
     boost::mutex::scoped_lock l(m_p->m_connectorsLock);
     m_p->m_connectors.push_back(conn);
     m_p->m_connectorCurrencyMap[conn->currency] = conn;
 }
 
-xbridge::WalletConnectorPtr App::connectorByCurrency(const std::string & currency) const
+WalletConnectorXRouterPtr App::connectorByCurrency(const std::string & currency) const
 {
     boost::mutex::scoped_lock l(m_p->m_connectorsLock);
     if (m_p->m_connectorCurrencyMap.count(currency))
@@ -286,9 +274,9 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     int confirmation_count = 0;
     while ((confirmation_count < confirmations) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         confirmation_count++;
-    
+
     Object error;
-    
+
     if(confirmation_count <= confirmations / 2) {
         error.emplace_back(Pair("error", "Failed to get response"));
         error.emplace_back(Pair("uuid", id));
@@ -304,7 +292,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
                         return cand;
                 }
         }
-        
+
         error.emplace_back(Pair("error", "No consensus between responses"));
         return json_spirit::write_string(Value(error), true);
     }
@@ -325,21 +313,21 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
 
     // body
     msg.insert(msg.end(), message.begin(), message.end());
-    
+
     if (wallet.empty()) {
         // TODO: here send only back to the sender
         for (CNode* pnode : vNodes) {
             pnode->PushMessage("xrouter", msg);
         }
-        
+
         return;
     }
-    
+
     for (CNode* pnode : vNodes) {
         pnode->PushMessage("xrouter", msg);
     }
     return;
-    
+
     // Send only to the service nodes that have the required wallet
     int nHeight;
     {
@@ -349,7 +337,7 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
         nHeight = pindex->nHeight;
     }
     std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
-    
+
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
@@ -363,7 +351,7 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
                     pnode->PushMessage("xrouter", msg);
                 }
             }
-            
+
         }
     }
 }
@@ -396,14 +384,14 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
         if (vout > coins.vout.size()) {
             std::clog << "Invalid vout index " << vout << "\n";
             return false;
-        }   
-        
+        }
+
         txOut = coins.vout[vout];
     } else if (GetTransaction(txHash, txval, hashBlock, true)) {
         txOut = txval.vout[vout];
     } else {
         std::clog << "Could not find " << txHash.ToString() << "\n";
-        return false;   
+        return false;
     }
 
     if (txOut.nValue < minBlock) {
@@ -444,14 +432,17 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
     std::cout << uuid << " "<< currency << std::endl;
-    
+
     Object result;
     Object error;
 
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    if (conn) {
-        result = conn->executeRpcCall("getblockcount", Array());
-    } else {
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+    if (conn)
+    {
+        result = conn->getBlockCount();
+    }
+    else
+    {
         error.emplace_back(Pair("error", "No connector for currency " + currency));
         result = error;
     }
@@ -475,15 +466,17 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
     std::string blockId((const char *)packet->data()+offset);
     offset += blockId.size() + 1;
     std::cout << uuid << " "<< currency << " " << blockId << std::endl;
-    
+
     Object result;
     Object error;
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    if (conn) {
-        Array a { std::stoi(blockId) };
-        result = conn->executeRpcCall("getblockhash", a);
-    } else {
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+    if (conn)
+    {
+        result = conn->getBlockHash(blockId);
+    }
+    else
+    {
         error.emplace_back(Pair("error", "No connector for currency " + currency));
         result = error;
     }
@@ -507,16 +500,17 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
     std::string blockHash((const char *)packet->data()+offset);
     offset += blockHash.size() + 1;
     std::cout << uuid << " "<< currency << " " << blockHash << std::endl;
-    
+
     Object result;
     Object error;
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn)
     {
-        Array a {blockHash};
-        result = conn->executeRpcCall("getblock", a);
-    } else {
+        result = conn->getBlock(blockHash);
+    }
+    else
+    {
         error.emplace_back(Pair("error", "No connector for currency " + currency));
         result = error;
     }
@@ -528,33 +522,6 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
     sendPacket(rpacket);
 
     return true;
-}
-
-static Value getResult(Object obj) {
-    for (Object::size_type i = 0; i != obj.size(); i++ ) {
-        if (obj[i].name_ == "result") {
-            return obj[i].value_;
-        }    
-    }
-    return Value();
-}
-
-static bool getResultOrError(Object obj, Value& res) {
-    for (Object::size_type i = 0; i != obj.size(); i++ ) {
-        if (obj[i].name_ == "result") {
-            res =  obj[i].value_;
-            return true;
-        }    
-    }
-    
-    for (Object::size_type i = 0; i != obj.size(); i++ ) {
-        if (obj[i].name_ == "error") {
-            res =  obj[i].value_;
-            return false;
-        }    
-    }
-    res = Object();
-    return false;
 }
 
 bool App::processGetTransaction(XRouterPacketPtr packet) {
@@ -567,28 +534,17 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     std::string hash((const char *)packet->data()+offset);
     offset += hash.size() + 1;
     std::cout << uuid << " "<< currency << " " << hash << std::endl;
-    
+
     Object result;
     Object error;
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn)
     {
-        Array a { hash };
-        Value raw;
-        Object raw_trans = conn->executeRpcCall("getrawtransaction", a);
-        bool code = getResultOrError(raw_trans, raw);
-        if (!code) {
-            result = raw_trans;
-        } else {
-            std::string txdata = raw.get_str();
-            Array d { Value(txdata) };
-            Value res_val = getResult(conn->executeRpcCall("decoderawtransaction", d));
-            Object wrap;
-            wrap.emplace_back(Pair("result", res_val));
-            result = wrap;
-        }
-    } else {
+        result = conn->getTransaction(hash);
+    }
+    else
+    {
         error.emplace_back(Pair("error", "No connector for currency " + currency));
         result = error;
     }
@@ -600,91 +556,6 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     sendPacket(rpacket);
 
     return true;
-}
-
-static double parseVout(Value vout, std::string account) {
-    double result = 0.0;
-    double val = find_value(vout.get_obj(), "value").get_real();
-    Object src = find_value(vout.get_obj(), "scriptPubKey").get_obj();
-    const Value & addr_val = find_value(src, "addresses");
-    if (addr_val.is_null())
-        return 0.0;
-    Array addr = addr_val.get_array();
-    
-    for (uint k = 0; k != addr.size(); k++ ) {
-        std::string cur_addr = Value(addr[k]).get_str();
-        if (cur_addr == account)
-            result += val;
-    }
-    
-    return result;
-}
-
-static double getBalanceChange(xbridge::WalletConnectorPtr conn, Object tx, std::string account) {
-    double result = 0.0;
-
-    Array vout = find_value(tx, "vout").get_array();
-    for (uint j = 0; j != vout.size(); j++ ) {
-        result += parseVout(vout[j], account);
-    }
-
-    Array vin = find_value(tx, "vin").get_array();
-    for (uint j = 0; j != vin.size(); j++ ) {
-        const Value& txid_val = find_value(vin[j].get_obj(), "txid");
-        if (txid_val.is_null())
-            continue;
-        std::string txid = txid_val.get_str();
-        int voutid = find_value(vin[j].get_obj(), "vout").get_int();
-        Array c { Value(txid) };
-        std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
-        Array d { Value(txdata) };
-        Object prev_tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
-        Array prev_vouts = find_value(prev_tx, "vout").get_array();
-        result -= parseVout(prev_vouts[voutid], account);
-    }
-    
-    return result;
-}
-
-static bool checkFilterFit(xbridge::WalletConnectorPtr conn, Object tx, CBloomFilter filter) {
-    Array vout = find_value(tx, "vout").get_array();
-    for (uint j = 0; j != vout.size(); j++ ) {
-        Object src = find_value(vout[j].get_obj(), "scriptPubKey").get_obj();
-        std::string outkey = find_value(src, "hex").get_str();
-        std::vector<unsigned char> outkeyv(outkey.begin(), outkey.end());
-        CScript vouts(outkeyv.begin(), outkeyv.end());
-        CScript::const_iterator pc = vouts.begin();
-        vector<unsigned char> data;
-        while (pc < vouts.end()) {
-            opcodetype opcode;
-            if (!vouts.GetOp(pc, opcode, data))
-                break;
-            if (data.size() != 0 && filter.contains(data)) {
-                return true;
-            }
-        }
-    }
-
-    Array vin = find_value(tx, "vin").get_array();
-    for (uint j = 0; j != vin.size(); j++ ) {
-        const Value& txid_val = find_value(vin[j].get_obj(), "scriptSig");
-        if (txid_val.is_null())
-            continue;
-        std::string inkey = find_value(txid_val.get_obj(), "hex").get_str();
-        std::vector<unsigned char> inkeyv(inkey.begin(), inkey.end());
-        CScript vins(inkeyv.begin(), inkeyv.end());
-        CScript::const_iterator pc = vins.begin();
-        vector<unsigned char> data;
-        while (pc < vins.end()) {
-            opcodetype opcode;
-            if (!vins.GetOp(pc, opcode, data))
-                break;
-            if (data.size() != 0 && filter.contains(data))
-                return true;
-        }
-    }
-    
-    return false;
 }
 
 bool App::processGetAllBlocks(XRouterPacketPtr packet) {
@@ -698,20 +569,12 @@ bool App::processGetAllBlocks(XRouterPacketPtr packet) {
     offset += number_s.size() + 1;
     std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     Array result;
     if (conn)
     {
-        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
-        int blockcount = res.get_int();
-        Value res_val;
-        for (int id = number; id <= blockcount; id++) {
-            Array a { Value(id) };
-            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
-            Array b { Value(hash) };
-            result.push_back(getResult(conn->executeRpcCall("getblock", b)));
-        }
+        result = conn->getAllBlocks(number);
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
@@ -736,30 +599,13 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
     offset += number_s.size() + 1;
     std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+
     Array result;
     if (conn)
     {
-        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
-        int blockcount = res.get_int();
-        for (int id = number; id <= blockcount; id++) {
-            Array a { Value(id) };
-            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
-            Array b { Value(hash) };
-            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
-            Array txs = find_value(block, "tx").get_array();
-            std::cout << "block " << id << " " << txs.size() << std::endl;
-            for (uint j = 0; j < txs.size(); j++) {
-                std::string txid = Value(txs[j]).get_str();
-                Array c { Value(txid) };
-                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
-                Array d { Value(txdata) };
-                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
-                if (getBalanceChange(conn, tx, account) != 0.0)
-                    result.push_back(Value(tx));
-            }
-        }
+        result = conn->getAllTransactions(account, number);
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
@@ -783,35 +629,18 @@ bool App::processGetBalance(XRouterPacketPtr packet) {
     std::string account((const char *)packet->data()+offset);
     offset += account.size() + 1;
     std::cout << uuid << " "<< currency << " " << account << std::endl;
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    double result = 0.0;
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+    std::string result;
     if (conn)
     {
-        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
-        int blockcount = res.get_int();
-        for (int id = 0; id <= blockcount; id++) {
-            Array a { Value(id) };
-            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
-            Array b { Value(hash) };
-            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
-            Array txs = find_value(block, "tx").get_array();
-            std::cout << "block " << id << " " << txs.size() << std::endl;
-            for (uint j = 0; j < txs.size(); j++) {
-                std::string txid = Value(txs[j]).get_str();
-                Array c { Value(txid) };
-                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
-                Array d { Value(txdata) };
-                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
-                result += getBalanceChange(conn, tx, account);
-            }
-        }
+        result = conn->getBalance(account);
     }
-    
+
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(std::to_string(result));
+    rpacket->append(result);
     sendPacket(rpacket);
 
     return true;
@@ -830,35 +659,19 @@ bool App::processGetBalanceUpdate(XRouterPacketPtr packet) {
     offset += number_s.size() + 1;
     std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    double result = 0.0;
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+
+    std::string result;
     if (conn)
     {
-        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
-        int blockcount = res.get_int();
-        for (int id = number; id <= blockcount; id++) {
-            Array a { Value(id) };
-            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
-            Array b { Value(hash) };
-            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
-            Array txs = find_value(block, "tx").get_array();
-            std::cout << "block " << id << " " << txs.size() << std::endl;
-            for (uint j = 0; j < txs.size(); j++) {
-                std::string txid = Value(txs[j]).get_str();
-                Array c { Value(txid) };
-                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
-                Array d { Value(txdata) };
-                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
-                result += getBalanceChange(conn, tx, account);
-            }
-        }
+        result = conn->getBalanceUpdate(account, number);
     }
-    
+
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(std::to_string(result));
+    rpacket->append(result);
     sendPacket(rpacket);
 
     return true;
@@ -873,41 +686,14 @@ bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
-
-    CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
-    stream.resize(packet->size() - offset);
-    memcpy(&stream[0], packet->data()+offset, packet->size() - offset);
-    std::cout << uuid << " "<< currency << " " << stream.str() << " " << stream.size() << " " << number_s << std::endl;
     int number = std::stoi(number_s);
-    
-    xbridge::WalletConnectorPtr conn = connectorByCurrency(currency);
-    CBloomFilter ft;
-    stream >> ft;
-    CBloomFilter filter(ft);
-    filter.UpdateEmptyFull();
-    
+
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+
     Array result;
     if (conn)
     {
-        Value res = getResult(conn->executeRpcCall("getblockcount", Array()));
-        int blockcount = res.get_int();
-        for (int id = number; id <= blockcount; id++) {
-            Array a { Value(id) };
-            std::string hash = getResult(conn->executeRpcCall("getblockhash", a)).get_str();
-            Array b { Value(hash) };
-            Object block = getResult(conn->executeRpcCall("getblock", b)).get_obj();
-            Array txs = find_value(block, "tx").get_array();
-            std::cout << "block " << id << " " << txs.size() << std::endl;
-            for (uint j = 0; j < txs.size(); j++) {
-                std::string txid = Value(txs[j]).get_str();
-                Array c { Value(txid) };
-                std::string txdata = getResult(conn->executeRpcCall("getrawtransaction", c)).get_str();
-                Array d { Value(txdata) };
-                Object tx = getResult(conn->executeRpcCall("decoderawtransaction", d)).get_obj();
-                if (checkFilterFit(conn, tx, filter))
-                    result.push_back(Value(tx));
-            }
-        }
+        result = conn->getTransactionsBloomFilter(number);
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
@@ -928,9 +714,9 @@ bool App::processSendTransaction(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string transaction((const char *)packet->data()+offset);
     offset += transaction.size() + 1;
-    
+
     std::string result = "sent";
-    
+
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
@@ -941,14 +727,14 @@ bool App::processSendTransaction(XRouterPacketPtr packet) {
 }
 
 bool App::processGetPaymentAddress(XRouterPacketPtr packet) {
-    
+
 }
 
 //*****************************************************************************
 //*****************************************************************************
 bool App::processReply(XRouterPacketPtr packet) {
     std::cout << "Processing Reply\n";
-    
+
     uint32_t offset = 0;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -956,11 +742,11 @@ bool App::processReply(XRouterPacketPtr packet) {
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
     std::cout << uuid << " " << reply << std::endl;
-    
+
     // check uuid is in queriesLock keys
     if (!queriesLocks.count(uuid))
         return true;
-    
+
     boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
     if (!queries.count(uuid))
         queries[uuid] = vector<std::string>();
@@ -987,7 +773,7 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         std::clog << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
-    
+
     if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
         return;
@@ -1075,10 +861,10 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     std::cout << "txHash = " << txHash.ToString() << "\n";
     std::cout << "vout = " << vout << "\n";
     std::cout << "Sending xrGetBlock packet...\n";
-    
+
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
     std::string id = boost::uuids::to_string(uuid);
-    
+
     packet->append(txHash.begin(), 32);
     packet->append(vout);
     packet->append(id);
@@ -1088,7 +874,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     if (!param2.empty())
         packet->append(param2);
     packet->sign(key);
-    
+
     if (!confirmations.empty())
         return sendPacketAndWait(packet, id, currency, std::stoi(confirmations), 300000);
     else
@@ -1143,7 +929,7 @@ std::string App::getTransactionsBloomFilter(const std::string & currency, const 
 std::string App::getReply(const std::string & id)
 {
     Object result;
-    
+
     if(queries[id].size() == 0) {
         result.emplace_back(Pair("error", "No replies found"));
         result.emplace_back(Pair("uuid", id));
@@ -1153,7 +939,7 @@ std::string App::getReply(const std::string & id)
             std::string cand = queries[id][i];
             result.emplace_back(Pair("reply" + std::to_string(i+1), cand));
         }
-        
+
         return json_spirit::write_string(Value(result), true);
     }
 }
@@ -1165,6 +951,6 @@ std::string App::sendTransaction(const std::string & currency, const std::string
 
 std::string App::getPaymentAddress(CNode* node)
 {
-    
+
 }
 } // namespace xrouter
