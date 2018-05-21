@@ -188,3 +188,18 @@ void CBloomFilter::UpdateEmptyFull()
     isFull = full;
     isEmpty = empty;
 }
+
+std::string CBloomFilter::to_hex()
+{
+    std::string res = "";
+    for (int i = 0; i < vData.size(); i++) {
+        std::cout << vData.size() << " " << i << std::endl;
+        unsigned int code = (unsigned int)vData[i];
+        std::cout << vData.size() << " " << i << " " << code << std::endl;
+    }
+    return "";
+}
+
+void CBloomFilter::from_hex(std::string s)
+{
+}
