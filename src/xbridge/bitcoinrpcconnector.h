@@ -18,7 +18,7 @@ namespace xbridge
 namespace rpc
 {
     // helper fn-s
-/**
+    /**
      * @brief storeDataIntoBlockchain
      * @param dstAddress
      * @param amount
