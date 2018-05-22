@@ -35,9 +35,9 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
+//#include <boost/uuid/uuid.hpp>
+//#include <boost/uuid/uuid_generators.hpp>
+//#include <boost/uuid/uuid_io.hpp>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -96,7 +96,7 @@ App::Impl::Impl()
 //*****************************************************************************
 //*****************************************************************************
 App::App()
-    : m_p(new Impl), queries()
+    : m_p(new Impl), queries(), req_cnt(0)
 {
 }
 
@@ -844,8 +844,10 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         return "Minimum block requirement not satisfied";
     }
 
-    boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    std::string id = boost::uuids::to_string(uuid);
+    //boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    //std::string id = boost::uuids::to_string(uuid);
+    std::string id = "request" + std::to_string(req_cnt);
+    req_cnt++;
 
     packet->append(txHash.begin(), 32);
     packet->append(vout);

@@ -41,7 +41,8 @@ private:
 
     boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
     boost::container::map<std::string, std::vector<std::string> > queries;
-
+    int req_cnt;
+    
 public:
     /**
      * @brief instance - the classical implementation of singletone
