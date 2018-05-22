@@ -109,8 +109,7 @@ outline:0; /* Remove Annoying Focus Rectangle */
 }
 
 QGroupBox {
-background-color:#575757;
-color:#ddd;
+background-color:#5e8092;
 }
 
 QToolTip {
@@ -187,6 +186,7 @@ outline:none;
 
 QPushButton:pressed {
 border:1px solid #AAA;
+background-color:qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #E0580a, stop: .1 #C0380a, stop: .95 #E0580a, stop: 1 #C0390a);
 }
 
 QComboBox { /* Dropdown Menus */
@@ -1689,3 +1689,26 @@ color:#333;
 QCalendarWidget QAbstractItemView:disabled { /* Calendar widget days not in month */
 color:#818181;
 }
+
+QDialog#ProposalCreationDialog QTextEdit { /* Contents of Proposal Creation Dialog */
+border:1px solid #1717a7;
+background-color:#0e0e0e;
+color:#ffffff;
+    
+}
+
+QDialog#ProposalCreationDialog QGroupBox {
+background-color:#5e8092;
+color:#43b581;
+font-size:14px;
+font-weight:bold;
+/*border: 1px solid white;
+border-radius: 1px;*/
+}
+
+QDialog#ProposalCreationDialo QGroupBox::title { 
+    background-color: transparent;
+    subcontrol-position: top left; /* position at the top left*/ 
+    padding: 13px;
+    padding-left:25px;
+ } 

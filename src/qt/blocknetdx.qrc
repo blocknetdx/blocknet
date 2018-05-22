@@ -55,6 +55,9 @@
         <file alias="staking_inactive">res/icons/staking_inactive.png</file>
         <file alias="address-book-white">res/icons/address-book-white.png</file>
         <file alias="editpaste-white">res/icons/editpaste-white.png</file>
+        <file alias="proposalvoting">res/icons/proposalvoting.png</file>
+        <file alias="proposalcreation">res/icons/proposalcreation.png</file>
+        <file alias="proposals">res/icons/proposals.png</file>
     </qresource>
     <qresource prefix="/css">
         <file alias="default">res/css/default.css</file>
