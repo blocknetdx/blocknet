@@ -62,7 +62,7 @@ App::Impl::Impl()
 //*****************************************************************************
 //*****************************************************************************
 App::App()
-    : m_p(new Impl)
+    : m_p(new Impl), queries()
 {
 }
 
@@ -223,13 +223,56 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
 
 //*****************************************************************************
 //*****************************************************************************
-static bool processGetBlocks(XRouterPacketPtr packet)
-{
+bool App::processGetBlocks(XRouterPacketPtr packet) {
     std::cout << "Processing GetBlocks\n";
+    if (!packet->verify())
+    {
+      std::clog << "unsigned packet or signature error " << __FUNCTION__;
+        return false;
+    }
+    
     if (!verifyBlockRequirement(packet)) {
         std::clog << "Block requirement not satisfied\n";
         return false;
     }
+    
+    uint32_t offset = 36;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+    std::string blockHash((const char *)packet->data()+offset);
+    offset += blockHash.size() + 1;
+    std::cout << uuid << " "<< currency << " " << blockHash << std::endl;
+    
+    std::string result = "query reply";
+    //
+    // SEND THE QUERY TO WALLET CONNECTOR HERE
+    //
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(result);
+    sendPacket(rpacket);
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::processReply(XRouterPacketPtr packet) {
+    std::cout << "Processing Reply\n";
+    
+    uint32_t offset = 0;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string reply((const char *)packet->data()+offset);
+    offset += reply.size() + 1;
+    std::cout << uuid << " " << reply << std::endl;
+    queries[uuid] = reply;
     return true;
 }
 
@@ -259,18 +302,18 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
     case xrGetBlocks:
         processGetBlocks(packet);
         break;
-    default:
-        std::clog << "Unkown packet\n";
+      case xrReply:
+        processReply(packet);
+        break;
+      default:
+        std::clog << "Unknown packet\n";
         break;
     }
 }
 
 //*****************************************************************************
 //*****************************************************************************
-static bool satisfyBlockRequirement(
-    uint256& txHash,
-    uint32_t& vout,
-    CKey& key)
+static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 {
     if (!pwalletMain) {
         return false;
@@ -298,9 +341,10 @@ static bool satisfyBlockRequirement(
 
 //*****************************************************************************
 //*****************************************************************************
-Error App::getBlocks(uint256& id)
+Error App::getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash)
 {
-    XRouterPacketPtr packet{new XRouterPacket{xrGetBlocks}};
+  std::cout << "process Query" << std::endl;
+    XRouterPacketPtr packet(new XRouterPacket(xrGetBlocks));
 
     uint256 txHash;
     uint32_t vout;
@@ -313,17 +357,29 @@ Error App::getBlocks(uint256& id)
     std::cout << "vout = " << vout << "\n";
 
     std::cout << "Sending xrGetBlock packet...\n";
+
     packet->append(txHash.begin(), 32);
     packet->append(vout);
-
+    packet->append(id);
+    packet->append(currency);
+    packet->append(blockHash);
     auto pubKey = key.GetPubKey();
-    std::vector<unsigned char> pubKeyData{pubKey.begin(), pubKey.end()};
+    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
 
     auto privKey = key.GetPrivKey_256();
-    std::vector<unsigned char> privKeyData{privKey.begin(), privKey.end()};
+    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
 
     packet->sign(pubKeyData, privKeyData);
     sendPacket(packet);
+    queries[id] = "Waiting for reply...";
     return SUCCESS;
+}
+
+std::string App::getReply(const std::string & uuid) {
+    if (queries.count(uuid) == 0) {
+        return "Query not found";
+    }
+    
+    return queries[uuid];
 }
 } // namespace xrouter

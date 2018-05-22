@@ -9,6 +9,7 @@
 #include "validationstate.h"
 
 #include <memory>
+#include <boost/container/map.hpp>
 
 #include "uint256.h"
 //*****************************************************************************
@@ -35,6 +36,8 @@ private:
     virtual ~App();
 
     std::unique_ptr<Impl> m_p;
+
+    boost::container::map<std::string, std::string> queries;
 
 public:
     /**
@@ -65,7 +68,13 @@ public:
     /**
      * @brief sendXRouterTransaction - create new xrouter transaction and send to network
      */
-    Error getBlocks(uint256& id);
+    Error getBlocks(const std::string & id, const std::string & currency, const std::string & blockHash);
+
+    std::string getReply(const std::string & uuid);
+
+
+    bool processGetBlocks(XRouterPacketPtr packet);
+    bool processReply(XRouterPacketPtr packet);
 
     //
     /**
