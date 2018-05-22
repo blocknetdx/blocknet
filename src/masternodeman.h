@@ -17,6 +17,8 @@
 #define MASTERNODES_DUMP_SECONDS (15 * 60)
 #define MASTERNODES_DSEG_SECONDS (3 * 60 * 60)
 
+#define MINIMUM_PROTOCOL_VERSION_OLD_PING 70003
+
 using namespace std;
 
 class CMasternodeMan;

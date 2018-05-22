@@ -209,7 +209,7 @@ public:
             "8441436038339044149526344321901146575444541784240209246165157233507787077498171257724679629263863563732899121548"
             "31438167899885040445364023527381951378636564391212010397122822120720357";
 
-        nZerocoinLastOldParams = 350000; // changeme
+        nZerocoinLastOldParams = 400000; // changeme
         nMaxZerocoinSpendsPerTransaction = 7; // Assume about 20kb each
         nMinZerocoinMintFee = 1 * CENT; //high fee required for zerocoin mints
         nMintRequiredConfirmations = 20; //the maximum amount of confirmations until accumulated in 19
@@ -253,7 +253,9 @@ public:
         nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
         nMaxMoneyOut = 43199500 * COIN;
         nLastPOWBlock = 200000;
-        nZerocoinStartHeight = 201576;
+        nZerocoinStartHeight = 0;
+
+        nZerocoinLastOldParams = 100000000;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
         genesis.nTime = 1505224800;
