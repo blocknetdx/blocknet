@@ -35,8 +35,8 @@ namespace xrouter
 
 class BtcWalletConnectorXRouter : public WalletConnectorXRouter {
 public:
-    Object      getBlockCount() const;
-    Object      getBlockHash(const std::string & blockId) const;
+    std::string getBlockCount() const;
+    std::string getBlockHash(const std::string & blockId) const;
     Object      getBlock(const std::string & blockHash) const;
     Object      getTransaction(const std::string & trHash) const;
     Array       getAllBlocks(const int number) const;
