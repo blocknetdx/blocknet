@@ -51,7 +51,7 @@ static double parseVout(Value vout, std::string account) {
 static double getBalanceChange(Object tx, std::string account)
 {
     std::string commandGRT("getblockhash");
-    std::string commandDRT("getblockhash");
+    std::string commandDRT("decoderawtransaction");
 
     double result = 0.0;
 
@@ -127,20 +127,20 @@ static bool checkFilterFit(Object tx, CBloomFilter filter) {
     return false;
 }
 
-Object BtcWalletConnectorXRouter::getBlockCount() const
+std::string BtcWalletConnectorXRouter::getBlockCount() const
 {
     std::string command("getblockcount");
     Array params;
 
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params).get_str();
 }
 
-Object BtcWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
+std::string BtcWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
 {
     std::string command("getblockhash");
     Array params { std::stoi(blockId) };
 
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params).get_str();
 }
 
 Object BtcWalletConnectorXRouter::getBlock(const std::string & blockHash) const

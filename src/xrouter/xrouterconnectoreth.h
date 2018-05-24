@@ -7,10 +7,10 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "../json/json_spirit_reader_template.h"
-#include "../json/json_spirit_writer_template.h"
-#include "../json/json_spirit_utils.h"
+#include "../json/json_spirit.h"
 #include "xrouterconnector.h"
+
+using namespace json_spirit;
 
 //******************************************************************************
 //******************************************************************************
@@ -35,15 +35,15 @@ namespace xrouter
 
 class EthWalletConnectorXRouter : public WalletConnectorXRouter {
 public:
-    Object      getBlockCount() const;
-    Object      getBlockHash(const std::string & blockId) const;
+    std::string getBlockCount() const;
+    std::string getBlockHash(const std::string & blockId) const;
     Object      getBlock(const std::string & blockHash) const;
     Object      getTransaction(const std::string & trHash) const;
     Array       getAllBlocks(const int number) const;
     Array       getAllTransactions(const std::string & account, const int number) const;
     std::string getBalance(const std::string & account) const;
     std::string getBalanceUpdate(const std::string & account, const int number) const;
-    Array       getTransactionsBloomFilter(const int number) const;
+    Array       getTransactionsBloomFilter(const int) const;
     Object      sendTransaction(const std::string & transaction) const;
     Object      getPaymentAddress() const;
 };

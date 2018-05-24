@@ -439,7 +439,7 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn)
     {
-        result = conn->getBlockCount();
+        result.push_back(Pair("result", conn->getBlockCount()));
     }
     else
     {
@@ -473,7 +473,7 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn)
     {
-        result = conn->getBlockHash(blockId);
+        result.push_back(Pair("result", conn->getBlockHash(blockId)));
     }
     else
     {

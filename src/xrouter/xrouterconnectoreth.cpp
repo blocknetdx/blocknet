@@ -1,87 +1,111 @@
 #include "xrouterconnectoreth.h"
+#include "../uint256.h"
 
 namespace xrouter
 {
 
-Object EthWalletConnectorXRouter::getBlockCount() const
-{
-    std::string command("getblockcount");
-    Array params;
-
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+static Value getResult(Object obj) {
+    for (Object::size_type i = 0; i != obj.size(); i++ ) {
+        if (obj[i].name_ == "result") {
+            return obj[i].value_;
+        }
+    }
+    return Value();
 }
 
-Object EthWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
-{
-    std::string command("getblockhash");
-    Array params { std::stoi(blockId) };
+static bool getResultOrError(Object obj, Value& res) {
+    for (Object::size_type i = 0; i != obj.size(); i++ ) {
+        if (obj[i].name_ == "result") {
+            res =  obj[i].value_;
+            return true;
+        }
+    }
 
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+    for (Object::size_type i = 0; i != obj.size(); i++ ) {
+        if (obj[i].name_ == "error") {
+            res =  obj[i].value_;
+            return false;
+        }
+    }
+    res = Object();
+    return false;
+}
+
+std::string EthWalletConnectorXRouter::getBlockCount() const
+{
+    std::string command("eth_blockNumber");
+
+    Object blockNumberObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, Array());
+
+    Value blockNumberVal = getResult(blockNumberObj);
+
+    if(blockNumberVal)
+    {
+        std::string hexValue = blockNumberVal.get_str();
+        uint256 bigInt(hexValue);
+
+        std::stringstream ss;
+
+        bigInt.Serialize(ss, 0, 0);
+
+        return ss.str();
+    }
+
+    return std::string();
+}
+
+std::string EthWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
+{
+    uint256 blockId256(std::stoi(blockId));
+
+    std::string command("eth_getBlockByNumber");
+    Array params { blockId256.ToString(), false };
+
+    Object resp = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+
+    Object blockHashObj = getResult(resp).get_obj();
+
+    return find_value(blockHashObj, "hash").get_str();
 }
 
 Object EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
 {
-    std::string command("getblock");
-    Array params { blockHash };
+    std::string command("eth_getBlockByHash");
+    Array params { blockHash, true };
 
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+    Object resp = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+
+    return getResult(resp).get_obj();
 }
 
 Object EthWalletConnectorXRouter::getTransaction(const std::string & trHash) const
 {
-    std::string commandGRT("getrawtransaction");
-    Array paramsGRT { hash };
+    std::string command("eth_getTransactionByHash");
+    Array params { trHash };
 
-    Object rawTr = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+    Object resp = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
 
-    Value raw;
-    bool code = getResultOrError(rawTr, raw);
-
-    if (!code)
-    {
-        return rawTr;
-    }
-    else
-    {
-        std::string txdata = raw.get_str();
-
-        std::string commandDRT("decoderawtransaction");
-        Array paramsDRT { txdata };
-
-        Object decTr = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-
-        Value resValue = getResult(decTr);
-        Object wrap;
-        wrap.emplace_back(Pair("result", resValue));
-
-        return wrap;
-    }
+    return getResult(resp).get_obj();
 }
 
 Array EthWalletConnectorXRouter::getAllBlocks(const int number) const
 {
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
+    std::string commandBN("eth_blockNumber");
+    std::string commandgGBBN("eth_getBlockByNumber");
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-
-    Value res = getResult(blockCountObj);
-    int blockcount = res.get_int();
+    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandBN, Array());
+    std::string hexValueStr = getResult(blockCountObj).get_str();
+    uint256 blockCount(hexValueStr);
 
     Array result;
 
-    for (int id = number; id <= blockcount; id++)
+    for(uint256 id = number; id <= blockCount; id++)
     {
-        Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
+        Array params { id.ToString(), true };
 
-        std::string hash = getResult(blockHashObj).get_str();
+        Object resp = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandgGBBN, params);
 
-        Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-
-        result.push_back(getResult(blockObj));
+        result.push_back(getResult(resp));
     }
 
     return result;
@@ -89,43 +113,32 @@ Array EthWalletConnectorXRouter::getAllBlocks(const int number) const
 
 Array EthWalletConnectorXRouter::getAllTransactions(const std::string & account, const int number) const
 {
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
+    std::string commandBN("eth_blockNumber");
+    std::string commandgGBBN("eth_getBlockByNumber");
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-    int blockcount = getResult(blockCountObj).get_int();
+    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandBN, Array());
+    std::string hexValueStr = getResult(blockCountObj).get_str();
+    uint256 blockCount(hexValueStr);
 
     Array result;
-    for (int id = number; id <= blockcount; id++)
+
+    for(uint256 id = number; id <= blockCount; id++)
     {
-        Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-        std::string hash = getResult(blockHashObj).get_str();
+        Array params { id.ToString(), true };
 
-        Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        Object block = getResult(blockObj).get_obj();
+        Object resp = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandgGBBN, params);
+        Object blockObj = getResult(resp).get_obj();
 
-        Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
+        const Array & transactionsInBlock = find_value(blockObj, "transactions").get_array();
 
-        for (uint j = 0; j < txs.size(); j++)
+        for(const Value & transaction : transactionsInBlock)
         {
-            std::string txid = Value(txs[j]).get_str();
+            Object transactionObj = transaction.get_obj();
 
-            Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
+            std::string from = find_value(transactionObj, "from");
 
-            Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
-
-            if (getBalanceChange(tx, account) != 0.0)
-                result.push_back(Value(tx));
+            if(from == account)
+                result.push_back(transaction);
         }
     }
 
@@ -134,141 +147,152 @@ Array EthWalletConnectorXRouter::getAllTransactions(const std::string & account,
 
 std::string EthWalletConnectorXRouter::getBalance(const std::string & account) const
 {
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
+    std::string commandBN("eth_blockNumber");
+    std::string commandgGBBN("eth_getBlockByNumber");
 
-    double result = 0.0;
+    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandBN, Array());
+    std::string hexValueStr = getResult(blockCountObj).get_str();
+    uint256 blockCount(hexValueStr);
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-    int blockcount = getResult(blockCountObj).get_int();
+    uint256 result;
+    bool isPositive = true;
 
-    for (int id = 0; id <= blockcount; id++)
+    for(uint256 id = number; id <= blockCount; id++)
     {
-        Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-        std::string hash = getResult(blockHashObj).get_str();
+        Array params { id.ToString(), true };
 
-        Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        Object block = getResult(blockObj).get_obj();
+        Object resp = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandgGBBN, params);
+        Object blockObj = getResult(resp).get_obj();
 
-        Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
+        const Array & transactionsInBlock = find_value(blockObj, "transactions").get_array();
 
-        for (uint j = 0; j < txs.size(); j++)
+        for(const Value & transaction : transactionsInBlock)
         {
-            std::string txid = Value(txs[j]).get_str();
+            Object transactionObj = transaction.get_obj();
 
-            Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
+            std::string from = find_value(transactionObj, "from");
+            std::string to = find_value(transactionObj, "to");
 
-            Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
+            if(from == account)
+            {
+                uint256 value(find_value(transactionObj, "value").get_str());
 
-            result += getBalanceChange(tx, account);
+                if(result < value)
+                {
+                    isPositive = false;
+                    result = value - result;
+                }
+            }
+            else if(to == account)
+            {
+                uint256 value(find_value(transactionObj, "value").get_str());
+
+                if(isPositive)
+                {
+                    result += value;
+                }
+                else
+                {
+                    if(result > value)
+                    {
+                        result -= value;
+                    }
+                    else
+                    {
+                        result = value - result;
+                        isPositive = true;
+                    }
+                }
+            }
         }
     }
 
-    return std::to_string(result);
+    std::stringstream ss;
+
+    if(!isPositive)
+        ss << "-";
+
+    result.Serialize(ss, 0, 0);
+
+    return ss.str();
 }
 
 std::string EthWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number) const
 {
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
+    std::string commandBN("eth_blockNumber");
+    std::string commandgGBBN("eth_getBlockByNumber");
 
-    double result = 0.0;
+    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandBN, Array());
+    std::string hexValueStr = getResult(blockCountObj).get_str();
+    uint256 blockCount(hexValueStr);
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-    int blockcount = getResult(blockCountObj).get_int();
+    uint256 result;
+    bool isPositive = true;
 
-    for (int id = number; id <= blockcount; id++)
+    for(uint256 id = number; id <= blockCount; id++)
     {
-        Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-        std::string hash = getResult(blockHashObj).get_str();
+        Array params { id.ToString(), true };
 
-        Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        Object block = getResult(blockObj).get_obj();
+        Object resp = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandgGBBN, params);
+        Object blockObj = getResult(resp).get_obj();
 
-        Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
+        const Array & transactionsInBlock = find_value(blockObj, "transactions").get_array();
 
-        for (uint j = 0; j < txs.size(); j++)
+        for(const Value & transaction : transactionsInBlock)
         {
-            std::string txid = Value(txs[j]).get_str();
+            Object transactionObj = transaction.get_obj();
 
-            Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
+            std::string from = find_value(transactionObj, "from");
+            std::string to = find_value(transactionObj, "to");
 
-            Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
+            if(from == account)
+            {
+                uint256 value(find_value(transactionObj, "value").get_str());
 
-            result += getBalanceChange(tx, account);
+                if(result < value)
+                {
+                    isPositive = false;
+                    result = value - result;
+                }
+            }
+            else if(to == account)
+            {
+                uint256 value(find_value(transactionObj, "value").get_str());
+
+                if(isPositive)
+                {
+                    result += value;
+                }
+                else
+                {
+                    if(result > value)
+                    {
+                        result -= value;
+                    }
+                    else
+                    {
+                        result = value - result;
+                        isPositive = true;
+                    }
+                }
+            }
         }
     }
 
-    return std::to_string(result);
+    std::stringstream ss;
+
+    if(!isPositive)
+        ss << "-";
+
+    result.Serialize(ss, 0, 0);
+
+    return ss.str();
 }
 
-Array EthWalletConnectorXRouter::getTransactionsBloomFilter(const int number) const
+Array EthWalletConnectorXRouter::getTransactionsBloomFilter(const int) const
 {
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
-
-    CBloomFilter ft;
-    stream >> ft;
-    CBloomFilter filter(ft);
-    filter.UpdateEmptyFull();
-
-    Array result;
-
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-    int blockcount = getResult(blockCountObj).get_int();
-
-    for (int id = number; id <= blockcount; id++)
-    {
-        Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-        std::string hash = getResult(blockHashObj).get_str();
-
-        Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        Object block = getResult(blockObj).get_obj();
-
-        Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
-
-        for (uint j = 0; j < txs.size(); j++)
-        {
-            std::string txid = Value(txs[j]).get_str();
-
-            Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
-
-            Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
-
-            if (checkFilterFit(tx, filter))
-                result.push_back(Value(tx));
-        }
-    }
+    // not realized for Ethereum
+    return Array();
 }
 
 Object EthWalletConnectorXRouter::sendTransaction(const std::string & transaction) const
