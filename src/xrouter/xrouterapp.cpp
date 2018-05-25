@@ -10,7 +10,6 @@
 #include "servicenodeman.h"
 #include "addrman.h"
 #include "script/standard.h"
-#include "util/xutil.h"
 #include "wallet.h"
 #include "bloom.h"
 
@@ -250,7 +249,7 @@ WalletConnectorXRouterPtr App::connectorByCurrency(const std::string & currency)
         return m_p->m_connectorCurrencyMap.at(currency);
     }
 
-    return xbridge::WalletConnectorPtr();
+    return xrouter::WalletConnectorXRouterPtr();
 }
 
 //*****************************************************************************
@@ -279,16 +278,22 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
         error.emplace_back(Pair("error", "Failed to get response"));
         error.emplace_back(Pair("uuid", id));
         return json_spirit::write_string(Value(error), true);
-    } else {
-        for (uint i = 0; i < queries[id].size(); i++) {
+    }
+    else
+    {
+        for (unsigned int i = 0; i < queries[id].size(); i++)
+        {
             std::string cand = queries[id][i];
             int cnt = 0;
-            for (uint j = 0; j < queries[id].size(); j++)
-                if (queries[id][j] == cand) {
+            for (unsigned int j = 0; j < queries[id].size(); j++)
+            {
+                if (queries[id][j] == cand)
+                {
                     cnt++;
                     if (cnt > confirmations / 2)
                         return cand;
                 }
+            }
         }
 
         error.emplace_back(Pair("error", "No consensus between responses"));
@@ -675,6 +680,11 @@ bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
+
+    CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
+    stream.resize(packet->size() - offset);
+    memcpy(&stream[0], packet->data()+offset, packet->size() - offset);
+
     int number = std::stoi(number_s);
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
@@ -682,7 +692,7 @@ bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
     Array result;
     if (conn)
     {
-        result = conn->getTransactionsBloomFilter(number);
+        result = conn->getTransactionsBloomFilter(number, stream);
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
@@ -919,7 +929,7 @@ std::string App::getReply(const std::string & id)
         result.emplace_back(Pair("uuid", id));
         return json_spirit::write_string(Value(result), true);
     } else {
-        for (uint i = 0; i < queries[id].size(); i++) {
+        for (unsigned int i = 0; i < queries[id].size(); i++) {
             std::string cand = queries[id][i];
             result.emplace_back(Pair("reply" + std::to_string(i+1), cand));
         }

@@ -1,9 +1,19 @@
 #include "xrouterconnectorbtc.h"
 
+namespace xbridge {
+namespace rpc
+{
+Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
+               const std::string & rpcip, const std::string & rpcport,
+               const std::string & strMethod, const Array & params);
+}
+}
+
 namespace xrouter
 {
 
-static Value getResult(Object obj) {
+static Value getResult(Object obj)
+{
     for (Object::size_type i = 0; i != obj.size(); i++ ) {
         if (obj[i].name_ == "result") {
             return obj[i].value_;
@@ -12,7 +22,8 @@ static Value getResult(Object obj) {
     return Value();
 }
 
-static bool getResultOrError(Object obj, Value& res) {
+static bool getResultOrError(Object obj, Value& res)
+{
     for (Object::size_type i = 0; i != obj.size(); i++ ) {
         if (obj[i].name_ == "result") {
             res =  obj[i].value_;
@@ -30,7 +41,8 @@ static bool getResultOrError(Object obj, Value& res) {
     return false;
 }
 
-static double parseVout(Value vout, std::string account) {
+static double parseVout(Value vout, std::string account)
+{
     double result = 0.0;
     double val = find_value(vout.get_obj(), "value").get_real();
     Object src = find_value(vout.get_obj(), "scriptPubKey").get_obj();
@@ -48,7 +60,7 @@ static double parseVout(Value vout, std::string account) {
     return result;
 }
 
-static double getBalanceChange(Object tx, std::string account)
+double BtcWalletConnectorXRouter::getBalanceChange(Object tx, std::string account)
 {
     std::string commandGRT("getblockhash");
     std::string commandDRT("decoderawtransaction");
@@ -72,11 +84,11 @@ static double getBalanceChange(Object tx, std::string account)
         int voutid = find_value(vin[j].get_obj(), "vout").get_int();
 
         Array paramsGRT { Value(txid) };
-        Object rawTr = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+        Object rawTr = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
         std::string txdata = getResult(rawTr).get_str();
 
         Array paramsDRT { Value(txdata) };
-        Object decRawTr = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
+        Object decRawTr = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
         Object prev_tx = getResult(decRawTr).get_obj();
         Array prev_vouts = find_value(prev_tx, "vout").get_array();
 
@@ -86,7 +98,8 @@ static double getBalanceChange(Object tx, std::string account)
     return result;
 }
 
-static bool checkFilterFit(Object tx, CBloomFilter filter) {
+bool BtcWalletConnectorXRouter::checkFilterFit(Object tx, CBloomFilter filter)
+{
     Array vout = find_value(tx, "vout").get_array();
     for (unsigned int j = 0; j != vout.size(); j++ ) {
         Object src = find_value(vout[j].get_obj(), "scriptPubKey").get_obj();
@@ -114,7 +127,7 @@ static bool checkFilterFit(Object tx, CBloomFilter filter) {
         std::vector<unsigned char> inkeyv(inkey.begin(), inkey.end());
         CScript vins(inkeyv.begin(), inkeyv.end());
         CScript::const_iterator pc = vins.begin();
-        vector<unsigned char> data;
+        std::vector<unsigned char> data;
         while (pc < vins.end()) {
             opcodetype opcode;
             if (!vins.GetOp(pc, opcode, data))
@@ -132,7 +145,9 @@ std::string BtcWalletConnectorXRouter::getBlockCount() const
     std::string command("getblockcount");
     Array params;
 
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params).get_str();
+    Object resp = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+
+    return getResult(resp).get_str();
 }
 
 std::string BtcWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
@@ -140,7 +155,9 @@ std::string BtcWalletConnectorXRouter::getBlockHash(const std::string & blockId)
     std::string command("getblockhash");
     Array params { std::stoi(blockId) };
 
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params).get_str();
+    Object resp = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+
+    return getResult(resp).get_str();
 }
 
 Object BtcWalletConnectorXRouter::getBlock(const std::string & blockHash) const
@@ -148,15 +165,15 @@ Object BtcWalletConnectorXRouter::getBlock(const std::string & blockHash) const
     std::string command("getblock");
     Array params { blockHash };
 
-    return rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
+    return xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
 }
 
 Object BtcWalletConnectorXRouter::getTransaction(const std::string & trHash) const
 {
     std::string commandGRT("getrawtransaction");
-    Array paramsGRT { hash };
+    Array paramsGRT { trHash };
 
-    Object rawTr = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+    Object rawTr = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
 
     Value raw;
     bool code = getResultOrError(rawTr, raw);
@@ -172,7 +189,7 @@ Object BtcWalletConnectorXRouter::getTransaction(const std::string & trHash) con
         std::string commandDRT("decoderawtransaction");
         Array paramsDRT { txdata };
 
-        Object decTr = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
+        Object decTr = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
 
         Value resValue = getResult(decTr);
         Object wrap;
@@ -188,7 +205,7 @@ Array BtcWalletConnectorXRouter::getAllBlocks(const int number) const
     std::string commandGBH("getblockhash");
     std::string commandGB("getblock");
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
+    Object blockCountObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
 
     Value res = getResult(blockCountObj);
     int blockcount = res.get_int();
@@ -198,12 +215,12 @@ Array BtcWalletConnectorXRouter::getAllBlocks(const int number) const
     for (int id = number; id <= blockcount; id++)
     {
         Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
+        Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
 
         std::string hash = getResult(blockHashObj).get_str();
 
         Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
+        Object blockObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
 
         result.push_back(getResult(blockObj));
     }
@@ -219,18 +236,18 @@ Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account,
     std::string commandGRT("getrawtransaction");
     std::string commandDRT("decoderawtransaction");
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
+    Object blockCountObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
     int blockcount = getResult(blockCountObj).get_int();
 
     Array result;
     for (int id = number; id <= blockcount; id++)
     {
         Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
+        Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
         std::string hash = getResult(blockHashObj).get_str();
 
         Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
+        Object blockObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
@@ -240,11 +257,11 @@ Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account,
             std::string txid = Value(txs[j]).get_str();
 
             Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+            Object rawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
             std::string txdata = getResult(rawTrObj).get_str();
 
             Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
+            Object decRawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
             Object tx = getResult(decRawTrObj).get_obj();
 
             if (getBalanceChange(tx, account) != 0.0)
@@ -265,17 +282,17 @@ std::string BtcWalletConnectorXRouter::getBalance(const std::string & account) c
 
     double result = 0.0;
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
+    Object blockCountObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
     int blockcount = getResult(blockCountObj).get_int();
 
     for (int id = 0; id <= blockcount; id++)
     {
         Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
+        Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
         std::string hash = getResult(blockHashObj).get_str();
 
         Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
+        Object blockObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
@@ -285,11 +302,11 @@ std::string BtcWalletConnectorXRouter::getBalance(const std::string & account) c
             std::string txid = Value(txs[j]).get_str();
 
             Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+            Object rawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
             std::string txdata = getResult(rawTrObj).get_str();
 
             Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
+            Object decRawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
             Object tx = getResult(decRawTrObj).get_obj();
 
             result += getBalanceChange(tx, account);
@@ -309,17 +326,17 @@ std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & acco
 
     double result = 0.0;
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
+    Object blockCountObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
     int blockcount = getResult(blockCountObj).get_int();
 
     for (int id = number; id <= blockcount; id++)
     {
         Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
+        Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
         std::string hash = getResult(blockHashObj).get_str();
 
         Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
+        Object blockObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
@@ -329,11 +346,11 @@ std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & acco
             std::string txid = Value(txs[j]).get_str();
 
             Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+            Object rawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
             std::string txdata = getResult(rawTrObj).get_str();
 
             Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
+            Object decRawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
             Object tx = getResult(decRawTrObj).get_obj();
 
             result += getBalanceChange(tx, account);
@@ -343,7 +360,7 @@ std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & acco
     return std::to_string(result);
 }
 
-Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number) const
+Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number, CDataStream & stream) const
 {
     std::string commandGBC("getblockcount");
     std::string commandGBH("getblockhash");
@@ -358,17 +375,17 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number) co
 
     Array result;
 
-    Object blockCountObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
+    Object blockCountObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
     int blockcount = getResult(blockCountObj).get_int();
 
     for (int id = number; id <= blockcount; id++)
     {
         Array paramsGBH { id };
-        Object blockHashObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
+        Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
         std::string hash = getResult(blockHashObj).get_str();
 
         Array paramsGB { hash };
-        Object blockObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
+        Object blockObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
@@ -378,11 +395,11 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number) co
             std::string txid = Value(txs[j]).get_str();
 
             Array paramsGRT { txid };
-            Object rawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+            Object rawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
             std::string txdata = getResult(rawTrObj).get_str();
 
             Array paramsDRT { txdata };
-            Object decRawTrObj = rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
+            Object decRawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
             Object tx = getResult(decRawTrObj).get_obj();
 
             if (checkFilterFit(tx, filter))

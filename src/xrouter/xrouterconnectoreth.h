@@ -8,28 +8,11 @@
 #include <string>
 #include <cstdint>
 #include <sstream>
-#include "../json/json_spirit.h"
+#include "json/json_spirit.h"
 #include "xrouterconnector.h"
+#include "streams.h"
 
 using namespace json_spirit;
-
-//******************************************************************************
-//******************************************************************************
-namespace rpc
-{
-    Object CallRPCAuthorized(const std::string & auth,
-                             const std::string & rpcip,
-                             const std::string & rpcport,
-                             const std::string & strMethod,
-                             const Array & params);
-
-    Object CallRPC(const std::string & rpcuser,
-                   const std::string & rpcpasswd,
-                   const std::string & rpcip,
-                   const std::string & rpcport,
-                   const std::string & strMethod,
-                   const Array & params);
-} // namespace rpc
 
 namespace xrouter
 {
@@ -44,8 +27,8 @@ public:
     Array       getAllTransactions(const std::string & account, const int number) const;
     std::string getBalance(const std::string & account) const;
     std::string getBalanceUpdate(const std::string & account, const int number) const;
-    Array       getTransactionsBloomFilter(const int) const;
-    Object      sendTransaction(const std::string & transaction) const;
+    Array       getTransactionsBloomFilter(const int, CDataStream &) const;
+    Object      sendTransaction(const std::string &) const;
     Object      getPaymentAddress() const;
 };
 

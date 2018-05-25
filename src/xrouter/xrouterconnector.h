@@ -4,8 +4,9 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "../json/json_spirit.h"
-#include "../xbridge/xbridgewallet.h"
+#include "json/json_spirit.h"
+#include "xbridge/xbridgewallet.h"
+#include "streams.h"
 
 using namespace json_spirit;
 
@@ -31,7 +32,7 @@ public:
     virtual Array       getAllTransactions(const std::string & account, const int number) const = 0;
     virtual std::string getBalance(const std::string & account) const = 0;
     virtual std::string getBalanceUpdate(const std::string & account, const int number) const = 0;
-    virtual Array       getTransactionsBloomFilter(const int number) const = 0;
+    virtual Array       getTransactionsBloomFilter(const int number, CDataStream & stream) const = 0;
     virtual Object      sendTransaction(const std::string & transaction) const = 0;
     virtual Object      getPaymentAddress() const = 0;
 };

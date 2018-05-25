@@ -307,9 +307,7 @@ SOURCES += \
     src/xrouter/xrouterconnector.cpp \
     src/xrouter/xrouterconnectorbtc.cpp \
     src/xrouter/xrouterconnectoreth.cpp \
-    src/xrouter/xrouterpacket.cpp \
-    src/xrouter/xrouterrpc.cpp \
-    src/xrouter/util/xutil.cpp
+    src/xrouter/xrouterpacket.cpp
 
 #protobuf generated
 SOURCES += \
@@ -607,10 +605,8 @@ HEADERS += \
     src/xrouter/xrouterconnectorbtc.h \
     src/xrouter/xrouterconnectoreth.h \
     src/xrouter/xrouterpacket.h \
-    src/xrouter/xrouterrpc.h \
     src/xrouter/xrouterdef.h \
-    src/xrouter/util/xroutererror.h \
-    src/xrouter/util/xutil.h
+    src/xrouter/util/xroutererror.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
