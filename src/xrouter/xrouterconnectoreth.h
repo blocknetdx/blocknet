@@ -7,6 +7,7 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include <sstream>
 #include "../json/json_spirit.h"
 #include "xrouterconnector.h"
 

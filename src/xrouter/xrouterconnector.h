@@ -4,10 +4,10 @@
 #include <vector>
 #include <string>
 #include <cstdint>
-#include "../json/json_spirit_reader_template.h"
-#include "../json/json_spirit_writer_template.h"
-#include "../json/json_spirit_utils.h"
+#include "../json/json_spirit.h"
 #include "../xbridge/xbridgewallet.h"
+
+using namespace json_spirit;
 
 namespace xrouter
 {

@@ -134,7 +134,6 @@ bool App::init(int argc, char *argv[])
         path += "/xbridge.conf";
         s.read(path.c_str());
         s.parseCmdLine(argc, argv);
-        std::cout << "Finished loading config" << path << std::endl;
     }
 
     return true;
@@ -163,7 +162,6 @@ bool App::Impl::start()
             {
                 xbridge::WalletParam wp;
                 wp.currency                    = *i;
-                std::cout << "currency " << wp.currency << std::endl;
                 wp.title                       = s.get<std::string>(*i + ".Title");
                 wp.address                     = s.get<std::string>(*i + ".Address");
                 wp.m_ip                        = s.get<std::string>(*i + ".Ip");
@@ -343,7 +341,6 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
-                std::cout << "sn " << s.second.addr.ToString() << " " << s.second.GetConnectedWalletsStr() << std::endl;
                 std::vector<string> wallets;
                 std::string wstr = s.second.GetConnectedWalletsStr();
                 boost::split(wallets, wstr, boost::is_any_of(","));
@@ -431,7 +428,6 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
     offset += uuid.size() + 1;
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
-    std::cout << uuid << " "<< currency << std::endl;
 
     Object result;
     Object error;
@@ -465,7 +461,6 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string blockId((const char *)packet->data()+offset);
     offset += blockId.size() + 1;
-    std::cout << uuid << " "<< currency << " " << blockId << std::endl;
 
     Object result;
     Object error;
@@ -499,7 +494,6 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string blockHash((const char *)packet->data()+offset);
     offset += blockHash.size() + 1;
-    std::cout << uuid << " "<< currency << " " << blockHash << std::endl;
 
     Object result;
     Object error;
@@ -533,7 +527,6 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string hash((const char *)packet->data()+offset);
     offset += hash.size() + 1;
-    std::cout << uuid << " "<< currency << " " << hash << std::endl;
 
     Object result;
     Object error;
@@ -567,7 +560,6 @@ bool App::processGetAllBlocks(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
-    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
@@ -597,7 +589,6 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
     offset += account.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
-    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
@@ -628,7 +619,6 @@ bool App::processGetBalance(XRouterPacketPtr packet) {
     offset += currency.size() + 1;
     std::string account((const char *)packet->data()+offset);
     offset += account.size() + 1;
-    std::cout << uuid << " "<< currency << " " << account << std::endl;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     std::string result;
@@ -657,7 +647,6 @@ bool App::processGetBalanceUpdate(XRouterPacketPtr packet) {
     offset += account.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
-    std::cout << uuid << " "<< currency << " " << number_s << std::endl;
     int number = std::stoi(number_s);
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
@@ -733,15 +722,12 @@ bool App::processGetPaymentAddress(XRouterPacketPtr packet) {
 //*****************************************************************************
 //*****************************************************************************
 bool App::processReply(XRouterPacketPtr packet) {
-    std::cout << "Processing Reply\n";
-
     uint32_t offset = 0;
 
     std::string uuid((const char *)packet->data()+offset);
     offset += uuid.size() + 1;
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
-    std::cout << uuid << " " << reply << std::endl;
 
     // check uuid is in queriesLock keys
     if (!queriesLocks.count(uuid))
@@ -848,7 +834,6 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 //*****************************************************************************
 std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2, std::string confirmations)
 {
-    std::cout << "process Query" << std::endl;
     XRouterPacketPtr packet(new XRouterPacket(command));
 
     uint256 txHash;
@@ -858,9 +843,6 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         std::cerr << "Minimum block requirement not satisfied\n";
         return "Minimum block requirement not satisfied";
     }
-    std::cout << "txHash = " << txHash.ToString() << "\n";
-    std::cout << "vout = " << vout << "\n";
-    std::cout << "Sending xrGetBlock packet...\n";
 
     boost::uuids::uuid uuid = boost::uuids::random_generator()();
     std::string id = boost::uuids::to_string(uuid);
@@ -876,7 +858,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     packet->sign(key);
 
     if (!confirmations.empty())
-        return sendPacketAndWait(packet, id, currency, std::stoi(confirmations), 300000);
+        return sendPacketAndWait(packet, id, currency, std::stoi(confirmations), 20000);
     else
         return sendPacketAndWait(packet, id, currency);
 }

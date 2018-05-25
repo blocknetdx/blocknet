@@ -301,7 +301,15 @@ SOURCES += \
     src/xbridge/xbridgewalletconnectorbcc.cpp \
     src/xbridge/xbridgewalletconnectorsys.cpp \
     src/xbridge/xbridgewalletconnectordgb.cpp \
-    src/xbridge/xbridgepacket.cpp
+    src/xbridge/xbridgepacket.cpp \
+    src/xrouter/rpcxrouter.cpp \
+    src/xrouter/xrouterapp.cpp \
+    src/xrouter/xrouterconnector.cpp \
+    src/xrouter/xrouterconnectorbtc.cpp \
+    src/xrouter/xrouterconnectoreth.cpp \
+    src/xrouter/xrouterpacket.cpp \
+    src/xrouter/xrouterrpc.cpp \
+    src/xrouter/util/xutil.cpp
 
 #protobuf generated
 SOURCES += \
@@ -592,7 +600,17 @@ HEADERS += \
     src/xbridge/xbridgewalletconnectorbcc.h \
     src/xbridge/xbridgewalletconnectorsys.h \
     src/xbridge/xbridgewalletconnectordgb.h \
-    src/xbridge/xbridgedef.h
+    src/xbridge/xbridgedef.h \
+    src/xrouter/version.h \
+    src/xrouter/xrouterapp.h \
+    src/xrouter/xrouterconnector.h \
+    src/xrouter/xrouterconnectorbtc.h \
+    src/xrouter/xrouterconnectoreth.h \
+    src/xrouter/xrouterpacket.h \
+    src/xrouter/xrouterrpc.h \
+    src/xrouter/xrouterdef.h \
+    src/xrouter/util/xroutererror.h \
+    src/xrouter/util/xutil.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

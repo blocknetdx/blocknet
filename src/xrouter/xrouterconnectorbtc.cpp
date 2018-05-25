@@ -39,7 +39,7 @@ static double parseVout(Value vout, std::string account) {
         return 0.0;
     Array addr = addr_val.get_array();
 
-    for (uint k = 0; k != addr.size(); k++ ) {
+    for (unsigned int k = 0; k != addr.size(); k++ ) {
         std::string cur_addr = Value(addr[k]).get_str();
         if (cur_addr == account)
             result += val;
@@ -56,13 +56,13 @@ static double getBalanceChange(Object tx, std::string account)
     double result = 0.0;
 
     Array vout = find_value(tx, "vout").get_array();
-    for (uint j = 0; j != vout.size(); j++ )
+    for (unsigned int j = 0; j != vout.size(); j++ )
     {
         result += parseVout(vout[j], account);
     }
 
     Array vin = find_value(tx, "vin").get_array();
-    for (uint j = 0; j != vin.size(); j++ )
+    for (unsigned int j = 0; j != vin.size(); j++ )
     {
         const Value& txid_val = find_value(vin[j].get_obj(), "txid");
         if (txid_val.is_null())
@@ -88,7 +88,7 @@ static double getBalanceChange(Object tx, std::string account)
 
 static bool checkFilterFit(Object tx, CBloomFilter filter) {
     Array vout = find_value(tx, "vout").get_array();
-    for (uint j = 0; j != vout.size(); j++ ) {
+    for (unsigned int j = 0; j != vout.size(); j++ ) {
         Object src = find_value(vout[j].get_obj(), "scriptPubKey").get_obj();
         std::string outkey = find_value(src, "hex").get_str();
         std::vector<unsigned char> outkeyv(outkey.begin(), outkey.end());
@@ -106,7 +106,7 @@ static bool checkFilterFit(Object tx, CBloomFilter filter) {
     }
 
     Array vin = find_value(tx, "vin").get_array();
-    for (uint j = 0; j != vin.size(); j++ ) {
+    for (unsigned int j = 0; j != vin.size(); j++ ) {
         const Value& txid_val = find_value(vin[j].get_obj(), "scriptSig");
         if (txid_val.is_null())
             continue;
@@ -234,9 +234,8 @@ Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account,
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
 
-        for (uint j = 0; j < txs.size(); j++)
+        for (unsigned int j = 0; j < txs.size(); j++)
         {
             std::string txid = Value(txs[j]).get_str();
 
@@ -280,9 +279,8 @@ std::string BtcWalletConnectorXRouter::getBalance(const std::string & account) c
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
 
-        for (uint j = 0; j < txs.size(); j++)
+        for (unsigned int j = 0; j < txs.size(); j++)
         {
             std::string txid = Value(txs[j]).get_str();
 
@@ -325,9 +323,8 @@ std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & acco
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
 
-        for (uint j = 0; j < txs.size(); j++)
+        for (unsigned int j = 0; j < txs.size(); j++)
         {
             std::string txid = Value(txs[j]).get_str();
 
@@ -375,9 +372,8 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number) co
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
-        std::cout << "block " << id << " " << txs.size() << std::endl;
 
-        for (uint j = 0; j < txs.size(); j++)
+        for (unsigned int j = 0; j < txs.size(); j++)
         {
             std::string txid = Value(txs[j]).get_str();
 

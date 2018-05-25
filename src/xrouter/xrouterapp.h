@@ -308,7 +308,7 @@ public:
      * @param timeout time period to wait
      * @return
      */
-    std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations=3, int timeout=300000);
+    std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations=3, int timeout=20000);
 
     // call when message from xrouter network received
     /**
