@@ -587,7 +587,8 @@ HEADERS += \
     src/xbridge/xbridgewalletconnectorbtc.h \
     src/xbridge/xbridgedef.h \
     src/xbridge/xbridgecryptoproviderbtc.h \
-    src/xbridge/xbridgewalletconnectorbch.h
+    src/xbridge/xbridgewalletconnectorbch.h \
+    src/xbridge/util/xassert.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

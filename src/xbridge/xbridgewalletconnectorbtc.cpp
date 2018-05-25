@@ -1279,11 +1279,14 @@ bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::
     for (std::string & account : accounts)
     {
         std::vector<std::string> addrs;
-        if (rpc::getaddressesbyaccount(m_user, m_passwd, m_ip, m_port, account, addrs))
+        if (!rpc::getaddressesbyaccount(m_user, m_passwd, m_ip, m_port, account, addrs))
         {
-            entries.emplace_back(account.empty() ? "_none" : account, addrs);
-            // LOG() << acc << " - " << boost::algorithm::join(addrs, ",");
+            continue;
         }
+
+        if (!rpc.validate)
+        entries.emplace_back(account.empty() ? "_none" : account, addrs);
+        // LOG() << acc << " - " << boost::algorithm::join(addrs, ",");
     }
 
     return true;
@@ -1588,7 +1591,7 @@ bool BtcWalletConnector<CryptoProvider>::checkTransaction(const std::string & de
     }
 
     // TODO check amount in tx, temporary only first vout
-    json_spirit::Array  vout    = json_spirit::find_value(txo, "vout");
+    json_spirit::Array  vout    = json_spirit::find_value(txo, "vout").get_array();
     json_spirit::Object vout0   = vout[0].get_obj();
     json_spirit::Value  vamount = json_spirit::find_value(vout0, "value");
     double receivedAmount = vamount.get_real();
