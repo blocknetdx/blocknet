@@ -34,19 +34,48 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string.hpp>
-//#include <boost/uuid/uuid.hpp>
-//#include <boost/uuid/uuid_generators.hpp>
-//#include <boost/uuid/uuid_io.hpp>
 #include <iostream>
 #include <sstream>
 #include <vector>
 
 static const CAmount minBlock = 200;
 
+#ifdef _WIN32
+#include <objbase.h>
+    
+static std::string generateUUID()
+{
+    GUID guid;
+	CoCreateGuid(&guid);
+    char guid_string[37];
+    sprintf(guid_string, sizeof(guid_string) / sizeof(guid_string[0]),
+          "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+          guid->Data1, guid->Data2, guid->Data3,
+          guid->Data4[0], guid->Data4[1], guid->Data4[2],
+          guid->Data4[3], guid->Data4[4], guid->Data4[5],
+          guid->Data4[6], guid->Data4[7]);
+    return guid_string;
+}
+    
+#else
+
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
+static std::string generateUUID()
+{
+    boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    return boost::uuids::to_string(uuid);
+}
+
+#endif 
+
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
-{
+{   
+    
 //*****************************************************************************
 //*****************************************************************************
 class App::Impl
@@ -856,7 +885,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
 
     //boost::uuids::uuid uuid = boost::uuids::random_generator()();
     //std::string id = boost::uuids::to_string(uuid);
-    std::string id = "request" + std::to_string(req_cnt);
+    std::string id = generateUUID(); //"request" + std::to_string(req_cnt);
     req_cnt++;
 
     packet->append(txHash.begin(), 32);
