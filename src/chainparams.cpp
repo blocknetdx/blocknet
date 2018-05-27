@@ -349,6 +349,12 @@ public:
         fMineBlocksOnDemand = true;
         fTestnetToBeDeprecatedFieldRPC = false;
         nRequiredAccumulation = 1;
+
+        // {
+        //   "PrivateKey": "87KoKKdy77Eno54xnmeBPJutb4mvpFaK6MX6ZLVFETLdeVG25To",
+        //   "PublicKey": "04fc01eb4be17dc122c2d9a49394e25b3766d527be5427662bfbb82dc57bfef6a6d37a8a3b90e7b7b44168b78358581ab36d39e264202dea87b9de9b0d871d5625"
+        // }
+        strSporkKey = "04fc01eb4be17dc122c2d9a49394e25b3766d527be5427662bfbb82dc57bfef6a6d37a8a3b90e7b7b44168b78358581ab36d39e264202dea87b9de9b0d871d5625";
     }
     const Checkpoints::CCheckpointData& Checkpoints() const
     {
