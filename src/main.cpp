@@ -2947,6 +2947,13 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
     CAmount nValueIn = 0;
     vector<uint256> vSpendsInBlock;
     uint256 hashBlock = block.GetHash();
+
+    unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_DERSIG;
+
+    if (GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime) {
+        flags |= SCRIPT_VERIFY_WITNESS | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY;
+    }
+
     for (unsigned int i = 0; i < block.vtx.size(); i++) {
         const CTransaction& tx = block.vtx[i];
 
@@ -3026,11 +3033,6 @@ bool ConnectBlock(const CBlock& block, CValidationState& state, CBlockIndex* pin
             nValueIn += view.GetValueIn(tx);
 
             std::vector<CScriptCheck> vChecks;
-            unsigned int flags = SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_DERSIG;
-
-            if (GetSporkValue(SPORK_17_SEGWIT_ACTIVATION) < block.nTime) {
-                flags |= SCRIPT_VERIFY_WITNESS;
-            }
 
             // GetTransactionSigOpCost counts 3 types of sigops:
             // * legacy (always)

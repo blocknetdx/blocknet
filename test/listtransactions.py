@@ -35,6 +35,7 @@ def check_array_result(object_array, to_match, expected):
 class ListTransactionsTest(TestCaseBase) :
     def set_test_params(self):
         self.num_nodes = 2
+        self.extra_args = [["-keypool=10"]] * self.num_nodes
         self.enable_mocktime()
 
     def initialize(self) :
