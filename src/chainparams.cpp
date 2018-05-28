@@ -351,10 +351,10 @@ public:
         nRequiredAccumulation = 1;
 
         // {
-        //   "PrivateKey": "87KoKKdy77Eno54xnmeBPJutb4mvpFaK6MX6ZLVFETLdeVG25To",
-        //   "PublicKey": "04fc01eb4be17dc122c2d9a49394e25b3766d527be5427662bfbb82dc57bfef6a6d37a8a3b90e7b7b44168b78358581ab36d39e264202dea87b9de9b0d871d5625"
+        //     "PrivateKey": "923EhWh2bJHynX6d4Tqt2Q75bhTDCT1b4kff3qzDKDZHZ6pkQs7",
+        //     "PublicKey": "04866dc02c998b7e1ab16fe14e0d86554595da90c36acb706a4d763b58ed0edb1f82c87e3ced065c5b299b26e12496956b9e5f9f19aa008b5c46229b15477c875a"
         // }
-        strSporkKey = "04fc01eb4be17dc122c2d9a49394e25b3766d527be5427662bfbb82dc57bfef6a6d37a8a3b90e7b7b44168b78358581ab36d39e264202dea87b9de9b0d871d5625";
+        strSporkKey = "04866dc02c998b7e1ab16fe14e0d86554595da90c36acb706a4d763b58ed0edb1f82c87e3ced065c5b299b26e12496956b9e5f9f19aa008b5c46229b15477c875a";
     }
     const Checkpoints::CCheckpointData& Checkpoints() const
     {

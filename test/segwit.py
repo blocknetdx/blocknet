@@ -14,6 +14,7 @@ from test_framework.address import script_to_p2sh, key_to_p2pkh
 from test_framework.script import CScript, OP_HASH160, OP_CHECKSIG, OP_0, hash160, OP_EQUAL, OP_DUP, OP_EQUALVERIFY, OP_1, OP_2, OP_CHECKMULTISIG
 from io import BytesIO
 from test_framework.mininode import FromHex
+import time
 
 NODE_0 = 0
 NODE_1 = 1
@@ -71,9 +72,9 @@ def getutxo(txid):
     utxo["txid"] = txid
     return utxo
 
-def find_unspent(node, min_value):
+def find_unspent(node, min_value, max_value = 100000000):
     for utxo in node.listunspent():
-        if utxo['amount'] >= min_value:
+        if utxo['amount'] >= min_value and utxo["amount"] <= max_value:
             return utxo
 
 class SegWitTest(BitcoinTestFramework):
@@ -94,27 +95,27 @@ class SegWitTest(BitcoinTestFramework):
         self.sync_all()
 
     def success_mine(self, node, txid, sign, redeem_script=""):
-        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("49.998"), sign, redeem_script)
+        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("6.998"), sign, redeem_script)
         block = node.setgenerate(True, 1)
         assert_equal(len(node.getblock(block[0])["tx"]), 2)
         sync_blocks(self.nodes)
 
     def skip_mine(self, node, txid, sign, redeem_script=""):
-        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("49.998"), sign, redeem_script)
+        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("6.998"), sign, redeem_script)
         block = node.setgenerate(True, 1)
         assert_equal(len(node.getblock(block[0])["tx"]), 1)
         sync_blocks(self.nodes)
 
     def fail_accept(self, node, txid, sign, redeem_script=""):
         try:
-            send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("49.998"), sign, redeem_script)
+            send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("6.998"), sign, redeem_script)
         except JSONRPCException as exp:
             assert(exp.error["code"] == -26)
         else:
             raise AssertionError("Tx should not have been accepted")
 
     def fail_mine(self, node, txid, sign, redeem_script=""):
-        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("49.998"), sign, redeem_script)
+        send_to_witness(1, node, getutxo(txid), self.pubkey[0], False, Decimal("6.998"), sign, redeem_script)
         try:
             node.setgenerate(True, 1)
         except JSONRPCException as exp:
@@ -124,19 +125,7 @@ class SegWitTest(BitcoinTestFramework):
         sync_blocks(self.nodes)
 
     def run_test(self):
-        self.nodes[0].setgenerate(True, 161) #block 161
-
-        print("Verify sigops are counted in GBT with pre-BIP141 rules before the fork")
-        txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1)
-        tmpl = self.nodes[0].getblocktemplate({})
-        assert(tmpl['sigoplimit'] == 80000)
-        assert(tmpl['transactions'][0]['hash'] == txid)
-        assert(tmpl['transactions'][0]['sigops'] == 4)
-        tmpl = self.nodes[0].getblocktemplate({'rules':['segwit']})
-        assert(tmpl['sigoplimit'] == 80000)
-        assert(tmpl['transactions'][0]['hash'] == txid)
-        assert(tmpl['transactions'][0]['sigops'] == 4)
-        self.nodes[0].setgenerate(True, 1) #block 162
+        self.nodes[0].setgenerate(True, 300) #block 161
 
         balance_presetup = self.nodes[0].getbalance()
         self.pubkey = []
@@ -144,6 +133,7 @@ class SegWitTest(BitcoinTestFramework):
         wit_ids = [] # wit_ids[NODE][VER] is an array of txids that spend to a witness version VER pkscript to an address for NODE via bare witness
         for i in range(3):
             newaddress = self.nodes[i].getnewaddress()
+            print(self.nodes[i].validateaddress(newaddress))
             self.pubkey.append(self.nodes[i].validateaddress(newaddress)["pubkey"])
             multiaddress = self.nodes[i].addmultisigaddress(1, [self.pubkey[-1]])
             self.nodes[i].addwitnessaddress(newaddress)
@@ -157,16 +147,18 @@ class SegWitTest(BitcoinTestFramework):
         for i in range(5):
             for n in range(3):
                 for v in range(2):
-                    wit_ids[n][v].append(send_to_witness(v, self.nodes[0], find_unspent(self.nodes[0], 50), self.pubkey[n], False, Decimal("49.999")))
-                    p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], find_unspent(self.nodes[0], 50), self.pubkey[n], True, Decimal("49.999")))
+                    utxo0 = find_unspent(self.nodes[0], 6, 7)
+                    wit_ids[n][v].append(send_to_witness(v, self.nodes[0], utxo0, self.pubkey[n], False, Decimal("6.999")))
+                    utxo1 = find_unspent(self.nodes[0], 6, 7)
+                    p2sh_ids[n][v].append(send_to_witness(v, self.nodes[0], utxo1, self.pubkey[n], True, Decimal("6.999")))
 
         self.nodes[0].setgenerate(True, 1) #block 163
         sync_blocks(self.nodes)
 
         # Make sure all nodes recognize the transactions as theirs
-        assert_equal(self.nodes[0].getbalance(), balance_presetup - 60*50 + 20*Decimal("49.999") + 50)
-        assert_equal(self.nodes[1].getbalance(), 20*Decimal("49.999"))
-        assert_equal(self.nodes[2].getbalance(), 20*Decimal("49.999"))
+        assert_equal(self.nodes[0].getbalance(), balance_presetup - 60*7 + 20*Decimal("6.999") + 7)
+        assert_equal(self.nodes[1].getbalance(), 20*Decimal("6.999"))
+        assert_equal(self.nodes[2].getbalance(), 20*Decimal("6.999"))
 
         self.nodes[0].setgenerate(True, 260) #block 423
         sync_blocks(self.nodes)
@@ -186,11 +178,12 @@ class SegWitTest(BitcoinTestFramework):
         self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V0][0], True)
         self.fail_accept(self.nodes[0], p2sh_ids[NODE_0][WIT_V1][0], True)
 
-        print("Verify witness txs are skipped for mining before the fork")
+        print("------------------------------------------------------------------------------------------------------Verify witness txs are skipped for mining before the fork")
         self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V0][0], True) #block 424
         self.skip_mine(self.nodes[2], wit_ids[NODE_2][WIT_V1][0], True) #block 425
         self.skip_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][0], True) #block 426
         self.skip_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][0], True) #block 427
+        # Phore: since witness won't be enabled until the fork, we don't care
 
         # TODO: An old node would see these txs without witnesses and be able to mine them
 
@@ -202,13 +195,11 @@ class SegWitTest(BitcoinTestFramework):
         self.fail_accept(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][1], False)
         self.fail_accept(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][1], False)
 
-        print("Verify unsigned p2sh witness txs with a redeem script in versionbits-settings blocks are valid before the fork")
-        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V0][1], False, addlength(witness_script(0, self.pubkey[2]))) #block 430
-        self.success_mine(self.nodes[2], p2sh_ids[NODE_2][WIT_V1][1], False, addlength(witness_script(1, self.pubkey[2]))) #block 431
-
         print("Verify previous witness txs skipped for mining can now be mined")
         assert_equal(len(self.nodes[2].getrawmempool()), 4)
         block = self.nodes[2].setgenerate(True, 1) #block 432 (first block with new rules; 432 = 144 * 3)
+        for node in self.nodes:
+            node.spork("SPORK_17_SEGWIT_ACTIVATION", int(time.time()))
         sync_blocks(self.nodes)
         assert_equal(len(self.nodes[2].getrawmempool()), 0)
         segwit_tx_list = self.nodes[2].getblock(block[0])["tx"]

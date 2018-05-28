@@ -257,7 +257,7 @@ def initialize_chain(test_dir, num_nodes):
             for peer in range(4):
                 for j in range(25):
                     set_node_times(rpcs, block_time)
-                    rpcs[peer].generate(1)
+                    rpcs[peer].setgenerate(True, 1)
                     block_time += 10*60
                 # Must sync before next peer starts generating blocks
                 sync_blocks(rpcs)
@@ -313,7 +313,7 @@ def start_node(i, dirname, extra_args=None, rpchost=None, timewait=None, binary=
     datadir = os.path.join(dirname, "node"+str(i))
     if binary is None:
         binary = os.getenv("PHORED", "phored")
-    args = [ binary, "-datadir="+datadir, "-server", "-keypool=1", "-discover=0", "-rest", "-mocktime="+str(get_mocktime()), "-regtest"]
+    args = [ binary, "-datadir="+datadir, "-server", "-keypool=1", "-discover=0", "-rest", "-mocktime="+str(get_mocktime()), "-regtest", "-sporkkey=923EhWh2bJHynX6d4Tqt2Q75bhTDCT1b4kff3qzDKDZHZ6pkQs7", "-printtoconsole"]
     if extra_args is not None: args.extend(extra_args)
     phored_processes[i] = subprocess.Popen(args)
     if os.getenv("PYTHON_DEBUG", ""):
@@ -575,7 +575,7 @@ def satoshi_round(amount):
 # Helper to create at least "count" utxos
 # Pass in a fee that is sufficient for relay and mining new transactions.
 def create_confirmed_utxos(fee, node, count):
-    node.generate(int(0.5*count)+101)
+    node.setgenerate(True, int(0.5*count)+101)
     utxos = node.listunspent()
     iterations = count - len(utxos)
     addr1 = node.getnewaddress()
@@ -595,7 +595,7 @@ def create_confirmed_utxos(fee, node, count):
         txid = node.sendrawtransaction(signed_tx)
 
     while (node.getmempoolinfo()['size'] > 0):
-        node.generate(1)
+        node.setgenerate(True, 1)
 
     utxos = node.listunspent()
     assert(len(utxos) >= count)
