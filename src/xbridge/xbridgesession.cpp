@@ -18,7 +18,6 @@
 #include "bitcoinrpcconnector.h"
 #include "xbitcointransaction.h"
 #include "xbitcoinaddress.h"
-#include "xbitcoinsecret.h"
 #include "script/script.h"
 #include "base58.h"
 #include "activeservicenode.h"
@@ -1327,14 +1326,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         {
             WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
             return true;
-        }
-
-        conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
-
-        if(xtx->xPubKey.size() != 33)
-        {
-            ERR() << "bad pubkey size " << __FUNCTION__;
-            return false;
         }
 
         // send blocknet tx with hash of X

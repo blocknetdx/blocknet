@@ -5,6 +5,7 @@
 #define XBRIDGEWALLETCONNECTOR_H
 
 #include "xbridgewallet.h"
+#include "uint256.h"
 
 #include <vector>
 #include <string>
@@ -51,8 +52,13 @@ public:
 
 public:
     // reimplement for currency
-    virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
+    virtual std::string fromXAddr(const unsigned char * xaddr) const = 0;
     virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
+
+    virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const
+    {
+        return fromXAddr(&xaddr[0]);
+    }
 
 public:
     // wallet RPC
@@ -65,10 +71,15 @@ public:
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
-    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const = 0;
+    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const = 0;
 
+    // if lock returns false if already locked
+    // if unlock always return true
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
-                             const bool lock = true) const = 0;
+                           const bool lock = true);
+
+    // remove locked coins (lockedCoins) from array
+    void removeLocked(std::vector<wallet::UtxoEntry> & inputs) const;
 
     virtual bool getTxOut(wallet::UtxoEntry & entry) = 0;
 

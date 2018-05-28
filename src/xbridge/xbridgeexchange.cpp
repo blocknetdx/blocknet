@@ -162,15 +162,15 @@ bool Exchange::Impl::initKeyPair()
         return false;
     }
 
-    ::CBitcoinSecret vchSecret;
+    CBitcoinSecret vchSecret;
     if (!vchSecret.SetString(secret))
     {
         ERR() << "invalid service node key " << __FUNCTION__;
         return false;
     }
 
-    ::CKey    key    = vchSecret.GetKey();
-    ::CPubKey pubkey = key.GetPubKey();
+    CKey    key    = vchSecret.GetKey();
+    CPubKey pubkey = key.GetPubKey();
     if (!pubkey.IsCompressed())
     {
         pubkey.Compress();
