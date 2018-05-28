@@ -90,7 +90,7 @@ UniValue getnewaddress(const UniValue& params, bool fHelp)
             "so payments received with the address will be credited to 'account'.\n"
             "\nArguments:\n"
             "1. \"account\"        (string, optional) The account name for the address to be linked to. if not provided, the default account \"\" is used. It can also be set to the empty string \"\" to represent the default account. The account does not need to exist, it will be created if there is no account by the given name.\n"
-            "2. \"address_type\"   (string, optional) The address type to use. Options are \"legacy\", \"p2sh\", and \"bech32\". Default is set by -addresstype.\n"
+            "2. \"address_type\"   (string, optional) The address type to use. Options are \"legacy\", \"p2sh-segwit\", and \"bech32\". Default is set by -addresstype.\n"
             "\nResult:\n"
             "\"phoreaddress\"    (string) The new phore address\n"
             "\nExamples:\n" +
@@ -1078,7 +1078,7 @@ UniValue addwitnessaddress(const UniValue& params, bool fHelp)
         throw runtime_error(msg);
     }
 
-    if (!IsSporkActive(SPORK_17_SEGWIT_ACTIVATION)) {
+    if (!IsSporkActive(SPORK_17_SEGWIT_ACTIVATION) && !GetBoolArg("-walletprematurewitness", false)) {
         throw JSONRPCError(RPC_WALLET_ERROR, "Segregated witness not enabled on network");
     }
 

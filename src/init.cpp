@@ -1726,7 +1726,7 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
             return InitError(strprintf(_("Unknown address type '%s'"), GetArg("-addresstype", "")));
         }
 
-        g_change_type = ParseOutputType(GetArg("-changetype", ""), g_address_type);
+        g_change_type = ParseOutputType(GetArg("-changetype", ""));
         if (g_change_type == OUTPUT_TYPE_NONE) {
             return InitError(strprintf(_("Unknown change type '%s'"), GetArg("-changetype", "")));
         }
