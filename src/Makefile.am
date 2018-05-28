@@ -407,11 +407,11 @@ libxbridge_xbridge_a_SOURCES = \
 libxrouter_xrouter_a_CPPFLAGS =  $(BITCOIN_INCLUDES)
 libxrouter_xrouter_a_SOURCES = \
   xrouter/xrouterapp.cpp \
+  xrouter/xrouterapp.h \
+  xrouter/version.h \
+  xrouter/xrouterdef.h \
   xrouter/rpcxrouter.cpp \
   xrouter/xrouterpacket.cpp \
-  xrouter/version.h \
-  xrouter/xrouterapp.h \
-  xrouter/util/xroutererror.h \
   xrouter/xrouterpacket.h \
   xrouter/xrouterconnector.h \
   xrouter/xrouterconnector.cpp \
@@ -419,6 +419,7 @@ libxrouter_xrouter_a_SOURCES = \
   xrouter/xrouterconnectorbtc.cpp \
   xrouter/xrouterconnectoreth.h \
   xrouter/xrouterconnectoreth.cpp \
+  xrouter/util/xroutererror.h \
   $(BITCOIN_CORE_H)
 
 
