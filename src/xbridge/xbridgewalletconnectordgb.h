@@ -2,6 +2,7 @@
 #define XBRIDGEWALLETCONNECTORDGB_H
 
 #include "xbridgewalletconnectorbtc.h"
+#include "xbridgecryptoproviderbtc.h"
 
 //*****************************************************************************
 //*****************************************************************************
@@ -10,7 +11,7 @@ namespace xbridge
 
 //******************************************************************************
 //******************************************************************************
-class DgbWalletConnector : public BtcWalletConnector
+class DgbWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
 {
 public:
     DgbWalletConnector();
