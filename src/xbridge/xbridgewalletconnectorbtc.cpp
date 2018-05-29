@@ -292,6 +292,58 @@ bool getaddressesbyaccount(const std::string & rpcuser, const std::string & rpcp
 
 //*****************************************************************************
 //*****************************************************************************
+bool validateaddress(const std::string & rpcuser, const std::string & rpcpasswd,
+                     const std::string & rpcip, const std::string & rpcport,
+                     const std::string & address,
+                     bool & isValid, bool & isMine, bool & isWatchOnly, bool & isScript)
+{
+    try
+    {
+        // LOG() << "rpc call <validateaddress>";
+
+        Array params;
+        params.push_back(address);
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "validateaddress", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an array " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Object o = result.get_obj();
+        isValid     = find_value(o, "isvalid").get_bool();
+        isMine      = find_value(o, "ismine").get_bool();
+        isWatchOnly = find_value(o, "iswatchonly").get_bool();
+        isScript    = find_value(o, "isscript").get_bool();
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "validateaddress exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool listUnspent(const std::string & rpcuser,
                  const std::string & rpcpasswd,
                  const std::string & rpcip,
@@ -1315,9 +1367,35 @@ bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::
             continue;
         }
 
-        if (!rpc.validate)
-        entries.emplace_back(account.empty() ? "_none" : account, addrs);
+        std::vector<std::string> copy;
+        for (const std::string & a : addrs)
+        {
+            bool isValid     = false;
+            bool isMine      = false;
+            bool isWatchOnly = false;
+            bool isScript    = false;
+            if (!rpc::validateaddress(m_user, m_passwd, m_ip, m_port, a,
+                                      isValid, isMine, isWatchOnly, isScript))
+            {
+                continue;
+            }
+
+            if (!isValid || !isMine || isWatchOnly || isScript)
+            {
+                continue;
+            }
+
+            copy.emplace_back(a);
+        }
+
+        if (copy.empty())
+        {
+            continue;
+        }
+
+        entries.emplace_back(account.empty() ? "_none" : account, copy);
         // LOG() << acc << " - " << boost::algorithm::join(addrs, ",");
+
     }
 
     return true;
@@ -1342,7 +1420,6 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
 
     return true;
 }
-
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
@@ -1568,7 +1645,7 @@ std::string BtcWalletConnector<CryptoProvider>::scriptIdToString(const std::vect
 // output count always 1
 //******************************************************************************
 template <class CryptoProvider>
-double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const
+double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount)
 {
     uint64_t fee = (148*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1583,7 +1660,7 @@ double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, 
 // input count always 1
 //******************************************************************************
 template <class CryptoProvider>
-double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const
+double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount)
 {
     uint64_t fee = (180*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
