@@ -42,21 +42,6 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
-struct WalletInfo
-{
-    double   relayFee;
-    uint32_t blocks;
-
-    WalletInfo()
-        : relayFee(0)
-        , blocks(0)
-    {
-
-    }
-};
-
-//*****************************************************************************
-//*****************************************************************************
 bool getinfo(const std::string & rpcuser, const std::string & rpcpasswd,
              const std::string & rpcip, const std::string & rpcport,
              WalletInfo & info)
@@ -142,6 +127,52 @@ bool getnetworkinfo(const std::string & rpcuser, const std::string & rpcpasswd,
         Object o = result.get_obj();
 
         info.relayFee = find_value(o, "relayfee").get_real();
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getinfo exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpasswd,
+                       const std::string & rpcip, const std::string & rpcport,
+                       WalletInfo & info)
+{
+    try
+    {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "getblockchaininfo", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Object o = result.get_obj();
+
+        info.blocks = find_value(o, "blocks").get_real();
     }
     catch (std::exception & e)
     {
@@ -1292,6 +1323,26 @@ bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
+{
+    if (!rpc::getblockchaininfo(m_user, m_passwd, m_ip, m_port, info) ||
+        !rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
+    {
+        LOG() << "getblockchaininfo & getnetworkinfo failed, trying call getinfo " << __FUNCTION__;
+
+        if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
+        {
+            WARN() << "all calls of getblockchaininfo & getnetworkinfo and getinfo failed " << __FUNCTION__;
+            return false;
+        }
+    }
+
+    return true;
+}
+
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
@@ -1400,10 +1451,11 @@ bool BtcWalletConnector<CryptoProvider>::sendRawTransaction(const std::string & 
     if (!rpc::sendRawTransaction(m_user, m_passwd, m_ip, m_port,
                                  rawtx, txid, errorCode, message))
     {
-        LOG() << "rpc::createRawTransaction failed, error code: "
+        LOG() << "rpc::sendRawTransaction failed, error code: <"
               << errorCode
-              << " message: "
+              << "> message: '"
               << message
+              << "' "
               << __FUNCTION__;
         return false;
     }
@@ -1516,7 +1568,7 @@ std::string BtcWalletConnector<CryptoProvider>::scriptIdToString(const std::vect
 // output count always 1
 //******************************************************************************
 template <class CryptoProvider>
-double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (148*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1531,7 +1583,7 @@ double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, 
 // input count always 1
 //******************************************************************************
 template <class CryptoProvider>
-double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (180*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1610,10 +1662,15 @@ template <class CryptoProvider>
 uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
 {
     rpc::WalletInfo info;
-    if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
+    if (!rpc::getblockchaininfo(m_user, m_passwd, m_ip, m_port, info))
     {
-        LOG() << "blockchain info not received " << __FUNCTION__;
-        return 0;
+        LOG() << "getblockchaininfo failed, trying call getinfo " << __FUNCTION__;
+
+        if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
+        {
+            WARN() << "both calls of getblockchaininfo and getinfo failed " << __FUNCTION__;
+            return 0;
+        }
     }
 
     if (info.blocks == 0)

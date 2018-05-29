@@ -303,6 +303,10 @@ void XBridgeTransactionsModel::onTimer()
                 boost::posix_time::microsec_clock::universal_time() -
                 m_transactions[i]->txtime;
 
+        boost::posix_time::time_duration tc =
+                boost::posix_time::microsec_clock::universal_time() -
+                m_transactions[i]->created;
+
         if (m_transactions[i]->state == xbridge::TransactionDescr::trNew &&
                 td.total_seconds() > xbridge::Transaction::pendingTTL)
         {
@@ -325,6 +329,14 @@ void XBridgeTransactionsModel::onTimer()
         else if ((m_transactions[i]->state == xbridge::TransactionDescr::trExpired ||
                   m_transactions[i]->state == xbridge::TransactionDescr::trOffline) &&
                  td.total_seconds() > xbridge::Transaction::TTL)
+        {
+            emit beginRemoveRows(QModelIndex(), i, i);
+            m_transactions.erase(m_transactions.begin()+i);
+            emit endRemoveRows();
+            --i;
+        }
+        else if (m_transactions[i]->state == xbridge::TransactionDescr::trPending &&
+                 tc.total_seconds() > xbridge::Transaction::deadlineTTL)
         {
             emit beginRemoveRows(QModelIndex(), i, i);
             m_transactions.erase(m_transactions.begin()+i);

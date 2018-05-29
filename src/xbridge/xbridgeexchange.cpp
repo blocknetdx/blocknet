@@ -114,11 +114,11 @@ bool Exchange::init()
         WalletParam & wp = m_p->m_wallets[*i];
         wp.currency   = *i;
         wp.title      = label;
-        wp.m_ip         = ip;
-        wp.m_port       = port;
-        wp.m_user       = user;
-        wp.m_passwd     = passwd;
-        wp.dustAmount  = minAmount;
+        wp.m_ip       = ip;
+        wp.m_port     = port;
+        wp.m_user     = user;
+        wp.m_passwd   = passwd;
+        wp.dustAmount = minAmount;
         wp.txVersion  = txVersion;
 
         LOG() << "read wallet " << *i << " \"" << label << "\" address <" << address << ">";

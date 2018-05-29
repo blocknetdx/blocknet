@@ -54,11 +54,11 @@ public:
         // transaction ttl in seconds, 60 sec * 60 min
         TTL = 60 * 60,
 
-        // order deadline ttl in seconds, 60 sec * 60 min * 24h
-        deadlineTTL = 60 * 60 * 24,
+        // order deadline ttl in seconds, 60 sec * 60 min * 24 hours * 7 days
+        deadlineTTL = 60 * 60 * 24 * 7,
 
-        // number of blocks ttl
-        blocksTTL = 1440
+        // number of blocks ttl, 1440 blocks per day * 7 days
+        blocksTTL = 1440 * 7
     };
 
 public:
