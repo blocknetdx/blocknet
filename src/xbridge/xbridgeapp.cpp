@@ -22,8 +22,10 @@
 #include "xbridgewalletconnectorbtc.h"
 #include "xbridgewalletconnectorbcc.h"
 #include "xbridgewalletconnectorsys.h"
+#include "xbridgewalletconnectordgb.h"
 
 #include <assert.h>
+#include <numeric>
 
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
@@ -325,6 +327,11 @@ bool App::Impl::start()
                     conn.reset(new SysWalletConnector);
                     *conn = wp;
                 }
+                else if (wp.method == "DGB")
+                {
+                    conn.reset(new DgbWalletConnector);
+                    *conn = wp;
+                }
 //                else if (wp.method == "RPC")
 //                {
 //                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
@@ -491,9 +498,17 @@ SessionPtr App::Impl::getSession()
     SessionPtr ptr;
 
     boost::mutex::scoped_lock l(m_sessionsLock);
+
     ptr = m_sessions.front();
     m_sessions.pop();
     m_sessions.push(ptr);
+
+    if(ptr->isWorking())
+    {
+        ptr = SessionPtr(new Session());
+        m_sessions.push(ptr);
+        m_sessionAddressMap[ptr->sessionAddr()] = ptr;
+    }
 
     return ptr;
 }
@@ -543,8 +558,8 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
         return;
     }
 
-    LOG() << "received message to " << util::base64_encode(std::string((char *)&id[0], 20)).c_str()
-             << " command " << packet->command();
+    LOG() << "received message to " << HexStr(id)
+          << " command " << packet->command();
 
     // check direct session address
     SessionPtr ptr = m_p->getSession(id);
@@ -552,7 +567,6 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     {
         ptr->processPacket(packet);
     }
-
     else
     {
         {
@@ -560,6 +574,13 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
             boost::mutex::scoped_lock l(m_p->m_connectorsLock);
             if (m_p->m_connectorAddressMap.count(id))
             {
+                WalletConnectorPtr conn = m_p->m_connectorAddressMap.at(id);
+
+                LOG() << "handling message with connector currency: "
+                      << conn->currency
+                      << " and address: "
+                      << conn->fromXAddr(id);
+
                 ptr = m_p->getSession();
             }
         }
@@ -894,28 +915,30 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    // check amount
-    std::vector<wallet::UtxoEntry> outputs;
-    connFrom->getUnspent(outputs);
+    if(pwalletMain->GetBalance() < connTo->serviceNodeFee)
+    {
+        return xbridge::Error::INSIFFICIENT_FUNDS_DX;
+    }
 
     uint64_t utxoAmount = 0;
     uint64_t fee1       = 0;
-    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
+    uint64_t fee2       = 0;
+
+    std::vector<wallet::UtxoEntry> outputs;
+    connFrom->getUnspent(outputs);
 
     // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
-    selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2);
+    if (!selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2))
+    {
+        WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
+        return xbridge::Error::INSIFFICIENT_FUNDS;
+    }
 
     LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
     LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
     LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
           << " required amount + fees: " << (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN);
-
-    if (utxoAmount < (fromAmount + fee1 + fee2))
-    {
-        WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
-        return xbridge::Error::INSIFFICIENT_FUNDS;
-    }
 
     // sign used coins
     for (wallet::UtxoEntry & entry : outputsForUse)
@@ -980,6 +1003,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->toAmount     = toAmount;
     ptr->usedCoins    = outputsForUse;
     ptr->blockHash    = blockHash;
+    ptr->role         = 'A';
 
     // m key
     connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
@@ -1135,22 +1159,25 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         return xbridge::Error::DUST;
     }
 
-    // check amount
+    uint64_t utxoAmount = 0;
+    uint64_t fee1       = 0;
+    uint64_t fee2       = 0;
+
     std::vector<wallet::UtxoEntry> outputs;
     connFrom->getUnspent(outputs);
 
-    uint64_t utxoAmount = 0;
-    uint64_t fee1       = 0;
-    uint64_t fee2       = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
-
+    // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
-    selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2);
-
-    if (utxoAmount < (ptr->fromAmount + fee1 + fee2))
+    if (!selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
     {
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
-        return xbridge::INSIFFICIENT_FUNDS;
+        return xbridge::Error::INSIFFICIENT_FUNDS;
     }
+
+    LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
+    LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
+    LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
+          << " required amount + fees: " << (static_cast<double>(ptr->fromAmount + fee1 + fee2) / TransactionDescr::COIN);
 
     // sign used coins
     for (wallet::UtxoEntry & entry : outputsForUse)
@@ -1184,9 +1211,10 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         }
     }
 
-    ptr->from = connFrom->toXAddr(from);
-    ptr->to   = connTo->toXAddr(to);
+    ptr->from      = connFrom->toXAddr(from);
+    ptr->to        = connTo->toXAddr(to);
     ptr->usedCoins = outputsForUse;
+    ptr->role      = 'B';
 
     // m key
     connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
@@ -1413,58 +1441,226 @@ Error App::checkAmount(const string & currency, const uint64_t & amount, const s
     return xbridge::SUCCESS;
 }
 
+template <typename T>
+T random_element(T begin, T end)
+{
+    const unsigned long n = std::distance(begin, end);
+    const unsigned long divisor = (RAND_MAX + 1) / n;
+
+    unsigned long k;
+    do { k = std::rand() / divisor; } while (k >= n);
+
+    std::advance(begin, k);
+    return begin;
+}
+
+
+
 //******************************************************************************
 //******************************************************************************
-void App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
-                      const WalletConnectorPtr &connFrom, const uint64_t &fromAmount,
-                      std::vector<wallet::UtxoEntry> &outputsForUse, uint64_t &utxoAmount, uint64_t &fee1,
-                      uint64_t &fee2, bool fillInputs) const {
-    auto processUtxos = [&outputsForUse, &utxoAmount, &fee1, &fee2](const std::string &addr,
-                                                                    const std::vector<wallet::UtxoEntry> &outputs,
-                                                                    std::vector<wallet::UtxoEntry> &unusedOutputs,
-                                                                    const WalletConnectorPtr &connFrom,
-                                                                    const uint64_t &fromAmount, bool fillInputs)
+bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
+                      const WalletConnectorPtr &connFrom, const uint64_t &requiredAmount,
+                      std::vector<wallet::UtxoEntry> &outputsForUse, uint64_t &utxoAmount,
+                      uint64_t &fee1, uint64_t &fee2) const
+{
+
+    auto getUtxos = [&connFrom, &requiredAmount, &outputsForUse, &utxoAmount, &fee1, &fee2](const std::vector<wallet::UtxoEntry> & o) -> bool
     {
-        for (const wallet::UtxoEntry & entry : outputs)
+        fee2 = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
+
+        if(o.empty())
         {
-            if (fillInputs && entry.address != addr) { // filter utxo's by user specified from address
-                unusedOutputs.push_back(entry);
-                continue;
-            }
+            LOG() << "outputs list are empty " << __FUNCTION__;
+            return false;
+        }
 
-            utxoAmount += (entry.amount * TransactionDescr::COIN);
-            outputsForUse.push_back(entry);
+        //sort entries from smaller to larger
+        std::vector<wallet::UtxoEntry> outputsForSelection = o;
+        std::sort(outputsForSelection.begin(), outputsForSelection.end(),
+                  [](const wallet::UtxoEntry a, const wallet::UtxoEntry b) {
+                      return (a.amount) < (b.amount);
+                  });
 
-            fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
+        //one output that larger than target value
+        std::vector<wallet::UtxoEntry> greaterThanTargetOutput;
 
-            LOG() << "using utxo item, id: <" << entry.txId << "> amount: " << entry.amount << " vout: " << entry.vout;
+        //try to find best matching one output or one larger output
+        {
+            fee1 = connFrom->minTxFee1(1, 3) * TransactionDescr::COIN;
+            uint64_t fullAmount = requiredAmount + fee1 + fee2;
 
-            uint64_t fullAmount = fromAmount + fee1 + fee2;
-            if (utxoAmount > fullAmount)
+            for(const wallet::UtxoEntry & entry : outputsForSelection)
             {
-                // check change (rest)
-                if (connFrom->isDustAmount(static_cast<double>(utxoAmount - fullAmount) / TransactionDescr::COIN))
+                uint64_t utxosAmount = (entry.amount * TransactionDescr::COIN);
+
+                if(utxosAmount == fullAmount)
                 {
-                    // change is dust, need more inputs
-                    continue;
+                    //we are lucky
+                    outputsForUse.emplace_back(entry);
+                    return true;
                 }
 
-                break;
+                if (utxosAmount > fullAmount &&
+                    !connFrom->isDustAmount(static_cast<double>(utxosAmount - fullAmount) / TransactionDescr::COIN))
+                {
+                    greaterThanTargetOutput.emplace_back(entry);
+                    break;
+                }
             }
         }
+
+
+        //try to find sum of smaller outputs that match target
+        std::vector<wallet::UtxoEntry> outputsSmallerThanTarget;
+        std::copy_if(outputsForSelection.begin(), outputsForSelection.end(),
+                     std::inserter(outputsSmallerThanTarget, outputsSmallerThanTarget.end()),
+                     [&requiredAmount](const wallet::UtxoEntry & entry)
+        {
+            return requiredAmount > entry.amount * TransactionDescr::COIN;
+        });
+
+        bool sumOfSmallerOutputsLargerThanTarget = false;
+        bool sumOfSmallerOutputsEqualTarget = false;
+        {
+            fee1 = connFrom->minTxFee1(outputsSmallerThanTarget.size(), 3) * TransactionDescr::COIN;
+
+            uint64_t fullAmount = requiredAmount + fee1 + fee2;
+
+            uint64_t utxosAmount = std::accumulate(outputsSmallerThanTarget.begin(), outputsSmallerThanTarget.end(), 0,
+                                                  [](uint64_t accumulator, const wallet::UtxoEntry & entry)
+            {
+                return accumulator += (entry.amount * TransactionDescr::COIN);
+            });
+
+            if (utxosAmount == fullAmount)
+            {
+                sumOfSmallerOutputsEqualTarget = true;
+            }
+
+            if (utxosAmount > fullAmount &&
+                !connFrom->isDustAmount(static_cast<double>(utxosAmount - fullAmount) / TransactionDescr::COIN))
+            {
+                sumOfSmallerOutputsLargerThanTarget = true;
+            }
+        }
+
+        //best combination of smaller utxo's with lowest fee
+        std::vector<wallet::UtxoEntry> bestSmallerOutputsCombination;
+
+        //sum of all smaller outputs is lower than target, so return greater output
+        if(!sumOfSmallerOutputsLargerThanTarget)
+        {
+            if(greaterThanTargetOutput.empty())
+            {
+                LOG() << "can't make any list of utxo's " << __FUNCTION__;
+                return false;
+            }
+
+            outputsForUse = greaterThanTargetOutput;
+            return true;
+        }
+        //sum of all smaller outputs is equal target, so best combination is all smaller outputs
+        else if(sumOfSmallerOutputsEqualTarget)
+        {
+            bestSmallerOutputsCombination = outputsSmallerThanTarget;
+        }
+        //try to combine small outputs to target sum
+        else
+        {
+            uint64_t smallestFee = std::numeric_limits<uint64_t>::max();
+            const uint32_t iterations = 1000;
+            for(uint32_t i = 0; i < iterations; ++i)
+            {
+                std::vector<wallet::UtxoEntry> uniqueOutputsSmallerThanTarget(outputsSmallerThanTarget);
+                std::vector<wallet::UtxoEntry> outputsForUse;
+
+                uint64_t utxosAmount = 0;
+
+                while (!uniqueOutputsSmallerThanTarget.empty())
+                {
+                    const auto it = random_element(uniqueOutputsSmallerThanTarget.begin(),
+                                                   uniqueOutputsSmallerThanTarget.end());
+                    wallet::UtxoEntry entry = *it;
+
+                    uniqueOutputsSmallerThanTarget.erase(it);
+
+                    outputsForUse.emplace_back(entry);
+
+                    fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
+
+                    uint64_t fullAmount = requiredAmount + fee1 + fee2;
+
+                    utxosAmount += (entry.amount * TransactionDescr::COIN);
+
+                    if (utxosAmount == fullAmount && fee1 < smallestFee)
+                    {
+                        smallestFee = fee1;
+                        bestSmallerOutputsCombination = outputsForUse;
+                        break;
+                    }
+
+                    if (utxosAmount > fullAmount && fee1 < smallestFee &&
+                        !connFrom->isDustAmount(static_cast<double>(utxosAmount - fullAmount) / TransactionDescr::COIN))
+                    {
+                        smallestFee = fee1;
+                        bestSmallerOutputsCombination = outputsForUse;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if(greaterThanTargetOutput.empty() && bestSmallerOutputsCombination.empty())
+        {
+            LOG() << "all strategy are fail to create utxo's list " << __FUNCTION__;
+            return false;
+        }
+        else if(greaterThanTargetOutput.empty())
+            outputsForUse = bestSmallerOutputsCombination;
+        else if(bestSmallerOutputsCombination.empty())
+            outputsForUse = greaterThanTargetOutput;
+        else
+        {
+            uint64_t times = 2; //differences in times
+            uint64_t greaterThanTargetOutputAmount = 0;
+            uint64_t bestSmallerOutputsCombinationAmount = 0;
+
+            for(const wallet::UtxoEntry & entry : greaterThanTargetOutput)
+                greaterThanTargetOutputAmount += (entry.amount * TransactionDescr::COIN);
+
+            for(const wallet::UtxoEntry & entry : bestSmallerOutputsCombination)
+                bestSmallerOutputsCombinationAmount += (entry.amount * TransactionDescr::COIN);
+
+            //if one larger output bigger then sum of small outputs more then twice - better to use small outputs
+            if(greaterThanTargetOutputAmount > bestSmallerOutputsCombinationAmount * times)
+            {
+                utxoAmount = bestSmallerOutputsCombinationAmount;
+                outputsForUse = bestSmallerOutputsCombination;
+            }
+            else
+            {
+                utxoAmount = greaterThanTargetOutputAmount;
+                outputsForUse = greaterThanTargetOutput;
+            }
+        }
+
+        fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
+
+        return true;
     };
-    std::vector<wallet::UtxoEntry> unusedOutputs;
-    processUtxos(addr, outputs, unusedOutputs, connFrom, fromAmount, fillInputs);
 
-    if (!fillInputs)
-        return;
+    std::vector<wallet::UtxoEntry> outputsFromRequiredAddress;
+    std::copy_if(outputs.begin(), outputs.end(), std::inserter(outputsFromRequiredAddress, outputsFromRequiredAddress.end()),
+                 [&addr](const wallet::UtxoEntry & entry){
+        return entry.address == addr;
+    });
 
-    // Fill up with available inputs from other addresses
-    uint64_t fullAmount = fromAmount + fee1 + fee2;
-    if (utxoAmount < fullAmount) {
-        std::vector<wallet::UtxoEntry> uo;
-        processUtxos(addr, unusedOutputs, uo, connFrom, fromAmount, false);
-    }
+    //try to fill outputs only from one address
+    if(getUtxos(outputsFromRequiredAddress))
+        return true;
+
+    //try to fill outputs from any address
+    return getUtxos(outputs);
 }
 
 //******************************************************************************

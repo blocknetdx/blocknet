@@ -17,6 +17,24 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
+namespace rpc
+{
+struct WalletInfo
+{
+    double   relayFee;
+    uint32_t blocks;
+
+    WalletInfo()
+        : relayFee(0)
+        , blocks(0)
+    {
+
+    }
+};
+} //namespace rpc
+
+//*****************************************************************************
+//*****************************************************************************
 class WalletConnector : public WalletParam
 {
 public:
@@ -45,7 +63,9 @@ public:
 
     double getWalletBalance(const std::string &addr = "") const;
 
-    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const = 0;
+    virtual bool getInfo(rpc::WalletInfo & info) const = 0;
+
+    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const = 0;
 
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
                              const bool lock = true) const = 0;
@@ -72,8 +92,8 @@ public:
     virtual std::vector<unsigned char> getScriptId(const std::vector<unsigned char> & script) = 0;
     virtual std::string scriptIdToString(const std::vector<unsigned char> & id) const = 0;
 
-    virtual double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) = 0;
-    virtual double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) = 0;
+    virtual double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const = 0;
+    virtual double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const = 0;
 
     virtual bool checkTransaction(const std::string & depositTxId,
                                   const std::string & /*destination*/,

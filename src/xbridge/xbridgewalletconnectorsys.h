@@ -19,7 +19,7 @@ public:
     SysWalletConnector();
 
 public:
-    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs) const;
+    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const;
 
 };
 
