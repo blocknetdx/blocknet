@@ -18,6 +18,7 @@
 #include "xbridge/xbridgewallet.h"
 #include "xbridge/xbridgewalletconnector.h"
 
+
 #include "xrouterconnector.h"
 #include "xrouterconnectorbtc.h"
 #include "xrouterconnectoreth.h"
@@ -157,13 +158,15 @@ bool App::init(int argc, char *argv[])
 {
     // init xbridge settings
     Settings & s = settings();
-    {
-        std::string path(GetDataDir(false).string());
-        path += "/xbridge.conf";
-        s.read(path.c_str());
-        s.parseCmdLine(argc, argv);
-    }
+    
+    std::string path(GetDataDir(false).string());
+    std::string xbridgepath = path + "/xbridge.conf";
+    s.read(xbridgepath.c_str());
+    s.parseCmdLine(argc, argv);
 
+    std::string xrouterpath = path + "/xrouter.conf";
+    this->xrouter_settings.read(xrouterpath.c_str());
+    
     return true;
 }
 

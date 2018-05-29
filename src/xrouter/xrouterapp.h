@@ -6,6 +6,7 @@
 
 #include "xrouterpacket.h"
 #include "util/xroutererror.h"
+#include "xroutersettings.h"
 #include "validationstate.h"
 #include "xrouterdef.h"
 #include "net.h"
@@ -43,6 +44,8 @@ private:
     boost::container::map<std::string, std::vector<std::string> > queries;
     int req_cnt;
     
+    XRouterSettings xrouter_settings;
+    
 public:
     /**
      * @brief instance - the classical implementation of singletone
@@ -55,6 +58,8 @@ public:
      * @return enabled by default
      */
     static bool isEnabled();
+    
+    XRouterSettings& xrouterSettings() { return xrouter_settings; }
 
     /**
      * @brief start - start xrouter
