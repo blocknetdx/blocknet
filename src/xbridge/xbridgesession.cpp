@@ -1661,13 +1661,13 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // depositTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs
         for (const wallet::UtxoEntry & entry : usedInTx)
         {
-            inputs.push_back(std::make_pair(entry.txId, entry.vout));
+            inputs.emplace_back(entry.txId, entry.vout, entry.amount);
         }
 
         // outputs
@@ -1706,11 +1706,11 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // refundTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(xtx->binTxId, 0));
+        inputs.emplace_back(xtx->binTxId, 0, outAmount+fee2);
 
         // outputs
         {
@@ -1803,7 +1803,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // destination address
     uint32_t offset = 72;
-    std::vector<unsigned char> destAddress(packet->data()+offset, packet->data()+offset+20);
+    // std::vector<unsigned char> destAddress(packet->data()+offset, packet->data()+offset+20);
     offset += 20;
 
     uint256 datatxid(packet->data()+offset);
@@ -1880,23 +1880,27 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         return true;
     }
 
-    bool isGood = false;
-    if (!connTo->checkTransaction(binATxId, std::string(), 0, isGood))
-    {
-        // move packet to pending
-        xapp.processLater(txid, packet);
-        return true;
-    }
-    else if (!isGood)
-    {
-        LOG() << "check A deposit tx error for " << txid.GetHex() << " " << __FUNCTION__;
-        sendCancelTransaction(xtx, crBadADepositTx);
-        return true;
-    }
-
-    LOG() << "deposit A tx confirmed " << txid.GetHex();
-
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
+    double checkAmount = outAmount;
+
+    // check A deposit tx
+    {
+        bool isGood = false;
+        if (!connTo->checkTransaction(binATxId, std::string(), checkAmount, isGood))
+        {
+            // move packet to pending
+            xapp.processLater(txid, packet);
+            return true;
+        }
+        else if (!isGood)
+        {
+            LOG() << "check A deposit tx error for " << txid.GetHex() << " " << __FUNCTION__;
+            sendCancelTransaction(xtx, crBadADepositTx);
+            return true;
+        }
+
+        LOG() << "deposit A tx confirmed " << txid.GetHex();
+    }
 
     double fee1      = 0;
     double fee2      = connFrom->minTxFee2(1, 1);

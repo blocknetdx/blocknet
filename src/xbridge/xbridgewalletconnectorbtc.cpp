@@ -1420,6 +1420,7 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
 
     return true;
 }
+
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
@@ -1645,7 +1646,7 @@ std::string BtcWalletConnector<CryptoProvider>::scriptIdToString(const std::vect
 // output count always 1
 //******************************************************************************
 template <class CryptoProvider>
-double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (148*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
@@ -1660,7 +1661,7 @@ double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, 
 // input count always 1
 //******************************************************************************
 template <class CryptoProvider>
-double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount)
+double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const
 {
     uint64_t fee = (180*inputCount + 34*outputCount + 10) * feePerByte;
     if (fee < minTxFee)
