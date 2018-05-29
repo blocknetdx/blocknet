@@ -791,6 +791,11 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
 {
     std::cerr << "Received xrouter packet\n";
 
+    // If Main.xrouter == 0, xrouter is turned offf on this snode
+    int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
+    if (!xrouter_on)
+        return;
+    
     XRouterPacketPtr packet(new XRouterPacket);
     if (!packet->copyFrom(message)) {
         std::clog << "incorrect packet received " << __FUNCTION__;
