@@ -191,15 +191,13 @@ void CBloomFilter::UpdateEmptyFull()
 
 std::string CBloomFilter::to_hex()
 {
-    std::string res = "";
-    for (int i = 0; i < vData.size(); i++) {
-        std::cout << vData.size() << " " << i << std::endl;
-        unsigned int code = (unsigned int)vData[i];
-        std::cout << vData.size() << " " << i << " " << code << std::endl;
-    }
-    return "";
+    std::string my_std_string(reinterpret_cast<const char*>(&vData[0]), vData.size());
+    return my_std_string;
 }
 
 void CBloomFilter::from_hex(std::string s)
 {
+    vData.clear();
+    for (int i = 0; i < s.length(); i++)
+        vData.push_back(s[i]);
 }
