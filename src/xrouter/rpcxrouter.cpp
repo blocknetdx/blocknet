@@ -377,19 +377,17 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
 Value xrGenerateBloomFilter(const Array & params, bool fHelp)
 {
     CBloomFilter f(10, 0.1, 5, 0);
-    vector<unsigned char> v;
-    v.push_back('p');
-    v.push_back('e');
-    v.push_back('z');
-    f.insert(v);
-    v.push_back('z');
-    v.push_back('u');
-    v.push_back('l');
-    f.insert(v);
-    v.push_back('3');
-    v.push_back('2');
-    v.push_back('4');
-    f.insert(v);
+    
+    if (fHelp) {
+        throw std::runtime_error("xrGenerateBloomFilter key1 key2 ...\nReturns bloom filter for given keys.");
+    }
+
+    for (int i = 0; i < params.size(); i++) {
+        std::string hash = params[i].get_str();
+        const uint256 key(hash.c_str());
+        f.insert(key);
+    }
+    
     return f.to_hex();
 }
 
