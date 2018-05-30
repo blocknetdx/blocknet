@@ -28,6 +28,8 @@ public:
 public:
     bool hasValidAddressPrefix(const std::string & addr) const;
 
+    std::string scriptIdToString(const std::vector<unsigned char> & id) const;
+
 public:
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,

@@ -816,6 +816,14 @@ bool BchWalletConnector::hasValidAddressPrefix(const std::string & /*addr*/) con
     return false;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+std::string BchWalletConnector::scriptIdToString(const std::vector<unsigned char> & id) const
+{
+    std::vector<uint8_t> data = PackAddrData(id, SCRIPT_TYPE);
+    return cashaddr::Encode(addrPrefix, data);
+}
+
 //******************************************************************************
 //******************************************************************************
 bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
