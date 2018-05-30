@@ -27,7 +27,7 @@ public:
 
 public:
     // reimplement for currency
-    std::string fromXAddr(const unsigned char * xaddr) const;
+    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
     std::vector<unsigned char> toXAddr(const std::string & addr) const;
 
 public:
@@ -52,6 +52,8 @@ public:
     bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature);
 
 public:
+    bool hasValidAddressPrefix(const std::string & addr) const;
+
     bool isDustAmount(const double & amount) const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);

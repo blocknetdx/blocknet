@@ -19,6 +19,15 @@ class BchWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
 public:
     BchWalletConnector();
 
+    bool init();
+
+public:
+    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
+    std::vector<unsigned char> toXAddr(const std::string & addr) const;
+
+public:
+    bool hasValidAddressPrefix(const std::string & addr) const;
+
 public:
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,

@@ -1307,6 +1307,12 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransactionPtr & txTo,
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::init()
 {
+    // convert prefixes
+    addrPrefix   = static_cast<char>(std::atoi(addrPrefix.data()));
+    scriptPrefix = static_cast<char>(std::atoi(scriptPrefix.data()));
+    secretPrefix = static_cast<char>(std::atoi(secretPrefix.data()));
+
+    // wallet info
     rpc::WalletInfo info;
     if (!rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
     {
@@ -1328,10 +1334,10 @@ bool BtcWalletConnector<CryptoProvider>::init()
 //*****************************************************************************
 //*****************************************************************************
 template <class CryptoProvider>
-std::string BtcWalletConnector<CryptoProvider>::fromXAddr(const unsigned char * xaddr) const
+std::string BtcWalletConnector<CryptoProvider>::fromXAddr(const std::vector<unsigned char> & xaddr) const
 {
     xbridge::XBitcoinAddress addr;
-    addr.Set(CKeyID(uint160(xaddr)), addrPrefix[0]);
+    addr.Set(CKeyID(uint160(&xaddr[0])), addrPrefix[0]);
     return addr.ToString();
 }
 
@@ -1443,7 +1449,9 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
             script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
             script[23] == 0x88 && script[24] == 0xac)
         {
-            entry.address = fromXAddr(&script[3]);
+            script.erase(script.begin(), script.begin()+3);
+            script.erase(script.end()-2, script.end());
+            entry.address = fromXAddr(script);
         }
         else
         {
@@ -1573,6 +1581,31 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
     }
 
     return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+
+/**
+ * \brief Checks if specified address has a valid prefix.
+ * \param addr Address to check
+ * \return returns true if address has a valid prefix, otherwise false.
+ *
+ * If the specified wallet address has a valid prefix the method returns true, otherwise false.
+ */
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::hasValidAddressPrefix(const std::string & addr) const
+{
+    std::vector<unsigned char> decoded;
+    if (!DecodeBase58Check(addr, decoded))
+    {
+        return false;
+    }
+
+    bool isP2PKH = memcmp(&addrPrefix[0],   &decoded[0], decoded.size()-sizeof(uint160)) == 0;
+    bool isP2SH  = memcmp(&scriptPrefix[0], &decoded[0], decoded.size()-sizeof(uint160)) == 0;
+
+    return isP2PKH || isP2SH;
 }
 
 //******************************************************************************

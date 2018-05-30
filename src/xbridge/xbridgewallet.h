@@ -65,9 +65,9 @@ public:
         , txWithTimeField(false)
         , isLockCoinsSupported(false)
     {
-        memset(addrPrefix,   0, sizeof(addrPrefix));
-        memset(scriptPrefix, 0, sizeof(scriptPrefix));
-        memset(secretPrefix, 0, sizeof(secretPrefix));
+        addrPrefix.resize(1, '\0');
+        scriptPrefix.resize(1, '\0');
+        secretPrefix.resize(1, '\0');
     }
 
     WalletParam & operator = (const WalletParam & other)
@@ -81,9 +81,9 @@ public:
         m_user                      = other.m_user;
         m_passwd                    = other.m_passwd;
 
-        memcpy(addrPrefix,   other.addrPrefix,   sizeof(addrPrefix)*sizeof(addrPrefix[0]));
-        memcpy(scriptPrefix, other.scriptPrefix, sizeof(scriptPrefix)*sizeof(scriptPrefix[0]));
-        memcpy(secretPrefix, other.secretPrefix, sizeof(secretPrefix)*sizeof(secretPrefix[0]));
+        addrPrefix                  = other.addrPrefix;
+        scriptPrefix                = other.scriptPrefix;
+        secretPrefix                = other.secretPrefix;
 
         txVersion                   = other.txVersion;
         COIN                        = other.COIN;
@@ -111,9 +111,9 @@ public:
     std::string                  m_user;
     std::string                  m_passwd;
 
-    char                         addrPrefix[8];
-    char                         scriptPrefix[8];
-    char                         secretPrefix[8];
+    std::string                  addrPrefix;
+    std::string                  scriptPrefix;
+    std::string                  secretPrefix;
     uint32_t                     txVersion;
     uint64_t                     COIN;
     uint64_t                     minTxFee;

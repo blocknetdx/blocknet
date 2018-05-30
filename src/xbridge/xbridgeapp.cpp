@@ -7,6 +7,7 @@
 #include "util/logger.h"
 #include "util/settings.h"
 #include "util/xbridgeerror.h"
+#include "util/xassert.h"
 #include "version.h"
 #include "config.h"
 #include "xuiconnector.h"
@@ -281,9 +282,9 @@ bool App::Impl::start()
                 wp.m_port                      = s.get<std::string>(*i + ".Port");
                 wp.m_user                      = s.get<std::string>(*i + ".Username");
                 wp.m_passwd                    = s.get<std::string>(*i + ".Password");
-                wp.addrPrefix[0]               = s.get<int>        (*i + ".AddressPrefix", 0);
-                wp.scriptPrefix[0]             = s.get<int>        (*i + ".ScriptPrefix", 0);
-                wp.secretPrefix[0]             = s.get<int>        (*i + ".SecretPrefix", 0);
+                wp.addrPrefix                  = s.get<std::string>(*i + ".AddressPrefix");
+                wp.scriptPrefix                = s.get<std::string>(*i + ".ScriptPrefix");
+                wp.secretPrefix                = s.get<std::string>(*i + ".SecretPrefix");
                 wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
                 wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
                 wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
@@ -300,11 +301,9 @@ bool App::Impl::start()
                     LOG() << "read wallet " << *i << " with empty parameters>";
                     continue;
                 }
-                else
-                {
-                    LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
-                          << ":" << wp.m_port; // << " COIN=" << wp.COIN;
-                }
+
+                LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
+                      << ":" << wp.m_port; // << " COIN=" << wp.COIN;
 
                 xbridge::WalletConnectorPtr conn;
                 if (wp.method == "ETHER")
@@ -327,14 +326,8 @@ bool App::Impl::start()
                     conn.reset(new DgbWalletConnector);
                     *conn = wp;
                 }
-//                else if (wp.method == "RPC")
-//                {
-//                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
-//                    // session.reset(new XBridgeSessionRpc(wp));
-//                }
                 else
                 {
-                    // session.reset(new XBridgeSession(wp));
                     ERR() << "unknown session type " << __FUNCTION__;
                 }
                 if (!conn)
@@ -901,7 +894,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    if(pwalletMain->GetBalance() < connTo->serviceNodeFee)
+    if (pwalletMain->GetBalance() < connTo->serviceNodeFee)
     {
         return xbridge::Error::INSIFFICIENT_FUNDS_DX;
     }
@@ -946,18 +939,18 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
 
-        if(entry.signature.size() != 65)
+        if (entry.signature.size() != 65)
         {
             ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
             return xbridge::Error::INVALID_SIGNATURE;
         }
-//        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        if(entry.rawAddress.size() != 20)
+        xassert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        if (entry.rawAddress.size() != 20)
         {
             ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
             return  xbridge::Error::INVALID_ADDRESS;
         }
-//        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+        xassert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
