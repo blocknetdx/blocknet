@@ -60,7 +60,7 @@ void ScriptPubKeyToJSON(const CScript& scriptPubKey, UniValue& out, bool fInclud
     out.push_back(Pair("addresses", a));
 }
 
-void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
+void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry, bool include_hex, int serialize_flags)
 {
     entry.push_back(Pair("txid", tx.GetHash().GetHex()));
     entry.push_back(Pair("hash", tx.GetWitnessHash().GetHex()));
@@ -111,7 +111,7 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
     }
     entry.push_back(Pair("vout", vout));
 
-    if (hashBlock != 0) {
+    if (!hashBlock.IsNull()) {
         entry.push_back(Pair("blockhash", hashBlock.GetHex()));
         BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
         if (mi != mapBlockIndex.end() && (*mi).second) {
@@ -123,6 +123,10 @@ void TxToJSON(const CTransaction& tx, const uint256 hashBlock, UniValue& entry)
             } else
                 entry.push_back(Pair("confirmations", 0));
         }
+    }
+
+    if (include_hex) {
+        entry.pushKV("hex", EncodeHexTx(tx, serialize_flags)); // The hex-encoded transaction. Used the name "hex" to be consistent with the verbose output of "getrawtransaction".
     }
 }
 
@@ -169,15 +173,14 @@ UniValue searchrawtransactions(const UniValue& params, bool fHelp)
         uint256 hashBlock;
         if (!ReadTransaction(tx, *it, hashBlock))
             throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "Cannot read transaction from disk");
-        CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
-        ssTx << tx;
-        string strHex = HexStr(ssTx.begin(), ssTx.end());
         if (fVerbose) {
             UniValue object(UniValue::VOBJ);
-            TxToJSON(tx, hashBlock, object);
-            object.push_back(Pair("hex", strHex));
+            TxToJSON(tx, hashBlock, object, true, RPCSerializationFlags());
             result.push_back(object);
         } else {
+            CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION | RPCSerializationFlags());
+            ssTx << tx;
+            string strHex = HexStr(ssTx.begin(), ssTx.end());
             result.push_back(strHex);
         }
         it++;
@@ -265,14 +268,13 @@ UniValue getrawtransaction(const UniValue& params, bool fHelp)
     if (!GetTransaction(hash, tx, hashBlock, true))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "No information available about transaction");
 
-    string strHex = EncodeHexTx(tx);
-
-    if (!fVerbose)
+    if (!fVerbose) {
+        string strHex = EncodeHexTx(tx, PROTOCOL_VERSION | RPCSerializationFlags()); 
         return strHex;
+    }
 
     UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("hex", strHex));
-    TxToJSON(tx, hashBlock, result);
+    TxToJSON(tx, hashBlock, result, true, RPCSerializationFlags());
     return result;
 }
 
@@ -469,7 +471,7 @@ UniValue createrawtransaction(const UniValue& params, bool fHelp)
         rawTx.vout.push_back(out);
     }
 
-    return EncodeHexTx(rawTx);
+    return EncodeHexTx(rawTx, PROTOCOL_VERSION | RPCSerializationFlags());
 }
 
 UniValue decoderawtransaction(const UniValue& params, bool fHelp)
@@ -534,7 +536,7 @@ UniValue decoderawtransaction(const UniValue& params, bool fHelp)
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "TX decode failed");
 
     UniValue result(UniValue::VOBJ);
-    TxToJSON(tx, 0, result);
+    TxToJSON(tx, 0, result, false, RPCSerializationFlags());
 
     return result;
 }
@@ -822,7 +824,7 @@ UniValue signrawtransaction(const UniValue& params, bool fHelp)
     bool fComplete = vErrors.empty();
 
     UniValue result(UniValue::VOBJ);
-    result.push_back(Pair("hex", EncodeHexTx(mergedTx)));
+    result.push_back(Pair("hex", EncodeHexTx(mergedTx, PROTOCOL_VERSION | RPCSerializationFlags())));
     result.push_back(Pair("complete", fComplete));
     if (!vErrors.empty()) {
         result.push_back(Pair("errors", vErrors));

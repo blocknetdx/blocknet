@@ -6,6 +6,7 @@
 
 #include "base58.h"
 #include "primitives/transaction.h"
+#include "rpcprotocol.h"
 #include "script/script.h"
 #include "script/standard.h"
 #include "serialize.h"
@@ -54,9 +55,9 @@ string FormatScript(const CScript& script)
     return ret.substr(0, ret.size() - 1);
 }
 
-string EncodeHexTx(const CTransaction& tx)
+std::string EncodeHexTx(const CTransaction& tx, const int serializeFlags)
 {
-    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION);
+    CDataStream ssTx(SER_NETWORK, PROTOCOL_VERSION | serializeFlags);
     ssTx << tx;
     return HexStr(ssTx.begin(), ssTx.end());
 }
@@ -131,5 +132,5 @@ void TxToUniv(const CTransaction& tx, const uint256& hashBlock, UniValue& entry)
     if (hashBlock != 0)
         entry.pushKV("blockhash", hashBlock.GetHex());
 
-    entry.pushKV("hex", EncodeHexTx(tx)); // the hex-encoded transaction. used the name "hex" to be consistent with the verbose output of "getrawtransaction".
+    entry.pushKV("hex", EncodeHexTx(tx, PROTOCOL_VERSION | RPCSerializationFlags())); // the hex-encoded transaction. used the name "hex" to be consistent with the verbose output of "getrawtransaction".
 }

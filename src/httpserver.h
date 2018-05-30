@@ -11,6 +11,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 
+static const int DEFAULT_RPC_SERIALIZE_VERSION = 1;
 static const int DEFAULT_HTTP_THREADS=4;
 static const int DEFAULT_HTTP_WORKQUEUE=16;
 static const int DEFAULT_HTTP_SERVER_TIMEOUT=30;

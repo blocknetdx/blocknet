@@ -88,4 +88,7 @@ bool GetAuthCookie(std::string *cookie_out);
 /** Delete RPC authentication cookie from disk */
 void DeleteAuthCookie();
 
+// Retrieves any serialization flags requested in command line argument
+int RPCSerializationFlags();
+
 #endif // BITCOIN_RPCPROTOCOL_H

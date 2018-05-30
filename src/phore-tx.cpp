@@ -511,7 +511,7 @@ static void OutputTxHash(const CTransaction& tx)
 
 static void OutputTxHex(const CTransaction& tx)
 {
-    string strHex = EncodeHexTx(tx);
+    string strHex = EncodeHexTx(tx, PROTOCOL_VERSION);
 
     fprintf(stdout, "%s\n", strHex.c_str());
 }
