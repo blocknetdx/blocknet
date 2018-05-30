@@ -521,7 +521,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp)
 
         UniValue entry(UniValue::VOBJ);
 
-        entry.push_back(Pair("data", EncodeHexTx(tx)));
+        entry.push_back(Pair("data", EncodeHexTx(tx, PROTOCOL_VERSION | RPCSerializationFlags())));
         entry.push_back(Pair("txid", txHash.GetHex()));
         entry.push_back(Pair("hash", tx.GetWitnessHash().GetHex()));
 

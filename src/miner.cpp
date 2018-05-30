@@ -344,18 +344,18 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
             CFeeRate feeRate = vecPriority.front().get<1>();
             const CTransaction& tx = *(vecPriority.front().get<2>());
 
-            if (!fIncludeWitness && !tx.wit.IsNull())
-                continue; // cannot accept witness transactions into a non-witness block
-
             std::pop_heap(vecPriority.begin(), vecPriority.end(), comparer);
             vecPriority.pop_back();
 
             // Size limits
             unsigned int nTxSize = ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
             int64_t nTxCost = nTxSize * WITNESS_SCALE_FACTOR;
+
+            if (!fIncludeWitness && !tx.wit.IsNull())
+                continue; // cannot accept witness transactions into a non-witness block
+
             if (nBlockCost + nTxCost >= nBlockMaxCost)
                 continue;
-
 
             // Skip free transactions if we're past the minimum block size:
             const uint256& hash = tx.GetHash();

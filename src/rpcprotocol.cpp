@@ -6,10 +6,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "httpserver.h"
 #include "rpcprotocol.h"
-
 #include "random.h"
 #include "tinyformat.h"
+#include "primitives/transaction.h"
 #include "util.h"
 #include "utilstrencodings.h"
 #include "utiltime.h"
@@ -127,4 +128,12 @@ void DeleteAuthCookie()
     } catch (const boost::filesystem::filesystem_error& e) {
         LogPrintf("%s: Unable to remove random auth cookie file: %s\n", __func__, e.what());
     }
+}
+
+int RPCSerializationFlags()
+{
+    int flag = 0;
+    if (GetArg("-rpcserialversion", DEFAULT_RPC_SERIALIZE_VERSION) == 0)
+        flag |= SERIALIZE_TRANSACTION_NO_WITNESS;
+    return flag;
 }

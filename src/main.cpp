@@ -1369,11 +1369,6 @@ bool CheckTransaction(const CTransaction& tx, bool fZerocoinActive, bool fReject
     if (::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION | SERIALIZE_TRANSACTION_NO_WITNESS) > MAX_BLOCK_BASE_SIZE)
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
 
-    // Reject transactions with witness before segregated witness activates (override with -prematurewitness)
-    if (!GetBoolArg("-prematurewitness", false) && !tx.wit.IsNull() && !fWitnessEnabled) {
-        return state.DoS(0, false, REJECT_NONSTANDARD, "no-witness-yet", true);
-    }
-
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
     int nZCSpendCount = 0;
