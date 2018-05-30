@@ -826,6 +826,17 @@ std::string BchWalletConnector::scriptIdToString(const std::vector<unsigned char
 
 //******************************************************************************
 //******************************************************************************
+xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
+xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
+                                           const std::vector<XTxIn> & inputs,
+                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const uint64_t COIN,
+                                           const uint32_t txversion,
+                                           const uint32_t lockTime,
+                                           const bool txWithTimeField = false);
+
+//******************************************************************************
+//******************************************************************************
 bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
                                                  const std::vector<std::pair<std::string, double> > & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
@@ -835,7 +846,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
                                                  std::string & txId,
                                                  std::string & rawTx)
 {
-    xbridge::CTransactionPtr txUnsigned = createTransaction(inputs, outputs, COIN, txVersion, lockTime, txWithTimeField);
+    xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, lockTime, txWithTimeField);
     txUnsigned->vin[0].nSequence = std::numeric_limits<uint32_t>::max()-1;
 
     CScript inner(innerScript.begin(), innerScript.end());
@@ -902,7 +913,7 @@ bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
                                                   std::string & txId,
                                                   std::string & rawTx)
 {
-    xbridge::CTransactionPtr txUnsigned = createTransaction(inputs, outputs, COIN, txVersion, 0, txWithTimeField);
+    xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
 
     CScript inner(innerScript.begin(), innerScript.end());
 

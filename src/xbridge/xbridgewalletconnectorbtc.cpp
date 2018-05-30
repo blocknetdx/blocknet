@@ -1891,7 +1891,8 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false)
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
+xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
+                                           const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
@@ -1902,13 +1903,6 @@ xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
     tx->nVersion  = txversion;
     tx->nLockTime = lockTime;
 
-//    uint32_t sequence = lockTime ? std::numeric_limits<uint32_t>::max() - 1 : std::numeric_limits<uint32_t>::max();
-
-//    for (const std::pair<std::string, int> & in : inputs)
-//    {
-//        tx->vin.push_back(CTxIn(COutPoint(uint256(in.first), in.second),
-//                                CScript(), sequence));
-//    }
     for (const XTxIn & in : inputs)
     {
         tx->vin.push_back(CTxIn(COutPoint(uint256(in.txid), in.n)));
@@ -1916,7 +1910,11 @@ xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
 
     for (const std::pair<std::string, double> & out : outputs)
     {
-        CScript scr = GetScriptForDestination(xbridge::XBitcoinAddress(out.first).Get());
+        std::vector<unsigned char> id = conn.toXAddr(out.first);
+
+        CScript scr;
+        scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
+
         tx->vout.push_back(CTxOut(out.second * COIN, scr));
     }
 
@@ -1935,7 +1933,8 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
                                                                  std::string & txId,
                                                                  std::string & rawTx)
 {
-    xbridge::CTransactionPtr txUnsigned = createTransaction(inputs, outputs,
+    xbridge::CTransactionPtr txUnsigned = createTransaction(*this,
+                                                            inputs, outputs,
                                                             COIN, txVersion,
                                                             lockTime, txWithTimeField);
     txUnsigned->vin[0].nSequence = std::numeric_limits<uint32_t>::max()-1;
@@ -2005,7 +2004,8 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
                                                                   std::string & txId,
                                                                   std::string & rawTx)
 {
-    xbridge::CTransactionPtr txUnsigned = createTransaction(inputs, outputs,
+    xbridge::CTransactionPtr txUnsigned = createTransaction(*this,
+                                                            inputs, outputs,
                                                             COIN, txVersion,
                                                             0, txWithTimeField);
 

@@ -1881,7 +1881,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     }
 
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
-    double checkAmount = outAmount;
+    double checkAmount = static_cast<double>(xtx->toAmount) / TransactionDescr::COIN;
 
     // check A deposit tx
     {
