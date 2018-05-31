@@ -362,13 +362,9 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
     std::string account = params[1].get_str();
     
     CBloomFilter f(10, 0.1, 5, 0);
+    f.from_hex(params[1].get_str());
     CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
     stream << f;
-    std::cout << stream.str() << " " << stream.size() << std::endl << std::flush;
-    std::vector<int> addr(stream.begin(), stream.end());
-    for (unsigned int i = 0; i < addr.size(); i++)
-            std::cout << (int)addr[i];
-        std::cout << std::endl;
 
     std::string reply = xrouter::App::instance().getTransactionsBloomFilter(currency, number, stream.str(), confirmations);
     return form_reply(reply);
