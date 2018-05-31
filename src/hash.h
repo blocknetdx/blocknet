@@ -300,6 +300,14 @@ public:
         ::Serialize(*this, obj, nType, nVersion);
         return (*this);
     }
+
+    //
+    // Stream subset
+    //
+    void SetType(int n) { nType = n; }
+    int GetType() { return nType; }
+    void SetVersion(int n) { nVersion = n; }
+    int GetVersion() { return nVersion; }
 };
 
 /** Compute the 256-bit hash of an object's serialization. */

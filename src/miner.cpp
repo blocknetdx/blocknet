@@ -501,9 +501,8 @@ CBlockTemplate* CreateNewBlock(const CScript& scriptPubKeyIn, CWallet* pwallet, 
 
         CValidationState state;
         if (!TestBlockValidity(state, *pblock, pindexPrev, false, false)) {
-            LogPrintf("CreateNewBlock() : TestBlockValidity failed\n");
             mempool.clear();
-            return NULL;
+            throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, state.GetRejectReason()));
         }
     }
 
