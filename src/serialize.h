@@ -952,6 +952,14 @@ public:
         return (*this);
     }
 
+    //
+    // Stream subset
+    //
+    void SetType(int n) { nType = n; }
+    int GetType() { return nType; }
+    void SetVersion(int n) { nVersion = n; }
+    int GetVersion() { return nVersion; }
+
     size_t size() const
     {
         return nSize;

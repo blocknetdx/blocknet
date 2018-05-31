@@ -47,10 +47,11 @@ def create_witnessprogram(version, node, utxo, pubkey, encode_p2sh, amount):
     inputs = []
     outputs = {}
     inputs.append({ "txid" : utxo["txid"], "vout" : utxo["vout"]} )
-    DUMMY_P2SH = "yCSYtmhzg1FnWSjrL9KWuprunG9HqtDqPz" # P2SH of "OP_1 OP_DROP"
+    coinbase = CTransaction()
+    DUMMY_P2SH = "8poAwF24PZJebPTtKJVyvAdFw1u7hX6uVX" # P2SH of "OP_1 OP_DROP"
     outputs[DUMMY_P2SH] = amount
     tx_to_witness = node.createrawtransaction(inputs,outputs)
-    #replace dummy output with our own
+    #replace  dummy output with our own
     tx_to_witness = tx_to_witness[0:110] + addlength(pkscript) + tx_to_witness[-8:]
     return tx_to_witness
 
@@ -85,9 +86,9 @@ class SegWitTest(BitcoinTestFramework):
 
     def setup_network(self):
         self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-logtimemicros", "-printtoconsole", "-walletprematurewitness", "-rpcserialversion=0"]))
-        self.nodes.append(start_node(1, self.options.tmpdir, ["-logtimemicros", "-printtoconsole", "-blockversion=4", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness", "-rpcserialversion=1"]))
-        self.nodes.append(start_node(2, self.options.tmpdir, ["-logtimemicros", "-printtoconsole", "-blockversion=536870915", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness"]))
+        self.nodes.append(start_node(0, self.options.tmpdir, ["-logtimemicros", "-debug", "-walletprematurewitness", "-rpcserialversion=0"]))
+        self.nodes.append(start_node(1, self.options.tmpdir, ["-logtimemicros", "-debug", "-blockversion=4", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness", "-rpcserialversion=1"]))
+        self.nodes.append(start_node(2, self.options.tmpdir, ["-logtimemicros", "-debug", "-blockversion=536870915", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness"]))
         connect_nodes(self.nodes[1], 0)
         connect_nodes(self.nodes[2], 1)
         connect_nodes(self.nodes[0], 2)
@@ -119,6 +120,7 @@ class SegWitTest(BitcoinTestFramework):
         try:
             node.setgenerate(True, 1)
         except JSONRPCException as exp:
+            print(exp.error)
             assert(exp.error["code"] == -1)
         else:
             raise AssertionError("Created valid block when TestBlockValidity should have failed")
@@ -196,7 +198,7 @@ class SegWitTest(BitcoinTestFramework):
 
         # enable segwit through spork system
         for node in self.nodes:
-            node.spork("SPORK_17_SEGWIT_ACTIVATION", int(time.time()))
+            node.spork("SPORK_17_SEGWIT_ACTIVATION", int(time.time() - 1))
 
         print("Verify previous witness txs skipped for mining can now be mined")
         assert_equal(len(self.nodes[2].getrawmempool()), 4)

@@ -165,9 +165,17 @@ UniValue setgenerate(const UniValue& params, bool fHelp)
         unsigned int nExtraNonce = 0;
         UniValue blockHashes(UniValue::VARR);
         while (nHeight < nHeightEnd) {
-            unique_ptr<CBlockTemplate> pblocktemplate(CreateNewBlockWithKey(reservekey, pwalletMain, false));
-            if (!pblocktemplate.get())
+            CPubKey pubkey;
+            if (!reservekey.GetReservedKey(pubkey))
                 throw JSONRPCError(RPC_INTERNAL_ERROR, "Wallet keypool empty");
+
+            CScript scriptPubKey = CScript() << ToByteVector(pubkey) << OP_CHECKSIG;
+            CBlockTemplate* pblocktemplate;
+            try {
+                pblocktemplate = CreateNewBlock(scriptPubKey, pwalletMain, false);
+            } catch(std::runtime_error err) {
+                throw JSONRPCError(RPC_MISC_ERROR, err.what());
+            }
             CBlock* pblock = &pblocktemplate->block;
             {
                 LOCK(cs_main);
