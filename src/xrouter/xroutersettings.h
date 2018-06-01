@@ -29,24 +29,6 @@ public:
 
     std::string logPath() const;
 
-    bool rpcEnabled()
-        { return get<bool>("Rpc.Enable", false); }
-    uint32_t rpcPort(const uint32_t def)
-        { return get<uint32_t>("Rpc.Port", def); }
-
-    std::string rpcServerUserName()
-        { return get<std::string>("Rpc.UserName"); }
-    std::string rpcServerPasswd()
-        { return get<std::string>("Rpc.Password"); }
-    bool rpcUseSsl()
-        { return get<bool>("Rpc.UseSSL"); }
-    std::string rpcSertFile(const std::string def = std::string())
-        { return get<std::string>("Rpc.SertFile", def); }
-    std::string rpcPKeyFile(const std::string def = std::string())
-        { return get<std::string>("Rpc.PKeyFile", def); }
-    std::string rpcSslCiphers(const std::string def = std::string())
-        { return get<std::string>("Rpc.SslCiphers", def); }
-
 public:
     template <class _T>
     _T get(const std::string & param, _T def = _T())
@@ -79,6 +61,7 @@ private:
     std::vector<std::string>    m_peers;
 
     bool                        m_isExchangeEnabled;
+    std::string rawtext;
 };
 
 #endif // SETTINGS_H

@@ -996,7 +996,58 @@ std::string App::getPaymentAddress(CNode* node)
 }
 
 std::string App::getXrouterConfig(CNode* node) {
+    XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
+
+    uint256 txHash;
+    uint32_t vout;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+        std::cerr << "Minimum block requirement not satisfied\n";
+        return "Minimum block requirement not satisfied";
+    }
+
+    //boost::uuids::uuid uuid = boost::uuids::random_generator()();
+    //std::string id = boost::uuids::to_string(uuid);
+    std::string id = generateUUID(); //"request" + std::to_string(req_cnt);
+    req_cnt++;
+
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->sign(key);
+
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+
+    static std::vector<unsigned char> addr(20, 0);
+    std::vector<unsigned char> msg(addr);
+    msg.insert(msg.end(), packet->body().begin(), packet->body().end());
+    node->PushMessage("xrouter", msg);
     
+    if (!cond->timed_wait(lock, boost::posix_time::milliseconds(30000)))
+        return "Could not get XRouter config";
+
+    std::string reply = queries[id][0];
+    
+    int nHeight;
+    {
+        LOCK(cs_main);
+        CBlockIndex* pindex = chainActive.Tip();
+        if(!pindex) return;
+        nHeight = pindex->nHeight;
+    }
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
+
+    LOCK(cs_vNodes);
+    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+        if (s.second.addr.ToString() == node->addr.ToString()) {
+            s.second.xrouterConfig = reply;
+        }
+
+    }
+    return reply;
 }
 
 } // namespace xrouter

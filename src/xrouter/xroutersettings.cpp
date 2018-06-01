@@ -56,6 +56,8 @@ bool XRouterSettings::read(const char * fileName)
         }
 
         boost::property_tree::ini_parser::read_ini(m_fileName, m_pt);
+        
+        // READ FILE HERE
     }
     catch (std::exception & e)
     {
