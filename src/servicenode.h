@@ -160,6 +160,7 @@ public:
     int nScanningErrorCount;
     int nLastScanningErrorBlockHeight;
     CServicenodePing lastPing;
+    std::string xrouterConfig;
 
     // xbridge wallets list, connected to service node
     std::vector<CServicenodeXWallet> connectedWallets;
