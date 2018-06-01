@@ -746,12 +746,18 @@ bool App::processSendTransaction(XRouterPacketPtr packet) {
     std::string transaction((const char *)packet->data()+offset);
     offset += transaction.size() + 1;
 
-    std::string result = "sent";
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+
+    Object result;
+    if (conn)
+    {
+        result = conn->sendTransaction(transaction);
+    }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
-    rpacket->append(result);
+    rpacket->append(json_spirit::write_string(Value(result), true));
     sendPacket(rpacket);
 
     return true;

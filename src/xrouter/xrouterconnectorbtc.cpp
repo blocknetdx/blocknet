@@ -410,7 +410,11 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number, CD
 
 Object BtcWalletConnectorXRouter::sendTransaction(const std::string & transaction) const
 {
+    std::string command("sendrawtransaction");
+    
+    Array params { transaction };
 
+    return xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
 }
 
 Object BtcWalletConnectorXRouter::getPaymentAddress() const
