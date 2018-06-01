@@ -28,6 +28,7 @@ public:
     std::string appPath() const    { return m_appPath; }
 
     std::string logPath() const;
+    std::string rawText() const { return rawtext; }
 
 public:
     template <class _T>

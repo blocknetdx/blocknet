@@ -768,7 +768,17 @@ bool App::processGetPaymentAddress(XRouterPacketPtr packet) {
 }
 
 bool App::processGetXrouterConfig(XRouterPacketPtr packet) {
+    uint32_t offset = 36;
 
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+    rpacket->append(uuid);
+    rpacket->append(this->xrouter_settings.rawText());
+    sendPacket(rpacket);
+
+    return true;
 }
 
 //*****************************************************************************
@@ -849,6 +859,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         break;
       case xrGetTransactionsBloomFilter:
         processGetTransactionsBloomFilter(packet);
+        break;
+      case xrGetXrouterConfig:
+        processGetXrouterConfig(packet);
         break;
       case xrReply:
         processReply(packet);
