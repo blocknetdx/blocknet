@@ -767,6 +767,10 @@ bool App::processGetPaymentAddress(XRouterPacketPtr packet) {
 
 }
 
+bool App::processGetXrouterConfig(XRouterPacketPtr packet) {
+
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool App::processReply(XRouterPacketPtr packet) {
@@ -990,4 +994,9 @@ std::string App::getPaymentAddress(CNode* node)
 {
 
 }
+
+std::string App::getXrouterConfig(CNode* node) {
+    
+}
+
 } // namespace xrouter

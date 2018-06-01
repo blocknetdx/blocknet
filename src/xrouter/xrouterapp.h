@@ -203,6 +203,13 @@ public:
      * @return
      */
     std::string getPaymentAddress(CNode* node);
+    
+    /**
+     * @brief fetches the xrouter config of a service node
+     * @param node node object
+     * @return config string
+     */
+    std::string getXrouterConfig(CNode* node);
 
 
     /**
@@ -281,6 +288,13 @@ public:
      * @return
      */
     bool processGetPaymentAddress(XRouterPacketPtr packet);
+    
+    /**
+     * @brief process GetXrouterConfig call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    bool processGetXrouterConfig(XRouterPacketPtr packet);
 
     /**
      * @brief process reply from service node on *client* side
