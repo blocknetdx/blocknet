@@ -11,6 +11,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
+#include <iostream>
 
 
 //******************************************************************************
@@ -57,7 +58,15 @@ bool XRouterSettings::read(const char * fileName)
 
         boost::property_tree::ini_parser::read_ini(m_fileName, m_pt);
         
-        // READ FILE HERE
+        ifstream ifs(m_fileName.c_str(), ios::in | ios::binary | ios::ate);
+
+        ifstream::pos_type fileSize = ifs.tellg();
+        ifs.seekg(0, ios::beg);
+
+        vector<char> bytes(fileSize);
+        ifs.read(bytes.data(), fileSize);
+
+        this->rawtext = string(bytes.data(), fileSize);
     }
     catch (std::exception & e)
     {
