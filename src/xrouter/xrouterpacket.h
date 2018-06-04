@@ -15,6 +15,7 @@
 //#include <assert.h>
 #include <string.h>
 #include "keystore.h"
+#include <boost/preprocessor.hpp>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -29,26 +30,29 @@ enum TxCancelReason
 
 //******************************************************************************
 //******************************************************************************
-enum XRouterCommand
-{
-    xbcInvalid = 0,
 
-    xrReply = 1,
-    xrConfigReply = 2,
-    xrGetBlockCount = 3,
-    xrGetBlockHash = 4,
-    xrGetBlock = 5,
-    xrGetTransaction = 6,
-    xrGetAllBlocks = 7,
-    xrGetAllTransactions = 8,
-    xrGetBalance = 9,
-    xrGetBalanceUpdate = 10,
-    xrGetTransactionsBloomFilter = 11,
-    xrSendTransaction = 12,
-    xrGetPaymentAddress = 13,
-    xrGetXrouterConfig = 14
-    
-};
+#define X_DEFINE_ENUM_WITH_STRING_CONVERSIONS_TOSTRING_CASE(r, data, elem)    \
+    case elem : return BOOST_PP_STRINGIZE(elem);
+
+#define DEFINE_ENUM_WITH_STRING_CONVERSIONS(name, enumerators)                \
+    enum name {                                                               \
+        BOOST_PP_SEQ_ENUM(enumerators)                                        \
+    };                                                                        \
+                                                                              \
+    inline const char* name##_ToString(name v)                                  \
+    {                                                                         \
+        switch (v)                                                            \
+        {                                                                     \
+            BOOST_PP_SEQ_FOR_EACH(                                            \
+                X_DEFINE_ENUM_WITH_STRING_CONVERSIONS_TOSTRING_CASE,          \
+                name,                                                         \
+                enumerators                                                   \
+            )                                                                 \
+            default: return "[Unknown " BOOST_PP_STRINGIZE(name) "]";         \
+        }                                                                     \
+    }
+
+DEFINE_ENUM_WITH_STRING_CONVERSIONS(XRouterCommand, (xbcInvalid)(xrReply)(xrConfigReply)(xrGetBlockCount)(xrGetBlockHash)(xrGetBlock)(xrGetTransaction)(xrGetAllBlocks)(xrGetAllTransactions)(xrGetBalance)(xrGetBalanceUpdate)(xrGetTransactionsBloomFilter)(xrSendTransaction)(xrGetPaymentAddress)(xrGetXrouterConfig))
 
 //******************************************************************************
 //******************************************************************************
