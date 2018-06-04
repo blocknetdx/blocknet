@@ -5,10 +5,14 @@
 
 #include <vector>
 #include <string>
+#include "xrouterpacket.h"
 
 #include <boost/property_tree/ptree.hpp>
 
 #define TRY(_STMNT_) try { (_STMNT_); } catch(std::exception & e) { LOG() << e.what(); }
+
+namespace xrouter
+{
 
 //******************************************************************************
 class XRouterSettings
@@ -30,6 +34,9 @@ public:
     std::string logPath() const;
     std::string rawText() const { return rawtext; }
 
+    bool isAvailableCommand(XRouterCommand c, bool def=false);
+    double getCommandFee(XRouterCommand c, double def=0.0);
+    
 public:
     template <class _T>
     _T get(const std::string & param, _T def = _T())
@@ -64,5 +71,7 @@ private:
     bool                        m_isExchangeEnabled;
     std::string rawtext;
 };
+
+} // namespace
 
 #endif // SETTINGS_H

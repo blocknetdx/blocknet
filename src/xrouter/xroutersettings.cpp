@@ -13,7 +13,8 @@
 #include <boost/algorithm/string.hpp>
 #include <iostream>
 
-
+namespace xrouter
+{  
 //******************************************************************************
 //******************************************************************************
 XRouterSettings::XRouterSettings()
@@ -86,3 +87,23 @@ std::string XRouterSettings::logPath() const
 
     return std::string(GetDataDir(false).string()) + "/";
 }
+
+bool XRouterSettings::isAvailableCommand(XRouterCommand c, bool def)
+{
+    int res = 0;
+    if (def)
+        res = 1;
+    res = get<int>(std::string(XRouterCommand_ToString(c)) + ".run", res);
+    if (res)
+        return true;
+    else
+        return false;
+}
+
+double XRouterSettings::getCommandFee(XRouterCommand c, double def)
+{
+    double res = get<double>(std::string(XRouterCommand_ToString(c)) + ".fee", def);
+    return res;
+}
+
+} // namespace xrouter
