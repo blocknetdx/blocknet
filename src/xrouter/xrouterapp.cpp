@@ -773,7 +773,7 @@ bool App::processGetXrouterConfig(XRouterPacketPtr packet) {
     std::string uuid((const char *)packet->data()+offset);
     offset += uuid.size() + 1;
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+    XRouterPacketPtr rpacket(new XRouterPacket(xrConfigReply));
     rpacket->append(uuid);
     rpacket->append(this->xrouter_settings.rawText());
     sendPacket(rpacket);
@@ -811,24 +811,24 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
 {
     std::cerr << "Received xrouter packet\n";
 
-    // If Main.xrouter == 0, xrouter is turned offf on this snode
+    // If Main.xrouter == 0, xrouter is turned off on this snode
     int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
     if (!xrouter_on)
         return;
     
     XRouterPacketPtr packet(new XRouterPacket);
     if (!packet->copyFrom(message)) {
-        std::clog << "incorrect packet received " << __FUNCTION__;
+        std::cerr << "incorrect packet received " << __FUNCTION__;
         return;
     }
 
-    if ((packet->command() != xrReply) && !packet->verify()) {
-        std::clog << "unsigned packet or signature error " << __FUNCTION__;
+    if ((packet->command() > xrConfigReply) && !packet->verify()) {
+        std::cerr << "unsigned packet or signature error " << __FUNCTION__;
         return;
     }
 
-    if ((packet->command() != xrReply) && !verifyBlockRequirement(packet)) {
-        std::clog << "Block requirement not satisfied\n";
+    if ((packet->command() > xrConfigReply) && !verifyBlockRequirement(packet)) {
+        std::cerr << "Block requirement not satisfied\n";
         return;
     }
 
@@ -1039,7 +1039,7 @@ std::string App::getXrouterConfig(CNode* node) {
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     node->PushMessage("xrouter", msg);
     
-    if (!cond->timed_wait(lock, boost::posix_time::milliseconds(30000)))
+    if (!cond->timed_wait(lock, boost::posix_time::milliseconds(3000)))
         return "Could not get XRouter config";
 
     std::string reply = queries[id][0];

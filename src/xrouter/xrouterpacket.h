@@ -34,18 +34,19 @@ enum XRouterCommand
     xbcInvalid = 0,
 
     xrReply = 1,
-    xrGetBlockCount = 2,
-    xrGetBlockHash = 3,
-    xrGetBlock = 4,
-    xrGetTransaction = 5,
-    xrGetAllBlocks = 6,
-    xrGetAllTransactions = 7,
-    xrGetBalance = 8,
-    xrGetBalanceUpdate = 9,
-    xrGetTransactionsBloomFilter = 10,
-    xrSendTransaction = 11,
-    xrGetPaymentAddress = 12,
-    xrGetXrouterConfig = 13
+    xrConfigReply = 2,
+    xrGetBlockCount = 3,
+    xrGetBlockHash = 4,
+    xrGetBlock = 5,
+    xrGetTransaction = 6,
+    xrGetAllBlocks = 7,
+    xrGetAllTransactions = 8,
+    xrGetBalance = 9,
+    xrGetBalanceUpdate = 10,
+    xrGetTransactionsBloomFilter = 11,
+    xrSendTransaction = 12,
+    xrGetPaymentAddress = 13,
+    xrGetXrouterConfig = 14
     
 };
 
