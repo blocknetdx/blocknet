@@ -822,6 +822,7 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
 
+    // TODO: here it implies that xrReply and xrConfig reply are first in enum before others, better compare explicitly
     if ((packet->command() > xrConfigReply) && !packet->verify()) {
         std::cerr << "unsigned packet or signature error " << __FUNCTION__;
         return;
@@ -829,6 +830,11 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
 
     if ((packet->command() > xrConfigReply) && !verifyBlockRequirement(packet)) {
         std::cerr << "Block requirement not satisfied\n";
+        return;
+    }
+    
+    if ((packet->command() > xrConfigReply) && !this->xrouter_settings.isAvailableCommand(packet->command())) {
+        std::cerr << "This command is blocked in xrouter.conf";
         return;
     }
 
