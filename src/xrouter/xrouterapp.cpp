@@ -701,11 +701,6 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         std::cerr << "Block requirement not satisfied\n";
         return;
     }
-    
-    if ((packet->command() > xrConfigReply) && !this->xrouter_settings.isAvailableCommand(packet->command())) {
-        std::cerr << "This command is blocked in xrouter.conf";
-        return;
-    }
 
     std::string reply;
     uint32_t offset = 36;
@@ -713,6 +708,11 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
     offset += uuid.size() + 1;
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
+    
+    if ((packet->command() > xrConfigReply) && !this->xrouter_settings.isAvailableCommand(packet->command(), currency)) {
+        std::cerr << "This command is blocked in xrouter.conf";
+        return;
+    }
 
     switch (packet->command()) {
       case xrGetBlockCount:
