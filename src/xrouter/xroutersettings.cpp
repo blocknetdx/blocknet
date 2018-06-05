@@ -88,21 +88,25 @@ std::string XRouterSettings::logPath() const
     return std::string(GetDataDir(false).string()) + "/";
 }
 
-bool XRouterSettings::isAvailableCommand(XRouterCommand c, bool def)
+bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string currency, bool def)
 {
     int res = 0;
     if (def)
         res = 1;
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".run", res);
+    if (!currency.empty())
+        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".run", res);
     if (res)
         return true;
     else
         return false;
 }
 
-double XRouterSettings::getCommandFee(XRouterCommand c, double def)
+double XRouterSettings::getCommandFee(XRouterCommand c, std::string currency, double def)
 {
     double res = get<double>(std::string(XRouterCommand_ToString(c)) + ".fee", def);
+    if (!currency.empty())
+        res = get<double>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".fee", res);
     return res;
 }
 

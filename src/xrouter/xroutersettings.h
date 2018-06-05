@@ -34,8 +34,8 @@ public:
     std::string logPath() const;
     std::string rawText() const { return rawtext; }
 
-    bool isAvailableCommand(XRouterCommand c, bool def=true);
-    double getCommandFee(XRouterCommand c, double def=0.0);
+    bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
+    double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
     
 public:
     template <class _T>
