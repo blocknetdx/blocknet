@@ -458,14 +458,7 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::processGetBlockCount(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
-
+std::string App::processGetBlockCount(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     Object result;
     Object error;
 
@@ -480,22 +473,10 @@ bool App::processGetBlockCount(XRouterPacketPtr packet) {
         result = error;
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return json_spirit::write_string(Value(result), true);
 }
 
-bool App::processGetBlockHash(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetBlockHash(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string blockId((const char *)packet->data()+offset);
     offset += blockId.size() + 1;
 
@@ -513,22 +494,10 @@ bool App::processGetBlockHash(XRouterPacketPtr packet) {
         result = error;
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return json_spirit::write_string(Value(result), true);
 }
 
-bool App::processGetBlock(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetBlock(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string blockHash((const char *)packet->data()+offset);
     offset += blockHash.size() + 1;
 
@@ -545,23 +514,11 @@ bool App::processGetBlock(XRouterPacketPtr packet) {
         error.emplace_back(Pair("error", "No connector for currency " + currency));
         result = error;
     }
-
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    
+    return json_spirit::write_string(Value(result), true);
 }
 
-bool App::processGetTransaction(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string hash((const char *)packet->data()+offset);
     offset += hash.size() + 1;
 
@@ -579,22 +536,10 @@ bool App::processGetTransaction(XRouterPacketPtr packet) {
         result = error;
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return json_spirit::write_string(Value(result), true);
 }
 
-bool App::processGetAllBlocks(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetAllBlocks(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
     int number = std::stoi(number_s);
@@ -606,22 +551,10 @@ bool App::processGetAllBlocks(XRouterPacketPtr packet) {
         result = conn->getAllBlocks(number);
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return json_spirit::write_string(Value(result), true);
 }
 
-bool App::processGetAllTransactions(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetAllTransactions(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string account((const char *)packet->data()+offset);
     offset += account.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
@@ -636,24 +569,12 @@ bool App::processGetAllTransactions(XRouterPacketPtr packet) {
         result = conn->getAllTransactions(account, number);
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return json_spirit::write_string(Value(result), true);
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::processGetBalance(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetBalance(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string account((const char *)packet->data()+offset);
     offset += account.size() + 1;
 
@@ -664,22 +585,10 @@ bool App::processGetBalance(XRouterPacketPtr packet) {
         result = conn->getBalance(account);
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(result);
-    sendPacket(rpacket);
-
-    return true;
+    return result;
 }
 
-bool App::processGetBalanceUpdate(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetBalanceUpdate(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string account((const char *)packet->data()+offset);
     offset += account.size() + 1;
     std::string number_s((const char *)packet->data()+offset);
@@ -694,22 +603,10 @@ bool App::processGetBalanceUpdate(XRouterPacketPtr packet) {
         result = conn->getBalanceUpdate(account, number);
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(result);
-    sendPacket(rpacket);
-
-    return true;
+    return result;
 }
 
-bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processGetTransactionsBloomFilter(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string number_s((const char *)packet->data()+offset);
     offset += number_s.size() + 1;
 
@@ -727,22 +624,10 @@ bool App::processGetTransactionsBloomFilter(XRouterPacketPtr packet) {
         result = conn->getTransactionsBloomFilter(number, stream);
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return json_spirit::write_string(Value(result), true);
 }
 
-bool App::processSendTransaction(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
+std::string App::processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     std::string transaction((const char *)packet->data()+offset);
     offset += transaction.size() + 1;
 
@@ -754,31 +639,15 @@ bool App::processSendTransaction(XRouterPacketPtr packet) {
         result = conn->sendTransaction(transaction);
     }
 
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(json_spirit::write_string(Value(result), true));
-    sendPacket(rpacket);
-
-    return true;
+    return json_spirit::write_string(Value(result), true);
 }
 
-bool App::processGetPaymentAddress(XRouterPacketPtr packet) {
-
+std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {
+    return "";
 }
 
-bool App::processGetXrouterConfig(XRouterPacketPtr packet) {
-    uint32_t offset = 36;
-
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-
-    XRouterPacketPtr rpacket(new XRouterPacket(xrConfigReply));
-    rpacket->append(uuid);
-    rpacket->append(this->xrouter_settings.rawText());
-    sendPacket(rpacket);
-
-    return true;
+std::string App::processGetXrouterConfig(XRouterPacketPtr packet) {
+    return this->xrouter_settings.rawText();
 }
 
 //*****************************************************************************
@@ -838,44 +707,58 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
 
+    std::string reply;
+    uint32_t offset = 36;
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string currency((const char *)packet->data()+offset);
+    offset += currency.size() + 1;
+
     switch (packet->command()) {
       case xrGetBlockCount:
-        processGetBlockCount(packet);
+        reply = processGetBlockCount(packet, offset, currency);
         break;
       case xrGetBlockHash:
-        processGetBlockHash(packet);
+        reply = processGetBlockHash(packet, offset, currency);
         break;
       case xrGetBlock:
-        processGetBlock(packet);
+        reply = processGetBlock(packet, offset, currency);
         break;
       case xrGetTransaction:
-        processGetTransaction(packet);
+        reply = processGetTransaction(packet, offset, currency);
         break;
       case xrGetAllBlocks:
-        processGetAllBlocks(packet);
+        reply = processGetAllBlocks(packet, offset, currency);
         break;
       case xrGetAllTransactions:
-        processGetAllTransactions(packet);
+        reply = processGetAllTransactions(packet, offset, currency);
         break;
       case xrGetBalance:
-        processGetBalance(packet);
+        reply = processGetBalance(packet, offset, currency);
         break;
       case xrGetBalanceUpdate:
-        processGetBalanceUpdate(packet);
+        reply = processGetBalanceUpdate(packet, offset, currency);
         break;
       case xrGetTransactionsBloomFilter:
-        processGetTransactionsBloomFilter(packet);
+        reply = processGetTransactionsBloomFilter(packet, offset, currency);
         break;
       case xrGetXrouterConfig:
-        processGetXrouterConfig(packet);
+        reply = processGetXrouterConfig(packet);
         break;
       case xrReply:
         processReply(packet);
-        break;
+        return;
       default:
         std::clog << "Unknown packet\n";
-        break;
+        return;
     }
+    
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+
+    rpacket->append(uuid);
+    rpacket->append(reply);
+    sendPacket(rpacket);
+    return;
 }
 
 //*****************************************************************************
@@ -1011,7 +894,7 @@ std::string App::sendTransaction(const std::string & currency, const std::string
 
 std::string App::getPaymentAddress(CNode* node)
 {
-
+    return "";
 }
 
 std::string App::getXrouterConfig(CNode* node) {
@@ -1054,7 +937,7 @@ std::string App::getXrouterConfig(CNode* node) {
     {
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive.Tip();
-        if(!pindex) return;
+        if(!pindex) return "";
         nHeight = pindex->nHeight;
     }
     std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);

@@ -217,84 +217,84 @@ public:
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetBlockCount(XRouterPacketPtr packet);
+    std::string processGetBlockCount(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetBlockHash call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetBlockHash(XRouterPacketPtr packet);
+    std::string processGetBlockHash(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetBlock call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetBlock(XRouterPacketPtr packet);
+    std::string processGetBlock(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetTransaction call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetTransaction(XRouterPacketPtr packet);
+    std::string processGetTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetAllBlocks call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetAllBlocks(XRouterPacketPtr packet);
+    std::string processGetAllBlocks(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetAllTransactions call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetAllTransactions(XRouterPacketPtr packet);
+    std::string processGetAllTransactions(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetBalance call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetBalance(XRouterPacketPtr packet);
+    std::string processGetBalance(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetBalanceUpdate call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetBalanceUpdate(XRouterPacketPtr packet);
+    std::string processGetBalanceUpdate(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetBalanceUpdate call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetTransactionsBloomFilter(XRouterPacketPtr packet);
+    std::string processGetTransactionsBloomFilter(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process SendTransaction call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processSendTransaction(XRouterPacketPtr packet);
+    std::string processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
      * @brief process GetPaymentAddress call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetPaymentAddress(XRouterPacketPtr packet);
+    std::string processGetPaymentAddress(XRouterPacketPtr packet);
     
     /**
      * @brief process GetXrouterConfig call on service node side
      * @param packet Xrouter packet received over the network
      * @return
      */
-    bool processGetXrouterConfig(XRouterPacketPtr packet);
+    std::string processGetXrouterConfig(XRouterPacketPtr packet);
 
     /**
      * @brief process reply from service node on *client* side
