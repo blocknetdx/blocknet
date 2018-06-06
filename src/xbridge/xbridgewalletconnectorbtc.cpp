@@ -632,7 +632,7 @@ bool gettransaction(const std::string & rpcuser,
 
             Object elementObj = element.get_obj();
 
-            uint vout = find_value(elementObj, "n").get_int();
+            uint32_t vout = find_value(elementObj, "n").get_int();
             if(vout == txout.vout)
             {
                 txout.amount = find_value(elementObj, "value").get_real();
