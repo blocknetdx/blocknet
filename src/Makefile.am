@@ -391,6 +391,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/logger.h \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
+  xbridge/util/xassert.h \
   xbridge/util/xutil.h \
   xbridge/util/xbridgeerror.h \
   xbridge/posixtimeconversion.h \
