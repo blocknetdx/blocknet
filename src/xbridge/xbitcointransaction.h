@@ -275,16 +275,6 @@ public:
     }
 };
 
-/**
- * @brief SignatureHash2  compute hash of transaction signature
- * @param scriptCode
- * @param txTo
- * @param nIn
- * @param nHashType
- * @return hash of transaction signature
- */
-uint256 SignatureHash2(const CScript& scriptCode, const CTransactionPtr & txTo, unsigned int nIn, int nHashType/*, const CAmount& amount, SigVersion sigversion, const PrecomputedTransactionData* cache*/);
-
 } // namespace xbridge
 
 #endif // BITCOINTRANSACTION_H

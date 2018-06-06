@@ -16,6 +16,19 @@
 namespace xbridge
 {
 
+struct XTxIn
+{
+    std::string txid;
+    uint32_t    n;
+    double      amount;
+
+    XTxIn(std::string _txid, uint32_t _n, double _amount)
+        : txid(_txid)
+        , n(_n)
+        , amount(_amount)
+    {}
+};
+
 //*****************************************************************************
 //*****************************************************************************
 namespace rpc
@@ -52,13 +65,8 @@ public:
 
 public:
     // reimplement for currency
-    virtual std::string fromXAddr(const unsigned char * xaddr) const = 0;
+    virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
     virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
-
-    virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const
-    {
-        return fromXAddr(&xaddr[0]);
-    }
 
 public:
     // wallet RPC
@@ -93,7 +101,7 @@ public:
 
 public:
     // helper functions
-    bool hasValidAddressPrefix(const std::string & addr) const;
+    virtual bool hasValidAddressPrefix(const std::string & addr) const = 0;
 
     virtual bool isDustAmount(const double & amount) const = 0;
 
@@ -108,7 +116,7 @@ public:
 
     virtual bool checkTransaction(const std::string & depositTxId,
                                   const std::string & /*destination*/,
-                                  const uint64_t & /*amount*/,
+                                  double & amount,
                                   bool & isGood) = 0;
 
     virtual uint32_t lockTime(const char role) const = 0;
@@ -119,12 +127,12 @@ public:
                                            const uint32_t lockTime,
                                            std::vector<unsigned char> & resultSript) = 0;
 
-    virtual bool createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    virtual bool createDepositTransaction(const std::vector<XTxIn> & inputs,
                                           const std::vector<std::pair<std::string, double> > & outputs,
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 
-    virtual bool createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    virtual bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                          const std::vector<std::pair<std::string, double> > & outputs,
                                          const std::vector<unsigned char> & mpubKey,
                                          const std::vector<unsigned char> & mprivKey,
@@ -133,7 +141,7 @@ public:
                                          std::string & txId,
                                          std::string & rawTx) = 0;
 
-    virtual bool createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    virtual bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
                                           const std::vector<std::pair<std::string, double> > & outputs,
                                           const std::vector<unsigned char> & mpubKey,
                                           const std::vector<unsigned char> & mprivKey,
