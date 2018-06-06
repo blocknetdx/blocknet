@@ -57,12 +57,6 @@ public:
     bool isDustAmount(const double & amount) const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
-    bool sign(const std::vector<unsigned char> & key,
-              const uint256 & data,
-              std::vector<unsigned char> & signature);
-    bool verify(const std::vector<unsigned char> & pubkey,
-                const uint256 & data,
-                const std::vector<unsigned char> & signature);
 
     std::vector<unsigned char> getKeyId(const std::vector<unsigned char> & pubkey);
     std::vector<unsigned char> getScriptId(const std::vector<unsigned char> & script);
@@ -107,7 +101,7 @@ public:
                                   std::string & txId,
                                   std::string & rawTx);
 
-private:
+protected:
     CryptoProvider m_cp;
 };
 

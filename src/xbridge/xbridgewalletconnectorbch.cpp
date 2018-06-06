@@ -753,13 +753,13 @@ CashAddrContent DecodeCashAddrContent(const std::string & addr,
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
+xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
 xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
-                                           const bool txWithTimeField = false);
+                                           const bool txWithTimeField);
 
 //******************************************************************************
 //******************************************************************************
@@ -860,7 +860,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
         SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
         std::vector<unsigned char> signature;
         uint256 hash = xbridge::SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
-        if (!sign(mprivKey, hash, signature))
+        if (!m_cp.sign(mprivKey, hash, signature))
         {
             // cancel transaction
             LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
@@ -920,7 +920,7 @@ bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
     SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
     std::vector<unsigned char> signature;
     uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
-    if (!sign(mprivKey, hash, signature))
+    if (!m_cp.sign(mprivKey, hash, signature))
     {
         // cancel transaction
         LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;

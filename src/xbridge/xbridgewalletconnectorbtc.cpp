@@ -1629,26 +1629,6 @@ bool BtcWalletConnector<CryptoProvider>::newKeyPair(std::vector<unsigned char> &
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::sign(const std::vector<unsigned char> & key,
-                              const uint256 & data,
-                              std::vector<unsigned char> & signature)
-{
-    return m_cp.sign(key, data, signature);
-}
-
-//******************************************************************************
-//******************************************************************************
-template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::verify(const std::vector<unsigned char> & pubkey,
-                                const uint256 & data,
-                                const std::vector<unsigned char> & signature)
-{
-    return m_cp.verify(pubkey, data, signature);
-}
-
-//******************************************************************************
-//******************************************************************************
-template <class CryptoProvider>
 std::vector<unsigned char> BtcWalletConnector<CryptoProvider>::getKeyId(const std::vector<unsigned char> & pubkey)
 {
     uint160 id = Hash160(&pubkey[0], &pubkey[0] + pubkey.size());
@@ -1884,7 +1864,7 @@ bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vec
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false)
+xbridge::CTransactionPtr createTransaction(const bool txWithTimeField)
 {
     return xbridge::CTransactionPtr(new xbridge::CTransaction(txWithTimeField));
 }
@@ -1897,7 +1877,7 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
-                                           const bool txWithTimeField = false)
+                                           const bool txWithTimeField)
 {
     xbridge::CTransactionPtr tx(new xbridge::CTransaction(txWithTimeField));
     tx->nVersion  = txversion;
@@ -1949,7 +1929,7 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
 
         std::vector<unsigned char> signature;
         uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL);
-        if (!sign(mprivKey, hash, signature))
+        if (!m_cp.sign(mprivKey, hash, signature))
         {
             // cancel transaction
             LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
@@ -2013,7 +1993,7 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
 
     std::vector<unsigned char> signature;
     uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL);
-    if (!sign(mprivKey, hash, signature))
+    if (!m_cp.sign(mprivKey, hash, signature))
     {
         // cancel transaction
         LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
