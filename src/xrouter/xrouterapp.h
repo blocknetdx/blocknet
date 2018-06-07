@@ -10,6 +10,7 @@
 #include "validationstate.h"
 #include "xrouterdef.h"
 #include "net.h"
+#include "servicenode.h"
 
 #include <memory>
 #include <boost/container/map.hpp>
@@ -42,6 +43,7 @@ private:
 
     boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
     boost::container::map<std::string, std::vector<std::string> > queries;
+    boost::container::map<std::string, CServicenode > configQueries;
     int req_cnt;
     
     XRouterSettings xrouter_settings;
@@ -210,6 +212,13 @@ public:
      * @return config string
      */
     std::string getXrouterConfig(CNode* node);
+    
+    /**
+     * @brief fetches the xrouter config of a service node
+     * @param node node object
+     * @return config string
+     */
+    std::string getXrouterConfigSync(CNode* node);
 
 
     /**

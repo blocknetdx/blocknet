@@ -174,6 +174,28 @@ bool App::init(int argc, char *argv[])
 //*****************************************************************************
 bool App::start()
 {
+    // Send only to the service nodes that have the required wallet
+    int nHeight;
+    {
+        LOCK(cs_main);
+        CBlockIndex* pindex = chainActive.Tip();
+        if(!pindex) return;
+        nHeight = pindex->nHeight;
+    }
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
+
+    LOCK(cs_vNodes);
+    for (CNode* pnode : vNodes) {
+        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+            if (s.second.addr.ToString() == pnode->addr.ToString()) {
+                // This node is a service node
+                std::string uuid = this->getXrouterConfig(pnode);
+                this->configQueries[uuid] = s.second;
+            }
+
+        }
+    }
+
     return m_p->start();
 }
 
@@ -660,6 +682,11 @@ bool App::processReply(XRouterPacketPtr packet) {
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
 
+    if (configQueries.count(uuid)) {
+        configQueries[uuid].xrouterConfig = reply;
+        return true;
+    }
+    
     // check uuid is in queriesLock keys
     if (!queriesLocks.count(uuid))
         return true;
@@ -898,6 +925,32 @@ std::string App::getPaymentAddress(CNode* node)
 }
 
 std::string App::getXrouterConfig(CNode* node) {
+    XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
+
+    uint256 txHash;
+    uint32_t vout;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+        std::cerr << "Minimum block requirement not satisfied\n";
+        return "Minimum block requirement not satisfied";
+    }
+
+    std::string id = generateUUID();
+
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->sign(key);
+    
+    static std::vector<unsigned char> addr(20, 0);
+    std::vector<unsigned char> msg(addr);
+    msg.insert(msg.end(), packet->body().begin(), packet->body().end());
+    node->PushMessage("xrouter", msg);
+    
+    return id;
+}
+
+std::string App::getXrouterConfigSync(CNode* node) {
     XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
 
     uint256 txHash;
