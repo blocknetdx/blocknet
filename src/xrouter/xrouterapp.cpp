@@ -703,7 +703,7 @@ bool App::processReply(XRouterPacketPtr packet) {
 //*****************************************************************************
 void App::onMessageReceived(const std::vector<unsigned char>& id,
     const std::vector<unsigned char>& message,
-    CValidationState& /*state*/)
+    CValidationState& state)
 {
     std::cerr << "Received xrouter packet\n";
 
@@ -715,17 +715,20 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
     XRouterPacketPtr packet(new XRouterPacket);
     if (!packet->copyFrom(message)) {
         std::cerr << "incorrect packet received " << __FUNCTION__;
+        state.DoS(10, error("XRouter: invalid packet received"), REJECT_INVALID, "xrouter-error");
         return;
     }
 
     // TODO: here it implies that xrReply and xrConfig reply are first in enum before others, better compare explicitly
     if ((packet->command() > xrConfigReply) && !packet->verify()) {
         std::cerr << "unsigned packet or signature error " << __FUNCTION__;
+        state.DoS(10, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
         return;
     }
 
     if ((packet->command() > xrConfigReply) && !verifyBlockRequirement(packet)) {
         std::cerr << "Block requirement not satisfied\n";
+        state.DoS(10, error("XRouter: block requirement not satisfied"), REJECT_INVALID, "xrouter-error");
         return;
     }
 
