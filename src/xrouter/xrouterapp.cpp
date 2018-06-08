@@ -113,7 +113,7 @@ protected:
      * @param id
      * @param message
      */
-    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, std::string wallet="");
+    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, int confirmations, std::string wallet="");
 };
 
 //*****************************************************************************
@@ -308,10 +308,10 @@ WalletConnectorXRouterPtr App::connectorByCurrency(const std::string & currency)
 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacket(const XRouterPacketPtr& packet, std::string wallet)
+void App::sendPacket(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
 {
     static std::vector<unsigned char> addr(20, 0);
-    m_p->onSend(addr, packet->body(), wallet);
+    m_p->onSend(addr, packet->body(), confirmations, wallet);
 }
 
 std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations, int timeout)
@@ -320,7 +320,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    sendPacket(packet, currency);
+    sendPacket(packet, confirmations, currency);
 
     int confirmation_count = 0;
     while ((confirmation_count < confirmations) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
@@ -360,7 +360,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
 // send packet to xrouter network to specified id,
 // or broadcast, when id is empty
 //*****************************************************************************
-void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, std::string wallet)
+void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, int confirmations, std::string wallet)
 {
     std::vector<unsigned char> msg(id);
     if (msg.size() != 20) {
@@ -380,10 +380,10 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
         return;
     }
 
-    for (CNode* pnode : vNodes) {
+    /*for (CNode* pnode : vNodes) {
         pnode->PushMessage("xrouter", msg);
     }
-    return;
+    return;*/
 
     // Send only to the service nodes that have the required wallet
     int nHeight;
@@ -395,6 +395,7 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
     }
     std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
 
+    int sent = 0;
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
@@ -405,18 +406,20 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
                 boost::split(wallets, wstr, boost::is_any_of(","));
                 if (std::find(wallets.begin(), wallets.end(), wallet) != wallets.end()) {
                     pnode->PushMessage("xrouter", msg);
+                    sent++;
+                    if (sent == confirmations)
+                        return;
                 }
             }
-
         }
     }
 }
 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPtr& packet, std::string wallet)
+void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPtr& packet, int confirmations, std::string wallet)
 {
-    m_p->onSend(id, packet->body(), wallet);
+    m_p->onSend(id, packet->body(), confirmations, wallet);
 }
 
 //*****************************************************************************
@@ -790,7 +793,7 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
 
     rpacket->append(uuid);
     rpacket->append(reply);
-    sendPacket(rpacket);
+    sendPacket(rpacket, 0);
     return;
 }
 

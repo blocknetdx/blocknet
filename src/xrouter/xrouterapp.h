@@ -318,7 +318,7 @@ public:
      * @param packet send message via xrouter
      * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
      */
-    void sendPacket(const XRouterPacketPtr & packet, std::string wallet="");
+    void sendPacket(const XRouterPacketPtr & packet, int confirmations, std::string wallet="");
 
     /**
      * @brief sendPacket send packet to xrouter network to specified id,
@@ -326,7 +326,7 @@ public:
      * @param packet packet data
      * @param wallet
      */
-    void sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet, std::string wallet="");
+    void sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet, int confirmations, std::string wallet="");
 
     /**
      * @brief sends packet to service node(s) and waits for replies in the same thread, then returns the result (or error if no reply came)
