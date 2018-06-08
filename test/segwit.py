@@ -120,7 +120,6 @@ class SegWitTest(BitcoinTestFramework):
         try:
             node.setgenerate(True, 1)
         except JSONRPCException as exp:
-            print(exp.error)
             assert(exp.error["code"] == -1)
         else:
             raise AssertionError("Created valid block when TestBlockValidity should have failed")
