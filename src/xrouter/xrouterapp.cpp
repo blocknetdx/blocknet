@@ -772,6 +772,9 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
       case xrGetTransactionsBloomFilter:
         reply = processGetTransactionsBloomFilter(packet, offset, currency);
         break;
+      case xrSendTransaction:
+        reply = processSendTransaction(packet, offset, currency);
+        break;
       case xrGetXrouterConfig:
         reply = processGetXrouterConfig(packet);
         break;

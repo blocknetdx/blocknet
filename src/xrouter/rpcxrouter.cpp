@@ -411,12 +411,8 @@ Value xrSendTransaction(const Array & params, bool fHelp)
     
     std::string currency = params[0].get_str();
     std::string transaction = params[1].get_str();
-    Object result;
-
     std::string reply = xrouter::App::instance().sendTransaction(currency, transaction);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrGetReply(const Array & params, bool fHelp)
