@@ -17,10 +17,12 @@
 #include "config/blocknetdx-config.h"
 #endif
 
+#include "autotruncatelog.h"
 #include "compat.h"
 #include "tinyformat.h"
 #include "utiltime.h"
 
+#include <atomic>
 #include <exception>
 #include <map>
 #include <stdint.h>
@@ -56,7 +58,7 @@ extern bool fServer;
 extern std::string strMiscWarning;
 extern bool fLogTimestamps;
 extern bool fLogIPs;
-extern volatile bool fReopenDebugLog;
+extern std::atomic<bool> fReopenDebugLog;
 
 void SetupEnvironment();
 
@@ -125,6 +127,14 @@ void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet, std::map
 boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate = true);
 #endif
 boost::filesystem::path GetTempPath();
+
+/**
+ * @brief Truncate the "debug.log" file if too big, keep most recent lines
+ * @param[in] truncSz specifies the threshold in bytes that triggers truncation
+ *            and the size of the file after truncation
+ */
+void TruncateLogKeepRecent(const TruncateSizes& truncSz);
+
 void ShrinkDebugFile();
 void runCommand(std::string strCommand);
 

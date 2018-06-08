@@ -15,6 +15,7 @@
 #include "activeservicenode.h"
 #include "addrman.h"
 #include "amount.h"
+#include "autotruncatelog.h"
 #include "checkpoints.h"
 #include "compat/sanity.h"
 #include "key.h"
@@ -458,6 +459,7 @@ std::string HelpMessage(HelpMessageMode mode)
             _("In this mode -genproclimit controls how many blocks are generated immediately."));
     }
     strUsage += HelpMessageOpt("-shrinkdebugfile", _("Shrink debug.log file on client startup (default: 1 when no -debug)"));
+    strUsage += HelpMessageOpt("-autotruncatelog=<n>", _("Set truncate size in MB when debug.log over 1024 MB, checked twice a day (0-1024, default: 0 for Servicenodes, 512 otherwise)"));
     strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
     strUsage += HelpMessageOpt("-litemode=<n>", strprintf(_("Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0));
 
@@ -941,6 +943,17 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
+
+    std::string atl{GetArg("-autotruncatelog","not specified")};
+    if (atl != "not specified") {
+        auto rc{global_auto_truncate_log.init(atl,GetBoolArg("-servicenode", false))};
+        if (rc != 0) {
+            return InitError(strprintf(_("Invalid size for -autotruncatelog=<n>: '%s' rc=%d"), atl, rc));
+        }
+        // Forced check during initialization
+        global_auto_truncate_log.check();
+    }
+
     LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     LogPrintf("BlocknetDX version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
     LogPrintf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
