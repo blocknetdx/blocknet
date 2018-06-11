@@ -408,6 +408,8 @@ void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPt
                 // This node is a service node
                 XRouterSettings settings;
                 settings.read(s.second.xrouterConfig);
+                if (!settings.walletEnabled(wallet))
+                    continue;
                 if (settings.isAvailableCommand(packet->command(), wallet)) {
                     m_p->onSend(id, packet->body(), pnode);
                     sent++;
