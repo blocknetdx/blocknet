@@ -407,9 +407,9 @@ void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPt
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
                 std::vector<string> wallets;
-                std::string wstr = s.second.GetConnectedWalletsStr();
-                boost::split(wallets, wstr, boost::is_any_of(","));
-                if (std::find(wallets.begin(), wallets.end(), wallet) != wallets.end()) {
+                XRouterSettings settings;
+                settings.read(s.second.xrouterConfig);
+                if (settings.isAvailableCommand(packet->command(), wallet)) {
                     m_p->onSend(id, packet->body(), pnode);
                     sent++;
                     if (sent == confirmations)
