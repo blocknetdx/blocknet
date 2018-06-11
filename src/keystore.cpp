@@ -34,7 +34,7 @@ void CBasicKeyStore::ImplicitlyLearnRelatedKeyScripts(const CPubKey& pubkey)
     AssertLockHeld(cs_KeyStore);
     CKeyID key_id = pubkey.GetID();
     // We must actually know about this key already.
-    assert(HaveKey(key_id));
+    assert(HaveKey(key_id) || mapWatchKeys.count(key_id));
     // This adds the redeemscripts necessary to detect P2WPKH and P2SH-P2WPKH
     // outputs. Technically P2WPKH outputs don't have a redeemscript to be
     // spent. However, our current IsMine logic requires the corresponding
@@ -57,8 +57,15 @@ void CBasicKeyStore::ImplicitlyLearnRelatedKeyScripts(const CPubKey& pubkey)
 bool CBasicKeyStore::GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
 {
     CKey key;
-    if (!GetKey(address, key))
+    if (!GetKey(address, key)) {
+        LOCK(cs_KeyStore);
+        WatchKeyMap::const_iterator it = mapWatchKeys.find(address);
+        if (it != mapWatchKeys.end()) {
+            vchPubKeyOut = it->second;
+            return true;
+        }
         return false;
+    }
     vchPubKeyOut = key.GetPubKey();
     return true;
 }
@@ -109,6 +116,7 @@ bool CBasicKeyStore::AddWatchOnly(const CScript& dest)
     setWatchOnly.insert(dest);
     CPubKey pubKey;
     if (ExtractPubKey(dest, pubKey)) {
+        mapWatchKeys[pubKey.GetID()] = pubKey;
         ImplicitlyLearnRelatedKeyScripts(pubKey);
     }
     return true;
@@ -119,6 +127,11 @@ bool CBasicKeyStore::RemoveWatchOnly(const CScript& dest)
     LOCK(cs_KeyStore);
     setWatchOnly.erase(dest);
     CPubKey pubKey;
+    if (ExtractPubKey(dest, pubKey)) {
+        mapWatchKeys.erase(pubKey.GetID());
+    }
+    // Related CScripts are not removed; having superfluous scripts around is
+    // harmless (see comment in ImplicitlyLearnRelatedKeyScripts).
     return true;
 }
 

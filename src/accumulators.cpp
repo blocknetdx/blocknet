@@ -380,7 +380,7 @@ bool GetAccumulatorValue(int& nHeight, const libzerocoin::CoinDenomination denom
         //Start at the first zerocoin
         libzerocoin::Accumulator accumulator(Params().Zerocoin_Params(), denom);
         bnAccValue = accumulator.getValue();
-        nHeight = Params().Zerocoin_LastOldParams() + 11;
+        nHeight = Params().Zerocoin_StartHeight() + 10;
         return true;
     }
 

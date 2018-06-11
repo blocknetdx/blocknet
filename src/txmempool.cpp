@@ -44,7 +44,7 @@ CTxMemPoolEntry::CTxMemPoolEntry(): nFee(0), nTxCost(0), nModSize(0), nTime(0), 
 }
 
 size_t CTxMemPoolEntry::GetTxSize() const {
-    return nTxSize;
+    return GetVirtualTransactionSize(tx);
 }
 
 double CTxMemPoolEntry::GetPriority(unsigned int currentHeight) const
