@@ -170,19 +170,23 @@ bool App::init(int argc, char *argv[])
     return true;
 }
 
-//*****************************************************************************
-//*****************************************************************************
-bool App::start()
+static std::vector<pair<int, CServicenode> > getServiceNodes()
 {
-    // Send only to the service nodes that have the required wallet
     int nHeight;
     {
         LOCK(cs_main);
         CBlockIndex* pindex = chainActive.Tip();
-        if(!pindex) return;
+        if(!pindex) return std::vector<pair<int, CServicenode> >();
         nHeight = pindex->nHeight;
     }
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
+    return mnodeman.GetServicenodeRanks(nHeight);
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::start()
+{
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
@@ -386,14 +390,7 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
     return;*/
 
     // Send only to the service nodes that have the required wallet
-    int nHeight;
-    {
-        LOCK(cs_main);
-        CBlockIndex* pindex = chainActive.Tip();
-        if(!pindex) return;
-        nHeight = pindex->nHeight;
-    }
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
     int sent = 0;
     LOCK(cs_vNodes);
@@ -995,14 +992,7 @@ std::string App::getXrouterConfigSync(CNode* node) {
 
     std::string reply = queries[id][0];
     
-    int nHeight;
-    {
-        LOCK(cs_main);
-        CBlockIndex* pindex = chainActive.Tip();
-        if(!pindex) return "";
-        nHeight = pindex->nHeight;
-    }
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
     LOCK(cs_vNodes);
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
