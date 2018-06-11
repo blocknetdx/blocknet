@@ -113,7 +113,7 @@ protected:
      * @param id
      * @param message
      */
-    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, int confirmations, std::string wallet="");
+    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, CNode* pnode);
 };
 
 //*****************************************************************************
@@ -309,14 +309,9 @@ WalletConnectorXRouterPtr App::connectorByCurrency(const std::string & currency)
 
     return xrouter::WalletConnectorXRouterPtr();
 }
-
+ 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacket(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
-{
-    static std::vector<unsigned char> addr(20, 0);
-    m_p->onSend(addr, packet->body(), confirmations, wallet);
-}
 
 std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations, int timeout)
 {
@@ -364,7 +359,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
 // send packet to xrouter network to specified id,
 // or broadcast, when id is empty
 //*****************************************************************************
-void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, int confirmations, std::string wallet)
+void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, CNode* pnode)
 {
     std::vector<unsigned char> msg(id);
     if (msg.size() != 20) {
@@ -375,10 +370,23 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
     // body
     msg.insert(msg.end(), message.begin(), message.end());
 
+    pnode->PushMessage("xrouter", msg);
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void App::sendPacket(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
+{
+    static std::vector<unsigned char> addr(20, 0);
+    sendPacket(addr, packet, confirmations, wallet);
+}
+
+void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPtr& packet, int confirmations, std::string wallet)
+{
     if (wallet.empty()) {
         // TODO: here send only back to the sender
         for (CNode* pnode : vNodes) {
-            pnode->PushMessage("xrouter", msg);
+            m_p->onSend(id, packet->body(), pnode);
         }
 
         return;
@@ -402,7 +410,7 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
                 std::string wstr = s.second.GetConnectedWalletsStr();
                 boost::split(wallets, wstr, boost::is_any_of(","));
                 if (std::find(wallets.begin(), wallets.end(), wallet) != wallets.end()) {
-                    pnode->PushMessage("xrouter", msg);
+                    m_p->onSend(id, packet->body(), pnode);
                     sent++;
                     if (sent == confirmations)
                         return;
@@ -410,13 +418,6 @@ void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<u
             }
         }
     }
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPtr& packet, int confirmations, std::string wallet)
-{
-    m_p->onSend(id, packet->body(), confirmations, wallet);
 }
 
 //*****************************************************************************
