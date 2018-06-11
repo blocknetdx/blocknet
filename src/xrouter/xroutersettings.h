@@ -35,6 +35,7 @@ public:
     std::string logPath() const;
     std::string rawText() const { return rawtext; }
 
+    bool walletEnabled(std::string currency);
     bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
     

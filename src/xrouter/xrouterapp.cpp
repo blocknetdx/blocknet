@@ -406,7 +406,6 @@ void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPt
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
-                std::vector<string> wallets;
                 XRouterSettings settings;
                 settings.read(s.second.xrouterConfig);
                 if (settings.isAvailableCommand(packet->command(), wallet)) {

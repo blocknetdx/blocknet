@@ -104,6 +104,17 @@ std::string XRouterSettings::logPath() const
     return std::string(GetDataDir(false).string()) + "/";
 }
 
+bool XRouterSettings::walletEnabled(std::string currency)
+{
+    std::vector<string> wallets;
+    std::string wstr = get<std::string>("Main.wallets", "");
+    boost::split(wallets, wstr, boost::is_any_of(","));
+    if (std::find(wallets.begin(), wallets.end(), currency) != wallets.end())
+        return true;
+    else
+        return false;
+}
+
 bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string currency, bool def)
 {
     int res = 0;
