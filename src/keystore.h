@@ -56,6 +56,7 @@ public:
 
 typedef std::map<CKeyID, CKey> KeyMap;
 typedef std::map<CScriptID, CScript> ScriptMap;
+typedef std::map<CKeyID, CPubKey> WatchKeyMap;
 typedef std::set<CScript> WatchOnlySet;
 typedef std::set<CScript> MultiSigScriptSet;
 
@@ -64,6 +65,7 @@ class CBasicKeyStore : public CKeyStore
 {
 protected:
     KeyMap mapKeys;
+    WatchKeyMap mapWatchKeys;
     ScriptMap mapScripts;
     WatchOnlySet setWatchOnly;
     MultiSigScriptSet setMultiSig;

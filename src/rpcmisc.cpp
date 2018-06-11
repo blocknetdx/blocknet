@@ -423,48 +423,51 @@ CScript _createmultisig_redeemScript(const UniValue& params)
     if ((int)keys.size() < nRequired)
         throw runtime_error(
             strprintf("not enough keys supplied "
-                      "(got %u keys, but need at least %d to redeem)",
-                keys.size(), nRequired));
+                      "(got %u keys, but need at least %d to redeem)", keys.size(), nRequired));
     if (keys.size() > 16)
         throw runtime_error("Number of addresses involved in the multisignature address creation > 16\nReduce the number");
     std::vector<CPubKey> pubkeys;
     pubkeys.resize(keys.size());
-    for (unsigned int i = 0; i < keys.size(); i++) {
+    for (unsigned int i = 0; i < keys.size(); i++)
+    {
         const std::string& ks = keys[i].get_str();
 #ifdef ENABLE_WALLET
-        // Case 1: Phore address and we have full public key:
-        if (pwalletMain && IsValidDestinationString(ks)) {
+        // Case 1: Bitcoin address and we have full public key:
+        LogPrintf("walletmain: %d, validdest: %d, dest: %s\n", !!pwalletMain ? 1 : 0, IsValidDestinationString(ks) ? 1 : 0, ks);
+        if (pwalletMain && IsValidDestinationString(ks))
+        {
             CTxDestination dest = DecodeDestination(ks);
-            CKeyID key = GetKeyForDestination(*pwalletMain, dest);
-            if (!key.IsNull())
-                throw runtime_error(
-                    strprintf("%s does not refer to a key", ks));
+            const CKeyStore& keystore = *pwalletMain;
+            CKeyID keyID = GetKeyForDestination(keystore, dest);
             CPubKey vchPubKey;
-            if (!pwalletMain->GetPubKey(key, vchPubKey))
+            if (!pwalletMain->GetPubKey(keyID, vchPubKey))
                 throw runtime_error(
-                    strprintf("no full public key for address %s", ks));
+                    strprintf("no full public key for address %s",ks));
             if (!vchPubKey.IsFullyValid())
-                throw runtime_error(" Invalid public key: " + ks);
+                throw runtime_error(" Invalid public key: "+ks);
             pubkeys[i] = vchPubKey;
         }
 
         // Case 2: hex public key
         else
 #endif
-            if (IsHex(ks)) {
+        if (IsHex(ks))
+        {
             CPubKey vchPubKey(ParseHex(ks));
             if (!vchPubKey.IsFullyValid())
-                throw runtime_error(" Invalid public key: " + ks);
+                throw runtime_error("Invalid public key: "+ks);
             pubkeys[i] = vchPubKey;
-        } else {
-            throw runtime_error(" Invalid public key: " + ks);
+        }
+        else
+        {
+            throw runtime_error("Invalid public key: "+ks);
         }
     }
     CScript result = GetScriptForMultisig(nRequired, pubkeys);
 
     if (result.size() > MAX_SCRIPT_ELEMENT_SIZE)
         throw runtime_error(
-            strprintf("redeemScript exceeds size limit: %d > %d", result.size(), MAX_SCRIPT_ELEMENT_SIZE));
+                strprintf("redeemScript exceeds size limit: %d > %d", result.size(), MAX_SCRIPT_ELEMENT_SIZE));
 
     return result;
 }

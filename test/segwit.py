@@ -86,11 +86,11 @@ class SegWitTest(BitcoinTestFramework):
 
     def setup_network(self):
         self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-logtimemicros", "-debug", "-walletprematurewitness", "-rpcserialversion=0"]))
-        self.nodes.append(start_node(1, self.options.tmpdir, ["-logtimemicros", "-debug", "-blockversion=4", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness", "-rpcserialversion=1"]))
-        self.nodes.append(start_node(2, self.options.tmpdir, ["-logtimemicros", "-debug", "-blockversion=536870915", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness"]))
+        self.nodes.append(start_node(0, self.options.tmpdir, ["-logtimemicros", "-walletprematurewitness", "-rpcserialversion=0"]))
+        self.nodes.append(start_node(1, self.options.tmpdir, ["-logtimemicros", "-blockversion=4", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness", "-rpcserialversion=1"]))
+        self.nodes.append(start_node(2, self.options.tmpdir, ["-logtimemicros", "-blockversion=536870915", "-promiscuousmempoolflags=517", "-prematurewitness", "-walletprematurewitness"]))
         connect_nodes(self.nodes[1], 0)
-        connect_nodes(self.nodes[2], 1)
+        connect_nodes(self.nodes[2], 1
         connect_nodes(self.nodes[0], 2)
         self.is_network_split = False
         self.sync_all()
@@ -230,26 +230,6 @@ class SegWitTest(BitcoinTestFramework):
         self.success_mine(self.nodes[0], p2sh_ids[NODE_0][WIT_V0][0], True) #block 434
         self.success_mine(self.nodes[0], p2sh_ids[NODE_0][WIT_V1][0], True) #block 435
 
-        print("Verify sigops are counted in GBT with BIP141 rules after the fork")
-        txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 1)
-        tmpl = self.nodes[0].getblocktemplate({'rules':['segwit']})
-        assert(tmpl['sigoplimit'] == 80000)
-        assert(tmpl['transactions'][0]['txid'] == txid)
-        assert(tmpl['transactions'][0]['sigops'] == 8)
-
-        print("Verify non-segwit miners get a valid GBT response after the fork")
-        send_to_witness(1, self.nodes[0], find_unspent(self.nodes[0], 50), self.pubkey[0], False, Decimal("49.998"))
-        try:
-            tmpl = self.nodes[0].getblocktemplate({})
-            assert(len(tmpl['transactions']) == 1)  # Doesn't include witness tx
-            assert(tmpl['sigoplimit'] == 20000)
-            assert(tmpl['transactions'][0]['hash'] == txid)
-            assert(tmpl['transactions'][0]['sigops'] == 2)
-            assert(('!segwit' in tmpl['rules']) or ('segwit' not in tmpl['rules']))
-        except JSONRPCException:
-            # This is an acceptable outcome
-            pass
-
         print("Verify behaviour of importaddress, addwitnessaddress and listunspent")
 
         # Some public keys to be used later
@@ -265,9 +245,9 @@ class SegWitTest(BitcoinTestFramework):
 
         # Import a compressed key and an uncompressed key, generate some multisig addresses
         self.nodes[0].importprivkey("92e6XLo5jVAVwrQKPNTs93oQco8f8sDNBcpv73Dsrs397fQtFQn")
-        uncompressed_spendable_address = ["mvozP4UwyGD2mGZU4D2eMvMLPB9WkMmMQu"]
+        uncompressed_spendable_address = ["yCGsx6q1rKBZfQTtjxMZwRyN1JMvYuASSt"]
         self.nodes[0].importprivkey("cNC8eQ5dg3mFAVePDX4ddmPYpPbw41r9bm2jd1nLJT77e6RrzTRR")
-        compressed_spendable_address = ["mmWQubrDomqpgSYekvsU7HWEVjLFHAakLe"]
+        compressed_spendable_address = ["y2yJUeCHgppMaaT5SgCPgo8G7rYfBexA1v"]
         assert ((self.nodes[0].validateaddress(uncompressed_spendable_address[0])['iscompressed'] == False))
         assert ((self.nodes[0].validateaddress(compressed_spendable_address[0])['iscompressed'] == True))
 
@@ -291,7 +271,7 @@ class SegWitTest(BitcoinTestFramework):
         uncompressed_solvable_address.append(self.nodes[0].addmultisigaddress(2, [compressed_spendable_address[0], uncompressed_solvable_address[0]]))
         compressed_solvable_address.append(self.nodes[0].addmultisigaddress(2, [compressed_spendable_address[0], compressed_solvable_address[0]]))
         compressed_solvable_address.append(self.nodes[0].addmultisigaddress(2, [compressed_solvable_address[0], compressed_solvable_address[1]]))
-        unknown_address = ["mtKKyoHabkk6e4ppT7NaM7THqPUt7AzPrT", "2NDP3jLWAFT8NDAiUa9qiE6oBt2awmMq7Dx"]
+        unknown_address = ["mtKKyoHabkk6e4ppT7NaM7THqPUt7AzPrT", "yF6LbHnfjfHt3HxwUfDj4RCQ1Meo7JkESV"]
 
         # Test multisig_without_privkey
         # We have 2 public keys without private keys, use addmultisigaddress to add to wallet.
