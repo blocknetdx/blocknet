@@ -378,7 +378,7 @@ Value xrGenerateBloomFilter(const Array & params, bool fHelp)
         throw std::runtime_error("xrGenerateBloomFilter key1 key2 ...\nReturns bloom filter for given keys.");
     }
 
-    for (int i = 0; i < params.size(); i++) {
+    for (unsigned int i = 0; i < params.size(); i++) {
         std::string hash = params[i].get_str();
         const uint256 key(hash.c_str());
         f.insert(key);
