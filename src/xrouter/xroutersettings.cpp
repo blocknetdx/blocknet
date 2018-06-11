@@ -78,6 +78,22 @@ bool XRouterSettings::read(const char * fileName)
     return true;
 }
 
+bool XRouterSettings::read(std::string config)
+{
+    try
+    {
+        boost::property_tree::ini_parser::read_ini(config.c_str(), m_pt);
+        this->rawtext = config;
+    }
+    catch (std::exception & e)
+    {
+        //LOG() << e.what();
+        return false;
+    }
+
+    return true;
+}
+
 //******************************************************************************
 //******************************************************************************
 std::string XRouterSettings::logPath() const

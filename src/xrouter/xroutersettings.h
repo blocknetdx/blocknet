@@ -23,6 +23,7 @@ public:
     bool parseCmdLine(int, char * argv[]);
 
     bool read(const char * fileName = 0);
+    bool read(std::string config);
 
 public:
     bool isFullLog()
