@@ -44,8 +44,9 @@ private:
 
     boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
     boost::container::map<std::string, std::vector<std::string> > queries;
-    boost::container::map<std::string, CServicenode > configQueries;
+    boost::container::map<std::string, CNode* > configQueries;
     boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
+    boost::container::map<CNode*, XRouterSettings > snodeConfigs;
     int req_cnt;
     
     XRouterSettings xrouter_settings;

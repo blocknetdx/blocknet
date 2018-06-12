@@ -82,7 +82,8 @@ bool XRouterSettings::read(std::string config)
 {
     try
     {
-        boost::property_tree::ini_parser::read_ini(config.c_str(), m_pt);
+        istringstream istr(config.c_str());
+        boost::property_tree::ini_parser::read_ini(istr, m_pt);
         this->rawtext = config;
     }
     catch (std::exception & e)

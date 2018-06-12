@@ -195,7 +195,7 @@ bool App::start()
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
                 std::string uuid = this->getXrouterConfig(pnode);
-                this->configQueries[uuid] = s.second;
+                this->configQueries[uuid] = pnode;
             }
 
         }
@@ -407,8 +407,9 @@ void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPt
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
-                XRouterSettings settings;
-                settings.read(s.second.xrouterConfig);
+                if (!snodeConfigs.count(pnode))
+                    continue;
+                XRouterSettings settings = snodeConfigs[pnode];
                 if (!settings.walletEnabled(wallet))
                     continue;
                 if (settings.isAvailableCommand(packet->command(), wallet)) {
@@ -686,7 +687,9 @@ bool App::processReply(XRouterPacketPtr packet) {
     offset += reply.size() + 1;
 
     if (configQueries.count(uuid)) {
-        configQueries[uuid].xrouterConfig = reply;
+        XRouterSettings settings;
+        settings.read(reply);
+        snodeConfigs[configQueries[uuid]] = settings;
         return true;
     }
     
