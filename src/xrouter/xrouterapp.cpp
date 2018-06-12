@@ -1007,16 +1007,9 @@ std::string App::getXrouterConfigSync(CNode* node) {
         return "Could not get XRouter config";
 
     std::string reply = queries[id][0];
-    
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
-
-    LOCK(cs_vNodes);
-    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-        if (s.second.addr.ToString() == node->addr.ToString()) {
-            s.second.xrouterConfig = reply;
-        }
-
-    }
+    XRouterSettings settings;
+    settings.read(reply);
+    this->snodeConfigs[node] = settings;
     return reply;
 }
 
