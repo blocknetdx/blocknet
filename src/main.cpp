@@ -5654,7 +5654,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
 
                 xrouter::App& app = xrouter::App::instance();
 
-                app.onMessageReceived(addr, raw, state);
+                app.onMessageReceived(pfrom, addr, raw, state);
 
                 int dos = 0;
                 if (state.IsInvalid(dos)) {

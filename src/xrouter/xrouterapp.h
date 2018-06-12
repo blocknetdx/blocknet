@@ -13,6 +13,7 @@
 #include "servicenode.h"
 
 #include <memory>
+#include <chrono>
 #include <boost/container/map.hpp>
 
 #include "uint256.h"
@@ -44,6 +45,7 @@ private:
     boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
     boost::container::map<std::string, std::vector<std::string> > queries;
     boost::container::map<std::string, CServicenode > configQueries;
+    boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
     int req_cnt;
     
     XRouterSettings xrouter_settings;
@@ -346,7 +348,7 @@ public:
      * @param message
      * @param state
      */
-    void onMessageReceived(const std::vector<unsigned char> & id, const std::vector<unsigned char> & message, CValidationState & state);
+    void onMessageReceived(CNode* node, const std::vector<unsigned char> & id, const std::vector<unsigned char> & message, CValidationState & state);
 };
 
 } // namespace xrouter

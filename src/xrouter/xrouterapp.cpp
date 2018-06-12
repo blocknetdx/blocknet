@@ -38,6 +38,7 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <chrono>
 
 static const CAmount minBlock = 200;
 
@@ -703,7 +704,7 @@ bool App::processReply(XRouterPacketPtr packet) {
 
 //*****************************************************************************
 //*****************************************************************************
-void App::onMessageReceived(const std::vector<unsigned char>& id,
+void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& id,
     const std::vector<unsigned char>& message,
     CValidationState& state)
 {
@@ -746,6 +747,7 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         return;
     }
 
+    std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     switch (packet->command()) {
       case xrGetBlockCount:
         reply = processGetBlockCount(packet, offset, currency);
@@ -779,6 +781,15 @@ void App::onMessageReceived(const std::vector<unsigned char>& id,
         break;
       case xrGetXrouterConfig:
         reply = processGetXrouterConfig(packet);
+        if (lastConfigQueries.count(node)) {
+            std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigQueries[node];
+            std::chrono::system_clock::duration diff = time - prev_time;
+            if (std::chrono::duration_cast<std::chrono::seconds>(diff) < std::chrono::seconds(10))
+                state.DoS(10, error("XRouter: too many config requests"), REJECT_INVALID, "xrouter-error");
+            lastConfigQueries[node] = time;
+        } else {
+            lastConfigQueries[node] = time;
+        }
         break;
       case xrReply:
         processReply(packet);
