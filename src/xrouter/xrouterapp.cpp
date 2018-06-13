@@ -191,6 +191,9 @@ bool App::start()
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
+        /*std::string uuid = this->getXrouterConfig(pnode);
+        this->configQueries[uuid] = pnode;
+        continue;*/
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
@@ -732,7 +735,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& id,
         return;
     }
 
-    if ((packet->command() > xrConfigReply) && !verifyBlockRequirement(packet)) {
+    if ((packet->command() > xrConfigReply) && (packet->command() != xrGetXrouterConfig) && !verifyBlockRequirement(packet)) {
         std::cerr << "Block requirement not satisfied\n";
         state.DoS(10, error("XRouter: block requirement not satisfied"), REJECT_INVALID, "xrouter-error");
         return;
@@ -822,11 +825,11 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
             if (output.Value() >= minBlock) {
                 CKeyID keyID;
                 if (!addressCoins.first.GetKeyID(keyID)) {
-                    std::cerr << "GetKeyID failed\n";
+                    //std::cerr << "GetKeyID failed\n";
                     continue;
                 }
                 if (!pwalletMain->GetKey(keyID, key)) {
-                    std::cerr << "GetKey failed\n";
+                    //std::cerr << "GetKey failed\n";
                     continue;
                 }
                 txHash = output.tx->GetHash();
@@ -847,7 +850,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     uint256 txHash;
     uint32_t vout;
     CKey key;
-    if (!satisfyBlockRequirement(txHash, vout, key)) {
+    if ((command != xrGetXrouterConfig) && !satisfyBlockRequirement(txHash, vout, key)) {
         std::cerr << "Minimum block requirement not satisfied\n";
         return "Minimum block requirement not satisfied";
     }
