@@ -73,6 +73,8 @@ public:
      */
     bool start();
 
+    std::string updateConfigs();
+    
     /**
      * @brief stop - stopped services
      * @return

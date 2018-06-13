@@ -418,7 +418,7 @@ Value xrSendTransaction(const Array & params, bool fHelp)
 Value xrGetReply(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance txdata\nSends signed transaction for selected currency.");
+        throw std::runtime_error("xrGetReply uuid\nRetrieves reply to request with uuid.");
     }
 
     if (params.size() < 1)
@@ -432,6 +432,19 @@ Value xrGetReply(const Array & params, bool fHelp)
     std::string id = params[0].get_str();
     Object result;
     std::string reply = xrouter::App::instance().getReply(id);
+    Object obj;
+    obj.emplace_back(Pair("reply", reply));
+    return obj;
+}
+
+Value xrUpdateConfigs(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrUpdateConfigs\nSends requests for all service node configs.");
+    }
+    
+    Object result;
+    std::string reply = xrouter::App::instance().updateConfigs();
     Object obj;
     obj.emplace_back(Pair("reply", reply));
     return obj;

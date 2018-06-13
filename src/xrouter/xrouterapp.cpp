@@ -187,6 +187,12 @@ static std::vector<pair<int, CServicenode> > getServiceNodes()
 //*****************************************************************************
 bool App::start()
 {
+    updateConfigs();
+    return m_p->start();
+}
+
+std::string App::updateConfigs()
+{
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
     LOCK(cs_vNodes);
@@ -203,8 +209,8 @@ bool App::start()
 
         }
     }
-
-    return m_p->start();
+    
+    return "Config requests have been sent";
 }
 
 //*****************************************************************************
