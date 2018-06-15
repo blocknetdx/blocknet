@@ -1359,7 +1359,8 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             o2.push_back(Pair(xtx->toCurrency, xtx->toAmount));
             arr.push_back(o1);
             arr.push_back(o2);
-            additionalData.emplace_back(write_string(Value(arr)));
+            std::string tmp = write_string(Value(arr));
+            additionalData.emplace_back(HexStr(tmp.begin(), tmp.end()));
         }
 
         std::string strtxid;
