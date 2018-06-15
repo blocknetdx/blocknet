@@ -28,7 +28,7 @@ namespace rpc
      */
     bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
                                  const double amount,
-                                 const std::vector<unsigned char> & data,
+                                 const std::vector<std::string> & data,
                                  std::string & txid);
     /**
      * @brief getDataFromTx
