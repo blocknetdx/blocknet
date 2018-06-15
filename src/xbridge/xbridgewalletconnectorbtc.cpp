@@ -1095,7 +1095,7 @@ bool BtcWalletConnector::init()
 
 //*****************************************************************************
 //*****************************************************************************
-std::string BtcWalletConnector<CryptoProvider>::fromXAddr(const unsigned char * xaddr) const
+std::string BtcWalletConnector::fromXAddr(const unsigned char * xaddr) const
 {
     xbridge::XBitcoinAddress addr;
     addr.Set(CKeyID(uint160(xaddr)), addrPrefix[0]);
