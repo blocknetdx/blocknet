@@ -299,7 +299,6 @@ SOURCES += \
     src/xbridge/xbridgewalletconnector.cpp \
     src/xbridge/xbridgewalletconnectorbtc.cpp \
     src/xbridge/xbridgewalletconnectorbcc.cpp \
-    src/xbridge/xbridgewalletconnectorsys.cpp \
     src/xbridge/xbridgewalletconnectordgb.cpp \
     src/xbridge/xbridgepacket.cpp
 
@@ -590,7 +589,6 @@ HEADERS += \
     src/xbridge/xbridgewalletconnector.h \
     src/xbridge/xbridgewalletconnectorbtc.h \
     src/xbridge/xbridgewalletconnectorbcc.h \
-    src/xbridge/xbridgewalletconnectorsys.h \
     src/xbridge/xbridgewalletconnectordgb.h \
     src/xbridge/xbridgedef.h
 

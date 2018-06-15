@@ -1345,9 +1345,27 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             return false;
         }
 
+        std::vector<std::string> additionalData;
+
+        // hash of xdata
+        additionalData.emplace_back(HexStr(xid.begin(), xid.end()));
+
+        // transaction info
+        {
+            Array arr;
+            Object o1;
+            o1.push_back(Pair(xtx->fromCurrency, xtx->fromAmount));
+            Object o2;
+            o2.push_back(Pair(xtx->toCurrency, xtx->toAmount));
+            arr.push_back(o1);
+            arr.push_back(o2);
+            std::string tmp = write_string(Value(arr));
+            additionalData.emplace_back(HexStr(tmp.begin(), tmp.end()));
+        }
+
         std::string strtxid;
         if (!rpc::storeDataIntoBlockchain(snodeAddress, conn->serviceNodeFee,
-                                          std::vector<unsigned char>(xid.begin(), xid.end()), strtxid))
+                                          additionalData, strtxid))
         {
             ERR() << "storeDataIntoBlockchain failed, error send blocknet tx " << __FUNCTION__;
             sendCancelTransaction(xtx, crBlocknetError);
