@@ -83,8 +83,6 @@ class WalletTest(TestCaseBase):
         self.nodes[1].setgenerate(True, 1)
         self.sync_all()
 
-        print(self.nodes[2].getrawtransaction(tx, 1))
-
         assert_equal(self.nodes[0].getbalance(), 0)
         #print(self.nodes[2].getbalance("from1"))
         #assert_equal(self.nodes[2].getbalance(), 5701)
