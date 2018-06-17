@@ -759,30 +759,29 @@ bool CMasternodePing::VerifySignature(CPubKey& pubKeyMasternode, int &nDos) {
 
 bool CMasternodePing::CheckAndUpdate(int& nDos, bool fRequireEnabled, bool fCheckSigTimeOnly)
 {
-    if (sigTime > GetAdjustedTime() + 60 * 60) {
-        LogPrint("masternode","CMasternodePing::CheckAndUpdate - Signature rejected, too far into the future %s\n", vin.prevout.hash.ToString());
-        nDos = 1;
-        return false;
-    }
-
-    if (sigTime <= GetAdjustedTime() - 60 * 60) {
-        LogPrint("masternode","CMasternodePing::CheckAndUpdate - Signature rejected, too far into the past %s - %d %d \n", vin.prevout.hash.ToString(), sigTime, GetAdjustedTime());
-        nDos = 1;
-        return false;
-    }
-
-    if(fCheckSigTimeOnly) {
-    	CMasternode* pmn = mnodeman.Find(vin);
-    	if(pmn) return VerifySignature(pmn->pubKeyMasternode, nDos);
-    	return true;
-    }
-
     LogPrint("masternode", "CMasternodePing::CheckAndUpdate - New Ping - %s - %s - %lli\n", GetHash().ToString(), blockHash.ToString(), sigTime);
 
     // see if we have this Masternode
     CMasternode* pmn = mnodeman.Find(vin);
     if (pmn != NULL && pmn->protocolVersion >= masternodePayments.GetMinMasternodePaymentsProto()) {
         if (fRequireEnabled && !pmn->IsEnabled()) return false;
+
+        if (pmn->protocolVersion >= MIN_PEER_VERSION_FIXED_SIGTIME) {
+            if (sigTime > GetAdjustedTime() + 60 * 60) {
+                LogPrint("masternode","CMasternodePing::CheckAndUpdate - Signature rejected, too far into the future %s\n", vin.prevout.hash.ToString());
+                nDos = 1;
+                return false;
+            }
+
+            if (sigTime <= GetAdjustedTime() - 60 * 60) {
+                LogPrint("masternode","CMasternodePing::CheckAndUpdate - Signature rejected, too far into the past %s - %d %d \n", vin.prevout.hash.ToString(), sigTime, GetAdjustedTime());
+                nDos = 1;
+                return false;
+            }
+        }
+        if(fCheckSigTimeOnly) {
+            return VerifySignature(pmn->pubKeyMasternode, nDos);
+        }
 
         // LogPrint("masternode","mnping - Found corresponding mn for vin: %s\n", vin.ToString());
         // update only if there is no known ping for this masternode or
