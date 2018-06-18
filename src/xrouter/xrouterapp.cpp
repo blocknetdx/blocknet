@@ -856,7 +856,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     CKey key;
     if ((command != xrGetXrouterConfig) && !satisfyBlockRequirement(txHash, vout, key)) {
         std::cerr << "Minimum block requirement not satisfied\n";
-        return "Minimum block requirement not satisfied";
+        return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
 
     //boost::uuids::uuid uuid = boost::uuids::random_generator()();
@@ -965,8 +965,7 @@ std::string App::getXrouterConfig(CNode* node) {
     packet->append(vout);
     packet->append(id);
     
-    static std::vector<unsigned char> addr(20, 0);
-    std::vector<unsigned char> msg(addr);
+    std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     node->PushMessage("xrouter", msg);
     
@@ -991,8 +990,7 @@ std::string App::getXrouterConfigSync(CNode* node) {
     boost::mutex::scoped_lock lock(*m);
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
 
-    static std::vector<unsigned char> addr(20, 0);
-    std::vector<unsigned char> msg(addr);
+    std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     node->PushMessage("xrouter", msg);
     
