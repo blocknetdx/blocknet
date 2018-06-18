@@ -323,7 +323,7 @@ public:
      * @param packet send message via xrouter
      * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
      */
-    void sendPacketToServer(const XRouterPacketPtr & packet, int confirmations, std::string wallet);
+    bool sendPacketToServer(const XRouterPacketPtr & packet, int confirmations, std::string wallet);
     
     /**
      * @brief sendPacket send packet btadcast to xrouter network

@@ -327,17 +327,19 @@ WalletConnectorXRouterPtr App::connectorByCurrency(const std::string & currency)
 
 std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations, int timeout)
 {
+    Object error;
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    sendPacketToServer(packet, confirmations, currency);
+    if (!sendPacketToServer(packet, confirmations, currency)) {
+        error.emplace_back(Pair("error", "Could not find available nodes for your request"));
+        return json_spirit::write_string(Value(error), true);
+    }
 
     int confirmation_count = 0;
     while ((confirmation_count < confirmations) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         confirmation_count++;
-
-    Object error;
 
     if(confirmation_count <= confirmations / 2) {
         error.emplace_back(Pair("error", "Failed to get response"));
@@ -380,7 +382,7 @@ void App::Impl::onSend(const std::vector<unsigned char>& message, CNode* pnode)
 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
+bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
 {
     /*for (CNode* pnode : vNodes) {
         pnode->PushMessage("xrouter", msg);
@@ -390,7 +392,8 @@ void App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
     // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
-    int sent = 0;
+    std::vector<CNode*> selectedNodes;
+    
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
@@ -402,14 +405,24 @@ void App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
                 if (!settings.walletEnabled(wallet))
                     continue;
                 if (settings.isAvailableCommand(packet->command(), wallet)) {
-                    m_p->onSend(packet->body(), pnode);
-                    sent++;
-                    if (sent == confirmations)
-                        return;
+                    selectedNodes.push_back(pnode);
                 }
             }
         }
     }
+    
+    if ((int)selectedNodes.size() < confirmations)
+        return false;
+    
+    int sent = 0;
+    for (CNode* pnode : selectedNodes) {
+        m_p->onSend(packet->body(), pnode);
+        sent++;
+        if (sent == confirmations)
+            return true;
+    }
+    
+    return false;
 }
 
 void App::sendPacketToClient(const XRouterPacketPtr& packet, CNode* pnode)
@@ -839,7 +852,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     XRouterPacketPtr packet(new XRouterPacket(command));
 
     uint256 txHash;
-    uint32_t vout;
+    uint32_t vout = 0;
     CKey key;
     if ((command != xrGetXrouterConfig) && !satisfyBlockRequirement(txHash, vout, key)) {
         std::cerr << "Minimum block requirement not satisfied\n";
