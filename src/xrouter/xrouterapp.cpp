@@ -735,7 +735,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& id,
     }
 
     // TODO: here it implies that xrReply and xrConfig reply are first in enum before others, better compare explicitly
-    if ((packet->command() > xrConfigReply) && !packet->verify()) {
+    if ((packet->command() > xrConfigReply) && (packet->command() != xrGetXrouterConfig) && !packet->verify()) {
         std::cerr << "unsigned packet or signature error " << __FUNCTION__;
         state.DoS(10, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
         return;
@@ -959,19 +959,13 @@ std::string App::getXrouterConfig(CNode* node) {
     XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
 
     uint256 txHash;
-    uint32_t vout;
-    CKey key;
-    if (!satisfyBlockRequirement(txHash, vout, key)) {
-        std::cerr << "Minimum block requirement not satisfied\n";
-        return "Minimum block requirement not satisfied";
-    }
+    uint32_t vout = 0;
 
     std::string id = generateUUID();
 
     packet->append(txHash.begin(), 32);
     packet->append(vout);
     packet->append(id);
-    packet->sign(key);
     
     static std::vector<unsigned char> addr(20, 0);
     std::vector<unsigned char> msg(addr);
@@ -985,22 +979,14 @@ std::string App::getXrouterConfigSync(CNode* node) {
     XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
 
     uint256 txHash;
-    uint32_t vout;
-    CKey key;
-    if (!satisfyBlockRequirement(txHash, vout, key)) {
-        std::cerr << "Minimum block requirement not satisfied\n";
-        return "Minimum block requirement not satisfied";
-    }
+    uint32_t vout = 0;
 
-    //boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    //std::string id = boost::uuids::to_string(uuid);
-    std::string id = generateUUID(); //"request" + std::to_string(req_cnt);
+    std::string id = generateUUID();
     req_cnt++;
 
     packet->append(txHash.begin(), 32);
     packet->append(vout);
     packet->append(id);
-    packet->sign(key);
 
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
