@@ -38,6 +38,7 @@
 #include <net/if.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <sys/socket.h>
