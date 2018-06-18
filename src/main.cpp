@@ -5646,15 +5646,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 Misbehaving(pfrom->GetId(), 10);
             } else {
                 CValidationState state;
-
-                static std::vector<unsigned char> zero(20, 0);
-                std::vector<unsigned char> addr(raw.begin(), raw.begin() + 20);
-                // remove addr from raw
-                raw.erase(raw.begin(), raw.begin() + 20);
-
                 xrouter::App& app = xrouter::App::instance();
-
-                app.onMessageReceived(pfrom, addr, raw, state);
+                app.onMessageReceived(pfrom, raw, state);
 
                 int dos = 0;
                 if (state.IsInvalid(dos)) {
