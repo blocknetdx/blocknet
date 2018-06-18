@@ -323,16 +323,16 @@ public:
      * @param packet send message via xrouter
      * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
      */
-    void sendPacket(const XRouterPacketPtr & packet, int confirmations, std::string wallet="");
-
+    void sendPacketToServer(const XRouterPacketPtr & packet, int confirmations, std::string wallet);
+    
     /**
-     * @brief sendPacket send packet to xrouter network to specified id,
-     * @param id address
-     * @param packet packet data
-     * @param wallet
+     * @brief sendPacket send packet btadcast to xrouter network
+     * @param packet send message via xrouter
+     * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
      */
-    void sendPacket(const std::vector<unsigned char> & id, const XRouterPacketPtr & packet, int confirmations, std::string wallet="");
-
+    void sendPacketToClient(const XRouterPacketPtr & packet, CNode* pnode);
+    
+    
     /**
      * @brief sends packet to service node(s) and waits for replies in the same thread, then returns the result (or error if no reply came)
      * @param packet Xrouter packet received over the network
@@ -347,11 +347,10 @@ public:
     // call when message from xrouter network received
     /**
      * @brief onMessageReceived  call when message from xrouter network received
-     * @param id packet id
      * @param message
      * @param state
      */
-    void onMessageReceived(CNode* node, const std::vector<unsigned char> & id, const std::vector<unsigned char> & message, CValidationState & state);
+    void onMessageReceived(CNode* node, const std::vector<unsigned char> & message, CValidationState & state);
 };
 
 } // namespace xrouter

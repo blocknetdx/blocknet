@@ -111,10 +111,9 @@ protected:
     /**
      * @brief onSend  send packet to xrouter network to specified id,
      *  or broadcast, when id is empty
-     * @param id
      * @param message
      */
-    void onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, CNode* pnode);
+    void onSend(const std::vector<unsigned char>& message, CNode* pnode);
 };
 
 //*****************************************************************************
@@ -197,9 +196,12 @@ std::string App::updateConfigs()
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        /*std::string uuid = this->getXrouterConfig(pnode);
+        if (snodeConfigs.count(pnode))
+            continue;
+        std::string uuid = this->getXrouterConfig(pnode);
         this->configQueries[uuid] = pnode;
-        continue;*/
+        std::cout << uuid << std::endl;
+        continue;
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
@@ -329,7 +331,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    sendPacket(packet, confirmations, currency);
+    sendPacketToServer(packet, confirmations, currency);
 
     int confirmation_count = 0;
     while ((confirmation_count < confirmations) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
@@ -369,39 +371,17 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
 // send packet to xrouter network to specified id,
 // or broadcast, when id is empty
 //*****************************************************************************
-void App::Impl::onSend(const std::vector<unsigned char>& id, const std::vector<unsigned char>& message, CNode* pnode)
+void App::Impl::onSend(const std::vector<unsigned char>& message, CNode* pnode)
 {
-    std::vector<unsigned char> msg(id);
-    if (msg.size() != 20) {
-        std::cerr << "bad send address " << __FUNCTION__;
-        return;
-    }
-
-    // body
+    std::vector<unsigned char> msg;
     msg.insert(msg.end(), message.begin(), message.end());
-
     pnode->PushMessage("xrouter", msg);
 }
 
 //*****************************************************************************
 //*****************************************************************************
-void App::sendPacket(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
+void App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
 {
-    static std::vector<unsigned char> addr(20, 0);
-    sendPacket(addr, packet, confirmations, wallet);
-}
-
-void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPtr& packet, int confirmations, std::string wallet)
-{
-    if (wallet.empty()) {
-        // TODO: here send only back to the sender
-        for (CNode* pnode : vNodes) {
-            m_p->onSend(id, packet->body(), pnode);
-        }
-
-        return;
-    }
-
     /*for (CNode* pnode : vNodes) {
         pnode->PushMessage("xrouter", msg);
     }
@@ -422,7 +402,7 @@ void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPt
                 if (!settings.walletEnabled(wallet))
                     continue;
                 if (settings.isAvailableCommand(packet->command(), wallet)) {
-                    m_p->onSend(id, packet->body(), pnode);
+                    m_p->onSend(packet->body(), pnode);
                     sent++;
                     if (sent == confirmations)
                         return;
@@ -430,6 +410,11 @@ void App::sendPacket(const std::vector<unsigned char>& id, const XRouterPacketPt
             }
         }
     }
+}
+
+void App::sendPacketToClient(const XRouterPacketPtr& packet, CNode* pnode)
+{
+    m_p->onSend(packet->body(), pnode);
 }
 
 //*****************************************************************************
@@ -716,9 +701,7 @@ bool App::processReply(XRouterPacketPtr packet) {
 
 //*****************************************************************************
 //*****************************************************************************
-void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& id,
-    const std::vector<unsigned char>& message,
-    CValidationState& state)
+void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& message, CValidationState& state)
 {
     std::cerr << "Received xrouter packet\n";
 
@@ -815,7 +798,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& id,
 
     rpacket->append(uuid);
     rpacket->append(reply);
-    sendPacket(rpacket, 0);
+    sendPacketToClient(rpacket, node);
     return;
 }
 
@@ -851,6 +834,8 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 //*****************************************************************************
 std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2, std::string confirmations)
 {
+    updateConfigs();
+    
     XRouterPacketPtr packet(new XRouterPacket(command));
 
     uint256 txHash;
