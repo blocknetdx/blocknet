@@ -1323,10 +1323,10 @@ bool AppInit2(boost::thread_group& threadGroup, CScheduler& scheduler)
 
     if (mapArgs.count("-externalip")) {
         BOOST_FOREACH (string strAddr, mapMultiArgs["-externalip"]) {
-            CService addrLocal(strAddr, GetListenPort(), fNameLookup);
+            CService addrLocal(strAddr, GetListenPort());
             if (!addrLocal.IsValid())
                 return InitError(strprintf(_("Cannot resolve -externalip address: '%s'"), strAddr));
-            AddLocal(CService(strAddr, GetListenPort(), fNameLookup), LOCAL_MANUAL);
+            AddLocal(CService(strAddr, GetListenPort()), LOCAL_MANUAL);
         }
     }
 
