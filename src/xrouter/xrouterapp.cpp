@@ -196,12 +196,15 @@ std::string App::updateConfigs()
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        if (snodeConfigs.count(pnode))
+        /*std::cout << pnode->addrName << std::endl;
+        if (snodeConfigs.count(pnode)) {
+            std::cout << snodeConfigs[pnode].rawText() << std::endl;
             continue;
+        }
         std::string uuid = this->getXrouterConfig(pnode);
         this->configQueries[uuid] = pnode;
         std::cout << uuid << std::endl;
-        continue;
+        continue;*/
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
@@ -213,6 +216,20 @@ std::string App::updateConfigs()
     }
     
     return "Config requests have been sent";
+}
+
+std::string App::printConfigs()
+{
+    Array result;
+    
+    for (const auto& it : this->snodeConfigs) {
+        Object val;
+        val.emplace_back("node", it.first->addrName);
+        val.emplace_back("config", it.second.rawText());
+        result.push_back(Value(val));
+    }
+    
+    return json_spirit::write_string(Value(result), true);
 }
 
 //*****************************************************************************
@@ -680,6 +697,7 @@ std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {
 }
 
 std::string App::processGetXrouterConfig(XRouterPacketPtr packet) {
+    //std::cout << this->xrouter_settings.rawText() << std::endl;
     return this->xrouter_settings.rawText();
 }
 
@@ -697,6 +715,8 @@ bool App::processReply(XRouterPacketPtr packet) {
         XRouterSettings settings;
         settings.read(reply);
         snodeConfigs[configQueries[uuid]] = settings;
+        //std::cout << "SETTINGS " << settings.rawText() << std::endl;
+        //std::cout << reply << std::endl;
         return true;
     }
     
@@ -716,7 +736,7 @@ bool App::processReply(XRouterPacketPtr packet) {
 //*****************************************************************************
 void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& message, CValidationState& state)
 {
-    std::cerr << "Received xrouter packet\n";
+    std::cout << "Received xrouter packet\n";
 
     // If Main.xrouter == 0, xrouter is turned off on this snode
     int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);

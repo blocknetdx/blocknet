@@ -74,6 +74,7 @@ public:
     bool start();
 
     std::string updateConfigs();
+    std::string printConfigs();
     
     /**
      * @brief stop - stopped services
