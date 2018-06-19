@@ -823,7 +823,7 @@ App::flushCancelledOrders(bpt::time_duration minAge) const
     for(auto mp : maps) {
         for(auto it = mp->begin(); it != mp->end(); ) {
             const TransactionDescrPtr & ptr = it->second; 
-            if (ptr->state != xbridge::TransactionDescr::trCancelled
+            if (ptr->state == xbridge::TransactionDescr::trCancelled
                 && ptr->txtime < keepTime) {
                 list.emplace_back(ptr->id,ptr->txtime,ptr.use_count());
                 mp->erase(it++);
