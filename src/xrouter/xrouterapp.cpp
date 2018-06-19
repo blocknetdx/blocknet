@@ -192,6 +192,10 @@ bool App::start()
 
 std::string App::updateConfigs()
 {
+    int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
+    if (!xrouter_on)
+        return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
+    
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
     LOCK(cs_vNodes);
@@ -697,7 +701,7 @@ std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {
 }
 
 std::string App::processGetXrouterConfig(XRouterPacketPtr packet) {
-    //std::cout << this->xrouter_settings.rawText() << std::endl;
+    std::cout << this->xrouter_settings.rawText() << std::endl;
     return this->xrouter_settings.rawText();
 }
 
@@ -715,8 +719,8 @@ bool App::processReply(XRouterPacketPtr packet) {
         XRouterSettings settings;
         settings.read(reply);
         snodeConfigs[configQueries[uuid]] = settings;
-        //std::cout << "SETTINGS " << settings.rawText() << std::endl;
-        //std::cout << reply << std::endl;
+        std::cout << "SETTINGS " << settings.rawText() << std::endl;
+        std::cout << reply << std::endl;
         return true;
     }
     
@@ -867,6 +871,10 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
 //*****************************************************************************
 std::string App::xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1, std::string param2, std::string confirmations)
 {
+    int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
+    if (!xrouter_on)
+        return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
+    
     updateConfigs();
     
     XRouterPacketPtr packet(new XRouterPacket(command));
