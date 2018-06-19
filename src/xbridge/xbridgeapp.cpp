@@ -828,7 +828,7 @@ App::flushCancelledOrders(bpt::time_duration minAge) const
                 list.emplace_back(ptr->id,ptr->txtime,ptr.use_count());
                 mp->erase(it++);
             } else {
-                it++;
+                ++it;
             }
         }
     }
