@@ -1352,15 +1352,15 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
 
         // transaction info
         {
-            Array arr;
-            Object o1;
-            o1.push_back(Pair(xtx->fromCurrency, xtx->fromAmount));
-            Object o2;
-            o2.push_back(Pair(xtx->toCurrency, xtx->toAmount));
-            arr.push_back(o1);
-            arr.push_back(o2);
-            std::string tmp = write_string(Value(arr));
-            additionalData.emplace_back(HexStr(tmp.begin(), tmp.end()));
+            Object sell;
+            sell.push_back(Pair(xtx->fromCurrency, xtx->fromAmount));
+            Object buy;
+            buy.push_back(Pair(xtx->toCurrency, xtx->toAmount));
+
+            Object info;
+            info.push_back(Pair("txid", txid.GetHex().substr(0, 10)));
+            info.push_back(Pair("sell", sell));
+            info.push_back(Pair("buy", buy));
         }
 
         std::string strtxid;
