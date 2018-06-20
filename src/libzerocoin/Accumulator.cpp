@@ -49,7 +49,6 @@ void Accumulator::increment(const CBigNum& bnValue) {
 void Accumulator::accumulate(const PublicCoin& coin) {
 	// Make sure we're initialized
 	if(!(this->value)) {
-        std::cout << "Accumulator is not initialized" << "\n";
 		throw std::runtime_error("Accumulator is not initialized");
 	}
 
