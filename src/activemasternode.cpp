@@ -113,6 +113,10 @@ void CActiveMasternode::ManageStatus()
                 return;
             }
 
+            //send to all peers
+            LogPrintf("CActiveMasternode::ManageStatus() - Relay broadcast vin = %s\n", vin.ToString());
+            mnb.Relay();
+
             LogPrintf("CActiveMasternode::ManageStatus() - Is capable master node!\n");
             status = ACTIVE_MASTERNODE_STARTED;
 

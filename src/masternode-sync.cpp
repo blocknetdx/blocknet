@@ -139,6 +139,9 @@ void CMasternodeSync::GetNextAsset()
     case (MASTERNODE_SYNC_INITIAL):
     case (MASTERNODE_SYNC_FAILED): // should never be used here actually, use Reset() instead
         ClearFulfilledRequest();
+        RequestedMasternodeAssets = MASTERNODE_SYNC_SPORKS;
+        break;
+    case (MASTERNODE_SYNC_SPORKS):
         RequestedMasternodeAssets = MASTERNODE_SYNC_LIST;
         break;
     case (MASTERNODE_SYNC_LIST):
@@ -161,6 +164,8 @@ std::string CMasternodeSync::GetSyncStatus()
     switch (masternodeSync.RequestedMasternodeAssets) {
     case MASTERNODE_SYNC_INITIAL:
         return _("Synchronization pending...");
+    case MASTERNODE_SYNC_SPORKS:
+        return _("Synchronizing sporks...");
     case MASTERNODE_SYNC_LIST:
         return _("Synchronizing masternodes...");
     case MASTERNODE_SYNC_MNW:
@@ -254,7 +259,7 @@ void CMasternodeSync::Process()
 
     // sporks synced but blockchain is not, wait until we're almost at a recent block to continue
     if (Params().NetworkID() != CBaseChainParams::REGTEST &&
-        !IsBlockchainSynced() && RequestedMasternodeAssets > MASTERNODE_SYNC_LIST) return;
+        !IsBlockchainSynced() && RequestedMasternodeAssets > MASTERNODE_SYNC_SPORKS) return;
 
     TRY_LOCK(cs_vNodes, lockRecv);
     if (!lockRecv) return;
@@ -277,12 +282,18 @@ void CMasternodeSync::Process()
             return;
         }
 
-        //set to synced
-        if (pnode->HasFulfilledRequest(NetMsgType::GETSPORK)) {
-            pnode->FulfilledRequest(NetMsgType::GETSPORK);
+        // set to synced
+        if (RequestedMasternodeAssets == MASTERNODE_SYNC_SPORKS) {
+            if (pnode->HasFulfilledRequest("getspork")) continue;
+            pnode->FulfilledRequest("getspork");
 
-            pnode->PushMessage(NetMsgType::GETSPORKS); //get current network sporks
-        }
+            pnode->PushMessage("getsporks"); //get current network sporks
+            if (RequestedMasternodeAttempt >= 2) GetNextAsset();
+            RequestedMasternodeAttempt++;
+ 
+            return;
+         }
+
 
         if (pnode->nVersion >= masternodePayments.GetMinMasternodePaymentsProto()) {
             if (RequestedMasternodeAssets == MASTERNODE_SYNC_LIST) {
