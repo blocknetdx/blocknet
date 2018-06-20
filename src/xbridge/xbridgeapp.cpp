@@ -38,6 +38,10 @@
 
 #include "posixtimeconversion.h"
 
+using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
+using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
+namespace bpt = boost::posix_time;
+
 //*****************************************************************************
 //*****************************************************************************
 XUIConnector xuiConnector;
@@ -797,6 +801,33 @@ std::map<uint256, xbridge::TransactionDescrPtr> App::history() const
 {
     boost::mutex::scoped_lock l(m_p->m_txLocker);
     return m_p->m_historicTransactions;
+}
+
+//******************************************************************************
+//******************************************************************************
+std::vector<App::FlushedOrder>
+App::flushCancelledOrders(bpt::time_duration minAge) const
+{
+    std::vector<App::FlushedOrder> list{};
+    const bpt::ptime keepTime{bpt::microsec_clock::universal_time() - minAge};
+    const std::vector<TransactionMap*> maps{&m_p->m_transactions, &m_p->m_historicTransactions};
+
+    boost::mutex::scoped_lock l{m_p->m_txLocker};
+
+    for(auto mp : maps) {
+        for(auto it = mp->begin(); it != mp->end(); ) {
+            const TransactionDescrPtr & ptr = it->second; 
+            if (ptr->state == xbridge::TransactionDescr::trCancelled
+                && ptr->txtime < keepTime) {
+                list.emplace_back(ptr->id,ptr->txtime,ptr.use_count());
+                mp->erase(it++);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    return list;
 }
 
 //******************************************************************************
