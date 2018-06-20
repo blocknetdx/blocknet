@@ -231,13 +231,15 @@ CInv::CInv(int typeIn, const uint256& hashIn)
 
 CInv::CInv(const std::string& strType, const uint256& hashIn)
 {
-    if (strType == NetMsgType::TX)
-        type = MSG_TX;
-    else if (strType == NetMsgType::BLOCK)
-        type = MSG_BLOCK;
-    else
-        throw std::out_of_range(strprintf("CInv::CInv(string, uint256): unknown type '%s'", strType));
-
+    unsigned int i;
+    for (i = 1; i < ARRAYLEN(ppszTypeName); i++) {
+        if (strType == ppszTypeName[i]) {
+            type = i;
+            break;
+        }
+    }
+    if (i == ARRAYLEN(ppszTypeName))
+        LogPrint("net", "CInv::CInv(string, uint256) : unknown type '%s'", strType);
     hash = hashIn;
 }
 
