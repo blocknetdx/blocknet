@@ -200,14 +200,11 @@ std::string App::updateConfigs()
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        /*std::cout << pnode->addrName << std::endl;
         if (snodeConfigs.count(pnode)) {
-            std::cout << snodeConfigs[pnode].rawText() << std::endl;
             continue;
         }
-        std::string uuid = this->getXrouterConfig(pnode);
+        /*std::string uuid = this->getXrouterConfig(pnode);
         this->configQueries[uuid] = pnode;
-        std::cout << uuid << std::endl;
         continue;*/
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
@@ -417,17 +414,22 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
     
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
+        if (!snodeConfigs.count(pnode))
+            continue;
+        XRouterSettings settings = snodeConfigs[pnode];
+        if (!settings.walletEnabled(wallet))
+            continue;
+        if (!settings.isAvailableCommand(packet->command(), wallet))
+            continue;
+        
+        /*
+        selectedNodes.push_back(pnode);
+        continue;*/
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
-                if (!snodeConfigs.count(pnode))
-                    continue;
-                XRouterSettings settings = snodeConfigs[pnode];
-                if (!settings.walletEnabled(wallet))
-                    continue;
-                if (settings.isAvailableCommand(packet->command(), wallet)) {
-                    selectedNodes.push_back(pnode);
-                }
+                selectedNodes.push_back(pnode);
+                break;
             }
         }
     }
@@ -439,6 +441,7 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
     for (CNode* pnode : selectedNodes) {
         m_p->onSend(packet->body(), pnode);
         sent++;
+        //std::cout << "sent " << sent << " " << confirmations << std::endl;
         if (sent == confirmations)
             return true;
     }
@@ -719,8 +722,6 @@ bool App::processReply(XRouterPacketPtr packet) {
         XRouterSettings settings;
         settings.read(reply);
         snodeConfigs[configQueries[uuid]] = settings;
-        std::cout << "SETTINGS " << settings.rawText() << std::endl;
-        std::cout << reply << std::endl;
         return true;
     }
     
