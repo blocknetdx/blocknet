@@ -147,7 +147,7 @@ std::string BtcWalletConnectorXRouter::getBlockCount() const
 
     Object resp = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
 
-    return getResult(resp).get_str();
+    return std::to_string(getResult(resp).get_int());
 }
 
 std::string BtcWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
