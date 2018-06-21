@@ -17,7 +17,7 @@
 #include "xbridge/util/settings.h"
 #include "xbridge/xbridgewallet.h"
 #include "xbridge/xbridgewalletconnector.h"
-
+#include "util/xrouterlogger.h"
 
 #include "xrouterconnector.h"
 #include "xrouterconnectorbtc.h"
@@ -197,12 +197,23 @@ std::string App::updateConfigs()
         return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
     
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
-
+    std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+    
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
         if (snodeConfigs.count(pnode)) {
             continue;
         }
+           
+        if (lastConfigUpdates.count(pnode)) {
+            // There was a request to this node already, a new one will be sent only after 5 minutes
+            std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigUpdates[pnode];
+            std::chrono::system_clock::duration diff = time - prev_time;
+            if (std::chrono::duration_cast<std::chrono::seconds>(diff) < std::chrono::seconds(300)) 
+                continue;
+        }
+            
+        std::cout << "Getting config from node " << pnode->addrName << std::endl;
         /*std::string uuid = this->getXrouterConfig(pnode);
         this->configQueries[uuid] = pnode;
         continue;*/
@@ -211,8 +222,8 @@ std::string App::updateConfigs()
                 // This node is a service node
                 std::string uuid = this->getXrouterConfig(pnode);
                 this->configQueries[uuid] = pnode;
+                lastConfigUpdates[pnode] = time;
             }
-
         }
     }
     
@@ -831,7 +842,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         std::clog << "Unknown packet\n";
         return;
     }
-    
+
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
 
     rpacket->append(uuid);
