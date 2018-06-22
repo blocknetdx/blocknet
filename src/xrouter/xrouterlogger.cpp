@@ -2,6 +2,7 @@
 //******************************************************************************
 
 #include "xrouterlogger.h"
+#include "util.h"
 
 #include <string>
 #include <sstream>
