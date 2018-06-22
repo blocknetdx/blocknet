@@ -5,7 +5,7 @@
 #define XROUTERAPP_H
 
 #include "xrouterpacket.h"
-#include "util/xroutererror.h"
+#include "xroutererror.h"
 #include "xroutersettings.h"
 #include "validationstate.h"
 #include "xrouterdef.h"

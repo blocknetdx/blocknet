@@ -17,7 +17,7 @@
 #include "xbridge/util/settings.h"
 #include "xbridge/xbridgewallet.h"
 #include "xbridge/xbridgewalletconnector.h"
-#include "util/xrouterlogger.h"
+#include "xrouterlogger.h"
 
 #include "xrouterconnector.h"
 #include "xrouterconnectorbtc.h"
@@ -213,9 +213,10 @@ std::string App::updateConfigs()
                 continue;
         }
             
-        std::cout << "Getting config from node " << pnode->addrName << std::endl;
-        /*std::string uuid = this->getXrouterConfig(pnode);
-        this->configQueries[uuid] = pnode;
+        LOG() << "Getting config from node " << pnode->addrName;
+        std::string uuid = this->getXrouterConfig(pnode);
+        /*this->configQueries[uuid] = pnode;
+        lastConfigUpdates[pnode] = time;
         continue;*/
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
@@ -433,8 +434,7 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
         if (!settings.isAvailableCommand(packet->command(), wallet))
             continue;
         
-        /*
-        selectedNodes.push_back(pnode);
+        /*selectedNodes.push_back(pnode);
         continue;*/
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
@@ -470,7 +470,7 @@ void App::sendPacketToClient(const XRouterPacketPtr& packet, CNode* pnode)
 static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
 {
     if (packet->size() < 36) {
-        std::clog << "packet not big enough\n";
+        LOG() << "Packet not big enough";
         return false;
     }
 
@@ -484,7 +484,7 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
     CTxOut txOut;
     if (pcoinsTip->GetCoins(txHash, coins)) {
         if (vout > coins.vout.size()) {
-            std::clog << "Invalid vout index " << vout << "\n";
+            LOG() << "Invalid vout index " << vout;
             return false;
         }
 
@@ -492,24 +492,24 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
     } else if (GetTransaction(txHash, txval, hashBlock, true)) {
         txOut = txval.vout[vout];
     } else {
-        std::clog << "Could not find " << txHash.ToString() << "\n";
+        LOG() << "Could not find " << txHash.ToString();
         return false;
     }
 
     if (txOut.nValue < minBlock) {
-        std::clog << "Insufficient BLOCK " << txOut.nValue << "\n";
+        LOG() << "Insufficient BLOCK " << txOut.nValue;
         return false;
     }
 
     CTxDestination destination;
     if (!ExtractDestination(txOut.scriptPubKey, destination)) {
-        std::clog << "Unable to extract destination\n";
+        LOG() << "Unable to extract destination";
         return false;
     }
 
     auto txKeyID = boost::get<CKeyID>(&destination);
     if (!txKeyID) {
-        std::clog << "destination must be a single address\n";
+        LOG() << "destination must be a single address";
         return false;
     }
 
@@ -517,7 +517,7 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
         packet->pubkey() + XRouterPacket::pubkeySize);
 
     if (packetKey.GetID() != *txKeyID) {
-        std::clog << "Public key provided doesn't match UTXO destination.\n";
+        LOG() << "Public key provided doesn't match UTXO destination.";
         return false;
     }
 
@@ -752,7 +752,7 @@ bool App::processReply(XRouterPacketPtr packet) {
 //*****************************************************************************
 void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& message, CValidationState& state)
 {
-    std::cout << "Received xrouter packet\n";
+    LOG() << "Received xrouter packet";
 
     // If Main.xrouter == 0, xrouter is turned off on this snode
     int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
@@ -761,20 +761,20 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     
     XRouterPacketPtr packet(new XRouterPacket);
     if (!packet->copyFrom(message)) {
-        std::cerr << "incorrect packet received " << __FUNCTION__;
+        LOG() << "incorrect packet received " << __FUNCTION__;
         state.DoS(10, error("XRouter: invalid packet received"), REJECT_INVALID, "xrouter-error");
         return;
     }
 
     // TODO: here it implies that xrReply and xrConfig reply are first in enum before others, better compare explicitly
     if ((packet->command() > xrConfigReply) && (packet->command() != xrGetXrouterConfig) && !packet->verify()) {
-        std::cerr << "unsigned packet or signature error " << __FUNCTION__;
+        LOG() << "unsigned packet or signature error " << __FUNCTION__;
         state.DoS(10, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
         return;
     }
 
     if ((packet->command() > xrConfigReply) && (packet->command() != xrGetXrouterConfig) && !verifyBlockRequirement(packet)) {
-        std::cerr << "Block requirement not satisfied\n";
+        LOG() << "Block requirement not satisfied\n";
         state.DoS(10, error("XRouter: block requirement not satisfied"), REJECT_INVALID, "xrouter-error");
         return;
     }
@@ -785,12 +785,13 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     offset += uuid.size() + 1;
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
-    
+    LOG() << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
+    std::cout << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
     if ((packet->command() > xrConfigReply) && !this->xrouter_settings.isAvailableCommand(packet->command(), currency)) {
-        std::cerr << "This command is blocked in xrouter.conf";
+        LOG() << "This command is blocked in xrouter.conf";
         return;
     }
-
+    
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     switch (packet->command()) {
       case xrGetBlockCount:
@@ -839,7 +840,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         processReply(packet);
         return;
       default:
-        std::clog << "Unknown packet\n";
+        LOG() << "Unknown packet";
         return;
     }
 
