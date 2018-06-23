@@ -5573,7 +5573,7 @@ void static ProcessGetData(CNode* pfrom)
                     LOCK(cs_mapRelay);
                     map<CInv, CDataStream>::iterator mi = mapRelay.find(inv);
                     if (mi != mapRelay.end()) {
-                        pfrom->PushMessageWithFlag(inv.type == MSG_WITNESS_TX ? 0 : SERIALIZE_TRANSACTION_NO_WITNESS, NetMsgType::TX, (*mi).second);
+                        pfrom->PushMessageWithFlag(inv.type == MSG_WITNESS_TX ? 0 : SERIALIZE_TRANSACTION_NO_WITNESS, inv.GetCommand(), (*mi).second);
                         pushed = true;
                     }
                 }
