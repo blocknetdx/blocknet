@@ -94,7 +94,7 @@ std::string LOG::makeFileName()
 
     return directory.string() + "/" +
             "xrouter_" +
-            boost::posix_time::to_iso_string(boost::posix_time::second_clock::local_time()) +
+            boost::gregorian::to_iso_string(boost::gregorian::day_clock::local_day()) +
             ".log";
 }
 
