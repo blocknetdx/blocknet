@@ -208,7 +208,7 @@ void CMasternode::Check(bool forceCheck)
         activeState = MASTERNODE_EXPIRED;
         return;
     }
-    
+
     if(lastPing.sigTime - sigTime < MASTERNODE_MIN_MNP_SECONDS){
     	activeState = MASTERNODE_PRE_ENABLED;
     	return;
@@ -283,7 +283,7 @@ int64_t CMasternode::GetLastPaid()
 
         if (masternodePayments.mapMasternodeBlocks.count(BlockReading->nHeight)) {
             /*
-                Search for this payee, with at least 2 votes. This will aid in consensus allowing the network 
+                Search for this payee, with at least 2 votes. This will aid in consensus allowing the network
                 to converge on the same payees quickly, then keep the same schedule.
             */
             if (masternodePayments.mapMasternodeBlocks[BlockReading->nHeight].HasPayeeWithVotes(mnpayee, 2)) {
@@ -466,14 +466,14 @@ bool CMasternodeBroadcast::CheckDefaultPort(std::string strService, std::string&
 {
     CService service = CService(strService);
     int nDefaultPort = Params().GetDefaultPort();
-    
+
     if (service.GetPort() != nDefaultPort) {
-        strErrorRet = strprintf("Invalid port %u for masternode %s, only %d is supported on %s-net.", 
+        strErrorRet = strprintf("Invalid port %u for masternode %s, only %d is supported on %s-net.",
                                         service.GetPort(), strService, nDefaultPort, Params().NetworkIDString());
         LogPrint("masternode", "%s - %s\n", strContext, strErrorRet);
         return false;
     }
- 
+
     return true;
 }
 
@@ -520,12 +520,12 @@ bool CMasternodeBroadcast::CheckAndUpdate(int& nDos)
 
     std::string errorMessage = "";
     if (!obfuScationSigner.VerifyMessage(pubKeyCollateralAddress, sig, GetNewStrMessage(), errorMessage)
-     		&& !obfuScationSigner.VerifyMessage(pubKeyCollateralAddress, sig, GetOldStrMessage(), errorMessage))
+    		&& !obfuScationSigner.VerifyMessage(pubKeyCollateralAddress, sig, GetOldStrMessage(), errorMessage))
     {
         // don't ban for old masternodes, their sigs could be broken because of the bug
         nDos = protocolVersion < MIN_PEER_MNANNOUNCE ? 0 : 100;
         return error("CMasternodeBroadcast::CheckAndUpdate - Got bad Masternode address signature : %s", errorMessage);
-     }
+    }
 
     if (Params().NetworkID() == CBaseChainParams::MAIN) {
         if (addr.GetPort() != 11771) return false;
@@ -660,7 +660,7 @@ bool CMasternodeBroadcast::Sign(CKey& keyCollateralAddress)
 {
     std::string errorMessage;
     sigTime = GetAdjustedTime();
- 
+
     std::string strMessage;
     if(chainActive.Height() <= Params().Zerocoin_LastOldParams())
     	strMessage = GetOldStrMessage();
@@ -670,7 +670,7 @@ bool CMasternodeBroadcast::Sign(CKey& keyCollateralAddress)
     if (!obfuScationSigner.SignMessage(strMessage, errorMessage, sig, keyCollateralAddress))
     	return error("CMasternodeBroadcast::Sign() - Error: %s", errorMessage);
 
-    
+
     if (!obfuScationSigner.VerifyMessage(pubKeyCollateralAddress, sig, strMessage, errorMessage))
     	return error("CMasternodeBroadcast::Sign() - Error: %s", errorMessage);
 
@@ -684,10 +684,10 @@ bool CMasternodeBroadcast::VerifySignature()
     if(!obfuScationSigner.VerifyMessage(pubKeyCollateralAddress, sig, GetNewStrMessage(), errorMessage)
             && !obfuScationSigner.VerifyMessage(pubKeyCollateralAddress, sig, GetOldStrMessage(), errorMessage))
         return error("CMasternodeBroadcast::VerifySignature() - Error: %s", errorMessage);
- 
+
     return true;
- }
- 
+}
+
 std::string CMasternodeBroadcast::GetOldStrMessage()
 {
     std::string strMessage;
@@ -750,7 +750,7 @@ bool CMasternodePing::VerifySignature(CPubKey& pubKeyMasternode, int &nDos) {
 	std::string strMessage = vin.ToString() + blockHash.ToString() + boost::lexical_cast<std::string>(sigTime);
 	std::string errorMessage = "";
 
-   if(!obfuScationSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, errorMessage)){
+	if(!obfuScationSigner.VerifyMessage(pubKeyMasternode, vchSig, strMessage, errorMessage)){
 		nDos = 33;
 		return error("CMasternodePing::VerifySignature - Got bad Masternode ping signature %s Error: %s", vin.ToString(), errorMessage);
 	}
@@ -759,6 +759,20 @@ bool CMasternodePing::VerifySignature(CPubKey& pubKeyMasternode, int &nDos) {
 
 bool CMasternodePing::CheckAndUpdate(int& nDos, bool fRequireEnabled, bool fCheckSigTimeOnly)
 {
+    // make sure signature isn't in the future (past is OK)
+    if (sigTime > GetAdjustedTime() + 60 * 60) {
+        LogPrint("masternode","mnb - Signature rejected, too far into the future %s\n", vin.prevout.hash.ToString());
+        nDos = 1;
+        return false;
+    }
+
+
+    if(fCheckSigTimeOnly) {
+    	CMasternode* pmn = mnodeman.Find(vin);
+    	if(pmn) return VerifySignature(pmn->pubKeyMasternode, nDos);
+    	return true;
+    }
+
     LogPrint("masternode", "CMasternodePing::CheckAndUpdate - New Ping - %s - %s - %lli\n", GetHash().ToString(), blockHash.ToString(), sigTime);
 
     // see if we have this Masternode
@@ -766,28 +780,11 @@ bool CMasternodePing::CheckAndUpdate(int& nDos, bool fRequireEnabled, bool fChec
     if (pmn != NULL && pmn->protocolVersion >= masternodePayments.GetMinMasternodePaymentsProto()) {
         if (fRequireEnabled && !pmn->IsEnabled()) return false;
 
-        if (pmn->protocolVersion >= MIN_PEER_VERSION_FIXED_SIGTIME) {
-            if (sigTime > GetAdjustedTime() + 60 * 60) {
-                LogPrint("masternode","CMasternodePing::CheckAndUpdate - Signature rejected, too far into the future %s\n", vin.prevout.hash.ToString());
-                nDos = 1;
-                return false;
-            }
-
-            if (sigTime <= GetAdjustedTime() - 60 * 60) {
-                LogPrint("masternode","CMasternodePing::CheckAndUpdate - Signature rejected, too far into the past %s - %d %d \n", vin.prevout.hash.ToString(), sigTime, GetAdjustedTime());
-                nDos = 1;
-                return false;
-            }
-        }
-        if(fCheckSigTimeOnly) {
-            return VerifySignature(pmn->pubKeyMasternode, nDos);
-        }
-
         // LogPrint("masternode","mnping - Found corresponding mn for vin: %s\n", vin.ToString());
         // update only if there is no known ping for this masternode or
         // last ping was more then MASTERNODE_MIN_MNP_SECONDS-60 ago comparing to this one
         if (!pmn->IsPingedWithin(MASTERNODE_MIN_MNP_SECONDS - 60, sigTime)) {
-            if (!VerifySignature(pmn->pubKeyMasternode, nDos))
+        	if (!VerifySignature(pmn->pubKeyMasternode, nDos))
                 return false;
 
             BlockMap::iterator mi = mapBlockIndex.find(blockHash);
