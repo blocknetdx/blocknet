@@ -47,6 +47,7 @@ private:
     boost::container::map<std::string, CNode* > configQueries;
     boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
     boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
+    boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPackets;
     boost::container::map<CNode*, XRouterSettings > snodeConfigs;
     int req_cnt;
     

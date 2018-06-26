@@ -414,11 +414,6 @@ void App::Impl::onSend(const std::vector<unsigned char>& message, CNode* pnode)
 //*****************************************************************************
 bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
 {
-    /*for (CNode* pnode : vNodes) {
-        pnode->PushMessage("xrouter", msg);
-    }
-    return;*/
-
     // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
@@ -793,38 +788,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     }
     
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-    switch (packet->command()) {
-      case xrGetBlockCount:
-        reply = processGetBlockCount(packet, offset, currency);
-        break;
-      case xrGetBlockHash:
-        reply = processGetBlockHash(packet, offset, currency);
-        break;
-      case xrGetBlock:
-        reply = processGetBlock(packet, offset, currency);
-        break;
-      case xrGetTransaction:
-        reply = processGetTransaction(packet, offset, currency);
-        break;
-      case xrGetAllBlocks:
-        reply = processGetAllBlocks(packet, offset, currency);
-        break;
-      case xrGetAllTransactions:
-        reply = processGetAllTransactions(packet, offset, currency);
-        break;
-      case xrGetBalance:
-        reply = processGetBalance(packet, offset, currency);
-        break;
-      case xrGetBalanceUpdate:
-        reply = processGetBalanceUpdate(packet, offset, currency);
-        break;
-      case xrGetTransactionsBloomFilter:
-        reply = processGetTransactionsBloomFilter(packet, offset, currency);
-        break;
-      case xrSendTransaction:
-        reply = processSendTransaction(packet, offset, currency);
-        break;
-      case xrGetXrouterConfig:
+    if (packet->command() == xrGetXrouterConfig) {
         reply = processGetXrouterConfig(packet);
         if (lastConfigQueries.count(node)) {
             std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigQueries[node];
@@ -835,13 +799,66 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         } else {
             lastConfigQueries[node] = time;
         }
-        break;
-      case xrReply:
-        processReply(packet);
-        return;
-      default:
-        LOG() << "Unknown packet";
-        return;
+    } else {
+        std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
+        double timeout = this->xrouter_settings.getCommandTimeout(packet->command(), currency);
+        if (lastPackets.count(node)) {
+            if (lastPackets[node].count(keystr)) {
+                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPackets[node][keystr];
+                std::chrono::system_clock::duration diff = time - prev_time;
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
+                    std::string err_msg = "XRouter: too many requests of type " + keystr; 
+                    state.DoS(100, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                }
+                if (!lastPackets.count(node))
+                    lastPackets[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+                lastPackets[node][keystr] = time;
+            } else {
+                lastPackets[node][keystr] = time;
+            }
+        } else {
+            lastPackets[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+            lastPackets[node][keystr] = time;
+        }
+            
+        switch (packet->command()) {
+        case xrGetBlockCount:
+            reply = processGetBlockCount(packet, offset, currency);
+            break;
+        case xrGetBlockHash:
+            reply = processGetBlockHash(packet, offset, currency);
+            break;
+        case xrGetBlock:
+            reply = processGetBlock(packet, offset, currency);
+            break;
+        case xrGetTransaction:
+            reply = processGetTransaction(packet, offset, currency);
+            break;
+        case xrGetAllBlocks:
+            reply = processGetAllBlocks(packet, offset, currency);
+            break;
+        case xrGetAllTransactions:
+            reply = processGetAllTransactions(packet, offset, currency);
+            break;
+        case xrGetBalance:
+            reply = processGetBalance(packet, offset, currency);
+            break;
+        case xrGetBalanceUpdate:
+            reply = processGetBalanceUpdate(packet, offset, currency);
+            break;
+        case xrGetTransactionsBloomFilter:
+            reply = processGetTransactionsBloomFilter(packet, offset, currency);
+            break;
+        case xrSendTransaction:
+            reply = processSendTransaction(packet, offset, currency);
+            break;
+        case xrReply:
+            processReply(packet);
+            return;
+        default:
+            LOG() << "Unknown packet";
+            return;
+        }
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
