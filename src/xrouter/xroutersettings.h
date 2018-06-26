@@ -11,6 +11,8 @@
 
 #define TRY(_STMNT_) try { (_STMNT_); } catch(std::exception & e) { LOG() << e.what(); }
 
+#define XROUTER_DEFAULT_TIMEOUT 2
+
 namespace xrouter
 {
 
@@ -38,6 +40,7 @@ public:
     bool walletEnabled(std::string currency);
     bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
+    double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
     
 public:
     template <class _T>

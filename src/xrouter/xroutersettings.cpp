@@ -138,4 +138,13 @@ double XRouterSettings::getCommandFee(XRouterCommand c, std::string currency, do
     return res;
 }
 
+double XRouterSettings::getCommandTimeout(XRouterCommand c, std::string currency, double def)
+{
+    double res = get<double>("Main.timeout", def);
+    res = get<double>(std::string(XRouterCommand_ToString(c)) + ".timeout", def);
+    if (!currency.empty())
+        res = get<double>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".timeout", res);
+    return res;
+}
+
 } // namespace xrouter
