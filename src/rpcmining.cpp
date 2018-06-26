@@ -593,7 +593,7 @@ UniValue getblocktemplate(const UniValue& params, bool fHelp)
         result.push_back(Pair("payee_amount", ""));
     }
 
-    result.push_back(Pair("masternode_payments", pblock->nTime > Params().StartMasternodePayments()));
+    result.push_back(Pair("masternode_payments", true));
     result.push_back(Pair("enforce_masternode_payments", true));
 
     if (!pblocktemplate->vchCoinbaseCommitment.empty()) {
