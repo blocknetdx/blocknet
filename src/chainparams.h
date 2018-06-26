@@ -94,7 +94,6 @@ public:
     int PoolMaxTransactions() const { return nPoolMaxTransactions; }
     std::string SporkKey() const { return strSporkKey; }
     std::string ObfuscationPoolDummyAddress() const { return strObfuscationPoolDummyAddress; }
-    int64_t StartMasternodePayments() const { return nStartMasternodePayments; }
     int64_t Budget_Fee_Confirmations() const { return nBudget_Fee_Confirmations; }
     CBaseChainParams::Network NetworkID() const { return networkID; }
 
@@ -158,7 +157,6 @@ protected:
     int nPoolMaxTransactions;
     std::string strSporkKey;
     std::string strObfuscationPoolDummyAddress;
-    int64_t nStartMasternodePayments;
     std::string zerocoinModulus;
     std::string oldZerocoinModulus;
     int nMaxZerocoinSpendsPerTransaction;
