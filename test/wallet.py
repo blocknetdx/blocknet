@@ -84,9 +84,9 @@ class WalletTest(TestCaseBase):
         self.sync_all()
 
         assert_equal(self.nodes[0].getbalance(), 0)
-        #print(self.nodes[2].getbalance("from1"))
-        #assert_equal(self.nodes[2].getbalance(), 5701)
-        #assert_equal(self.nodes[2].getbalance("from1"), 17501798)
+
+        # Test basic functionality of dumpprivkey
+        self.nodes[0].dumpprivkey(self.nodes[0].getnewaddress())
 
 
 if __name__ == '__main__':
