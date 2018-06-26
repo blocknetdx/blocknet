@@ -402,8 +402,11 @@ UniValue dumpprivkey(const UniValue& params, bool fHelp)
             "1. \"phoreaddress\"   (string, required) The phore address for the private key\n"
             "\nResult:\n"
             "\"key\"                (string) The private key\n"
-            "\nExamples:\n" +
-            HelpExampleCli("dumpprivkey", "\"myaddress\"") + HelpExampleCli("importprivkey", "\"mykey\"") + HelpExampleRpc("dumpprivkey", "\"myaddress\""));
+            "\nExamples:\n"
+            + HelpExampleCli("dumpprivkey", "\"myaddress\"")
+            + HelpExampleCli("importprivkey", "\"mykey\"")
+            + HelpExampleRpc("dumpprivkey", "\"myaddress\"")
+        );
 
     LOCK2(cs_main, pwalletMain->cs_wallet);
 
@@ -411,11 +414,12 @@ UniValue dumpprivkey(const UniValue& params, bool fHelp)
 
     string strAddress = params[0].get_str();
     if (!IsValidDestinationString(strAddress))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Phore address");
-    CTxDestination address = DecodeDestination(strAddress);
-    CKeyID keyid = GetKeyForDestination(*pwalletMain, address);
-    if (!keyid.IsNull())
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+    const CTxDestination dest = DecodeDestination(strAddress);
+    auto keyid = GetKeyForDestination(*pwalletMain, dest);
+    if (keyid.IsNull()) {
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
+    }
     CKey vchSecret;
     if (!pwalletMain->GetKey(keyid, vchSecret))
         throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address " + strAddress + " is not known");
