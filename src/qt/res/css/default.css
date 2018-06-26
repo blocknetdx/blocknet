@@ -1660,6 +1660,18 @@ QLabel#transactionSum { /* Example of setObjectName for widgets without name */
 color:#333333;
 }
 
+TransactionView QComboBox { font-size: 12px; font-family: "Roboto"; color: white; }
+QScrollBar { /* Scroll Bar */
+
+}
+
+QScrollBar:vertical { /* Vertical Scroll Bar Attributes */
+border:0;
+background:#ffffff;
+width:18px;
+margin:18px 0px 18px 0px;
+}
+
 /**************************** TRANSACTION DETAILS DIALOG ********************************/
 
 QDialog#TransactionDescDialog QTextEdit { /* Contents of Receive Coin Dialog */

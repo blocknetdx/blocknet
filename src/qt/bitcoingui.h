@@ -1,4 +1,5 @@
 // Copyright (c) 2011-2014 The Bitcoin developers
+// Copyright (c) 2018 The Blocknet Developers
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,6 +11,7 @@
 #endif
 
 #include "amount.h"
+#include "blocknetwallet.h"
 
 #include <QLabel>
 #include <QMainWindow>
@@ -18,6 +20,7 @@
 #include <QPoint>
 #include <QPushButton>
 #include <QSystemTrayIcon>
+#include <QHash>
 
 class ClientModel;
 class NetworkStyle;
@@ -27,7 +30,6 @@ class BlockExplorer;
 class RPCConsole;
 class SendCoinsRecipient;
 class UnitDisplayStatusBarControl;
-class WalletFrame;
 class WalletModel;
 class ServicenodeList;
 
@@ -48,10 +50,10 @@ class BitcoinGUI : public QMainWindow
     Q_OBJECT
 
 public:
-    static const QString DEFAULT_WALLET;
+    static const QString DEFAULT_WALLET() { return QString("~Default"); }
 
-    explicit BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent = 0);
-    ~BitcoinGUI();
+    explicit BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent = nullptr);
+    ~BitcoinGUI() override;
 
     /** Set the client model.
         The client model represents the part of the core that communicates with the P2P network, and is wallet-agnostic.
@@ -71,23 +73,19 @@ public:
     bool fMultiSend = false;
 
 protected:
-    void changeEvent(QEvent* e);
-    void closeEvent(QCloseEvent* event);
-    void dragEnterEvent(QDragEnterEvent* event);
-    void dropEvent(QDropEvent* event);
-    bool eventFilter(QObject* object, QEvent* event);
+    void changeEvent(QEvent* e) override;
+    void closeEvent(QCloseEvent* event) override;
+    void dragEnterEvent(QDragEnterEvent* event) override;
+    void dropEvent(QDropEvent* event) override;
+    bool eventFilter(QObject* object, QEvent* event) override;
 
 private:
     ClientModel* clientModel;
-    WalletFrame* walletFrame;
+    WalletModel* walletModel;
+    QHash<QString, WalletModel*> wallets;
+    BlocknetWallet* walletFrame;
 
     UnitDisplayStatusBarControl* unitDisplayControl;
-    QLabel* labelStakingIcon;
-    QLabel* labelEncryptionIcon;
-    QPushButton* labelConnectionsIcon;
-    QLabel* labelBlocksIcon;
-    QLabel* progressBarLabel;
-    QProgressBar* progressBar;
     QProgressDialog* progressDialog;
 
     QMenuBar* appMenuBar;
@@ -130,6 +128,7 @@ private:
     Notificator* notificator;
     RPCConsole* rpcConsole;
     BlockExplorer* explorerWindow;
+    QString stylesOld;
 
     /** Keep track of previous number of blocks, to detect progress */
     int prevBlocks;
@@ -200,8 +199,6 @@ private slots:
     void gotoHistoryPage();
     /** Switch to xbridge page */
     void gotoXBridgePage();
-    /** Switch to Explorer Page */
-    void gotoBlockExplorerPage();
     /** Switch to servicenode page */
     void gotoServicenodePage();
     /** Switch to receive coins page */
@@ -222,7 +219,17 @@ private slots:
     /** Show open dialog */
     void openClicked();
 
+    void encryptWallet(bool status);
+    void backupWallet();
+    void changePassphrase();
+    void unlockWallet();
+    void lockWallet();
+    void usedSendingAddresses();
+    void usedReceivingAddresses();
+    void lockRequest(bool locked, bool stakingOnly);
+
 #endif // ENABLE_WALLET
+
     /** Show configuration dialog */
     void optionsClicked();
     /** Show about dialog */
@@ -257,7 +264,7 @@ public:
 
 protected:
     /** So that it responds to left-button clicks */
-    void mousePressEvent(QMouseEvent* event);
+    void mousePressEvent(QMouseEvent* event) override;
 
 private:
     OptionsModel* optionsModel;

@@ -420,6 +420,16 @@ public:
                            bool useIX = false,
                            CAmount nFeePay = 0);
 
+    bool CreateUnsignedTransaction(const std::vector<std::pair<CScript, CAmount> > & vecSend,
+                           CWalletTx& wtxNew,
+                           CReserveKey& reservekey,
+                           CAmount& nFeeRet,
+                           std::string& strFailReason,
+                           const CCoinControl* coinControl = NULL,
+                           AvailableCoinsType coin_type = ALL_COINS,
+                           bool useIX = false,
+                           CAmount nFeePay = 0);
+
     bool CreateTransaction(CScript scriptPubKey,
                            const CAmount& nValue,
                            CWalletTx& wtxNew,

@@ -15,9 +15,9 @@ static const struct {
     const char* titleAddText;
     const char* splashImage;
 } network_styles[] = {
-    {"main", QAPP_APP_NAME_DEFAULT, ":/icons/bitcoin-ms-icon-310x310", "", ":/images/Blocknet_splash_Logo_Symbol_Neg_022718"},
-    {"test", QAPP_APP_NAME_TESTNET, ":/icons/bitcoin-ms-icon-310x310", QT_TRANSLATE_NOOP("SplashScreen", "[testnet]"), ":/images/Blocknet_splash_Logo_Symbol_Neg_022718"},
-    {"regtest", QAPP_APP_NAME_TESTNET, ":/icons/bitcoin-ms-icon-310x310", "[regtest]", ":/images/Blocknet_splash_Logo_Symbol_Neg_022718"}};
+    {"main", QAPP_APP_NAME_DEFAULT, ":/icons/bitcoin-ms-icon-310x310", "", ":/images/BlocknetSplash"},
+    {"test", QAPP_APP_NAME_TESTNET, ":/icons/bitcoin-ms-icon-310x310", QT_TRANSLATE_NOOP("SplashScreen", "[testnet]"), ":/images/BlocknetSplash"},
+    {"regtest", QAPP_APP_NAME_TESTNET, ":/icons/bitcoin-ms-icon-310x310", "[regtest]", ":/images/BlocknetSplash"}};
 static const unsigned network_styles_count = sizeof(network_styles) / sizeof(*network_styles);
 
 // titleAddText needs to be const char* for tr()

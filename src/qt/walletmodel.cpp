@@ -200,7 +200,7 @@ bool WalletModel::validateAddress(const QString& address)
     return addressParsed.IsValid();
 }
 
-WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction& transaction, const CCoinControl* coinControl)
+WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction& transaction, const CCoinControl* coinControl, CAmount payFee, bool sign)
 {
     CAmount total = 0;
     QList<SendCoinsRecipient> recipients = transaction.getRecipients();
@@ -210,7 +210,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         return OK;
     }
 
-    if (isAnonymizeOnlyUnlocked()) {
+    if (isAnonymizeOnlyUnlocked() && sign) { // only raise issue if signing was requested
         return AnonymizeOnlyUnlocked;
     }
 
@@ -277,8 +277,17 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             return TransactionCreationFailed;
         }
 
-        bool fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX);
-        transaction.setTransactionFee(nFeeRequired);
+        bool fCreated;
+        if (sign) { // signed tx
+            fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX, payFee);
+            transaction.setTransactionFee(nFeeRequired);
+        }
+        else { // unsigned tx
+            fCreated = wallet->CreateUnsignedTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX, payFee);
+            if (payFee > 0)
+                transaction.setTransactionFee(nFeeRequired);
+            else transaction.setTransactionFee(nFeeRequired * 2); // TODO Improve fee estimate to account for signed tx
+        }
 
         if (recipients[0].useSwiftTX && newTx->GetValueOut() > GetSporkValue(SPORK_5_MAX_VALUE) * COIN) {
             emit message(tr("Send Coins"), tr("SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 BLOCK.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
