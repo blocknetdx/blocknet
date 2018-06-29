@@ -27,7 +27,7 @@ static Object form_reply(std::string reply)
     
     if (error.type() != null_type)
     {
-        ret.emplace_back(Pair("error", error));
+        return reply_obj;
     }
     else if (result.type() != null_type)
     {
