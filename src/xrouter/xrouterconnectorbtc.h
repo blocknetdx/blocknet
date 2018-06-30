@@ -34,8 +34,8 @@ public:
     Object      getPaymentAddress() const;
 
 private:
-    double getBalanceChange(Object tx, std::string account);
-    bool checkFilterFit(Object tx, CBloomFilter filter);
+    double getBalanceChange(Object tx, std::string account) const;
+    bool checkFilterFit(Object tx, CBloomFilter filter) const;
 };
 
 
