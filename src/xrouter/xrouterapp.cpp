@@ -697,11 +697,18 @@ std::string App::processSendTransaction(XRouterPacketPtr packet, uint32_t offset
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
 
     Object result;
+    Object error;
+    
     if (conn)
     {
         result = conn->sendTransaction(transaction);
     }
-
+    else
+    {
+        error.emplace_back(Pair("error", "No connector for currency " + currency));
+        result = error;
+    }
+    
     return json_spirit::write_string(Value(result), true);
 }
 
@@ -917,9 +924,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
 
-    //boost::uuids::uuid uuid = boost::uuids::random_generator()();
-    //std::string id = boost::uuids::to_string(uuid);
-    std::string id = generateUUID(); //"request" + std::to_string(req_cnt);
+    std::string id = generateUUID();
     req_cnt++;
 
     packet->append(txHash.begin(), 32);
