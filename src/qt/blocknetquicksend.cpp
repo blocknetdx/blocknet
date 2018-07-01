@@ -141,18 +141,9 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QFrame *parent) : QFrame(pa
     connect(amountTi, SIGNAL(textChanged(const QString&)), this, SLOT(onAmountChanged(const QString&)));
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
     connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
-    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
-    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
 
     onAmountChanged();
 }
-
-void BlocknetQuickSend::showEvent(QShowEvent *event) {
-    QWidget::showEvent(event);
-    if (!addressTi->hasFocus() && !amountTi->hasFocus())
-        addressTi->setFocus(Qt::FocusReason::ActiveWindowFocusReason);
-}
-
 
 bool BlocknetQuickSend::validated() {
     return walletModel->validateAddress(addressTi->text()) && !amountTi->text().isEmpty() &&
@@ -165,6 +156,20 @@ void BlocknetQuickSend::keyPressEvent(QKeyEvent *event) {
         return;
     if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
         onSubmit();
+}
+
+void BlocknetQuickSend::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    if (!addressTi->hasFocus() && !amountTi->hasFocus())
+        addressTi->setFocus(Qt::FocusReason::ActiveWindowFocusReason);
+    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
+    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
+}
+
+void BlocknetQuickSend::hideEvent(QHideEvent *event) {
+    QWidget::hideEvent(event);
+    disconnect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
+    disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
 }
 
 void BlocknetQuickSend::onAmountChanged(const QString &text) {

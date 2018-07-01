@@ -16,11 +16,15 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QRadioButton>
+#include <QShowEvent>
+#include <QHideEvent>
 
 class BlocknetSendFunds3 : public BlocknetSendFundsPage {
     Q_OBJECT
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
 public:
     explicit BlocknetSendFunds3(WalletModel *w, int id, QFrame *parent = nullptr);

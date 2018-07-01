@@ -60,8 +60,6 @@ BlocknetSendFunds4::BlocknetSendFunds4(WalletModel *w, int id, QFrame *parent) :
 
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
     connect(continueBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
-    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
-    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
 }
 
 /**
@@ -138,6 +136,18 @@ void BlocknetSendFunds4::keyPressEvent(QKeyEvent *event) {
         onSubmit();
     else if (event->key() == Qt::Key_Escape)
         onBack();
+}
+
+void BlocknetSendFunds4::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
+    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
+}
+
+void BlocknetSendFunds4::hideEvent(QHideEvent *event) {
+    QWidget::hideEvent(event);
+    disconnect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
+    disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
 }
 
 /**

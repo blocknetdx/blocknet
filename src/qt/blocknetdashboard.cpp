@@ -130,11 +130,7 @@ void BlocknetDashboard::setWalletModel(WalletModel *w) {
     if (walletModel == w)
         return;
 
-    if (walletModel) {
-        disconnect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)),
-                                       this, SLOT(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
-        disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
-    }
+    walletEvents(false);
 
     walletModel = w;
     if (!walletModel || !walletModel->getOptionsModel())
@@ -145,9 +141,7 @@ void BlocknetDashboard::setWalletModel(WalletModel *w) {
                    walletModel->getWatchBalance(), walletModel->getWatchUnconfirmedBalance(), walletModel->getWatchImmatureBalance());
 
     // Watch for wallet changes
-    connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)),
-                                   this, SLOT(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
-    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
+    walletEvents(true);
 }
 
 /**
@@ -257,6 +251,16 @@ void BlocknetDashboard::setRecentTransactions(QVector<BlocknetRecentTransaction>
     l->setRowStretch(i + 1, 2);
 }
 
+void BlocknetDashboard::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    walletEvents(true);
+}
+
+void BlocknetDashboard::hideEvent(QHideEvent *event) {
+    QWidget::hideEvent(event);
+    walletEvents(false);
+}
+
 void BlocknetDashboard::balanceChanged(const CAmount balance, const CAmount unconfirmed, const CAmount immature,
                                        const CAmount anonymized, const CAmount watch, const CAmount watchUnconfirmed,
                                        const CAmount watchImmature) {
@@ -281,4 +285,16 @@ void BlocknetDashboard::updateBalance() {
 
 void BlocknetDashboard::onRecentTransactions(QVector<BlocknetDashboard::BlocknetRecentTransaction> &txs) {
     setRecentTransactions(txs);
+}
+
+void BlocknetDashboard::walletEvents(bool on) {
+    if (walletModel && on) {
+        connect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)),
+                this, SLOT(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
+    } else if (walletModel) {
+        disconnect(walletModel, SIGNAL(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)),
+                   this, SLOT(balanceChanged(CAmount, CAmount, CAmount, CAmount, CAmount, CAmount, CAmount)));
+        disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
+    }
 }

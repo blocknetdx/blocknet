@@ -51,6 +51,10 @@ public slots:
     void displayUnitChanged(int displayUnit);
     void onRecentTransactions(QVector<BlocknetDashboard::BlocknetRecentTransaction> &txs);
 
+protected:
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
+
 private slots:
     void onViewAll() { emit history(); };
 
@@ -78,6 +82,7 @@ private:
     QVector<BlocknetRecentTransaction> transactions;
 
     void updateBalance();
+    void walletEvents(const bool on);
 };
 
 #endif // BLOCKNETDASHBOARD_H

@@ -117,7 +117,6 @@ BlocknetSendFunds3::BlocknetSendFunds3(WalletModel *w, int id, QFrame *parent) :
     connect(specificFeeTi, SIGNAL(textChanged(const QString&)), this, SLOT(onSpecificFee(const QString&)));
     connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
-    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
 }
 
 /**
@@ -166,6 +165,16 @@ void BlocknetSendFunds3::keyPressEvent(QKeyEvent *event) {
         onNext();
     else if (event->key() == Qt::Key_Escape)
         onBack();
+}
+
+void BlocknetSendFunds3::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
+}
+
+void BlocknetSendFunds3::hideEvent(QHideEvent *event) {
+    QWidget::hideEvent(event);
+    disconnect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
 }
 
 void BlocknetSendFunds3::onFeeDesignation() {

@@ -15,6 +15,8 @@
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QList>
+#include <QShowEvent>
+#include <QHideEvent>
 
 class BlocknetQuickSend : public QFrame
 {
@@ -34,6 +36,7 @@ public slots:
 protected:
     void keyPressEvent(QKeyEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
 private slots:
     void onAmountChanged(const QString &text = QString());

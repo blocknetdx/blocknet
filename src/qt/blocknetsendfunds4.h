@@ -15,6 +15,8 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QScrollArea>
+#include <QShowEvent>
+#include <QHideEvent>
 
 class BlocknetSendFunds4 : public BlocknetSendFundsPage {
     Q_OBJECT
@@ -31,6 +33,8 @@ signals:
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
 private slots:
     void onEdit();
