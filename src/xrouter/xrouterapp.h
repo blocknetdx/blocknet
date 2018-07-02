@@ -49,7 +49,7 @@ private:
     boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPackets;
     boost::container::map<CNode*, XRouterSettings > snodeConfigs;
-    boost::container::map<CNode*, double > snodeScore;
+    static boost::container::map<CNode*, double > snodeScore;
     int req_cnt;
     
     XRouterSettings xrouter_settings;
@@ -322,6 +322,11 @@ public:
     bool processReply(XRouterPacketPtr packet);
 
     //
+    
+    static bool cmpNodeScore(CNode* & a, CNode* & b) { return snodeScore[a] > snodeScore[b]; }
+    
+    std::vector<CNode*> getAvailableNodes(const XRouterPacketPtr & packet, std::string wallet);
+    
     /**
      * @brief sendPacket send packet btadcast to xrouter network
      * @param packet send message via xrouter

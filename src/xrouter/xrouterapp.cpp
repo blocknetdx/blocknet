@@ -77,7 +77,8 @@ static std::string generateUUID()
 //*****************************************************************************
 namespace xrouter
 {   
-    
+boost::container::map<CNode*, double > App::snodeScore = boost::container::map<CNode*, double >();    
+
 //*****************************************************************************
 //*****************************************************************************
 class App::Impl
@@ -410,9 +411,7 @@ void App::Impl::onSend(const std::vector<unsigned char>& message, CNode* pnode)
     pnode->PushMessage("xrouter", msg);
 }
 
-//*****************************************************************************
-//*****************************************************************************
-bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
+std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std::string wallet)
 {
     // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
@@ -439,6 +438,23 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
             }
         }
     }
+    
+    for (CNode* node: selectedNodes) {
+        if (!snodeScore.count(node))
+            snodeScore[node] = 0;
+    }
+    
+    std::sort(selectedNodes.begin(), selectedNodes.end(), cmpNodeScore);
+    
+    return selectedNodes;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
+{
+    // Send only to the service nodes that have the required wallet
+    std::vector<CNode*> selectedNodes = getAvailableNodes(packet, wallet);
     
     if ((int)selectedNodes.size() < confirmations)
         return false;
@@ -706,6 +722,7 @@ std::string App::processSendTransaction(XRouterPacketPtr packet, uint32_t offset
     else
     {
         error.emplace_back(Pair("error", "No connector for currency " + currency));
+        error.emplace_back(Pair("errorcode", "-100"));
         result = error;
     }
     
@@ -1008,7 +1025,64 @@ std::string App::getReply(const std::string & id)
 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
 {
-    return this->xrouterCall(xrSendTransaction, currency, transaction, "", "1");
+        int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
+    if (!xrouter_on)
+        return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
+    
+    updateConfigs();
+    
+    XRouterPacketPtr packet(new XRouterPacket(xrSendTransaction));
+
+    uint256 txHash;
+    uint32_t vout = 0;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+        return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
+    }
+
+    std::string id = generateUUID();
+    req_cnt++;
+
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->append(currency);
+    packet->append(transaction);
+    packet->sign(key);
+    
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+
+    std::vector<unsigned char> msg;
+    msg.insert(msg.end(), packet->body().begin(), packet->body().end());
+
+    std::vector<CNode*> selectedNodes = getAvailableNodes(packet, currency);
+    
+    if ((int)selectedNodes.size() == 0)
+        return "No available nodes";
+    
+    for (CNode* pnode : selectedNodes) {
+        pnode->PushMessage("xrouter", msg);
+        if (cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
+            std::string reply = queries[id][0];
+            Value reply_val;
+            read_string(reply, reply_val);
+            Object reply_obj = reply_val.get_obj();
+            const Value & errorcode  = find_value(reply_obj, "errorcode");
+            if (errorcode.type() != null_type)
+                if (errorcode.get_int() < 0) {
+                    // Try sending to another node
+                    queries[id].clear();
+                    continue;
+                }
+        
+            return reply;
+        }
+    }
+    
+    return "No available nodes";
 }
 
 std::string App::getPaymentAddress(CNode* node)
