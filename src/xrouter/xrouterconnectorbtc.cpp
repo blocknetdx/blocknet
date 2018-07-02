@@ -60,7 +60,7 @@ static double parseVout(Value vout, std::string account)
     return result;
 }
 
-double BtcWalletConnectorXRouter::getBalanceChange(Object tx, std::string account)
+double BtcWalletConnectorXRouter::getBalanceChange(Object tx, std::string account) const
 {
     std::string commandGRT("getblockhash");
     std::string commandDRT("decoderawtransaction");
@@ -98,7 +98,7 @@ double BtcWalletConnectorXRouter::getBalanceChange(Object tx, std::string accoun
     return result;
 }
 
-bool BtcWalletConnectorXRouter::checkFilterFit(Object tx, CBloomFilter filter)
+bool BtcWalletConnectorXRouter::checkFilterFit(Object tx, CBloomFilter filter) const
 {
     Array vout = find_value(tx, "vout").get_array();
     for (unsigned int j = 0; j != vout.size(); j++ ) {
