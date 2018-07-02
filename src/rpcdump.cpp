@@ -414,7 +414,7 @@ UniValue dumpprivkey(const UniValue& params, bool fHelp)
 
     string strAddress = params[0].get_str();
     if (!IsValidDestinationString(strAddress))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Phore address");
     const CTxDestination dest = DecodeDestination(strAddress);
     auto keyid = GetKeyForDestination(*pwalletMain, dest);
     if (keyid.IsNull()) {
