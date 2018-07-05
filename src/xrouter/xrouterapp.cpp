@@ -1085,6 +1085,12 @@ std::string App::sendTransaction(const std::string & currency, const std::string
     return "No available nodes";
 }
 
+std::string App::sendCustomCall(const std::string & name, std::vector<std::string> & params)
+{
+    return "";
+}
+
+
 std::string App::getPaymentAddress(CNode* node)
 {
     return "";

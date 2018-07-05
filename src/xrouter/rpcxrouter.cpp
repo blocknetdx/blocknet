@@ -387,6 +387,28 @@ Value xrGenerateBloomFilter(const Array & params, bool fHelp)
     return f.to_hex();
 }
 
+Value xrCustomCall(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrCustomCall service_name param1 param2 param3 ... paramN\nSends the custom call with [service_name] name.");
+    }
+
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back(Pair("error", "Service name not specified"));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return error;
+    }
+    
+    std::string name = params[0].get_str();
+    std::vector<std::string> call_params;
+    for (unsigned int i = 1; i < params.size(); i++)
+        call_params.push_back(params[i].get_str());
+    std::string reply = xrouter::App::instance().sendCustomCall(name, call_params);
+    return form_reply(reply);
+}
+
 Value xrSendTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {

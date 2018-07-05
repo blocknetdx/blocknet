@@ -209,6 +209,15 @@ public:
     std::string sendTransaction(const std::string & currency, const std::string & transaction);
 
     /**
+     * @brief sends raw transaction to the given chain
+     * @param currency chain code (BTC, LTC etc)
+     * @param transaction raw signed transaction
+     * @return
+     */
+    std::string sendCustomCall(const std::string & name, std::vector<std::string> & params);
+
+    
+    /**
      * @brief gets an account for comission payment
      * @param node service node
      * @return
