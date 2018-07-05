@@ -1166,6 +1166,11 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
 
+    int count = this->xrouter_settings.getServiceParamCount(name);
+    if (params.size() != count) {
+        return "Wrong number of parameters";
+    }
+    
     std::string id = generateUUID();
 
     packet->append(txHash.begin(), 32);
