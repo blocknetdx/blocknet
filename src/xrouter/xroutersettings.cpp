@@ -152,6 +152,20 @@ bool XRouterSettings::hasService(std::string name)
     std::string type = get<std::string>(name + ".type", "");
     return type == "";
 }
-    
+
+std::string XRouterSettings::getServiceParam(std::string name, std::string param)
+{
+    return get<std::string>(name + "." + param, "");
+}
+
+double XRouterSettings::getServiceFee(std::string name)
+{
+    return get<double>(name + ".fee", 0.0);
+}
+
+int XRouterSettings::getServiceParamCount(std::string name)
+{
+    return get<int>(name + ".paramsCount", 0);
+}
 
 } // namespace xrouter

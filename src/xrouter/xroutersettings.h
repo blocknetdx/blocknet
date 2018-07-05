@@ -42,6 +42,9 @@ public:
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
     double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
     bool hasService(std::string name);
+    std::string getServiceParam(std::string name, std::string param);
+    double getServiceFee(std::string name);
+    int getServiceParamCount(std::string name);
     
 public:
     template <class _T>
