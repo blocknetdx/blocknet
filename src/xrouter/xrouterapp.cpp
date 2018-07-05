@@ -73,6 +73,16 @@ static std::string generateUUID()
 
 #endif 
 
+// TODO: move this somewhere
+namespace xbridge {
+namespace rpc
+{
+Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
+               const std::string & rpcip, const std::string & rpcport,
+               const std::string & strMethod, const Array & params);
+}
+}
+
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
@@ -753,6 +763,36 @@ std::string App::processSendTransaction(XRouterPacketPtr packet, uint32_t offset
     }
     
     return json_spirit::write_string(Value(result), true);
+}
+
+std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std::string name)
+{
+    std::string callType = this->xrouter_settings.getServiceParam(name, "type");
+    if (callType == "")
+        return "Custom call not found";
+    
+    if (callType == "rpc") {
+        Array params;
+        int count = this->xrouter_settings.getServiceParamCount(name);
+        std::string p;
+        for (int i = 0; i < count; i++) {
+            // TODO: check missing params
+            p = (const char *)packet->data()+offset;
+            params.push_back(p);
+            offset += p.size() + 1;
+        }
+        
+        std::string user, passwd, ip, port, command;
+        user = this->xrouter_settings.getServiceParam(name, "rpcUser");
+        passwd = this->xrouter_settings.getServiceParam(name, "rpcPassword");
+        ip = this->xrouter_settings.getServiceParam(name, "rpcIp", "127.0.0.1");
+        port = this->xrouter_settings.getServiceParam(name, "rpcPort");
+        command = this->xrouter_settings.getServiceParam(name, "rpcCommand");
+        Object result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, params);
+        return json_spirit::write_string(Value(result), true);
+    } else if (callType == "cmd") {
+        
+    }  
 }
 
 std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {

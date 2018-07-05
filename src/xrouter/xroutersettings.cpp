@@ -153,9 +153,9 @@ bool XRouterSettings::hasService(std::string name)
     return type == "";
 }
 
-std::string XRouterSettings::getServiceParam(std::string name, std::string param)
+std::string XRouterSettings::getServiceParam(std::string name, std::string param, std::string def)
 {
-    return get<std::string>(name + "." + param, "");
+    return get<std::string>(name + "." + param, def);
 }
 
 double XRouterSettings::getServiceFee(std::string name)

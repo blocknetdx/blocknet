@@ -309,6 +309,8 @@ public:
      */
     std::string processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
+    std::string processCustomCall(XRouterPacketPtr packet, uint32_t offset, std::string name);
+    
     /**
      * @brief process GetPaymentAddress call on service node side
      * @param packet Xrouter packet received over the network
