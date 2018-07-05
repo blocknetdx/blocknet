@@ -136,7 +136,7 @@ App::Impl::Impl()
 //*****************************************************************************
 //*****************************************************************************
 App::App()
-    : m_p(new Impl), queries(), req_cnt(0)
+    : m_p(new Impl), queries()
 {
 }
 
@@ -1008,7 +1008,6 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     }
 
     std::string id = generateUUID();
-    req_cnt++;
 
     packet->append(txHash.begin(), 32);
     packet->append(vout);
@@ -1107,7 +1106,6 @@ std::string App::sendTransaction(const std::string & currency, const std::string
     }
 
     std::string id = generateUUID();
-    req_cnt++;
 
     packet->append(txHash.begin(), 32);
     packet->append(vout);
@@ -1165,12 +1163,10 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     uint32_t vout = 0;
     CKey key;
     if (!satisfyBlockRequirement(txHash, vout, key)) {
-        std::cerr << "Minimum block requirement not satisfied\n";
         return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
 
     std::string id = generateUUID();
-    req_cnt++;
 
     packet->append(txHash.begin(), 32);
     packet->append(vout);
@@ -1231,7 +1227,6 @@ std::string App::getXrouterConfigSync(CNode* node) {
     uint32_t vout = 0;
 
     std::string id = generateUUID();
-    req_cnt++;
 
     packet->append(txHash.begin(), 32);
     packet->append(vout);
