@@ -147,4 +147,11 @@ double XRouterSettings::getCommandTimeout(XRouterCommand c, std::string currency
     return res;
 }
 
+bool XRouterSettings::hasService(std::string name)
+{
+    std::string type = get<std::string>(name + ".type", "");
+    return type == "";
+}
+    
+
 } // namespace xrouter

@@ -336,6 +336,8 @@ public:
     
     std::vector<CNode*> getAvailableNodes(const XRouterPacketPtr & packet, std::string wallet);
     
+    CNode* getNodeForService(std::string name);
+    
     /**
      * @brief sendPacket send packet btadcast to xrouter network
      * @param packet send message via xrouter

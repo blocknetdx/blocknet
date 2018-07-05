@@ -449,6 +449,32 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
     return selectedNodes;
 }
 
+CNode* App::getNodeForService(std::string name)
+{
+    // Send only to the service nodes that have the required wallet
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
+
+    LOCK(cs_vNodes);
+    for (CNode* pnode : vNodes) {
+        if (!snodeConfigs.count(pnode))
+            continue;
+        XRouterSettings settings = snodeConfigs[pnode];
+        if (!settings.hasService(name))
+            continue;
+        
+        // return pnode;
+        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+            if (s.second.addr.ToString() == pnode->addr.ToString()) {
+                // This node is a service node
+                // TODO: check for doubles and resolve the name conflict
+                return pnode;
+            }
+        }
+    }
+    
+    return NULL;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
@@ -1025,7 +1051,7 @@ std::string App::getReply(const std::string & id)
 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
 {
-        int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
+    int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
     if (!xrouter_on)
         return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
     
@@ -1087,7 +1113,50 @@ std::string App::sendTransaction(const std::string & currency, const std::string
 
 std::string App::sendCustomCall(const std::string & name, std::vector<std::string> & params)
 {
-    return "";
+    int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
+    if (!xrouter_on)
+        return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
+    
+    updateConfigs();
+    
+    XRouterPacketPtr packet(new XRouterPacket(xrCustomCall));
+
+    uint256 txHash;
+    uint32_t vout = 0;
+    CKey key;
+    if (!satisfyBlockRequirement(txHash, vout, key)) {
+        std::cerr << "Minimum block requirement not satisfied\n";
+        return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
+    }
+
+    std::string id = generateUUID();
+    req_cnt++;
+
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->append(name);
+    for (std::string param: params)
+        packet->append(param);
+    packet->sign(key);
+
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+
+    std::vector<unsigned char> msg;
+    msg.insert(msg.end(), packet->body().begin(), packet->body().end());
+
+    CNode* pnode = getNodeForService(name);
+    if (!pnode)
+        return "No available nodes";
+    
+    pnode->PushMessage("xrouter", msg);
+    if (cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
+        std::string reply = queries[id][0];
+        return reply;
+    }
 }
 
 
