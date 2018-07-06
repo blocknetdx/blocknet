@@ -397,6 +397,8 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number, CD
                 result.push_back(Value(tx));
         }
     }
+    
+    return result;
 }
 
 Object BtcWalletConnectorXRouter::sendTransaction(const std::string & transaction) const
@@ -410,7 +412,7 @@ Object BtcWalletConnectorXRouter::sendTransaction(const std::string & transactio
 
 Object BtcWalletConnectorXRouter::getPaymentAddress() const
 {
-
+    return Object();
 }
 
 } // namespace xrouter

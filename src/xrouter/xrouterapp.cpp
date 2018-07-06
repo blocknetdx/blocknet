@@ -780,9 +780,22 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
         command = this->xrouter_settings.getServiceParam(name, "rpcCommand");
         Object result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, params);
         return json_spirit::write_string(Value(result), true);
-    } else if (callType == "cmd") {
+    } else if (callType == "shell") {
+        std::string cmd = this->xrouter_settings.getServiceParam(name, "rpcCommand");
+        int count = this->xrouter_settings.getServiceParamCount(name);
+        std::string p;
+        for (int i = 0; i < count; i++) {
+            // TODO: check missing params
+            p = (const char *)packet->data()+offset;
+            cmd += " " + p;
+            offset += p.size() + 1;
+        }
         
+        std::string result = CallCMD(cmd);
+        return result;
     }  
+    
+    return "Unknown type";
 }
 
 std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {
@@ -1156,7 +1169,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
 
-    int count = this->xrouter_settings.getServiceParamCount(name);
+    unsigned int count = this->xrouter_settings.getServiceParamCount(name);
     if (params.size() != count) {
         return "Wrong number of parameters";
     }
