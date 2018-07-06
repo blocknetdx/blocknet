@@ -22,6 +22,8 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 namespace xrouter
 {
 
+std::string CallCMD(std::string cmd);
+    
 class WalletConnectorXRouter : public xbridge::WalletParam
 {
 public:
