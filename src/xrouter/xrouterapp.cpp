@@ -1196,11 +1196,16 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     if (!pnode)
         return "No available nodes";
     
+    Object result;
     pnode->PushMessage("xrouter", msg);
     if (cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
         std::string reply = queries[id][0];
         return reply;
     }
+    
+    result.emplace_back(Pair("error", "Failed to get response"));
+    result.emplace_back(Pair("uuid", id));
+    return json_spirit::write_string(Value(result), true);
 }
 
 
