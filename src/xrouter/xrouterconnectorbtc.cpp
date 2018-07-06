@@ -1,14 +1,5 @@
 #include "xrouterconnectorbtc.h"
 
-namespace xbridge {
-namespace rpc
-{
-Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
-               const std::string & rpcip, const std::string & rpcport,
-               const std::string & strMethod, const Array & params);
-}
-}
-
 namespace xrouter
 {
 
