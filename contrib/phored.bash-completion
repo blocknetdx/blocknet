@@ -81,7 +81,7 @@ _phored() {
     fi
 
     case "$prev" in
-        backupwallet|dumpwallet|importwallet)
+        backupwallet|dumpwallet|dumpallprivatekeys|importwallet)
             _filedir
             return 0
             ;;

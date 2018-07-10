@@ -298,12 +298,12 @@ UniValue importwallet(const UniValue& params, bool fHelp)
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "importwallet \"filename\"\n"
-            "\nImports keys from a wallet dump file (see dumpwallet).\n"
+            "\nImports keys from a wallet dump file (see dumpallprivatekeys).\n"
             "\nArguments:\n"
             "1. \"filename\"    (string, required) The wallet file\n"
             "\nExamples:\n"
             "\nDump the wallet\n" +
-            HelpExampleCli("dumpwallet", "\"test\"") +
+            HelpExampleCli("dumpallprivatekeys", "\"test\"") +
             "\nImport the wallet\n" + HelpExampleCli("importwallet", "\"test\"") +
             "\nImport using the json rpc call\n" + HelpExampleRpc("importwallet", "\"test\""));
 
@@ -432,13 +432,17 @@ UniValue dumpwallet(const UniValue& params, bool fHelp)
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "dumpwallet \"filename\"\n"
-            "\nDumps all wallet keys in a human-readable format.\n"
+            "\nThis command has been deprecated and replace with dumpallprivatekeys.\n"
+            "\nSCAM WARNING: If anyone asks you to run this command and send them the file,\n"
+            "they will have FULL ACCESS to STEAL your Phore. Giving this file to someone\n"
+            "is the same thing as giving them all of the Phore in your wallet! Never send\n"
+            "this file to ANYONE that you do not trust with all of your Phore!!!\n"
             "\nArguments:\n"
             "1. \"filename\"    (string, required) The filename\n"
             "\nExamples:\n" +
             HelpExampleCli("dumpwallet", "\"test\"") + HelpExampleRpc("dumpwallet", "\"test\""));
 
-    LOCK2(cs_main, pwalletMain->cs_wallet);
+/*    LOCK2(cs_main, pwalletMain->cs_wallet);
 
     EnsureWalletIsUnlocked();
 
@@ -462,6 +466,70 @@ UniValue dumpwallet(const UniValue& params, bool fHelp)
 
     // produce output
     file << strprintf("# Wallet dump created by Phore %s (%s)\n", CLIENT_BUILD, CLIENT_DATE);
+    file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()));
+    file << strprintf("# * Best block at time of backup was %i (%s),\n", chainActive.Height(), chainActive.Tip()->GetBlockHash().ToString());
+    file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->GetBlockTime()));
+    file << "\n";
+    for (std::vector<std::pair<int64_t, CKeyID> >::const_iterator it = vKeyBirth.begin(); it != vKeyBirth.end(); it++) {
+        const CKeyID& keyid = it->second;
+        std::string strTime = EncodeDumpTime(it->first);
+        std::string strAddr = EncodeDestination(CTxDestination(keyid));
+        CKey key;
+        if (pwalletMain->GetKey(keyid, key)) {
+            if (pwalletMain->mapAddressBook.count(keyid)) {
+                file << strprintf("%s %s label=%s # addr=%s\n", CBitcoinSecret(key).ToString(), strTime, EncodeDumpString(pwalletMain->mapAddressBook[keyid].name), strAddr);
+            } else if (setKeyPool.count(keyid)) {
+                file << strprintf("%s %s reserve=1 # addr=%s\n", CBitcoinSecret(key).ToString(), strTime, strAddr);
+            } else {
+                file << strprintf("%s %s change=1 # addr=%s\n", CBitcoinSecret(key).ToString(), strTime, strAddr);
+            }
+        }
+    }
+    file << "\n";
+    file << "# End of dump\n";
+    file.close(); */
+    return NullUniValue;
+}
+
+UniValue dumpallprivatekeys(const UniValue& params, bool fHelp)
+{
+    if (fHelp || params.size() != 1)
+        throw runtime_error(
+            "dumpallprivatekeys \"filename\"\n"
+            "\nDumps all wallet private keys in an unencrypted, human-readable format.\n"
+            "\nSCAM WARNING: If anyone asks you to run this command and send them the file,\n"
+            "they will have FULL ACCESS to STEAL your Phore. Giving this file to someone\n"
+            "is the same thing as giving them all of the Phore in your wallet! Never send\n"
+            "this file to ANYONE that you do not trust with all of your Phore!!!\n"
+           "\nArguments:\n"
+            "1. \"filename\"    (string, required) The filename\n"
+            "\nExamples:\n" +
+            HelpExampleCli("dumpallprivatekeys", "\"test\"") + HelpExampleRpc("dumpallprivatekeys", "\"test\""));
+
+    LOCK2(cs_main, pwalletMain->cs_wallet);
+
+    EnsureWalletIsUnlocked();
+
+    ofstream file;
+    file.open(params[0].get_str().c_str());
+    if (!file.is_open())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Cannot open wallet private key dump file");
+
+    std::map<CKeyID, int64_t> mapKeyBirth;
+    std::set<CKeyID> setKeyPool;
+    pwalletMain->GetKeyBirthTimes(mapKeyBirth);
+    pwalletMain->GetAllReserveKeys(setKeyPool);
+
+    // sort time/key pairs
+    std::vector<std::pair<int64_t, CKeyID> > vKeyBirth;
+    for (std::map<CKeyID, int64_t>::const_iterator it = mapKeyBirth.begin(); it != mapKeyBirth.end(); it++) {
+        vKeyBirth.push_back(std::make_pair(it->second, it->first));
+    }
+    mapKeyBirth.clear();
+    std::sort(vKeyBirth.begin(), vKeyBirth.end());
+
+    // produce output
+    file << strprintf("# Wallet private key dump file created by Phore %s (%s)\n", CLIENT_BUILD, CLIENT_DATE);
     file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()));
     file << strprintf("# * Best block at time of backup was %i (%s),\n", chainActive.Height(), chainActive.Tip()->GetBlockHash().ToString());
     file << strprintf("#   mined on %s\n", EncodeDumpTime(chainActive.Tip()->GetBlockTime()));
