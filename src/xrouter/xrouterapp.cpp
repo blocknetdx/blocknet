@@ -167,7 +167,8 @@ bool App::init(int argc, char *argv[])
 
     std::string xrouterpath = path + "/xrouter.conf";
     this->xrouter_settings.read(xrouterpath.c_str());
-    
+    LOG() << "Loading config from file " << xrouterpath;
+	
     return true;
 }
 
