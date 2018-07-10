@@ -333,7 +333,7 @@ public:
 
     //
     
-    static bool cmpNodeScore(CNode* & a, CNode* & b) { return snodeScore[a] > snodeScore[b]; }
+    static bool cmpNodeScore(CNode* a, CNode* b) { return snodeScore[a] > snodeScore[b]; }
     
     std::vector<CNode*> getAvailableNodes(const XRouterPacketPtr & packet, std::string wallet);
     
