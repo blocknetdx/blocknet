@@ -140,7 +140,7 @@ public:
 
         /** Height or Time Based Activations **/
         nLastPOWBlock = 200;
-        nModifierUpdateBlock = 433160;
+        nModifierUpdateBlock = 468744;
         nZerocoinStartHeight = 89993;
 
         /**
