@@ -429,6 +429,19 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
         if (!settings.isAvailableCommand(packet->command(), wallet))
             continue;
         
+        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        std::string keystr = wallet + "::" + XRouterCommand_ToString(packet->command());
+        double timeout = settings.getCommandTimeout(packet->command(), wallet);
+        if (lastPacketsSent.count(pnode)) {
+            if (lastPacketsSent[pnode].count(keystr)) {
+                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[pnode][keystr];
+                std::chrono::system_clock::duration diff = time - prev_time;
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
+                    continue;
+                }
+            }
+        }
+        
         /*selectedNodes.push_back(pnode);
         continue;*/
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
@@ -490,6 +503,13 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
     for (CNode* pnode : selectedNodes) {
         m_p->onSend(packet->body(), pnode);
         sent++;
+        
+        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        std::string keystr = wallet + "::" + XRouterCommand_ToString(packet->command());
+        if (!lastPacketsSent.count(pnode)) {
+            lastPacketsSent[pnode] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+        }
+        lastPacketsSent[pnode][keystr] = time;
         //std::cout << "sent " << sent << " " << confirmations << std::endl;
         if (sent == confirmations)
             return true;
@@ -896,23 +916,23 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     } else {
         std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
         double timeout = this->xrouter_settings.getCommandTimeout(packet->command(), currency);
-        if (lastPackets.count(node)) {
-            if (lastPackets[node].count(keystr)) {
-                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPackets[node][keystr];
+        if (lastPacketsReceived.count(node)) {
+            if (lastPacketsReceived[node].count(keystr)) {
+                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsReceived[node][keystr];
                 std::chrono::system_clock::duration diff = time - prev_time;
                 if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
                     std::string err_msg = "XRouter: too many requests of type " + keystr; 
                     state.DoS(100, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
                 }
-                if (!lastPackets.count(node))
-                    lastPackets[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-                lastPackets[node][keystr] = time;
+                if (!lastPacketsReceived.count(node))
+                    lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+                lastPacketsReceived[node][keystr] = time;
             } else {
-                lastPackets[node][keystr] = time;
+                lastPacketsReceived[node][keystr] = time;
             }
         } else {
-            lastPackets[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-            lastPackets[node][keystr] = time;
+            lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+            lastPacketsReceived[node][keystr] = time;
         }
             
         switch (packet->command()) {
