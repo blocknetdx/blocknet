@@ -215,13 +215,7 @@ cov: test_blocknetdx.coverage/.dirstamp total.coverage/.dirstamp
 
 endif
 
-# BlocknetDX: disable the outdated comparison tool test
-# Ref https://github.com/bitcoin/bitcoin/issues/4545
-if USE_COMPARISON_TOOL
-check-local:
-	## $(MKDIR_P) qa/tmp
-	## @qa/pull-tester/run-bitcoind-for-test.sh $(JAVA) -jar $(JAVA_COMPARISON_TOOL) qa/tmp/compTool $(COMPARISON_TOOL_REORG_TESTS) 2>&1
-endif
+dist_noinst_SCRIPTS = autogen.sh
 
 EXTRA_DIST = $(top_srcdir)/share/genbuild.sh qa/pull-tester/rpc-tests.sh qa/pull-tester/run-bitcoin-cli qa/rpc-tests $(DIST_DOCS) $(WINDOWS_PACKAGING) $(OSX_PACKAGING)
 
