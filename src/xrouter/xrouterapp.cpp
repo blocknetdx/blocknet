@@ -164,10 +164,12 @@ bool App::init(int argc, char *argv[])
     std::string xbridgepath = path + "/xbridge.conf";
     s.read(xbridgepath.c_str());
     s.parseCmdLine(argc, argv);
+    LOG() << "Loading xbridge config from file " << xbridgepath;
+	
 
     std::string xrouterpath = path + "/xrouter.conf";
     this->xrouter_settings.read(xrouterpath.c_str());
-    LOG() << "Loading config from file " << xrouterpath;
+    LOG() << "Loading xrouter config from file " << xrouterpath;
 	
     return true;
 }
@@ -363,6 +365,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
+    LOG() << "Sending query " << id;
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     if (!sendPacketToServer(packet, confirmations, currency)) {
         error.emplace_back(Pair("error", "Could not find available nodes for your request"));
@@ -510,7 +513,7 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
             lastPacketsSent[pnode] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
         }
         lastPacketsSent[pnode][keystr] = time;
-        //std::cout << "sent " << sent << " " << confirmations << std::endl;
+        LOG() << "Sent message to node " << pnode->addrName;
         if (sent == confirmations)
             return true;
     }
@@ -839,6 +842,8 @@ bool App::processReply(XRouterPacketPtr packet) {
     offset += reply.size() + 1;
 
     if (configQueries.count(uuid)) {
+        LOG() << "Got xrouter config from node " << configQueries[uuid]->addrName;
+        LOG() << reply;
         XRouterSettings settings;
         settings.read(reply);
         snodeConfigs[configQueries[uuid]] = settings;
@@ -849,6 +854,8 @@ bool App::processReply(XRouterPacketPtr packet) {
     if (!queriesLocks.count(uuid))
         return true;
 
+    LOG() << "Got reply to query " << uuid;
+    LOG() << reply;
     boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
     if (!queries.count(uuid))
         queries[uuid] = vector<std::string>();
@@ -1027,7 +1034,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     uint32_t vout = 0;
     CKey key;
     if ((command != xrGetXrouterConfig) && !satisfyBlockRequirement(txHash, vout, key)) {
-        std::cerr << "Minimum block requirement not satisfied\n";
+        LOG() << "Minimum block requirement not satisfied";
         return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
 
