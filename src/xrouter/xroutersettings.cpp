@@ -15,35 +15,10 @@
 
 namespace xrouter
 {  
-//******************************************************************************
-//******************************************************************************
-XRouterSettings::XRouterSettings()
-    : m_isExchangeEnabled(false)
-{
-}
 
 //******************************************************************************
 //******************************************************************************
-bool XRouterSettings::parseCmdLine(int, char * argv[])
-{
-    m_appPath = std::string(argv[0]);
-    std::replace(m_appPath.begin(), m_appPath.end(), '\\', '/');
-    m_appPath = m_appPath.substr(0, m_appPath.rfind('/')+1);
-
-    bool enableExchange = GetBoolArg("-enableexchange", false);
-
-    if (enableExchange)
-    {
-        m_isExchangeEnabled = true;
-        //LOG() << "exchange enabled by passing argument";
-    }
-
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
-bool XRouterSettings::read(const char * fileName)
+bool IniConfig::read(const char * fileName)
 {
     try
     {
@@ -78,7 +53,7 @@ bool XRouterSettings::read(const char * fileName)
     return true;
 }
 
-bool XRouterSettings::read(std::string config)
+bool IniConfig::read(std::string config)
 {
     try
     {

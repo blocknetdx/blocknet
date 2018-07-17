@@ -16,37 +16,13 @@
 namespace xrouter
 {
 
-//******************************************************************************
-class XRouterSettings
+class IniConfig
 {
 public:
-    XRouterSettings();
-
-    bool parseCmdLine(int, char * argv[]);
-
+    IniConfig() {}
     bool read(const char * fileName = 0);
     bool read(std::string config);
-
-public:
-    bool isFullLog()
-        { return get<bool>("Main.FullLog", false); }
-
-    bool isExchangeEnabled() const { return m_isExchangeEnabled; }
-    std::string appPath() const    { return m_appPath; }
-
-    std::string logPath() const;
-    std::string rawText() const { return rawtext; }
-
-    bool walletEnabled(std::string currency);
-    bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
-    double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
-    double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
-    bool hasService(std::string name);
-    std::string getServiceParam(std::string name, std::string param, std::string def="");
-    double getServiceFee(std::string name);
-    int getServiceParamCount(std::string name);
     
-public:
     template <class _T>
     _T get(const std::string & param, _T def = _T())
     {
@@ -69,17 +45,38 @@ public:
 
         return tmp;
     }
-
-private:
-    std::string                 m_appPath;
-    std::string                 m_fileName;
+    
+protected:
+    std::string m_fileName;
     boost::property_tree::ptree m_pt;
-
-    std::vector<std::string>    m_peers;
-
-    bool                        m_isExchangeEnabled;
     std::string rawtext;
 };
+    
+//******************************************************************************
+class XRouterSettings : public IniConfig
+{
+public:
+    XRouterSettings() {}
+
+    std::string logPath() const;
+    std::string rawText() const { return rawtext; }
+
+    bool walletEnabled(std::string currency);
+    bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
+    double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
+    double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
+    bool hasService(std::string name);
+    std::string getServiceParam(std::string name, std::string param, std::string def="");
+    double getServiceFee(std::string name);
+    int getServiceParamCount(std::string name);
+};
+
+class XRouterPluginSettings : public IniConfig
+{
+public:
+    XRouterPluginSettings() {}
+};
+
 
 } // namespace
 
