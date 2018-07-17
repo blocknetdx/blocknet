@@ -169,6 +169,7 @@ bool App::init(int argc, char *argv[])
 
     std::string xrouterpath = path + "/xrouter.conf";
     this->xrouter_settings.read(xrouterpath.c_str());
+    this->xrouter_settings.loadPlugins();
     LOG() << "Loading xrouter config from file " << xrouterpath;
 	
     return true;
@@ -476,7 +477,7 @@ CNode* App::getNodeForService(std::string name)
         if (!snodeConfigs.count(pnode))
             continue;
         XRouterSettings settings = snodeConfigs[pnode];
-        if (!settings.hasService(name))
+        if (!settings.hasPlugin(name))
             continue;
         
         // return pnode;

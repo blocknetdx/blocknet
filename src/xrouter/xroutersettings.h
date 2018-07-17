@@ -8,6 +8,7 @@
 #include "xrouterpacket.h"
 
 #include <boost/property_tree/ptree.hpp>
+#include <boost/container/map.hpp>
 
 #define TRY(_STMNT_) try { (_STMNT_); } catch(std::exception & e) { LOG() << e.what(); }
 
@@ -16,6 +17,8 @@
 namespace xrouter
 {
 
+class XRouterPluginSettings;
+    
 class IniConfig
 {
 public:
@@ -58,17 +61,22 @@ class XRouterSettings : public IniConfig
 public:
     XRouterSettings() {}
 
-    std::string logPath() const;
+    void loadPlugins();
+    void loadPlugin(std::string name);
+    std::string pluginPath() const;
     std::string rawText() const { return rawtext; }
 
     bool walletEnabled(std::string currency);
     bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
     double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
-    bool hasService(std::string name);
+    bool hasPlugin(std::string name);
     std::string getServiceParam(std::string name, std::string param, std::string def="");
     double getServiceFee(std::string name);
     int getServiceParamCount(std::string name);
+    
+private:
+    boost::container::map<std::string, XRouterPluginSettings > plugins;
 };
 
 class XRouterPluginSettings : public IniConfig

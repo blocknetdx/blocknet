@@ -72,12 +72,27 @@ bool IniConfig::read(std::string config)
 
 //******************************************************************************
 //******************************************************************************
-std::string XRouterSettings::logPath() const
+void XRouterSettings::loadPlugins()
 {
-//    try { return m_pt.get<std::string>("Main.LogPath"); }
-//    catch (std::exception &) {} return std::string();
+    std::vector<std::string> plugins;
+    std::string pstr = get<std::string>("Main.plugins", "");
+    boost::split(plugins, pstr, boost::is_any_of(","));
+    for(std::string s : plugins)
+        loadPlugin(s);
+}
 
-    return std::string(GetDataDir(false).string()) + "/";
+void XRouterSettings::loadPlugin(std::string name)
+{
+    std::string filename = pluginPath() + name + ".conf";
+    XRouterPluginSettings settings;
+    if(!settings.read(filename.c_str()))
+        return;
+    this->plugins[name] = settings;
+}
+
+std::string XRouterSettings::pluginPath() const
+{
+    return std::string(GetDataDir(false).string()) + "/plugins/";
 }
 
 bool XRouterSettings::walletEnabled(std::string currency)
@@ -122,7 +137,7 @@ double XRouterSettings::getCommandTimeout(XRouterCommand c, std::string currency
     return res;
 }
 
-bool XRouterSettings::hasService(std::string name)
+bool XRouterSettings::hasPlugin(std::string name)
 {
     std::string type = get<std::string>(name + ".type", "");
     return type == "";
