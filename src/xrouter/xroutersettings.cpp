@@ -2,7 +2,7 @@
 //******************************************************************************
 
 #include "xroutersettings.h"
-//#include "../config.h"
+#include "xrouterlogger.h"
 
 #include "../main.h"
 
@@ -46,7 +46,7 @@ bool IniConfig::read(const char * fileName)
     }
     catch (std::exception & e)
     {
-        //LOG() << e.what();
+        LOG() << e.what();
         return false;
     }
 
@@ -63,7 +63,7 @@ bool IniConfig::read(std::string config)
     }
     catch (std::exception & e)
     {
-        //LOG() << e.what();
+        LOG() << e.what();
         return false;
     }
 
@@ -85,9 +85,11 @@ void XRouterSettings::loadPlugin(std::string name)
 {
     std::string filename = pluginPath() + name + ".conf";
     XRouterPluginSettings settings;
+    LOG() << "Trying to load plugin " << name + ".conf";
     if(!settings.read(filename.c_str()))
         return;
     this->plugins[name] = settings;
+    LOG() << "Successfully loaded plugin " << name;
 }
 
 std::string XRouterSettings::pluginPath() const

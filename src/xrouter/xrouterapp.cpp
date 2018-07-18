@@ -165,13 +165,12 @@ bool App::init(int argc, char *argv[])
     s.read(xbridgepath.c_str());
     s.parseCmdLine(argc, argv);
     LOG() << "Loading xbridge config from file " << xbridgepath;
-	
 
     std::string xrouterpath = path + "/xrouter.conf";
+    LOG() << "Loading xrouter config from file " << xrouterpath;
     this->xrouter_settings.read(xrouterpath.c_str());
     this->xrouter_settings.loadPlugins();
-    LOG() << "Loading xrouter config from file " << xrouterpath;
-	
+
     return true;
 }
 
@@ -808,7 +807,7 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
         Object result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, params);
         return json_spirit::write_string(Value(result), true);
     } else if (callType == "shell") {
-        std::string cmd = psettings.getParam("rpcCommand");
+        std::string cmd = psettings.getParam("cmd");
         int count = psettings.getParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
