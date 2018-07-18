@@ -725,17 +725,14 @@ size_t Exchange::eraseExpiredTransactions()
         {
             LOG() << __FUNCTION__ << std::endl << "order expired" << ptr;
 
-            m_p->m_pendingTransactions.erase(it);
+            m_p->m_pendingTransactions.erase(it++);
 
             unlockUtxos(ptr->id());
 
             ++result;
+        } else {
+            ++it;
         }
-
-        if (m_p->m_pendingTransactions.empty())
-            break;
-
-        ++it;
     }
 
     if(result > 0)
