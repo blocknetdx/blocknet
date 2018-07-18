@@ -42,6 +42,8 @@
 
 static const CAmount minBlock = 200;
 
+#define TEST_RUN_ON_CLIENT 0
+
 #ifdef _WIN32
 #include <objbase.h>
     
@@ -219,9 +221,11 @@ std::string App::updateConfigs()
             
         LOG() << "Getting config from node " << pnode->addrName;
         std::string uuid = this->getXrouterConfig(pnode);
-        /*this->configQueries[uuid] = pnode;
-        lastConfigUpdates[pnode] = time;
-        continue;*/
+        if (TEST_RUN_ON_CLIENT) {
+            this->configQueries[uuid] = pnode;
+            lastConfigUpdates[pnode] = time;
+            continue;
+        }
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
@@ -445,8 +449,10 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
             }
         }
         
-        /*selectedNodes.push_back(pnode);
-        continue;*/
+        if (TEST_RUN_ON_CLIENT) {
+            selectedNodes.push_back(pnode);
+            continue;
+        }
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
@@ -479,7 +485,8 @@ CNode* App::getNodeForService(std::string name)
         if (!settings.hasPlugin(name))
             continue;
         
-        // return pnode;
+        if (TEST_RUN_ON_CLIENT)
+            return pnode;
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
