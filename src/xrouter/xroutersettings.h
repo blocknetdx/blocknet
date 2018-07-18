@@ -26,6 +26,8 @@ public:
     bool read(const char * fileName = 0);
     bool read(std::string config);
     
+    std::string rawText() const { return rawtext; }
+    
     template <class _T>
     _T get(const std::string & param, _T def = _T())
     {
@@ -71,19 +73,20 @@ public:
     XRouterSettings() {}
 
     void loadPlugins();
-    void loadPlugin(std::string name);
+    bool loadPlugin(std::string name);
     std::string pluginPath() const;
-    std::string rawText() const { return rawtext; }
 
     bool walletEnabled(std::string currency);
     bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
     double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
     bool hasPlugin(std::string name);
+    std::vector<std::string>& getPlugins() { return pluginList; }
     XRouterPluginSettings& getPluginSettings(std::string name) { return plugins[name]; }
     
 private:
     boost::container::map<std::string, XRouterPluginSettings > plugins;
+    std::vector<std::string> pluginList;
 };
 
 } // namespace

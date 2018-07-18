@@ -836,8 +836,13 @@ std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {
 }
 
 std::string App::processGetXrouterConfig(XRouterPacketPtr packet) {
-    std::cout << this->xrouter_settings.rawText() << std::endl;
-    return this->xrouter_settings.rawText();
+    Object result;
+    result.emplace_back(Pair("config", this->xrouter_settings.rawText()));
+    Object plugins;
+    for (std::string s : this->xrouter_settings.getPlugins())
+        result.emplace_back(s, this->xrouter_settings.getPluginSettings(s).rawText());
+    result.emplace_back(Pair("plugins", plugins));
+    return json_spirit::write_string(Value(result), true);
 }
 
 //*****************************************************************************

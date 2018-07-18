@@ -78,18 +78,20 @@ void XRouterSettings::loadPlugins()
     std::string pstr = get<std::string>("Main.plugins", "");
     boost::split(plugins, pstr, boost::is_any_of(","));
     for(std::string s : plugins)
-        loadPlugin(s);
+        if(loadPlugin(s))
+            pluginList.push_back(s);
 }
 
-void XRouterSettings::loadPlugin(std::string name)
+bool XRouterSettings::loadPlugin(std::string name)
 {
     std::string filename = pluginPath() + name + ".conf";
     XRouterPluginSettings settings;
     LOG() << "Trying to load plugin " << name + ".conf";
     if(!settings.read(filename.c_str()))
-        return;
+        return false;
     this->plugins[name] = settings;
     LOG() << "Successfully loaded plugin " << name;
+    return true;
 }
 
 std::string XRouterSettings::pluginPath() const
