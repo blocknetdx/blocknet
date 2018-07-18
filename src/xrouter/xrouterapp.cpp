@@ -782,13 +782,15 @@ std::string App::processSendTransaction(XRouterPacketPtr packet, uint32_t offset
 
 std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std::string name)
 {
-    std::string callType = this->xrouter_settings.getServiceParam(name, "type");
-    if (callType == "")
-        return "Custom call not found";
     
+    if (!this->xrouter_settings.hasPlugin(name))
+        return "Custom call not found";
+
+    XRouterPluginSettings psettings = this->xrouter_settings.getPluginSettings(name);
+    std::string callType = psettings.getParam("type");
     if (callType == "rpc") {
         Array params;
-        int count = this->xrouter_settings.getServiceParamCount(name);
+        int count = psettings.getParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
             // TODO: check missing params
@@ -798,16 +800,16 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
         }
         
         std::string user, passwd, ip, port, command;
-        user = this->xrouter_settings.getServiceParam(name, "rpcUser");
-        passwd = this->xrouter_settings.getServiceParam(name, "rpcPassword");
-        ip = this->xrouter_settings.getServiceParam(name, "rpcIp", "127.0.0.1");
-        port = this->xrouter_settings.getServiceParam(name, "rpcPort");
-        command = this->xrouter_settings.getServiceParam(name, "rpcCommand");
+        user = psettings.getParam("rpcUser");
+        passwd = psettings.getParam("rpcPassword");
+        ip = psettings.getParam("rpcIp", "127.0.0.1");
+        port = psettings.getParam("rpcPort");
+        command = psettings.getParam("rpcCommand");
         Object result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, params);
         return json_spirit::write_string(Value(result), true);
     } else if (callType == "shell") {
-        std::string cmd = this->xrouter_settings.getServiceParam(name, "rpcCommand");
-        int count = this->xrouter_settings.getServiceParamCount(name);
+        std::string cmd = psettings.getParam("rpcCommand");
+        int count = psettings.getParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
             // TODO: check missing params
@@ -1198,7 +1200,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
 
-    unsigned int count = this->xrouter_settings.getServiceParamCount(name);
+    unsigned int count = this->xrouter_settings.getPluginSettings(name).getParamCount();
     if (params.size() != count) {
         return "Wrong number of parameters";
     }

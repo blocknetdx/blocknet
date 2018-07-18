@@ -54,7 +54,16 @@ protected:
     boost::property_tree::ptree m_pt;
     std::string rawtext;
 };
-    
+
+class XRouterPluginSettings : public IniConfig
+{
+public:
+    XRouterPluginSettings() {}
+    std::string getParam(std::string param, std::string def="");
+    double getFee();
+    int getParamCount();
+};
+
 //******************************************************************************
 class XRouterSettings : public IniConfig
 {
@@ -71,20 +80,11 @@ public:
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
     double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
     bool hasPlugin(std::string name);
-    std::string getServiceParam(std::string name, std::string param, std::string def="");
-    double getServiceFee(std::string name);
-    int getServiceParamCount(std::string name);
+    XRouterPluginSettings& getPluginSettings(std::string name) { return plugins[name]; }
     
 private:
     boost::container::map<std::string, XRouterPluginSettings > plugins;
 };
-
-class XRouterPluginSettings : public IniConfig
-{
-public:
-    XRouterPluginSettings() {}
-};
-
 
 } // namespace
 

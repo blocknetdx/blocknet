@@ -139,23 +139,22 @@ double XRouterSettings::getCommandTimeout(XRouterCommand c, std::string currency
 
 bool XRouterSettings::hasPlugin(std::string name)
 {
-    std::string type = get<std::string>(name + ".type", "");
-    return type == "";
+    return plugins.count(name) > 0;
 }
 
-std::string XRouterSettings::getServiceParam(std::string name, std::string param, std::string def)
+std::string XRouterPluginSettings::getParam(std::string param, std::string def)
 {
-    return get<std::string>(name + "." + param, def);
+    return get<std::string>(param, def);
 }
 
-double XRouterSettings::getServiceFee(std::string name)
+double XRouterPluginSettings::getFee()
 {
-    return get<double>(name + ".fee", 0.0);
+    return get<double>("fee", 0.0);
 }
 
-int XRouterSettings::getServiceParamCount(std::string name)
+int XRouterPluginSettings::getParamCount()
 {
-    return get<int>(name + ".paramsCount", 0);
+    return get<int>("paramsCount", 0);
 }
 
 } // namespace xrouter
