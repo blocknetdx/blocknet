@@ -199,7 +199,12 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             }
             break;
         }
-//        case BlocknetPage::PROPOSALS:
+        case BlocknetPage::PROPOSALS: {
+            auto *proposals = new BlocknetProposals;
+            proposals->setWalletModel(walletModel);
+            screen = proposals;
+            break;
+        }
 //        case BlocknetPage::ANNOUNCEMENTS:
 //        case BlocknetPage::SETTINGS:
 //        case BlocknetPage::TOOLS:

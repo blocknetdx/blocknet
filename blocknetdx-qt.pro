@@ -308,6 +308,7 @@ SOURCES += \
     src/qt/blocknethdiv.cpp \
     src/qt/blocknetdropdown.cpp \
     src/qt/blockneticonbtn.cpp \
+    src/qt/blockneticonaltbtn.cpp \
     src/qt/blockneticonlabel.cpp \
     src/qt/blocknetleftmenu.cpp \
     src/qt/blocknetlineedit.cpp \
@@ -621,6 +622,7 @@ HEADERS += \
     src/qt/blocknethdiv.h \
     src/qt/blocknetdropdown.h \
     src/qt/blockneticonbtn.h \
+    src/qt/blockneticonaltbtn.h \
     src/qt/blockneticonlabel.h \
     src/qt/blocknetleftmenu.h \
     src/qt/blocknetlineedit.h \

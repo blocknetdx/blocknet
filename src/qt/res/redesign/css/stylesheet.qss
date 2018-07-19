@@ -96,6 +96,16 @@ BlocknetBreadCrumb QPushButton { font-size: 13px; color: #6F8097; font-family: "
 BlocknetBreadCrumb QPushButton:checked { color: #74B2FE; }
 BlocknetIconBtn #title { font-size: 12px; color: white; font-family: "Roboto"; }
 
+BlocknetProposals #h4 { padding-left: 1px; }
+BlocknetProposals #title { font-size: 12px; color: white; font-family: "Roboto"; }
+BlocknetProposals QTableView { background-color: rgba(55, 71, 92, 0); }
+BlocknetProposals QTableView QHeaderView { color: #37475C; background-color: rgba(55, 71, 92, 0); }
+BlocknetProposals QTableView QHeaderView::section { background-color: rgba(55, 71, 92, 0); }
+QTableView QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
+QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
+QTableWidget::item::selected { color: white; background-color: #016AFF; }
+/*BlocknetProposals QTableView QHeaderView::down-arrow { image: url("data:image/svg+xml;utf8,<svg fill='red' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>"); }*/
+
 BlocknetDashboard #h4 { padding-left: 1px; }
 BlocknetDashboard #balanceLbl { font-size: 21px; color: #6F8097; font-family: "Roboto"; padding-top: 40px; }
 BlocknetDashboard #pendingLbl { font-size: 14px; color: #6F8097; font-family: "Roboto"; font-weight: 25; }

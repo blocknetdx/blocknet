@@ -9,6 +9,7 @@
 #include "blocknetleftmenu.h"
 #include "blocknetdashboard.h"
 #include "blocknetsendfunds.h"
+#include "blocknetproposals.h"
 #include "blocknettoolbar.h"
 
 #include "clientmodel.h"
