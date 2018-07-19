@@ -222,7 +222,9 @@ static void MutateTxAddOutAddr(CMutableTransaction& tx, const string& strInput)
 
     // extract and validate ADDRESS
     string strAddr = strInput.substr(pos + 1, string::npos);
+
     if (!IsValidDestinationString(strAddr))
+
         throw runtime_error("invalid TX output address");
 
     // build standard output script via GetScriptForDestination()
