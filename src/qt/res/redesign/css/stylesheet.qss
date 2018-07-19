@@ -23,6 +23,21 @@ BlocknetLockMenu QPushButton:!hover { color: #016AFF; background-color: white; }
 BlocknetLockMenu QPushButton:hover { color: white; background-color: #016AFF; }
 BlocknetLockMenu #hdiv { background-color: #CCCCCC; }
 
+BlocknetDropdown { 
+    background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); 
+    selection-color: #FFFFFF; 
+    selection-background-color: #37475C; 
+    border: 1px solid #6F8097; 
+    color: #FFFFFF; 
+    font-size: 13px; 
+    font-family: "Roboto"; 
+}
+BlocknetDropdown::drop-down { width: 35px; border: 0px; }
+BlocknetDropdown QAbstractItemView {
+    background: #6F8097;
+    background-color: #6F8097;
+}
+
 BlocknetWallet #content { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
 
 #h1 { font-size: 51px; color: white; font-family: "Roboto"; font-weight: 25; }

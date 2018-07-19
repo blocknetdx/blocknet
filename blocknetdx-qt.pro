@@ -306,6 +306,7 @@ SOURCES += \
     src/qt/blocknetfontmgr.cpp \
     src/qt/blocknetformbtn.cpp \
     src/qt/blocknethdiv.cpp \
+    src/qt/blocknetdropdown.cpp \
     src/qt/blockneticonbtn.cpp \
     src/qt/blockneticonlabel.cpp \
     src/qt/blocknetleftmenu.cpp \
@@ -615,6 +616,7 @@ HEADERS += \
     src/qt/blocknetfontmgr.h \
     src/qt/blocknetformbtn.h \
     src/qt/blocknethdiv.h \
+    src/qt/blocknetdropdown.h \
     src/qt/blockneticonbtn.h \
     src/qt/blockneticonlabel.h \
     src/qt/blocknetleftmenu.h \

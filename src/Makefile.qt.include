@@ -104,6 +104,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetfontmgr.cpp \
   qt/moc_blocknetformbtn.cpp \
   qt/moc_blocknethdiv.cpp \
+  qt/moc_blocknetdropdown.cpp \
   qt/moc_blockneticonbtn.cpp \
   qt/moc_blockneticonlabel.cpp \
   qt/moc_blocknetleftmenu.cpp \
@@ -209,6 +210,7 @@ BITCOIN_QT_H = \
   qt/blocknetfontmgr.h \
   qt/blocknetformbtn.h \
   qt/blocknethdiv.h \
+  qt/blocknetdropdown.h \
   qt/blockneticonbtn.h \
   qt/blockneticonlabel.h \
   qt/blocknetleftmenu.h \
@@ -228,6 +230,7 @@ BITCOIN_QT_H = \
   qt/blocknetsendfundsrequest.h
 
 RES_ICONS = \
+  qt/res/icons/accordion-arrow.png \
   qt/res/icons/add.png \
   qt/res/icons/address-book.png \
   qt/res/icons/address-book-white.png \
@@ -324,6 +327,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetfontmgr.cpp \
   qt/blocknetformbtn.cpp \
   qt/blocknethdiv.cpp \
+  qt/blocknetdropdown.cpp \
   qt/blockneticonbtn.cpp \
   qt/blockneticonlabel.cpp \
   qt/blocknetleftmenu.cpp \
