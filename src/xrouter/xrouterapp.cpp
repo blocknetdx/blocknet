@@ -42,7 +42,7 @@
 
 static const CAmount minBlock = 200;
 
-#define TEST_RUN_ON_CLIENT 0
+#define TEST_RUN_ON_CLIENT 1
 
 #ifdef _WIN32
 #include <objbase.h>
@@ -210,7 +210,7 @@ std::string App::updateConfigs()
         if (snodeConfigs.count(pnode)) {
             continue;
         }
-           
+
         if (lastConfigUpdates.count(pnode)) {
             // There was a request to this node already, a new one will be sent only after 5 minutes
             std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigUpdates[pnode];
@@ -218,11 +218,10 @@ std::string App::updateConfigs()
             if (std::chrono::duration_cast<std::chrono::seconds>(diff) < std::chrono::seconds(300)) 
                 continue;
         }
-            
-        LOG() << "Getting config from node " << pnode->addrName;
-        std::string uuid = this->getXrouterConfig(pnode);
+         
         if (TEST_RUN_ON_CLIENT) {
-            this->configQueries[uuid] = pnode;
+            std::string uuid = this->getXrouterConfig(pnode);
+            LOG() << "Getting config from node " << pnode->addrName << " request id = " << uuid;
             lastConfigUpdates[pnode] = time;
             continue;
         }
@@ -230,7 +229,7 @@ std::string App::updateConfigs()
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
                 std::string uuid = this->getXrouterConfig(pnode);
-                this->configQueries[uuid] = pnode;
+                LOG() << "Getting config from node " << pnode->addrName << " request id = " << uuid;
                 lastConfigUpdates[pnode] = time;
             }
         }
@@ -794,6 +793,7 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
 
     XRouterPluginSettings psettings = this->xrouter_settings.getPluginSettings(name);
     std::string callType = psettings.getParam("type");
+    LOG() << "Plugin call " << name << " type = " << callType; 
     if (callType == "rpc") {
         Array params;
         int count = psettings.getParamCount();
@@ -824,6 +824,7 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
             offset += p.size() + 1;
         }
         
+        LOG() << "Executing shell command " << cmd;
         std::string result = CallCMD(cmd);
         return result;
     }  
@@ -840,8 +841,9 @@ std::string App::processGetXrouterConfig(XRouterPacketPtr packet) {
     result.emplace_back(Pair("config", this->xrouter_settings.rawText()));
     Object plugins;
     for (std::string s : this->xrouter_settings.getPlugins())
-        result.emplace_back(s, this->xrouter_settings.getPluginSettings(s).rawText());
+        plugins.emplace_back(s, this->xrouter_settings.getPluginSettings(s).rawText());
     result.emplace_back(Pair("plugins", plugins));
+    LOG() << "Sending config " << json_spirit::write_string(Value(result), true);
     return json_spirit::write_string(Value(result), true);
 }
 
@@ -855,11 +857,26 @@ bool App::processReply(XRouterPacketPtr packet) {
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
 
+    LOG() << "Got reply to query " << uuid;
+    
     if (configQueries.count(uuid)) {
         LOG() << "Got xrouter config from node " << configQueries[uuid]->addrName;
         LOG() << reply;
+        Value reply_val;
+        read_string(reply, reply_val);
+        Object reply_obj = reply_val.get_obj();
+        std::string config = find_value(reply_obj, "config").get_str();
+        Object plugins  = find_value(reply_obj, "plugins").get_obj();
+        
         XRouterSettings settings;
-        settings.read(reply);
+        settings.read(config);
+        
+        for (Object::size_type i = 0; i != plugins.size(); i++ ) {
+            XRouterPluginSettings psettings;
+            psettings.read(std::string(plugins[i].value_.get_str()));
+            settings.addPlugin(std::string(plugins[i].name_), psettings);
+        }
+        
         snodeConfigs[configQueries[uuid]] = settings;
         return true;
     }
@@ -867,8 +884,7 @@ bool App::processReply(XRouterPacketPtr packet) {
     // check uuid is in queriesLock keys
     if (!queriesLocks.count(uuid))
         return true;
-
-    LOG() << "Got reply to query " << uuid;
+    
     LOG() << reply;
     boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
     if (!queries.count(uuid))
@@ -916,7 +932,6 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
     LOG() << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
-    std::cout << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
     if ((packet->command() > xrConfigReply) && !this->xrouter_settings.isAvailableCommand(packet->command(), currency)) {
         LOG() << "This command is blocked in xrouter.conf";
         return;
@@ -986,6 +1001,9 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
             break;
         case xrSendTransaction:
             reply = processSendTransaction(packet, offset, currency);
+            break;
+        case xrCustomCall:
+            reply = processCustomCall(packet, offset, currency);
             break;
         case xrReply:
             processReply(packet);
@@ -1263,15 +1281,15 @@ std::string App::getXrouterConfig(CNode* node) {
     uint32_t vout = 0;
 
     std::string id = generateUUID();
-
     packet->append(txHash.begin(), 32);
     packet->append(vout);
     packet->append(id);
     
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
-    node->PushMessage("xrouter", msg);
     
+    this->configQueries[id] = node;
+    node->PushMessage("xrouter", msg);
     return id;
 }
 

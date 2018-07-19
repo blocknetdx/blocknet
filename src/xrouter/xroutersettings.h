@@ -75,6 +75,7 @@ public:
     void loadPlugins();
     bool loadPlugin(std::string name);
     std::string pluginPath() const;
+    void addPlugin(std::string name, XRouterPluginSettings s) { plugins[name] = s; pluginList.push_back(name); }
 
     bool walletEnabled(std::string currency);
     bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
