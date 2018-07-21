@@ -53,7 +53,7 @@ static double parseVout(Value vout, std::string account)
 
 double BtcWalletConnectorXRouter::getBalanceChange(Object tx, std::string account) const
 {
-    std::string commandGRT("getblockhash");
+    std::string commandGRT("getrawtransaction");
     std::string commandDRT("decoderawtransaction");
 
     double result = 0.0;
@@ -265,46 +265,7 @@ Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account,
 
 std::string BtcWalletConnectorXRouter::getBalance(const std::string & account) const
 {
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
-
-    double result = 0.0;
-
-    Object blockCountObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-    int blockcount = getResult(blockCountObj).get_int();
-
-    for (int id = 0; id <= blockcount; id++)
-    {
-        Array paramsGBH { id };
-        Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-        std::string hash = getResult(blockHashObj).get_str();
-
-        Array paramsGB { hash };
-        Object blockObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        Object block = getResult(blockObj).get_obj();
-
-        Array txs = find_value(block, "tx").get_array();
-
-        for (unsigned int j = 0; j < txs.size(); j++)
-        {
-            std::string txid = Value(txs[j]).get_str();
-
-            Array paramsGRT { txid };
-            Object rawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
-
-            Array paramsDRT { txdata };
-            Object decRawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
-
-            result += getBalanceChange(tx, account);
-        }
-    }
-
-    return std::to_string(result);
+    return getBalanceUpdate(account, 0);
 }
 
 std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number) const
