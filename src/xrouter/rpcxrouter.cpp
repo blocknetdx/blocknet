@@ -33,6 +33,10 @@ static Object form_reply(std::string reply)
     {
         ret.emplace_back(Pair("reply", result));
     }
+    else
+    {
+        return reply_obj;
+    }
     
     return ret;
 }
@@ -454,9 +458,7 @@ Value xrGetReply(const Array & params, bool fHelp)
     std::string id = params[0].get_str();
     Object result;
     std::string reply = xrouter::App::instance().getReply(id);
-    Object obj;
-    obj.emplace_back(Pair("reply", reply));
-    return obj;
+    return form_reply(reply);
 }
 
 Value xrUpdateConfigs(const Array & params, bool fHelp)
