@@ -146,6 +146,39 @@ bool XRouterSettings::hasPlugin(std::string name)
     return plugins.count(name) > 0;
 }
 
+bool XRouterPluginSettings::read(const char * fileName)
+{
+    if (!IniConfig::read(fileName))
+        return false;
+    
+    formPublicText();
+    return true;
+}
+
+bool XRouterPluginSettings::read(std::string config)
+{
+    if (!IniConfig::read(config))
+        return false;
+    
+    formPublicText();
+    return true;
+}
+
+void XRouterPluginSettings::formPublicText()
+{
+    std::vector<string> lines;
+    boost::split(lines, this->rawtext, boost::is_any_of("\n"));
+    this->publictext = "";
+    std::string prefix = "private::";
+    for (std::string line : lines) {
+        if (!line.compare(0, prefix.size(), prefix))
+            this->publictext += line + "\n";
+        else {
+            this->publictext += line.erase(0, prefix.size()) + "\n"; 
+        }
+    }
+}
+
 std::string XRouterPluginSettings::getParam(std::string param, std::string def)
 {
     return get<std::string>(param, def);

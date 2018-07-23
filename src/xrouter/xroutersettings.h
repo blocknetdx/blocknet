@@ -64,6 +64,14 @@ public:
     std::string getParam(std::string param, std::string def="");
     double getFee();
     int getParamCount();
+    std::string rawText() { return publictext; }
+    std::string fullText() { return rawtext; }
+    
+    bool read(const char * fileName = 0);
+    bool read(std::string config);
+private:
+    void formPublicText();
+    std::string publictext;
 };
 
 //******************************************************************************
