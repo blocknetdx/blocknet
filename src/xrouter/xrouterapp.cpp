@@ -168,7 +168,7 @@ bool App::init(int argc, char *argv[])
     s.parseCmdLine(argc, argv);
     LOG() << "Loading xbridge config from file " << xbridgepath;
 
-    std::string xrouterpath = path + "/xrouter.conf";
+    this->xrouterpath = path + "/xrouter.conf";
     LOG() << "Loading xrouter config from file " << xrouterpath;
     this->xrouter_settings.read(xrouterpath.c_str());
     this->xrouter_settings.loadPlugins();
@@ -1322,6 +1322,12 @@ std::string App::getXrouterConfigSync(CNode* node) {
     settings.read(reply);
     this->snodeConfigs[node] = settings;
     return reply;
+}
+
+void App::reloadConfigs() {
+    LOG() << "Reloading xrouter config from file " << xrouterpath;
+    this->xrouter_settings.read(xrouterpath.c_str());
+    this->xrouter_settings.loadPlugins();
 }
 
 } // namespace xrouter

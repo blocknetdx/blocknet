@@ -477,10 +477,21 @@ Value xrUpdateConfigs(const Array & params, bool fHelp)
 Value xrShowConfigs(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrUpdateConfigs\nSends requests for all service node configs.");
+        throw std::runtime_error("xrShowConfigs\nPrints all service node configs.");
     }
     
     Object result;
     std::string reply = xrouter::App::instance().printConfigs();
     return reply;
+}
+
+Value xrReloadConfigs(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrReloadConfigs\nSends requests for all service node configs.");
+    }
+    
+    Object result;
+    xrouter::App::instance().reloadConfigs();
+    return "XRouter Configs reloaded";
 }

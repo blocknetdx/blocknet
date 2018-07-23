@@ -53,6 +53,7 @@ private:
     static boost::container::map<CNode*, double > snodeScore;
     
     XRouterSettings xrouter_settings;
+    std::string xrouterpath;
     
 public:
     /**
@@ -215,6 +216,8 @@ public:
      * @return
      */
     std::string sendCustomCall(const std::string & name, std::vector<std::string> & params);
+    
+    void reloadConfigs();
 
     
     /**
