@@ -181,7 +181,14 @@ void XRouterPluginSettings::formPublicText()
 
 std::string XRouterPluginSettings::getParam(std::string param, std::string def)
 {
-    return get<std::string>(param, def);
+    try
+    {
+        return m_pt.get<std::string>(param);
+    }
+    catch (std::exception & e)
+    {
+        return get<std::string>("private::" + param, def);
+    }
 }
 
 double XRouterPluginSettings::getFee()
