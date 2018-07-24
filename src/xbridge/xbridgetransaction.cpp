@@ -162,41 +162,6 @@ Transaction::State Transaction::increaseStateCounter(const Transaction::State st
         }
         return m_state;
     }
-//    else if (state == trSigned && m_state == state)
-//    {
-//        if (from == m_a.source())
-//        {
-//            m_a_stateChanged = true;
-//        }
-//        else if (from == m_b.source())
-//        {
-//            m_b_stateChanged = true;
-//        }
-//        if (m_a_stateChanged && m_b_stateChanged)
-//        {
-//            m_state = trCommited;
-//            m_a_stateChanged = m_b_stateChanged = false;
-//        }
-//        return m_state;
-//    }
-//    else if (state == trCommited && m_state == state)
-//    {
-//        if (from == m_a.dest())
-//        {
-//            m_a_stateChanged = true;
-//        }
-//        else if (from == m_b.dest())
-//        {
-//            m_b_stateChanged = true;
-//        }
-
-//        if (m_a_stateChanged && m_b_stateChanged)
-//        {
-//            m_state = trFinished;
-//            m_a_stateChanged = m_b_stateChanged = false;
-//        }
-//        return m_state;
-//    }
 
     return trInvalid;
 }

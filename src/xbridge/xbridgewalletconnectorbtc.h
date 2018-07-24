@@ -6,6 +6,8 @@
 
 #include "xbridgewalletconnector.h"
 
+#include <memory>
+
 //*****************************************************************************
 //*****************************************************************************
 namespace xbridge
@@ -13,10 +15,13 @@ namespace xbridge
 
 //*****************************************************************************
 //*****************************************************************************
+template <class CryptoProvider>
 class BtcWalletConnector : public WalletConnector
 {
+    class Impl;
+
 public:
-    BtcWalletConnector();
+    BtcWalletConnector() {}
 
     bool init();
 
@@ -30,9 +35,9 @@ public:
 
     bool getInfo(rpc::WalletInfo & info) const;
 
-    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const;
+    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const;
 
-    bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true) const;
+    bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true);
 
     bool getNewAddress(std::string & addr);
 
@@ -47,6 +52,8 @@ public:
     bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature);
 
 public:
+    bool hasValidAddressPrefix(const std::string & addr) const;
+
     bool isDustAmount(const double & amount) const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
@@ -60,7 +67,7 @@ public:
 
     bool checkTransaction(const std::string & depositTxId,
                           const std::string & /*destination*/,
-                          const uint64_t & /*amount*/,
+                          double & amount,
                           bool & isGood);
 
     uint32_t lockTime(const char role) const;
@@ -71,12 +78,12 @@ public:
                                    const uint32_t lockTime,
                                    std::vector<unsigned char> & resultSript);
 
-    bool createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    bool createDepositTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
                                   std::string & txId,
                                   std::string & rawTx);
 
-    bool createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,
                                  const std::vector<unsigned char> & mpubKey,
                                  const std::vector<unsigned char> & mprivKey,
@@ -85,7 +92,7 @@ public:
                                  std::string & txId,
                                  std::string & rawTx);
 
-    bool createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
                                   const std::vector<unsigned char> & mpubKey,
                                   const std::vector<unsigned char> & mprivKey,
@@ -93,6 +100,9 @@ public:
                                   const std::vector<unsigned char> & innerScript,
                                   std::string & txId,
                                   std::string & rawTx);
+
+protected:
+    CryptoProvider m_cp;
 };
 
 } // namespace xbridge
