@@ -1330,4 +1330,27 @@ void App::reloadConfigs() {
     this->xrouter_settings.loadPlugins();
 }
 
+std::string App::getStatus() {
+    Object result;
+    result.emplace_back(Pair("enabled", xrouter_settings.get<int>("Main.xrouter", 0) != 0));
+    result.emplace_back(Pair("config", this->xrouter_settings.rawText()));
+    
+    Object nodes;
+    for (CNode* node: vNodes) {
+        if (!snodeConfigs.count(node))
+            continue;
+        Object vnode;
+        vnode.emplace_back(Pair("config", snodeConfigs[node].rawText()));
+        Object plugins;
+        for (std::string s : snodeConfigs[node].getPlugins())
+            plugins.emplace_back(s, snodeConfigs[node].getPluginSettings(s).rawText());
+        vnode.emplace_back(Pair("plugins", plugins));
+        nodes.emplace_back(Pair(node->addrName, vnode));
+    }
+    
+    result.emplace_back(Pair("nodes", nodes));
+    
+    return json_spirit::write_string(Value(result), true);
+}
+
 } // namespace xrouter

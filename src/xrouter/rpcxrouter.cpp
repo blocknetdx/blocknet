@@ -495,3 +495,14 @@ Value xrReloadConfigs(const Array & params, bool fHelp)
     xrouter::App::instance().reloadConfigs();
     return "XRouter Configs reloaded";
 }
+
+Value xrStatus(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrStatus\nSends requests for all service node configs.");
+    }
+    
+    Object result;
+    std::string reply = xrouter::App::instance().getStatus();
+    return reply;
+}

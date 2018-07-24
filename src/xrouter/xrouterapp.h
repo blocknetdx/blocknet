@@ -218,6 +218,8 @@ public:
     std::string sendCustomCall(const std::string & name, std::vector<std::string> & params);
     
     void reloadConfigs();
+    
+    std::string getStatus();
 
     
     /**
