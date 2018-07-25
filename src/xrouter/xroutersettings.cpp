@@ -74,6 +74,8 @@ bool IniConfig::read(std::string config)
 //******************************************************************************
 void XRouterSettings::loadPlugins()
 {
+    this->plugins.clear();
+    this->pluginList.clear();
     std::vector<std::string> plugins;
     std::string pstr = get<std::string>("Main.plugins", "");
     boost::split(plugins, pstr, boost::is_any_of(","));
