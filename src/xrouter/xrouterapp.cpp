@@ -43,6 +43,7 @@
 static const CAmount minBlock = 200;
 
 #define TEST_RUN_ON_CLIENT 1
+#define DEFAULT_TIMEOUT 20000
 
 #ifdef _WIN32
 #include <objbase.h>
@@ -362,12 +363,13 @@ WalletConnectorXRouterPtr App::connectorByCurrency(const std::string & currency)
 //*****************************************************************************
 //*****************************************************************************
 
-std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations, int timeout)
+std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations)
 {
     Object error;
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
+    int timeout = this->xrouter_settings.get<int>("Main.wait", DEFAULT_TIMEOUT);
     LOG() << "Sending query " << id;
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     if (!sendPacketToServer(packet, confirmations, currency)) {
@@ -1083,7 +1085,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     packet->sign(key);
 
     if (!confirmations.empty())
-        return sendPacketAndWait(packet, id, currency, std::stoi(confirmations), 20000);
+        return sendPacketAndWait(packet, id, currency, std::stoi(confirmations));
     else
         return sendPacketAndWait(packet, id, currency);
 }
@@ -1258,7 +1260,8 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     Object result;
     pnode->PushMessage("xrouter", msg);
-    if (cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
+    int timeout = this->xrouter_settings.get<int>("Main.wait", DEFAULT_TIMEOUT);
+    if (cond->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
         std::string reply = queries[id][0];
         return reply;
     }
@@ -1313,8 +1316,8 @@ std::string App::getXrouterConfigSync(CNode* node) {
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     node->PushMessage("xrouter", msg);
-    
-    if (!cond->timed_wait(lock, boost::posix_time::milliseconds(3000)))
+    int timeout = this->xrouter_settings.get<int>("Main.wait", DEFAULT_TIMEOUT);
+    if (!cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         return "Could not get XRouter config";
 
     std::string reply = queries[id][0];

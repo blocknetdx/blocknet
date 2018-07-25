@@ -171,7 +171,7 @@ void XRouterPluginSettings::formPublicText()
     this->publictext = "";
     std::string prefix = "private::";
     for (std::string line : lines) {
-        if (!line.compare(0, prefix.size(), prefix))
+        if (line.compare(0, prefix.size(), prefix))
             this->publictext += line + "\n";
         else {
             this->publictext += line.erase(0, prefix.size()) + "\n"; 
