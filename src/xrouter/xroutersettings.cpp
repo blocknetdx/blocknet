@@ -80,7 +80,7 @@ void XRouterSettings::loadPlugins()
     std::string pstr = get<std::string>("Main.plugins", "");
     boost::split(plugins, pstr, boost::is_any_of(","));
     for(std::string s : plugins)
-        if(loadPlugin(s))
+        if((s.length() > 0) && loadPlugin(s))
             pluginList.push_back(s);
 }
 
@@ -91,6 +91,38 @@ bool XRouterSettings::loadPlugin(std::string name)
     LOG() << "Trying to load plugin " << name + ".conf";
     if(!settings.read(filename.c_str()))
         return false;
+    bool result = true;
+    std::string type;
+    try {
+        type = m_pt.get<std::string>("type");
+        if ((type != "rpc") && (type != "shell")) {
+            LOG() << "Can't load plugin " << name << ": unknown plugin type: " << type;
+            result = false;
+        }
+    } catch (std::exception & e) {
+        LOG() << "Can't load plugin " << name << ": type not specified";
+        result = false;
+    }
+    
+    try {
+        int count = m_pt.get<int>("paramsCount");
+    } catch (std::exception & e) {
+        LOG() << "Can't load plugin " << name << ": paramsCount not specified";
+        result = false;
+    }
+    
+    if (type == "rpc") {
+        try {
+            std::string typestring = m_pt.get<std::string>("paramsType");
+        } catch (std::exception & e) {
+            LOG() << "Can't load plugin " << name << ": paramsType not specified";
+            result = false;
+        }
+    }
+    
+    if (!result)
+        return false;
+    
     this->plugins[name] = settings;
     LOG() << "Successfully loaded plugin " << name;
     return true;
