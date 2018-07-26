@@ -91,37 +91,6 @@ bool XRouterSettings::loadPlugin(std::string name)
     LOG() << "Trying to load plugin " << name + ".conf";
     if(!settings.read(filename.c_str()))
         return false;
-    bool result = true;
-    std::string type;
-    try {
-        type = m_pt.get<std::string>("type");
-        if ((type != "rpc") && (type != "shell")) {
-            LOG() << "Can't load plugin " << name << ": unknown plugin type: " << type;
-            result = false;
-        }
-    } catch (std::exception & e) {
-        LOG() << "Can't load plugin " << name << ": type not specified";
-        result = false;
-    }
-    
-    try {
-        int count = m_pt.get<int>("paramsCount");
-    } catch (std::exception & e) {
-        LOG() << "Can't load plugin " << name << ": paramsCount not specified";
-        result = false;
-    }
-    
-    if (type == "rpc") {
-        try {
-            std::string typestring = m_pt.get<std::string>("paramsType");
-        } catch (std::exception & e) {
-            LOG() << "Can't load plugin " << name << ": paramsType not specified";
-            result = false;
-        }
-    }
-    
-    if (!result)
-        return false;
     
     this->plugins[name] = settings;
     LOG() << "Successfully loaded plugin " << name;
@@ -184,6 +153,8 @@ bool XRouterPluginSettings::read(const char * fileName)
 {
     if (!IniConfig::read(fileName))
         return false;
+    if (!verify(fileName))
+        return false;
     
     formPublicText();
     return true;
@@ -193,8 +164,47 @@ bool XRouterPluginSettings::read(std::string config)
 {
     if (!IniConfig::read(config))
         return false;
+    if (!verify())
+        return false;
     
     formPublicText();
+    return true;
+}
+
+bool XRouterPluginSettings::verify(std::string name)
+{
+    bool result = true;
+    std::string type;
+    try {
+        type = m_pt.get<std::string>("type");
+        if ((type != "rpc") && (type != "shell")) {
+            LOG() << "Can't load plugin " << name << ": unknown plugin type: " << type;
+            result = false;
+        }
+    } catch (std::exception & e) {
+        LOG() << "Can't load plugin " << name << ": type not specified";
+        result = false;
+    }
+    
+    try {
+        int count = m_pt.get<int>("paramsCount");
+    } catch (std::exception & e) {
+        LOG() << "Can't load plugin " << name << ": paramsCount not specified";
+        LOG() << e.what();
+        result = false;
+    }
+    
+    if (type == "rpc") {
+        try {
+            std::string typestring = m_pt.get<std::string>("paramsType");
+        } catch (std::exception & e) {
+            LOG() << "Can't load plugin " << name << ": paramsType not specified";
+            result = false;
+        }
+    }
+    
+    if (!result)
+        return false;
     return true;
 }
 

@@ -787,7 +787,7 @@ std::string App::processSendTransaction(XRouterPacketPtr packet, uint32_t offset
     return json_spirit::write_string(Value(result), true);
 }
 
-std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std::string name)
+std::string App::processCustomCall(std::string name, std::vector<std::string> params)
 {
     
     if (!this->xrouter_settings.hasPlugin(name))
@@ -797,21 +797,18 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
     std::string callType = psettings.getParam("type");
     LOG() << "Plugin call " << name << " type = " << callType; 
     if (callType == "rpc") {
-        Array params;
+        Array jsonparams;
         int count = psettings.getParamCount();
         std::vector<std::string> paramtypes;
         std::string typestring = psettings.getParam("paramsType");
         boost::split(paramtypes, typestring, boost::is_any_of(","));
         std::string p;
         for (int i = 0; i < count; i++) {
-            // TODO: check missing params
-            p = (const char *)packet->data()+offset;
+            p = params[i];
             if (paramtypes[i] == "string")
-                params.push_back(p);
+                jsonparams.push_back(p);
             else if (paramtypes[i] == "int")
-                params.push_back(std::stoi(p));
-                
-            offset += p.size() + 1;
+                jsonparams.push_back(std::stoi(p));
         }
         
         std::string user, passwd, ip, port, command;
@@ -820,17 +817,14 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
         ip = psettings.getParam("rpcIp", "127.0.0.1");
         port = psettings.getParam("rpcPort");
         command = psettings.getParam("rpcCommand");
-        Object result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, params);
+        Object result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, jsonparams);
         return json_spirit::write_string(Value(result), true);
     } else if (callType == "shell") {
         std::string cmd = psettings.getParam("cmd");
         int count = psettings.getParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
-            // TODO: check missing params
-            p = (const char *)packet->data()+offset;
-            cmd += " " + p;
-            offset += p.size() + 1;
+            cmd += " " + params[i];
         }
         
         LOG() << "Executing shell command " << cmd;
@@ -958,6 +952,19 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         } else {
             lastConfigQueries[node] = time;
         }
+    } else if (packet->command() == xrCustomCall) {
+        XRouterPluginSettings psettings = this->xrouter_settings.getPluginSettings(currency);
+        std::vector<std::string> params;
+        int count = psettings.getParamCount();
+        std::string p;
+        for (int i = 0; i < count; i++) {
+            // TODO: check missing params
+            p = (const char *)packet->data()+offset;
+            params.push_back(p);
+            offset += p.size() + 1;
+        }
+        
+        reply = processCustomCall(currency, params);
     } else {
         std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
         double timeout = this->xrouter_settings.getCommandTimeout(packet->command(), currency);
@@ -1010,9 +1017,6 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
             break;
         case xrSendTransaction:
             reply = processSendTransaction(packet, offset, currency);
-            break;
-        case xrCustomCall:
-            reply = processCustomCall(packet, offset, currency);
             break;
         case xrReply:
             processReply(packet);
@@ -1227,6 +1231,11 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     if (!xrouter_on)
         return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
     
+    if (this->xrouter_settings.hasPlugin(name)) {
+        // Run the plugin locally
+        return processCustomCall(name, params);
+    }
+    
     updateConfigs();
     
     XRouterPacketPtr packet(new XRouterPacket(xrCustomCall));
@@ -1255,7 +1264,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
 
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
-
+    
     CNode* pnode = getNodeForService(name);
     if (!pnode)
         return "No available nodes";
@@ -1344,6 +1353,10 @@ std::string App::getStatus() {
     Object result;
     result.emplace_back(Pair("enabled", xrouter_settings.get<int>("Main.xrouter", 0) != 0));
     result.emplace_back(Pair("config", this->xrouter_settings.rawText()));
+    Object myplugins;
+    for (std::string s : this->xrouter_settings.getPlugins())
+        myplugins.emplace_back(s, this->xrouter_settings.getPluginSettings(s).rawText());
+    result.emplace_back(Pair("plugins", myplugins));
     
     Object nodes;
     for (CNode* node: vNodes) {

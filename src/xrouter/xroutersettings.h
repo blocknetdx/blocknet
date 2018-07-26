@@ -69,6 +69,8 @@ public:
     
     bool read(const char * fileName = 0);
     bool read(std::string config);
+    
+    bool verify(std::string name="");
 private:
     void formPublicText();
     std::string publictext;
