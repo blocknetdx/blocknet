@@ -175,9 +175,6 @@ void XRouterPluginSettings::formPublicText()
     for (std::string line : lines) {
         if (line.compare(0, prefix.size(), prefix))
             this->publictext += line + "\n";
-        else {
-            this->publictext += line.erase(0, prefix.size()) + "\n"; 
-        }
     }
 }
 

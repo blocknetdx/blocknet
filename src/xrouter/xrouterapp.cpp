@@ -1230,11 +1230,6 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     if (!satisfyBlockRequirement(txHash, vout, key)) {
         return "Minimum block requirement not satisfied. Make sure that your wallet is unlocked.";
     }
-
-    unsigned int count = this->xrouter_settings.getPluginSettings(name).getParamCount();
-    if (params.size() != count) {
-        return "Wrong number of parameters";
-    }
     
     std::string id = generateUUID();
 
@@ -1257,6 +1252,11 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     CNode* pnode = getNodeForService(name);
     if (!pnode)
         return "No available nodes";
+    
+    unsigned int count = snodeConfigs[pnode].getPluginSettings(name).getParamCount();
+    if (params.size() != count) {
+        return "Wrong number of plugin parameters";
+    }
     
     Object result;
     pnode->PushMessage("xrouter", msg);
