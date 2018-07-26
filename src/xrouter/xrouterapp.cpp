@@ -799,11 +799,18 @@ std::string App::processCustomCall(XRouterPacketPtr packet, uint32_t offset, std
     if (callType == "rpc") {
         Array params;
         int count = psettings.getParamCount();
+        std::vector<std::string> paramtypes;
+        std::string typestring = psettings.getParam("paramsType");
+        boost::split(paramtypes, typestring, boost::is_any_of(","));
         std::string p;
         for (int i = 0; i < count; i++) {
             // TODO: check missing params
             p = (const char *)packet->data()+offset;
-            params.push_back(p);
+            if (paramtypes[i] == "string")
+                params.push_back(p);
+            else if (paramtypes[i] == "int")
+                params.push_back(std::stoi(p));
+                
             offset += p.size() + 1;
         }
         
