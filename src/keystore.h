@@ -73,9 +73,9 @@ protected:
     void ImplicitlyLearnRelatedKeyScripts(const CPubKey& pubkey);
 
 public:
-    bool AddKeyPubKey(const CKey& key, const CPubKey& pubkey);
+    bool AddKeyPubKey(const CKey& key, const CPubKey& pubkey) override;
     bool GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const override;
-    bool HaveKey(const CKeyID& address) const
+    bool HaveKey(const CKeyID& address) const override 
     {
         bool result;
         {
@@ -84,7 +84,7 @@ public:
         }
         return result;
     }
-    void GetKeys(std::set<CKeyID>& setAddress) const
+    void GetKeys(std::set<CKeyID>& setAddress) const override
     {
         setAddress.clear();
         {
@@ -96,7 +96,7 @@ public:
             }
         }
     }
-    bool GetKey(const CKeyID& address, CKey& keyOut) const
+    bool GetKey(const CKeyID& address, CKey& keyOut) const override
     {
         {
             LOCK(cs_KeyStore);
@@ -108,19 +108,19 @@ public:
         }
         return false;
     }
-    virtual bool AddCScript(const CScript& redeemScript);
-    virtual bool HaveCScript(const CScriptID& hash) const;
-    virtual bool GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const;
+    virtual bool AddCScript(const CScript& redeemScript) override;
+    virtual bool HaveCScript(const CScriptID& hash) const override;
+    virtual bool GetCScript(const CScriptID& hash, CScript& redeemScriptOut) const override;
 
-    virtual bool AddWatchOnly(const CScript& dest);
-    virtual bool RemoveWatchOnly(const CScript& dest);
-    virtual bool HaveWatchOnly(const CScript& dest) const;
-    virtual bool HaveWatchOnly() const;
+    virtual bool AddWatchOnly(const CScript& dest) override;
+    virtual bool RemoveWatchOnly(const CScript& dest) override;
+    virtual bool HaveWatchOnly(const CScript& dest) const override;
+    virtual bool HaveWatchOnly() const override;
 
-    virtual bool AddMultiSig(const CScript& dest);
-    virtual bool RemoveMultiSig(const CScript& dest);
-    virtual bool HaveMultiSig(const CScript& dest) const;
-    virtual bool HaveMultiSig() const;
+    virtual bool AddMultiSig(const CScript& dest) override;
+    virtual bool RemoveMultiSig(const CScript& dest) override;
+    virtual bool HaveMultiSig(const CScript& dest) const override;
+    virtual bool HaveMultiSig() const override;
 };
 
 typedef std::vector<unsigned char, secure_allocator<unsigned char> > CKeyingMaterial;
