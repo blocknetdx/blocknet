@@ -32,10 +32,10 @@ struct BlocknetTransaction {
     QString getAmount(int unit) const {
         return BitcoinUnits::format(unit, amount);
     }
-    bool isValid(WalletModel *w, int unit) {
+    bool isValid(WalletModel *w) {
         // address is valid and amount is greater than dust
         return !address.isEmpty() && w->validateAddress(address) && amount > 0 &&
-               !GUIUtil::isDust(address, CAmount(amount * BitcoinUnits::factor(unit)));
+               !GUIUtil::isDust(address, amount);
     }
     static CAmount stringToInt(const QString &str, int unit) {
         std::stringstream ss;
@@ -74,19 +74,22 @@ inline uint qHash(const BlocknetTransaction &t) {
 }
 
 struct BlocknetSendFundsModel {
-    QSet<BlocknetTransaction> recipients;
     QString changeAddress;
     bool customFee;
     CAmount userFee;
-
     CAmount txFees;
     CAmount txAmount;
+    QSet<BlocknetTransaction> recipients;
     QList<SendCoinsRecipient> txRecipients;
+    QVector<COutPoint> txSelectedUtxos;
     WalletModel::SendCoinsReturn txStatus;
+    bool split;
+    int splitCount;
 
     explicit BlocknetSendFundsModel() : changeAddress(QString()), customFee(false), userFee(0),
                                         txFees(0), txAmount(0), recipients(QSet<BlocknetTransaction>()),
-                                        txRecipients(QList<SendCoinsRecipient>()) {};
+                                        txRecipients(QList<SendCoinsRecipient>()), txSelectedUtxos(QVector<COutPoint>()),
+                                        txStatus(WalletModel::SendCoinsReturn()), split(false), splitCount(0) {};
 
     void addRecipient(const BlocknetTransaction &recipient) {
         recipients.insert(recipient);
@@ -123,7 +126,10 @@ struct BlocknetSendFundsModel {
         txAmount = 0;
         recipients.clear();
         txRecipients.clear();
+        txSelectedUtxos.clear();
         txStatus = WalletModel::SendCoinsReturn();
+        split = false;
+        splitCount = 0;
     }
 
     CCoinControl getCoinControl(WalletModel *walletModel) {
@@ -135,11 +141,16 @@ struct BlocknetSendFundsModel {
                 coinControl.destChange     = addr.Get();
         }
 
-        coinControl.fAllowOtherInputs      = true;
         coinControl.fOverrideFeeRate       = customFee;
         if (customFee)
             coinControl.nMinimumTotalFee   = userFee;
         coinControl.fAllowZeroValueOutputs = false;
+        coinControl.fAllowWatchOnly        = false;
+        for (COutPoint &o : txSelectedUtxos)
+            coinControl.Select(o);
+        coinControl.fAllowOtherInputs      = !coinControl.HasSelected();
+        coinControl.fSplitBlock            = split;
+        coinControl.nSplitBlock            = split ? splitCount : 0;
 
         return coinControl;
     }

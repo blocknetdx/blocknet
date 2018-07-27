@@ -137,9 +137,17 @@ void BlocknetSendFunds3::setData(BlocknetSendFundsModel *model) {
  * @brief Clear fee information from labels.
  */
 void BlocknetSendFunds3::clear() {
+    recommendedRb->blockSignals(true);
+    specificFeeTi->blockSignals(true);
+    specificRb->blockSignals(true);
     specificFeeTi->clear();
     specificFeeLbl->clear();
     totalFeeLbl->clear();
+    recommendedRb->setChecked(true);
+    specificRb->setChecked(false);
+    recommendedRb->blockSignals(false);
+    specificRb->blockSignals(false);
+    specificFeeTi->blockSignals(false);
 }
 
 /**

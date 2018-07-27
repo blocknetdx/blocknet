@@ -321,6 +321,7 @@ SOURCES += \
     src/qt/blocknetsendfundsdone.cpp \
     src/qt/blocknettoolbar.cpp \
     src/qt/blocknetwallet.cpp \
+    src/qt/blocknetcoincontrol.cpp \
     src/qt/blocknetsendfundsrequest.cpp
 
 #protobuf generated
@@ -633,6 +634,7 @@ HEADERS += \
     src/qt/blocknettoolbar.h \
     src/qt/blocknetvars.h \
     src/qt/blocknetwallet.h \
+    src/qt/blocknetcoincontrol.h \
     src/qt/blocknetsendfundsrequest.h
 
 #ENABLE_ZMQ

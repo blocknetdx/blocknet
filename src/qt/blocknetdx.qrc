@@ -152,6 +152,8 @@
         <file alias="UtilityBar/StakingNodeIconActive.png">res/redesign/icons/UtilityBar/StakingNodeIconActive.png</file>
         <file alias="UtilityBar/StakingNodeIconInactive.png">res/redesign/icons/UtilityBar/StakingNodeIconInactive.png</file>
         <file alias="UtilityBar/UnlockedIcon.png">res/redesign/icons/UtilityBar/UnlockedIcon.png</file>
+        <file alias="checkmark-on">res/redesign/icons/checkmark-on.png</file>
+        <file alias="checkmark-off">res/redesign/icons/checkmark-off.png</file>
         <file alias="Roboto-Black.ttf">res/redesign/fonts/Roboto/Roboto-Black.ttf</file>
         <file alias="Roboto-BlackItalic.ttf">res/redesign/fonts/Roboto/Roboto-BlackItalic.ttf</file>
         <file alias="Roboto-Bold.ttf">res/redesign/fonts/Roboto/Roboto-Bold.ttf</file>

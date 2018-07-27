@@ -112,13 +112,13 @@ void BlocknetSendFunds4::clear() {
  */
 bool BlocknetSendFunds4::validated() {
     auto list = model->recipients.toList();
-    bool allValid = [](QList<BlocknetTransaction> &recipients, WalletModel *w, int unit) -> bool {
+    bool allValid = [](QList<BlocknetTransaction> &recipients, WalletModel *w) -> bool {
         for (BlocknetTransaction &rec : recipients) {
-            if (!rec.isValid(w, unit))
+            if (!rec.isValid(w))
                 return false;
         }
         return true;
-    }(list, walletModel, displayUnit);
+    }(list, walletModel);
     if (list.isEmpty() || !allValid) {
         auto msg = tr("Please specify an amount larger than %1 for each address.")
                            .arg(BitcoinUnits::formatWithUnit(displayUnit, ::minRelayTxFee.GetFeePerK()));
@@ -173,6 +173,7 @@ void BlocknetSendFunds4::displayMultiple() {
 
     // Support scrollable content
     scrollArea = new QScrollArea;
+    scrollArea->setObjectName("contentScrollArea");
     scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scrollArea->setWidgetResizable(true);
     scrollArea->setWidget(scrollc);

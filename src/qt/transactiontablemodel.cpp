@@ -314,7 +314,8 @@ QString TransactionTableModel::formatTxDate(const TransactionRecord* wtx) const
  */
 QString TransactionTableModel::lookupAddress(const std::string& address, bool tooltip) const
 {
-    QString label = walletModel->getAddressTableModel()->labelForAddress(QString::fromStdString(address));
+    // QString label = walletModel->getAddressTableModel()->labelForAddress(QString::fromStdString(address)); // Way too slow
+    QString label;
     QString description;
     if (!label.isEmpty()) {
         description += label;
@@ -576,7 +577,8 @@ QVariant TransactionTableModel::data(const QModelIndex& index, int role) const
     case AddressRole:
         return QString::fromStdString(rec->address);
     case LabelRole:
-        return walletModel->getAddressTableModel()->labelForAddress(QString::fromStdString(rec->address));
+        // return walletModel->getAddressTableModel()->labelForAddress(QString::fromStdString(rec->address)); // Too slow
+        return QString();
     case AmountRole:
         return qint64(rec->credit + rec->debit);
     case TxIDRole:

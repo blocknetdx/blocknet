@@ -45,23 +45,37 @@ BlocknetWallet #content { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1,
 #h3 { font-size: 24px; color: white; font-family: "Roboto"; font-weight: 25; }
 #h4 { font-size: 21px; color: white; font-family: "Roboto"; font-weight: 25; }
 #h5 { font-size: 18px; color: white; font-family: "Roboto"; }
-#h6 { font-size: 12px; color: white; font-family: "Roboto"; }
+#h6 { font-size: 13px; color: white; font-family: "Roboto"; font-weight: bold; }
 #body { font-size: 13px; color: white; font-family: "Roboto"; }
 
 #hdiv { border: 1px solid #172E48; height: 1px; }
+#vdiv { border: 1px solid #172E48; width: 1px; }
 #linkBtn { font-size: 14px; color: #016AFF; background-color: rgba(0,0,0,0); }
 #coin { font-size: 13px; color: white; font-family: "Roboto"; padding: 12px; background-color: #6F8097; text-align: left; }
 #header { font-size: 16px; color: white; font-family: "Roboto"; }
 #standard { font-size: 13px; color: white; font-family: "Roboto"; font-weight: 25; }
 #warning { font-size: 12px; color: red; padding-left: 2px; margin-left: -2px; }
+#stretch { border: 0; background-color: transparent; }
 
-QScrollArea, QScrollArea #scrollAreaWidgetContents, QScrollArea #content, #stretch { border: 0; background-color: transparent; }
+QScrollArea, QScrollArea #scrollAreaWidgetContents, QScrollArea #content { border: 0; }
 QRadioButton { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
 QRadioButton:disabled { color: #0C2448; }
 QRadioButton:indicator { width: 16px; height: 16px; border: 1px solid #6F8097; border-radius: 9px; }
 QRadioButton:indicator:checked { background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.52, stop:0 #016AFF, stop:0.65 #016AFF, stop:0.70 rgba(0,0,0,0), stop:1 rgba(0,0,0,0)); }
 QRadioButton:indicator:disabled { background-color: transparent; }
 QCheckBox { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
+QCheckBox::indicator:checked { image: url(:/redesign/checkmark-on); max-width: 20px; }
+QCheckBox::indicator:unchecked { image: url(:/redesign/checkmark-off); max-width: 20px; }
+QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; }
+QTableWidget::item { font-size: 13px; color: white; font-family: "Roboto"; }
+QTableWidget::item::selected { color: white; background-color: #016AFF; }
+QTableWidget QHeaderView, QTableWidget QHeaderView::section { background-color: #000D20; border-style: none; border: 0; }
+QTableWidget QHeaderView::section { font-size: 12px; color: #6F8097; font-family: "Roboto"; padding: 6px; }
+QTableWidget QHeaderView::section::selected { color: white; }
+QTableWidget QHeaderView::down-arrow, QTableWidget QHeaderView::up-arrow { color: white; }
+QTableWidget::indicator:checked { image: url(:/redesign/checkmark-on); }
+QTableWidget::indicator:unchecked { image: url(:/redesign/checkmark-off); }
+
 BlocknetLineEdit, QLineEdit { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
 BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #333333; color: #333333; }
 BlocknetAddressEditor { font-size: 13px; color: white; font-family: "Roboto"; padding-top: 3px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
@@ -113,7 +127,7 @@ BlocknetDashboard QScrollArea #content #indicator[state="8"] { background-color:
 BlocknetDashboard QScrollArea #content #indicator[state="9"] { background-color: #FB7F70; }
 
 BlocknetSendFunds { padding-left: 30px; padding-right: 10px; }
-BlocknetSendFunds QScrollArea { min-width: 730px; }
+BlocknetSendFunds #contentScrollArea { min-width: 730px; }
 BlocknetSendFunds #sectionTitle { font-size: 18px; color: white; font-family: "Roboto"; }
 BlocknetSendFunds #sectionSubtitle { font-size: 12px; color: #6F8097; padding-left: 2px; margin-left: -2px; }
 BlocknetSendFunds #descLbl { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
@@ -138,3 +152,5 @@ BlocknetQuickSend #address { max-width: 500px; }
 #transactionHistory::item:selected { background-color: #1F487E; color: white; }
 #transactionHistory QHeaderView { border: 0; background-color: transparent; outline: 0; }
 #transactionHistory QHeaderView::section { border: 0; qproperty-alignment:left; background-color:transparent; font-size: 12px; font-family: "Roboto"; color:#6F8097; min-height:30px; }
+
+#coinControlDialog { background-color: #172F49; }
