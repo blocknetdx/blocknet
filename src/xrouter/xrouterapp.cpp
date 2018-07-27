@@ -486,6 +486,18 @@ CNode* App::getNodeForService(std::string name)
         if (!settings.hasPlugin(name))
             continue;
         
+        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        double timeout = settings.getPluginSettings(name).get<double>("timeout", -1.0);
+        if (lastPacketsSent.count(pnode)) {
+            if (lastPacketsSent[pnode].count(name)) {
+                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[pnode][name];
+                std::chrono::system_clock::duration diff = time - prev_time;
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
+                    continue;
+                }
+            }
+        }
+        
         if (TEST_RUN_ON_CLIENT)
             return pnode;
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
@@ -954,11 +966,34 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         }
     } else if (packet->command() == xrCustomCall) {
         XRouterPluginSettings psettings = this->xrouter_settings.getPluginSettings(currency);
+        
+        std::string keystr = currency;
+        double timeout = psettings.get<double>("timeout", -1.0);
+        if (timeout >= 0) {
+            if (lastPacketsReceived.count(node)) {
+                if (lastPacketsReceived[node].count(keystr)) {
+                    std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsReceived[node][keystr];
+                    std::chrono::system_clock::duration diff = time - prev_time;
+                    if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
+                        std::string err_msg = "XRouter: too many requests to plugin " + keystr; 
+                        state.DoS(100, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                    }
+                    if (!lastPacketsReceived.count(node))
+                        lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+                    lastPacketsReceived[node][keystr] = time;
+                } else {
+                    lastPacketsReceived[node][keystr] = time;
+                }
+            } else {
+                lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+                lastPacketsReceived[node][keystr] = time;
+            }
+        }
+        
         std::vector<std::string> params;
         int count = psettings.getParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
-            // TODO: check missing params
             p = (const char *)packet->data()+offset;
             params.push_back(p);
             offset += p.size() + 1;
@@ -1275,6 +1310,13 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     }
     
     Object result;
+    
+    std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+    if (!lastPacketsSent.count(pnode)) {
+        lastPacketsSent[pnode] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+    }
+    lastPacketsSent[pnode][name] = time;
+    
     pnode->PushMessage("xrouter", msg);
     int timeout = this->xrouter_settings.get<int>("Main.wait", DEFAULT_TIMEOUT);
     if (cond->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
