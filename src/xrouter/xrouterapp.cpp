@@ -821,12 +821,20 @@ std::string App::processCustomCall(std::string name, std::vector<std::string> pa
                 continue;
             if (paramtypes[i] == "string")
                 jsonparams.push_back(p);
-            else if (paramtypes[i] == "int")
+            else if (paramtypes[i] == "int") {
                 try {
                     jsonparams.push_back(std::stoi(p));
                 } catch (...) {
                     return "Parameter #" + std::to_string(i+1) + " can not be converted to integer";
                 }
+            } else if (paramtypes[i] == "bool") {
+                if (params[i] == "true")
+                    jsonparams.push_back(true);
+                else if (params[i] == "false")
+                    jsonparams.push_back(true);
+                else
+                    return "Parameter #" + std::to_string(i+1) + " can not be converted to bool";
+            }
         }
         
         std::string user, passwd, ip, port, command;

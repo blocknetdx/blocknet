@@ -186,10 +186,10 @@ bool XRouterPluginSettings::verify(std::string name)
         result = false;
     }
     
-    int min_count, max_count;
+    int min_count = -1, max_count = -1;
     try {
         min_count = m_pt.get<int>("paramsCount");
-        max_count = min_count
+        max_count = min_count;
     } catch (std::exception & e) {
         try {
             min_count = m_pt.get<int>("minParamsCount");
@@ -203,7 +203,7 @@ bool XRouterPluginSettings::verify(std::string name)
     if (type == "rpc") {
         try {
             std::string typestring = m_pt.get<std::string>("paramsType");
-            int type_count = std::count(typestring.begin(), typestring.end(), ',') + 1
+            int type_count = std::count(typestring.begin(), typestring.end(), ',') + 1;
             if (type_count != max_count) {
                 LOG() << "Can't load plugin " << name << ": paramsType string countains less elements than maxParamsCount";
                 result = false;
