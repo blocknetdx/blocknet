@@ -810,17 +810,23 @@ std::string App::processCustomCall(std::string name, std::vector<std::string> pa
     LOG() << "Plugin call " << name << " type = " << callType; 
     if (callType == "rpc") {
         Array jsonparams;
-        int count = psettings.getParamCount();
+        int count = psettings.getMaxParamCount();
         std::vector<std::string> paramtypes;
         std::string typestring = psettings.getParam("paramsType");
         boost::split(paramtypes, typestring, boost::is_any_of(","));
         std::string p;
         for (int i = 0; i < count; i++) {
             p = params[i];
+            if (p == "")
+                continue;
             if (paramtypes[i] == "string")
                 jsonparams.push_back(p);
             else if (paramtypes[i] == "int")
-                jsonparams.push_back(std::stoi(p));
+                try {
+                    jsonparams.push_back(std::stoi(p));
+                } catch (...) {
+                    return "Parameter #" + std::to_string(i+1) + " can not be converted to integer";
+                }
         }
         
         std::string user, passwd, ip, port, command;
@@ -833,7 +839,7 @@ std::string App::processCustomCall(std::string name, std::vector<std::string> pa
         return json_spirit::write_string(Value(result), true);
     } else if (callType == "shell") {
         std::string cmd = psettings.getParam("cmd");
-        int count = psettings.getParamCount();
+        int count = psettings.getMaxParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
             cmd += " " + params[i];
@@ -991,7 +997,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         }
         
         std::vector<std::string> params;
-        int count = psettings.getParamCount();
+        int count = psettings.getMaxParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
             p = (const char *)packet->data()+offset;
@@ -1304,9 +1310,14 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     if (!pnode)
         return "No available nodes";
     
-    unsigned int count = snodeConfigs[pnode].getPluginSettings(name).getParamCount();
-    if (params.size() != count) {
-        return "Wrong number of plugin parameters";
+    unsigned int min_count = snodeConfigs[pnode].getPluginSettings(name).getMinParamCount();
+    if (params.size() < min_count) {
+        return "Not enough plugin parameters";
+    }
+    
+    unsigned int max_count = snodeConfigs[pnode].getPluginSettings(name).getMaxParamCount();
+    if (params.size() > max_count) {
+        return "Too many plugin parameters";
     }
     
     Object result;

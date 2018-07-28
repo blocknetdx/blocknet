@@ -63,7 +63,8 @@ public:
     XRouterPluginSettings() {}
     std::string getParam(std::string param, std::string def="");
     double getFee();
-    int getParamCount();
+    int getMinParamCount();
+    int getMaxParamCount();
     std::string rawText() { return publictext; }
     std::string fullText() { return rawtext; }
     

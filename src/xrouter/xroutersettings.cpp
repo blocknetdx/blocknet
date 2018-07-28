@@ -237,9 +237,20 @@ double XRouterPluginSettings::getFee()
     return get<double>("fee", 0.0);
 }
 
-int XRouterPluginSettings::getParamCount()
+int XRouterPluginSettings::getMinParamCount()
 {
-    return get<int>("paramsCount", 0);
+    int res = get<int>("minParamsCount", -1);
+    if (res < 0)
+        res = get<int>("paramsCount", 0);
+    return res;
+}
+
+int XRouterPluginSettings::getMaxParamCount()
+{
+    int res = get<int>("maxParamsCount", -1);
+    if (res < 0)
+        res = get<int>("paramsCount", 0);
+    return res;
 }
 
 } // namespace xrouter
