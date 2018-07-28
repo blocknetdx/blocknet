@@ -203,6 +203,11 @@ bool XRouterPluginSettings::verify(std::string name)
     if (type == "rpc") {
         try {
             std::string typestring = m_pt.get<std::string>("paramsType");
+            int type_count = std::count(typestring.begin(), typestring.end(), ',') + 1
+            if (type_count != max_count) {
+                LOG() << "Can't load plugin " << name << ": paramsType string countains less elements than maxParamsCount";
+                result = false;
+            }
         } catch (std::exception & e) {
             LOG() << "Can't load plugin " << name << ": paramsType not specified";
             result = false;
