@@ -186,12 +186,18 @@ bool XRouterPluginSettings::verify(std::string name)
         result = false;
     }
     
+    int min_count, max_count;
     try {
-        int count = m_pt.get<int>("paramsCount");
+        min_count = m_pt.get<int>("paramsCount");
+        max_count = min_count
     } catch (std::exception & e) {
-        LOG() << "Can't load plugin " << name << ": paramsCount not specified";
-        LOG() << e.what();
-        result = false;
+        try {
+            min_count = m_pt.get<int>("minParamsCount");
+            max_count = m_pt.get<int>("maxParamsCount");
+        } catch (std::exception & e) {
+            LOG() << "Can't load plugin " << name << ": paramsCount or min/max paramsCount not specified";
+            result = false;
+        }
     }
     
     if (type == "rpc") {
