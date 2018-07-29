@@ -379,6 +379,7 @@ bool CCryptoKeyStore::EncryptKeys(CKeyingMaterial& vMasterKeyIn)
 
 bool CCryptoKeyStore::AddDeterministicSeed(const uint256& seed)
 {
+    LOCK(cs_KeyStore);
     CWalletDB db(pwalletMain->strWalletFile);
     string strErr;
     uint256 hashSeed = Hash(seed.begin(), seed.end());
@@ -405,14 +406,14 @@ bool CCryptoKeyStore::AddDeterministicSeed(const uint256& seed)
         }
         strErr = "save zphrseed to wallet";
     }
-                //the use case for this is no password set seed, mint dzPHR,
+    //the use case for this is no password set seed, mint dzPHR,
 
     return error("s%: Failed to %s\n", __func__, strErr);
 }
 
 bool CCryptoKeyStore::GetDeterministicSeed(const uint256& hashSeed, uint256& seedOut)
 {
-
+    LOCK(cs_KeyStore);
     CWalletDB db(pwalletMain->strWalletFile);
     string strErr;
     if (IsCrypted()) {
