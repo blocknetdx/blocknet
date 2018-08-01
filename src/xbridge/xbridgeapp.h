@@ -89,20 +89,6 @@ public:
     bool stop();
 
 public:
-    // classes
-    /**
-     * @brief summary info about old orders flushed by flushCancelledOrders()
-     */
-    class FlushedOrder {
-    public:
-        uint256 id;
-        boost::posix_time::ptime txtime;
-        int use_count;
-        FlushedOrder() = delete;
-        FlushedOrder(uint256 id, boost::posix_time::ptime txtime, int use_count)
-            : id{id}, txtime{txtime}, use_count{use_count} {}
-    };
-
     // transactions
 
     /**
@@ -121,11 +107,6 @@ public:
      * @return map of historical transaction (local canceled and finished)
      */
     std::map<uint256, xbridge::TransactionDescrPtr> history() const;
-    /**
-     * @brief flushCancelledOrders with txtime older than minAge
-     * @return list of all flushed orders
-     */
-    std::vector<FlushedOrder> flushCancelledOrders(boost::posix_time::time_duration minAge) const;
 
     /**
      * @brief appendTransaction append transaction into list (map) of transaction if not exits
