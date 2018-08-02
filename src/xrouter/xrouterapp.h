@@ -77,6 +77,7 @@ public:
      */
     bool start();
 
+    void openConnections();
     std::string updateConfigs();
     std::string printConfigs();
     

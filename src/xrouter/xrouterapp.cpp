@@ -194,7 +194,32 @@ static std::vector<pair<int, CServicenode> > getServiceNodes()
 bool App::start()
 {
     updateConfigs();
-    return m_p->start();
+    bool res = m_p->start();
+    openConnections();
+    return res;
+}
+
+void App::openConnections()
+{
+    LOCK(cs_vNodes);
+    LOG() << "Current peers count = " << vNodes.size();
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
+    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+        bool connected = false;
+        for (CNode* pnode : vNodes) {
+            if (s.second.addr.ToString() == pnode->addr.ToString()) {
+                connected = true;
+            }
+        }
+        
+        if (!connected) {
+            CAddress addr;
+            CNode* res = ConnectNode(addr, s.second.addr.ToString().c_str());
+            LOG() << "Trying to connect to " << s.second.addr.ToString() << "; result=" << ((res == NULL) ? "fail" : "success");
+        }
+    }
+
+    LOG() << "Current peers count = " << vNodes.size();
 }
 
 std::string App::updateConfigs()
