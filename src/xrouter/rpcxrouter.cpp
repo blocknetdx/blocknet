@@ -506,3 +506,14 @@ Value xrStatus(const Array & params, bool fHelp)
     std::string reply = xrouter::App::instance().getStatus();
     return reply;
 }
+
+Value xrOpenConnections(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrOpenConnections\nSends requests for all service node configs.");
+    }
+    
+    Object result;
+    xrouter::App::instance().openConnections();
+    return "";
+}

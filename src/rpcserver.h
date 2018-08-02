@@ -638,6 +638,7 @@ extern json_spirit::Value xrUpdateConfigs(const json_spirit::Array& params, bool
 extern json_spirit::Value xrShowConfigs(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrReloadConfigs(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrStatus(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrOpenConnections(const json_spirit::Array& params, bool fHelp);
 
 /** @} */
 
