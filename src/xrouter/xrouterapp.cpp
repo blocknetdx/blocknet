@@ -233,7 +233,7 @@ std::string App::updateConfigs()
     
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        if (snodeConfigs.count(pnode)) {
+        if (snodeConfigs.count(pnode->addr.ToString())) {
             continue;
         }
 
@@ -270,7 +270,7 @@ std::string App::printConfigs()
     
     for (const auto& it : this->snodeConfigs) {
         Object val;
-        val.emplace_back("node", it.first->addrName);
+        val.emplace_back("node", it.first);
         val.emplace_back("config", it.second.rawText());
         result.push_back(Value(val));
     }
@@ -454,9 +454,9 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
     
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        if (!snodeConfigs.count(pnode))
+        if (!snodeConfigs.count(pnode->addr.ToString()))
             continue;
-        XRouterSettings settings = snodeConfigs[pnode];
+        XRouterSettings settings = snodeConfigs[pnode->addr.ToString()];
         if (!settings.walletEnabled(wallet))
             continue;
         if (!settings.isAvailableCommand(packet->command(), wallet))
@@ -505,9 +505,9 @@ CNode* App::getNodeForService(std::string name)
 
     LOCK(cs_vNodes);
     for (CNode* pnode : vNodes) {
-        if (!snodeConfigs.count(pnode))
+        if (!snodeConfigs.count(pnode->addr.ToString()))
             continue;
-        XRouterSettings settings = snodeConfigs[pnode];
+        XRouterSettings settings = snodeConfigs[pnode->addr.ToString()];
         if (!settings.hasPlugin(name))
             continue;
         
@@ -931,7 +931,7 @@ bool App::processReply(XRouterPacketPtr packet) {
             settings.addPlugin(std::string(plugins[i].name_), psettings);
         }
         
-        snodeConfigs[configQueries[uuid]] = settings;
+        snodeConfigs[configQueries[uuid]->addr.ToString()] = settings;
         return true;
     }
     
@@ -1343,12 +1343,12 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     if (!pnode)
         return "No available nodes";
     
-    unsigned int min_count = snodeConfigs[pnode].getPluginSettings(name).getMinParamCount();
+    unsigned int min_count = snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getMinParamCount();
     if (params.size() < min_count) {
         return "Not enough plugin parameters";
     }
     
-    unsigned int max_count = snodeConfigs[pnode].getPluginSettings(name).getMaxParamCount();
+    unsigned int max_count = snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getMaxParamCount();
     if (params.size() > max_count) {
         return "Too many plugin parameters";
     }
@@ -1425,7 +1425,7 @@ std::string App::getXrouterConfigSync(CNode* node) {
     std::string reply = queries[id][0];
     XRouterSettings settings;
     settings.read(reply);
-    this->snodeConfigs[node] = settings;
+    this->snodeConfigs[node->addr.ToString()] = settings;
     return reply;
 }
 
@@ -1446,13 +1446,13 @@ std::string App::getStatus() {
     
     Object nodes;
     for (CNode* node: vNodes) {
-        if (!snodeConfigs.count(node))
+        if (!snodeConfigs.count(node->addr.ToString()))
             continue;
         Object vnode;
-        vnode.emplace_back(Pair("config", snodeConfigs[node].rawText()));
+        vnode.emplace_back(Pair("config", snodeConfigs[node->addr.ToString()].rawText()));
         Object plugins;
-        for (std::string s : snodeConfigs[node].getPlugins())
-            plugins.emplace_back(s, snodeConfigs[node].getPluginSettings(s).rawText());
+        for (std::string s : snodeConfigs[node->addr.ToString()].getPlugins())
+            plugins.emplace_back(s, snodeConfigs[node->addr.ToString()].getPluginSettings(s).rawText());
         vnode.emplace_back(Pair("plugins", plugins));
         nodes.emplace_back(Pair(node->addrName, vnode));
     }
