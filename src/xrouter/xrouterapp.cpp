@@ -35,6 +35,7 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/range/adaptor/map.hpp>
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -201,7 +202,7 @@ bool App::start()
 
 void App::openConnections()
 {
-    LOCK(cs_vNodes);
+    //LOCK(cs_vNodes);
     LOG() << "Current peers count = " << vNodes.size();
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
@@ -453,21 +454,37 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
     std::vector<CNode*> selectedNodes;
     
     LOCK(cs_vNodes);
-    for (CNode* pnode : vNodes) {
-        if (!snodeConfigs.count(pnode->addr.ToString()))
-            continue;
-        XRouterSettings settings = snodeConfigs[pnode->addr.ToString()];
+    BOOST_FOREACH(const std::string key, snodeConfigs | boost::adaptors::map_keys)
+    {
+        XRouterSettings settings = snodeConfigs[key];
         if (!settings.walletEnabled(wallet))
             continue;
         if (!settings.isAvailableCommand(packet->command(), wallet))
             continue;
         
+        CNode* res = NULL;
+        for (CNode* pnode : vNodes) {
+            if (key == pnode->addr.ToString()) {
+                // This node is a running xrouter
+                res = pnode;
+                break;
+            }
+        }
+        
+        if (!res) {
+            CAddress addr;
+            res = ConnectNode(addr, key.c_str());
+        }
+        
+        if (!res)
+            continue;
+        
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::string keystr = wallet + "::" + XRouterCommand_ToString(packet->command());
         double timeout = settings.getCommandTimeout(packet->command(), wallet);
-        if (lastPacketsSent.count(pnode)) {
-            if (lastPacketsSent[pnode].count(keystr)) {
-                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[pnode][keystr];
+        if (lastPacketsSent.count(res)) {
+            if (lastPacketsSent[res].count(keystr)) {
+                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[res][keystr];
                 std::chrono::system_clock::duration diff = time - prev_time;
                 if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
                     continue;
@@ -475,17 +492,7 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
             }
         }
         
-        if (TEST_RUN_ON_CLIENT) {
-            selectedNodes.push_back(pnode);
-            continue;
-        }
-        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-            if (s.second.addr.ToString() == pnode->addr.ToString()) {
-                // This node is a service node
-                selectedNodes.push_back(pnode);
-                break;
-            }
-        }
+        selectedNodes.push_back(res);
     }
     
     for (CNode* node: selectedNodes) {
