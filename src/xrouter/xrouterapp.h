@@ -235,7 +235,7 @@ public:
      * @param node node object
      * @return config string
      */
-    std::string getXrouterConfig(CNode* node);
+    std::string getXrouterConfig(CNode* node, std::string addr="self");
     
     /**
      * @brief fetches the xrouter config of a service node
@@ -329,7 +329,7 @@ public:
      * @param packet Xrouter packet received over the network
      * @return
      */
-    std::string processGetXrouterConfig(XRouterPacketPtr packet);
+    std::string processGetXrouterConfig(XRouterSettings cfg);
 
     /**
      * @brief process reply from service node on *client* side

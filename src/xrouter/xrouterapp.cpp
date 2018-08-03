@@ -905,12 +905,12 @@ std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {
     return "";
 }
 
-std::string App::processGetXrouterConfig(XRouterPacketPtr packet) {
+std::string App::processGetXrouterConfig(XRouterSettings cfg) {
     Object result;
-    result.emplace_back(Pair("config", this->xrouter_settings.rawText()));
+    result.emplace_back(Pair("config", cfg.rawText()));
     Object plugins;
-    for (std::string s : this->xrouter_settings.getPlugins())
-        plugins.emplace_back(s, this->xrouter_settings.getPluginSettings(s).rawText());
+    for (std::string s : cfg.getPlugins())
+        plugins.emplace_back(s, cfg.getPluginSettings(s).rawText());
     result.emplace_back(Pair("plugins", plugins));
     LOG() << "Sending config " << json_spirit::write_string(Value(result), true);
     return json_spirit::write_string(Value(result), true);
@@ -1008,7 +1008,18 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     if (packet->command() == xrGetXrouterConfig) {
-        reply = processGetXrouterConfig(packet);
+        std::string addr((const char *)packet->data()+36); //36 = base offset
+        XRouterSettings cfg;
+        if (addr == "self")
+            cfg = this->xrouter_settings;
+        else {
+            if (!this->snodeConfigs.count(addr))
+                return;
+            else
+                cfg = this->snodeConfigs[addr];
+        }
+        
+        reply = processGetXrouterConfig(cfg);
         if (lastConfigQueries.count(node)) {
             std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigQueries[node];
             std::chrono::system_clock::duration diff = time - prev_time;
@@ -1394,7 +1405,7 @@ std::string App::getPaymentAddress(CNode* node)
     return "";
 }
 
-std::string App::getXrouterConfig(CNode* node) {
+std::string App::getXrouterConfig(CNode* node, std::string addr) {
     XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
 
     uint256 txHash;
@@ -1404,6 +1415,7 @@ std::string App::getXrouterConfig(CNode* node) {
     packet->append(txHash.begin(), 32);
     packet->append(vout);
     packet->append(id);
+    packet->append(addr);
     
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
