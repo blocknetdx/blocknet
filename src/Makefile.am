@@ -408,6 +408,8 @@ libxrouter_xrouter_a_CPPFLAGS =  $(BITCOIN_INCLUDES)
 libxrouter_xrouter_a_SOURCES = \
   xrouter/xrouterapp.cpp \
   xrouter/xrouterapp.h \
+  xrouter/xrouterserver.cpp \
+  xrouter/xrouterserver.h \
   xrouter/version.h \
   xrouter/xrouterdef.h \
   xrouter/rpcxrouter.cpp \

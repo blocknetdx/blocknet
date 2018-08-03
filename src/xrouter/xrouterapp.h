@@ -8,6 +8,7 @@
 #include "xroutererror.h"
 #include "xroutersettings.h"
 #include "validationstate.h"
+#include "xrouterserver.h"
 #include "xrouterdef.h"
 #include "net.h"
 #include "servicenode.h"
@@ -40,7 +41,7 @@ private:
      */
     virtual ~App();
 
-    std::unique_ptr<Impl> m_p;
+    std::unique_ptr<XRouterServer> server;
 
     boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
     boost::container::map<std::string, std::vector<std::string> > queries;
