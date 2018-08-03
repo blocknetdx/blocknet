@@ -41,8 +41,6 @@
 #include <vector>
 #include <chrono>
 
-static const CAmount minBlock = 200;
-
 #define TEST_RUN_ON_CLIENT 1
 #define DEFAULT_TIMEOUT 20000
 
@@ -241,24 +239,6 @@ bool App::stop()
 {
     return true;
 }
-
-void App::addConnector(const WalletConnectorXRouterPtr & conn)
-{
-    boost::mutex::scoped_lock l(server->m_connectorsLock);
-    server->m_connectors.push_back(conn);
-    server->m_connectorCurrencyMap[conn->currency] = conn;
-}
-
-WalletConnectorXRouterPtr App::connectorByCurrency(const std::string & currency) const
-{
-    boost::mutex::scoped_lock l(server->m_connectorsLock);
-    if (server->m_connectorCurrencyMap.count(currency))
-    {
-        return server->m_connectorCurrencyMap.at(currency);
-    }
-
-    return xrouter::WalletConnectorXRouterPtr();
-}
  
 //*****************************************************************************
 //*****************************************************************************
@@ -443,330 +423,6 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
     return false;
 }
 
-void App::sendPacketToClient(const XRouterPacketPtr& packet, CNode* pnode)
-{
-    pnode->PushMessage("xrouter", packet->body());
-}
-
-//*****************************************************************************
-//*****************************************************************************
-static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
-{
-    if (packet->size() < 36) {
-        LOG() << "Packet not big enough";
-        return false;
-    }
-
-    uint256 txHash(packet->data());
-    CTransaction txval;
-    uint256 hashBlock;
-    int offset = 32;
-    uint32_t vout = *static_cast<uint32_t*>(static_cast<void*>(packet->data() + offset));
-
-    CCoins coins;
-    CTxOut txOut;
-    if (pcoinsTip->GetCoins(txHash, coins)) {
-        if (vout > coins.vout.size()) {
-            LOG() << "Invalid vout index " << vout;
-            return false;
-        }
-
-        txOut = coins.vout[vout];
-    } else if (GetTransaction(txHash, txval, hashBlock, true)) {
-        txOut = txval.vout[vout];
-    } else {
-        LOG() << "Could not find " << txHash.ToString();
-        return false;
-    }
-
-    if (txOut.nValue < minBlock) {
-        LOG() << "Insufficient BLOCK " << txOut.nValue;
-        return false;
-    }
-
-    CTxDestination destination;
-    if (!ExtractDestination(txOut.scriptPubKey, destination)) {
-        LOG() << "Unable to extract destination";
-        return false;
-    }
-
-    auto txKeyID = boost::get<CKeyID>(&destination);
-    if (!txKeyID) {
-        LOG() << "destination must be a single address";
-        return false;
-    }
-
-    CPubKey packetKey(packet->pubkey(),
-        packet->pubkey() + XRouterPacket::pubkeySize);
-
-    if (packetKey.GetID() != *txKeyID) {
-        LOG() << "Public key provided doesn't match UTXO destination.";
-        return false;
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string App::processGetBlockCount(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    Object result;
-    Object error;
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-    if (conn)
-    {
-        result.push_back(Pair("result", conn->getBlockCount()));
-    }
-    else
-    {
-        error.emplace_back(Pair("error", "No connector for currency " + currency));
-        result = error;
-    }
-
-    return json_spirit::write_string(Value(result), true);
-}
-
-std::string App::processGetBlockHash(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string blockId((const char *)packet->data()+offset);
-    offset += blockId.size() + 1;
-
-    Object result;
-    Object error;
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-    if (conn)
-    {
-        result.push_back(Pair("result", conn->getBlockHash(blockId)));
-    }
-    else
-    {
-        error.emplace_back(Pair("error", "No connector for currency " + currency));
-        result = error;
-    }
-
-    return json_spirit::write_string(Value(result), true);
-}
-
-std::string App::processGetBlock(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string blockHash((const char *)packet->data()+offset);
-    offset += blockHash.size() + 1;
-
-    Object result;
-    Object error;
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-    if (conn)
-    {
-        result = conn->getBlock(blockHash);
-    }
-    else
-    {
-        error.emplace_back(Pair("error", "No connector for currency " + currency));
-        result = error;
-    }
-    
-    return json_spirit::write_string(Value(result), true);
-}
-
-std::string App::processGetTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string hash((const char *)packet->data()+offset);
-    offset += hash.size() + 1;
-
-    Object result;
-    Object error;
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-    if (conn)
-    {
-        result = conn->getTransaction(hash);
-    }
-    else
-    {
-        error.emplace_back(Pair("error", "No connector for currency " + currency));
-        result = error;
-    }
-
-    return json_spirit::write_string(Value(result), true);
-}
-
-std::string App::processGetAllBlocks(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string number_s((const char *)packet->data()+offset);
-    offset += number_s.size() + 1;
-    int number = std::stoi(number_s);
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-    Array result;
-    if (conn)
-    {
-        result = conn->getAllBlocks(number);
-    }
-
-    return json_spirit::write_string(Value(result), true);
-}
-
-std::string App::processGetAllTransactions(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string account((const char *)packet->data()+offset);
-    offset += account.size() + 1;
-    std::string number_s((const char *)packet->data()+offset);
-    offset += number_s.size() + 1;
-    int number = std::stoi(number_s);
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-
-    Array result;
-    if (conn)
-    {
-        result = conn->getAllTransactions(account, number);
-    }
-
-    return json_spirit::write_string(Value(result), true);
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string App::processGetBalance(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string account((const char *)packet->data()+offset);
-    offset += account.size() + 1;
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-    std::string result;
-    if (conn)
-    {
-        result = conn->getBalance(account);
-    }
-
-    return result;
-}
-
-std::string App::processGetBalanceUpdate(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string account((const char *)packet->data()+offset);
-    offset += account.size() + 1;
-    std::string number_s((const char *)packet->data()+offset);
-    offset += number_s.size() + 1;
-    int number = std::stoi(number_s);
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-
-    std::string result;
-    if (conn)
-    {
-        result = conn->getBalanceUpdate(account, number);
-    }
-
-    return result;
-}
-
-std::string App::processGetTransactionsBloomFilter(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string number_s((const char *)packet->data()+offset);
-    offset += number_s.size() + 1;
-
-    CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
-    stream.resize(packet->size() - offset);
-    memcpy(&stream[0], packet->data()+offset, packet->size() - offset);
-
-    int number = std::stoi(number_s);
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-
-    Array result;
-    if (conn)
-    {
-        result = conn->getTransactionsBloomFilter(number, stream);
-    }
-
-    return json_spirit::write_string(Value(result), true);
-}
-
-std::string App::processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
-    std::string transaction((const char *)packet->data()+offset);
-    offset += transaction.size() + 1;
-
-    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-
-    Object result;
-    Object error;
-    
-    if (conn)
-    {
-        result = conn->sendTransaction(transaction);
-    }
-    else
-    {
-        error.emplace_back(Pair("error", "No connector for currency " + currency));
-        error.emplace_back(Pair("errorcode", "-100"));
-        result = error;
-    }
-    
-    return json_spirit::write_string(Value(result), true);
-}
-
-std::string App::processCustomCall(std::string name, std::vector<std::string> params)
-{
-    
-    if (!this->xrouter_settings.hasPlugin(name))
-        return "Custom call not found";
-
-    XRouterPluginSettings psettings = this->xrouter_settings.getPluginSettings(name);
-    std::string callType = psettings.getParam("type");
-    LOG() << "Plugin call " << name << " type = " << callType; 
-    if (callType == "rpc") {
-        Array jsonparams;
-        int count = psettings.getMaxParamCount();
-        std::vector<std::string> paramtypes;
-        std::string typestring = psettings.getParam("paramsType");
-        boost::split(paramtypes, typestring, boost::is_any_of(","));
-        std::string p;
-        for (int i = 0; i < count; i++) {
-            p = params[i];
-            if (p == "")
-                continue;
-            if (paramtypes[i] == "string")
-                jsonparams.push_back(p);
-            else if (paramtypes[i] == "int") {
-                try {
-                    jsonparams.push_back(std::stoi(p));
-                } catch (...) {
-                    return "Parameter #" + std::to_string(i+1) + " can not be converted to integer";
-                }
-            } else if (paramtypes[i] == "bool") {
-                if (params[i] == "true")
-                    jsonparams.push_back(true);
-                else if (params[i] == "false")
-                    jsonparams.push_back(true);
-                else
-                    return "Parameter #" + std::to_string(i+1) + " can not be converted to bool";
-            }
-        }
-        
-        std::string user, passwd, ip, port, command;
-        user = psettings.getParam("rpcUser");
-        passwd = psettings.getParam("rpcPassword");
-        ip = psettings.getParam("rpcIp", "127.0.0.1");
-        port = psettings.getParam("rpcPort");
-        command = psettings.getParam("rpcCommand");
-        Object result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, jsonparams);
-        return json_spirit::write_string(Value(result), true);
-    } else if (callType == "shell") {
-        std::string cmd = psettings.getParam("cmd");
-        int count = psettings.getMaxParamCount();
-        std::string p;
-        for (int i = 0; i < count; i++) {
-            cmd += " " + params[i];
-        }
-        
-        LOG() << "Executing shell command " << cmd;
-        std::string result = CallCMD(cmd);
-        return result;
-    }  
-    
-    return "Unknown type";
-}
-
-std::string App::processGetPaymentAddress(XRouterPacketPtr packet) {
-    return "";
-}
-
 std::string App::processGetXrouterConfig(XRouterSettings cfg) {
     Object result;
     result.emplace_back(Pair("config", cfg.rawText()));
@@ -843,19 +499,6 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         return;
     }
 
-    // TODO: here it implies that xrReply and xrConfig reply are first in enum before others, better compare explicitly
-    if ((packet->command() > xrConfigReply) && (packet->command() != xrGetXrouterConfig) && !packet->verify()) {
-        LOG() << "unsigned packet or signature error " << __FUNCTION__;
-        state.DoS(10, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
-        return;
-    }
-
-    if ((packet->command() > xrConfigReply) && (packet->command() != xrGetXrouterConfig) && !verifyBlockRequirement(packet)) {
-        LOG() << "Block requirement not satisfied\n";
-        state.DoS(10, error("XRouter: block requirement not satisfied"), REJECT_INVALID, "xrouter-error");
-        return;
-    }
-
     std::string reply;
     uint32_t offset = 36;
     std::string uuid((const char *)packet->data()+offset);
@@ -891,110 +534,19 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
         } else {
             lastConfigQueries[node] = time;
         }
-    } else if (packet->command() == xrCustomCall) {
-        XRouterPluginSettings psettings = this->xrouter_settings.getPluginSettings(currency);
         
-        std::string keystr = currency;
-        double timeout = psettings.get<double>("timeout", -1.0);
-        if (timeout >= 0) {
-            if (lastPacketsReceived.count(node)) {
-                if (lastPacketsReceived[node].count(keystr)) {
-                    std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsReceived[node][keystr];
-                    std::chrono::system_clock::duration diff = time - prev_time;
-                    if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
-                        std::string err_msg = "XRouter: too many requests to plugin " + keystr; 
-                        state.DoS(100, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
-                    }
-                    if (!lastPacketsReceived.count(node))
-                        lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-                    lastPacketsReceived[node][keystr] = time;
-                } else {
-                    lastPacketsReceived[node][keystr] = time;
-                }
-            } else {
-                lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-                lastPacketsReceived[node][keystr] = time;
-            }
-        }
-        
-        std::vector<std::string> params;
-        int count = psettings.getMaxParamCount();
-        std::string p;
-        for (int i = 0; i < count; i++) {
-            p = (const char *)packet->data()+offset;
-            params.push_back(p);
-            offset += p.size() + 1;
-        }
-        
-        reply = processCustomCall(currency, params);
+        XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+        rpacket->append(uuid);
+        rpacket->append(reply);
+        node->PushMessage("xrouter", rpacket->body());
+        return;
+    } else if (packet->command() == xrReply) {
+        processReply(packet);
+        return;
     } else {
-        std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
-        double timeout = this->xrouter_settings.getCommandTimeout(packet->command(), currency);
-        if (lastPacketsReceived.count(node)) {
-            if (lastPacketsReceived[node].count(keystr)) {
-                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsReceived[node][keystr];
-                std::chrono::system_clock::duration diff = time - prev_time;
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
-                    std::string err_msg = "XRouter: too many requests of type " + keystr; 
-                    state.DoS(100, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
-                }
-                if (!lastPacketsReceived.count(node))
-                    lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-                lastPacketsReceived[node][keystr] = time;
-            } else {
-                lastPacketsReceived[node][keystr] = time;
-            }
-        } else {
-            lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-            lastPacketsReceived[node][keystr] = time;
-        }
-            
-        switch (packet->command()) {
-        case xrGetBlockCount:
-            reply = processGetBlockCount(packet, offset, currency);
-            break;
-        case xrGetBlockHash:
-            reply = processGetBlockHash(packet, offset, currency);
-            break;
-        case xrGetBlock:
-            reply = processGetBlock(packet, offset, currency);
-            break;
-        case xrGetTransaction:
-            reply = processGetTransaction(packet, offset, currency);
-            break;
-        case xrGetAllBlocks:
-            reply = processGetAllBlocks(packet, offset, currency);
-            break;
-        case xrGetAllTransactions:
-            reply = processGetAllTransactions(packet, offset, currency);
-            break;
-        case xrGetBalance:
-            reply = processGetBalance(packet, offset, currency);
-            break;
-        case xrGetBalanceUpdate:
-            reply = processGetBalanceUpdate(packet, offset, currency);
-            break;
-        case xrGetTransactionsBloomFilter:
-            reply = processGetTransactionsBloomFilter(packet, offset, currency);
-            break;
-        case xrSendTransaction:
-            reply = processSendTransaction(packet, offset, currency);
-            break;
-        case xrReply:
-            processReply(packet);
-            return;
-        default:
-            LOG() << "Unknown packet";
-            return;
-        }
+        server->onMessageReceived(node, packet, state);
+        return;
     }
-
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-
-    rpacket->append(uuid);
-    rpacket->append(reply);
-    sendPacketToClient(rpacket, node);
-    return;
 }
 
 //*****************************************************************************
@@ -1006,7 +558,7 @@ static bool satisfyBlockRequirement(uint256& txHash, uint32_t& vout, CKey& key)
     }
     for (auto& addressCoins : pwalletMain->AvailableCoinsByAddress()) {
         for (auto& output : addressCoins.second) {
-            if (output.Value() >= minBlock) {
+            if (output.Value() >= MIN_BLOCK) {
                 CKeyID keyID;
                 if (!addressCoins.first.GetKeyID(keyID)) {
                     //std::cerr << "GetKeyID failed\n";
@@ -1195,7 +747,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     if (this->xrouter_settings.hasPlugin(name)) {
         // Run the plugin locally
-        return processCustomCall(name, params);
+        return server->processCustomCall(name, params);
     }
     
     updateConfigs();

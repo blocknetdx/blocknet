@@ -9,6 +9,8 @@
 #include "xrouterconnectorbtc.h"
 #include "xrouterconnectoreth.h"
 #include "xrouterdef.h"
+#include <chrono>
+#include <boost/container/map.hpp>
 
 namespace xrouter
 {
@@ -24,25 +26,127 @@ class XRouterServer
     xrouter::ConnectorsAddrMap m_connectorAddressMap;
     xrouter::ConnectorsCurrencyMap m_connectorCurrencyMap;
 
+    boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
+    
 protected:
     /**
      * @brief Impl - default constructor, init
      * services and timer
      */
-    XRouterServer() {}
+    XRouterServer() { }
 
     /**
      * @brief start - run sessions, threads and services
      * @return true, if run succesfull
      */
     bool start();
+    
+    /**
+     * @brief load the connector (class used to communicate with other chains)
+     * @param conn
+     * @return
+     */
+    void addConnector(const WalletConnectorXRouterPtr & conn);
 
     /**
-     * @brief onSend  send packet to xrouter network to specified id,
-     *  or broadcast, when id is empty
-     * @param message
+     * @brief return the connector (class used to communicate with other chains) for selected chain
+     * @param currency chain code (BTC, LTC etc)
+     * @return
      */
-    void onSend(const std::vector<unsigned char>& message, CNode* pnode);
+    WalletConnectorXRouterPtr connectorByCurrency(const std::string & currency) const;
+    
+    /**
+     * @brief sendPacket send packet btadcast to xrouter network
+     * @param packet send message via xrouter
+     * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
+     */
+    void sendPacketToClient(const XRouterPacketPtr & packet, CNode* pnode);
+    
+    /**
+     * @brief onMessageReceived  call when message from xrouter network received
+     * @param message
+     * @param state
+     */
+    void onMessageReceived(CNode* node, XRouterPacketPtr& packet, CValidationState & state);
+    
+       /**
+     * @brief process GetBlockCount call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetBlockCount(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetBlockHash call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetBlockHash(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetBlock call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetBlock(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetTransaction call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetAllBlocks call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetAllBlocks(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetAllTransactions call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetAllTransactions(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetBalance call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetBalance(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetBalanceUpdate call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetBalanceUpdate(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process GetBalanceUpdate call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetTransactionsBloomFilter(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    /**
+     * @brief process SendTransaction call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+
+    std::string processCustomCall(std::string name, std::vector<std::string> params);
+    
+    /**
+     * @brief process GetPaymentAddress call on service node side
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
+    std::string processGetPaymentAddress(XRouterPacketPtr packet);
 };
 
 } // namespace
