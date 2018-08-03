@@ -511,18 +511,34 @@ CNode* App::getNodeForService(std::string name)
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
     LOCK(cs_vNodes);
-    for (CNode* pnode : vNodes) {
-        if (!snodeConfigs.count(pnode->addr.ToString()))
-            continue;
-        XRouterSettings settings = snodeConfigs[pnode->addr.ToString()];
+    BOOST_FOREACH(const std::string key, snodeConfigs | boost::adaptors::map_keys)
+    {
+        XRouterSettings settings = snodeConfigs[key];
         if (!settings.hasPlugin(name))
+            continue;
+        
+        CNode* res = NULL;
+        for (CNode* pnode : vNodes) {
+            if (key == pnode->addr.ToString()) {
+                // This node is a running xrouter
+                res = pnode;
+                break;
+            }
+        }
+        
+        if (!res) {
+            CAddress addr;
+            res = ConnectNode(addr, key.c_str());
+        }
+        
+        if (!res)
             continue;
         
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         double timeout = settings.getPluginSettings(name).get<double>("timeout", -1.0);
-        if (lastPacketsSent.count(pnode)) {
-            if (lastPacketsSent[pnode].count(name)) {
-                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[pnode][name];
+        if (lastPacketsSent.count(res)) {
+            if (lastPacketsSent[res].count(name)) {
+                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[res][name];
                 std::chrono::system_clock::duration diff = time - prev_time;
                 if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
                     continue;
@@ -530,15 +546,7 @@ CNode* App::getNodeForService(std::string name)
             }
         }
         
-        if (TEST_RUN_ON_CLIENT)
-            return pnode;
-        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-            if (s.second.addr.ToString() == pnode->addr.ToString()) {
-                // This node is a service node
-                // TODO: check for doubles and resolve the name conflict
-                return pnode;
-            }
-        }
+        return res;
     }
     
     return NULL;
