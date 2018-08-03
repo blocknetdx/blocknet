@@ -26,7 +26,7 @@ namespace rpc
      * @param txid
      * @return
      */
-    bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
+    bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
                                  const double amount,
                                  const std::vector<unsigned char> & data,
                                  std::string & txid);

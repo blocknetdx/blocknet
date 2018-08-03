@@ -1367,8 +1367,30 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             return false;
         }
 
+        // transaction info
+        std::vector<unsigned char> txInfo;
+        {
+            Array info;
+            info.push_back(txid.GetHex());
+            info.push_back(xtx->fromCurrency);
+            info.push_back(xtx->fromAmount);
+            info.push_back(xtx->toCurrency);
+            info.push_back(xtx->toAmount);
+            std::string strInfo = HexStr(write_string(Value(info)));
+            txInfo.resize(strInfo.size());
+            std::copy(strInfo.begin(), strInfo.end(), txInfo.begin());
+        }
+
+        uint160 id(snodeAddress);
+        CBitcoinAddress addr;
+        addr.Set(CKeyID(id));
+
+        CScript destScript;
+        destScript << txInfo << OP_DROP;
+        destScript += GetScriptForDestination(addr.Get());
+
         std::string strtxid;
-        if (!rpc::storeDataIntoBlockchain(snodeAddress, conn->serviceNodeFee,
+        if (!rpc::storeDataIntoBlockchain(destScript, conn->serviceNodeFee,
                                           std::vector<unsigned char>(xid.begin(), xid.end()), strtxid))
         {
             ERR() << "storeDataIntoBlockchain failed, error send blocknet tx " << __FUNCTION__;
