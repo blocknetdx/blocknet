@@ -234,7 +234,7 @@ public:
      * @param packet Xrouter packet received over the network
      * @return
      */
-    std::string processGetXrouterConfig(XRouterSettings cfg);
+    std::string processGetXrouterConfig(XRouterSettings cfg, std::string addr);
 
     /**
      * @brief process reply from service node on *client* side
@@ -242,6 +242,8 @@ public:
      * @return
      */
     bool processReply(XRouterPacketPtr packet);
+    
+    bool processConfigReply(XRouterPacketPtr packet);
     
     static bool cmpNodeScore(CNode* a, CNode* b) { return snodeScore[a] > snodeScore[b]; }
     

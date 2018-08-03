@@ -185,7 +185,6 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
     LOG() << "Processing packet on server side";
     App& app = App::instance();
     
-    // TODO: here it implies that xrReply and xrConfig reply are first in enum before others, better compare explicitly
     if (!packet->verify()) {
         LOG() << "unsigned packet or signature error " << __FUNCTION__;
         state.DoS(10, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
@@ -205,7 +204,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
     std::string currency((const char *)packet->data()+offset);
     offset += currency.size() + 1;
     LOG() << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
-    if ((packet->command() > xrConfigReply) && !app.xrouter_settings.isAvailableCommand(packet->command(), currency)) {
+    if (!app.xrouter_settings.isAvailableCommand(packet->command(), currency)) {
         LOG() << "This command is blocked in xrouter.conf";
         return;
     }

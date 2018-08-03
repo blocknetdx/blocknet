@@ -13,10 +13,7 @@
 #include "wallet.h"
 #include "bloom.h"
 
-#include "xbridge/xkey.h"
 #include "xbridge/util/settings.h"
-#include "xbridge/xbridgewallet.h"
-#include "xbridge/xbridgewalletconnector.h"
 #include "xrouterlogger.h"
 
 #include "xrouterconnector.h"
@@ -171,6 +168,8 @@ void App::openConnections()
             CAddress addr;
             CNode* res = ConnectNode(addr, s.second.addr.ToString().c_str());
             LOG() << "Trying to connect to " << s.second.addr.ToString() << "; result=" << ((res == NULL) ? "fail" : "success");
+            if (res)
+                this->getXrouterConfig(res);
         }
     }
 
@@ -212,6 +211,31 @@ std::string App::updateConfigs()
                 std::string uuid = this->getXrouterConfig(pnode);
                 LOG() << "Getting config from node " << pnode->addrName << " request id = " << uuid;
                 lastConfigUpdates[pnode] = time;
+            }
+        }
+    }
+    
+    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+        bool found = false;
+        for (CNode* pnode : vNodes) {
+            if (s.second.addr.ToString() == pnode->addr.ToString()) {
+                found = true;
+                break;
+            }
+        }
+        
+        if (!found) {
+            LOG() << "Broadcasting request for config of snode " << s.second.addr.ToString();
+            for (CNode* pnode : vNodes) {
+                if (lastConfigUpdates.count(pnode)) {
+                    // There was a request to this node already, a new one will be sent only after 5 minutes
+                    std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigUpdates[pnode];
+                    std::chrono::system_clock::duration diff = time - prev_time;
+                    if (std::chrono::duration_cast<std::chrono::seconds>(diff) < std::chrono::seconds(300)) 
+                        continue;
+                }
+                this->getXrouterConfig(pnode, s.second.addr.ToString());
+                break;
             }
         }
     }
@@ -423,13 +447,14 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
     return false;
 }
 
-std::string App::processGetXrouterConfig(XRouterSettings cfg) {
+std::string App::processGetXrouterConfig(XRouterSettings cfg, std::string addr) {
     Object result;
     result.emplace_back(Pair("config", cfg.rawText()));
     Object plugins;
     for (std::string s : cfg.getPlugins())
         plugins.emplace_back(s, cfg.getPluginSettings(s).rawText());
     result.emplace_back(Pair("plugins", plugins));
+    result.emplace_back(Pair("addr", addr));
     LOG() << "Sending config " << json_spirit::write_string(Value(result), true);
     return json_spirit::write_string(Value(result), true);
 }
@@ -446,28 +471,6 @@ bool App::processReply(XRouterPacketPtr packet) {
 
     LOG() << "Got reply to query " << uuid;
     
-    if (configQueries.count(uuid)) {
-        LOG() << "Got xrouter config from node " << configQueries[uuid]->addrName;
-        LOG() << reply;
-        Value reply_val;
-        read_string(reply, reply_val);
-        Object reply_obj = reply_val.get_obj();
-        std::string config = find_value(reply_obj, "config").get_str();
-        Object plugins  = find_value(reply_obj, "plugins").get_obj();
-        
-        XRouterSettings settings;
-        settings.read(config);
-        
-        for (Object::size_type i = 0; i != plugins.size(); i++ ) {
-            XRouterPluginSettings psettings;
-            psettings.read(std::string(plugins[i].value_.get_str()));
-            settings.addPlugin(std::string(plugins[i].name_), psettings);
-        }
-        
-        snodeConfigs[configQueries[uuid]->addr.ToString()] = settings;
-        return true;
-    }
-    
     // check uuid is in queriesLock keys
     if (!queriesLocks.count(uuid))
         return true;
@@ -479,6 +482,43 @@ bool App::processReply(XRouterPacketPtr packet) {
     queries[uuid].push_back(reply);
     queriesLocks[uuid].second->notify_all();
     return true;
+}
+
+bool App::processConfigReply(XRouterPacketPtr packet) {
+    uint32_t offset = 0;
+
+    std::string uuid((const char *)packet->data()+offset);
+    offset += uuid.size() + 1;
+    std::string reply((const char *)packet->data()+offset);
+    offset += reply.size() + 1;
+
+    LOG() << "Got reply to query " << uuid;
+    
+    
+    LOG() << "Got xrouter config from node " << configQueries[uuid]->addrName;
+    LOG() << reply;
+    Value reply_val;
+    read_string(reply, reply_val);
+    Object reply_obj = reply_val.get_obj();
+    std::string config = find_value(reply_obj, "config").get_str();
+    Object plugins  = find_value(reply_obj, "plugins").get_obj();
+    
+    XRouterSettings settings;
+    settings.read(config);
+    
+    for (Object::size_type i = 0; i != plugins.size(); i++ ) {
+        XRouterPluginSettings psettings;
+        psettings.read(std::string(plugins[i].value_.get_str()));
+        settings.addPlugin(std::string(plugins[i].name_), psettings);
+    }
+     if (configQueries.count(uuid)) {   
+        snodeConfigs[configQueries[uuid]->addr.ToString()] = settings;
+        return true;
+    } else {
+        std::string addr = find_value(reply_obj, "addr").get_str();
+        snodeConfigs[addr] = settings;
+        return true;
+    }
 }
 
 //*****************************************************************************
@@ -500,20 +540,14 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     }
 
     std::string reply;
-    uint32_t offset = 36;
-    std::string uuid((const char *)packet->data()+offset);
-    offset += uuid.size() + 1;
-    std::string currency((const char *)packet->data()+offset);
-    offset += currency.size() + 1;
     LOG() << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
-    if ((packet->command() > xrConfigReply) && !this->xrouter_settings.isAvailableCommand(packet->command(), currency)) {
-        LOG() << "This command is blocked in xrouter.conf";
-        return;
-    }
     
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     if (packet->command() == xrGetXrouterConfig) {
-        std::string addr((const char *)packet->data()+36); //36 = base offset
+        uint32_t offset = 36;
+        std::string uuid((const char *)packet->data()+offset);
+        offset += uuid.size() + 1;
+        std::string addr((const char *)packet->data()+offset);
         XRouterSettings cfg;
         if (addr == "self")
             cfg = this->xrouter_settings;
@@ -524,7 +558,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
                 cfg = this->snodeConfigs[addr];
         }
         
-        reply = processGetXrouterConfig(cfg);
+        reply = processGetXrouterConfig(cfg, addr);
         if (lastConfigQueries.count(node)) {
             std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigQueries[node];
             std::chrono::system_clock::duration diff = time - prev_time;
@@ -535,13 +569,16 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
             lastConfigQueries[node] = time;
         }
         
-        XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+        XRouterPacketPtr rpacket(new XRouterPacket(xrConfigReply));
         rpacket->append(uuid);
         rpacket->append(reply);
         node->PushMessage("xrouter", rpacket->body());
         return;
     } else if (packet->command() == xrReply) {
         processReply(packet);
+        return;
+    } else if (packet->command() == xrConfigReply) {
+        processConfigReply(packet);
         return;
     } else {
         server->onMessageReceived(node, packet, state);
