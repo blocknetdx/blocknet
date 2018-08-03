@@ -150,7 +150,7 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
-bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
+bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
                              const double amount,
                              const std::vector<unsigned char> & data,
                              string & txid)
@@ -168,15 +168,21 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
 
     try
     {
-        Object outputs;
+        Array outputs;
 
-        std::string strdata = HexStr(data.begin(), data.end());
-        outputs.push_back(Pair("data", strdata));
+        {
+            Object out;
+            std::string strdata = HexStr(data.begin(), data.end());
+            out.push_back(Pair("data", strdata));
+            outputs.push_back(out);
+        }
 
-        uint160 id(dstAddress);
-        CBitcoinAddress addr;
-        addr.Set(CKeyID(id));
-        outputs.push_back(Pair(addr.ToString(), amount));
+        {
+            Object out;
+            out.push_back(Pair("script", HexStr(dstScript)));
+            out.push_back(Pair("amount", amount));
+            outputs.push_back(out);
+        }
 
         std::vector<COutput> used;
 

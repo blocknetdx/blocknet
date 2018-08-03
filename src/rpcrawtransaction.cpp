@@ -300,6 +300,59 @@ Value listunspent(const Array& params, bool fHelp)
 }
 #endif
 
+namespace
+{
+
+void addScriptOutput(CMutableTransaction & tx, const Value & script, const Value & amount)
+{
+    std::vector<unsigned char> vscript = ParseHex(script.get_str());
+    if (vscript.empty())
+    {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid or empty script: ") + script.get_str());
+    }
+
+    CScript scriptPubKey(vscript.begin(), vscript.end());
+    CAmount nAmount = AmountFromValue(amount);
+
+    CTxOut out(nAmount, scriptPubKey);
+    tx.vout.push_back(out);
+}
+
+void addAddressOutput(CMutableTransaction & tx, const Value & addr, const Value & amount)
+{
+    CBitcoinAddress address(addr.get_str());
+    if (!address.IsValid())
+    {
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid BlocknetDX address: ") + addr.get_str());
+    }
+
+//    if (setAddress.count(address))
+//    {
+//        throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + addr);
+//    }
+//    setAddress.insert(address);
+
+    CScript scriptPubKey = GetScriptForDestination(address.Get());
+    CAmount nAmount = AmountFromValue(amount);
+
+    CTxOut out(nAmount, scriptPubKey);
+    tx.vout.push_back(out);
+}
+
+void addDataOutput(CMutableTransaction & tx, const Value & v)
+{
+    std::vector<unsigned char> data = ParseHex(v.get_str());
+    if(data.size() > nMaxDatacarrierBytes-1)
+    {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Message length greater than " + std::to_string(nMaxDatacarrierBytes - 1));
+    }
+
+    CTxOut out(0,CScript() << OP_RETURN << data);
+    tx.vout.push_back(out);
+}
+
+} // namespace
+
 Value createrawtransaction(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 2)
@@ -314,20 +367,36 @@ Value createrawtransaction(const Array& params, bool fHelp)
             "it is not stored in the wallet or transmitted to the network.\n"
 
             "\nArguments:\n"
-            "1. \"transactions\"        (string, required) A json array of json objects\n"
+            "1. \"transactions\"           (string, required) A json array of json objects\n"
             "     [\n"
             "       {\n"
-            "         \"txid\":\"id\",  (string, required) The transaction id\n"
-            "         \"vout\":n        (numeric, required) The output number\n"
+            "         \"txid\":\"id\",     (string, required) The transaction id\n"
+            "         \"vout\":n           (numeric, required) The output number\n"
             "       }\n"
             "       ,...\n"
             "     ]\n"
-            "2. \"addresses\"           (string, required) a json object with addresses as keys and amounts as values\n"
+            "2. \"addresses\"              (string, required) a json object with addresses as keys and amounts as values\n"
             "    {\n"
             "      \"data\":\"<Message>\", (string, optional) hex encoded data\n"
-            "      \"address\": x.xxx   (numeric, required) The key is the blocknetdx address, the value is the btc amount\n"
+            "      \"address\": x.xxx      (numeric, required) The key is the blocknetdx address, the value is the block amount\n"
             "      ,...\n"
             "    }\n"
+            "or \"outputs\"                (string, required) A json array of json objects\n"
+            "     [\n"
+            "       {\n"
+            "         \"address\":\"id\",  (string, required) The blocknetdx address\n"
+            "         \"amount\":n         (numeric, required) The block amount\n"
+            "       },\n"
+            "       {\n"
+            "         \"data\":\"id\",     (string, reqired) Hex encoded data\n"
+            "         \"amount\":n         (numeric, required) The block amount (ignored)\n"
+            "       },\n"
+            "       {\n"
+            "         \"script\":\"id\",   (string, reqired) Hex encoded script\n"
+            "         \"amount\":n         (numeric, required) The block amount\n"
+            "       }\n"
+            "       ,...\n"
+            "     ]\n"
 
             "\nResult:\n"
             "\"transaction\"            (string) hex string of the transaction\n"
@@ -335,57 +404,83 @@ Value createrawtransaction(const Array& params, bool fHelp)
             "\nExamples\n" +
             HelpExampleCli("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\" \"{\\\"address\\\":0.01}\"") + HelpExampleRpc("createrawtransaction", "\"[{\\\"txid\\\":\\\"myid\\\",\\\"vout\\\":0}]\", \"{\\\"address\\\":0.01}\""));
 
-    RPCTypeCheck(params, list_of(array_type)(obj_type));
-
-    Array inputs = params[0].get_array();
-    Object sendTo = params[1].get_obj();
+    RPCTypeCheck(params, list_of(array_type));
 
     CMutableTransaction rawTx;
 
-    BOOST_FOREACH (const Value& input, inputs) {
-        const Object& o = input.get_obj();
+    // inputs
+    {
+        Array inputs = params[0].get_array();
+        for (const Value & input : inputs)
+        {
+            const Object& o = input.get_obj();
 
-        uint256 txid = ParseHashO(o, "txid");
+            uint256 txid = ParseHashO(o, "txid");
 
-        const Value& vout_v = find_value(o, "vout");
-        if (vout_v.type() != int_type)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, missing vout key");
-        int nOutput = vout_v.get_int();
-        if (nOutput < 0)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, vout must be positive");
+            const Value& vout_v = find_value(o, "vout");
+            if (vout_v.type() != int_type)
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, missing vout key");
+            int nOutput = vout_v.get_int();
+            if (nOutput < 0)
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, vout must be positive");
 
-        CTxIn in(COutPoint(txid, nOutput));
-        rawTx.vin.push_back(in);
+            CTxIn in(COutPoint(txid, nOutput));
+            rawTx.vin.push_back(in);
+        }
     }
 
-    set<CBitcoinAddress> setAddress;
-    BOOST_FOREACH (const Pair& s, sendTo)
+    // outputs
+    if (params[1].type() == obj_type)
     {
-        if (s.name_ == string("data"))
+        Object sendTo = params[1].get_obj();
+        for (const Pair & s : sendTo)
         {
-            std::vector<unsigned char> data = ParseHex(s.value_.get_str());
-            if(data.size()>512*1024)
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Message length greater than 1*1024*1024");
-
-            CTxOut out(0,CScript() << OP_RETURN << data);
-            rawTx.vout.push_back(out);
+            if (s.name_ == string("data"))
+            {
+                addDataOutput(rawTx, s.value_);
+            }
+            else
+            {
+                addAddressOutput(rawTx, s.name_, s.value_);
+            }
         }
-        else
+    }
+    else if (params[1].type() == array_type)
+    {
+        Array sendTo = params[1].get_array();
+        for (Value & vTo : sendTo)
         {
-            CBitcoinAddress address(s.name_);
-            if (!address.IsValid())
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid BlocknetDX address: ") + s.name_);
+            if (vTo.type() != obj_type)
+            {
+                throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter ") + write_string(vTo));
+            }
 
-            if (setAddress.count(address))
-                throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + s.name_);
-            setAddress.insert(address);
+            Object oTo = vTo.get_obj();
 
-            CScript scriptPubKey = GetScriptForDestination(address.Get());
-            CAmount nAmount = AmountFromValue(s.value_);
-
-            CTxOut out(nAmount, scriptPubKey);
-            rawTx.vout.push_back(out);
+            Value amount = find_value(oTo, "amount");
+            Value data   = find_value(oTo, "address");
+            if (data.type() != null_type)
+            {
+                addAddressOutput(rawTx, data, amount);
+                continue;
+            }
+            data = find_value(oTo, "data");
+            if (data.type() != null_type)
+            {
+                addDataOutput(rawTx, data);
+                continue;
+            }
+            data = find_value(oTo, "script");
+            if (data.type() != null_type)
+            {
+                addScriptOutput(rawTx, data, amount);
+                continue;
+            }
         }
+    }
+    else
+    {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, string("Invalid second parameter, must be array or object"));
     }
 
     return EncodeHexTx(rawTx);
