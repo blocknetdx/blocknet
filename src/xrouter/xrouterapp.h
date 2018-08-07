@@ -68,6 +68,10 @@ public:
      */
     static bool isEnabled();
     
+    /**
+     * @brief xrouterSettings
+     * @return local xrouter.conf settings
+     */
     XRouterSettings& xrouterSettings() { return xrouter_settings; }
 
     /**
@@ -77,8 +81,19 @@ public:
      */
     bool start();
 
+    /**
+     * @brief try to open connections to all service nodes in order
+     */
     void openConnections();
+    
+    /**
+     * @brief send config update requests to all nodes
+     */
     std::string updateConfigs();
+    
+    /**
+     * @brief prints xrouter configs
+     */
     std::string printConfigs();
     
     /**
@@ -196,15 +211,21 @@ public:
     std::string sendTransaction(const std::string & currency, const std::string & transaction);
 
     /**
-     * @brief sends raw transaction to the given chain
-     * @param currency chain code (BTC, LTC etc)
-     * @param transaction raw signed transaction
+     * @brief sends custom (plugin) call
+     * @param name plugin name (taken from xrouter config)
+     * @param params parameters list from command line. The function checks that the number and type of parameters matches the config
      * @return
      */
     std::string sendCustomCall(const std::string & name, std::vector<std::string> & params);
     
+    /**
+     * @brief reload xrouter.conf and plugin configs from disks
+     */
     void reloadConfigs();
     
+    /**
+     * @brief returns status json object
+     */
     std::string getStatus();
 
     
@@ -218,6 +239,7 @@ public:
     /**
      * @brief fetches the xrouter config of a service node
      * @param node node object
+     * @param addr "self" means return own xrouter.conf, any other address requests config for this address if present
      * @return config string
      */
     std::string getXrouterConfig(CNode* node, std::string addr="self");
@@ -243,17 +265,34 @@ public:
      */
     bool processReply(XRouterPacketPtr packet);
     
+    /**
+     * @brief process reply about xrouter config contents
+     * @param packet Xrouter packet received over the network
+     * @return
+     */
     bool processConfigReply(XRouterPacketPtr packet);
     
     static bool cmpNodeScore(CNode* a, CNode* b) { return snodeScore[a] > snodeScore[b]; }
     
+    /**
+     * @brief get all nodes that support the command for a given chain
+     * @param packet Xrouter packet formed and ready to be sendTransaction
+     * @param wallet currency
+     * @return
+     */
     std::vector<CNode*> getAvailableNodes(const XRouterPacketPtr & packet, std::string wallet);
     
+    /**
+     * @brief find the node that supports a given plugin 
+     * @param name pkugin name
+     * @return
+     */
     CNode* getNodeForService(std::string name);
     
     /**
      * @brief sendPacket send packet btadcast to xrouter network
      * @param packet send message via xrouter
+     * @param configmation number of copies to send
      * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
      */
     bool sendPacketToServer(const XRouterPacketPtr & packet, int confirmations, std::string wallet);
@@ -264,7 +303,6 @@ public:
      * @param id address
      * @param currency chain id
      * @param confirmations number of packets to send and wait for reply (result is decided by majority vote)
-     * @param timeout time period to wait
      * @return
      */
     std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations=3);
@@ -272,8 +310,9 @@ public:
     // call when message from xrouter network received
     /**
      * @brief onMessageReceived  call when message from xrouter network received
-     * @param message
-     * @param state
+     * @param node source CNode
+     * @message packet contents
+     * @param state variable, used to ban misbehaving nodes
      */
     void onMessageReceived(CNode* node, const std::vector<unsigned char> & message, CValidationState & state);
 };
