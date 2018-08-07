@@ -922,17 +922,16 @@ std::string App::getStatus() {
         myplugins.emplace_back(s, this->xrouter_settings.getPluginSettings(s).rawText());
     result.emplace_back(Pair("plugins", myplugins));
     
-    Object nodes;
-    for (CNode* node: vNodes) {
-        if (!snodeConfigs.count(node->addr.ToString()))
-            continue;
-        Object vnode;
-        vnode.emplace_back(Pair("config", snodeConfigs[node->addr.ToString()].rawText()));
+    Array nodes;
+    for (auto& it : this->snodeConfigs) {
+        Object val;
+        val.emplace_back("node", it.first);
+        val.emplace_back("config", it.second.rawText());
         Object plugins;
-        for (std::string s : snodeConfigs[node->addr.ToString()].getPlugins())
-            plugins.emplace_back(s, snodeConfigs[node->addr.ToString()].getPluginSettings(s).rawText());
-        vnode.emplace_back(Pair("plugins", plugins));
-        nodes.emplace_back(Pair(node->addrName, vnode));
+        for (std::string s : it.second.getPlugins())
+            plugins.emplace_back(s, it.second.getPluginSettings(s).rawText());
+        val.emplace_back(Pair("plugins", plugins));
+        nodes.push_back(Value(val));
     }
     
     result.emplace_back(Pair("nodes", nodes));
