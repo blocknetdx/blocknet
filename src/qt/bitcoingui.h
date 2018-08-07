@@ -129,7 +129,7 @@ private:
     QAction* openBlockExplorerAction;
     QAction* showHelpMessageAction;
     QAction* multiSendAction;
-	QAction *proposalAction;
+    QAction* proposalAction;
 
     QSystemTrayIcon* trayIcon;
     QMenu* trayIconMenu;
