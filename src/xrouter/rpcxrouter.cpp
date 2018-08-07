@@ -46,7 +46,7 @@ static Object form_reply(std::string reply)
 Value xrGetBlockCount(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlock currency\nLookup total number of blocks in a specified blockchain.");
+        throw std::runtime_error("xrGetBlockCount currency\nLookup total number of blocks in a specified blockchain.");
     }
 
     if (params.size() < 1)
@@ -171,7 +171,7 @@ Value xrGetTransaction(const Array & params, bool fHelp)
 Value xrGetAllBlocks(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance\nReturns a list of all blocks starting with n for selected currency.");
+        throw std::runtime_error("xrGetAllBlocks currency [number]\nReturns a list of all blocks starting with n for selected currency.");
     }
 
     if (params.size() < 1)
@@ -416,7 +416,7 @@ Value xrCustomCall(const Array & params, bool fHelp)
 Value xrSendTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance txdata\nSends signed transaction for selected currency.");
+        throw std::runtime_error("xrSendTransaction txdata\nSends signed transaction for selected currency.");
     }
 
     if (params.size() < 1)
@@ -488,7 +488,7 @@ Value xrShowConfigs(const Array & params, bool fHelp)
 Value xrReloadConfigs(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrReloadConfigs\nSends requests for all service node configs.");
+        throw std::runtime_error("xrReloadConfigs\nReloads xrouter.conf and plugin configs from disk in case they were changed externally.");
     }
     
     Object result;
@@ -499,7 +499,7 @@ Value xrReloadConfigs(const Array & params, bool fHelp)
 Value xrStatus(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrStatus\nSends requests for all service node configs.");
+        throw std::runtime_error("xrStatus\nShow current XRouter status and info.");
     }
     
     Object result;
@@ -510,7 +510,7 @@ Value xrStatus(const Array & params, bool fHelp)
 Value xrOpenConnections(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrOpenConnections\nSends requests for all service node configs.");
+        throw std::runtime_error("xrOpenConnections\nOpens connections to all available service nodes.");
     }
     
     Object result;
