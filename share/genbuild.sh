@@ -1,4 +1,5 @@
 #!/bin/sh
+LC_ALL=C
 if [ $# -gt 1 ]; then
     cd "$2"
 fi

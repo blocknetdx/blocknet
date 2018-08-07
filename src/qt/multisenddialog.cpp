@@ -5,6 +5,7 @@
 #include "init.h"
 #include "ui_multisenddialog.h"
 #include "walletmodel.h"
+#include <QStyle>
 #include <QLineEdit>
 #include <QMessageBox>
 #include <boost/lexical_cast.hpp>
