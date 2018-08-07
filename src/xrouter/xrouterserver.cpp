@@ -419,11 +419,15 @@ std::string XRouterServer::processGetAllTransactions(XRouterPacketPtr packet, ui
     int number = std::stoi(number_s);
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
-
+    int time = 0;
+    if (account.find(":") != string::npos) {
+        time = std::stoi(account.substr(account.find(":")+1));
+        account = account.substr(0, account.find(":"));
+    }
     Array result;
     if (conn)
     {
-        result = conn->getAllTransactions(account, number);
+        result = conn->getAllTransactions(account, number, time);
     }
 
     return json_spirit::write_string(Value(result), true);
@@ -436,10 +440,15 @@ std::string XRouterServer::processGetBalance(XRouterPacketPtr packet, uint32_t o
     offset += account.size() + 1;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+    int time = 0;
+    if (account.find(":") != string::npos) {
+        time = std::stoi(account.substr(account.find(":")+1));
+        account = account.substr(0, account.find(":"));
+    }
     std::string result;
     if (conn)
     {
-        result = conn->getBalance(account);
+        result = conn->getBalance(account, time);
     }
 
     return result;
@@ -453,11 +462,16 @@ std::string XRouterServer::processGetBalanceUpdate(XRouterPacketPtr packet, uint
     int number = std::stoi(number_s);
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+    int time = 0;
+    if (account.find(":") != string::npos) {
+        time = std::stoi(account.substr(account.find(":")+1));
+        account = account.substr(0, account.find(":"));
+    }
 
     std::string result;
     if (conn)
     {
-        result = conn->getBalanceUpdate(account, number);
+        result = conn->getBalanceUpdate(account, number, time);
     }
 
     return result;
