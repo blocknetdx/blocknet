@@ -307,11 +307,10 @@ public:
      */
     std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations=3);
 
-    // call when message from xrouter network received
     /**
      * @brief onMessageReceived  call when message from xrouter network received
      * @param node source CNode
-     * @message packet contents
+     * @param message packet contents
      * @param state variable, used to ban misbehaving nodes
      */
     void onMessageReceived(CNode* node, const std::vector<unsigned char> & message, CValidationState & state);

@@ -64,8 +64,9 @@ protected:
     
     /**
      * @brief onMessageReceived  call when message from xrouter network received
-     * @param message
-     * @param state
+     * @param node source CNode
+     * @param message packet contents
+     * @param state variable, used to ban misbehaving nodes
      */
     void onMessageReceived(CNode* node, XRouterPacketPtr& packet, CValidationState & state);
     
@@ -79,6 +80,8 @@ protected:
     /**
      * @brief process GetBlockHash call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetBlockHash(XRouterPacketPtr packet, uint32_t offset, std::string currency);
@@ -86,6 +89,8 @@ protected:
     /**
      * @brief process GetBlock call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetBlock(XRouterPacketPtr packet, uint32_t offset, std::string currency);
@@ -93,6 +98,8 @@ protected:
     /**
      * @brief process GetTransaction call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
@@ -100,6 +107,8 @@ protected:
     /**
      * @brief process GetAllBlocks call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetAllBlocks(XRouterPacketPtr packet, uint32_t offset, std::string currency);
@@ -107,6 +116,8 @@ protected:
     /**
      * @brief process GetAllTransactions call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetAllTransactions(XRouterPacketPtr packet, uint32_t offset, std::string currency);
@@ -114,6 +125,8 @@ protected:
     /**
      * @brief process GetBalance call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetBalance(XRouterPacketPtr packet, uint32_t offset, std::string currency);
@@ -121,13 +134,17 @@ protected:
     /**
      * @brief process GetBalanceUpdate call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetBalanceUpdate(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
-     * @brief process GetBalanceUpdate call on service node side
+     * @brief process GetTransactionsBloomFilter call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processGetTransactionsBloomFilter(XRouterPacketPtr packet, uint32_t offset, std::string currency);
@@ -135,10 +152,18 @@ protected:
     /**
      * @brief process SendTransaction call on service node side
      * @param packet Xrouter packet received over the network
+     * @param offset offset in the packet where to start reading additional parameters
+     * @param currency chain id
      * @return
      */
     std::string processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
+    /**
+     * @brief process xrCustomCall call on service node side
+     * @param name plugin name
+     * @param params plugin parameters
+     * @return
+     */
     std::string processCustomCall(std::string name, std::vector<std::string> params);
     
     /**
