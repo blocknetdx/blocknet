@@ -38,7 +38,7 @@
 #include <vector>
 #include <chrono>
 
-#define TEST_RUN_ON_CLIENT 1
+#define TEST_RUN_ON_CLIENT 0
 #define DEFAULT_TIMEOUT 20000
 
 #ifdef _WIN32
