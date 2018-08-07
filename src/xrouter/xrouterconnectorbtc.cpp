@@ -203,6 +203,10 @@ Array BtcWalletConnectorXRouter::getAllBlocks(const int number) const
 
     Array result;
 
+    if (blockcount - number > 50) {
+        result.push_back(Value("Error: too many blocks requested"));
+        return result;
+    }
     for (int id = number; id <= blockcount; id++)
     {
         Array paramsGBH { id };
