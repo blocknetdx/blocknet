@@ -192,7 +192,7 @@ Array EthWalletConnectorXRouter::getAllBlocks(const int number) const
     return result;
 }
 
-Array EthWalletConnectorXRouter::getAllTransactions(const std::string & account, const int number) const
+Array EthWalletConnectorXRouter::getAllTransactions(const std::string & account, const int number, const int time) const
 {
     std::string commandBN("eth_blockNumber");
     std::string commandgGBBN("eth_getBlockByNumber");
@@ -226,7 +226,7 @@ Array EthWalletConnectorXRouter::getAllTransactions(const std::string & account,
     return result;
 }
 
-std::string EthWalletConnectorXRouter::getBalance(const std::string & account) const
+std::string EthWalletConnectorXRouter::getBalance(const std::string & account, const int time) const
 {
     std::string commandBN("eth_blockNumber");
     std::string commandgGBBN("eth_getBlockByNumber");
@@ -298,7 +298,7 @@ std::string EthWalletConnectorXRouter::getBalance(const std::string & account) c
     return ss.str();
 }
 
-std::string EthWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number) const
+std::string EthWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number, const int time) const
 {
     std::string commandBN("eth_blockNumber");
     std::string commandgGBBN("eth_getBlockByNumber");

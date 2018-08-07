@@ -223,7 +223,7 @@ Array BtcWalletConnectorXRouter::getAllBlocks(const int number) const
     return result;
 }
 
-Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account, const int number) const
+Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account, const int number, const int time) const
 {
     std::string commandGBC("getblockcount");
     std::string commandGBH("getblockhash");
@@ -235,7 +235,7 @@ Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account,
     int blockcount = getResult(blockCountObj).get_int();
 
     Array result;
-    for (int id = number; id <= blockcount; id++)
+    for (int id = blockcount; id >= number; id--)
     {
         Array paramsGBH { id };
         Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
@@ -246,6 +246,9 @@ Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account,
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
+        int blocktime = find_value(block, "time").get_int();
+        if (blocktime < time)
+            break;
 
         for (unsigned int j = 0; j < txs.size(); j++)
         {
@@ -267,12 +270,12 @@ Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account,
     return result;
 }
 
-std::string BtcWalletConnectorXRouter::getBalance(const std::string & account) const
+std::string BtcWalletConnectorXRouter::getBalance(const std::string & account, const int time) const
 {
     return getBalanceUpdate(account, 0);
 }
 
-std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number) const
+std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number, const int time) const
 {
     std::string commandGBC("getblockcount");
     std::string commandGBH("getblockhash");
@@ -285,7 +288,7 @@ std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & acco
     Object blockCountObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
     int blockcount = getResult(blockCountObj).get_int();
 
-    for (int id = number; id <= blockcount; id++)
+    for (int id = blockcount; id >= number; id--)
     {
         Array paramsGBH { id };
         Object blockHashObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
@@ -296,6 +299,9 @@ std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & acco
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
+        int blocktime = find_value(block, "time").get_int();
+        if (blocktime < time)
+            break;
 
         for (unsigned int j = 0; j < txs.size(); j++)
         {

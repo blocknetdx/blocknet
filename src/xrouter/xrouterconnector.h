@@ -40,9 +40,9 @@ public:
     virtual Object      getBlock(const std::string & blockHash) const = 0;
     virtual Object      getTransaction(const std::string & trHash) const = 0;
     virtual Array       getAllBlocks(const int number) const = 0;
-    virtual Array       getAllTransactions(const std::string & account, const int number) const = 0;
-    virtual std::string getBalance(const std::string & account) const = 0;
-    virtual std::string getBalanceUpdate(const std::string & account, const int number) const = 0;
+    virtual Array       getAllTransactions(const std::string & account, const int number, const int time=0) const = 0;
+    virtual std::string getBalance(const std::string & account, const int time=0) const = 0;
+    virtual std::string getBalanceUpdate(const std::string & account, const int number, const int time=0) const = 0;
     virtual Array       getTransactionsBloomFilter(const int number, CDataStream & stream) const = 0;
     virtual Object      sendTransaction(const std::string & transaction) const = 0;
     virtual Object      getPaymentAddress() const = 0;
