@@ -68,7 +68,8 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
     // So long as script passes the IsUnspendable() test and all but the first
     // byte passes the IsPushOnly() test we don't care what exactly is in the
     // script.
-    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1)) {
+    if (scriptPubKey.size() >= 1 && scriptPubKey[0] == OP_RETURN && scriptPubKey.IsPushOnly(scriptPubKey.begin()+1, scriptPubKey.end()))
+    {
         typeRet = TX_NULL_DATA;
         return true;
     }
@@ -84,7 +85,7 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         vector<unsigned char> vch1, vch2;
 
         // Compare
-        CScript::const_iterator pc1 = script1.begin();
+        CScript::const_iterator pc1 = script1.begin_skipLeadingData();
         CScript::const_iterator pc2 = script2.begin();
         while (true)
         {

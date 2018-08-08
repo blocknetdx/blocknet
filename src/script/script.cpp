@@ -243,9 +243,9 @@ bool CScript::IsPayToScriptHash() const
             this->at(22) == OP_EQUAL);
 }
 
-bool CScript::IsPushOnly(const_iterator pc) const
+bool CScript::IsPushOnly(const_iterator pc, const_iterator pend) const
 {
-    while (pc < end())
+    while (pc < pend)
     {
         opcodetype opcode;
         if (!GetOp(pc, opcode))
@@ -262,7 +262,60 @@ bool CScript::IsPushOnly(const_iterator pc) const
 
 bool CScript::IsPushOnly() const
 {
-    return this->IsPushOnly(begin());
+    return this->IsPushOnly(begin(), end());
+}
+
+CScript::const_iterator CScript::begin_skipLeadingData() const
+{
+    const_iterator pcurr = begin();
+    const_iterator psave = pcurr;
+    const_iterator pend  = end();
+
+    opcodetype op;
+    std::vector<unsigned char> vchData;
+
+    uint32_t dataCounter = 0;
+    while (pcurr < pend)
+    {
+        psave = pcurr;
+        if (!GetOp(pcurr, op, vchData))
+        {
+            return begin();
+        }
+
+        if (op == OP_DROP || op == OP_2DROP)
+        {
+            if (op == OP_DROP && dataCounter == 1)
+            {
+                break;
+            }
+            else if (dataCounter == 2 /* && op == OP_2DROP*/)
+            {
+                break;
+            }
+
+            return begin();
+        }
+
+        if (op > OP_16)
+        {
+            return begin();
+        }
+
+        ++dataCounter;
+    }
+
+    if (pcurr == pend)
+    {
+        return begin();
+    }
+
+    if (!IsPushOnly(begin(), psave))
+    {
+        return begin();
+    }
+
+    return pcurr;
 }
 
 std::string CScript::ToString() const
