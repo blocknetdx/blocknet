@@ -85,50 +85,12 @@ bool Solver(const CScript& scriptPubKey, txnouttype& typeRet, vector<vector<unsi
         vector<unsigned char> vch1, vch2;
 
         // Compare
-        // CScript::const_iterator pc1 = script1.begin_skipLeadingData();
         CScript::const_iterator pc1 = script1.begin();
         CScript::const_iterator pc2 = script2.begin();
         while (true)
         {
-            if (pc2 == script2.end())
+            if (pc1 == script1.end() && pc2 == script2.end())
             {
-                // check <data> OP_DROP and <data> <data> OP_2DROP in the tail of the script
-                if (pc1 != script1.end())
-                {
-                    if (!script1.GetOp(pc1, opcode1, vch1))
-                    {
-                        break;
-                    }
-                    if (opcode1 > OP_16)
-                    {
-                        break;
-                    }
-                    if (!script1.GetOp(pc1, opcode1, vch1))
-                    {
-                        break;
-                    }
-                    if (opcode1 != OP_DROP)
-                    {
-                        if (opcode1 > OP_16)
-                        {
-                            break;
-                        }
-                        if (!script1.GetOp(pc1, opcode1, vch1))
-                        {
-                            break;
-                        }
-                        if (opcode1 != OP_2DROP)
-                        {
-                            break;
-                        }
-                    }
-                }
-
-                if (pc1 != script1.end())
-                {
-                    break;
-                }
-
                 // Found a match
                 typeRet = tplate.first;
                 if (typeRet == TX_MULTISIG)

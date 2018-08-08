@@ -265,60 +265,6 @@ bool CScript::IsPushOnly() const
     return this->IsPushOnly(begin(), end());
 }
 
-// skip <data> OP_DROP or <data> <data> OP_2DROP from the beginning of the script
-CScript::const_iterator CScript::begin_skipLeadingData() const
-{
-    const_iterator pcurr = begin();
-    const_iterator psave = pcurr;
-    const_iterator pend  = end();
-
-    opcodetype op;
-    std::vector<unsigned char> vchData;
-
-    uint32_t dataCounter = 0;
-    while (pcurr < pend)
-    {
-        psave = pcurr;
-        if (!GetOp(pcurr, op, vchData))
-        {
-            return begin();
-        }
-
-        if (op == OP_DROP || op == OP_2DROP)
-        {
-            if (op == OP_DROP && dataCounter == 1)
-            {
-                break;
-            }
-            else if (dataCounter == 2 /* && op == OP_2DROP*/)
-            {
-                break;
-            }
-
-            return begin();
-        }
-
-        if (op > OP_16)
-        {
-            return begin();
-        }
-
-        ++dataCounter;
-    }
-
-    if (pcurr == pend)
-    {
-        return begin();
-    }
-
-    if (!IsPushOnly(begin(), psave))
-    {
-        return begin();
-    }
-
-    return pcurr;
-}
-
 std::string CScript::ToString() const
 {
     std::string str;

@@ -626,9 +626,6 @@ public:
     bool IsPushOnly(const_iterator pc, const_iterator pend) const;
     bool IsPushOnly() const;
 
-    /** Called by IsStandardTx (from Solver) */
-    const_iterator begin_skipLeadingData() const;
-
     /**
      * Returns whether the script is guaranteed to fail at execution,
      * regardless of the initial stack. This allows outputs to be pruned
