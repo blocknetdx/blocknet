@@ -133,6 +133,7 @@ TransactionView::TransactionView(QWidget* parent) : QWidget(parent), model(0), t
     vlayout->setSpacing(0);
 
     QTableView* view = new QTableView(this);
+    view->setShowGrid(false);
     vlayout->addLayout(hlayout);
     vlayout->addWidget(createDateRangeWidget());
     vlayout->addWidget(view);

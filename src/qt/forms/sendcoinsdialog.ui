@@ -53,7 +53,7 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="1,0,1">
+         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="0">
           <property name="spacing">
            <number>6</number>
           </property>
@@ -79,50 +79,10 @@
              </font>
             </property>
             <property name="text">
-             <string>SEND</string>
+             <string>Send</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_Header">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QLabel" name="labelOverviewHeaderRight">
-            <property name="minimumSize">
-             <size>
-              <width>464</width>
-              <height>60</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>60</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -898,7 +858,7 @@
              <x>0</x>
              <y>0</y>
              <width>944</width>
-             <height>68</height>
+             <height>83</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2" stretch="0,1">
@@ -1175,6 +1135,11 @@
                   </item>
                   <item row="3" column="1">
                    <widget class="QLabel" name="labelCustomFee">
+                    <property name="font">
+                     <font>
+                      <pointsize>16</pointsize>
+                     </font>
+                    </property>
                     <property name="text">
                      <string>Custom:</string>
                     </property>
@@ -1284,6 +1249,11 @@
                   </item>
                   <item row="1" column="1">
                    <widget class="QLabel" name="labelSmartFee_2">
+                    <property name="font">
+                     <font>
+                      <pointsize>16</pointsize>
+                     </font>
+                    </property>
                     <property name="text">
                      <string>Recommended</string>
                     </property>
@@ -1298,7 +1268,7 @@
                      <number>2</number>
                     </property>
                     <property name="bottomMargin">
-                     <number>20</number>
+                     <number>0</number>
                     </property>
                     <item>
                      <layout class="QHBoxLayout" name="horizontalLayoutFee9">
@@ -1314,6 +1284,12 @@
                       </item>
                       <item>
                        <widget class="QLabel" name="labelSmartFeeNormal">
+                        <property name="font">
+                         <font>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
                         <property name="text">
                          <string>normal</string>
                         </property>
@@ -1358,6 +1334,12 @@
                       </item>
                       <item>
                        <widget class="QLabel" name="labelSmartFeeFast">
+                        <property name="font">
+                         <font>
+                          <weight>75</weight>
+                          <bold>true</bold>
+                         </font>
+                        </property>
                         <property name="text">
                          <string>fast</string>
                         </property>
@@ -1377,7 +1359,7 @@
                         </property>
                         <property name="sizeHint" stdset="0">
                          <size>
-                          <width>40</width>
+                          <width>100</width>
                           <height>20</height>
                          </size>
                         </property>
@@ -1395,6 +1377,11 @@
                       </item>
                       <item>
                        <widget class="QLabel" name="labelSmartFee2">
+                        <property name="font">
+                         <font>
+                          <pointsize>11</pointsize>
+                         </font>
+                        </property>
                         <property name="text">
                          <string>(Smart fee not initialized yet. This usually takes a few blocks...)</string>
                         </property>
@@ -1484,7 +1471,7 @@
                       <property name="sizeHint" stdset="0">
                        <size>
                         <width>20</width>
-                        <height>40</height>
+                        <height>10</height>
                        </size>
                       </property>
                      </spacer>
@@ -1746,15 +1733,15 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>QValidatedLineEdit</class>
-   <extends>QLineEdit</extends>
-   <header>qvalidatedlineedit.h</header>
-  </customwidget>
-  <customwidget>
    <class>BitcoinAmountField</class>
    <extends>QLineEdit</extends>
    <header>bitcoinamountfield.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QValidatedLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>qvalidatedlineedit.h</header>
   </customwidget>
  </customwidgets>
  <resources>
@@ -1762,7 +1749,7 @@
  </resources>
  <connections/>
  <buttongroups>
-  <buttongroup name="groupFee"/>
   <buttongroup name="groupCustomFee"/>
+  <buttongroup name="groupFee"/>
  </buttongroups>
 </ui>
