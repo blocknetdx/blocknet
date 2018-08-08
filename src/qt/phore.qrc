@@ -3,7 +3,7 @@
         <file alias="bitcoin">res/icons/bitcoin.png</file>
         <file alias="address-book">res/icons/address-book.png</file>
         <file alias="quit">res/icons/quit.png</file>
-        <file alias="send">res/icons/send.png</file>
+        <file alias="send">res/icons/send.svg</file>
         <file alias="send_dark">res/icons/send_dark.png</file>
         <file alias="connect_0">res/icons/connect0_16.png</file>
         <file alias="connect_1">res/icons/connect1_16.png</file>
@@ -22,18 +22,18 @@
         <file alias="eye_minus">res/icons/eye_minus.png</file>
         <file alias="eye_plus">res/icons/eye_plus.png</file>
         <file alias="options">res/icons/configure.png</file>
-        <file alias="receiving_addresses">res/icons/receive.png</file>
+        <file alias="receiving_addresses">res/icons/receive.svg</file>
         <file alias="proposal">res/icons/proposal.png</file>
         <file alias="receiving_addresses_dark">res/icons/receive_dark.png</file>
-        <file alias="privacy">res/icons/privacy.png</file>
+        <file alias="privacy">res/icons/privacy.svg</file>
         <file alias="editpaste">res/icons/editpaste.png</file>
         <file alias="editcopy">res/icons/editcopy.png</file>
         <file alias="add">res/icons/add.png</file>
         <file alias="bitcoin_testnet">res/icons/bitcoin_testnet.png</file>
         <file alias="edit">res/icons/edit.png</file>
-        <file alias="history">res/icons/history.png</file>
-        <file alias="overview">res/icons/overview.png</file>
-        <file alias="masternodes">res/icons/masternodes.png</file>
+        <file alias="history">res/icons/history.svg</file>
+        <file alias="overview">res/icons/overview.svg</file>
+        <file alias="masternodes">res/icons/masternodes.svg</file>
         <file alias="export">res/icons/export.png</file>
         <file alias="synced">res/icons/synced.png</file>
         <file alias="remove">res/icons/remove.png</file>
@@ -112,5 +112,13 @@
         <file alias="spinner-032">res/movies/spinner-032.png</file>
         <file alias="spinner-033">res/movies/spinner-033.png</file>
         <file alias="spinner-034">res/movies/spinner-034.png</file>
+    </qresource>
+    <qresource prefix="/fonts">
+        <file alias="Hind-Bold">res/fonts/Hind-Bold.ttf</file>
+        <file alias="Hind-Light">res/fonts/Hind-Light.ttf</file>
+        <file alias="Hind-Medium">res/fonts/Hind-Medium.ttf</file>
+        <file alias="Hind-Regular">res/fonts/Hind-Regular.ttf</file>
+        <file alias="Hind-SemiBold">res/fonts/Hind-SemiBold.ttf</file>
+        <file alias="Montserrat-Bold">res/fonts/Montserrat-Bold.ttf</file>
     </qresource>
 </RCC>

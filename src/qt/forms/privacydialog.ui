@@ -47,7 +47,7 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="1,0,1">
+         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="1">
           <item>
            <widget class="QLabel" name="labelOverviewHeaderLeft">
             <property name="minimumSize">
@@ -70,47 +70,10 @@
              </font>
             </property>
             <property name="text">
-             <string>PRIVACY</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_1">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QLabel" name="labelOverviewHeaderRight">
-            <property name="minimumSize">
-             <size>
-              <width>464</width>
-              <height>60</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>60</height>
-             </size>
-            </property>
-            <property name="font">
-             <font>
-              <pointsize>14</pointsize>
-             </font>
-            </property>
-            <property name="text">
-             <string/>
+             <string>Privacy</string>
             </property>
             <property name="alignment">
-             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+             <set>Qt::AlignCenter</set>
             </property>
            </widget>
           </item>
@@ -134,6 +97,19 @@
         <property name="bottomMargin">
          <number>6</number>
         </property>
+        <item>
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>80</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
         <item>
          <widget class="QFrame" name="frame_Content">
           <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -175,9 +151,9 @@
                          <widget class="QLabel" name="labelzPHRActions">
                           <property name="font">
                            <font>
-                            <pointsize>12</pointsize>
-                            <weight>75</weight>
-                            <bold>true</bold>
+                            <pointsize>28</pointsize>
+                            <weight>50</weight>
+                            <bold>false</bold>
                            </font>
                           </property>
                           <property name="text">
@@ -922,9 +898,6 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                           </item>
                           <item>
                            <widget class="QLabel" name="labelzPHR">
-                            <property name="alignment">
-                             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                            </property>
                             <property name="minimumSize">
                              <size>
                               <width>55</width>
@@ -933,6 +906,9 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                             </property>
                             <property name="text">
                              <string>zPHR</string>
+                            </property>
+                            <property name="alignment">
+                             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                             </property>
                            </widget>
                           </item>
@@ -1010,15 +986,18 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                    <layout class="QVBoxLayout" name="verticalLayout_9">
                     <item>
                      <layout class="QVBoxLayout" name="verticalLayout_Right">
+                      <property name="spacing">
+                       <number>4</number>
+                      </property>
                       <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_21">
                         <item>
                          <widget class="QLabel" name="labelzPHRStats">
                           <property name="font">
                            <font>
-                            <pointsize>12</pointsize>
-                            <weight>75</weight>
-                            <bold>true</bold>
+                            <pointsize>28</pointsize>
+                            <weight>50</weight>
+                            <bold>false</bold>
                            </font>
                           </property>
                           <property name="toolTip">
@@ -1147,6 +1126,11 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                        <layout class="QHBoxLayout" name="horizontalLayout_13">
                         <item>
                          <widget class="QLabel" name="labelzDenom1Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 1:</string>
                           </property>
@@ -1179,6 +1163,11 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                             <height>0</height>
                            </size>
                           </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
 Immature: confirmed, but less than 2 mints of the same denomination after it was minted</string>
@@ -1200,6 +1189,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        <layout class="QHBoxLayout" name="horizontalLayout_14">
                         <item>
                          <widget class="QLabel" name="labelzDenom2Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 5:</string>
                           </property>
@@ -1232,6 +1226,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                             <height>0</height>
                            </size>
                           </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
 Immature: confirmed, but less than 2 mints of the same denomination after it was minted</string>
@@ -1253,6 +1252,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        <layout class="QHBoxLayout" name="horizontalLayout_15">
                         <item>
                          <widget class="QLabel" name="labelzDenom3Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 10:</string>
                           </property>
@@ -1285,6 +1289,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                             <height>0</height>
                            </size>
                           </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
 Immature: confirmed, but less than 2 mints of the same denomination after it was minted</string>
@@ -1306,6 +1315,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        <layout class="QHBoxLayout" name="horizontalLayout_16">
                         <item>
                          <widget class="QLabel" name="labelzDenom4Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 50:</string>
                           </property>
@@ -1338,6 +1352,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                             <height>0</height>
                            </size>
                           </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
 Immature: confirmed, but less than 2 mints of the same denomination after it was minted</string>
@@ -1359,6 +1378,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        <layout class="QHBoxLayout" name="horizontalLayout_17">
                         <item>
                          <widget class="QLabel" name="labelzDenom5Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 100:</string>
                           </property>
@@ -1391,6 +1415,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                             <height>0</height>
                            </size>
                           </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
 Immature: confirmed, but less than 2 mints of the same denomination after it was minted</string>
@@ -1412,6 +1441,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        <layout class="QHBoxLayout" name="horizontalLayout_18">
                         <item>
                          <widget class="QLabel" name="labelzDenom6Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 500:</string>
                           </property>
@@ -1444,6 +1478,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                             <height>0</height>
                            </size>
                           </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
 Immature: confirmed, but less than 2 mints of the same denomination after it was minted</string>
@@ -1465,6 +1504,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        <layout class="QHBoxLayout" name="horizontalLayout_19">
                         <item>
                          <widget class="QLabel" name="labelzDenom7Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 1000:</string>
                           </property>
@@ -1497,6 +1541,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                             <height>0</height>
                            </size>
                           </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
 Immature: confirmed, but less than 2 mints of the same denomination after it was minted</string>
@@ -1518,6 +1567,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        <layout class="QHBoxLayout" name="horizontalLayout_20">
                         <item>
                          <widget class="QLabel" name="labelzDenom8Text">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="toolTip">
                            <string>Denominations with value 5000:</string>
                           </property>
@@ -1549,6 +1603,11 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                             <width>40</width>
                             <height>0</height>
                            </size>
+                          </property>
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
                           </property>
                           <property name="toolTip">
                            <string>Unconfirmed: less than 20 confirmations
@@ -1688,6 +1747,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_26">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText1">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 1:</string>
                           </property>
@@ -1708,6 +1772,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount1">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
@@ -1719,6 +1788,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_27">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText5">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 5:</string>
                           </property>
@@ -1739,6 +1813,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount5">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
@@ -1750,6 +1829,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_28">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText10">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 10:</string>
                           </property>
@@ -1770,6 +1854,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount10">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
@@ -1781,6 +1870,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_29">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText50">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 50:</string>
                           </property>
@@ -1801,6 +1895,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount50">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
@@ -1812,6 +1911,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_30">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText100">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 100:</string>
                           </property>
@@ -1832,6 +1936,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount100">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
@@ -1843,6 +1952,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_31">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText500">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 500:</string>
                           </property>
@@ -1863,6 +1977,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount500">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
@@ -1874,6 +1993,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_32">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText1000">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 1000:</string>
                           </property>
@@ -1894,6 +2018,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount1000">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
@@ -1905,6 +2034,11 @@ To change the percentage (no restart required):
                        <layout class="QHBoxLayout" name="horizontalLayout_33">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText5000">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>Denom. 5000:</string>
                           </property>
@@ -1925,6 +2059,11 @@ To change the percentage (no restart required):
                         </item>
                         <item>
                          <widget class="QLabel" name="labelZsupplyAmount5000">
+                          <property name="font">
+                           <font>
+                            <pointsize>11</pointsize>
+                           </font>
+                          </property>
                           <property name="text">
                            <string>0 zPHR</string>
                           </property>
