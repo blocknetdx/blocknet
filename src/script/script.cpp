@@ -265,6 +265,7 @@ bool CScript::IsPushOnly() const
     return this->IsPushOnly(begin(), end());
 }
 
+// skip <data> OP_DROP or <data> <data> OP_2DROP from the beginning of the script
 CScript::const_iterator CScript::begin_skipLeadingData() const
 {
     const_iterator pcurr = begin();
