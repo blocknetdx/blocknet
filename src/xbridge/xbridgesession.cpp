@@ -1402,9 +1402,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             return true;
         }
 
-        sendCancelTransaction(xtx, crBlocknetError);
-        return true;
-
         datatxtd = uint256(strtxid);
 
         if(datatxtd.IsNull())
