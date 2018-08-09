@@ -15,6 +15,12 @@ static Object form_reply(std::string reply)
     Object ret;
     Value reply_val;
     read_string(reply, reply_val);
+    
+    if (reply_val.type() == array_type) {
+        ret.emplace_back(Pair("reply", reply_val));
+        return ret;
+    }
+    
     if (reply_val.type() != obj_type) {
         ret.emplace_back(Pair("reply", reply));
         return ret;
