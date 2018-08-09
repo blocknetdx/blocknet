@@ -1305,7 +1305,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             }
         }
 
-        snodePubKey = snode->pubKeyCollateralAddress;
+        snodePubKey = snode->pubKeyCollateralAddress.Raw();
 
         LOG() << "use service node " << HexStr(snodePubKey) << " " << __FUNCTION__;
     }
