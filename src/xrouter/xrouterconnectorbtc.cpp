@@ -89,48 +89,6 @@ double BtcWalletConnectorXRouter::getBalanceChange(Object tx, std::string accoun
     return result;
 }
 
-bool BtcWalletConnectorXRouter::checkFilterFit(Object tx, CBloomFilter filter) const
-{
-    Array vout = find_value(tx, "vout").get_array();
-    for (unsigned int j = 0; j != vout.size(); j++ ) {
-        Object src = find_value(vout[j].get_obj(), "scriptPubKey").get_obj();
-        std::string outkey = find_value(src, "hex").get_str();
-        std::vector<unsigned char> outkeyv(outkey.begin(), outkey.end());
-        CScript vouts(outkeyv.begin(), outkeyv.end());
-        CScript::const_iterator pc = vouts.begin();
-        vector<unsigned char> data;
-        while (pc < vouts.end()) {
-            opcodetype opcode;
-            if (!vouts.GetOp(pc, opcode, data))
-                break;
-            if (data.size() != 0 && filter.contains(data)) {
-                return true;
-            }
-        }
-    }
-
-    Array vin = find_value(tx, "vin").get_array();
-    for (unsigned int j = 0; j != vin.size(); j++ ) {
-        const Value& txid_val = find_value(vin[j].get_obj(), "scriptSig");
-        if (txid_val.is_null())
-            continue;
-        std::string inkey = find_value(txid_val.get_obj(), "hex").get_str();
-        std::vector<unsigned char> inkeyv(inkey.begin(), inkey.end());
-        CScript vins(inkeyv.begin(), inkeyv.end());
-        CScript::const_iterator pc = vins.begin();
-        std::vector<unsigned char> data;
-        while (pc < vins.end()) {
-            opcodetype opcode;
-            if (!vins.GetOp(pc, opcode, data))
-                break;
-            if (data.size() != 0 && filter.contains(data))
-                return true;
-        }
-    }
-
-    return false;
-}
-
 std::string BtcWalletConnectorXRouter::getBlockCount() const
 {
     std::string command("getblockcount");
@@ -358,14 +316,15 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number, CD
 
             Array paramsGRT { txid };
             Object rawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
-
-            Array paramsDRT { txdata };
-            Object decRawTrObj = xbridge::rpc::CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
-
-            if (checkFilterFit(tx, filter))
-                result.push_back(Value(tx));
+            std::string txData_str = getResult(rawTrObj).get_str();
+            vector<unsigned char> txData(ParseHex(txData_str));
+            CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
+            CTransaction tx;
+            ssData >> tx;
+            
+            if (filter.IsRelevantAndUpdate(tx)) {
+                result.push_back(Value(txData_str));
+            }
         }
     }
     

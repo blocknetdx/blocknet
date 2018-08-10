@@ -5,6 +5,7 @@
 #include <exception>
 #include <iostream>
 #include "bloom.h"
+#include "core_io.h"
 
 #include "xrouterapp.h"
 #include "uint256.h"
@@ -371,7 +372,7 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
     
-    CBloomFilter f(10, 0.1, 5, 0);
+    CBloomFilter f(params[1].size(), 0.1, 5, 0);
     f.from_hex(params[1].get_str());
     CDataStream stream(SER_NETWORK, PROTOCOL_VERSION);
     stream << f;
@@ -382,16 +383,23 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
 
 Value xrGenerateBloomFilter(const Array & params, bool fHelp)
 {
-    CBloomFilter f(10, 0.1, 5, 0);
+    CBloomFilter f(10 * params.size(), 0.1, 5, 0);
     
     if (fHelp) {
-        throw std::runtime_error("xrGenerateBloomFilter key1 key2 ...\nReturns bloom filter for given keys.");
+        throw std::runtime_error("xrGenerateBloomFilter address1 address2 ...\nReturns bloom filter for given base58 addresses.");
     }
-
+    
     for (unsigned int i = 0; i < params.size(); i++) {
-        std::string hash = params[i].get_str();
-        const uint256 key(hash.c_str());
-        f.insert(key);
+        std::string addr_string = params[i].get_str();
+        CBitcoinAddress address(addr_string);
+        if (!address.IsValid()) {
+            std::cout << "Ignoring invalid address " << addr_string << std::endl;
+            continue;
+        }
+        CKeyID keyid;
+        address.GetKeyID(keyid);
+        vector<unsigned char> data(keyid.begin(), keyid.end());
+        f.insert(data);
     }
     
     return f.to_hex();
