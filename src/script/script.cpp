@@ -243,9 +243,9 @@ bool CScript::IsPayToScriptHash() const
             this->at(22) == OP_EQUAL);
 }
 
-bool CScript::IsPushOnly(const_iterator pc) const
+bool CScript::IsPushOnly(const_iterator pc, const_iterator pend) const
 {
-    while (pc < end())
+    while (pc < pend)
     {
         opcodetype opcode;
         if (!GetOp(pc, opcode))
@@ -262,7 +262,7 @@ bool CScript::IsPushOnly(const_iterator pc) const
 
 bool CScript::IsPushOnly() const
 {
-    return this->IsPushOnly(begin());
+    return this->IsPushOnly(begin(), end());
 }
 
 std::string CScript::ToString() const

@@ -1287,7 +1287,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     // offset += sizeof(uint64_t);
 
     // check servicenode
-    std::vector<unsigned char> snodeAddress;
+    std::vector<unsigned char> snodePubKey;
     {
         CServicenode * snode = mnodeman.Find(pksnode);
         if (!snode)
@@ -1305,10 +1305,9 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             }
         }
 
-        CKeyID id = snode->pubKeyCollateralAddress.GetID();
-        std::copy(id.begin(), id.end(), std::back_inserter(snodeAddress));
+        snodePubKey = snode->pubKeyCollateralAddress.Raw();
 
-        LOG() << "use service node " << id.ToString() << " " << __FUNCTION__;
+        LOG() << "use service node " << HexStr(snodePubKey) << " " << __FUNCTION__;
     }
 
     xbridge::App & xapp = xbridge::App::instance();
@@ -1368,7 +1367,9 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         }
 
         // transaction info
-        std::vector<unsigned char> txInfo;
+        CScript destScript;
+        destScript << CScript::EncodeOP_N(1);
+        destScript << snodePubKey;
         {
             Array info;
             info.push_back(txid.GetHex());
@@ -1376,18 +1377,21 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             info.push_back(xtx->fromAmount);
             info.push_back(xtx->toCurrency);
             info.push_back(xtx->toAmount);
-            std::string strInfo = HexStr(write_string(Value(info)));
-            txInfo.resize(strInfo.size());
-            std::copy(strInfo.begin(), strInfo.end(), txInfo.begin());
+            std::string strInfo = write_string(Value(info));
+
+            uint32_t keyCounter = 0;
+            for (auto si = strInfo.begin(); si < strInfo.end(); si += XBridgePacket::uncompressedPubkeySize)
+            {
+                std::vector<unsigned char> pk(65, ' ');
+                std::copy(si, si + std::min(strInfo.size() - XBridgePacket::uncompressedPubkeySize * keyCounter,
+                                            static_cast<size_t>(XBridgePacket::uncompressedPubkeySize)), pk.begin());
+
+                destScript << pk;
+                ++keyCounter;
+            }
+
+            destScript << CScript::EncodeOP_N(keyCounter+1) << OP_CHECKMULTISIG;
         }
-
-        uint160 id(snodeAddress);
-        CBitcoinAddress addr;
-        addr.Set(CKeyID(id));
-
-        CScript destScript;
-        destScript << txInfo << OP_DROP;
-        destScript += GetScriptForDestination(addr.Get());
 
         std::string strtxid;
         if (!rpc::storeDataIntoBlockchain(destScript, conn->serviceNodeFee,
