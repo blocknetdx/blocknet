@@ -2180,7 +2180,24 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
                 bool fFirst = true;
 
                 // vouts to the payees
-                if (coinControl && !coinControl->fSplitBlock) {
+                if (coinControl && coinControl->fSplitBlock) { //UTXO Splitter Transaction
+                    int nSplitBlock;
+
+                    if (coinControl)
+                        nSplitBlock = coinControl->nSplitBlock;
+                    else
+                        nSplitBlock = 1;
+
+                    for (const auto& s : vecSend) {
+                        for (int i = 0; i < nSplitBlock; i++) {
+                            if (i == nSplitBlock - 1) {
+                                CAmount nRemainder = s.nAmount % nSplitBlock;
+                                txNew.vout.emplace_back((s.nAmount / nSplitBlock) + nRemainder, s.scriptPubKey);
+                            } else
+                                txNew.vout.emplace_back(s.nAmount / nSplitBlock, s.scriptPubKey);
+                        }
+                    }
+                } else { // Normal transaction
                     for (const auto& recipient : vecSend) {
                         CTxOut txout(recipient.nAmount, recipient.scriptPubKey);
                         if (recipient.fSubtractFeeFromAmount) {
@@ -2202,24 +2219,6 @@ bool CWallet::CreateTransaction(const vector<CRecipient>& vecSend, CWalletTx& wt
                             return false;
                         }
                         txNew.vout.push_back(txout);
-                    }
-                } else //UTXO Splitter Transaction
-                {
-                    int nSplitBlock;
-
-                    if (coinControl)
-                        nSplitBlock = coinControl->nSplitBlock;
-                    else
-                        nSplitBlock = 1;
-
-                    for (const auto& s : vecSend) {
-                        for (int i = 0; i < nSplitBlock; i++) {
-                            if (i == nSplitBlock - 1) {
-                                CAmount nRemainder = s.nAmount % nSplitBlock;
-                                txNew.vout.emplace_back((s.nAmount / nSplitBlock) + nRemainder, s.scriptPubKey);
-                            } else
-                                txNew.vout.emplace_back(s.nAmount / nSplitBlock, s.scriptPubKey);
-                        }
                     }
                 }
 
