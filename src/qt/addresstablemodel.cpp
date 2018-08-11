@@ -377,16 +377,25 @@ bool AddressTableModel::removeRows(int row, int count, const QModelIndex& parent
 
 /* Look up label for address in address book, if not found return empty string.
  */
-QString AddressTableModel::labelForAddress(const QString& address) const
+QString AddressTableModel::labelForAddress(const QString& address)
 {
+    // Using a hash to improve performance as DecodeBase58Check in CBitcoinAddress is very expensive
+    // A side effect is that addresses and label pairs may get stale. However, worthy tradeoff is as
+    // gui locks up on wallets with many utxos.
+    if (labelHash.contains(address))
+        return labelHash[address];
+
     {
         LOCK(wallet->cs_wallet);
         CBitcoinAddress address_parsed(address.toStdString());
         std::map<CTxDestination, CAddressBookData>::iterator mi = wallet->mapAddressBook.find(address_parsed.Get());
         if (mi != wallet->mapAddressBook.end()) {
-            return QString::fromStdString(mi->second.name);
+            const auto label = QString::fromStdString(mi->second.name);
+            labelHash[address] = label;
+            return label;
         }
     }
+
     return QString();
 }
 
