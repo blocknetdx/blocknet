@@ -20,17 +20,24 @@
 #include <sstream>
 #include <iomanip>
 
+/**
+ * @brief Blocknet transaction data object.
+ */
 struct BlocknetTransaction {
     QString address;
     CAmount amount{0};
+    CAmount fee{0};
     QString alias;
-    explicit BlocknetTransaction(const QString address = QString(), const CAmount amount = 0,
-            const QString alias = QString()) : address(address), amount(amount), alias(alias) {}
+    explicit BlocknetTransaction(const QString address = QString(), const CAmount amount = 0, const CAmount fee = 0,
+            const QString alias = QString()) : address(address), amount(amount), fee(fee), alias(alias) {}
     bool operator==(const BlocknetTransaction &other) const {
         return address == other.address;
     }
     QString getAmount(int unit) const {
         return BitcoinUnits::format(unit, amount);
+    }
+    QString getAmountAfterFee(int unit) const {
+        return BitcoinUnits::format(unit, amount - fee);
     }
     bool isValid(WalletModel *w) {
         // address is valid and amount is greater than dust
@@ -73,6 +80,33 @@ inline uint qHash(const BlocknetTransaction &t) {
     return qHash(t.address);
 }
 
+/**
+ * @brief Simple UTXO object used by the Blocknet data model. Compatible with Qt containers.
+ */
+struct BlocknetSimpleUTXO {
+    uint256 hash;
+    uint vout{0};
+    QString address;
+    CAmount amount{0};
+    explicit BlocknetSimpleUTXO(const uint256 hash = uint256(), const uint vout = 0, const QString address = QString(), const CAmount amount = 0)
+        : hash(hash), vout(vout), address(address), amount(amount) {}
+    bool operator==(const BlocknetSimpleUTXO &other) const {
+        return hash.GetHex() == other.hash.GetHex();
+    }
+    COutPoint outpoint() {
+        COutPoint o(hash, static_cast<const uint32_t>(vout));
+        return o;
+    }
+}; Q_DECLARE_METATYPE(BlocknetSimpleUTXO)
+
+inline uint qHash(const BlocknetSimpleUTXO &t) {
+    return qHash(QString::fromStdString(t.hash.GetHex()));
+}
+
+/**
+ * @brief Manages the state through the Blocknet payment screens. This model is also responsible for creating any
+ *        required wallet specific data for use with internal wallet functions.
+ */
 struct BlocknetSendFundsModel {
     QString changeAddress;
     bool customFee;
@@ -81,21 +115,22 @@ struct BlocknetSendFundsModel {
     CAmount txAmount;
     QSet<BlocknetTransaction> recipients;
     QList<SendCoinsRecipient> txRecipients;
-    QVector<COutPoint> txSelectedUtxos;
+    QVector<BlocknetSimpleUTXO> txSelectedUtxos;
     WalletModel::SendCoinsReturn txStatus;
     bool split;
     int splitCount;
+    bool subtractFee;
 
     explicit BlocknetSendFundsModel() : changeAddress(QString()), customFee(false), userFee(0),
                                         txFees(0), txAmount(0), recipients(QSet<BlocknetTransaction>()),
-                                        txRecipients(QList<SendCoinsRecipient>()), txSelectedUtxos(QVector<COutPoint>()),
-                                        txStatus(WalletModel::SendCoinsReturn()), split(false), splitCount(0) {};
+                                        txRecipients(QList<SendCoinsRecipient>()), txSelectedUtxos(QVector<BlocknetSimpleUTXO>()),
+                                        txStatus(WalletModel::SendCoinsReturn()), split(false), splitCount(0), subtractFee(false) {};
 
     void addRecipient(const BlocknetTransaction &recipient) {
         recipients.insert(recipient);
     }
     void addRecipient(const QString &address, const CAmount amount, const QString alias = QString()) {
-        recipients.insert(BlocknetTransaction{ address, amount, alias });
+        recipients.insert(BlocknetTransaction{ address, amount, 0, alias });
     }
     void removeRecipient(const BlocknetTransaction &recipient) {
         recipients.remove(recipient);
@@ -108,11 +143,17 @@ struct BlocknetSendFundsModel {
         recipients.insert(recipient);
         return true;
     }
+    CAmount totalRecipientsAmount() {
+        CAmount t = 0;
+        for (auto &r : recipients)
+            t += r.amount;
+        return t;
+    }
     CAmount txTotalAmount() {
         return txAmount + txActiveFee();
     }
     CAmount txActiveFee() {
-        return customFee ? userFee : txFees;
+        return txFees;
     }
     bool isZeroFee() {
         return txActiveFee() == 0;
@@ -130,6 +171,31 @@ struct BlocknetSendFundsModel {
         txStatus = WalletModel::SendCoinsReturn();
         split = false;
         splitCount = 0;
+        subtractFee = false;
+    }
+
+    void updateFees(QList<SendCoinsRecipient> &recs) {
+        if (recipients.count() <= 0)
+            return;
+
+        // reset fees to 0
+        auto list = recipients.toList();
+        for (auto &t : list) {
+            if (t.fee > 0)
+                replaceRecipient(BlocknetTransaction{t.address, t.amount, 0, t.alias});
+        }
+
+        if (isZeroFee()) // do not assign estimated fees if 0 fee is specified
+            return;
+
+        for (auto &r : recs) {
+            for (auto &t : recipients) {
+                if (r.subtractFee && r.address == t.address) {
+                    replaceRecipient(BlocknetTransaction{t.address, t.amount, t.amount - r.amount, t.alias});
+                    break;
+                }
+            }
+        }
     }
 
     CCoinControl getCoinControl(WalletModel *walletModel) {
@@ -146,23 +212,26 @@ struct BlocknetSendFundsModel {
             coinControl.nMinimumTotalFee   = userFee;
         coinControl.fAllowZeroValueOutputs = false;
         coinControl.fAllowWatchOnly        = false;
-        for (COutPoint &o : txSelectedUtxos)
-            coinControl.Select(o);
+        for (auto &o : txSelectedUtxos)
+            coinControl.Select(o.outpoint());
         coinControl.fAllowOtherInputs      = !coinControl.HasSelected();
         coinControl.fSplitBlock            = split;
         coinControl.nSplitBlock            = split ? splitCount : 0;
+        coinControl.fSubtractFee           = subtractFee;
 
         return coinControl;
     }
 
     WalletModel::SendCoinsReturn processFunds(WalletModel *walletModel, CCoinControl *coinControl) {
         txRecipients.clear();
+
         for (const BlocknetTransaction &tx : recipients) {
             SendCoinsRecipient recipient;
             recipient.address = tx.address;
             recipient.amount = tx.amount;
             recipient.useSwiftTX = false;
             recipient.inputType = ALL_COINS;
+            recipient.subtractFee = coinControl ? coinControl->fSubtractFee : false;
             txRecipients << recipient;
         }
 
@@ -181,25 +250,48 @@ struct BlocknetSendFundsModel {
         else
             txStatus = walletModel->prepareTransaction(walletTx, coinControl, payFee);
 
-        if (txStatus.status == WalletModel::OK || txStatus.status == WalletModel::Cancel) {
-            txFees = walletTx.getTransactionFee();
-            txAmount = walletTx.getTotalTransactionAmount();
-        } else {
-            txFees = 0;
-            txAmount = 0;
-        }
+        txFees = walletTx.getTransactionFee();
+        txAmount = walletTx.getTotalTransactionAmount();
+
+        auto recs = walletTx.getRecipients();
+        updateFees(recs);
 
         return txStatus;
     }
 
+    /**
+     * @brief  Returns the total amount of COIN selected by the coin control widget.
+     * @return
+     */
+    CAmount selectedInputsTotal() const {
+        CAmount total = 0;
+        for (auto &t : txSelectedUtxos)
+            total += t.amount;
+        return total;
+    }
+
+    /**
+     * @brief  Returns the selected COutPoint objects.
+     * @return
+     */
+    std::vector<COutPoint> selectedOutpoints() const {
+        std::vector<COutPoint> r;
+        for (auto &t : txSelectedUtxos)
+            r.emplace_back(t.hash, t.vout);
+        return r;
+    }
+
 }; Q_DECLARE_METATYPE(BlocknetSendFundsModel)
 
+/**
+ * @brief Parent class responsible for the Send Funds screen flow.
+ */
 class BlocknetSendFundsPage : public QFrame {
     Q_OBJECT
 public:
     explicit BlocknetSendFundsPage(WalletModel *w, int id, QFrame *parent = nullptr) : QFrame(parent), walletModel(w), pageID(id) { }
     void setWalletModel(WalletModel *w) { walletModel = w; }
-    virtual void setData(BlocknetSendFundsModel *model) { this->model = model; }
+    virtual void setData(BlocknetSendFundsModel *model) { clear(); this->model = model; }
     virtual void clear() {};
     virtual bool validated() = 0;
 
@@ -217,6 +309,26 @@ protected:
     WalletModel *walletModel;
     int pageID{0};
     BlocknetSendFundsModel *model = nullptr;
+};
+
+/**
+ * @brief Double validator, rejects separators.
+ */
+class BlocknetNumberValidator : public QDoubleValidator {
+    Q_OBJECT
+public:
+    explicit BlocknetNumberValidator(double bottom, double top, int decimals, QObject *parent = 0) : QDoubleValidator(bottom, top, decimals, parent) {
+        this->setLocale(QLocale::C);
+    }
+    QValidator::State validate(QString &input, int &pos) const override {
+        if (input.contains(QChar(',')))
+            return QValidator::Invalid;
+        return QDoubleValidator::validate(input, pos);
+    }
+    void fixup(QString &input) const override {
+        input.remove(QChar(','), Qt::CaseInsensitive);
+        QDoubleValidator::fixup(input);
+    }
 };
 
 #endif //BLOCKNETSENDFUNDSUTIL_H

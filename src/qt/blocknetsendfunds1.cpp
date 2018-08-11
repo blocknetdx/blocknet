@@ -22,6 +22,11 @@ BlocknetSendFunds1::BlocknetSendFunds1(WalletModel *w, int id, QFrame *parent) :
 
     addressTi = new BlocknetAddressEditor(675);
     addressTi->setPlaceholderText(tr("Enter Blocknet Address..."));
+    addressTi->setAddressValidator([w](QString &addr) -> bool {
+        if (w == nullptr)
+            return false;
+        else return w->validateAddress(addr);
+    });
 
     continueBtn = new BlocknetFormBtn;
     continueBtn->setText(tr("Continue"));
@@ -50,10 +55,17 @@ BlocknetSendFunds1::BlocknetSendFunds1(WalletModel *w, int id, QFrame *parent) :
 
 void BlocknetSendFunds1::setData(BlocknetSendFundsModel *model) {
     BlocknetSendFundsPage::setData(model);
+    addressTi->blockSignals(true);
+    // Add addresses to display
+    for (const BlocknetTransaction &b : model->recipients)
+        addressTi->addAddress(b.address);
+    addressTi->blockSignals(false);
 }
 
 void BlocknetSendFunds1::clear() {
-    addressTi->clear();
+    addressTi->blockSignals(true);
+    addressTi->clearData();
+    addressTi->blockSignals(false);
 }
 
 void BlocknetSendFunds1::focusInEvent(QFocusEvent *event) {
@@ -107,9 +119,8 @@ void BlocknetSendFunds1::onAddressesChanged() {
         model->addRecipient(r);
     }
     // Remove any unspecified addresses
-    auto txlist = model->recipients.toList();
-    for (const BlocknetTransaction &r : txlist) {
-        if (!hash.contains(r.address))
-            model->removeRecipient(r);
+    for (const BlocknetTransaction &b : model->recipients)  {
+        if (!hash.contains(b.address))
+            model->removeRecipient(b);
     }
 }

@@ -5,6 +5,7 @@
 #include "blocknetsendfunds2.h"
 #include "blocknethdiv.h"
 #include "blocknetcircle.h"
+#include "blocknetclosebtn.h"
 
 #include "main.h"
 #include "optionsmodel.h"
@@ -14,17 +15,17 @@
 #include <memory>
 
 #include <QCheckBox>
-#include <QDoubleValidator>
 #include <QMessageBox>
 #include <QKeyEvent>
 #include <QSettings>
+#include <QScrollBar>
 
 BlocknetSendFunds2List::BlocknetSendFunds2List(int displayUnit, QFrame *parent) : QFrame(parent),
                                                                                   displayUnit(displayUnit),
                                                                                   gridLayout(new QGridLayout) {
 //    this->setStyleSheet("border: 1px solid red");
     this->setObjectName(getName());
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
     gridLayout->setContentsMargins(0, 5, 0, 5);
     gridLayout->setSpacing(15);
     this->setLayout(gridLayout);
@@ -32,7 +33,7 @@ BlocknetSendFunds2List::BlocknetSendFunds2List(int displayUnit, QFrame *parent) 
 
 QSize BlocknetSendFunds2List::sizeHint() const {
     QSize r;
-    r.setWidth(this->width());
+    r.setWidth(this->width() + (gridLayout->contentsMargins().left() + gridLayout->contentsMargins().right()) * 4);
     int totalH = (widgets.count() / columns) * (rowHeight + gridLayout->verticalSpacing()) +
             gridLayout->contentsMargins().bottom() + gridLayout->contentsMargins().top();
     r.setHeight(totalH > 0 ? totalH : rowHeight);
@@ -52,8 +53,7 @@ void BlocknetSendFunds2List::addRow(int row, const QString addr, const QString a
     amountTi->setID(addr);
     amountTi->setPlaceholderText(tr("Enter Amount..."));
     amountTi->setObjectName("amount");
-    auto validator = new QDoubleValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit));
-    amountTi->setValidator(validator);
+    amountTi->setValidator(new BlocknetNumberValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
     amountTi->setMaxLength(BLOCKNETGUI_MAXCHARS);
     amountTi->setText(amount);
 
@@ -62,16 +62,24 @@ void BlocknetSendFunds2List::addRow(int row, const QString addr, const QString a
     coinLbl->setObjectName("coin");
     coinLbl->setFixedHeight(amountTi->minimumHeight());
 
-    gridLayout->addWidget(circle, row, 0, Qt::AlignCenter | Qt::AlignVCenter);    gridLayout->setColumnStretch(0, 0);
-    gridLayout->addWidget(addressLbl, row, 1, Qt::AlignLeft  | Qt::AlignVCenter); gridLayout->setColumnStretch(1, 1);
-    gridLayout->addWidget(amountTi, row, 2, Qt::AlignLeft | Qt::AlignVCenter);    gridLayout->setColumnStretch(2, 0);
-    gridLayout->addWidget(coinLbl, row, 3, Qt::AlignLeft | Qt::AlignVCenter);     gridLayout->setColumnStretch(3, 2);
-    gridLayout->setRowMinimumHeight(row, BlocknetSendFunds2List::rowHeight);      gridLayout->setRowStretch(row, 1);
+    // col 5: close btn
+    auto *closeBtn = new BlocknetCloseBtn;
+    closeBtn->setID(addr);
 
-    widgets << circle; widgets << addressLbl; widgets << amountTi; widgets << coinLbl;
+    gridLayout->addWidget(circle, row, 0, Qt::AlignCenter | Qt::AlignVCenter);    gridLayout->setColumnStretch(0, 0);
+    gridLayout->addWidget(addressLbl, row, 1, Qt::AlignLeft  | Qt::AlignVCenter); gridLayout->setColumnStretch(1, 0);
+    gridLayout->addWidget(amountTi, row, 2, Qt::AlignLeft | Qt::AlignVCenter);    gridLayout->setColumnStretch(2, 0);
+    gridLayout->addWidget(coinLbl, row, 3, Qt::AlignLeft | Qt::AlignVCenter);     gridLayout->setColumnStretch(3, 0);
+    gridLayout->addWidget(closeBtn, row, 4, Qt::AlignCenter | Qt::AlignVCenter);  gridLayout->setColumnStretch(4, 0);
+    gridLayout->addWidget(new QFrame, row, 5);                                    gridLayout->setColumnStretch(5, 2);
+    gridLayout->setRowMinimumHeight(row, BlocknetSendFunds2List::rowHeight);      gridLayout->setRowStretch(row, 1);
+    gridLayout->setColumnMinimumWidth(4, closeBtn->width() + 10);
+
+    widgets << circle; widgets << addressLbl; widgets << amountTi; widgets << coinLbl; widgets << closeBtn;
     tis << amountTi;
 
     connect(amountTi, SIGNAL(editingFinished()), this, SLOT(onAmount()));
+    connect(closeBtn, SIGNAL(clicked()), this, SLOT(onRemove()));
 }
 
 void BlocknetSendFunds2List::clear() {
@@ -106,6 +114,12 @@ void BlocknetSendFunds2List::onAmount() {
         emit amount(amountTi->getID(), amountTi->text());
 }
 
+void BlocknetSendFunds2List::onRemove() {
+    auto *closeBtn = qobject_cast<BlocknetCloseBtn *>(sender());
+    if (closeBtn != nullptr)
+        emit remove(closeBtn->getID());
+}
+
 BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) : BlocknetSendFundsPage(w, id, parent),
                                                                                  layout(new QVBoxLayout),
                                                                                  bFundList(nullptr) {
@@ -119,37 +133,31 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
 
     content = new QFrame;
     content->setObjectName("content");
+    content->setContentsMargins(0, 0, 15, 0);
+    content->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Minimum);
     contentLayout = new QVBoxLayout;
-    contentLayout->setContentsMargins(0, 0, 30, 0);
     content->setLayout(contentLayout);
 
     scrollArea = new QScrollArea;
     scrollArea->setObjectName("contentScrollArea");
     scrollArea->setContentsMargins(QMargins());
     scrollArea->setWidgetResizable(true);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     scrollArea->setWidget(content);
 
     QLabel *subtitleLbl = new QLabel(tr("How much would you like to send?"));
     subtitleLbl->setObjectName("h2");
 
     fundList = new QFrame;
-//    fundList->setStyleSheet("border: 1px solid red");
     fundList->setObjectName("sendFundsList");
-    fundList->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    fundList->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     auto *fundListLayout = new QVBoxLayout;
     fundListLayout->setContentsMargins(QMargins());
     fundListLayout->setSpacing(0);
     fundList->setLayout(fundListLayout);
 
-    continueBtn = new BlocknetFormBtn;
-    continueBtn->setText(tr("Continue"));
-    cancelBtn = new BlocknetFormBtn;
-    cancelBtn->setObjectName("cancel");
-    cancelBtn->setText(tr("Cancel"));
-
     // Coin control options
     auto *ccBox = new QFrame;
-//    ccBox->setStyleSheet("border: 1px solid red");
     ccBox->setObjectName("coinControlSection");
     ccBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto *ccBoxLayout = new QVBoxLayout;
@@ -181,7 +189,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     // as well as the utxo list.
     ccManualBox = new QFrame;
     auto *ccManualBoxLayout = new QHBoxLayout;
-    ccManualBoxLayout->setContentsMargins(28, 0, 0, 0);
+    ccManualBoxLayout->setContentsMargins(15, 0, 0, 0);
     ccManualBoxLayout->setSpacing(20);
     ccManualBox->setLayout(ccManualBoxLayout);
 
@@ -202,7 +210,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     ccLeftBox->setLayout(ccLeftBoxLayout);
 
     auto *ccInputsBox = new QFrame;
-    ccInputsBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    ccInputsBox->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
     auto *ccInputsBoxLayout = new QHBoxLayout;
     ccInputsBoxLayout->setContentsMargins(QMargins());
     ccInputsBox->setLayout(ccInputsBoxLayout);
@@ -289,16 +297,22 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     btnBoxLayout->setContentsMargins(QMargins());
     btnBoxLayout->setSpacing(15);
     btnBox->setLayout(btnBoxLayout);
-    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignLeft);
+    auto *backBtn = new BlocknetFormBtn;
+    backBtn->setText(tr("Back"));
+    continueBtn = new BlocknetFormBtn;
+    continueBtn->setText(tr("Continue"));
+    cancelBtn = new BlocknetFormBtn;
+    cancelBtn->setObjectName("cancel");
+    cancelBtn->setText(tr("Cancel"));
+    btnBoxLayout->addWidget(backBtn, 0, Qt::AlignLeft);
     btnBoxLayout->addWidget(continueBtn, 0, Qt::AlignLeft);
     btnBoxLayout->addStretch(1);
+    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignRight);
 
     auto *hdiv1 = new BlocknetHDiv;
     auto *hdiv2 = new BlocknetHDiv;
     auto *hdiv3 = new BlocknetHDiv;
 
-    layout->addWidget(titleLbl, 0, Qt::AlignTop | Qt::AlignLeft);
-    layout->addSpacing(45);
     contentLayout->addWidget(subtitleLbl, 0, Qt::AlignTop);
     contentLayout->addSpacing(15);
     contentLayout->addWidget(fundList, 0);
@@ -310,7 +324,10 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     contentLayout->addWidget(hdiv3);
     contentLayout->addWidget(btnBox);
     contentLayout->addStretch(1);
-    layout->addWidget(scrollArea, 0);
+
+    layout->addWidget(titleLbl, 0, Qt::AlignTop | Qt::AlignLeft);
+    layout->addSpacing(45);
+    layout->addWidget(scrollArea, 10);
 
     // Coin control
     ccDialog = new BlocknetCoinControlDialog;
@@ -319,6 +336,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     connect(ccDefaultRb, SIGNAL(toggled(bool)), this, SLOT(onCoinControl()));
     connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
+    connect(backBtn, SIGNAL(clicked()), this, SLOT(onBack()));
     connect(changeAddrTi, SIGNAL(editingFinished()), this, SLOT(onChangeAddress()));
     connect(ccSplitOutputCb, SIGNAL(toggled(bool)), this, SLOT(onSplitChanged()));
     connect(ccSplitOutputTi, SIGNAL(editingFinished()), this, SLOT(onSplitChanged()));
@@ -333,31 +351,41 @@ void BlocknetSendFunds2::setData(BlocknetSendFundsModel *model) {
 
     clear();
 
-    bFundList = new BlocknetSendFunds2List(displayUnit);
+    changeAddrTi->blockSignals(true);
     changeAddrTi->setText(model->changeAddress);
+    changeAddrTi->blockSignals(false);
 
-    // Restore coin control mode
     QSettings settings;
-    if (model->txSelectedUtxos.count() > 0 || model->split || settings.value("nCoinControlMode").toBool()) {
-        ccManualRb->setChecked(true);
-    } else ccDefaultRb->setChecked(true);
 
+    // Coin control designation
+    ccDefaultRb->blockSignals(true);
+    ccManualRb->blockSignals(true);
+    ccSplitOutputCb->blockSignals(true);
+    bool showCoinControl = model->txSelectedUtxos.count() > 0 || model->split || settings.value("nCoinControlMode").toBool();
+    ccDefaultRb->setChecked(!showCoinControl);
+    ccManualRb->setChecked(showCoinControl);
+    ccManualBox->setHidden(!showCoinControl); // unhide the coin control box
     if (model->splitCount > 0) // assign textinput text before split checkbox to prevent overwrite
         ccSplitOutputTi->setText(QString::number(model->splitCount));
     ccSplitOutputCb->setChecked(model->split);
+    ccDefaultRb->blockSignals(false);
+    ccManualRb->blockSignals(false);
+    ccSplitOutputCb->blockSignals(false);
 
+    // summary label
+    updateCoinControlSummary();
+
+    bFundList = new BlocknetSendFunds2List(displayUnit);
     uint i = 0;
     for (const BlocknetTransaction &r : model->recipients) {
         bFundList->addRow(i, r.address, r.amount > 0 ? r.getAmount(displayUnit) : QString());
         ++i;
     }
-
     fundList->layout()->addWidget(bFundList);
     fundList->adjustSize();
-    contentLayout->update();
-    layout->update();
 
     connect(bFundList, SIGNAL(amount(QString, QString)), this, SLOT(onAmount(QString, QString)));
+    connect(bFundList, SIGNAL(remove(QString)), this, SLOT(onRemove(QString)));
 }
 
 /**
@@ -365,9 +393,10 @@ void BlocknetSendFunds2::setData(BlocknetSendFundsModel *model) {
  */
 void BlocknetSendFunds2::clear() {
     // clear send funds list
-    if (bFundList != nullptr)
+    if (bFundList != nullptr) {
         bFundList->clear();
-    bFundList->deleteLater();
+        bFundList->deleteLater();
+    }
     bFundList = nullptr;
     for (int i = fundList->layout()->count() - 1; i >= 0; --i) {
         auto *item = fundList->layout()->itemAt(i);
@@ -379,6 +408,9 @@ void BlocknetSendFunds2::clear() {
         item->widget()->deleteLater();
         delete item;
     }
+
+    // reset scroll to top
+    scrollArea->verticalScrollBar()->setValue(0);
 
     // Clear coin control lbl
     ccSummary2Lbl->setText(tr("0 inputs have been selected"));
@@ -415,6 +447,12 @@ void BlocknetSendFunds2::clear() {
  */
 bool BlocknetSendFunds2::validated() {
     // Check recipients
+    if (model->recipients.isEmpty()) {
+        auto msg = tr("Please add recipients.");
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), msg);
+        return false;
+    }
+
     auto list = model->recipients.toList();
     bool allTxsValid = [](QList<BlocknetTransaction> &txs, WalletModel *w) -> bool {
         for (BlocknetTransaction &tx : txs) {
@@ -433,7 +471,7 @@ bool BlocknetSendFunds2::validated() {
 
     // Check change address
     if (!changeAddrTi->text().isEmpty() && !walletModel->validateAddress(changeAddrTi->text())) {
-        QMessageBox::warning(this->parentWidget(), tr("Issue"), QString("The change address is not valid address."));
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("The change address is not valid address."));
         return false;
     }
 
@@ -441,19 +479,28 @@ bool BlocknetSendFunds2::validated() {
     if (ccSplitOutputCb->isChecked()) {
         bool ok = false; uint count = splitCount(&ok);
         if (!ok || count == 0) {
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), QString("Please enter a valid number for the split count."));
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Please enter a valid number for the split count."));
             return false;
         }
         if (this->model->txSelectedUtxos.count() > 1) { // Split requires a single utxo
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), QString("Please select only one UTXO with split outputs option."));
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Please select only one UTXO with split outputs option."));
             return false;
         }
         if (this->model->txSelectedUtxos.count() < 1) {
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), QString("Please select a UTXO."));
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Please select a UTXO."));
             return false;
         }
         if (count > maxSplitOutputs) {
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), QString("Too many splits. The maximum number of splits is %n").arg(maxSplitOutputs));
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Too many splits. The maximum number of splits is %n").arg(maxSplitOutputs));
+            return false;
+        }
+    }
+
+    // Check that coin control inputs are larger than designated amounts
+    if (ccManualRb->isChecked()) {
+        if (model->selectedInputsTotal() < model->totalRecipientsAmount() || model->txSelectedUtxos.count() == 0) {
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Not enough coin inputs selected to cover this transaction. An additional %1 required.")
+                    .arg(BitcoinUnits::formatWithUnit(displayUnit, model->totalRecipientsAmount() - model->selectedInputsTotal())));
             return false;
         }
     }
@@ -511,7 +558,7 @@ void BlocknetSendFunds2::onSplitChanged() {
     ccSplitOutputTi->setEnabled(ccSplitOutputCb->isChecked());
 
     if (ccSplitOutputCb->isChecked()) {
-        auto pts = this->model->txSelectedUtxos.toStdVector();
+        auto pts = this->model->selectedOutpoints();
         std::vector<COutput> outputs;
         walletModel->getOutputs(pts, outputs);
 
@@ -533,6 +580,9 @@ void BlocknetSendFunds2::onSplitChanged() {
  * @param amount Amount of the transaction
  */
 void BlocknetSendFunds2::onAmount(const QString addr, const QString amount) {
+    if (model->recipients.isEmpty()) // should not be empty here
+        return;
+
     CAmount newAmount = BlocknetTransaction::stringToInt(amount, displayUnit);
 
     // find recipient
@@ -548,6 +598,17 @@ void BlocknetSendFunds2::onAmount(const QString addr, const QString amount) {
 
     // Replace existing transaction in the set, added if it doesn't already exist
     model->replaceRecipient(recipient);
+}
+
+/**
+ * @brief Handles the remove signal from the address list.
+ * @param addr Address of the sender to remove
+ */
+void BlocknetSendFunds2::onRemove(const QString addr) {
+    model->removeRecipient(BlocknetTransaction(addr));
+    if (model->recipients.count() == 0) // go back to address screen
+        emit back(this->pageID);
+    else setData(this->model);
 }
 
 /**
@@ -594,7 +655,7 @@ void BlocknetSendFunds2::updateCoinControl() {
             if (!(sAddress == sWalletAddress)) { // if change
                 utxo->label = tr("(change)");
             } else {
-                QString sLabel = walletModel->getAddressTableModel()->labelForAddress(sAddress); // TODO Very slow, improve performance w/ caching
+                QString sLabel = walletModel->getAddressTableModel()->labelForAddress(sAddress);
                 if (sLabel.isEmpty())
                     sLabel = tr("(no label)");
                 utxo->label = sLabel;
@@ -605,7 +666,7 @@ void BlocknetSendFunds2::updateCoinControl() {
             utxo->camount = out.tx->vout[out.i].nValue;
 
             // date
-            utxo->date = QDateTime::fromTime_t(out.tx->GetTxTime());
+            utxo->date = QDateTime::fromTime_t(static_cast<uint>(out.tx->GetTxTime()));
 
             // confirmations
             utxo->confirmations = out.nDepth;
@@ -619,15 +680,15 @@ void BlocknetSendFunds2::updateCoinControl() {
             // transaction hash & vout
             uint256 txhash = out.tx->GetHash();
             utxo->transaction = QString::fromStdString(txhash.GetHex());
-            utxo->vout = out.i;
+            utxo->vout = static_cast<unsigned int>(out.i);
 
             // locked coins
-            utxo->locked = walletModel->isLockedCoin(txhash, out.i);
+            utxo->locked = walletModel->isLockedCoin(txhash, static_cast<unsigned int>(out.i));
             utxo->unlocked = !utxo->locked;
 
             // selected coins
             for (auto &outpt : model->txSelectedUtxos) {
-                if (outpt.hash == txhash && static_cast<int>(outpt.n) == out.i && !utxo->locked) {
+                if (outpt.hash == txhash && outpt.vout == static_cast<uint>(out.i) && !utxo->locked) {
                     utxo->checked = true;
                     break;
                 }
@@ -646,17 +707,11 @@ void BlocknetSendFunds2::updateCoinControl() {
 }
 
 void BlocknetSendFunds2::ccAccepted() {
-    int displayUnit = walletModel->getOptionsModel()->getDisplayUnit();
-    CAmount totalN = 0;
-    QSet<QString> addrs;
-
     // Get selected utxos
-    QVector<COutPoint> selectedUtxos;
+    QVector<BlocknetSimpleUTXO> selectedUtxos;
     for (auto *data : ccDialog->getCC()->getData()->data) {
         if (data->checked) {
-            totalN += data->camount;
-            addrs.insert(data->address);
-            COutPoint utxo(uint256(data->transaction.toStdString()), data->vout);
+            BlocknetSimpleUTXO utxo(uint256(data->transaction.toStdString()), data->vout, data->address, data->camount);
             selectedUtxos.push_back(utxo);
         }
         if (data->locked) {
@@ -669,20 +724,34 @@ void BlocknetSendFunds2::ccAccepted() {
         }
     }
     this->model->txSelectedUtxos = selectedUtxos;
-
-    // update the selected inputs summary
-    QString c = QString::number(selectedUtxos.count());
-    QString a = QString::number(addrs.count());
-    QString s1 = tr("%1 input has been selected from %2 addresses totalling %3").arg(c, a, BitcoinUnits::formatWithUnit(displayUnit, totalN));
-    QString s2 = tr("%1 inputs have been selected from %2 addresses totalling %3").arg(c, a, BitcoinUnits::formatWithUnit(displayUnit, totalN));
-    QString sNone = tr("0 inputs have been selected");
-    if (selectedUtxos.count() == 0)
-        ccSummary2Lbl->setText(sNone);
-    else ccSummary2Lbl->setText(selectedUtxos.count() == 1 ? s1 : s2);
+    updateCoinControlSummary();
 }
 
 uint BlocknetSendFunds2::splitCount(bool *ok) {
     uint count = ccSplitOutputTi->text().toUInt(ok);
     count = (ok ? count : 0);
     return count;
+}
+
+void BlocknetSendFunds2::updateCoinControlSummary() {
+    int displayUnit = walletModel->getOptionsModel()->getDisplayUnit();
+    int utxoCount = this->model->txSelectedUtxos.count();
+    CAmount totalN = 0;
+    QSet<QString> addrs;
+    for (auto &t : this->model->txSelectedUtxos) {
+        totalN += t.amount;
+        addrs.insert(t.address);
+    }
+
+    // update the selected inputs summary
+    QString c = QString::number(utxoCount);
+    QString a = QString::number(addrs.count());
+    QString s1 = tr("%1 input has been selected from %2 addresses totalling %3").arg(c, a, BitcoinUnits::formatWithUnit(displayUnit, totalN));
+    QString s2 = tr("%1 inputs have been selected from %2 addresses totalling %3").arg(c, a, BitcoinUnits::formatWithUnit(displayUnit, totalN));
+    QString sNone = tr("0 inputs have been selected");
+
+    if (utxoCount == 0)
+        ccSummary2Lbl->setText(sNone);
+    else
+        ccSummary2Lbl->setText(utxoCount == 1 ? s1 : s2);
 }

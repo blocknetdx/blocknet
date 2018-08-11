@@ -18,6 +18,7 @@
 #include <QVector>
 #include <QWidget>
 #include <QDialog>
+#include <QLabel>
 
 class BlocknetCoinControl : public QFrame {
     Q_OBJECT
@@ -138,13 +139,17 @@ class BlocknetCoinControlDialog : public QDialog {
 public:
     explicit BlocknetCoinControlDialog(QWidget *parent = nullptr);
     void resizeEvent(QResizeEvent *evt) override;
-    void clear() { cc->clear(); }
+    void clear() {
+        totalValueLbl->clear();
+        cc->clear();
+    }
     BlocknetCoinControl* getCC() { return cc; }
 private:
     QFrame *content;
     BlocknetFormBtn *confirmBtn;
     BlocknetFormBtn *cancelBtn;
     BlocknetCoinControl *cc;
+    QLabel *totalValueLbl;
 };
 
 #endif // BLOCKNETCOINCONTROL_H

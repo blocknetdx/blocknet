@@ -22,6 +22,7 @@
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
 #include <stdint.h>
+#include <coincontrol.h>
 
 #include <QDebug>
 #include <QSet>
@@ -204,7 +205,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
 {
     CAmount total = 0;
     QList<SendCoinsRecipient> recipients = transaction.getRecipients();
-    std::vector<std::pair<CScript, CAmount> > vecSend;
+    std::vector<CRecipient> vecSend;
 
     if (recipients.empty()) {
         return OK;
@@ -218,7 +219,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
     int nAddresses = 0;
 
     // Pre-check input data for validity
-    foreach (const SendCoinsRecipient& rcp, recipients) {
+    for (const SendCoinsRecipient& rcp : recipients) {
         if (rcp.paymentRequest.IsInitialized()) { // PaymentRequest...
             CAmount subtotal = 0;
             const payments::PaymentDetails& details = rcp.paymentRequest.getDetails();
@@ -228,7 +229,9 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
                 subtotal += out.amount();
                 const unsigned char* scriptStr = (const unsigned char*)out.script().data();
                 CScript scriptPubKey(scriptStr, scriptStr + out.script().size());
-                vecSend.push_back(std::pair<CScript, CAmount>(scriptPubKey, out.amount()));
+                CAmount nAmount = out.amount();
+                CRecipient recipient = {scriptPubKey, nAmount, rcp.subtractFee};
+                vecSend.push_back(recipient);
             }
             if (subtotal <= 0) {
                 return InvalidAmount;
@@ -245,7 +248,8 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             ++nAddresses;
 
             CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
-            vecSend.push_back(std::pair<CScript, CAmount>(scriptPubKey, rcp.amount));
+            CRecipient recipient = {scriptPubKey, rcp.amount, rcp.subtractFee};
+            vecSend.push_back(recipient);
 
             total += rcp.amount;
         }
@@ -270,24 +274,27 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         CWalletTx* newTx = transaction.getTransaction();
         CReserveKey* keyChange = transaction.getPossibleKeyChange();
 
-
         if (recipients[0].useSwiftTX && total > GetSporkValue(SPORK_5_MAX_VALUE) * COIN) {
             emit message(tr("Send Coins"), tr("SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 BLOCK.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
                 CClientUIInterface::MSG_ERROR);
             return TransactionCreationFailed;
         }
 
-        bool fCreated;
-        if (sign) { // signed tx
-            fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX, payFee);
-            transaction.setTransactionFee(nFeeRequired);
+        int changePosition = -1;
+        bool fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX, payFee, &changePosition, sign);
+        transaction.setTransactionFee(nFeeRequired);
+
+        bool subtractFee = false;
+        for (auto &recipient : recipients) {
+            if (recipient.subtractFee) {
+                subtractFee = true;
+                break;
+            }
         }
-        else { // unsigned tx
-            fCreated = wallet->CreateUnsignedTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX, payFee);
-            if (payFee > 0)
-                transaction.setTransactionFee(nFeeRequired);
-            else transaction.setTransactionFee(nFeeRequired * 2); // TODO Improve fee estimate to account for signed tx
-        }
+
+        // Reassign amounts if subtracting fee from amount
+        if (fCreated && subtractFee)
+            transaction.reassignAmounts(changePosition);
 
         if (recipients[0].useSwiftTX && newTx->GetValueOut() > GetSporkValue(SPORK_5_MAX_VALUE) * COIN) {
             emit message(tr("Send Coins"), tr("SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 BLOCK.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
@@ -296,7 +303,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         }
 
         if (!fCreated) {
-            if ((total + nFeeRequired) > nBalance) {
+            if (!subtractFee && (total + nFeeRequired) > nBalance) {
                 return SendCoinsReturn(AmountWithFeeExceedsBalance);
             }
             emit message(tr("Send Coins"), QString::fromStdString(strFailReason),

@@ -4,6 +4,8 @@
 
 #include "blocknetcoincontrol.h"
 
+#include "bitcoinunits.h"
+
 #include <QSizePolicy>
 #include <QAbstractItemView>
 #include <QHeaderView>
@@ -11,6 +13,8 @@
 #include <QClipboard>
 #include <QResizeEvent>
 #include <QSettings>
+#include <QHBoxLayout>
+#include <QGridLayout>
 
 /**
  * @brief Dialog encapsulates the coin control table. The default size is 960x580
@@ -29,6 +33,17 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(QWidget *parent) : QDialog(
     auto *contentLayout = new QVBoxLayout;
     contentLayout->setContentsMargins(0, 0, 0, 20);
     content->setLayout(contentLayout);
+
+    // info box
+    auto *infoBox = new QFrame;
+    infoBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    auto *infoBoxLayout = new QGridLayout;
+    infoBoxLayout->setContentsMargins(QMargins());
+    infoBox->setLayout(infoBoxLayout);
+    totalValueLbl = new QLabel;
+    totalValueLbl->setObjectName("h5");
+    totalValueLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    infoBoxLayout->addWidget(totalValueLbl, 0, 1, Qt::AlignCenter);
 
     confirmBtn = new BlocknetFormBtn;
     confirmBtn->setText(tr("Confirm"));
@@ -49,9 +64,23 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(QWidget *parent) : QDialog(
     cc = new BlocknetCoinControl;
 
     contentLayout->addWidget(cc, 1);
+    contentLayout->addSpacing(20);
+    contentLayout->addWidget(infoBox);
+    contentLayout->addSpacing(20);
     contentLayout->addWidget(btnBox);
 
     this->resize(960, 580);
+
+    auto updateTotal = [this]() {
+        int64_t total = 0;
+        if (cc->getData() != nullptr) {
+            for (auto &utxo : cc->getData()->data) {
+                if (utxo->unlocked && utxo->checked)
+                    total += utxo->camount;
+            }
+        }
+        totalValueLbl->setText(BitcoinUnits::formatWithUnit(BitcoinUnits::BLOCK, total, false, BitcoinUnits::SeparatorStyle::separatorNever));
+    };
 
     connect(confirmBtn, &QPushButton::clicked, this, [this]() {
         emit accept();
@@ -60,6 +89,10 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(QWidget *parent) : QDialog(
         cc->setData(std::make_shared<BlocknetCoinControl::Model>());
         emit reject();
     });
+    connect(cc, &BlocknetCoinControl::tableUpdated, this, updateTotal);
+
+    // update initial total
+    updateTotal();
 }
 
 void BlocknetCoinControlDialog::resizeEvent(QResizeEvent *evt) {
@@ -149,10 +182,11 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
                 if (item) {
                     UTXO *utxo = nullptr;
                     if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                        if (!utxo->locked) // do not select locked coins
+                        if (!utxo->locked) { // do not select locked coins
                             utxo->checked = true;
+                            item->setCheckState(Qt::Checked);
+                        }
                     }
-                    item->setCheckState(Qt::Checked);
                 }
             }
             watch();
@@ -169,10 +203,11 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
                 if (item) {
                     UTXO *utxo = nullptr;
                     if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                        if (!utxo->locked) // do not modify locked coins
+                        if (!utxo->locked) { // do not modify locked coins
                             utxo->checked = false;
+                            item->setCheckState(Qt::Unchecked);
+                        }
                     }
-                    item->setCheckState(Qt::Unchecked);
                 }
             }
             watch();
@@ -220,10 +255,10 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
                         utxo->locked = true;
                         utxo->unlocked = !utxo->locked;
                         utxo->checked = false;
+                        auto *cbItem = new QTableWidgetItem;
+                        cbItem->setIcon(QIcon(":/icons/lock_closed"));
+                        table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
                     }
-                    auto *cbItem = new QTableWidgetItem;
-                    cbItem->setIcon(QIcon(":/icons/lock_closed"));
-                    table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
                 }
             }
             watch();
@@ -243,8 +278,10 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
                         utxo->locked = false;
                         utxo->unlocked = !utxo->locked;
                         utxo->checked = false;
+                        auto *cbItem = new QTableWidgetItem;
+                        cbItem->setCheckState(Qt::Unchecked);
+                        table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
                     }
-                    item->setCheckState(Qt::Unchecked);
                 }
             }
             watch();

@@ -5,6 +5,7 @@
 #include "blocknetquicksend.h"
 #include "blocknethdiv.h"
 #include "blocknetsendfundsrequest.h"
+#include "blocknetsendfundsutil.h"
 
 #include "optionsmodel.h"
 #include "amount.h"
@@ -12,7 +13,6 @@
 #include "base58.h"
 
 #include <QMessageBox>
-#include <QDoubleValidator>
 #include <QKeyEvent>
 
 BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QFrame *parent) : QFrame(parent), walletModel(w),
@@ -45,7 +45,7 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QFrame *parent) : QFrame(pa
     amountBox->setLayout(amountBoxLayout);
     amountTi = new BlocknetLineEdit;
     amountTi->setPlaceholderText(tr("Enter Amount..."));
-    amountTi->setValidator(new QDoubleValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
+    amountTi->setValidator(new BlocknetNumberValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
     amountTi->setMaxLength(BLOCKNETGUI_MAXCHARS);
     auto *coinLbl = new QLabel(displayUnitName);
     coinLbl->setObjectName("coin");
@@ -295,6 +295,6 @@ void BlocknetQuickSend::onEncryptionStatus(int encStatus) {
 
 void BlocknetQuickSend::onDisplayUnit(int unit) {
     displayUnit = unit;
-    amountTi->setValidator(new QDoubleValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
+    amountTi->setValidator(new BlocknetNumberValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
     onAmountChanged();
 }

@@ -100,6 +100,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetaddresseditor.cpp \
   qt/moc_blocknetbreadcrumb.cpp \
   qt/moc_blocknetcircle.cpp \
+  qt/moc_blocknetclosebtn.cpp \
   qt/moc_blocknetdashboard.cpp \
   qt/moc_blocknetfontmgr.cpp \
   qt/moc_blocknetformbtn.cpp \
@@ -207,6 +208,7 @@ BITCOIN_QT_H = \
   qt/blocknetaddresseditor.h \
   qt/blocknetbreadcrumb.h \
   qt/blocknetcircle.h \
+  qt/blocknetclosebtn.h \
   qt/blocknetdashboard.h \
   qt/blocknetfontmgr.h \
   qt/blocknetformbtn.h \
@@ -325,6 +327,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetaddresseditor.cpp \
   qt/blocknetbreadcrumb.cpp \
   qt/blocknetcircle.cpp \
+  qt/blocknetclosebtn.cpp \
   qt/blocknetdashboard.cpp \
   qt/blocknetfontmgr.cpp \
   qt/blocknetformbtn.cpp \

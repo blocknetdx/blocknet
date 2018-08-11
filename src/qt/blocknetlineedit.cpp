@@ -2,7 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <QEvent>
 #include "blocknetlineedit.h"
 
 BlocknetLineEdit::BlocknetLineEdit(int w, int h, QLineEdit *parent) : QLineEdit(parent) {

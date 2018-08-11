@@ -38,7 +38,7 @@ BlocknetDropdown QAbstractItemView {
     background-color: #6F8097;
 }
 
-BlocknetWallet #content { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
+BlocknetWallet #contentBox { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
 
 #h1 { font-size: 51px; color: white; font-family: "Roboto"; font-weight: 25; }
 #h2 { font-size: 30px; color: white; font-family: "Roboto"; font-weight: 25; }
@@ -101,6 +101,7 @@ BlocknetDashboard #totalLbl { font-size: 14px; color: #6F8097; font-family: "Rob
 BlocknetDashboard #totalValueLbl { font-size: 14px; color: white; font-family: "Roboto"; font-weight: 25; }
 BlocknetDashboard #recentTransactionsLbl { font-size: 21px; color: #6F8097; font-family: "Roboto"; }
 
+BlocknetDashboard QScrollArea #content { background-color: transparent; }
 BlocknetDashboard QScrollArea #content QLabel { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 3px; }
 BlocknetDashboard QScrollArea #content QLabel[rowA=true] { background-color: #172F49; }
 BlocknetDashboard QScrollArea #content QLabel[rowA=false] { background-color: #0F2743; }
@@ -127,7 +128,7 @@ BlocknetDashboard QScrollArea #content #indicator[state="8"] { background-color:
 BlocknetDashboard QScrollArea #content #indicator[state="9"] { background-color: #FB7F70; }
 
 BlocknetSendFunds { padding-left: 30px; padding-right: 10px; }
-BlocknetSendFunds #contentScrollArea { min-width: 730px; }
+BlocknetSendFunds #contentScrollArea { min-width: 730px; background-color: transparent; }
 BlocknetSendFunds #sectionTitle { font-size: 18px; color: white; font-family: "Roboto"; }
 BlocknetSendFunds #sectionSubtitle { font-size: 12px; color: #6F8097; padding-left: 2px; margin-left: -2px; }
 BlocknetSendFunds #descLbl { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
@@ -140,8 +141,9 @@ BlocknetSendFunds #coinControlSection { padding-top: 20px; padding-bottom: 25px;
 BlocknetSendFunds #changeSection { padding-top: 10px; padding-bottom: 20px; max-width: 450px; }
 BlocknetSendFunds #changeSection #changeAddress { margin-left: 2px; }
 BlocknetSendFunds #buttonSection { padding-top: 30px; }
+BlocknetSendFunds QCheckBox#subtractFeeCb { font-size: 16px; color: white; font-family: "Roboto"; }
 
-BlocknetSendFunds #sendFundsList #address { font-size: 13px; color: white; font-family: "Roboto"; padding-right: 20px; }
+BlocknetSendFunds #sendFundsList #address { font-size: 13px; color: white; font-family: "Roboto"; }
 BlocknetSendFunds #sendFundsList { font-size: 13px; color: white; font-family: "Roboto"; }
 BlocknetSendFunds #body { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
 

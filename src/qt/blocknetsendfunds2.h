@@ -35,9 +35,11 @@ public:
 
 signals:
     void amount(QString addr, QString amount);
+    void remove(QString addr);
 
 private slots:
     void onAmount();
+    void onRemove();
 
 private:
     int displayUnit;
@@ -57,6 +59,7 @@ public:
 private slots:
     void onCoinControl();
     void onAmount(QString addr, QString amount);
+    void onRemove(QString addr);
     void onChangeAddress();
     void ccAccepted();
     void onSplitChanged();
@@ -88,6 +91,7 @@ private:
     const uint maxSplitOutputs = 1500;
 
     void updateCoinControl();
+    void updateCoinControlSummary();
     uint splitCount(bool *ok = nullptr);
 };
 

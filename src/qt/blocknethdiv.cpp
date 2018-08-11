@@ -7,5 +7,5 @@
 BlocknetHDiv::BlocknetHDiv(QLabel *parent) : QLabel(parent) {
     this->setObjectName("hdiv");
     this->setFixedHeight(1);
-    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }

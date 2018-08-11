@@ -60,6 +60,7 @@ class COutput;
 class CReserveKey;
 class CScript;
 class CWalletTx;
+struct CRecipient;
 
 /** (client) version numbers for particular wallet features */
 enum WalletFeature {
@@ -410,36 +411,17 @@ public:
                          bool                   keepReserveKey = true,
                          const CCoinControl   * coinControl = NULL);
 
-    bool CreateTransaction(const std::vector<std::pair<CScript, CAmount> > & vecSend,
-                           CWalletTx& wtxNew,
-                           CReserveKey& reservekey,
-                           CAmount& nFeeRet,
-                           std::string& strFailReason,
-                           const CCoinControl* coinControl = NULL,
-                           AvailableCoinsType coin_type = ALL_COINS,
-                           bool useIX = false,
-                           CAmount nFeePay = 0);
+    bool CreateTransaction(const std::vector<CRecipient>& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet,
+            std::string& strFailReason, const CCoinControl* coinControl = NULL, AvailableCoinsType coin_type = ALL_COINS,
+            bool useIX = false, CAmount nFeePay = 0, int *changePosition = nullptr, bool sign = true);
 
-    bool CreateUnsignedTransaction(const std::vector<std::pair<CScript, CAmount> > & vecSend,
-                           CWalletTx& wtxNew,
-                           CReserveKey& reservekey,
-                           CAmount& nFeeRet,
-                           std::string& strFailReason,
-                           const CCoinControl* coinControl = NULL,
-                           AvailableCoinsType coin_type = ALL_COINS,
-                           bool useIX = false,
-                           CAmount nFeePay = 0);
+    bool CreateTransaction(const std::vector<std::pair<CScript, CAmount> >& vecSend, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet,
+            std::string& strFailReason, const CCoinControl* coinControl = NULL, AvailableCoinsType coin_type = ALL_COINS,
+            bool useIX = false, CAmount nFeePay = 0, int *changePosition = nullptr);
 
-    bool CreateTransaction(CScript scriptPubKey,
-                           const CAmount& nValue,
-                           CWalletTx& wtxNew,
-                           CReserveKey& reservekey,
-                           CAmount& nFeeRet,
-                           std::string& strFailReason,
-                           const CCoinControl* coinControl = NULL,
-                           AvailableCoinsType coin_type = ALL_COINS,
-                           bool useIX = false,
-                           CAmount nFeePay = 0);
+    bool CreateTransaction(CScript scriptPubKey, const CAmount& nValue, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet,
+            std::string& strFailReason, const CCoinControl* coinControl = NULL, AvailableCoinsType coin_type = ALL_COINS,
+            bool useIX = false, CAmount nFeePay = 0, int *changePosition = nullptr);
 
     bool CommitTransaction(CWalletTx& wtxNew, CReserveKey& reservekey, std::string strCommand = "tx");
     std::string PrepareObfuscationDenominate(int minRounds, int maxRounds);
