@@ -72,7 +72,7 @@ AskPassphraseDialog::AskPassphraseDialog(Mode mode, QWidget* parent, WalletModel
         break;
     }
 
-    ui->anonymizationCheckBox->setChecked(model->isAnonymizeOnlyUnlocked());
+//    ui->anonymizationCheckBox->setChecked(model->isAnonymizeOnlyUnlocked());
 
     textChanged();
     connect(ui->passEdit1, SIGNAL(textChanged(QString)), this, SLOT(textChanged()));

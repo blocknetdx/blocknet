@@ -54,6 +54,7 @@
         <file alias="staking_active">res/icons/staking_active.png</file>
         <file alias="staking_inactive">res/icons/staking_inactive.png</file>
         <file alias="address-book-white">res/icons/address-book-white.png</file>
+        <file alias="accordion-arrow">res/icons/accordion-arrow.png</file>
         <file alias="editpaste-white">res/icons/editpaste-white.png</file>
     </qresource>
     <qresource prefix="/css">
@@ -83,6 +84,7 @@
         <file alias="walletFrame">res/images/walletFrame.png</file>
         <file alias="splash">res/images/splash.png</file>
         <file alias="splash_testnet">res/images/splash_testnet.png</file>
+        <file alias="BlocknetSplash">res/redesign/BlocknetSplash.png</file>
     </qresource>
     <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.png</file>
@@ -120,6 +122,60 @@
         <file alias="spinner-032">res/movies/spinner-032.png</file>
         <file alias="spinner-033">res/movies/spinner-033.png</file>
         <file alias="spinner-034">res/movies/spinner-034.png</file>
+    </qresource>
+    <qresource prefix="/redesign">
+        <file alias="Active/AddressBookIcon.png">res/redesign/icons/NavBarIcons/Active/AddressBookIcon.png</file>
+        <file alias="Active/AnnouncementsIcon.png">res/redesign/icons/NavBarIcons/Active/AnnouncementsIcon.png</file>
+        <file alias="Active/DashboardIcon.png">res/redesign/icons/NavBarIcons/Active/DashboardIcon.png</file>
+        <file alias="Active/ProposalIcon.png">res/redesign/icons/NavBarIcons/Active/ProposalIcon.png</file>
+        <file alias="Active/RequestFundsIcon.png">res/redesign/icons/NavBarIcons/Active/RequestFundsIcon.png</file>
+        <file alias="Active/SendFundsIcon.png">res/redesign/icons/NavBarIcons/Active/SendFundsIcon.png</file>
+        <file alias="Active/ServiceNodesIcon.png">res/redesign/icons/NavBarIcons/Active/ServiceNodesIcon.png</file>
+        <file alias="Active/SettingsIcon.png">res/redesign/icons/NavBarIcons/Active/SettingsIcon.png</file>
+        <file alias="Active/TransactionHistoryIcon.png">res/redesign/icons/NavBarIcons/Active/TransactionHistoryIcon.png</file>
+        <file alias="Active/ToolsIcon.png">res/redesign/icons/NavBarIcons/Active/ToolsIcon.png</file>
+        <file alias="Inactive/AddressBookIcon.png">res/redesign/icons/NavBarIcons/Inactive/AddressBookIcon.png</file>
+        <file alias="Inactive/AnnouncementsIcon.png">res/redesign/icons/NavBarIcons/Inactive/AnnouncementsIcon.png</file>
+        <file alias="Inactive/DashboardIcon.png">res/redesign/icons/NavBarIcons/Inactive/DashboardIcon.png</file>
+        <file alias="Inactive/ProposalIcon.png">res/redesign/icons/NavBarIcons/Inactive/ProposalIcon.png</file>
+        <file alias="Inactive/RequestFundsIcon.png">res/redesign/icons/NavBarIcons/Inactive/RequestFundsIcon.png</file>
+        <file alias="Inactive/SendFundsIcon.png">res/redesign/icons/NavBarIcons/Inactive/SendFundsIcon.png</file>
+        <file alias="Inactive/ServiceNodesIcon.png">res/redesign/icons/NavBarIcons/Inactive/ServiceNodesIcon.png</file>
+        <file alias="Inactive/SettingsIcon.png">res/redesign/icons/NavBarIcons/Inactive/SettingsIcon.png</file>
+        <file alias="Inactive/TransactionHistoryIcon.png">res/redesign/icons/NavBarIcons/Inactive/TransactionHistoryIcon.png</file>
+        <file alias="Inactive/ToolsIcon.png">res/redesign/icons/NavBarIcons/Inactive/ToolsIcon.png</file>
+        <file alias="QuickActions/AddressBookIcon.png">res/redesign/icons/QuickActions/AddressBookIcon.png</file>
+        <file alias="QuickActions/ProposalsIcon.png">res/redesign/icons/QuickActions/ProposalsIcon.png</file>
+        <file alias="QuickActions/QuickSendIcon.png">res/redesign/icons/QuickActions/QuickSendIcon.png</file>
+        <file alias="UtilityBar/LockedIcon.png">res/redesign/icons/UtilityBar/LockedIcon.png</file>
+        <file alias="UtilityBar/Peers.png">res/redesign/icons/UtilityBar/Peers.png</file>
+        <file alias="UtilityBar/StakingNodeIconActive.png">res/redesign/icons/UtilityBar/StakingNodeIconActive.png</file>
+        <file alias="UtilityBar/StakingNodeIconInactive.png">res/redesign/icons/UtilityBar/StakingNodeIconInactive.png</file>
+        <file alias="UtilityBar/UnlockedIcon.png">res/redesign/icons/UtilityBar/UnlockedIcon.png</file>
+        <file alias="Roboto-Black.ttf">res/redesign/fonts/Roboto/Roboto-Black.ttf</file>
+        <file alias="Roboto-BlackItalic.ttf">res/redesign/fonts/Roboto/Roboto-BlackItalic.ttf</file>
+        <file alias="Roboto-Bold.ttf">res/redesign/fonts/Roboto/Roboto-Bold.ttf</file>
+        <file alias="Roboto-BoldItalic.ttf">res/redesign/fonts/Roboto/Roboto-BoldItalic.ttf</file>
+        <file alias="Roboto-Italic.ttf">res/redesign/fonts/Roboto/Roboto-Italic.ttf</file>
+        <file alias="Roboto-Light.ttf">res/redesign/fonts/Roboto/Roboto-Light.ttf</file>
+        <file alias="Roboto-LightItalic.ttf">res/redesign/fonts/Roboto/Roboto-LightItalic.ttf</file>
+        <file alias="Roboto-Medium.ttf">res/redesign/fonts/Roboto/Roboto-Medium.ttf</file>
+        <file alias="Roboto-MediumItalic.ttf">res/redesign/fonts/Roboto/Roboto-MediumItalic.ttf</file>
+        <file alias="Roboto-Regular.ttf">res/redesign/fonts/Roboto/Roboto-Regular.ttf</file>
+        <file alias="Roboto-Thin.ttf">res/redesign/fonts/Roboto/Roboto-Thin.ttf</file>
+        <file alias="Roboto-ThinItalic.ttf">res/redesign/fonts/Roboto/Roboto-ThinItalic.ttf</file>
+        <file alias="RobotoMono-Bold.ttf">res/redesign/fonts/RobotoMono/RobotoMono-Bold.ttf</file>
+        <file alias="RobotoMono-BoldItalic.ttf">res/redesign/fonts/RobotoMono/RobotoMono-BoldItalic.ttf</file>
+        <file alias="RobotoMono-Italic.ttf">res/redesign/fonts/RobotoMono/RobotoMono-Italic.ttf</file>
+        <file alias="RobotoMono-Light.ttf">res/redesign/fonts/RobotoMono/RobotoMono-Light.ttf</file>
+        <file alias="RobotoMono-LightItalic.ttf">res/redesign/fonts/RobotoMono/RobotoMono-LightItalic.ttf</file>
+        <file alias="RobotoMono-Medium.ttf">res/redesign/fonts/RobotoMono/RobotoMono-Medium.ttf</file>
+        <file alias="RobotoMono-MediumItalic.ttf">res/redesign/fonts/RobotoMono/RobotoMono-MediumItalic.ttf</file>
+        <file alias="RobotoMono-Regular.ttf">res/redesign/fonts/RobotoMono/RobotoMono-Regular.ttf</file>
+        <file alias="RobotoMono-Thin.ttf">res/redesign/fonts/RobotoMono/RobotoMono-Thin.ttf</file>
+        <file alias="RobotoMono-ThinItalic.ttf">res/redesign/fonts/RobotoMono/RobotoMono-ThinItalic.ttf</file>
+        <file alias="white_blocknet_logo.png">res/redesign/white_blocknet_logo.png</file>
+        <file alias="css/default">res/redesign/css/stylesheet.qss</file>
     </qresource>
     <qresource prefix="/"/>
 </RCC>

@@ -301,7 +301,27 @@ SOURCES += \
     src/xbridge/xbridgewalletconnectorbcc.cpp \
     src/xbridge/xbridgewalletconnectorsys.cpp \
     src/xbridge/xbridgewalletconnectordgb.cpp \
-    src/xbridge/xbridgepacket.cpp
+    src/xbridge/xbridgepacket.cpp \
+    src/qt/blocknetdxstrings.cpp \
+    src/qt/blocknetfontmgr.cpp \
+    src/qt/blocknetformbtn.cpp \
+    src/qt/blocknethdiv.cpp \
+    src/qt/blocknetdropdown.cpp \
+    src/qt/blockneticonbtn.cpp \
+    src/qt/blockneticonlabel.cpp \
+    src/qt/blocknetleftmenu.cpp \
+    src/qt/blocknetlineedit.cpp \
+    src/qt/blocknetlockmenu.cpp \
+    src/qt/blocknetquicksend.cpp \
+    src/qt/blocknetsendfunds.cpp \
+    src/qt/blocknetsendfunds1.cpp \
+    src/qt/blocknetsendfunds2.cpp \
+    src/qt/blocknetsendfunds3.cpp \
+    src/qt/blocknetsendfunds4.cpp \
+    src/qt/blocknetsendfundsdone.cpp \
+    src/qt/blocknettoolbar.cpp \
+    src/qt/blocknetwallet.cpp \
+    src/qt/blocknetsendfundsrequest.cpp
 
 #protobuf generated
 SOURCES += \
@@ -592,7 +612,28 @@ HEADERS += \
     src/xbridge/xbridgewalletconnectorbcc.h \
     src/xbridge/xbridgewalletconnectorsys.h \
     src/xbridge/xbridgewalletconnectordgb.h \
-    src/xbridge/xbridgedef.h
+    src/xbridge/xbridgedef.h \
+    src/qt/blocknetfontmgr.h \
+    src/qt/blocknetformbtn.h \
+    src/qt/blocknethdiv.h \
+    src/qt/blocknetdropdown.h \
+    src/qt/blockneticonbtn.h \
+    src/qt/blockneticonlabel.h \
+    src/qt/blocknetleftmenu.h \
+    src/qt/blocknetlineedit.h \
+    src/qt/blocknetlockmenu.h \
+    src/qt/blocknetquicksend.h \
+    src/qt/blocknetsendfunds.h \
+    src/qt/blocknetsendfunds1.h \
+    src/qt/blocknetsendfunds2.h \
+    src/qt/blocknetsendfunds3.h \
+    src/qt/blocknetsendfunds4.h \
+    src/qt/blocknetsendfundsdone.h \
+    src/qt/blocknetsendfundsutil.h \
+    src/qt/blocknettoolbar.h \
+    src/qt/blocknetvars.h \
+    src/qt/blocknetwallet.h \
+    src/qt/blocknetsendfundsrequest.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
@@ -679,7 +720,6 @@ FORMS += \
     src/qt/forms/receiverequestdialog.ui \
     src/qt/forms/servicenodelist.ui \
     src/qt/forms/tradingdialog.ui
-
 
 contains(USE_QRCODE, 1) {
 HEADERS += src/qt/qrcodedialog.h

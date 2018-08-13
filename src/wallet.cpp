@@ -2358,6 +2358,225 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend,
     return true;
 }
 
+bool CWallet::CreateUnsignedTransaction(const vector<pair<CScript, CAmount> >& vecSend,
+                                CWalletTx& wtxNew,
+                                CReserveKey& reservekey,
+                                CAmount& nFeeRet,
+                                std::string& strFailReason,
+                                const CCoinControl* coinControl,
+                                AvailableCoinsType coin_type,
+                                bool useIX,
+                                CAmount nFeePay)
+{
+    if (useIX && nFeePay < CENT) nFeePay = CENT;
+
+    CAmount nValue = 0;
+
+    BOOST_FOREACH (const PAIRTYPE(CScript, CAmount) & s, vecSend) {
+        if (nValue < 0) {
+            strFailReason = _("Transaction amounts must be positive");
+            return false;
+        }
+        nValue += s.second;
+    }
+    if (vecSend.empty() || nValue < 0) {
+        strFailReason = _("Transaction amounts must be positive");
+        return false;
+    }
+
+    wtxNew.fTimeReceivedIsTxTime = true;
+    wtxNew.BindWallet(this);
+    CMutableTransaction txNew;
+
+    {
+        LOCK2(cs_main, cs_wallet);
+        {
+            nFeeRet = 0;
+            if (nFeePay > 0) nFeeRet = nFeePay;
+            while (true) {
+                txNew.vin.clear();
+                txNew.vout.clear();
+                wtxNew.fFromMe = true;
+
+                CAmount nTotalValue = nValue + nFeeRet;
+                double dPriority = 0;
+
+                // vouts to the payees
+                if (coinControl && !coinControl->fSplitBlock) {
+                    BOOST_FOREACH (const PAIRTYPE(CScript, CAmount) & s, vecSend) {
+                        CTxOut txout(s.second, s.first);
+                        if (coinControl->fAllowZeroValueOutputs && txout.nValue == 0)
+                        {
+                            txNew.vout.push_back(txout);
+                        }
+                        else if (txout.IsDust(::minRelayTxFee))
+                        {
+                            strFailReason = _("Transaction amount too small");
+                            return false;
+                        }
+                        else
+                        {
+                            txNew.vout.push_back(txout);
+                        }
+                    }
+                } else //UTXO Splitter Transaction
+                {
+                    int nSplitBlock;
+
+                    if (coinControl)
+                        nSplitBlock = coinControl->nSplitBlock;
+                    else
+                        nSplitBlock = 1;
+
+                    BOOST_FOREACH (const PAIRTYPE(CScript, CAmount) & s, vecSend) {
+                        for (int i = 0; i < nSplitBlock; i++) {
+                            if (i == nSplitBlock - 1) {
+                                uint64_t nRemainder = s.second % nSplitBlock;
+                                txNew.vout.push_back(CTxOut((s.second / nSplitBlock) + nRemainder, s.first));
+                            } else
+                                txNew.vout.push_back(CTxOut(s.second / nSplitBlock, s.first));
+                        }
+                    }
+                }
+
+                // Choose coins to use
+                set<pair<const CWalletTx*, unsigned int> > setCoins;
+                CAmount nValueIn = 0;
+
+                if (!SelectCoins(nTotalValue, setCoins, nValueIn, coinControl, coin_type, useIX)) {
+                    if (coin_type == ALL_COINS) {
+                        strFailReason = _("Insufficient funds.");
+                    } else if (coin_type == ONLY_NOT_SERVICENODE_REQUIRED_AMOUNT_IFMN) {
+                        strFailReason = _("Unable to locate enough funds for this transaction that are not equal 10000 BLOCK.");
+                    } else if (coin_type == ONLY_NONDENOMINATED_NOT_SERVICENODE_REQUIRED_AMOUNT_IFMN) {
+                        strFailReason = _("Unable to locate enough Obfuscation non-denominated funds for this transaction that are not equal 10000 BLOCK.");
+                    } else {
+                        strFailReason = _("Unable to locate enough Obfuscation denominated funds for this transaction.");
+                        strFailReason += " " + _("Obfuscation uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.");
+                    }
+
+                    if (useIX) {
+                        strFailReason += " " + _("SwiftTX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.");
+                    }
+
+                    return false;
+                }
+
+
+                BOOST_FOREACH (PAIRTYPE(const CWalletTx*, unsigned int) pcoin, setCoins) {
+                    CAmount nCredit = pcoin.first->vout[pcoin.second].nValue;
+                    //The coin age after the next block (depth+1) is used instead of the current,
+                    //reflecting an assumption the user would accept a bit more delay for
+                    //a chance at a free transaction.
+                    //But mempool inputs might still be in the mempool, so their age stays 0
+                    int age = pcoin.first->GetDepthInMainChain();
+                    if (age != 0)
+                        age += 1;
+                    dPriority += (double)nCredit * age;
+                }
+
+                CAmount nChange = nValueIn - nValue - nFeeRet;
+
+                //over pay for denominated transactions
+                if (coin_type == ONLY_DENOMINATED) {
+                    nFeeRet += nChange;
+                    nChange = 0;
+                    wtxNew.mapValue["DS"] = "1";
+                }
+
+                if (nChange > 0) {
+                    // Fill a vout to ourself
+                    // TODO: pass in scriptChange instead of reservekey so
+                    // change transaction isn't always pay-to-blocknetdx-address
+                    CScript scriptChange;
+
+                    // coin control: send change to custom address
+                    if (coinControl && !boost::get<CNoDestination>(&coinControl->destChange))
+                        scriptChange = GetScriptForDestination(coinControl->destChange);
+
+                    // no coin control: send change to newly generated address
+                    else {
+                        // Note: We use a new key here to keep it from being obvious which side is the change.
+                        //  The drawback is that by not reusing a previous key, the change may be lost if a
+                        //  backup is restored, if the backup doesn't have the new private key for the change.
+                        //  If we reused the old key, it would be possible to add code to look for and
+                        //  rediscover unknown transactions that were written with keys of ours to recover
+                        //  post-backup change.
+
+                        // Reserve a new key pair from key pool
+                        CPubKey vchPubKey;
+                        bool ret;
+                        ret = reservekey.GetReservedKey(vchPubKey);
+                        assert(ret); // should never fail, as we just unlocked
+
+                        scriptChange = GetScriptForDestination(vchPubKey.GetID());
+                    }
+
+                    CTxOut newTxOut(nChange, scriptChange);
+
+                    // Never create dust outputs; if we would, just
+                    // add the dust to the fee.
+                    if (newTxOut.IsDust(::minRelayTxFee)) {
+                        nFeeRet += nChange;
+                        nChange = 0;
+                        reservekey.ReturnKey();
+                    } else {
+                        // Insert change txn at random position:
+                        vector<CTxOut>::iterator position = txNew.vout.begin() + GetRandInt(txNew.vout.size() + 1);
+                        txNew.vout.insert(position, newTxOut);
+                    }
+                } else
+                    reservekey.ReturnKey();
+
+                // Fill vin
+                BOOST_FOREACH (const PAIRTYPE(const CWalletTx*, unsigned int) & coin, setCoins)
+                    txNew.vin.push_back(CTxIn(coin.first->GetHash(), coin.second));
+
+                // Embed the constructed transaction data in wtxNew.
+                *static_cast<CTransaction*>(&wtxNew) = CTransaction(txNew);
+
+                // Limit size
+                unsigned int nBytes = ::GetSerializeSize(*(CTransaction*)&wtxNew, SER_NETWORK, PROTOCOL_VERSION);
+                if (nBytes >= MAX_STANDARD_TX_SIZE) {
+                    strFailReason = _("Transaction too large");
+                    return false;
+                }
+                dPriority = wtxNew.ComputePriority(dPriority, nBytes);
+
+                // Can we complete this as a free transaction?
+                if (fSendFreeTransactions && nBytes <= MAX_FREE_TRANSACTION_CREATE_SIZE) {
+                    // Not enough fee: enough priority?
+                    double dPriorityNeeded = mempool.estimatePriority(nTxConfirmTarget);
+                    // Not enough mempool history to estimate: use hard-coded AllowFree.
+                    if (dPriorityNeeded <= 0 && AllowFree(dPriority))
+                        break;
+
+                    // Small enough, and priority high enough, to send for free
+                    if (dPriorityNeeded > 0 && dPriority >= dPriorityNeeded)
+                        break;
+                }
+
+                CAmount nFeeNeeded = max(nFeePay, GetMinimumFee(nBytes, nTxConfirmTarget, mempool));
+
+                // If we made it here and we aren't even able to meet the relay fee on the next pass, give up
+                // because we must be at the maximum allowed fee.
+                if (nFeeNeeded < ::minRelayTxFee.GetFee(nBytes)) {
+                    strFailReason = _("Transaction too large for fee policy");
+                    return false;
+                }
+
+                if (nFeeRet >= nFeeNeeded) // Done, enough fee included
+                    break;
+
+                // Include more fee and try again.
+                nFeeRet = nFeeNeeded;
+                continue;
+            }
+        }
+    }
+    return true;
+}
+
 bool CWallet::CreateTransaction(CScript scriptPubKey, const CAmount& nValue, CWalletTx& wtxNew, CReserveKey& reservekey, CAmount& nFeeRet, std::string& strFailReason, const CCoinControl* coinControl, AvailableCoinsType coin_type, bool useIX, CAmount nFeePay)
 {
     vector<pair<CScript, CAmount> > vecSend;

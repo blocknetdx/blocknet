@@ -6,6 +6,7 @@
 #define BITCOIN_QT_SPLASHSCREEN_H
 
 #include <QSplashScreen>
+#include <QLabel>
 
 class NetworkStyle;
 
@@ -40,7 +41,7 @@ private:
     /** Disconnect core signals to splash screen */
     void unsubscribeFromCoreSignals();
 
-    QPixmap pixmap;
+    QLabel *bg;
     QString curMessage;
     QColor curColor;
     int curAlignment;

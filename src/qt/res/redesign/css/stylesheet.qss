@@ -1,0 +1,140 @@
+BlocknetLeftMenu { background-color: #051937; }
+BlocknetLeftMenu BlocknetIconLabel { border: none; text-align: left; }
+BlocknetLeftMenu BlocknetIconLabel QLabel { font-size: 14px; font-family: "Roboto"; font-weight: normal; }
+BlocknetLeftMenu BlocknetIconLabel QLabel[selected=true] { color: #74B2FE; }
+BlocknetLeftMenu BlocknetIconLabel QLabel[selected=false] { color: #6F8097; }
+BlocknetLeftMenu BlocknetIconLabel#disabled QLabel { color: #0C2448; }
+BlocknetLeftMenu #balanceLbl { font-size: 12px; color: #6F8097; font-family: "Roboto"; }
+BlocknetLeftMenu #balanceAmountLbl { font-size: 14px; color: white; font-family: "Roboto"; }
+BlocknetLeftMenu #hdiv { border-top: 1px solid #172E48; height: 1px; }
+BlocknetLeftMenu #versionLbl { font-size: 11px; color: #40526A; font-family: "Roboto"; }
+
+BlocknetToolBar { padding-right: 10px; }
+BlocknetToolBar #progress { background-color: #000E1C; }
+BlocknetToolBar #progress QProgressBar { font-size: 10px; color: white; font-family: "Roboto"; background-color: #000E1C; }
+BlocknetToolBar #progress QProgressBar::chunk { background-color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); }
+BlocknetToolBar #peersLbl { font-size: 13px; color: #74B2FE; font-family: "Roboto"; }
+BlocknetToolBar #lock { background-color: #016AFF; border-radius: 3px; }
+BlocknetToolBar #lock #timeLbl { font-size: 12px; color: white; }
+
+BlocknetLockMenu { border: 1px solid #CCCCCC; background-color: white; }
+BlocknetLockMenu QPushButton { font-size: 13px; font-family: "Roboto"; text-align: left; padding-left: 20px; border: none; }
+BlocknetLockMenu QPushButton:!hover { color: #016AFF; background-color: white; }
+BlocknetLockMenu QPushButton:hover { color: white; background-color: #016AFF; }
+BlocknetLockMenu #hdiv { background-color: #CCCCCC; }
+
+BlocknetDropdown { 
+    background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); 
+    selection-color: #FFFFFF; 
+    selection-background-color: #37475C; 
+    border: 1px solid #6F8097; 
+    color: #FFFFFF; 
+    font-size: 13px; 
+    font-family: "Roboto"; 
+}
+BlocknetDropdown::drop-down { width: 35px; border: 0px; }
+BlocknetDropdown QAbstractItemView {
+    background: #6F8097;
+    background-color: #6F8097;
+}
+
+BlocknetWallet #content { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
+
+#h1 { font-size: 51px; color: white; font-family: "Roboto"; font-weight: 25; }
+#h2 { font-size: 30px; color: white; font-family: "Roboto"; font-weight: 25; }
+#h3 { font-size: 24px; color: white; font-family: "Roboto"; font-weight: 25; }
+#h4 { font-size: 21px; color: white; font-family: "Roboto"; font-weight: 25; }
+#h5 { font-size: 18px; color: white; font-family: "Roboto"; }
+#h6 { font-size: 12px; color: white; font-family: "Roboto"; }
+#body { font-size: 13px; color: white; font-family: "Roboto"; }
+
+#hdiv { border: 1px solid #172E48; height: 1px; }
+#linkBtn { font-size: 14px; color: #016AFF; background-color: rgba(0,0,0,0); }
+#coin { font-size: 13px; color: white; font-family: "Roboto"; padding: 12px; background-color: #6F8097; text-align: left; }
+#header { font-size: 16px; color: white; font-family: "Roboto"; }
+#standard { font-size: 13px; color: white; font-family: "Roboto"; font-weight: 25; }
+#warning { font-size: 12px; color: red; padding-left: 2px; margin-left: -2px; }
+
+QScrollArea, QScrollArea #scrollAreaWidgetContents, QScrollArea #content, #stretch { border: 0; background-color: transparent; }
+QRadioButton { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
+QRadioButton:disabled { color: #0C2448; }
+QRadioButton:indicator { width: 16px; height: 16px; border: 1px solid #6F8097; border-radius: 9px; }
+QRadioButton:indicator:checked { background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.52, stop:0 #016AFF, stop:0.65 #016AFF, stop:0.70 rgba(0,0,0,0), stop:1 rgba(0,0,0,0)); }
+QRadioButton:indicator:disabled { background-color: transparent; }
+QCheckBox { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
+BlocknetLineEdit, QLineEdit { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
+BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #333333; color: #333333; }
+BlocknetAddressEditor { font-size: 13px; color: white; font-family: "Roboto"; padding-top: 3px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
+BlocknetAddressEditor:disabled { border: 1px solid #333333; color: #333333; }
+BlocknetAddressEditor #placeholder { font-size: 13px; color: #666666; font-family: "Roboto"; }
+BlocknetFormBtn { font-size: 13px; font-family: "Roboto"; color: white; background-color: #016AFF; border: 1px solid #095FD8; }
+BlocknetFormBtn:hover { background-color: #0051C3; }
+BlocknetFormBtn:disabled { background-color: #37475C; border: 1px solid #243040; color: #6F8097; }
+BlocknetFormBtn#cancel { background-color: rgba(0,0,0,0); }
+BlocknetFormBtn#cancel:hover { background-color: #016AFF; }
+BlocknetFormBtn#cancel:disabled { border: 1px solid #37475C; color: #6F8097; }
+BlocknetBreadCrumb QPushButton { font-size: 13px; color: #6F8097; font-family: "Roboto"; border: none; }
+BlocknetBreadCrumb QPushButton:checked { color: #74B2FE; }
+BlocknetIconBtn #title { font-size: 12px; color: white; font-family: "Roboto"; }
+
+BlocknetDashboard #h4 { padding-left: 1px; }
+BlocknetDashboard #balanceLbl { font-size: 21px; color: #6F8097; font-family: "Roboto"; padding-top: 40px; }
+BlocknetDashboard #pendingLbl { font-size: 14px; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #pendingValueLbl { font-size: 14px; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #immatureLbl { font-size: 14px; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #immatureValueLbl { font-size: 14px; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #totalLbl { font-size: 14px; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #totalValueLbl { font-size: 14px; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #recentTransactionsLbl { font-size: 21px; color: #6F8097; font-family: "Roboto"; }
+
+BlocknetDashboard QScrollArea #content QLabel { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 3px; }
+BlocknetDashboard QScrollArea #content QLabel[rowA=true] { background-color: #172F49; }
+BlocknetDashboard QScrollArea #content QLabel[rowA=false] { background-color: #0F2743; }
+BlocknetDashboard QScrollArea #content #dateBox[rowA=true] { background-color: #172F49; }
+BlocknetDashboard QScrollArea #content #dateBox[rowA=false] { background-color: #0F2743; }
+BlocknetDashboard QScrollArea #content #month { font-size: 13px; font-weight: 25; }
+BlocknetDashboard QScrollArea #content #date { font-size: 21px; font-weight: 25; margin-top: -5px; }
+BlocknetDashboard QScrollArea #content #alias { padding-right: 15px; }
+BlocknetDashboard QScrollArea #content #action { padding-right: 15px; }
+BlocknetDashboard QScrollArea #content #amount { padding-right: 30px; }
+BlocknetDashboard QScrollArea #content #amount[positive=true] { color: #4BF5C6; }
+BlocknetDashboard QScrollArea #content #amount[positive=false] { color: #FB7F70; }
+BlocknetDashboard QScrollArea #content #more { font-size: 20px; color: #74B2FE; }
+BlocknetDashboard QScrollArea #content #time { padding-left: 10px; }
+BlocknetDashboard QScrollArea #content #indicator[state="0"] { background-color: #4BF5C6; }
+BlocknetDashboard QScrollArea #content #indicator[state="1"] { background-color: #F8BF1C; }
+BlocknetDashboard QScrollArea #content #indicator[state="2"] { background-color: #F8BF1C; }
+BlocknetDashboard QScrollArea #content #indicator[state="3"] { background-color: #FB7F70; }
+BlocknetDashboard QScrollArea #content #indicator[state="4"] { background-color: #F8BF1C; }
+BlocknetDashboard QScrollArea #content #indicator[state="5"] { background-color: #F8BF1C; }
+BlocknetDashboard QScrollArea #content #indicator[state="6"] { background-color: #FB7F70; }
+BlocknetDashboard QScrollArea #content #indicator[state="7"] { background-color: #FB7F70; }
+BlocknetDashboard QScrollArea #content #indicator[state="8"] { background-color: #FB7F70; }
+BlocknetDashboard QScrollArea #content #indicator[state="9"] { background-color: #FB7F70; }
+
+BlocknetSendFunds { padding-left: 30px; padding-right: 10px; }
+BlocknetSendFunds QScrollArea { min-width: 730px; }
+BlocknetSendFunds #sectionTitle { font-size: 18px; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #sectionSubtitle { font-size: 12px; color: #6F8097; padding-left: 2px; margin-left: -2px; }
+BlocknetSendFunds #descLbl { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
+BlocknetSendFunds #defaultRb { font-size: 16px; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #radioBox #descLbl, BlocknetSendFunds #specificFeeBox { margin-left: 25px; }
+BlocknetSendFunds #specificFeeLbl { font-size: 16px; color: white; font-family: "Roboto"; padding: 12px; background-color: #6F8097; text-align: left; }
+BlocknetSendFunds #totalLbl { font-size: 16px; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #totalFeeLbl { font-size: 16px; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetSendFunds #coinControlSection { padding-top: 20px; padding-bottom: 25px; }
+BlocknetSendFunds #changeSection { padding-top: 10px; padding-bottom: 20px; max-width: 450px; }
+BlocknetSendFunds #changeSection #changeAddress { margin-left: 2px; }
+BlocknetSendFunds #buttonSection { padding-top: 30px; }
+
+BlocknetSendFunds #sendFundsList #address { font-size: 13px; color: white; font-family: "Roboto"; padding-right: 20px; }
+BlocknetSendFunds #sendFundsList { font-size: 13px; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #body { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
+
+BlocknetQuickSend #address { max-width: 500px; }
+
+#transactionHistory, .QTableView { border: 0; background-color: transparent; }
+#transactionHistory::item { border: 0; qproperty-alignment:left; font-size: 12px; font-family: "Roboto"; color: white; alternate-background-color: #0F2743; background-color: #172F49; }
+#transactionHistory::item:selected { background-color: #1F487E; color: white; }
+#transactionHistory QHeaderView { border: 0; background-color: transparent; outline: 0; }
+#transactionHistory QHeaderView::section { border: 0; qproperty-alignment:left; background-color:transparent; font-size: 12px; font-family: "Roboto"; color:#6F8097; min-height:30px; }
