@@ -26,7 +26,7 @@ BlocknetWallet::BlocknetWallet(QFrame *parent) : QFrame(parent) {
     this->setLayout(layout);
 
     contentBox = new QFrame;
-    contentBox->setObjectName("content");
+    contentBox->setObjectName("contentBox");
     auto *contentBoxLayout = new QVBoxLayout;
     contentBoxLayout->setContentsMargins(QMargins());
     contentBoxLayout->setSpacing(0);

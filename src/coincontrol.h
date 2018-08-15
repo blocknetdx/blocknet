@@ -33,6 +33,8 @@ public:
     int nConfirmTarget;
     //! Allow zero-value outputs (used for data-field (wia OP_RETURN))
     bool fAllowZeroValueOutputs;
+    // Subtract fee from amount
+    bool fSubtractFee;
 
     CCoinControl()
     {
@@ -55,6 +57,7 @@ public:
         fOverrideFeeRate = false;
         nConfirmTarget = 0;
         fAllowZeroValueOutputs = false;
+        fSubtractFee = false;
     }
 
     bool HasSelected() const

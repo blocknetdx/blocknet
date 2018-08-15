@@ -8,6 +8,7 @@
 #include "blocknetsendfundsutil.h"
 #include "blocknetformbtn.h"
 #include "blocknetlineedit.h"
+#include "blocknetcoincontrol.h"
 
 #include "walletmodel.h"
 
@@ -28,14 +29,17 @@ public:
     void clear();
     void requestFocus();
     void addRow(int row, QString addr, QString amount);
+    void setAmount(const CAmount &amt);
     static const int rowHeight = 50;
     static const int columns = 4;
 
 signals:
     void amount(QString addr, QString amount);
+    void remove(QString addr);
 
 private slots:
     void onAmount();
+    void onRemove();
 
 private:
     int displayUnit;
@@ -55,7 +59,10 @@ public:
 private slots:
     void onCoinControl();
     void onAmount(QString addr, QString amount);
+    void onRemove(QString addr);
     void onChangeAddress();
+    void ccAccepted();
+    void onSplitChanged();
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
@@ -76,7 +83,16 @@ private:
     BlocknetFormBtn *cancelBtn;
     QRadioButton *ccDefaultRb;
     QRadioButton *ccManualRb;
+    QCheckBox *ccSplitOutputCb;
+    BlocknetLineEdit *ccSplitOutputTi;
+    QLabel *ccSummary2Lbl;
     BlocknetSendFunds2List *bFundList = nullptr;
+    BlocknetCoinControlDialog *ccDialog;
+    const uint maxSplitOutputs = 1500;
+
+    void updateCoinControl();
+    void updateCoinControlSummary();
+    uint splitCount(bool *ok = nullptr);
 };
 
 #endif // BLOCKNETSENDFUNDS2_H

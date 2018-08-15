@@ -37,8 +37,10 @@ signals:
 
 private slots:
     void onFeeDesignation();
-    void onSpecificFee(const QString& = QString());
+    void onSpecificFee();
     void onEncryptionStatus(int encStatus);
+    void onSubtractFee();
+    void onDisplayUnit(int unit);
 
 private:
     int displayUnit;
@@ -54,6 +56,8 @@ private:
     BlocknetFormBtn *continueBtn;
     BlocknetFormBtn *cancelBtn;
     QLabel *transactionFeeDesc;
+    QCheckBox *subtractFeeCb;
+    QLabel *warningLbl;
 
     void updateFee();
     void updateTxFees(CAmount fee);

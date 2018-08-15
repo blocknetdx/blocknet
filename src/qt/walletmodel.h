@@ -53,6 +53,7 @@ public:
     CAmount amount;
     // If from a payment request, this is used for storing the memo
     QString message;
+    bool subtractFee;
 
     // If from a payment request, paymentRequest.IsInitialized() will be true
     PaymentRequestPlus paymentRequest;
@@ -217,6 +218,29 @@ public:
     bool isAnonymizeOnlyUnlocked();
     // Wallet backup
     bool backupWallet(const QString& filename);
+
+    // Get fee info
+    struct FeeResult {
+        CAmount amount;
+        CAmount fee;
+        CAmount afterFee;
+        CAmount change;
+        uint quantity;
+        uint64_t bytes;
+        double priority;
+        bool dust;
+        bool allowFree;
+    };
+    struct CoinInput {
+        uint256 hash;
+        uint32_t n;
+        QString address;
+        CAmount amount;
+        COutPoint outpoint() const {
+            return COutPoint(hash, n);
+        }
+    };
+    FeeResult getFeeInfo(QVector<CoinInput> &inputs, CAmount payAmount = 0, uint splitCount = 0, bool freeTransaction = false);
 
     // RAI object for unlocking wallet, returned by requestUnlock()
     class UnlockContext

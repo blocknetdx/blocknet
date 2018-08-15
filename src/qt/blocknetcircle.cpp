@@ -10,9 +10,9 @@ BlocknetCircle::BlocknetCircle(qreal w, qreal h, QColor color1,
                                QColor color2, QWidget *parent) : QWidget(parent),
                                                                  w(w),
                                                                  h(h),
-                                                                 color1(std::move(color1)),
-                                                                 color2(std::move(color2)) {
-    this->setMinimumSize(static_cast<int>(w), static_cast<int>(h));
+                                                                 color1(color1),
+                                                                 color2(color2) {
+    this->setFixedSize(static_cast<int>(w), static_cast<int>(h));
 }
 
 void BlocknetCircle::paintEvent(QPaintEvent *) {

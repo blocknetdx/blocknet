@@ -37,22 +37,12 @@ BlocknetAddressEditor::BlocknetAddressEditor(int width, QTextEdit *parent) : QTe
     connect(this, SIGNAL(selectionChanged()), this, SLOT(onSelectionChanged()));
 }
 
-void BlocknetAddressEditor::setPlaceholderText(const QString &placeholderText) {
-    if (placeholder == nullptr) {
-        placeholder = new QLabel(placeholderText);
-        placeholder->setObjectName("placeholder");
-        placeholder->setContentsMargins(20, 0, 0, 0);
-        placeholder->setFixedHeight(minHeight);
-        placeholder->setAlignment(Qt::AlignLeft | Qt::AlignVCenter);
-        placeholder->setParent(this);
-    }
-    placeholder->setText(placeholderText);
-}
-
 void BlocknetAddressEditor::keyPressEvent(QKeyEvent *event) {
     if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
         emit returnPressed();
         return;
+    } else if (event->key() == Qt::Key_Backspace) {
+        backspacePressed = true;
     }
     QTextEdit::keyPressEvent(event);
 }
@@ -118,6 +108,9 @@ void BlocknetAddressEditor::addAddress(QString addr) {
     imageFormat.setName(addr);
     cursor.insertImage(imageFormat);
     cursor.insertText(" "); // add space between addresses
+
+    // resize
+    this->setFixedHeight(this->optimalSize().height());
 }
 
 /**
@@ -127,6 +120,12 @@ void BlocknetAddressEditor::addAddress(QString addr) {
  *        duplicates in any pasted or inserted text.
  */
 void BlocknetAddressEditor::onTextChanged() {
+    auto a = this->toHtml().replace(" ", "");
+    if (backspacePressed && a == prevText.replace(" ", "")) {
+        backspacePressed = false;
+        return;
+    }
+
     disconnect(this, SIGNAL(textChanged()), this, SLOT(onTextChanged()));
 
     // clear existing addresses
@@ -213,28 +212,27 @@ void BlocknetAddressEditor::onTextChanged() {
         tc.setPosition(moveToPosition);
     this->setTextCursor(tc);
 
-    // resize the text edit to fit the content
-    int newH = int(this->document()->size().height()) + 5;
-    if (newH > minHeight)
-        this->setFixedHeight(newH);
-    else if (newH <= minHeight && newH != minHeight)
-        this->setFixedHeight(minHeight);
-
-    displayPlaceholder();
+    prevText = this->toHtml();
+    backspacePressed = false; // reset backspace state
 
     // Notify addresses changed
     emit addresses();
 
     connect(this, SIGNAL(textChanged()), this, SLOT(onTextChanged()));
-
 }
 
-void BlocknetAddressEditor::displayPlaceholder() {
-    // Handle placeholder text
-    if (this->toPlainText().isEmpty() && addrs.isEmpty())
-        placeholder->show();
-    else
-        placeholder->hide();
+/**
+ * @brief  Returns the optimal size for the widget.
+ * @return
+ */
+QSize BlocknetAddressEditor::optimalSize() const {
+    // resize the text edit to fit the content
+    int newH = static_cast<int>(this->document()->size().height()) + 5;
+    if (newH > minHeight)
+        return { this->width(), newH };
+    else if (newH <= minHeight && newH != minHeight)
+        return { this->width(), minHeight };
+    return { this->width(), this->height() };
 }
 
 /**
@@ -301,13 +299,6 @@ void BlocknetAddressEditor::focusOutEvent(QFocusEvent *e) {
     cbOn(false);
 }
 
-bool BlocknetAddressEditor::event(QEvent *e) {
-    if (e->type() == QEvent::LayoutRequest) {
-        displayPlaceholder();
-    }
-    return QTextEdit::event(e);
-}
-
 /**
  * @brief Turn the clipboard events on or off.
  * @param on [default=true]
@@ -325,7 +316,7 @@ void BlocknetAddressEditor::cbOn(bool on) {
  * @return
  */
 bool BlocknetAddressEditor::isValidAddress(QString &addr) {
-    return addr.size() >= 33 && addr.size() <= 35; // TODO Implement proper address validation
+    return this->validator(addr);
 }
 
 bool BlocknetAddressEditor::equalS(QString s1, QString s2, Qt::CaseSensitivity sensitivity) {

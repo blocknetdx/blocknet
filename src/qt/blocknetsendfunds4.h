@@ -60,6 +60,8 @@ private:
     void fillWalletData();
     void displayMultiple();
     void clearRecipients();
+    QString feeText(QString fee);
+    QString totalText(QString total);
 };
 
 #endif // BLOCKNETSENDFUNDS4_H

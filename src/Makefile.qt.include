@@ -100,6 +100,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetaddresseditor.cpp \
   qt/moc_blocknetbreadcrumb.cpp \
   qt/moc_blocknetcircle.cpp \
+  qt/moc_blocknetclosebtn.cpp \
   qt/moc_blocknetdashboard.cpp \
   qt/moc_blocknetfontmgr.cpp \
   qt/moc_blocknetformbtn.cpp \
@@ -120,6 +121,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetsendfundsutil.cpp \
   qt/moc_blocknettoolbar.cpp \
   qt/moc_blocknetwallet.cpp \
+  qt/moc_blocknetcoincontrol.cpp \
   qt/moc_blocknetsendfundsrequest.cpp
 
 BITCOIN_MM = \
@@ -206,6 +208,7 @@ BITCOIN_QT_H = \
   qt/blocknetaddresseditor.h \
   qt/blocknetbreadcrumb.h \
   qt/blocknetcircle.h \
+  qt/blocknetclosebtn.h \
   qt/blocknetdashboard.h \
   qt/blocknetfontmgr.h \
   qt/blocknetformbtn.h \
@@ -227,6 +230,7 @@ BITCOIN_QT_H = \
   qt/blocknettoolbar.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \
+  qt/blocknetcoincontrol.h \
   qt/blocknetsendfundsrequest.h
 
 RES_ICONS = \
@@ -323,6 +327,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetaddresseditor.cpp \
   qt/blocknetbreadcrumb.cpp \
   qt/blocknetcircle.cpp \
+  qt/blocknetclosebtn.cpp \
   qt/blocknetdashboard.cpp \
   qt/blocknetfontmgr.cpp \
   qt/blocknetformbtn.cpp \
@@ -376,6 +381,7 @@ BITCOIN_QT_CPP += \
   qt/blocknetsendfunds3.cpp \
   qt/blocknetsendfunds4.cpp \
   qt/blocknetsendfundsdone.cpp \
+  qt/blocknetcoincontrol.cpp \
   qt/blocknetwallet.cpp
 
 endif
@@ -432,6 +438,8 @@ RES_IMAGES = \
   qt/res/redesign/icons/UtilityBar/StakingNodeIconActive.png \
   qt/res/redesign/icons/UtilityBar/StakingNodeIconInactive.png \
   qt/res/redesign/icons/UtilityBar/UnlockedIcon.png \
+  qt/res/redesign/icons/checkmark-on.png \
+  qt/res/redesign/icons/checkmark-off.png \
   qt/res/redesign/fonts/Roboto/Roboto-Black.ttf \
   qt/res/redesign/fonts/Roboto/Roboto-BlackItalic.ttf \
   qt/res/redesign/fonts/Roboto/Roboto-Bold.ttf \
@@ -565,4 +573,3 @@ moc_%.cpp: %.h
 	@test -f $(LRELEASE)
 	@$(MKDIR_P) $(@D)
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LRELEASE) -silent $< -qm $@
-

@@ -20,10 +20,9 @@ public:
     QString sendStatusMsg(const WalletModel::SendCoinsReturn &scr, const QString &txFeeStr, int displayUnit);
 
 private:
+    QWidget *widget;
     WalletModel *walletModel;
     CCoinControl *coinControl = nullptr;
-
-    QWidget *widget;
 };
 
 #endif //BLOCKNETSENDFUNDSREQUEST_H

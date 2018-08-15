@@ -74,7 +74,19 @@ void BlocknetSendFunds::focusInEvent(QFocusEvent *event) {
 }
 
 void BlocknetSendFunds::crumbChanged(int crumb) {
-    if (screen && crumb > breadCrumb->getCrumb() && breadCrumb->showCrumb(breadCrumb->getCrumb()) && !screen->validated())
+    // Prevent users from jumping around the crumb widget without validating previous pages
+    auto validatePages = [](const int toPage, const QVector<BlocknetSendFundsPage*> &pages) -> bool {
+        if (toPage - 1 > pages.count())
+            return false;
+        for (int i = 0; i < toPage - 1; ++i) {
+            auto *page = pages[i];
+            if (!page->validated())
+                return false;
+        }
+        return true;
+    };
+
+    if (screen && crumb > breadCrumb->getCrumb() && breadCrumb->showCrumb(breadCrumb->getCrumb()) && !validatePages(crumb, pages))
         return;
     breadCrumb->showCrumb(crumb);
 
@@ -129,9 +141,12 @@ void BlocknetSendFunds::prevCrumb(int crumb) {
 }
 
 void BlocknetSendFunds::onCancel(int crumb) {
-    clear();
-    breadCrumb->goToCrumb(RECIPIENT);
-    emit dashboard();
+    auto ret = QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Are you sure you want to cancel this transaction?"), QMessageBox::Yes, QMessageBox::No);
+    if (ret == QMessageBox::Yes) {
+        clear();
+        breadCrumb->goToCrumb(RECIPIENT);
+        emit dashboard();
+    }
 }
 
 void BlocknetSendFunds::onEdit() {

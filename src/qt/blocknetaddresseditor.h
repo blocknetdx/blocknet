@@ -5,25 +5,40 @@
 #ifndef BLOCKNETADDRESSEDITOR_H
 #define BLOCKNETADDRESSEDITOR_H
 
+#include <utility>
+
 #include <QTextEdit>
 #include <QClipboard>
 #include <QSet>
 #include <QLabel>
 #include <QStyleOption>
 #include <QProxyStyle>
+#include <QSize>
 
 class BlocknetAddressEditor : public QTextEdit
 {
     Q_OBJECT
 public:
     explicit BlocknetAddressEditor(int width = 675, QTextEdit *parent = nullptr);
-    void setPlaceholderText(const QString &placeholderText);
     void addAddress(QString addr);
     QSet<QString> getAddresses() {
         return this->addrs;
     }
+    void clearData() {
+        this->blockSignals(true);
+        this->addrs.clear();
+        prevText = QString();
+        backspacePressed = false;
+        this->clear();// resize
+        this->setFixedHeight(this->optimalSize().height());
+        this->blockSignals(false);
+    }
+    void setAddressValidator(std::function<bool (QString&)> validator) {
+        this->validator = std::move(validator);
+    }
 
 protected:
+    QSize optimalSize() const;
 
 signals:
     void addresses();
@@ -36,8 +51,6 @@ private slots:
 
 protected:
     void focusOutEvent(QFocusEvent *e) override;
-    bool event(QEvent *e) override;
-
     void keyPressEvent(QKeyEvent *e) override;
 
 private:
@@ -47,8 +60,9 @@ private:
     void cbOn(bool on = true);
     bool isValidAddress(QString &addr);
     bool equalS(QString s1, QString s2, Qt::CaseSensitivity sensitivity = Qt::CaseSensitive);
-    QLabel *placeholder = nullptr;
-    void displayPlaceholder();
+    QString prevText;
+    bool backspacePressed;
+    std::function<bool (QString&)> validator;
 };
 
 #endif // BLOCKNETADDRESSEDITOR_H
