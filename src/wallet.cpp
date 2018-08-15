@@ -2052,21 +2052,72 @@ bool CWallet::GetBudgetSystemCollateralTX(CTransaction& tx, uint256 hash, bool u
 
 bool CWallet::GetBudgetSystemCollateralTX(CWalletTx& tx, uint256 hash, bool useIX)
 {
-    // make our change address
-    CReserveKey reservekey(pwalletMain);
-
-    CScript scriptChange;
-    scriptChange << OP_RETURN << ToByteVector(hash);
+    std::string proposalAddress = GetArg("-proposaladdress", "");
+    CAmount budgetFee = GetBudgetFee();
 
     int64_t nFeeRet = 0;
     std::string strFail = "";
-    vector<pair<CScript, int64_t> > vecSend;
-    vecSend.push_back(make_pair(scriptChange, GetBudgetFee()));
+    CReserveKey reservekey(pwalletMain); // change address
 
-    CCoinControl* coinControl = NULL;
-    bool success = CreateTransaction(vecSend, tx, reservekey, nFeeRet, strFail, coinControl, ALL_COINS, useIX, (CAmount)0);
+    vector<pair<CScript, int64_t> > vecSend;
+    CScript scriptChange;
+    scriptChange << OP_RETURN << ToByteVector(hash);
+    vecSend.push_back(make_pair(scriptChange, budgetFee));
+
+    CCoinControl coinControl; // used by the proposaladdress config flag
+
+    // Send from specific address
+    if (!proposalAddress.empty()) {
+        CBitcoinAddress addressParsed(proposalAddress);
+        if (!addressParsed.IsValid()) {
+            LogPrintf("GetBudgetSystemCollateralTX: Proposal Submission Error - Bad proposaladdress in config: %s\n", proposalAddress);
+            return false;
+        }
+        coinControl.destChange = addressParsed.Get();
+
+        vector<COutput> vCoins;
+        AvailableCoins(vCoins, true, nullptr, false, ALL_COINS, false);
+        // sort ascending
+        sort(vCoins.begin(), vCoins.end(), [](const COutput &out1, const COutput &out2) -> bool {
+            return out1.Value() < out2.Value();
+        });
+
+        CAmount selectedAmount = 0;
+        for (const COutput &out : vCoins) {
+            if (!out.fSpendable)
+                continue;
+
+            // Only allow coins associated with proposal address
+            CTxDestination dest;
+            if (!ExtractDestination(out.tx->vout[out.i].scriptPubKey, dest))
+                continue;
+            CBitcoinAddress checkAddress(dest);
+            if (checkAddress.ToString() != proposalAddress)
+                continue;
+
+            auto amount = out.tx->vout[out.i].nValue;
+            selectedAmount += amount;
+            COutPoint outpoint(out.tx->GetHash(), out.i);
+            coinControl.Select(outpoint);
+        }
+
+        if (budgetFee > selectedAmount) {
+            LogPrintf("GetBudgetSystemCollateralTX: Proposal Submission Error - Not enough funds in %s\n", proposalAddress);
+            return false;
+        }
+
+        bool success = CreateTransaction(vecSend, tx, reservekey, nFeeRet, strFail, &coinControl, ALL_COINS);
+        if (!success) {
+            LogPrintf("GetBudgetSystemCollateralTX: Proposal Submission Error - %s\n", strFail);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool success = CreateTransaction(vecSend, tx, reservekey, nFeeRet, strFail);
     if (!success) {
-        LogPrintf("GetBudgetSystemCollateralTX: Error - %s\n", strFail);
+        LogPrintf("GetBudgetSystemCollateralTX: Proposal Submission Error - %s\n", strFail);
         return false;
     }
 
