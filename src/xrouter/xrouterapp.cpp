@@ -558,10 +558,18 @@ bool App::processConfigReply(XRouterPacketPtr packet) {
     }
      if (configQueries.count(uuid)) {   
         snodeConfigs[configQueries[uuid]->addr.ToString()] = settings;
+        snodeDomains[configQueries[uuid]->addr.ToString()] = configQueries[uuid]->addr.ToString();
+        if (settings.get<std::string>("domain", "") != "") {
+            snodeDomains[settings.get<std::string>("domain")] = configQueries[uuid]->addr.ToString();
+        }
         return true;
     } else {
         std::string addr = find_value(reply_obj, "addr").get_str();
         snodeConfigs[addr] = settings;
+        snodeDomains[addr] = addr;
+        if (settings.get<std::string>("domain", "") != "") {
+            snodeDomains[settings.get<std::string>("domain")] = addr;
+        }
         return true;
     }
 }
