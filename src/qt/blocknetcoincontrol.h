@@ -7,6 +7,7 @@
 
 #include "blocknetformbtn.h"
 
+#include "walletmodel.h"
 #include <memory>
 
 #include <QFrame>
@@ -18,6 +19,7 @@
 #include <QVector>
 #include <QWidget>
 #include <QDialog>
+#include <QGridLayout>
 #include <QLabel>
 
 class BlocknetCoinControl : public QFrame {
@@ -72,6 +74,7 @@ public:
     }
 
     void sizeTo(int minimumHeight, int maximumHeight);
+    QString getPriorityLabel(double dPriority);
 
 signals:
     void tableUpdated();
@@ -93,7 +96,6 @@ private:
     ModelPtr dataModel = nullptr;
 
     void setClipboard(const QString &str);
-    QString getPriorityLabel(double dPriority);
     void unwatch();
     void watch();
     bool utxoForHash(QString transaction, uint vout, UTXO *&utxo);
@@ -137,19 +139,47 @@ private:
 class BlocknetCoinControlDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit BlocknetCoinControlDialog(QWidget *parent = nullptr);
+    explicit BlocknetCoinControlDialog(WalletModel *w, QWidget *parent = nullptr);
     void resizeEvent(QResizeEvent *evt) override;
     void clear() {
-        totalValueLbl->clear();
+        payAmount = 0;
         cc->clear();
+        updateLabels();
     }
     BlocknetCoinControl* getCC() { return cc; }
+    void setPayAmount(CAmount payAmount) {
+        this->payAmount = payAmount;
+    }
+
+protected:
+    void showEvent(QShowEvent *event) override;
+
 private:
+    WalletModel *walletModel;
     QFrame *content;
     BlocknetFormBtn *confirmBtn;
     BlocknetFormBtn *cancelBtn;
     BlocknetCoinControl *cc;
-    QLabel *totalValueLbl;
+    QFrame *feePanel;
+    QGridLayout *feePanelLayout;
+    QLabel *quantityLbl;
+    QLabel *quantityVal;
+    QLabel *amountLbl;
+    QLabel *amountVal;
+    QLabel *feeLbl;
+    QLabel *feeVal;
+    QLabel *afterFeeLbl;
+    QLabel *afterFeeVal;
+    QLabel *bytesLbl;
+    QLabel *bytesVal;
+    QLabel *priorityLbl;
+    QLabel *priorityVal;
+    QLabel *dustLbl;
+    QLabel *dustVal;
+    QLabel *changeLbl;
+    QLabel *changeVal;
+    CAmount payAmount;
+    void updateLabels();
 };
 
 #endif // BLOCKNETCOINCONTROL_H

@@ -93,6 +93,7 @@ BlocknetSendFunds3::BlocknetSendFunds3(WalletModel *w, int id, QFrame *parent) :
     warningLbl->setObjectName("warning");
 
     auto *btnBox = new QFrame;
+    btnBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
     auto *btnBoxLayout = new QHBoxLayout;
     btnBoxLayout->setContentsMargins(QMargins());
     btnBoxLayout->setSpacing(15);
@@ -104,10 +105,10 @@ BlocknetSendFunds3::BlocknetSendFunds3(WalletModel *w, int id, QFrame *parent) :
     cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");
     cancelBtn->setText(tr("Cancel"));
-    btnBoxLayout->addWidget(backBtn, 0, Qt::AlignLeft);
-    btnBoxLayout->addWidget(continueBtn, 0, Qt::AlignLeft);
+    btnBoxLayout->addWidget(backBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
+    btnBoxLayout->addWidget(continueBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
     btnBoxLayout->addStretch(1);
-    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignRight);
+    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignRight | Qt::AlignBottom);
 
     layout->addWidget(titleLbl, 0, Qt::AlignTop | Qt::AlignLeft);
     layout->addSpacing(45);
@@ -128,8 +129,8 @@ BlocknetSendFunds3::BlocknetSendFunds3(WalletModel *w, int id, QFrame *parent) :
     layout->addSpacing(10);
     layout->addWidget(warningLbl);
     layout->addSpacing(30);
-    layout->addWidget(btnBox);
     layout->addStretch(1);
+    layout->addWidget(btnBox);
 
     recommendedRb->setChecked(true);
 
@@ -260,17 +261,28 @@ void BlocknetSendFunds3::onSubtractFee() {
 void BlocknetSendFunds3::updateFee() {
     specificFeeLbl->setText(BitcoinUnits::name(displayUnit));
 
-    // Process funds w/ new fee designations
-    auto prepare = [](BlocknetSendFundsModel *m, WalletModel *w) {
-        if (m->recipients.count() > 0) {
-            auto coinControl = m->getCoinControl(w);
-            m->processFunds(w, &coinControl);
-        }
-    };
-
     CFeeRate feeRate = walletModel->estimatedFee(1);
     recommendedDescLbl->setText(QString("%1\n%2").arg(BitcoinUnits::formatWithUnit(displayUnit, feeRate.GetFeePerK()) + "/kB",
                                                       tr("Estimated to begin confirmation in %1 block").arg(1)));
+
+    // Process funds w/ new fee designations
+    auto calculateFees = [](BlocknetSendFundsModel *m, WalletModel *w) {
+        if (m->recipients.count() > 0) {
+            auto coinControl = m->getCoinControl(w);
+            if (m->selectedInputsTotal() > 0) { // Manually calc fee information if we know selected inputs (faster)
+                m->prepareFundsCoinInputs(w, &coinControl);
+            } else {
+                m->prepareFunds(w, &coinControl);
+            }
+        }
+    };
+
+    // Display or clear the warning message according to the wallet status
+    auto warningMsg = [this](WalletModel::StatusCode &status) {
+        if (status != WalletModel::OK)
+            warningLbl->setText(walletModel->messageForSendCoinsReturn(model->txStatus));
+        else warningLbl->clear();
+    };
 
     // If specific fee option is selected, do not display per kB
     // since it's a total fee and not an estimate.
@@ -281,21 +293,20 @@ void BlocknetSendFunds3::updateFee() {
         CAmount cfee = BlocknetTransaction::doubleToInt(sfee, displayUnit);
         showZeroFeeMsg(cfee == 0);
         updateTxFees(cfee);
-        prepare(model, walletModel);
+        calculateFees(model, walletModel);
         totalFeeLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, cfee));
+        warningMsg(model->txStatus.status);
         return;
-    } else {
-        updateTxFees(0);
-        prepare(model, walletModel);
     }
 
-    if (model->txStatus.status != WalletModel::OK)
-        warningLbl->setText(walletModel->messageForSendCoinsReturn(model->txStatus));
-    else
-        warningLbl->clear();
+    updateTxFees(0);
+    calculateFees(model, walletModel);
+    warningMsg(model->txStatus.status);
 
     showZeroFeeMsg(false);
     totalFeeLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, model->txActiveFee()));
+
+    // ux - remove focus on update fee
     if (specificFeeTi->hasFocus()) {
         specificFeeTi->blockSignals(true);
         specificFeeTi->clearFocus();

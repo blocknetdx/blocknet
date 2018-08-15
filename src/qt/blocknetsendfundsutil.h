@@ -54,7 +54,9 @@ struct BlocknetTransaction {
         return BitcoinUnits::format(unit, a);
     }
     static CAmount doubleToInt(const double a, int unit) {
-        return static_cast<CAmount>(a * BitcoinUnits::factor(unit));
+        double aa = a + static_cast<double>(1) / static_cast<double>(BitcoinUnits::factor(unit) * 10);
+        auto r = static_cast<CAmount>(aa * BitcoinUnits::factor(unit));
+        return r;
     }
     static double intToDouble(const CAmount a, int unit) {
         std::stringstream ss;
@@ -222,9 +224,13 @@ struct BlocknetSendFundsModel {
         return coinControl;
     }
 
-    WalletModel::SendCoinsReturn processFunds(WalletModel *walletModel, CCoinControl *coinControl) {
+    /**
+     * @brief Calculates the fees
+     * @param walletModel
+     * @param coinControl
+     */
+    WalletModel::SendCoinsReturn prepareFunds(WalletModel *walletModel, CCoinControl *coinControl) {
         txRecipients.clear();
-
         for (const BlocknetTransaction &tx : recipients) {
             SendCoinsRecipient recipient;
             recipient.address = tx.address;
@@ -250,10 +256,78 @@ struct BlocknetSendFundsModel {
         else
             txStatus = walletModel->prepareTransaction(walletTx, coinControl, payFee);
 
+        // Determine the total to recipients not including change
+        CAmount totalAmount = 0;
+        for (const auto &r : txRecipients)
+            totalAmount += r.amount;
+
         txFees = walletTx.getTransactionFee();
-        txAmount = walletTx.getTotalTransactionAmount();
+        txAmount = coinControl->fSubtractFee ? totalAmount - txFees : totalAmount;
 
         auto recs = walletTx.getRecipients();
+        updateFees(recs);
+
+        return txStatus;
+    }
+
+    /**
+     * @brief Calculates the estimated fee based on the specified coin inputs.
+     * @param walletModel
+     * @param coinControl
+     */
+    WalletModel::SendCoinsReturn prepareFundsCoinInputs(WalletModel *walletModel, CCoinControl *coinControl) {
+        QVector<WalletModel::CoinInput> inputs;
+        for (auto &t : txSelectedUtxos)
+            inputs.push_back({ t.hash, t.vout, t.address, t.amount });
+
+        CAmount totalAmount = this->totalRecipientsAmount();
+        auto res = walletModel->getFeeInfo(inputs, totalAmount);
+        txFees = coinControl->fOverrideFeeRate ? coinControl->nMinimumTotalFee : res.fee;
+        txAmount = coinControl->fSubtractFee ? totalAmount - txFees : totalAmount;
+
+        if (res.change < 0) { // if not enough to cover transaction
+            if (coinControl->fSubtractFee && res.change + res.fee >= 0)
+                txStatus = WalletModel::OK;
+            else txStatus = WalletModel::AmountWithFeeExceedsBalance;
+        } else {
+            txStatus = WalletModel::OK;
+        }
+
+        // Set recipients data
+        txRecipients.clear();
+        for (const BlocknetTransaction &tx : recipients) {
+            SendCoinsRecipient recipient;
+            recipient.address = tx.address;
+            recipient.amount = tx.amount;
+            recipient.useSwiftTX = false;
+            recipient.inputType = ALL_COINS;
+            recipient.subtractFee = coinControl ? coinControl->fSubtractFee : false;
+            txRecipients << recipient;
+        }
+
+        QList<SendCoinsRecipient> recs;
+
+        // Produce list of recipients with the fee subtracted from the totals (for use in calculating the fee amounts)
+        if (coinControl && coinControl->fSubtractFee) {
+            bool isFirst = true;
+            for (const BlocknetTransaction &tx : recipients) {
+                SendCoinsRecipient rec;
+                rec.address = tx.address;
+                if (coinControl && coinControl->fSubtractFee) { // subtract fee from amount equally across recipients
+                    CAmount amount = tx.amount - txFees / recipients.count();
+                    if (isFirst && recipients.count() > 1) { // store remainder on first recipient
+                        amount -= txFees % recipients.count();
+                        isFirst = false;
+                    }
+                    rec.amount = amount;
+                } else rec.amount = tx.amount;
+                rec.useSwiftTX = false;
+                rec.inputType = ALL_COINS;
+                rec.subtractFee = true;
+                recs << rec;
+            }
+        }
+
         updateFees(recs);
 
         return txStatus;

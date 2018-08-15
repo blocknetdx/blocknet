@@ -304,17 +304,15 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");
     cancelBtn->setText(tr("Cancel"));
-    btnBoxLayout->addWidget(backBtn, 0, Qt::AlignLeft);
-    btnBoxLayout->addWidget(continueBtn, 0, Qt::AlignLeft);
+    btnBoxLayout->addWidget(backBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
+    btnBoxLayout->addWidget(continueBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
     btnBoxLayout->addStretch(1);
-    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignRight);
+    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignRight | Qt::AlignBottom);
 
     auto *hdiv1 = new BlocknetHDiv;
     auto *hdiv2 = new BlocknetHDiv;
     auto *hdiv3 = new BlocknetHDiv;
 
-    contentLayout->addWidget(subtitleLbl, 0, Qt::AlignTop);
-    contentLayout->addSpacing(15);
     contentLayout->addWidget(fundList, 0);
     contentLayout->addSpacing(30);
     contentLayout->addWidget(hdiv1);
@@ -322,15 +320,18 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     contentLayout->addWidget(hdiv2);
     contentLayout->addWidget(ccBox);
     contentLayout->addWidget(hdiv3);
-    contentLayout->addWidget(btnBox);
     contentLayout->addStretch(1);
 
     layout->addWidget(titleLbl, 0, Qt::AlignTop | Qt::AlignLeft);
     layout->addSpacing(45);
+    layout->addWidget(subtitleLbl);
+    layout->addSpacing(15);
     layout->addWidget(scrollArea, 10);
+    layout->addSpacing(20);
+    layout->addWidget(btnBox);
 
     // Coin control
-    ccDialog = new BlocknetCoinControlDialog;
+    ccDialog = new BlocknetCoinControlDialog(w);
     ccDialog->setStyleSheet(GUIUtil::loadStyleSheet());
 
     connect(ccDefaultRb, SIGNAL(toggled(bool)), this, SLOT(onCoinControl()));
@@ -341,7 +342,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     connect(ccSplitOutputCb, SIGNAL(toggled(bool)), this, SLOT(onSplitChanged()));
     connect(ccSplitOutputTi, SIGNAL(editingFinished()), this, SLOT(onSplitChanged()));
     connect(ccInputsBtn, &QPushButton::clicked, this, [this]() {
-        updateCoinControl(); ccDialog->exec();
+        updateCoinControl(); ccDialog->setPayAmount(model->totalRecipientsAmount()); ccDialog->exec();
     });
 }
 

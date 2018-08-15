@@ -9,24 +9,25 @@
 
 #include <QMessageBox>
 
-BlocknetSendFundsRequest::BlocknetSendFundsRequest(QWidget *widget, WalletModel *w, CCoinControl *coinControl,
-                                                   QObject *parent) : QObject(parent), widget(widget), walletModel(w),
-                                                                      coinControl(coinControl) { }
+BlocknetSendFundsRequest::BlocknetSendFundsRequest(QWidget *widget, WalletModel *w, CCoinControl *coinControl, QObject *parent) : QObject(parent),
+                                                   widget(widget), walletModel(w), coinControl(coinControl) {}
 
 /**
  * @brief Sends the transaction.
  * @param walletTx Prepared tx
- * @param result
+ * @param txFees Mutated, assigned the most recent fee for this request
+ * @param txAmount Mutated, assigned the most recent amount for this request
  * @return
  */
 WalletModel::SendCoinsReturn BlocknetSendFundsRequest::send(QList<SendCoinsRecipient> &recipients, CAmount &txFees, CAmount &txAmount) {
     if (recipients.isEmpty())
         return WalletModel::InvalidAddress;
 
+    WalletModelTransaction wtx(recipients);
+
     // lambda wrapped in wallet unlock context
-    auto sendInt = [=](CAmount &fees, CAmount &amount) -> WalletModel::SendCoinsReturn {
+    auto sendInt = [=](WalletModelTransaction &wtx, CAmount &fees, CAmount &amount) -> WalletModel::SendCoinsReturn {
         int displayUnit = walletModel->getOptionsModel()->getDisplayUnit();
-        WalletModelTransaction wtx(recipients);
 
         // Prepare tx
         CAmount payFee = 0;
@@ -84,10 +85,10 @@ WalletModel::SendCoinsReturn BlocknetSendFundsRequest::send(QList<SendCoinsRecip
             // Unlock wallet was cancelled
             return WalletModel::Cancel;
         }
-        return sendInt(txFees, txAmount);
+        return sendInt(wtx, txFees, txAmount);
     }
 
-    return sendInt(txFees, txAmount);
+    return sendInt(wtx, txFees, txAmount);
 }
 
 QString BlocknetSendFundsRequest::sendStatusMsg(const WalletModel::SendCoinsReturn &scr, const QString &txFeeStr, const int displayUnit) {

@@ -21,6 +21,7 @@
 #include "ui_interface.h"
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
+#include <algorithm>
 #include <stdint.h>
 #include <coincontrol.h>
 
@@ -461,6 +462,120 @@ bool WalletModel::changePassphrase(const SecureString& oldPass, const SecureStri
 bool WalletModel::backupWallet(const QString& filename)
 {
     return BackupWallet(*wallet, filename.toLocal8Bit().data());
+}
+
+WalletModel::FeeResult WalletModel::getFeeInfo(QVector<CoinInput> &inputs, CAmount payAmount, uint splitCount, bool freeTransaction) {
+    CAmount nPayAmount = payAmount;
+    bool fDust = false;
+    uint nInputCount = static_cast<uint>(inputs.size());
+
+    vector<COutPoint> vInputs;
+    CMutableTransaction txDummy;
+    for (const auto &p : inputs) {
+        if (p.amount > 0) {
+            CTxOut txout(p.amount, (CScript)vector<unsigned char>(24, 0));
+            txDummy.vout.push_back(txout);
+            if (txout.IsDust(::minRelayTxFee))
+                fDust = true;
+        }
+        vInputs.push_back(p.outpoint());
+    }
+
+    CAmount nAmount = 0;
+    CAmount nPayFee = 0;
+    CAmount nAfterFee = 0;
+    CAmount nChange = 0;
+    unsigned int nBytes = 0;
+    unsigned int nBytesInputs = 0;
+    double dPriority = 0;
+    double dPriorityInputs = 0;
+    unsigned int nQuantity = 0;
+    int nQuantityUncompressed = 0;
+    bool fAllowFree = false;
+
+    vector<COutput> vOutputs;
+    this->getOutputs(vInputs, vOutputs);
+
+    for (const COutput& out : vOutputs) {
+        // Quantity
+        nQuantity++;
+
+        // Amount
+        nAmount += out.tx->vout[out.i].nValue;
+
+        // Priority
+        dPriorityInputs += (double)out.tx->vout[out.i].nValue * (out.nDepth + 1);
+
+        // Bytes
+        CTxDestination address;
+        if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address)) {
+            CPubKey pubkey;
+            CKeyID* keyid = boost::get<CKeyID>(&address);
+            if (keyid && this->getPubKey(*keyid, pubkey)) {
+                nBytesInputs += (pubkey.IsCompressed() ? 148 : 180);
+                if (!pubkey.IsCompressed())
+                    nQuantityUncompressed++;
+            } else
+                nBytesInputs += 148; // in all error cases, simply assume 148 here
+        } else
+            nBytesInputs += 148;
+    }
+
+    // calculation
+    if (nQuantity > 0) {
+        // Bytes
+        nBytes = nBytesInputs + ((nInputCount > 0 ? nInputCount + std::max(1, static_cast<int>(splitCount)) : 2) * 34) + 10; // always assume +1 output for change here
+
+        // Priority
+        double mempoolEstimatePriority = mempool.estimatePriority(nTxConfirmTarget);
+        dPriority = dPriorityInputs / (nBytes - nBytesInputs + (nQuantityUncompressed * 29)); // 29 = 180 - 151 (uncompressed public keys are over the limit. max 151 bytes of the input are ignored for priority)
+
+        // Fee
+        nPayFee = CWallet::GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
+
+        // Allow free?
+        double dPriorityNeeded = mempoolEstimatePriority;
+        if (dPriorityNeeded <= 0)
+            dPriorityNeeded = AllowFreeThreshold(); // not enough data, back to hard-coded
+        fAllowFree = (dPriority >= dPriorityNeeded);
+
+        if (freeTransaction)
+            if (fAllowFree && nBytes <= MAX_FREE_TRANSACTION_CREATE_SIZE)
+                nPayFee = 0;
+
+        if (nPayAmount > 0) {
+            nChange = nAmount - nPayFee - nPayAmount;
+
+            // Never create dust outputs; if we would, just add the dust to the fee.
+            if (nChange > 0 && nChange < CENT) {
+                CTxOut txout(nChange, (CScript)vector<unsigned char>(24, 0));
+                if (txout.IsDust(::minRelayTxFee)) {
+                    nPayFee += nChange;
+                    nChange = 0;
+                }
+            }
+
+            if (nChange == 0)
+                nBytes -= 34;
+        }
+
+        // after fee
+        nAfterFee = nAmount - nPayFee;
+        if (nAfterFee < 0)
+            nAfterFee = 0;
+    }
+
+    return FeeResult{
+        nPayAmount,
+        nPayFee,
+        nAfterFee,
+        nChange,
+        nInputCount,
+        nBytes,
+        dPriority,
+        fDust,
+        fAllowFree
+    };
 }
 
 // Handlers for core signals

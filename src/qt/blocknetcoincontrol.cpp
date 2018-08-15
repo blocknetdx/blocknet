@@ -5,6 +5,9 @@
 #include "blocknetcoincontrol.h"
 
 #include "bitcoinunits.h"
+#include "uint256.h"
+#include "walletmodel.h"
+#include "optionsmodel.h"
 
 #include <QSizePolicy>
 #include <QAbstractItemView>
@@ -14,13 +17,12 @@
 #include <QResizeEvent>
 #include <QSettings>
 #include <QHBoxLayout>
-#include <QGridLayout>
 
 /**
  * @brief Dialog encapsulates the coin control table. The default size is 960x580
  * @param parent
  */
-BlocknetCoinControlDialog::BlocknetCoinControlDialog(QWidget *parent) : QDialog(parent) {
+BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *parent) : QDialog(parent), walletModel(w) {
     //this->setStyleSheet("border: 1px solid red;");
     this->setContentsMargins(QMargins());
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -33,17 +35,6 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(QWidget *parent) : QDialog(
     auto *contentLayout = new QVBoxLayout;
     contentLayout->setContentsMargins(0, 0, 0, 20);
     content->setLayout(contentLayout);
-
-    // info box
-    auto *infoBox = new QFrame;
-    infoBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    auto *infoBoxLayout = new QGridLayout;
-    infoBoxLayout->setContentsMargins(QMargins());
-    infoBox->setLayout(infoBoxLayout);
-    totalValueLbl = new QLabel;
-    totalValueLbl->setObjectName("h5");
-    totalValueLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    infoBoxLayout->addWidget(totalValueLbl, 0, 1, Qt::AlignCenter);
 
     confirmBtn = new BlocknetFormBtn;
     confirmBtn->setText(tr("Confirm"));
@@ -61,26 +52,64 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(QWidget *parent) : QDialog(
     btnBoxLayout->addWidget(confirmBtn, 0, Qt::AlignLeft);
     btnBoxLayout->addStretch(1);
 
+    // Manages the coin list
     cc = new BlocknetCoinControl;
 
+    // Manages the selected coin details
+    feePanel = new QFrame;
+    feePanel->setObjectName("feePanel");
+    feePanel->setContentsMargins(20, 0, 20, 0);
+    feePanel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    feePanelLayout = new QGridLayout;
+    feePanelLayout->setHorizontalSpacing(40);
+    feePanel->setLayout(feePanelLayout);
+    feePanel->setHidden(true);
+
+    // row 1
+    quantityLbl = new QLabel(QString("%1:").arg(tr("Selected Inputs")));
+    quantityVal = new QLabel;                                       quantityVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    amountLbl = new QLabel(QString("%1:").arg(tr("Amount")));
+    amountVal = new QLabel;                                         amountVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    feeLbl = new QLabel(QString("%1:").arg(tr("Estimated Fee")));
+    feeVal = new QLabel;                                            feeVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    afterFeeLbl = new QLabel(QString("%1:").arg(tr("After Fee")));
+    afterFeeVal = new QLabel;                                       afterFeeVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    feePanelLayout->addWidget(quantityLbl, 0, 0, Qt::AlignRight);
+    feePanelLayout->addWidget(quantityVal, 0, 1, Qt::AlignLeft);
+    feePanelLayout->addWidget(amountLbl, 0, 2, Qt::AlignRight);
+    feePanelLayout->addWidget(amountVal, 0, 3, Qt::AlignLeft);
+    feePanelLayout->addWidget(feeLbl, 0, 4, Qt::AlignRight);
+    feePanelLayout->addWidget(feeVal, 0, 5, Qt::AlignLeft);
+    feePanelLayout->addWidget(afterFeeLbl, 0, 6, Qt::AlignRight);
+    feePanelLayout->addWidget(afterFeeVal, 0, 7, Qt::AlignLeft);
+
+    // row 2
+    bytesLbl = new QLabel(QString("%1:").arg(tr("Bytes")));
+    bytesVal = new QLabel;                                          bytesVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    priorityLbl = new QLabel(QString("%1:").arg(tr("Priority")));
+    priorityVal = new QLabel;                                       priorityVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    dustLbl = new QLabel(QString("%1:").arg(tr("Dust")));
+    dustVal = new QLabel;                                           dustVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    changeLbl = new QLabel(QString("%1:").arg(tr("Change")));
+    changeVal = new QLabel;                                         changeVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    feePanelLayout->addWidget(bytesLbl, 1, 0, Qt::AlignRight);
+    feePanelLayout->addWidget(bytesVal, 1, 1, Qt::AlignLeft);
+    feePanelLayout->addWidget(priorityLbl, 1, 2, Qt::AlignRight);
+    feePanelLayout->addWidget(priorityVal, 1, 3, Qt::AlignLeft);
+    feePanelLayout->addWidget(dustLbl, 1, 4, Qt::AlignRight);
+    feePanelLayout->addWidget(dustVal, 1, 5, Qt::AlignLeft);
+    feePanelLayout->addWidget(changeLbl, 1, 6, Qt::AlignRight);
+    feePanelLayout->addWidget(changeVal, 1, 7, Qt::AlignLeft);
+
+    feePanelLayout->setRowMinimumHeight(0, 20);
+    feePanelLayout->setRowMinimumHeight(1, 20);
+
     contentLayout->addWidget(cc, 1);
-    contentLayout->addSpacing(20);
-    contentLayout->addWidget(infoBox);
-    contentLayout->addSpacing(20);
+    contentLayout->addSpacing(5);
+    contentLayout->addWidget(feePanel);
     contentLayout->addWidget(btnBox);
 
-    this->resize(960, 580);
-
-    auto updateTotal = [this]() {
-        int64_t total = 0;
-        if (cc->getData() != nullptr) {
-            for (auto &utxo : cc->getData()->data) {
-                if (utxo->unlocked && utxo->checked)
-                    total += utxo->camount;
-            }
-        }
-        totalValueLbl->setText(BitcoinUnits::formatWithUnit(BitcoinUnits::BLOCK, total, false, BitcoinUnits::SeparatorStyle::separatorNever));
-    };
+    this->resize(960, 680);
 
     connect(confirmBtn, &QPushButton::clicked, this, [this]() {
         emit accept();
@@ -89,10 +118,9 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(QWidget *parent) : QDialog(
         cc->setData(std::make_shared<BlocknetCoinControl::Model>());
         emit reject();
     });
-    connect(cc, &BlocknetCoinControl::tableUpdated, this, updateTotal);
+    connect(cc, &BlocknetCoinControl::tableUpdated, this, &BlocknetCoinControlDialog::updateLabels);
 
-    // update initial total
-    updateTotal();
+    updateLabels();
 }
 
 void BlocknetCoinControlDialog::resizeEvent(QResizeEvent *evt) {
@@ -100,6 +128,44 @@ void BlocknetCoinControlDialog::resizeEvent(QResizeEvent *evt) {
     content->resize(evt->size().width(), evt->size().height());
 }
 
+void BlocknetCoinControlDialog::showEvent(QShowEvent *event) {
+    QDialog::showEvent(event);
+    updateLabels();
+}
+
+void BlocknetCoinControlDialog::updateLabels() {
+    auto displayUnit = walletModel->getOptionsModel()->getDisplayUnit();
+    int64_t totalSelectedAmount = 0;
+    QVector<WalletModel::CoinInput> inputs;
+
+    if (cc->getData() != nullptr) {
+        for (auto &utxo : cc->getData()->data) {
+            if (utxo->unlocked && utxo->checked) {
+                totalSelectedAmount += utxo->camount;
+                inputs.push_back({ uint256S(utxo->transaction.toStdString()), utxo->vout, utxo->address, utxo->camount });
+            }
+        }
+    }
+
+    if (totalSelectedAmount > 0) {
+        auto res = walletModel->getFeeInfo(inputs, payAmount);
+        quantityVal->setText(QString::number(res.quantity));
+        amountVal->setText(BitcoinUnits::formatWithUnit(displayUnit, res.amount));
+        feeVal->setText(BitcoinUnits::formatWithUnit(displayUnit, res.fee));
+        afterFeeVal->setText(BitcoinUnits::formatWithUnit(displayUnit, res.afterFee));
+        bytesVal->setText(QString::number(res.bytes));
+        priorityVal->setText(cc->getPriorityLabel(res.priority));
+        dustVal->setText(res.dust ? tr("yes") : tr("no"));
+        changeVal->setText(BitcoinUnits::formatWithUnit(displayUnit, res.change));
+    }
+
+    feePanel->setHidden(totalSelectedAmount == 0);
+}
+
+/**
+ * @brief Manages and displays the coin control input list.
+ * @param parent
+ */
 BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layout(new QVBoxLayout),
                                                            table(new QTableWidget), contextMenu(new QMenu) {
     // this->setStyleSheet("border: 1px solid red");
@@ -135,9 +201,11 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
 
     // context menu actions
     selectCoins = new QAction(tr("Select coins"), this);
-    selectCoins->setEnabled(false);
     deselectCoins = new QAction(tr("Deselect coins"), this);
+    selectCoins->setEnabled(false);
     deselectCoins->setEnabled(false);
+    auto *selectAllCoins = new QAction(tr("Select all coins"), this);
+    auto *deselectAllCoins = new QAction(tr("Deselect all coins"), this);
     auto *copyAmountAction = new QAction(tr("Copy amount"), this);
     auto *copyLabelAction = new QAction(tr("Copy label"), this);
     auto *copyAddressAction = new QAction(tr("Copy address"), this);
@@ -148,6 +216,9 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
     // context menu
     contextMenu->addAction(selectCoins);
     contextMenu->addAction(deselectCoins);
+    contextMenu->addSeparator();
+    contextMenu->addAction(selectAllCoins);
+    contextMenu->addAction(deselectAllCoins);
     contextMenu->addSeparator();
     contextMenu->addAction(copyAddressAction);
     contextMenu->addAction(copyLabelAction);
@@ -177,7 +248,7 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto idx : idxs) {
+            for (auto &idx : idxs) {
                 auto *item = table->item(idx.row(), idx.column());
                 if (item) {
                     UTXO *utxo = nullptr;
@@ -198,7 +269,7 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto idx : idxs) {
+            for (auto &idx : idxs) {
                 auto *item = table->item(idx.row(), idx.column());
                 if (item) {
                     UTXO *utxo = nullptr;
@@ -214,6 +285,42 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
             emit tableUpdated();
         }
     });
+
+    connect(selectAllCoins, &QAction::triggered, this, [this]() {
+        unwatch();
+        for (int row = 0; row < table->rowCount(); ++row) {
+            auto *item = table->item(row, COLUMN_CHECKBOX);
+            if (item) {
+                UTXO *utxo = nullptr;
+                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
+                    if (!utxo->locked) { // do not select locked coins
+                        utxo->checked = true;
+                        item->setCheckState(Qt::Checked);
+                    }
+                }
+            }
+        }
+        watch();
+        emit tableUpdated();
+    });
+    connect(deselectAllCoins, &QAction::triggered, this, [this]() {
+        unwatch();
+        for (int row = 0; row < table->rowCount(); ++row) {
+            auto *item = table->item(row, COLUMN_CHECKBOX);
+            if (item) {
+                UTXO *utxo = nullptr;
+                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
+                    if (!utxo->locked) { // do not select locked coins
+                        utxo->checked = false;
+                        item->setCheckState(Qt::Unchecked);
+                    }
+                }
+            }
+        }
+        watch();
+        emit tableUpdated();
+    });
+
     connect(copyAmountAction, &QAction::triggered, this, [this]() {
         if (contextItem) {
             UTXO *utxo = nullptr;
@@ -247,7 +354,7 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto idx : idxs) {
+            for (auto &idx : idxs) {
                 auto *item = table->item(idx.row(), COLUMN_TXHASH);
                 if (item) {
                     UTXO *utxo = nullptr;
@@ -270,7 +377,7 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto idx : idxs) {
+            for (auto &idx : idxs) {
                 auto *item = table->item(idx.row(), COLUMN_TXHASH);
                 if (item) {
                     UTXO *utxo = nullptr;
@@ -383,6 +490,11 @@ void BlocknetCoinControl::setClipboard(const QString &str) {
     QApplication::clipboard()->setText(str, QClipboard::Clipboard);
 }
 
+/**
+ * @brief  Returns the string representation of the priority.
+ * @param  dPriority
+ * @return
+ */
 QString BlocknetCoinControl::getPriorityLabel(double dPriority) {
     double dPriorityMedium = dataModel->mempoolPriority;
 

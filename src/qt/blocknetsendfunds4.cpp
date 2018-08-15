@@ -39,24 +39,65 @@ BlocknetSendFunds4::BlocknetSendFunds4(WalletModel *w, int id, QFrame *parent) :
     cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");
     cancelBtn->setText(tr("Cancel"));
-    btnBoxLayout->addWidget(backBtn, 0, Qt::AlignLeft);
-    btnBoxLayout->addWidget(continueBtn, 0, Qt::AlignLeft);
+    btnBoxLayout->addWidget(backBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
+    btnBoxLayout->addWidget(continueBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
     btnBoxLayout->addStretch(1);
-    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignRight);
+    btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignRight | Qt::AlignBottom);
 
     content = new QFrame;
     content->setObjectName("review");
-    content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    content->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Expanding);
     contentLayout = new QVBoxLayout;
     contentLayout->setContentsMargins(QMargins());
     content->setLayout(contentLayout);
+
+    // Totals box
+    auto *totals = new QFrame;
+    totals->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+    auto *totalsLayout = new QGridLayout;
+    totalsLayout->setContentsMargins(0, 0, 35, 0);
+    totalsLayout->setSpacing(50);
+    totalsLayout->setVerticalSpacing(0);
+    totals->setLayout(totalsLayout);
+
+    auto *div1 = new BlocknetHDiv;
+    auto *feeLbl = new QLabel(tr("Transaction Fee")); feeLbl->setObjectName("header");
+    feeValueLbl = new QLabel; feeValueLbl->setObjectName("standard");
+
+    auto *div2 = new BlocknetHDiv;
+    auto *totalLbl = new QLabel(tr("Total")); totalLbl->setObjectName("header");
+    totalValueLbl = new QLabel; totalValueLbl->setObjectName("header");
+
+    auto *pl1 = new QLabel;
+    auto *pl2 = new QLabel;
+
+    totalsLayout->addWidget(div1, 0, 0, 1, 3); totalsLayout->setRowMinimumHeight(0, 15);
+    totalsLayout->addWidget(feeLbl, 1, 0, Qt::AlignLeft | Qt::AlignVCenter);
+    totalsLayout->addWidget(feeValueLbl, 1, 1, Qt::AlignLeft | Qt::AlignVCenter);
+    totalsLayout->addWidget(pl1, 1, 2, Qt::AlignRight);
+    totalsLayout->addWidget(div2, 2, 0, 1, 3); totalsLayout->setRowMinimumHeight(2, 15);
+    totalsLayout->addWidget(totalLbl, 3, 0, Qt::AlignLeft | Qt::AlignVCenter);
+    totalsLayout->addWidget(totalValueLbl, 3, 1, Qt::AlignLeft | Qt::AlignVCenter);
+    totalsLayout->addWidget(pl2, 3, 2, Qt::AlignRight);
+    totalsLayout->setColumnStretch(1, 1);
+    totalsLayout->setColumnStretch(2, 1);
+    totalsLayout->setRowMinimumHeight(1, 45);
+    totalsLayout->setRowMinimumHeight(3, 45);
+    // End Totals box
+
+    warningLbl = new QLabel;
+    warningLbl->setObjectName("warning");
 
     layout->addWidget(titleLbl, 0, Qt::AlignTop | Qt::AlignLeft);
     layout->addSpacing(45);
     layout->addWidget(subtitleLbl, 0, Qt::AlignTop);
     layout->addSpacing(30);
-    layout->addWidget(content, 1);
-    layout->addSpacing(30);
+    layout->addWidget(content, 10);
+    layout->addSpacing(10);
+    layout->addWidget(totals);
+    layout->addSpacing(10);
+    layout->addWidget(warningLbl);
+    layout->addSpacing(10);
     layout->addWidget(btnBox);
 
     connect(continueBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
@@ -78,7 +119,7 @@ void BlocknetSendFunds4::setData(BlocknetSendFundsModel *model) {
 void BlocknetSendFunds4::onEncryptionStatus(int encStatus) {
     if (!this->isHidden() && encStatus == WalletModel::Unlocked) {
         auto coinControl = model->getCoinControl(walletModel);
-        model->processFunds(walletModel, &coinControl);
+        model->prepareFunds(walletModel, &coinControl);
         fillWalletData();
     }
 }
@@ -87,6 +128,9 @@ void BlocknetSendFunds4::onEncryptionStatus(int encStatus) {
  * @brief Asks the wallet to create a transaction in order to obtain more accurate fee information.
  */
 void BlocknetSendFunds4::fillWalletData() {
+    // Disable the confirm button if there are any problems
+    continueBtn->setDisabled(model->txStatus.status != WalletModel::OK);
+
     if (model->txStatus.status != WalletModel::OK && model->txStatus.status != WalletModel::Cancel) {
         // Handle errors
         feeValueLbl->setText(tr("n/a"));
@@ -171,7 +215,6 @@ void BlocknetSendFunds4::displayMultiple() {
     recipients->setLayout(recipientsLayout);
 
     auto *scrollc = new QFrame;
-//    scrollc->setStyleSheet("border: 1px solid red");
     scrollc->setObjectName("content");
     scrollc->setContentsMargins(0, 0, 20, 0);
     scrollc->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Minimum);
@@ -185,6 +228,7 @@ void BlocknetSendFunds4::displayMultiple() {
     scrollArea = new QScrollArea;
     scrollArea->setObjectName("contentScrollArea");
     scrollArea->setContentsMargins(QMargins());
+    scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scrollArea->setWidgetResizable(true);
     scrollArea->setWidget(scrollc);
 
@@ -249,67 +293,11 @@ void BlocknetSendFunds4::displayMultiple() {
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     scrollcLayout->addWidget(spacer, i + 1, 0, 1, 3);
 
-    // Display totals
-
-    struct Row {
-        bool div; QString id; QString title; QString val; bool bold;
-        explicit Row() : id(QString("div")), div(false), title(QString()), val(QString()), bold(false) { }
-        explicit Row(bool div = false, QString id = QString("div"), QString title = QString(), QString val = QString(), bool bold = false) :
-                div(div), id(std::move(id)), title(std::move(title)), val(std::move(val)), bold(bold) { }
-    };
-
-    const QVector<Row> rows = {
-            Row{ true },
-            Row{ false, QString("fees"), tr("Transaction Fee"), feeText(BitcoinUnits::formatWithUnit(displayUnit, model->txActiveFee())) },
-            Row{ true },
-            Row{ false, QString("total"), tr("Total"), totalText(BitcoinUnits::formatWithUnit(displayUnit, model->txTotalAmount())), true },
-    };
-
-    auto *totals = new QFrame;
-//    totals->setStyleSheet("border: 1px solid red");
-    auto *totalsLayout = new QGridLayout;
-    totalsLayout->setContentsMargins(0, 0, 35, 0);
-    totalsLayout->setSpacing(50);
-    totalsLayout->setVerticalSpacing(0);
-    totals->setLayout(totalsLayout);
-
-    int k = 0;
-    for (k; k < rows.count(); ++k) {
-        if (rows[k].div) {
-            auto *div = new BlocknetHDiv;
-            totalsLayout->addWidget(div, k, 0, 1, 3);
-            totalsLayout->setRowMinimumHeight(0, 15);
-            continue;
-        }
-
-        auto *headerLbl = new QLabel(rows[k].title);
-        headerLbl->setObjectName("header");
-        totalsLayout->addWidget(headerLbl, k, 0, Qt::AlignLeft | Qt::AlignVCenter);
-
-        auto *valLbl = new QLabel(rows[k].val);
-        valLbl->setObjectName(rows[k].bold ? "header" : "standard");
-        totalsLayout->addWidget(valLbl, k, 1, Qt::AlignLeft | Qt::AlignVCenter);
-        totalsLayout->setColumnStretch(k, 1);
-        if (rows[k].id == QString("fees")) {
-            feeValueLbl = valLbl;
-        } else if (rows[k].id == QString("total")) {
-            totalValueLbl = valLbl;
-        }
-
-        auto *pl = new QLabel;
-        totalsLayout->setColumnStretch(2, 1);
-        totalsLayout->addWidget(pl, k, 2, Qt::AlignRight);
-
-        totalsLayout->setRowMinimumHeight(k, 45);
-    }
-
-    warningLbl = new QLabel;
-    warningLbl->setObjectName("warning");
-
     recipientsLayout->addWidget(scrollArea, 10);
-    recipientsLayout->addWidget(totals);
-    recipientsLayout->addWidget(warningLbl, 1);
     contentLayout->addWidget(recipients, 1);
+
+    feeValueLbl->setText(feeText(BitcoinUnits::formatWithUnit(displayUnit, model->txActiveFee())));
+    totalValueLbl->setText(totalText(BitcoinUnits::formatWithUnit(displayUnit, model->txTotalAmount())));
 }
 
 /**
@@ -318,17 +306,14 @@ void BlocknetSendFunds4::displayMultiple() {
 void BlocknetSendFunds4::clearRecipients() {
     if (recipients == nullptr)
         return;
+    totalValueLbl->clear();
+    feeValueLbl->clear();
+    warningLbl->clear();
     contentLayout->removeWidget(recipients);
     recipients->deleteLater();
     scrollArea->deleteLater();
-    totalValueLbl->deleteLater();
-    feeValueLbl->deleteLater();
-    warningLbl->deleteLater();
     recipients = nullptr;
     scrollArea = nullptr;
-    totalValueLbl = nullptr;
-    feeValueLbl = nullptr;
-    warningLbl = nullptr;
 }
 
 void BlocknetSendFunds4::onEdit() {
@@ -339,6 +324,7 @@ void BlocknetSendFunds4::onSubmit() {
     if (!this->validated())
         return;
 
+    // Use lambda to encapsulate the send request in a wallet unlock context
     auto send = [this]() {
         bool zeroFee = model->customFee && model->userFee == 0;
         if (zeroFee)
@@ -346,24 +332,30 @@ void BlocknetSendFunds4::onSubmit() {
 
         if (warningLbl) warningLbl->clear();
 
+        CAmount fees{0};
+        CAmount amount{0};
         auto coinControl = model->getCoinControl(walletModel);
         auto *sendFundsRequest = new BlocknetSendFundsRequest(this, walletModel, &coinControl);
-        auto result = sendFundsRequest->send(model->txRecipients, model->txFees, model->txAmount);
+        auto result = sendFundsRequest->send(model->txRecipients, fees, amount);
+
+        model->txFees = fees;
+        model->txAmount = amount;
+
         if (result.status != WalletModel::OK && result.status != WalletModel::Cancel) {
             if (feeValueLbl) feeValueLbl->setText(tr("n/a"));
             if (totalValueLbl) totalValueLbl->setText(tr("n/a"));
             if (warningLbl) warningLbl->setText(walletModel->messageForSendCoinsReturn(result));
             return;
         }
-        else if (result.status == WalletModel::OK) {
+
+        displayMultiple();
+        fillWalletData();
+
+        if (result.status == WalletModel::OK)
             emit submit();
-        }
 
         if (zeroFee) // Unset
             walletModel->attemptToSendZeroFee(false);
-
-        // Update display with new fee info
-        displayMultiple();
     };
 
     // Unlock wallet context (for relock)
@@ -383,7 +375,7 @@ void BlocknetSendFunds4::onSubmit() {
 void BlocknetSendFunds4::onDisplayUnit(int unit) {
     displayUnit = unit;
     auto coinControl = model->getCoinControl(walletModel);
-    model->processFunds(walletModel, &coinControl);
+    model->prepareFunds(walletModel, &coinControl);
     displayMultiple();
     fillWalletData();
 }
