@@ -376,6 +376,46 @@ CNode* App::getNodeForService(std::string name)
     // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
+    if (name.find("/") != string::npos) {
+        std::vector<std::string> parts;
+        boost::split(parts, name, boost::is_any_of("/"));
+        std::string domain = parts[0];
+        std::string name_part = parts[1];
+        if (snodeDomains.count(domain)) {
+            XRouterSettings settings = snodeConfigs[snodeDomains[domain]];
+            if (!settings.hasPlugin(name_part))
+                return NULL;
+            
+            CNode* res = NULL;
+            for (CNode* pnode : vNodes) {
+                if (snodeDomains[domain] == pnode->addr.ToString()) {
+                    // This node is a running xrouter
+                    res = pnode;
+                    break;
+                }
+            }
+            
+            if (!res)
+                return NULL;
+            
+            std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+            double timeout = settings.getPluginSettings(name).get<double>("timeout", -1.0);
+            if (lastPacketsSent.count(res)) {
+                if (lastPacketsSent[res].count(name)) {
+                    std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[res][name];
+                    std::chrono::system_clock::duration diff = time - prev_time;
+                    if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
+                        return NULL;
+                    }
+                }
+            }
+            
+            return res;
+        } else {
+            return NULL;
+        }
+    }
+    
     LOCK(cs_vNodes);
     BOOST_FOREACH(const std::string key, snodeConfigs | boost::adaptors::map_keys)
     {
@@ -384,11 +424,16 @@ CNode* App::getNodeForService(std::string name)
             continue;
         
         CNode* res = NULL;
+        bool found = false;
         for (CNode* pnode : vNodes) {
             if (key == pnode->addr.ToString()) {
                 // This node is a running xrouter
+                if (found) {
+                    LOG() << "Ambiguous plugin call";
+                    return NULL;
+                }
                 res = pnode;
-                break;
+                found = true;
             }
         }
         

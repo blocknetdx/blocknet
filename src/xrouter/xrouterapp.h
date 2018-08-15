@@ -51,6 +51,7 @@ private:
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
     boost::container::map<std::string, XRouterSettings > snodeConfigs;
     static boost::container::map<CNode*, double > snodeScore;
+    boost::container::map<std::string, std::string > snodeDomains;
     
     XRouterSettings xrouter_settings;
     std::string xrouterpath;
