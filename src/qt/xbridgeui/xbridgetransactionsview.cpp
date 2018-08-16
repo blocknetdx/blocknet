@@ -47,6 +47,7 @@ void XBridgeTransactionsView::setupUi()
                                << xbridge::TransactionDescr::trPending
                                << xbridge::TransactionDescr::trAccepting
                                << xbridge::TransactionDescr::trHold
+                               << xbridge::TransactionDescr::trInitialized
                                << xbridge::TransactionDescr::trCreated
                                << xbridge::TransactionDescr::trSigned
                                << xbridge::TransactionDescr::trCommited;

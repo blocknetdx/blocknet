@@ -1458,6 +1458,8 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
     // opponent publick key
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
+    // TODO check fee transaction
+
     TransactionPtr tr = e.transaction(id);
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
