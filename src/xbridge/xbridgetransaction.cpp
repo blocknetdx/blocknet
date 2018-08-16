@@ -328,13 +328,6 @@ std::vector<unsigned char> Transaction::a_innerScript() const
 
 //*****************************************************************************
 //*****************************************************************************
-uint256 Transaction::a_datatxid() const
-{
-    return m_a_datatxid;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 std::vector<unsigned char> Transaction::a_pk1() const
 {
     return m_a.mpubkey();
@@ -441,18 +434,15 @@ bool Transaction::tryJoin(const TransactionPtr other)
 //*****************************************************************************
 //*****************************************************************************
 bool Transaction::setKeys(const std::vector<unsigned char> & addr,
-                                 const uint256 & datatxid,
-                                 const std::vector<unsigned char> & pk)
+                          const std::vector<unsigned char> & pk)
 {
     if (m_b.dest() == addr)
     {
-        m_b_datatxid = datatxid;
         m_b.setMPubkey(pk);
         return true;
     }
     else if (m_a.dest() == addr)
     {
-        m_a_datatxid = datatxid;
         m_a.setMPubkey(pk);
         return true;
     }

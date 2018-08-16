@@ -593,7 +593,7 @@ bool gettransaction(const std::string & rpcuser,
 
         Array d { Value(result.get_str()) };
         reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "decoderawtransaction", d);
-        
+
         const Value & result2 = find_value(reply, "result");
         const Value & error2  = find_value(reply, "error");
 
@@ -612,7 +612,7 @@ bool gettransaction(const std::string & rpcuser,
                                                    write_string(result2, true));
             return false;
         }
-        
+
         Object o = result2.get_obj();
 
         const Value & vouts = find_value(o, "vout");
@@ -1691,10 +1691,10 @@ double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, 
 // amount in - for check vout[0].value, out = vout[0].value
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::checkTransaction(const std::string & depositTxId,
-                                                          const std::string & /*destination*/,
-                                                          double & amount,
-                                                          bool & isGood)
+bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::string & depositTxId,
+                                                                 const std::string & /*destination*/,
+                                                                 double & amount,
+                                                                 bool & isGood)
 {
     isGood  = false;
 

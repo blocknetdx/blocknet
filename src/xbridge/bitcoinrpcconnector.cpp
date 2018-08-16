@@ -170,6 +170,7 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
     {
         Array outputs;
 
+        if (data.size() > 0)
         {
             Object out;
             std::string strdata = HexStr(data.begin(), data.end());
@@ -292,46 +293,10 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
     {
         TXERR() << "xdata sendrawtransaction " << rawtx;
         LOG() << "error send xdata transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
-//        QMessageBox::warning(this,
-//                             trUtf8("Send Coins"),
-//                             trUtf8("Failed, code %1\n%2").arg(QString::number(errCode), QString::fromStdString(errMessage)),
-//                             QMessageBox::Ok,
-//                             QMessageBox::Ok);
         return false;
     }
 
     return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool getDataFromTx(const std::string & strtxid, std::vector<unsigned char> & data)
-{
-    uint256 txid(strtxid);
-
-    CTransaction tx;
-    uint256 block;
-    if (!GetTransaction(txid, tx, block))
-    {
-        return false;
-    }
-
-    uint32_t cnt = 0;
-    const std::vector<CTxOut> & vout = tx.vout;
-    for (const CTxOut & out : vout)
-    {
-        auto it = out.scriptPubKey.begin();
-        opcodetype op;
-        out.scriptPubKey.GetOp(it, op);
-        if (op == OP_RETURN)
-        {
-            return out.scriptPubKey.GetOp(it, op, data);
-        }
-
-        ++cnt;
-    }
-
-    return false;
 }
 
 } // namespace rpc

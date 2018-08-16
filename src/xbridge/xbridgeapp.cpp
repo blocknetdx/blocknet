@@ -894,11 +894,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    if (pwalletMain->GetBalance() < connTo->serviceNodeFee)
-    {
-        return xbridge::Error::INSIFFICIENT_FUNDS_DX;
-    }
-
     uint64_t utxoAmount = 0;
     uint64_t fee1       = 0;
     uint64_t fee2       = 0;
@@ -1033,63 +1028,54 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
 //******************************************************************************
 bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
 {
-    // if (!ptr->packet)
+    if (ptr->from.size() == 0 || ptr->to.size() == 0)
     {
-        if (ptr->from.size() == 0 || ptr->to.size() == 0)
-        {
-            // TODO temporary
-            return false;
-        }
-
-        if (ptr->packet && ptr->packet->command() != xbcTransaction)
-        {
-            // not send pending packets if not an xbcTransaction
-            return false;
-        }
-        ptr->packet.reset(new XBridgePacket(xbcTransaction));
-
-        // field length must be 8 bytes
-        std::vector<unsigned char> fc(8, 0);
-        std::copy(ptr->fromCurrency.begin(), ptr->fromCurrency.end(), fc.begin());
-
-        // field length must be 8 bytes
-        std::vector<unsigned char> tc(8, 0);
-        std::copy(ptr->toCurrency.begin(), ptr->toCurrency.end(), tc.begin());
-
-        // 32 bytes - id of transaction
-        // 2x
-        // 20 bytes - address
-        //  8 bytes - currency
-        //  8 bytes - amount
-        // 32 bytes - hash of block when tr created
-        ptr->packet->append(ptr->id.begin(), 32);
-        ptr->packet->append(ptr->from);
-        ptr->packet->append(fc);
-        ptr->packet->append(ptr->fromAmount);
-        ptr->packet->append(ptr->to);
-        ptr->packet->append(tc);
-        ptr->packet->append(ptr->toAmount);
-        ptr->packet->append(util::timeToInt(ptr->created));
-        ptr->packet->append(ptr->blockHash.begin(), 32);
-
-
-        // utxo items
-        ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
-        for (const wallet::UtxoEntry & entry : ptr->usedCoins)
-        {
-            uint256 txid(entry.txId);
-            ptr->packet->append(txid.begin(), 32);
-            ptr->packet->append(entry.vout);
-            ptr->packet->append(entry.rawAddress);
-            ptr->packet->append(entry.signature);
-        }
-
+        // TODO temporary
+        return false;
     }
 
-    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
+    XBridgePacketPtr packet(new XBridgePacket(xbcTransaction));
+
+    // field length must be 8 bytes
+    std::vector<unsigned char> fc(8, 0);
+    std::copy(ptr->fromCurrency.begin(), ptr->fromCurrency.end(), fc.begin());
+
+    // field length must be 8 bytes
+    std::vector<unsigned char> tc(8, 0);
+    std::copy(ptr->toCurrency.begin(), ptr->toCurrency.end(), tc.begin());
+
+    // 32 bytes - id of transaction
+    // 2x
+    // 20 bytes - address
+    //  8 bytes - currency
+    //  8 bytes - amount
+    // 32 bytes - hash of block when tr created
+    packet->append(ptr->id.begin(), 32);
+    packet->append(ptr->from);
+    packet->append(fc);
+    packet->append(ptr->fromAmount);
+    packet->append(ptr->to);
+    packet->append(tc);
+    packet->append(ptr->toAmount);
+    packet->append(util::timeToInt(ptr->created));
+    packet->append(ptr->blockHash.begin(), 32);
+
+
+    // utxo items
+    packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
+    for (const wallet::UtxoEntry & entry : ptr->usedCoins)
+    {
+        uint256 txid(entry.txId);
+        packet->append(txid.begin(), 32);
+        packet->append(entry.vout);
+        packet->append(entry.rawAddress);
+        packet->append(entry.signature);
+    }
+
+    packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
     static std::vector<unsigned char> addr(20, 0);
-    onSend(addr, ptr->packet->body());
+    onSend(addr, packet->body());
 
     return true;
 }
@@ -1136,6 +1122,11 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     if (connTo->isDustAmount(static_cast<double>(ptr->toAmount) / TransactionDescr::COIN))
     {
         return xbridge::Error::DUST;
+    }
+
+    if (pwalletMain->GetBalance() < connTo->serviceNodeFee)
+    {
+        return xbridge::Error::INSIFFICIENT_FUNDS_DX;
     }
 
     uint64_t utxoAmount = 0;
@@ -1223,7 +1214,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 //******************************************************************************
 bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
 {
-    ptr->packet.reset(new XBridgePacket(xbcTransactionAccepting));
+    XBridgePacketPtr packet(new XBridgePacket(xbcTransactionAccepting));
 
     // field length must be 8 bytes
     std::vector<unsigned char> fc(8, 0);
@@ -1238,29 +1229,29 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
     // 20 bytes - address
     //  8 bytes - currency
     //  4 bytes - amount
-    ptr->packet->append(ptr->hubAddress);
-    ptr->packet->append(ptr->id.begin(), 32);
-    ptr->packet->append(ptr->from);
-    ptr->packet->append(fc);
-    ptr->packet->append(ptr->fromAmount);
-    ptr->packet->append(ptr->to);
-    ptr->packet->append(tc);
-    ptr->packet->append(ptr->toAmount);
+    packet->append(ptr->hubAddress);
+    packet->append(ptr->id.begin(), 32);
+    packet->append(ptr->from);
+    packet->append(fc);
+    packet->append(ptr->fromAmount);
+    packet->append(ptr->to);
+    packet->append(tc);
+    packet->append(ptr->toAmount);
 
     // utxo items
-    ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
+    packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
     for (const wallet::UtxoEntry & entry : ptr->usedCoins)
     {
         uint256 txid(entry.txId);
-        ptr->packet->append(txid.begin(), 32);
-        ptr->packet->append(entry.vout);
-        ptr->packet->append(entry.rawAddress);
-        ptr->packet->append(entry.signature);
+        packet->append(txid.begin(), 32);
+        packet->append(entry.vout);
+        packet->append(entry.rawAddress);
+        packet->append(entry.signature);
     }
 
-    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
+    packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
-    onSend(ptr->hubAddress, ptr->packet->body());
+    onSend(ptr->hubAddress, packet->body());
 
     ptr->state = TransactionDescr::trAccepting;
     xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
