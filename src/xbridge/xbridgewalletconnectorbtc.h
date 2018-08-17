@@ -65,10 +65,10 @@ public:
     double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const;
     double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const;
 
-    bool checkTransaction(const std::string & depositTxId,
-                          const std::string & /*destination*/,
-                          double & amount,
-                          bool & isGood);
+    bool checkDepositTransaction(const std::string & depositTxId,
+                                 const std::string & /*destination*/,
+                                 double & amount,
+                                 bool & isGood);
 
     uint32_t lockTime(const char role) const;
 
