@@ -2399,9 +2399,7 @@ bool CWallet::CreateTransaction(const vector<pair<CScript, CAmount> >& vecSend, 
 {
     vector<CRecipient> vecSend2;
     for (auto &t : vecSend) {
-        CRecipient r;
-        r.scriptPubKey = t.first;
-        r.nAmount = t.second;
+        CRecipient r{ t.first, t.second, coinControl ? coinControl->fSubtractFee : false };
         vecSend2.push_back(r);
     }
     return CreateTransaction(vecSend2, wtxNew, reservekey, nFeeRet, strFailReason, coinControl, coin_type, useIX, nFeePay, changePosition);
@@ -2411,9 +2409,7 @@ bool CWallet::CreateTransaction(CScript scriptPubKey, const CAmount& nValue, CWa
                                 std::string& strFailReason, const CCoinControl* coinControl, AvailableCoinsType coin_type, bool useIX, CAmount nFeePay,
                                 int *changePosition)
 {
-    CRecipient r;
-    r.scriptPubKey = scriptPubKey;
-    r.nAmount = nValue;
+    CRecipient r{scriptPubKey, nValue, coinControl ? coinControl->fSubtractFee : false };
     vector<CRecipient> vecSend{r};
     return CreateTransaction(vecSend, wtxNew, reservekey, nFeeRet, strFailReason, coinControl, coin_type, useIX, nFeePay, changePosition);
 }
