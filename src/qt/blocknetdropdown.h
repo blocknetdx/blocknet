@@ -21,7 +21,7 @@ public:
 
     QVariant value() const;
     void setValue(const QVariant& value);
-    void showPopup();
+    void showPopup() override;
 
 protected:
     void wheelEvent(QWheelEvent *e) override;

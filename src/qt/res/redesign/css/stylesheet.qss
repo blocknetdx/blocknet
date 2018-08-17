@@ -23,20 +23,9 @@ BlocknetLockMenu QPushButton:!hover { color: #016AFF; background-color: white; }
 BlocknetLockMenu QPushButton:hover { color: white; background-color: #016AFF; }
 BlocknetLockMenu #hdiv { background-color: #CCCCCC; }
 
-BlocknetDropdown { 
-    background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); 
-    selection-color: #FFFFFF; 
-    selection-background-color: #37475C; 
-    border: 1px solid #6F8097; 
-    color: #FFFFFF; 
-    font-size: 13px; 
-    font-family: "Roboto"; 
-}
+BlocknetDropdown { background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); selection-color: #FFFFFF; selection-background-color: #37475C; border: 1px solid #6F8097; color: #FFFFFF; font-size: 13px; font-family: "Roboto"; }
 BlocknetDropdown::drop-down { width: 35px; border: 0px; }
-BlocknetDropdown QAbstractItemView {
-    background: #6F8097;
-    background-color: #6F8097;
-}
+BlocknetDropdown QAbstractItemView { background: #6F8097; background-color: #6F8097; }
 
 BlocknetWallet #contentBox { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
 
@@ -72,14 +61,16 @@ QCheckBox { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px;
 QCheckBox::indicator:checked { image: url(:/redesign/checkmark-on); max-width: 20px; }
 QCheckBox::indicator:unchecked { image: url(:/redesign/checkmark-off); max-width: 20px; }
 QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; }
-QTableWidget::item { font-size: 13px; color: white; font-family: "Roboto"; }
+QTableWidget::item { font-size: 13px; color: white; font-family: "Roboto"; background-color: #172F49; }
+QTableWidget::item:alternate { background-color: #0F2743; }
 QTableWidget::item::selected { color: white; background-color: #016AFF; }
 QTableWidget QHeaderView, QTableWidget QHeaderView::section { background-color: #000D20; border-style: none; border: 0; }
 QTableWidget QHeaderView::section { font-size: 12px; color: #6F8097; font-family: "Roboto"; padding: 6px; }
 QTableWidget QHeaderView::section::selected { color: white; }
-QTableWidget QHeaderView::down-arrow, QTableWidget QHeaderView::up-arrow { color: white; }
 QTableWidget::indicator:checked { image: url(:/redesign/checkmark-on); }
 QTableWidget::indicator:unchecked { image: url(:/redesign/checkmark-off); }
+QTableView QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
+QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
 
 BlocknetLineEdit, QLineEdit { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
 BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #333333; color: #333333; }
@@ -98,13 +89,17 @@ BlocknetIconBtn #title { font-size: 12px; color: white; font-family: "Roboto"; }
 
 BlocknetProposals #h4 { padding-left: 1px; }
 BlocknetProposals #title { font-size: 12px; color: white; font-family: "Roboto"; }
-BlocknetProposals QTableView { background-color: rgba(55, 71, 92, 0); }
-BlocknetProposals QTableView QHeaderView { color: #37475C; background-color: rgba(55, 71, 92, 0); }
-BlocknetProposals QTableView QHeaderView::section { background-color: rgba(55, 71, 92, 0); }
-QTableView QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
-QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
-QTableWidget::item::selected { color: white; background-color: #016AFF; }
-/*BlocknetProposals QTableView QHeaderView::down-arrow { image: url("data:image/svg+xml;utf8,<svg fill='red' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>"); }*/
+BlocknetProposals QTableWidget { background-color: transparent; }
+BlocknetProposals QTableWidget QHeaderView { color: #37475C; background-color: transparent; }
+BlocknetProposals QTableWidget QHeaderView::section { background-color: transparent; }
+BlocknetProposals QTableWidget #indicator[state="0"] { background-color: #4BF5C6; }
+BlocknetProposals QTableWidget #indicator[state="1"] { background-color: #F8BF1C; }
+BlocknetProposals QTableWidget #indicator[state="2"] { background-color: #FB7F70; }
+BlocknetProposals QTableWidget::item { padding: 3px; }
+BlocknetProposalsVoteDialog { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
+BlocknetProposalsVoteDialog #description { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
+BlocknetProposalsVoteDialog #value { font-size: 13px; color: white; font-family: "Roboto"; bold: true; }
+BlocknetProposalsVoteDialog QRadioButton, BlocknetProposalsVoteDialog QCheckBox { font-size: 14px; }
 
 BlocknetDashboard #h4 { padding-left: 1px; }
 BlocknetDashboard #balanceLbl { font-size: 21px; color: #6F8097; font-family: "Roboto"; padding-top: 40px; }
