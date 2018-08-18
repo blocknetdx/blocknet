@@ -1,0 +1,6 @@
+before_script:
+  - docker info
+
+build_image:
+  script:
+    - docker build --build-arg cores=32 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME .
