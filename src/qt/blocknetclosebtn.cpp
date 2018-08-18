@@ -6,6 +6,8 @@
 
 #include <QPainter>
 #include <QPainterPath>
+#include <QPainterPathStroker>
+#include <QPen>
 
 BlocknetCloseBtn::BlocknetCloseBtn(qreal w, qreal h, QColor xColor, QColor fillColor, QWidget *parent) : QPushButton(parent),
                                                                      w(w), h(h), xColor(xColor), fillColor(fillColor),
@@ -29,10 +31,10 @@ void BlocknetCloseBtn::paintEvent(QPaintEvent *) {
     p3.lineTo(w - pad, h - pad);
     p3.moveTo(pad, h - pad);
     p3.lineTo(w - pad, pad);
-    QPen pen(xColor);
-    pen.setStyle(Qt::SolidLine);
-    pen.setWidth(1);
-    QPainterPathStroker stroke(pen);
+    QPainterPathStroker stroke;
+    stroke.setDashPattern(Qt::SolidLine);
+    stroke.setWidth(1);
     stroke.createStroke(p3);
+    QPen pen(xColor);
     p.strokePath(p3, pen);
 }

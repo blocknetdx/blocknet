@@ -7,6 +7,7 @@
 
 #include <QWidget>
 #include <QPushButton>
+#include <QPaintEvent>
 
 class BlocknetCloseBtn : public QPushButton {
     Q_OBJECT

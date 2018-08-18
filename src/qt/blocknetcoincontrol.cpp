@@ -438,7 +438,7 @@ void BlocknetCoinControl::setData(ModelPtr dataModel) {
 
         // confirmations
         auto *confItem = new BlocknetCoinControl::NumberItem;
-        confItem->setData(Qt::DisplayRole, d->confirmations);
+        confItem->setData(Qt::DisplayRole, QString::number(d->confirmations));
         table->setItem(i, COLUMN_CONFIRMATIONS, confItem);
 
         // priority
