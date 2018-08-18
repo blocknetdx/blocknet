@@ -1,4 +1,7 @@
 .git*/**
+*.o
+*.lo
+*.pb.*
 
 .DS_Store
 wallet.dat
