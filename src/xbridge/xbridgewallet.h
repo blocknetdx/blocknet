@@ -61,7 +61,7 @@ public:
         , dustAmount(0)
         , blockTime(0)
         , requiredConfirmations(0)
-        , serviceNodeFee(.025)
+        , serviceNodeFee(.015)
         , txWithTimeField(false)
         , isLockCoinsSupported(false)
     {
