@@ -57,6 +57,8 @@ BlocknetWallet #contentBox { background-color: QLinearGradient(x1: 0, y1: 0, x2:
 #warning { font-size: 12px; color: red; padding-left: 2px; margin-left: -2px; }
 #stretch { border: 0; background-color: transparent; }
 
+QMessageBox { background-color: #172F49; }
+QMessageBox QLabel { font-size: 13px; color: white; font-family: "Roboto"; font-weight: 25; }
 QScrollArea, QScrollArea #scrollAreaWidgetContents, QScrollArea #content { border: 0; }
 QRadioButton { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
 QRadioButton:disabled { color: #0C2448; }
