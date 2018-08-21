@@ -60,6 +60,9 @@ BlocknetWallet #contentBox { background-color: QLinearGradient(x1: 0, y1: 0, x2:
 QMessageBox { background-color: #172F49; }
 QMessageBox QLabel { font-size: 13px; color: white; font-family: "Roboto"; font-weight: 25; }
 QScrollArea, QScrollArea #scrollAreaWidgetContents, QScrollArea #content { border: 0; }
+QComboBox { padding-left: 5px; }
+QComboBox QAbstractItemView { background-color: #7b8ca2; font-size: 13px; color: white; font-family: "Roboto"; selection-background-color: #016AFF; }
+QComboBox QAbstractItemView::item { background-color: #7b8ca2; font-size: 13px; color: white; font-family: "Roboto"; }
 QRadioButton { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
 QRadioButton:disabled { color: #0C2448; }
 QRadioButton:indicator { width: 16px; height: 16px; border: 1px solid #6F8097; border-radius: 9px; }

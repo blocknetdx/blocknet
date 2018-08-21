@@ -7,6 +7,7 @@
 
 #include <QComboBox>
 #include <QVariant>
+#include <QWheelEvent>
 
 /* QComboBox that can be used with QDataWidgetMapper to select ordinal values from a model. */
 class BlocknetDropdown : public QComboBox
@@ -21,6 +22,9 @@ public:
     QVariant value() const;
     void setValue(const QVariant& value);
     void showPopup();
+
+protected:
+    void wheelEvent(QWheelEvent *e) override;
 
 signals:
     void valueChanged();

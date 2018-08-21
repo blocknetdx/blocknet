@@ -3,12 +3,18 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "blocknetdropdown.h"
+
 #include <QGridLayout>
 #include <QPixmap>
 #include <QLabel>
 #include <QAbstractItemView>
+#include <QStyleFactory>
+#include <QPoint>
 
 BlocknetDropdown::BlocknetDropdown(const QStringList &list, QWidget* parent) : QComboBox(parent) {
+#if defined(Q_OS_MAC)
+    this->setStyle(QStyleFactory::create("Windows"));
+#endif
     this->setObjectName("dropdown");
     this->setFixedSize(ddW, ddH);
     for (int i = 0; i < list.size(); i++) {
@@ -42,5 +48,8 @@ void BlocknetDropdown::showPopup() {
     QList<QFrame *> widgets = this->findChildren<QFrame*>();
     QWidget *popup = widgets[1];
     popup->setMinimumWidth(ddW);
-    popup->move(popup->x() + 8, popup->y() + ddH + currentIndex() * 20);
+}
+
+void BlocknetDropdown::wheelEvent(QWheelEvent *e) {
+    e->ignore();
 }
