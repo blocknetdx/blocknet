@@ -1,6 +1,26 @@
 before_script:
   - docker info
 
-build_image:
+build_linux:
+  stage: build
   script:
-    - docker build --build-arg cores=32 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME .
+  - mkdir -p $CI_PROJECT_DIR/dist/linux
+  - docker build -f Dockerfile-linux --build-arg cores=16 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-linux .
+  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-linux)" ]; then docker rm $CI_COMMIT_REF_NAME-linux; fi
+  - docker create --name=$CI_COMMIT_REF_NAME-linux blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-linux
+  - docker cp $CI_COMMIT_REF_NAME-linux:/usr/local/bin $CI_PROJECT_DIR/dist/linux
+  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-linux)" ]; then docker rm $CI_COMMIT_REF_NAME-linux; fi
+  artifacts:
+    name: "BLOCKDX-$CI_COMMIT_REF_NAME-linux"
+    paths:
+    - dist/linux/bin
+
+test_linux:
+  stage: test
+  script:
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknetdx-cli\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknetdxd\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknetdx-qt\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknetdx-tx\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_blocknetdx\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_blocknetdx-qt\" ];"
