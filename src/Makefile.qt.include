@@ -128,6 +128,10 @@ QT_MOC_CPP = \
   qt/moc_blocknetsendfundsdone.cpp \
   qt/moc_blocknetsendfundsutil.cpp \
   qt/moc_blocknetproposals.cpp \
+  qt/moc_blocknetcreateproposal.cpp \
+  qt/moc_blocknetcreateproposal1.cpp \
+  qt/moc_blocknetcreateproposal2.cpp \
+  qt/moc_blocknetcreateproposalutil.cpp \
   qt/moc_blocknetaddressbook.cpp \
   qt/moc_blocknetaddressedit.cpp \
   qt/moc_blocknettoolbar.cpp \
@@ -247,6 +251,10 @@ BITCOIN_QT_H = \
   qt/blocknetsendfundsdone.h \
   qt/blocknetsendfundsutil.h \
   qt/blocknetproposals.h \
+  qt/blocknetcreateproposal.h \
+  qt/blocknetcreateproposal1.h \
+  qt/blocknetcreateproposal2.h \
+  qt/blocknetcreateproposalutil.h \
   qt/blocknetaddressbook.h \
   qt/blocknetaddressedit.h \
   qt/blocknettoolbar.h \
@@ -415,6 +423,9 @@ BITCOIN_QT_CPP += \
   qt/blocknetsendfunds4.cpp \
   qt/blocknetsendfundsdone.cpp \
   qt/blocknetcoincontrol.cpp \
+  qt/blocknetcreateproposal.cpp \
+  qt/blocknetcreateproposal1.cpp \
+  qt/blocknetcreateproposal2.cpp \
   qt/blocknetwallet.cpp
 
 endif

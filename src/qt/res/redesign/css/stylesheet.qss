@@ -126,6 +126,7 @@ BlocknetProposalsVoteDialog { background-color: QLinearGradient(x1: 0, y1: 0, x2
 BlocknetProposalsVoteDialog #description { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
 BlocknetProposalsVoteDialog #value { font-size: 13px; color: white; font-family: "Roboto"; bold: true; }
 BlocknetProposalsVoteDialog QRadioButton, BlocknetProposalsVoteDialog QCheckBox { font-size: 14px; }
+BlocknetCreateProposalPage #detail { font-size: 14px; color: white; }
 
 BlocknetDashboard #h4 { padding-left: 1px; }
 BlocknetDashboard #balanceLbl { font-size: 21px; color: #6F8097; font-family: "Roboto"; padding-top: 40px; }
