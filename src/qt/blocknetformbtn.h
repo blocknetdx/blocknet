@@ -12,10 +12,14 @@ class BlocknetFormBtn : public QPushButton
     Q_OBJECT
 public:
     explicit BlocknetFormBtn(QPushButton *parent = nullptr);
-
+    void setID(QString id) { this->id = id; }
+    QString getID() { return this->id; }
 signals:
 
 public slots:
+
+private:
+    QString id;
 };
 
 #endif // BLOCKNETFORMBTN_H

@@ -107,6 +107,7 @@ QT_MOC_CPP = \
   qt/moc_blocknethdiv.cpp \
   qt/moc_blocknetdropdown.cpp \
   qt/moc_blockneticonbtn.cpp \
+  qt/moc_blockneticonaltbtn.cpp \
   qt/moc_blockneticonlabel.cpp \
   qt/moc_blocknetleftmenu.cpp \
   qt/moc_blocknetlineedit.cpp \
@@ -119,6 +120,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetsendfunds4.cpp \
   qt/moc_blocknetsendfundsdone.cpp \
   qt/moc_blocknetsendfundsutil.cpp \
+  qt/moc_blocknetproposals.cpp \
   qt/moc_blocknettoolbar.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetcoincontrol.cpp \
@@ -215,6 +217,7 @@ BITCOIN_QT_H = \
   qt/blocknethdiv.h \
   qt/blocknetdropdown.h \
   qt/blockneticonbtn.h \
+  qt/blockneticonaltbtn.h \
   qt/blockneticonlabel.h \
   qt/blocknetleftmenu.h \
   qt/blocknetlineedit.h \
@@ -227,6 +230,7 @@ BITCOIN_QT_H = \
   qt/blocknetsendfunds4.h \
   qt/blocknetsendfundsdone.h \
   qt/blocknetsendfundsutil.h \
+  qt/blocknetproposals.h \
   qt/blocknettoolbar.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \
@@ -329,11 +333,13 @@ BITCOIN_QT_CPP = \
   qt/blocknetcircle.cpp \
   qt/blocknetclosebtn.cpp \
   qt/blocknetdashboard.cpp \
+  qt/blocknetproposals.cpp \
   qt/blocknetfontmgr.cpp \
   qt/blocknetformbtn.cpp \
   qt/blocknethdiv.cpp \
   qt/blocknetdropdown.cpp \
   qt/blockneticonbtn.cpp \
+  qt/blockneticonaltbtn.cpp \
   qt/blockneticonlabel.cpp \
   qt/blocknetleftmenu.cpp \
   qt/blocknetlineedit.cpp \
@@ -438,6 +444,8 @@ RES_IMAGES = \
   qt/res/redesign/icons/UtilityBar/StakingNodeIconActive.png \
   qt/res/redesign/icons/UtilityBar/StakingNodeIconInactive.png \
   qt/res/redesign/icons/UtilityBar/UnlockedIcon.png \
+  qt/res/redesign/icons/Table/HeaderViewArrowUp.png \
+  qt/res/redesign/icons/Table/HeaderViewArrowDown.png \
   qt/res/redesign/icons/checkmark-on.png \
   qt/res/redesign/icons/checkmark-off.png \
   qt/res/redesign/fonts/Roboto/Roboto-Black.ttf \

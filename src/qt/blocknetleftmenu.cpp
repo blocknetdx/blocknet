@@ -153,7 +153,6 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
 
     connect(group, SIGNAL(buttonToggled(int, bool)), this, SLOT(onMenuSelected(int, bool)));
 
-    proposals->setObjectName("disabled"); proposals->setEnabled(false); proposals->setToolTip(tr("Coming soon"));
     announcements->setObjectName("disabled"); announcements->setEnabled(false); announcements->setToolTip(tr("Coming soon"));
 }
 
