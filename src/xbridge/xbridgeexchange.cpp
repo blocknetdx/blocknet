@@ -545,10 +545,9 @@ bool Exchange::updateTransactionWhenHoldApplyReceived(const TransactionPtr & tx,
 //*****************************************************************************
 bool Exchange::updateTransactionWhenInitializedReceived(const TransactionPtr &tx,
                                                         const std::vector<unsigned char> & from,
-                                                        const uint256 & datatxid,
                                                         const std::vector<unsigned char> & pk)
 {
-    if (!tx->setKeys(from, datatxid, pk))
+    if (!tx->setKeys(from, pk))
     {
         // wtf?
         LOG() << "unknown sender address for transaction, id <" << tx->id().GetHex() << ">";

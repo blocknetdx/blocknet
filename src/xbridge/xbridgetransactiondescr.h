@@ -85,11 +85,6 @@ struct TransactionDescr
     std::string                depositP2SH;
     std::vector<unsigned char> innerScript;
 
-    // prevtxs for signrawtransaction
-    // std::string                prevtxs;
-
-    XBridgePacketPtr           packet;
-
     // local created key (for exchange)
     std::vector<unsigned char>    mPubKey;
     std::vector<unsigned char>    mPrivKey;
