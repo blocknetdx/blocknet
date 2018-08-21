@@ -61,7 +61,7 @@ public:
         auto & ios = stream.get_io_service();
         tcp::resolver resolver(ios);
         tcp::resolver::iterator endpoint_iterator;
-	connect_ec = boost::asio::error::host_not_found;
+        connect_ec = boost::asio::error::host_not_found;
         try {
             // The default query (flags address_configured) tries IPv6 if
             // non-localhost IPv6 configured, and IPv4 if non-localhost IPv4
@@ -69,16 +69,16 @@ public:
             tcp::resolver::query query(server.c_str(), port.c_str());
             endpoint_iterator = resolver.resolve(query);
         } catch (boost::system::system_error& e) {
-	    LogPrint("net", "SSLIOStreamDevice: exception resolving %s:%s: %s\n", server, port, e.what());
+            LogPrint("net", "SSLIOStreamDevice: exception resolving %s:%s: %s\n", server, port, e.what());
             // If we at first don't succeed, try blanket lookup (IPv4+IPv6 independent of configured interfaces)
             try {
                 tcp::resolver::query query(server.c_str(), port.c_str(), resolver_query_base::flags());
                 endpoint_iterator = resolver.resolve(query);
-	        connect_ec = boost::asio::error::host_not_found;
+                connect_ec = boost::asio::error::host_not_found;
             } catch (boost::system::system_error& e) {
-	        LogPrint("net", "SSLIOStreamDevice: exception resolving %s:%s: %s\n", server, port, e.what());
- 	        connect_ec = e.code();
-	        return false;
+                LogPrint("net", "SSLIOStreamDevice: exception resolving %s:%s: %s\n", server, port, e.what());
+                connect_ec = e.code();
+                return false;
             }
         }
         try {
@@ -101,8 +101,8 @@ public:
             deadline.async_wait([&](const boost::system::error_code& ec) {
                 // Timer expired or was cancelled
                 LogPrint("net", "SSLIOStreamDevice: async_wait(): deadline=%fsec %s %s:%s\n",
-			 std::chrono::duration<double>(timeout).count(),
-			 ec ? ec.message() : "timer expired", server, port);
+                    std::chrono::duration<double>(timeout).count(),
+                    ec ? ec.message() : "timer expired", server, port);
                 if (!connect_ec) return; // async_connect was successful
                 // Note: race condition here: connection might succeed before socket is closed,
                 //       not worth using a mutex, but must set error code after closing
@@ -111,9 +111,9 @@ public:
               });
             socket.async_connect(*endpoint_iterator++, [&](const boost::system::error_code& ec) {
                 // Connection completed or was cancelled
-                LogPrint("net", "SSLIOStreamDevice: async_connect(): %s %s:%s\n", ec ? ec.message() : "connected to", server, port);
-                deadline.expires_from_now(timeout); // cancel async_wait
                 connect_ec = ec;
+                deadline.expires_from_now(timeout); // cancel async_wait
+                LogPrint("net", "SSLIOStreamDevice: async_connect(): %s %s:%s\n", ec ? ec.message() : "connected to", server, port);
               });
             // concurrently run async_wait and async_connect
             ios.run(); // blocks until both handlers have run
