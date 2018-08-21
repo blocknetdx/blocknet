@@ -58,6 +58,8 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
     ui->proxyPort->setEnabled(false);
     ui->proxyPort->setValidator(new QIntValidator(1, 65535, this));
 
+    ui->coinControlFeatures->setHidden(true); // The new wallet design no longer requires coincontrol to be explicitly set
+
     connect(ui->connectSocks, SIGNAL(toggled(bool)), ui->proxyIp, SLOT(setEnabled(bool)));
     connect(ui->connectSocks, SIGNAL(toggled(bool)), ui->proxyPort, SLOT(setEnabled(bool)));
 

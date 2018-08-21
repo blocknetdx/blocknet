@@ -65,7 +65,7 @@ public:
     int getDisplayUnit() { return nDisplayUnit; }
     QString getThirdPartyTxUrls() { return strThirdPartyTxUrls; }
     bool getProxySettings(QNetworkProxy& proxy) const;
-    bool getCoinControlFeatures() { return fCoinControlFeatures; }
+    bool getCoinControlFeatures() { return true; } // coin control on by default
     const QString& getOverriddenByCommandLine() { return strOverriddenByCommandLine; }
 
     /* Restart flag helper */
