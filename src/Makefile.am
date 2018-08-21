@@ -145,6 +145,7 @@ BITCOIN_CORE_H = \
   script/script_error.h \
   serialize.h \
   spork.h \
+  ssliostreamdevice.h \
   streams.h \
   support/cleanse.h \
   sync.h \

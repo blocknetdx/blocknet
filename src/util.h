@@ -58,6 +58,10 @@ extern bool fLogTimestamps;
 extern bool fLogIPs;
 extern volatile bool fReopenDebugLog;
 
+/** -timeout default */
+static const int DEFAULT_CONNECT_TIMEOUT = 5000;
+extern int nConnectTimeout;
+
 void SetupEnvironment();
 
 /** Return true if log accepts specified category */

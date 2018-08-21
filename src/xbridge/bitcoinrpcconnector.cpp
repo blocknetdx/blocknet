@@ -106,7 +106,9 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
     iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
     if (!d.connect(rpcip, rpcport))
-        throw runtime_error("couldn't connect to server");
+      throw runtime_error("couldn't connect to "
+			  + rpcip +":"+ rpcport
+			  +" : "+ d.connect_error_code().message());
 
     // HTTP basic authentication
     string strUserPass64 = util::base64_encode(rpcuser + ":" + rpcpasswd);
