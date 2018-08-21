@@ -16,7 +16,7 @@ class BlocknetDropdown : public QComboBox
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
 
 public:
-    explicit BlocknetDropdown(const QStringList &list, QWidget* parent = 0);
+    explicit BlocknetDropdown(const QStringList &list, QWidget* parent = nullptr);
 
     QVariant value() const;
     void setValue(const QVariant& value);
@@ -27,6 +27,10 @@ signals:
 
 private slots:
     void handleSelectionChanged(int idx);
+
+private:
+    const int ddW = 180;
+    const int ddH = 40;
 };
 
 #endif // BLOCKNETDROPDOWN_H

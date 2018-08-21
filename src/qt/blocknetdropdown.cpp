@@ -10,7 +10,7 @@
 
 BlocknetDropdown::BlocknetDropdown(const QStringList &list, QWidget* parent) : QComboBox(parent) {
     this->setObjectName("dropdown");
-    this->setFixedSize(180, 40);
+    this->setFixedSize(ddW, ddH);
     for (int i = 0; i < list.size(); i++) {
         this->addItem(list[i]);
     }
@@ -41,6 +41,6 @@ void BlocknetDropdown::showPopup() {
     QComboBox::showPopup();
     QList<QFrame *> widgets = this->findChildren<QFrame*>();
     QWidget *popup = widgets[1];
-    popup->setMinimumWidth(180);
-    popup->move(popup->x() + 8, popup->y() + this->height() + currentIndex() * 20);
+    popup->setMinimumWidth(ddW);
+    popup->move(popup->x() + 8, popup->y() + ddH + currentIndex() * 20);
 }
