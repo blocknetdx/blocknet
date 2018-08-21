@@ -67,6 +67,7 @@ private slots:
 protected:
     void keyPressEvent(QKeyEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
+    void hideEvent(QHideEvent *qHideEvent) override;
 
 private:
     int displayUnit;

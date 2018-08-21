@@ -61,7 +61,7 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *pa
     feePanel->setContentsMargins(20, 0, 20, 0);
     feePanel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     feePanelLayout = new QGridLayout;
-    feePanelLayout->setHorizontalSpacing(40);
+    feePanelLayout->setHorizontalSpacing(30);
     feePanel->setLayout(feePanelLayout);
     feePanel->setHidden(true);
 
@@ -109,7 +109,7 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *pa
     contentLayout->addWidget(feePanel);
     contentLayout->addWidget(btnBox);
 
-    this->resize(960, 680);
+    this->resize(1010, 680);
 
     connect(confirmBtn, &QPushButton::clicked, this, [this]() {
         emit accept();

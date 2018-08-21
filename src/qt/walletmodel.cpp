@@ -566,7 +566,7 @@ WalletModel::FeeResult WalletModel::getFeeInfo(QVector<CoinInput> &inputs, CAmou
     }
 
     return FeeResult{
-        nPayAmount,
+        nAmount,
         nPayFee,
         nAfterFee,
         nChange,
