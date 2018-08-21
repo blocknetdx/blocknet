@@ -342,7 +342,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     connect(ccSplitOutputCb, SIGNAL(toggled(bool)), this, SLOT(onSplitChanged()));
     connect(ccSplitOutputTi, SIGNAL(editingFinished()), this, SLOT(onSplitChanged()));
     connect(ccInputsBtn, &QPushButton::clicked, this, [this]() {
-        updateCoinControl(); ccDialog->setPayAmount(model->totalRecipientsAmount()); ccDialog->exec();
+        updateCoinControl(); ccDialog->setPayAmount(model->totalRecipientsAmount()); ccDialog->show();
     });
 }
 
@@ -523,6 +523,12 @@ void BlocknetSendFunds2::keyPressEvent(QKeyEvent *event) {
         onNext();
     else if (event->key() == Qt::Key_Escape)
         onBack();
+}
+
+void BlocknetSendFunds2::hideEvent(QHideEvent *qHideEvent) {
+    if (ccDialog->isVisible())
+        ccDialog->reject();
+    QWidget::hideEvent(qHideEvent);
 }
 
 /**
