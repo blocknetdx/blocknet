@@ -67,6 +67,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     table->setColumnCount(COLUMN_PADDING2 + 1);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setFocusPolicy(Qt::NoFocus);
     table->setAlternatingRowColors(true);
     table->setColumnWidth(COLUMN_COLOR, 3);
@@ -137,7 +138,17 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     timer->start(timerInterval);
 
     //connect(createproposal, SIGNAL(clicked()), this, SLOT(onCreateProposal()));
-    connect(table->horizontalHeader(), SIGNAL(sectionClicked(int)), this, SLOT(recordSelected()));
+    connect(table, &QTableWidget::itemSelectionChanged, this, [this]() {
+        lastSelection = QDateTime::currentMSecsSinceEpoch();
+    });
+    connect(table, &QTableWidget::itemClicked, this, [this](QTableWidgetItem *item) {
+        if (item && item->row() == lastRow && (QDateTime::currentMSecsSinceEpoch() - lastSelection > 250)) // defeat event loop w/ time check
+            table->clearSelection();
+        auto items = table->selectedItems();
+        if (items.count() > 0)
+            lastRow = items[0]->row();
+        else lastRow = -1;
+    });
     connect(table, &QTableWidget::customContextMenuRequested, this, &BlocknetProposals::showContextMenu);
     connect(proposalsDropdown, &BlocknetDropdown::valueChanged, this, &BlocknetProposals::onFilter);
 
@@ -244,12 +255,10 @@ void BlocknetProposals::initialize() {
             }
         }
 
-        bool userVoted = false;
         int userVoteInt = -1;
         auto userVote = QString();
         for (auto &vote : proposal->mapVotes) {
             if (proposal->GetHash() == vote.second.nProposalHash && hasVote(vote.second.vin)) {
-                userVoted = true;
                 userVote = QString::fromStdString(vote.second.GetVoteString());
                 userVoteInt = vote.second.nVote;
                 break;
@@ -676,23 +685,6 @@ void BlocknetProposals::unwatch() {
 void BlocknetProposals::watch() {
     table->setEnabled(true);
     connect(table, &QTableWidget::itemChanged, this, &BlocknetProposals::onItemChanged);
-}
-
-void BlocknetProposals::recordSelected() {
-    unwatch();
-    for (int i=0; i<table->rowCount(); i++) {
-        for (int j=0; j<table->columnCount(); j++) {
-            QColor backgroundColor = QColor(17, 41, 65);
-            if (i%2 == 0) {
-                backgroundColor = QColor(23, 47, 73);
-            }
-            if (j != 0) {
-                QTableWidgetItem *item = table->item(i,j);
-                item->setBackgroundColor(backgroundColor);
-            }
-        }
-    }
-    watch();
 }
 
 void BlocknetProposals::showContextMenu(QPoint pt) {

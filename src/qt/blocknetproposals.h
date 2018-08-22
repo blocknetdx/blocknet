@@ -72,7 +72,6 @@ public slots:
 private slots:
     void onItemChanged(QTableWidgetItem *item);
     void onFilter();
-    void recordSelected();
 
 private:
     QVBoxLayout *layout;
@@ -87,6 +86,8 @@ private:
     QVector<Proposal> dataModel;
     QVector<Proposal> filteredData;
     QTimer *timer;
+    int lastRow = -1;
+    qint64 lastSelection = 0;
     bool syncInProgress = false;
 
     void initialize();
