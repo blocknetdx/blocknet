@@ -84,6 +84,7 @@ QTableView QHeaderView::up-arrow, QTableView QHeaderView::up-arrow { image: url(
 
 BlocknetLineEdit, QLineEdit { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
 BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #333333; color: #333333; }
+BlocknetLineEditWithTitle #h1 { font-size: 12px; color: #6F8097 }
 BlocknetAddressEditor { font-size: 13px; color: white; font-family: "Roboto"; padding-top: 3px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
 BlocknetAddressEditor:disabled { border: 1px solid #333333; color: #333333; }
 BlocknetAddressEditor #placeholder { font-size: 13px; color: #666666; font-family: "Roboto"; }
@@ -147,6 +148,9 @@ BlocknetSendFunds #sendFundsList { font-size: 13px; color: white; font-family: "
 BlocknetSendFunds #body { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
 
 BlocknetQuickSend #address { max-width: 500px; }
+
+BlocknetAddressEdit #h2 { padding-left: 10px; }
+BlocknetAddressEdit #h4 { padding-left: 10px; }
 
 BlocknetTransactionHistory { border: 0; }
 BlocknetTransactionHistory::item { border: 0; qproperty-alignment:left; }
