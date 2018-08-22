@@ -139,7 +139,7 @@ private:
 class BlocknetCoinControlDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit BlocknetCoinControlDialog(WalletModel *w, QWidget *parent = nullptr);
+    explicit BlocknetCoinControlDialog(WalletModel *w, QWidget *parent = nullptr, Qt::WindowFlags f = 0);
     void resizeEvent(QResizeEvent *evt) override;
     void clear() {
         payAmount = 0;

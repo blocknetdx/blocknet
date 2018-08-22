@@ -22,7 +22,8 @@
  * @brief Dialog encapsulates the coin control table. The default size is 960x580
  * @param parent
  */
-BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *parent) : QDialog(parent), walletModel(w) {
+BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *parent, Qt::WindowFlags f) : QDialog(parent, f),
+                                                                                                           walletModel(w) {
     //this->setStyleSheet("border: 1px solid red;");
     this->setContentsMargins(QMargins());
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);

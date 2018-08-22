@@ -331,7 +331,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     layout->addWidget(btnBox);
 
     // Coin control
-    ccDialog = new BlocknetCoinControlDialog(w);
+    ccDialog = new BlocknetCoinControlDialog(w, nullptr, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
     ccDialog->setStyleSheet(GUIUtil::loadStyleSheet());
 
     connect(ccDefaultRb, SIGNAL(toggled(bool)), this, SLOT(onCoinControl()));
