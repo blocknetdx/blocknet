@@ -111,6 +111,7 @@ QT_MOC_CPP = \
   qt/moc_blockneticonlabel.cpp \
   qt/moc_blocknetleftmenu.cpp \
   qt/moc_blocknetlineedit.cpp \
+  qt/moc_blocknetlineeditwithtitle.cpp \
   qt/moc_blocknetlockmenu.cpp \
   qt/moc_blocknetquicksend.cpp \
   qt/moc_blocknetsendfunds.cpp \
@@ -221,6 +222,7 @@ BITCOIN_QT_H = \
   qt/blockneticonlabel.h \
   qt/blocknetleftmenu.h \
   qt/blocknetlineedit.h \
+  qt/blocknetlineeditwithtitle.h \
   qt/blocknetlockmenu.h \
   qt/blocknetquicksend.h \
   qt/blocknetsendfunds.h \
@@ -343,6 +345,7 @@ BITCOIN_QT_CPP = \
   qt/blockneticonlabel.cpp \
   qt/blocknetleftmenu.cpp \
   qt/blocknetlineedit.cpp \
+  qt/blocknetlineeditwithtitle.cpp \
   qt/blocknetlockmenu.cpp \
   qt/blocknettoolbar.cpp \
   qt/blocknetsendfundsrequest.cpp
