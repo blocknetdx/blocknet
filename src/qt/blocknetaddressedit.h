@@ -13,6 +13,7 @@
 #include <QFrame>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QRadioButton>
 
 class BlocknetAddressEdit : public QFrame {
     Q_OBJECT
@@ -30,6 +31,8 @@ private:
     QLabel *titleLbl;
     BlocknetLineEditWithTitle *addressTi;
     BlocknetLineEditWithTitle *aliasTi;
+    QRadioButton *myAddressBtn;
+    QRadioButton *otherUserBtn;
     BlocknetFormBtn *confirmBtn;
     BlocknetFormBtn *cancelBtn;
 };

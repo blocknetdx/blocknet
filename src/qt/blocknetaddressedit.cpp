@@ -25,38 +25,43 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, bool e, QFrame *parent)
     titleLbl->setObjectName("h2");
 
     addressTi = new BlocknetLineEditWithTitle(tr("Address"), tr("Enter Address..."), 675);
-    //addressTi->setObjectName("proposal");
-
     aliasTi = new BlocknetLineEditWithTitle(tr("Alias (optional)"), tr("Enter alias..."));
-    //BlocknetLineEditWithTitle->setObjectName("url");
 
-    /*auto *compactGrid = new QFrame;
-    QGridLayout *gridLayout = new QGridLayout;
-    gridLayout->setContentsMargins(QMargins());
-    gridLayout->setVerticalSpacing(0);
-    compactGrid->setLayout(gridLayout);*/
+    auto *radioGrid = new QFrame;
+    radioGrid->setObjectName("radioGrid");
+    QGridLayout *radioLayout = new QGridLayout;
+    radioLayout->setContentsMargins(QMargins());
+    radioLayout->setVerticalSpacing(0);
+    radioLayout->setColumnStretch(0, 0);
+    radioLayout->setColumnStretch(1, 1);
+    radioGrid->setLayout(radioLayout);
 
-    /*gridLayout->addWidget(paymentCountTi, 0, 0);
-    gridLayout->addWidget(superBlockTi, 0, 1);
-    gridLayout->addWidget(amountTi, 1, 0);*/
+    myAddressBtn = new QRadioButton(tr("My Address"));
+    otherUserBtn = new QRadioButton(tr("Other User"));
+    otherUserBtn->setObjectName("otherUserBtn");
+
+    radioLayout->addWidget(myAddressBtn, 0, 0);
+    radioLayout->addWidget(otherUserBtn, 0, 1);
 
     auto *div1 = new BlocknetHDiv;
 
-    /*auto *buttonGrid = new QFrame;
+    auto *buttonGrid = new QFrame;
     QGridLayout *buttonLayout = new QGridLayout;
     buttonLayout->setContentsMargins(15, 0, 15, 0);
     buttonLayout->setColumnStretch(0, 0);
     buttonLayout->setColumnStretch(1, 2);
-    buttonGrid->setLayout(buttonLayout);*/
+    buttonGrid->setLayout(buttonLayout);
 
-    /*continueBtn = new BlocknetFormBtn;
-    continueBtn->setText(tr("Continue"));
+    confirmBtn = new BlocknetFormBtn;
+    QString buttonString = QString("Add Address");
+    if (editMode) buttonString = QString("Apply");
+    confirmBtn->setText(buttonString);
     cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");
     cancelBtn->setText(tr("Cancel"));
 
     buttonLayout->addWidget(cancelBtn, 0, 0, Qt::AlignLeft);
-    buttonLayout->addWidget(continueBtn, 0, 1, Qt::AlignLeft);*/
+    buttonLayout->addWidget(confirmBtn, 0, 1, Qt::AlignLeft);
 
     layout->addWidget(addressLbl);
     layout->addSpacing(45);
@@ -64,6 +69,12 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, bool e, QFrame *parent)
     layout->addSpacing(20);
     layout->addWidget(addressTi);
     layout->addWidget(aliasTi);
+    layout->addSpacing(20);
+    layout->addWidget(radioGrid);
+    layout->addSpacing(30);
+    layout->addWidget(div1);
+    layout->addSpacing(60);
+    layout->addWidget(buttonGrid);
     layout->addStretch(1);
 }
 
