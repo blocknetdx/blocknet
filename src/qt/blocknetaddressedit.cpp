@@ -9,7 +9,7 @@
 #include <QKeyEvent>
 #include <QDoubleValidator>
 
-BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, bool e, QFrame *parent) : QFrame(parent), editMode(e), walletModel(w),
+BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, QString t, QString b, QFrame *parent) : QFrame(parent), title(t), buttonString(b), walletModel(w),
                                                                                  layout(new QVBoxLayout) {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setLayout(layout);
@@ -19,9 +19,7 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, bool e, QFrame *parent)
     addressLbl = new QLabel(tr("Address Book"));
     addressLbl->setObjectName("h4");
 
-    QString titleString = QString("Add Address");
-    if (editMode) titleString = QString("Edit Address");
-    QLabel *titleLbl = new QLabel(titleString);
+    QLabel *titleLbl = new QLabel(title);
     titleLbl->setObjectName("h2");
 
     addressTi = new BlocknetLineEditWithTitle(tr("Address"), tr("Enter Address..."), 675);
@@ -53,8 +51,6 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, bool e, QFrame *parent)
     buttonGrid->setLayout(buttonLayout);
 
     confirmBtn = new BlocknetFormBtn;
-    QString buttonString = QString("Add Address");
-    if (editMode) buttonString = QString("Apply");
     confirmBtn->setText(buttonString);
     cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");

@@ -18,14 +18,15 @@
 class BlocknetAddressEdit : public QFrame {
     Q_OBJECT
 public:
-    explicit BlocknetAddressEdit(WalletModel *w, bool editMode = false, QFrame *parent = nullptr);
+    explicit BlocknetAddressEdit(WalletModel *w, QString title = "Edit Address", QString buttonString = "Apply", QFrame *parent = nullptr);
 
 public slots:
     void clear();
 
 private:
     WalletModel *walletModel;
-    bool editMode;
+    QString title;
+    QString buttonString;
     QVBoxLayout *layout;
     QLabel *addressLbl;
     QLabel *titleLbl;
