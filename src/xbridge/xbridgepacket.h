@@ -278,20 +278,22 @@ public:
     enum
     {
         // header, size, version, command, timestamp, pubkey, signature
-        headerSize             = 8*sizeof(uint32_t)+33+64,
-        commandSize            = sizeof(uint32_t),
-        timestampSize          = sizeof(uint32_t),
-        addressSize            = 20,
+        headerSize                = 8*sizeof(uint32_t)+33+64,
+        commandSize               = sizeof(uint32_t),
+        timestampSize             = sizeof(uint32_t),
+        addressSize               = 20,
 
-        hashSize               = 32,
+        hashSize                  = 32,
 
-        privkeySize            = 32,
+        privkeySize               = 32,
 
-        pubkeySize             = 33,
-        uncompressedPubkeySize = 65,
+        pubkeySizeRaw             = 32,
+        pubkeySize                = 33,
+        uncompressedPubkeySizeRaw = 64,
+        uncompressedPubkeySize    = 65,
 
-        rawSignatureSize       = 64,
-        signatureSize          = 65
+        rawSignatureSize          = 64,
+        signatureSize             = 65
     };
 
     uint32_t     size()    const     { return sizeField(); }
