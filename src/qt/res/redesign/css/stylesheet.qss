@@ -153,6 +153,7 @@ BlocknetAddressEdit #h2 { padding-left: 10px; }
 BlocknetAddressEdit #h4 { padding-left: 10px; }
 BlocknetAddressEdit #radioGrid { padding-left: 10px; }
 BlocknetAddressEdit #otherUserBtn { padding-left: 50px; }
+BlocknetAddressEdit BlocknetLineEdit { max-width: 500px; }
 
 BlocknetTransactionHistory { border: 0; }
 BlocknetTransactionHistory::item { border: 0; qproperty-alignment:left; }

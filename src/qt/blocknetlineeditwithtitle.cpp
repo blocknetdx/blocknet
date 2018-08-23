@@ -6,14 +6,13 @@
 #include "blocknetlineeditwithtitle.h"
 
 BlocknetLineEditWithTitle::BlocknetLineEditWithTitle(QString title, QString placeholder, int w, int h, QFrame *parent) : QFrame(parent), layout(new QVBoxLayout) {
-    this->setMinimumSize(w, h);
     this->setLayout(layout);
 
     titleLbl = new QLabel(title);
     titleLbl->setObjectName("h1");
     layout->addWidget(titleLbl);
 
-    lineEdit = new BlocknetLineEdit;
+    lineEdit = new BlocknetLineEdit(w, h);
     lineEdit->setPlaceholderText(placeholder);
     layout->addWidget(lineEdit);
 }

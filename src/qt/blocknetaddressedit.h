@@ -20,8 +20,19 @@ class BlocknetAddressEdit : public QFrame {
 public:
     explicit BlocknetAddressEdit(WalletModel *w, QString title = "Edit Address", QString buttonString = "Apply", QFrame *parent = nullptr);
 
+    bool validated();
+
+signals:
+    void next();
+
 public slots:
     void clear();
+    void addressChanged();
+    void aliasChanged();
+    void onApply() { emit next(); }
+protected:
+    void keyPressEvent(QKeyEvent *event);
+    void focusInEvent(QFocusEvent *event);
 
 private:
     WalletModel *walletModel;

@@ -22,7 +22,7 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, QString t, QString b, Q
     QLabel *titleLbl = new QLabel(title);
     titleLbl->setObjectName("h2");
 
-    addressTi = new BlocknetLineEditWithTitle(tr("Address"), tr("Enter Address..."), 675);
+    addressTi = new BlocknetLineEditWithTitle(tr("Address"), tr("Enter Address..."));
     aliasTi = new BlocknetLineEditWithTitle(tr("Alias (optional)"), tr("Enter alias..."));
 
     auto *radioGrid = new QFrame;
@@ -72,8 +72,36 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, QString t, QString b, Q
     layout->addSpacing(60);
     layout->addWidget(buttonGrid);
     layout->addStretch(1);
+
+    connect(addressTi, SIGNAL(textChanged()), this, SLOT(addressChanged()));
+    connect(aliasTi, SIGNAL(textChanged()), this, SLOT(aliasChanged()));
+    connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onApply()));
 }
 
 void BlocknetAddressEdit::clear() {
-    //proposalTi->clear();
+    addressTi->lineEdit->clear();
+    aliasTi->lineEdit->clear();
+}
+
+void BlocknetAddressEdit::focusInEvent(QFocusEvent *event) {
+    QWidget::focusInEvent(event);
+    addressTi->setFocus();
+}
+
+void BlocknetAddressEdit::keyPressEvent(QKeyEvent *event) {
+    QWidget::keyPressEvent(event);
+    if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
+        onApply();
+}
+
+bool BlocknetAddressEdit::validated() {
+    return true;
+}
+
+void BlocknetAddressEdit::addressChanged() {
+    //auto addresses = addressTi->getAddresses();
+}
+
+void BlocknetAddressEdit::aliasChanged() {
+    //auto addresses = aliasTi->getAddresses();
 }
