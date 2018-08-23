@@ -1372,11 +1372,12 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             std::string strInfo = write_string(Value(info));
 
             uint32_t keyCounter = 0;
-            for (auto si = strInfo.begin(); si < strInfo.end(); si += XBridgePacket::uncompressedPubkeySize)
+            for (auto si = strInfo.begin(); si < strInfo.end(); si += XBridgePacket::uncompressedPubkeySizeRaw)
             {
-                std::vector<unsigned char> pk(65, ' ');
-                std::copy(si, si + std::min(strInfo.size() - XBridgePacket::uncompressedPubkeySize * keyCounter,
-                                            static_cast<size_t>(XBridgePacket::uncompressedPubkeySize)), pk.begin());
+                std::vector<unsigned char> pk(XBridgePacket::uncompressedPubkeySize, ' ');
+                pk[0] = 0x04;
+                std::copy(si, si + std::min(strInfo.size() - XBridgePacket::uncompressedPubkeySizeRaw * keyCounter,
+                                            static_cast<size_t>(XBridgePacket::uncompressedPubkeySizeRaw)), pk.begin()+1);
 
                 destScript << pk;
                 ++keyCounter;
