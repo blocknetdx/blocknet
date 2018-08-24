@@ -236,6 +236,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             }
         }
         
+        std::string feetx((const char *)packet->data()+offset);
+        offset += feetx.size() + 1;
+        
         std::vector<std::string> params;
         int count = psettings.getMaxParamCount();
         std::string p;

@@ -14,6 +14,7 @@
 #include "bloom.h"
 
 #include "xbridge/util/settings.h"
+#include "xbridge/bitcoinrpcconnector.h"
 #include "xrouterlogger.h"
 
 #include "xrouterconnector.h"
@@ -853,21 +854,10 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     std::string id = generateUUID();
 
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
-    packet->append(id);
-    packet->append(name);
-    for (std::string param: params)
-        packet->append(param);
-    packet->sign(key);
-
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-
-    std::vector<unsigned char> msg;
-    msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     
     CNode* pnode = getNodeForService(name);
     if (!pnode)
@@ -882,6 +872,21 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     if (params.size() > max_count) {
         return "Too many plugin parameters";
     }
+    
+    std::string strtxid;
+    std::string dest = getPaymentAddress(pnode);
+    xbridge::rpc::storeDataIntoBlockchain(std::vector<unsigned char>(dest.begin(), dest.end()), snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee(), std::vector<unsigned char>(), strtxid);
+    
+    packet->append(txHash.begin(), 32);
+    packet->append(vout);
+    packet->append(id);
+    packet->append(name);
+    packet->append(strtxid);
+    for (std::string param: params)
+        packet->append(param);
+    packet->sign(key);
+    std::vector<unsigned char> msg;
+    msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     
     Object result;
     
@@ -914,6 +919,8 @@ std::string App::getPaymentAddress(CNode* node)
             }
         }
     }
+    
+    return "";
 }
 
 std::string App::getXrouterConfig(CNode* node, std::string addr) {
