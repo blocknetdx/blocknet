@@ -583,8 +583,4 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
     return "Unknown type";
 }
 
-std::string XRouterServer::processGetPaymentAddress(XRouterPacketPtr packet) {
-    return "";
-}
-
 } // namespace xrouter

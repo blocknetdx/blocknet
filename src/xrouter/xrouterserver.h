@@ -165,13 +165,6 @@ protected:
      * @return
      */
     std::string processCustomCall(std::string name, std::vector<std::string> params);
-    
-    /**
-     * @brief process GetPaymentAddress call on service node side
-     * @param packet Xrouter packet received over the network
-     * @return
-     */
-    std::string processGetPaymentAddress(XRouterPacketPtr packet);
 };
 
 } // namespace
