@@ -83,6 +83,9 @@ BlocknetFormBtn:disabled { background-color: #37475C; border: 1px solid #243040;
 BlocknetFormBtn#cancel { background-color: rgba(0,0,0,0); }
 BlocknetFormBtn#cancel:hover { background-color: #016AFF; }
 BlocknetFormBtn#cancel:disabled { border: 1px solid #37475C; color: #6F8097; }
+BlocknetFormBtn#delete { background-color: #FF5656; border: 1px solid #FF4747; }
+BlocknetFormBtn#delete:hover { background-color: #FF3B3B; }
+BlocknetFormBtn#delete:disabled { border: 1px solid #37475C; color: #6F8097; }
 BlocknetBreadCrumb QPushButton { font-size: 13px; color: #6F8097; font-family: "Roboto"; border: none; }
 BlocknetBreadCrumb QPushButton:checked { color: #74B2FE; }
 BlocknetIconBtn #title { font-size: 12px; color: white; font-family: "Roboto"; }
