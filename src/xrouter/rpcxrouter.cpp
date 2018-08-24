@@ -542,3 +542,25 @@ Value xrOpenConnections(const Array & params, bool fHelp)
     xrouter::App::instance().openConnections();
     return "";
 }
+
+Value xrRegisterDomain(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrOpenConnections\nOpens connections to all available service nodes.");
+    }
+    
+    //Object result;
+    //xrouter::App::instance().openConnections();
+    return "";
+}
+
+Value xrQueryDomain(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrOpenConnections\nOpens connections to all available service nodes.");
+    }
+    
+    //Object result;
+    //xrouter::App::instance().openConnections();
+    return "";
+}
