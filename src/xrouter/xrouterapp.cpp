@@ -906,7 +906,14 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
 
 std::string App::getPaymentAddress(CNode* node)
 {
-    return "";
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
+    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+        for (CNode* pnode : vNodes) {
+            if (s.second.addr.ToString() == pnode->addr.ToString()) {
+                return CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString();
+            }
+        }
+    }
 }
 
 std::string App::getXrouterConfig(CNode* node, std::string addr) {
