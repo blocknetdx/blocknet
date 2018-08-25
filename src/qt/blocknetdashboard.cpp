@@ -325,7 +325,7 @@ QVariant BlocknetDashboardFilterProxy::data(const QModelIndex &index, int role) 
     case Qt::DisplayRole:
         switch (index.column()) {
             case DashboardStatus:
-                return rec->status.status;
+                return static_cast<int>(rec->status.status);
             case DashboardDate:
                 return model->formatTxDate(rec);
             case DashboardTime:
@@ -362,7 +362,7 @@ QVariant BlocknetDashboardFilterProxy::data(const QModelIndex &index, int role) 
             case DashboardToAddress:
                 return model->formatTxToAddress(rec, true);
             case DashboardAmount:
-                return static_cast<CAmount>(rec->credit + rec->debit);
+                return static_cast<qint64>(rec->credit + rec->debit);
             }
         break;
     case Qt::DecorationRole:
