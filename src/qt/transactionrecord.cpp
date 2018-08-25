@@ -139,10 +139,10 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
             // Payment to self by default
             sub.type = TransactionRecord::SendToSelf;
             sub.address = "";
+            CTxDestination address;
 
             if (mapValue["DS"] == "1") {
                 sub.type = TransactionRecord::Obfuscated;
-                CTxDestination address;
                 if (ExtractDestination(wtx.vout[0].scriptPubKey, address)) {
                     // Sent to BlocknetDX Address
                     sub.address = CBitcoinAddress(address).ToString();
@@ -151,6 +151,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
                     sub.address = mapValue["to"];
                 }
             } else {
+                CAmount largest = 0;
                 for (unsigned int nOut = 0; nOut < wtx.vout.size(); nOut++) {
                     const CTxOut& txout = wtx.vout[nOut];
                     sub.idx = parts.size();
@@ -158,6 +159,13 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet* 
                     if (wallet->IsCollateralAmount(txout.nValue)) sub.type = TransactionRecord::ObfuscationMakeCollaterals;
                     if (wallet->IsDenominatedAmount(txout.nValue)) sub.type = TransactionRecord::ObfuscationCreateDenominations;
                     if (nDebit - wtx.GetValueOut() == OBFUSCATION_COLLATERAL) sub.type = TransactionRecord::ObfuscationCollateralPayment;
+
+                    // store the address of largest payment to self
+                    if (txout.nValue > largest) {
+                        largest = txout.nValue;
+                        if (ExtractDestination(txout.scriptPubKey, address))
+                            sub.address = CBitcoinAddress(address).ToString();
+                    }
                 }
             }
 

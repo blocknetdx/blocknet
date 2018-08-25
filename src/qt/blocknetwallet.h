@@ -41,7 +41,6 @@ signals:
     void passphrase();
     void balance(CAmount walletBalance, CAmount unconfirmed, CAmount immature, CAmount anonymized, CAmount watch,
                  CAmount watchUnconfirmed, CAmount watchImmature);
-    void recentTransactionsChanged(QVector<BlocknetDashboard::BlocknetRecentTransaction> &txs);
     void addressbook();
     void request();
     void settings();
@@ -66,19 +65,18 @@ protected slots:
     void balanceChanged(CAmount walletBalance, CAmount unconfirmed, CAmount immature, CAmount anonymized,
                         CAmount watch, CAmount watchUnconfirmed, CAmount watchImmature);
     void displayUnitChanged(int unit);
-    void processTransaction(const QModelIndex &parent, int first, int last);
 
 private:
     QHash<QString, WalletModel*> wallets;
     ClientModel *clientModel;
     WalletModel *walletModel;
-    QVector<BlocknetDashboard::BlocknetRecentTransaction> recentTransactions;
     BlocknetPage page;
 
     BlocknetLeftMenu *leftMenu;
     QFrame *contentBox;
     BlocknetToolBar *toolbar;
     BlocknetSendFunds *sendFunds = nullptr;
+    BlocknetDashboard *dashboard = nullptr;
     QWidget *screen = nullptr;
 };
 

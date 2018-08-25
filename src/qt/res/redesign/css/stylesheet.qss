@@ -60,17 +60,17 @@ QRadioButton:indicator:disabled { background-color: transparent; }
 QCheckBox { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
 QCheckBox::indicator:checked { image: url(:/redesign/checkmark-on); max-width: 20px; }
 QCheckBox::indicator:unchecked { image: url(:/redesign/checkmark-off); max-width: 20px; }
-QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; }
-QTableWidget::item { font-size: 13px; color: white; font-family: "Roboto"; background-color: #172F49; }
-QTableWidget::item:alternate { background-color: #0F2743; }
-QTableWidget::item::selected { color: white; background-color: #016AFF; }
-QTableWidget QHeaderView, QTableWidget QHeaderView::section { background-color: #000D20; border-style: none; border: 0; }
-QTableWidget QHeaderView::section { font-size: 12px; color: #6F8097; font-family: "Roboto"; padding: 6px; }
-QTableWidget QHeaderView::section::selected { color: white; }
-QTableWidget::indicator:checked { image: url(:/redesign/checkmark-on); }
-QTableWidget::indicator:unchecked { image: url(:/redesign/checkmark-off); }
-QTableView QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
-QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
+QTableView, QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; }
+QTableView::item, QTableWidget::item { font-size: 13px; font-family: "Roboto"; background-color: #172F49; }
+QTableView::item:alternate, QTableWidget::item:alternate { background-color: #0F2743; }
+QTableView::item::selected, QTableWidget::item::selected { color: white; background-color: #016AFF; }
+QTableView QHeaderView, QTableWidget QHeaderView, QTableWidget QHeaderView::section { background-color: #000D20; border-style: none; border: 0; }
+QTableView QHeaderView::section, QTableWidget QHeaderView::section { font-size: 12px; color: #6F8097; font-family: "Roboto"; padding: 6px; }
+QTableView QHeaderView::section::selected, QTableWidget QHeaderView::section::selected { color: white; }
+QTableView::indicator:checked, QTableWidget::indicator:checked { image: url(:/redesign/checkmark-on); }
+QTableView::indicator:unchecked, QTableWidget::indicator:unchecked { image: url(:/redesign/checkmark-off); }
+QTableView QHeaderView::down-arrow, QTableView QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
+QTableView QHeaderView::up-arrow, QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
 
 BlocknetLineEdit, QLineEdit { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
 BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #333333; color: #333333; }
@@ -92,7 +92,7 @@ BlocknetIconBtn #title { font-size: 12px; color: white; font-family: "Roboto"; }
 
 BlocknetProposals #h4 { padding-left: 1px; }
 BlocknetProposals #title { font-size: 12px; color: white; font-family: "Roboto"; }
-BlocknetProposals QTableWidget { background-color: transparent; }
+BlocknetProposals QTableWidget { color: white; background-color: transparent; }
 BlocknetProposals QTableWidget QHeaderView { color: #37475C; background-color: transparent; }
 BlocknetProposals QTableWidget QHeaderView::section { background-color: transparent; }
 BlocknetProposals QTableWidget #indicator[state="0"] { background-color: #4BF5C6; }
@@ -113,32 +113,6 @@ BlocknetDashboard #immatureValueLbl { font-size: 14px; color: white; font-family
 BlocknetDashboard #totalLbl { font-size: 14px; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
 BlocknetDashboard #totalValueLbl { font-size: 14px; color: white; font-family: "Roboto"; font-weight: 25; }
 BlocknetDashboard #recentTransactionsLbl { font-size: 21px; color: #6F8097; font-family: "Roboto"; }
-
-BlocknetDashboard QScrollArea #content { background-color: transparent; }
-BlocknetDashboard QScrollArea #content QLabel { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 3px; }
-BlocknetDashboard QScrollArea #content QLabel[rowA=true] { background-color: #172F49; }
-BlocknetDashboard QScrollArea #content QLabel[rowA=false] { background-color: #0F2743; }
-BlocknetDashboard QScrollArea #content #dateBox[rowA=true] { background-color: #172F49; }
-BlocknetDashboard QScrollArea #content #dateBox[rowA=false] { background-color: #0F2743; }
-BlocknetDashboard QScrollArea #content #month { font-size: 13px; font-weight: 25; }
-BlocknetDashboard QScrollArea #content #date { font-size: 21px; font-weight: 25; margin-top: -5px; }
-BlocknetDashboard QScrollArea #content #alias { padding-right: 15px; }
-BlocknetDashboard QScrollArea #content #action { padding-right: 15px; }
-BlocknetDashboard QScrollArea #content #amount { padding-right: 30px; }
-BlocknetDashboard QScrollArea #content #amount[positive=true] { color: #4BF5C6; }
-BlocknetDashboard QScrollArea #content #amount[positive=false] { color: #FB7F70; }
-BlocknetDashboard QScrollArea #content #more { font-size: 20px; color: #74B2FE; }
-BlocknetDashboard QScrollArea #content #time { padding-left: 10px; }
-BlocknetDashboard QScrollArea #content #indicator[state="0"] { background-color: #4BF5C6; }
-BlocknetDashboard QScrollArea #content #indicator[state="1"] { background-color: #F8BF1C; }
-BlocknetDashboard QScrollArea #content #indicator[state="2"] { background-color: #F8BF1C; }
-BlocknetDashboard QScrollArea #content #indicator[state="3"] { background-color: #FB7F70; }
-BlocknetDashboard QScrollArea #content #indicator[state="4"] { background-color: #F8BF1C; }
-BlocknetDashboard QScrollArea #content #indicator[state="5"] { background-color: #F8BF1C; }
-BlocknetDashboard QScrollArea #content #indicator[state="6"] { background-color: #FB7F70; }
-BlocknetDashboard QScrollArea #content #indicator[state="7"] { background-color: #FB7F70; }
-BlocknetDashboard QScrollArea #content #indicator[state="8"] { background-color: #FB7F70; }
-BlocknetDashboard QScrollArea #content #indicator[state="9"] { background-color: #FB7F70; }
 
 BlocknetSendFunds { padding-left: 30px; padding-right: 10px; }
 BlocknetSendFunds #contentScrollArea { min-width: 730px; background-color: transparent; }
@@ -168,6 +142,7 @@ BlocknetQuickSend #address { max-width: 500px; }
 #transactionHistory QHeaderView { border: 0; background-color: transparent; outline: 0; }
 #transactionHistory QHeaderView::section { border: 0; qproperty-alignment:left; background-color:transparent; font-size: 12px; font-family: "Roboto"; color:#6F8097; min-height:30px; }
 
+BlocknetCoinControl QTableWidget { color: white; }
 #coinControlDialog { background-color: #172F49; }
 #coinControlDialog #feePanel { background-color: #172F49; }
 #coinControlDialog #feePanel QLabel { font-size: 13px; color: white; font-family: "Roboto"; }
