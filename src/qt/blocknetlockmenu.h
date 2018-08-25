@@ -5,6 +5,8 @@
 #ifndef BLOCKMENU_H
 #define BLOCKMENU_H
 
+#include <functional>
+
 #include <QFrame>
 #include <QLayout>
 #include <QVBoxLayout>

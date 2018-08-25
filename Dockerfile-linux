@@ -40,7 +40,7 @@ RUN mkdir -p /opt/blocknetdx/BlockDX \
   && ./autogen.sh \
   && ./configure CC=gcc-7 CXX=g++-7 --with-gui=qt5 --enable-debug \
   && echo "Building with cores: $ecores" \
-  && make install
+  && make install -j$ecores
 
 WORKDIR /opt/blocknetdx/BlockDX
 

@@ -6,6 +6,7 @@
 #define BLOCKNETADDRESSEDITOR_H
 
 #include <utility>
+#include <functional>
 
 #include <QTextEdit>
 #include <QClipboard>
