@@ -20,10 +20,12 @@ RUN add-apt-repository ppa:bitcoin/bitcoin \
      libdb4.8-dev libdb4.8++-dev libgmp-dev libminiupnpc-dev libzmq3-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN apt update \
+RUN add-apt-repository ppa:ubuntu-toolchain-r/test \
+  && apt update \
   && apt install -y --no-install-recommends \
      libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev \
      qttools5-dev-tools libprotobuf-dev protobuf-compiler \
+     g++-7 \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Copy source files
@@ -36,9 +38,9 @@ RUN mkdir -p /opt/blocknetdx/BlockDX \
   && cd /opt/blocknetdx/BlockDX \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
-  && ./configure --with-gui=qt5 --enable-debug \
+  && ./configure CC=gcc-7 CXX=g++-7 --with-gui=qt5 --enable-debug \
   && echo "Building with cores: $ecores" \
-  && make install -j$ecores
+  && make install
 
 WORKDIR /opt/blocknetdx/BlockDX
 
