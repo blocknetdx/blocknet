@@ -1,0 +1,51 @@
+FROM ubuntu:trusty
+
+ARG cores=8
+ENV ecores=$cores
+
+RUN apt update \
+  && apt install -y --no-install-recommends \
+     software-properties-common \
+     ca-certificates \
+     wget curl git python vim \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN add-apt-repository ppa:bitcoin/bitcoin \
+  && apt update \
+  && apt install -y --no-install-recommends \
+     build-essential libtool autotools-dev bsdmainutils \
+     libevent-dev autoconf automake pkg-config libssl-dev \
+     libdb4.8-dev libdb4.8++-dev \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV PROJECTDIR=/opt/blocknetdx/BlockDX
+ENV BASEPREFIX=$PROJECTDIR/depends
+ENV DISTDIR=/opt/blocknetdx/dist
+ENV HOST=x86_64-pc-linux-gnu
+
+# Copy source files
+#RUN mkdir -p /opt/blocknetdx \
+#  && cd /opt/blocknetdx \
+#  && git clone --depth 1 --branch v3.9.22 https://github.com/BlocknetDX/BlockDX.git
+COPY . /opt/blocknetdx/BlockDX/
+RUN cd $PROJECTDIR \
+  && wget -nv https://s3.amazonaws.com/blockdxbuilds/devbuilds/depends-trusty.tar.gz \
+  && [ "$(printf 'e6e1fce9c5871c233a3e6f206cc9619a146f4878ea981bfb793e18c1b9c7f5a7 depends-trusty.tar.gz' | sha256sum -c)" = "depends-trusty.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1) \
+  && rm -r $BASEPREFIX \
+  && tar xzvf depends-trusty.tar.gz
+
+# Build source
+RUN mkdir -p $DISTDIR \
+  && cd $PROJECTDIR \
+  && chmod +x ./autogen.sh; sync \
+  && ./autogen.sh \
+  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure --with-gui=qt5 --enable-debug --prefix=/ \
+  && echo "Building with cores: $ecores" \
+  && make -j$ecores \
+  && make install DESTDIR=$DISTDIR \
+  && make clean
+
+WORKDIR /opt/blocknetdx/dist
+
+# Port, RPC, Test Port, Test RPC
+EXPOSE 41412 41414 41474 41419

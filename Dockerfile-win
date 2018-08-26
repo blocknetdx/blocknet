@@ -1,0 +1,57 @@
+FROM ubuntu:bionic
+
+ARG cores=8
+ENV ecores=$cores
+
+RUN apt update \
+  && apt install -y --no-install-recommends \
+     software-properties-common \
+     ca-certificates \
+     wget curl git python vim \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN add-apt-repository ppa:bitcoin/bitcoin \
+  && apt update \
+  && apt install -y --no-install-recommends \
+     build-essential libtool autotools-dev bsdmainutils \
+     libevent-dev autoconf automake pkg-config libssl-dev \
+     libdb4.8-dev libdb4.8++-dev \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# mingw
+RUN apt update \
+  && apt install -y --no-install-recommends \
+     g++ mingw-w64 g++-mingw-w64 nsis zip \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV PROJECTDIR=/opt/blocknetdx/BlockDX
+ENV BASEPREFIX=$PROJECTDIR/depends
+ENV DISTDIR=/opt/blocknetdx/dist
+ENV HOST=x86_64-w64-mingw32
+
+# Copy source files
+#RUN mkdir -p /opt/blocknetdx \
+#  && cd /opt/blocknetdx \
+#  && git clone --depth 1 --branch v3.9.22 https://github.com/BlocknetDX/BlockDX.git
+COPY . /opt/blocknetdx/BlockDX/
+RUN cd $PROJECTDIR \
+  && wget -nv https://s3.amazonaws.com/blockdxbuilds/devbuilds/depends-win.tar.gz \
+  && [ "$(printf '9f18c0b65db2653dee9e09cdcad12569b9fcb93e3f8c47094cd8c100a20b00b4 depends-win.tar.gz' | sha256sum -c)" = "depends-win.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1) \
+  && rm -r $BASEPREFIX \
+  && tar xzvf depends-win.tar.gz
+
+# Build source
+RUN mkdir -p $DISTDIR \
+  && cd $PROJECTDIR \
+  && chmod +x ./autogen.sh; sync \
+  && ./autogen.sh \
+  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CXXFLAGS='-Wno-deprecated' --enable-reduce-exports --disable-bench --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --with-gui=qt5 --prefix=/ \
+  && echo "Building with cores: $ecores" \
+  && make -j$ecores \
+  && make install DESTDIR=$DISTDIR \
+  && make clean
+
+WORKDIR /opt/blocknetdx/dist
+
+# Port, RPC, Test Port, Test RPC
+EXPOSE 41412 41414 41474 41419
