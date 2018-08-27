@@ -383,11 +383,14 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
 
 Value xrGenerateBloomFilter(const Array & params, bool fHelp)
 {
-    CBloomFilter f(10 * params.size(), 0.1, 5, 0);
-    
     if (fHelp) {
         throw std::runtime_error("xrGenerateBloomFilter address1 address2 ...\nReturns bloom filter for given base58 addresses or public key hashes.");
     }
+
+    if (params.size() == 0)
+        return "";
+    
+    CBloomFilter f(10 * params.size(), 0.1, 5, 0);
     
     vector<unsigned char> data;
     for (unsigned int i = 0; i < params.size(); i++) {
