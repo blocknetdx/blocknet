@@ -83,6 +83,8 @@ public:
     bool contains(const std::vector<unsigned char>& vKey) const;
     bool contains(const COutPoint& outpoint) const;
     bool contains(const uint256& hash) const;
+    std::string to_hex();
+    void from_hex(std::string s);
 
     void clear();
 

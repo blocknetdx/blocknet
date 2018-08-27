@@ -31,6 +31,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 #include "coinvalidator.h"
 
 #include <sstream>
@@ -5633,59 +5634,89 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 }
             }
         } // if (isEnabled)
+    } else if (strCommand == "xrouter") {
+        std::vector<unsigned char> raw;
+        vRecv >> raw;
+
+
+        static bool isEnabled = xrouter::App::isEnabled();
+        if (isEnabled) {
+            if (raw.size() < (20 + sizeof(time_t))) {
+                // bad packet, small penalty
+                Misbehaving(pfrom->GetId(), 10);
+            } else {
+                CValidationState state;
+                xrouter::App& app = xrouter::App::instance();
+                app.onMessageReceived(pfrom, raw, state);
+
+                int dos = 0;
+                if (state.IsInvalid(dos)) {
+                    LogPrint("xrouter", "invalid xrouter packet from peer=%d %s : %s\n",
+                        pfrom->id, pfrom->cleanSubVer,
+                        state.GetRejectReason());
+                    if (dos > 0) {
+                        Misbehaving(pfrom->GetId(), dos);
+                    }
+                } else if (state.IsError()) {
+                    LogPrint("xrouter", "xrouter packet from peer=%d %s processed with error: %s\n",
+                        pfrom->id, pfrom->cleanSubVer,
+                        state.GetRejectReason());
+                    // Misbehaving(pfrom->GetId(), 10);
+                }
+            }
+        }
     }
 
     // messages
     // TODO move to xbridge packet processing fn
-//    else if (strCommand == "message")
-//    {
-//        // received message
-//        Message msg;
-//        vRecv >> msg;
+    //    else if (strCommand == "message")
+    //    {
+    //        // received message
+    //        Message msg;
+    //        vRecv >> msg;
 
-//        // check known
-//        uint256 hash = msg.getNetworkHash();
-//        if (pfrom->setKnown.count(hash) == 0)
-//        {
-//            pfrom->setKnown.insert(hash);
+    //        // check known
+    //        uint256 hash = msg.getNetworkHash();
+    //        if (pfrom->setKnown.count(hash) == 0)
+    //        {
+    //            pfrom->setKnown.insert(hash);
 
-//            bool isForMe = false;
-//            if (!msg.process(isForMe))
-//            {
-//                pfrom->Misbehaving(10);
-//            }
+    //            bool isForMe = false;
+    //            if (!msg.process(isForMe))
+    //            {
+    //                pfrom->Misbehaving(10);
+    //            }
 
-//            if (!isForMe)
-//            {
-//                // relay, if message not for me
-//                msg.broadcast();
-//            }
-//        }
-//    }
-//    else if (strCommand == "msgack")
-//    {
-//        // message delivered
-//        uint256 hash;
-//        vRecv >> hash;
+    //            if (!isForMe)
+    //            {
+    //                // relay, if message not for me
+    //                msg.broadcast();
+    //            }
+    //        }
+    //    }
+    //    else if (strCommand == "msgack")
+    //    {
+    //        // message delivered
+    //        uint256 hash;
+    //        vRecv >> hash;
 
-//        if (pfrom->setKnown.count(hash) == 0)
-//        {
-//            pfrom->setKnown.insert(hash);
+    //        if (pfrom->setKnown.count(hash) == 0)
+    //        {
+    //            pfrom->setKnown.insert(hash);
 
-//            if (!Message::processReceived(hash))
-//            {
-//                // relay, if not for me
-//                LOCK(cs_vNodes);
-//                for (CNode* pnode : vNodes)
-//                {
-//                    pnode->PushMessage("msgack", hash);
-//                }
-//            }
-//        }
-//    }
+    //            if (!Message::processReceived(hash))
+    //            {
+    //                // relay, if not for me
+    //                LOCK(cs_vNodes);
+    //                for (CNode* pnode : vNodes)
+    //                {
+    //                    pnode->PushMessage("msgack", hash);
+    //                }
+    //            }
+    //        }
+    //    }
 
-    else
-    {
+    else {
         //probably one the extensions
         obfuScationPool.ProcessMessageObfuscation(pfrom, strCommand, vRecv);
         mnodeman.ProcessMessage(pfrom, strCommand, vRecv);

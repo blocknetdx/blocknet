@@ -9,6 +9,7 @@
 #include "script/script.h"
 #include "script/standard.h"
 #include "streams.h"
+#include "utilstrencodings.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -187,4 +188,41 @@ void CBloomFilter::UpdateEmptyFull()
     }
     isFull = full;
     isEmpty = empty;
+}
+
+std::string CBloomFilter::to_hex()
+{
+    //std::string my_std_string(reinterpret_cast<const char*>(&vData[0]), vData.size());
+    char psz[vData.size() * 2 + 1];
+    for (unsigned int i = 0; i < vData.size(); i++)
+        sprintf(psz + i * 2, "%02x", vData[vData.size() - i - 1]);
+    return std::string(psz, psz + vData.size() * 2);
+}
+
+void CBloomFilter::from_hex(std::string s)
+{
+    const char* psz = s.c_str();
+    
+    // skip leading spaces
+    while (isspace(*psz))
+        psz++;
+
+    // skip 0x
+    if (psz[0] == '0' && tolower(psz[1]) == 'x')
+        psz += 2;
+
+    // hex string to uint
+    const char* pbegin = psz;
+    while (HexDigit(*psz) != -1)
+        psz++;
+    const char* pend = psz;
+    const char* pl = pbegin;
+    vData.clear();
+    while (pl != pend) {
+        unsigned char c = (unsigned char)HexDigit(*pl) << 4;
+        pl++;
+        c |= (unsigned char)HexDigit(*pl);
+        vData.insert(vData.begin(), c);
+        pl++;
+    }
 }
