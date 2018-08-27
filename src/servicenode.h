@@ -305,7 +305,17 @@ public:
     int64_t GetLastPaid();
     bool IsValidNetAddr();
 
-    std::string GetConnectedWalletsStr() const;
+    /**
+     * @brief Returns the services list (including xwallets).
+     * @return
+     */
+    std::string GetServices() const;
+
+    /**
+     * @brief Returns true if the snode has the specified service.
+     * @return
+     */
+    bool HasService(const std::string &service) const;
 };
 
 //
@@ -320,8 +330,7 @@ public:
                           const CTxIn & newVin,
                           const CPubKey & pubKeyCollateralAddressNew,
                           const CPubKey & pubKeyServicenodeNew,
-                          const int protocolVersionIn,
-                          const std::vector<std::string> & exchangeWallets);
+                          const int protocolVersionIn);
     CServicenodeBroadcast(const CServicenode& mn);
 
     bool CheckAndUpdate(int& nDoS);
@@ -368,14 +377,12 @@ public:
                        const CPubKey & pubKeyCollateralAddressNew,
                        const CKey & keyServicenodeNew,
                        const CPubKey & pubKeyServicenodeNew,
-                       const std::vector<string> & exchangeWallets,
                        std::string & strErrorRet,
                        CServicenodeBroadcast & mnbRet);
     static bool Create(const std::string & strService,
                        const std::string & strKey,
                        const std::string & strTxHash,
                        const std::string & strOutputIndex,
-                       const std::vector<string> & exchangeWallets,
                        std::string & strErrorRet,
                        CServicenodeBroadcast & mnbRet,
                        const bool fOffline = false);
