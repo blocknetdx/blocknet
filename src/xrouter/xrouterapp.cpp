@@ -148,7 +148,7 @@ bool App::start()
 {
     updateConfigs();
     bool res = server->start();
-    openConnections();
+    //openConnections();
     return res;
 }
 
