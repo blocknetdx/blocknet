@@ -46,6 +46,8 @@ using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
 using RealVector        = std::vector<double>;
 
 using TransactionVector = std::vector<xbridge::TransactionDescrPtr>;
+using ArrayValue = Array::value_type;
+
 namespace bpt           = boost::posix_time;
 
 
@@ -890,6 +892,53 @@ Value dxCancelOrder(const Array &params, bool fHelp)
 
 //******************************************************************************
 //******************************************************************************
+Value dxFlushCancelledOrders(const Array &params, bool fHelp)
+{
+    if(fHelp)
+    {
+        throw runtime_error("dxFlushCancelledOrders (ageMillis)\n"
+                            "Flush cancelled orders older than ageMillis");
+    }
+
+    const int ageMillis = params.size() == 0
+        ? 0
+        : (params.size() == 1 ? params[0].get_int() : -1);
+
+    if (ageMillis < 0)
+    {
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "(ageMillis)");
+    }
+
+    const auto minAge = boost::posix_time::millisec{ageMillis};
+
+    LOG() << "rpc flush cancelled orders older than " << minAge << ": " << __FUNCTION__;
+
+    const auto now = boost::posix_time::microsec_clock::universal_time();
+    const auto list = xbridge::App::instance().flushCancelledOrders(minAge);
+    const auto micros = boost::posix_time::time_duration{ boost::posix_time::microsec_clock::universal_time() - now };
+
+    Object result{
+        Pair{"ageMillis",        ageMillis},
+        Pair{"now",              boost::posix_time::to_iso_string(now)},
+        Pair{"durationMicrosec", static_cast<int>(micros.total_microseconds())},
+    };
+    Array a;
+    for(const auto & it : list) {
+        a.emplace_back(
+            ArrayValue{Object{
+                Pair{"id",        it.id.GetHex()},
+                Pair{"txtime",    boost::posix_time::to_iso_string(it.txtime)},
+                Pair{"use_count", it.use_count},
+            }}
+        );
+    }
+    result.emplace_back("flushedOrders", a);
+    return result;
+}
+
+//******************************************************************************
+//******************************************************************************
 Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 {
     if (fHelp)
@@ -1513,7 +1562,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
                             "Return list of locked utxo of an order.");
     }
 
-    if (params.size() != 0 || params.size() != 1)
+    if (params.size() > 1)
     {
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id or empty param")));

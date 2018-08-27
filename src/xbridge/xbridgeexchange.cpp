@@ -162,15 +162,15 @@ bool Exchange::Impl::initKeyPair()
         return false;
     }
 
-    ::CBitcoinSecret vchSecret;
+    CBitcoinSecret vchSecret;
     if (!vchSecret.SetString(secret))
     {
         ERR() << "invalid service node key " << __FUNCTION__;
         return false;
     }
 
-    ::CKey    key    = vchSecret.GetKey();
-    ::CPubKey pubkey = key.GetPubKey();
+    CKey    key    = vchSecret.GetKey();
+    CPubKey pubkey = key.GetPubKey();
     if (!pubkey.IsCompressed())
     {
         pubkey.Compress();
@@ -508,9 +508,6 @@ bool Exchange::deletePendingTransaction(const uint256 & id)
     // if there are any locked utxo's for this txid, unlock them
     unlockUtxos(id);
 
-    if (!m_p->m_pendingTransactions.count(id))
-        return false;
-
     m_p->m_pendingTransactions.erase(id);
 
     return true;
@@ -547,11 +544,10 @@ bool Exchange::updateTransactionWhenHoldApplyReceived(const TransactionPtr & tx,
 //*****************************************************************************
 //*****************************************************************************
 bool Exchange::updateTransactionWhenInitializedReceived(const TransactionPtr &tx,
-                                                               const std::vector<unsigned char> & from,
-                                                               const uint256 & datatxid,
-                                                               const std::vector<unsigned char> & pk)
+                                                        const std::vector<unsigned char> & from,
+                                                        const std::vector<unsigned char> & pk)
 {
-    if (!tx->setKeys(from, datatxid, pk))
+    if (!tx->setKeys(from, pk))
     {
         // wtf?
         LOG() << "unknown sender address for transaction, id <" << tx->id().GetHex() << ">";
@@ -725,17 +721,14 @@ size_t Exchange::eraseExpiredTransactions()
         {
             LOG() << __FUNCTION__ << std::endl << "order expired" << ptr;
 
-            m_p->m_pendingTransactions.erase(it);
+            m_p->m_pendingTransactions.erase(it++);
 
             unlockUtxos(ptr->id());
 
             ++result;
+        } else {
+            ++it;
         }
-
-        if (m_p->m_pendingTransactions.empty())
-            break;
-
-        ++it;
     }
 
     if(result > 0)
@@ -744,20 +737,28 @@ size_t Exchange::eraseExpiredTransactions()
     return result;
 }
 
-bool Exchange::lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry> &items) {
+//******************************************************************************
+//******************************************************************************
+bool Exchange::lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry> &items)
+{
     if (items.empty())
+    {
         return false;
+    }
 
     boost::mutex::scoped_lock l(m_p->m_utxoLocker);
     // use set to prevent overwriting utxo's from 'A' or 'B' role
     std::set<wallet::UtxoEntry> utxoTxMapItems;
     for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
+    {
         utxoTxMapItems.insert(item);
+    }
 
     for (const wallet::UtxoEntry & item : items)
     {
         m_p->m_utxoItems.insert(item);
-        if (!utxoTxMapItems.count(item)) {
+        if (!utxoTxMapItems.count(item))
+        {
             utxoTxMapItems.insert(item);
             m_p->m_utxoTxMap[id].push_back(item);
         }
@@ -766,18 +767,23 @@ bool Exchange::lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry>
     return true;
 }
 
-bool Exchange::unlockUtxos(const uint256 &id) {
+//******************************************************************************
+//******************************************************************************
+bool Exchange::unlockUtxos(const uint256 &id)
+{
     boost::mutex::scoped_lock l(m_p->m_utxoLocker);
 
-    if (m_p->m_utxoTxMap.count(id))
+    if (!m_p->m_utxoTxMap.count(id))
     {
-        for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
-            m_p->m_utxoItems.erase(item);
-
-        m_p->m_utxoTxMap.erase(id);
-    } else {
         return false;
     }
+
+    for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
+    {
+        m_p->m_utxoItems.erase(item);
+    }
+
+    m_p->m_utxoTxMap.erase(id);
 
     return true;
 }

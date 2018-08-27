@@ -378,6 +378,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxGetTokenBalances",                   &dxGetTokenBalances,         true, true, true},
         {"xbridge", "dxGetMyOrders",                        &dxGetMyOrders,              true, true, true},
         {"xbridge", "dxGetLockedUtxos",                     &dxGetLockedUtxos,           true, true, true},
+        {"xbridge", "dxFlushCancelledOrders",               &dxFlushCancelledOrders,     true, true, true},
 
         {"xrouter", "xrGetBlockCount",                      &xrGetBlockCount,            true, true, true},
         {"xrouter", "xrGetBlockHash",                       &xrGetBlockHash,             true, true, true},
@@ -401,6 +402,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xrouter", "xrRegisterDomain",                     &xrRegisterDomain,           true, true, true},
         {"xrouter", "xrQueryDomain",                        &xrQueryDomain,              true, true, true},
         {"xrouter", "xrCustomCall",                         &xrCustomCall,               true, true, true}
+        
     #endif // ENABLE_WALLET
 };
 

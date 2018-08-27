@@ -167,13 +167,11 @@ public:
      * @brief updateTransactionWhenInitializedReceived -
      * @param tx
      * @param from
-     * @param datatxid
      * @param pk
      * @return true, if all checks success and new transaction state == trInizialized
      */
     bool updateTransactionWhenInitializedReceived(const TransactionPtr & tx,
                                                   const std::vector<unsigned char> & from,
-                                                  const uint256 & datatxid,
                                                   const std::vector<unsigned char> & pk);
     /**
      * @brief updateTransactionWhenCreatedReceived - increase transaction state

@@ -15,10 +15,10 @@
 #include "util/xutil.h"
 #include "util/logger.h"
 #include "util/txlog.h"
+#include "util/xassert.h"
 #include "bitcoinrpcconnector.h"
 #include "xbitcointransaction.h"
 #include "xbitcoinaddress.h"
-#include "xbitcoinsecret.h"
 #include "script/script.h"
 #include "base58.h"
 #include "activeservicenode.h"
@@ -324,7 +324,7 @@ bool Session::checkXBridgePacketVersion(const std::vector<unsigned char> & messa
 
     if (version != static_cast<boost::uint32_t>(XBRIDGE_PROTOCOL_VERSION))
     {
-        ERR() << "incorrect protocol version <" << version << "> " << __FUNCTION__;
+        // ERR() << "incorrect protocol version <" << version << "> " << __FUNCTION__;
         return false;
     }
 
@@ -338,7 +338,7 @@ bool Session::checkXBridgePacketVersion(XBridgePacketPtr packet)
 {
     if (packet->version() != static_cast<boost::uint32_t>(XBRIDGE_PROTOCOL_VERSION))
     {
-        ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
+        // ERR() << "incorrect protocol version <" << packet->version() << "> " << __FUNCTION__;
         return false;
     }
 
@@ -912,24 +912,28 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
             boost::mutex::scoped_lock l(tr->m_lock);
 
+            if (tr->state() != xbridge::Transaction::trJoined)
+            {
+                xassert(!"wrong state");
+                WARN() << "wrong tx state " << tr->id().ToString()
+                       << " state " << tr->state()
+                       << " in " << __FUNCTION__;
+                return true;
+            }
+
             LOG() << __FUNCTION__ << tr;
 
-            if (tr && tr->state() == xbridge::Transaction::trJoined)
-            {
-                // send hold
+            // send hold
+            // TODO remove this log
+            LOG() << "send xbcTransactionHold ";
 
-                // first
-                // TODO remove this log
-                LOG() << "send xbcTransactionHold ";
+            XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
+            reply1->append(m_myid);
+            reply1->append(tr->id().begin(), XBridgePacket::hashSize);
 
-                XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
-                reply1->append(m_myid);
-                reply1->append(tr->id().begin(), XBridgePacket::hashSize);
+            reply1->sign(e.pubKey(), e.privKey());
 
-                reply1->sign(e.pubKey(), e.privKey());
-
-                sendPacketBroadcast(reply1);
-            }
+            sendPacketBroadcast(reply1);
         }
     }
 
@@ -963,7 +967,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     offset += XBridgePacket::hashSize;
 
     // service node pub key
-    ::CPubKey pksnode;
+    CPubKey pksnode;
 
     {
         uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
@@ -1015,7 +1019,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
             LOG() << __FUNCTION__ << tr;
 
-            if (!tr || tr->state() != xbridge::Transaction::trJoined)
+            if (tr->state() != xbridge::Transaction::trJoined)
             {
                 e.deletePendingTransaction(id);
             }
@@ -1043,11 +1047,20 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         return true;
     }
 
+    if (xtx->state >= TransactionDescr::trHold)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
+        return true;
+    }
+
     if (!xtx->isLocal())
     {
         xtx->state = TransactionDescr::trFinished;
 
-        LOG() << __FUNCTION__ << std::endl << "order is taken, moving to history" << xtx;
+        LOG() << "tx moving to history " << xtx->id.ToString() << " " << __FUNCTION__;
 
         xapp.moveTransactionToHistory(id);
         xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
@@ -1122,13 +1135,22 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     TransactionPtr tr = e.transaction(id);
 
+    boost::mutex::scoped_lock l(tr->m_lock);
+
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
         WARN() << "invalid packet signature " << __FUNCTION__;
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    if (tr->state() != xbridge::Transaction::trJoined)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << tr->id().ToString()
+               << " state " << tr->state()
+               << " in " << __FUNCTION__;
+        return true;
+    }
 
     tr->updateTimestamp();
 
@@ -1195,7 +1217,7 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
         }
     }
 
-    LOG() << __FUNCTION__ << tr;
+    // LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -1265,7 +1287,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     // offset += sizeof(uint64_t);
 
     // check servicenode
-    std::vector<unsigned char> snodeAddress;
+    std::vector<unsigned char> snodePubKey;
     {
         CServicenode * snode = mnodeman.Find(pksnode);
         if (!snode)
@@ -1283,10 +1305,9 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             }
         }
 
-        CKeyID id = snode->pubKeyCollateralAddress.GetID();
-        std::copy(id.begin(), id.end(), std::back_inserter(snodeAddress));
+        snodePubKey = snode->pubKeyCollateralAddress.Raw();
 
-        LOG() << "use service node " << id.ToString() << " " << __FUNCTION__;
+        LOG() << "use service node " << HexStr(snodePubKey) << " " << __FUNCTION__;
     }
 
     xbridge::App & xapp = xbridge::App::instance();
@@ -1300,6 +1321,14 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     if (!xtx->isLocal())
     {
         ERR() << "not local transaction " << txid.ToString() << " " << __FUNCTION__;
+        return true;
+    }
+    if (xtx->state >= TransactionDescr::trInitialized)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
         return true;
     }
 
@@ -1318,9 +1347,9 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     // store service node public key
     xtx->sPubKey = std::vector<unsigned char>(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
-    // x key
-    uint256 datatxtd;
-    if (xtx->role == 'A')
+    // acceptor fee
+    uint256 feetxtd;
+    if (xtx->role == 'B')
     {
         WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
         if (!conn)
@@ -1329,34 +1358,46 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             return true;
         }
 
-        conn->newKeyPair(xtx->xPubKey, xtx->xPrivKey);
-
-        if(xtx->xPubKey.size() != 33)
+        // transaction info
+        CScript destScript;
+        destScript << CScript::EncodeOP_N(1);
+        destScript << snodePubKey;
         {
-            ERR() << "bad pubkey size " << __FUNCTION__;
-            return false;
-        }
+            Array info;
+            info.push_back(txid.GetHex());
+            info.push_back(xtx->fromCurrency);
+            info.push_back(xtx->fromAmount);
+            info.push_back(xtx->toCurrency);
+            info.push_back(xtx->toAmount);
+            std::string strInfo = write_string(Value(info));
 
-        // send blocknet tx with hash of X
-        std::vector<unsigned char> xid = conn->getKeyId(xtx->xPubKey);
-        if(xid.size() != 20)
-        {
-            ERR() << "bad pubkey id size " << __FUNCTION__;
-            return false;
+            uint32_t keyCounter = 0;
+            for (auto si = strInfo.begin(); si < strInfo.end(); si += XBridgePacket::uncompressedPubkeySizeRaw)
+            {
+                std::vector<unsigned char> pk(XBridgePacket::uncompressedPubkeySize, ' ');
+                pk[0] = 0x04;
+                std::copy(si, si + std::min(strInfo.size() - XBridgePacket::uncompressedPubkeySizeRaw * keyCounter,
+                                            static_cast<size_t>(XBridgePacket::uncompressedPubkeySizeRaw)), pk.begin()+1);
+
+                destScript << pk;
+                ++keyCounter;
+            }
+
+            destScript << CScript::EncodeOP_N(keyCounter+1) << OP_CHECKMULTISIG;
         }
 
         std::string strtxid;
-        if (!rpc::storeDataIntoBlockchain(snodeAddress, conn->serviceNodeFee,
-                                          std::vector<unsigned char>(xid.begin(), xid.end()), strtxid))
+        if (!rpc::storeDataIntoBlockchain(destScript, conn->serviceNodeFee,
+                                          std::vector<unsigned char>(), strtxid))
         {
             ERR() << "storeDataIntoBlockchain failed, error send blocknet tx " << __FUNCTION__;
             sendCancelTransaction(xtx, crBlocknetError);
             return true;
         }
 
-        datatxtd = uint256(strtxid);
+        feetxtd = uint256(strtxid);
 
-        if(datatxtd.IsNull())
+        if(feetxtd.IsNull())
         {
             LOG() << "storeDataIntoBlockchain failed with zero tx id, process packet later " << __FUNCTION__;
             xapp.processLater(txid, packet);
@@ -1364,14 +1405,17 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         }
     }
 
-    LOG() << __FUNCTION__ << xtx;
+    xtx->state = TransactionDescr::trInitialized;
+    xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
+
+    // LOG() << __FUNCTION__ << xtx;
 
     // send initialized
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionInitialized));
     reply->append(hubAddress);
     reply->append(thisAddress);
     reply->append(txid.begin(), 32);
-    reply->append(datatxtd.begin(), 32);
+    reply->append(feetxtd.begin(), 32);
 
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
@@ -1412,14 +1456,10 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
     // transaction id
     uint256 id(packet->data()+40);
 
-    uint32_t offset = 72;
-
-    // data tx id
-    uint256 datatxid(packet->data() + offset);
-    offset += 32;
-
     // opponent publick key
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+
+    // TODO check fee transaction
 
     TransactionPtr tr = e.transaction(id);
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
@@ -1439,7 +1479,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
         return true;
     }
 
-    if (e.updateTransactionWhenInitializedReceived(tr, from, datatxid, pk1))
+    if (e.updateTransactionWhenInitializedReceived(tr, from, pk1))
     {
         if (tr->state() == xbridge::Transaction::trInitialized)
         {
@@ -1457,8 +1497,6 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
             reply1->append(tr->a_address());
             reply1->append(m_myid);
             reply1->append(id.begin(), 32);
-            reply1->append(tr->b_destination());
-            reply1->append(tr->a_datatxid().begin(), 32);
             reply1->append(tr->b_pk1());
 
             reply1->sign(e.pubKey(), e.privKey());
@@ -1493,10 +1531,10 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    if (packet->size() < 157)
+    if (packet->size() != 105)
     {
         ERR() << "incorrect packet size for xbcTransactionCreateA "
-              << "need min 157 bytes, received " << packet->size() << " "
+              << "need 105 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1509,14 +1547,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // destination address
     uint32_t offset = 72;
-    std::vector<unsigned char> destAddress(packet->data()+offset, packet->data()+offset+20);
-    offset += 20;
-
-    uint256 datatxid(packet->data()+offset);
-    offset += 32;
 
     std::vector<unsigned char> mPubKey(packet->data()+offset, packet->data()+offset+33);
-    offset += 33;
+    // offset += 33;
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -1542,7 +1575,16 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return true;
     }
 
-    LOG() << __FUNCTION__ << xtx;
+    if (xtx->state >= TransactionDescr::trCreated)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
+        return true;
+    }
+
+    // LOG() << __FUNCTION__ << xtx;
 
     // connectors
     WalletConnectorPtr connFrom = xapp.connectorByCurrency(xtx->fromCurrency);
@@ -1551,15 +1593,6 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     {
         WARN() << "no connector for <" << (!connFrom ? xtx->fromCurrency : xtx->toCurrency) << "> " << __FUNCTION__;
         sendCancelTransaction(xtx, crBadADepositTx);
-        return true;
-    }
-
-    std::vector<unsigned char> hx;
-    if (!rpc::getDataFromTx(datatxid.GetHex(), hx))
-    {
-        // no data, move to pending
-        LOG() << "no data about tx " << datatxid.GetHex() << " process packet later";
-        xapp.processLater(txid, packet);
         return true;
     }
 
@@ -1612,6 +1645,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // create transactions
 
+    // hash of secret
+    std::vector<unsigned char> hx = connFrom->getKeyId(xtx->xPubKey);
+
 #ifdef LOG_KEYPAIR_VALUES
     LOG() << "unlock script pub keys" << std::endl <<
              "    my       " << HexStr(xtx->mPubKey) << std::endl <<
@@ -1627,13 +1663,13 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // depositTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs
         for (const wallet::UtxoEntry & entry : usedInTx)
         {
-            inputs.push_back(std::make_pair(entry.txId, entry.vout));
+            inputs.emplace_back(entry.txId, entry.vout, entry.amount);
         }
 
         // outputs
@@ -1672,11 +1708,11 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // refundTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(xtx->binTxId, 0));
+        inputs.emplace_back(xtx->binTxId, 0, outAmount+fee2);
 
         // outputs
         {
@@ -1737,6 +1773,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     reply->append(thisAddress);
     reply->append(txid.begin(), 32);
     reply->append(xtx->binTxId);
+    reply->append(hx);
     reply->append(static_cast<uint32_t>(xtx->innerScript.size()));
     reply->append(xtx->innerScript);
 
@@ -1747,16 +1784,111 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
+{
+    DEBUG_TRACE();
+
+    // size must be > 92 bytes
+    if (packet->size() < 92)
+    {
+        ERR() << "invalid packet size for xbcTransactionCreatedA "
+              << "need more than 92 received " << packet->size() << " "
+              << __FUNCTION__;
+        return false;
+    }
+
+    // check is for me
+    if (!checkPacketAddress(packet))
+    {
+        return true;
+    }
+
+    Exchange & e = Exchange::instance();
+    if (!e.isStarted())
+    {
+        return true;
+    }
+
+    size_t offset = 20;
+
+    std::vector<unsigned char> from(packet->data()+offset, packet->data()+offset+20);
+    offset += 20;
+
+    uint256 txid(packet->data()+offset);
+    offset += 32;
+
+    std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
+    offset += binTxId.size()+1;
+
+    std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+20);
+    offset += 20;
+
+    uint32_t innerSize = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    offset += sizeof(uint32_t);
+
+    std::vector<unsigned char> innerScript(packet->data()+offset, packet->data()+offset+innerSize);
+    // offset += innerScript.size();
+
+    TransactionPtr tr = e.transaction(txid);
+
+    if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
+    {
+        WARN() << "invalid packet signature " << __FUNCTION__;
+        return true;
+    }
+
+    boost::mutex::scoped_lock l(tr->m_lock);
+
+    tr->updateTimestamp();
+
+    if (!isAddressInTransaction(from, tr))
+    {
+        ERR() << "invalid transaction address " << __FUNCTION__;
+        sendCancelTransaction(tr, crInvalidAddress);
+        return true;
+    }
+
+    if (e.updateTransactionWhenCreatedReceived(tr, from, binTxId, innerScript))
+    {
+        // wtf ?
+        ERR() << "invalid createdA " << __FUNCTION__;
+        sendCancelTransaction(tr, crInvalidAddress);
+        return true;
+    }
+
+    // TODO remove this log
+    LOG() << "send xbcTransactionCreate to "
+          << HexStr(tr->b_address());
+
+    XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionCreateB));
+    reply2->append(tr->b_address());
+    reply2->append(m_myid);
+    reply2->append(txid.begin(), 32);
+    reply2->append(tr->a_pk1());
+    reply2->append(binTxId);
+    reply2->append(hx);
+
+    reply2->sign(e.pubKey(), e.privKey());
+
+    sendPacket(tr->b_address(), reply2);
+
+    LOG() << __FUNCTION__ << tr;
+
+    return true;
+}
+
 //******************************************************************************
 //******************************************************************************
 bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    if (packet->size() < 157)
+    if (packet->size() < 125)
     {
         ERR() << "incorrect packet size for xbcTransactionCreateB "
-              << "need min 157 bytes, received " << packet->size() << " "
+              << "need min 125 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1769,17 +1901,15 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // destination address
     uint32_t offset = 72;
-    std::vector<unsigned char> destAddress(packet->data()+offset, packet->data()+offset+20);
-    offset += 20;
-
-    uint256 datatxid(packet->data()+offset);
-    offset += 32;
 
     std::vector<unsigned char> mPubKey(packet->data()+offset, packet->data()+offset+33);
     offset += 33;
 
     std::string binATxId(reinterpret_cast<const char *>(packet->data()+offset));
     offset += binATxId.size()+1;
+
+    std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+20);
+    offset += 20;
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -1816,7 +1946,16 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         return true;
     }
 
-    LOG() << __FUNCTION__ << xtx;
+    if (xtx->state >= TransactionDescr::trCreated)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
+        return true;
+    }
+
+    // LOG() << __FUNCTION__ << xtx;
 
     // connectors
     WalletConnectorPtr connFrom = xapp.connectorByCurrency(xtx->fromCurrency);
@@ -1828,32 +1967,30 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         return true;
     }
 
-    std::vector<unsigned char> hx;
-    if (!rpc::getDataFromTx(datatxid.GetHex(), hx))
-    {
-        // no data, move to pending
-        LOG() << "no data about tx " << datatxid.GetHex() << " process packet later";
-        xapp.processLater(txid, packet);
-        return true;
-    }
-
-    bool isGood = false;
-    if (!connTo->checkTransaction(binATxId, std::string(), 0, isGood))
-    {
-        // move packet to pending
-        xapp.processLater(txid, packet);
-        return true;
-    }
-    else if (!isGood)
-    {
-        LOG() << "check A deposit tx error for " << txid.GetHex() << " " << __FUNCTION__;
-        sendCancelTransaction(xtx, crBadADepositTx);
-        return true;
-    }
-
-    LOG() << "deposit A tx confirmed " << txid.GetHex();
-
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
+    double checkAmount = static_cast<double>(xtx->toAmount) / TransactionDescr::COIN;
+
+    // TODO check A iner script
+
+
+    // check A deposit tx
+    {
+        bool isGood = false;
+        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, isGood))
+        {
+            // move packet to pending
+            xapp.processLater(txid, packet);
+            return true;
+        }
+        else if (!isGood)
+        {
+            LOG() << "check A deposit tx error for " << txid.GetHex() << " " << __FUNCTION__;
+            sendCancelTransaction(xtx, crBadADepositTx);
+            return true;
+        }
+
+        LOG() << "deposit A tx confirmed " << txid.GetHex();
+    }
 
     double fee1      = 0;
     double fee2      = connFrom->minTxFee2(1, 1);
@@ -1917,13 +2054,13 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // depositTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs
         for (const wallet::UtxoEntry & entry : usedInTx)
         {
-            inputs.push_back(std::make_pair(entry.txId, entry.vout));
+            inputs.emplace_back(entry.txId, entry.vout, entry.amount);
         }
 
         // outputs
@@ -1962,11 +2099,11 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // refundTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(xtx->binTxId, 0));
+        inputs.emplace_back(xtx->binTxId, 0, outAmount+fee2);
 
         // outputs
         {
@@ -2033,99 +2170,6 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
     sendPacket(hubAddress, reply);
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
-{
-    DEBUG_TRACE();
-
-    // size must be > 72 bytes
-    if (packet->size() < 72)
-    {
-        ERR() << "invalid packet size for xbcTransactionCreatedA "
-              << "need more than 74 received " << packet->size() << " "
-              << __FUNCTION__;
-        return false;
-    }
-
-    // check is for me
-    if (!checkPacketAddress(packet))
-    {
-        return true;
-    }
-
-    Exchange & e = Exchange::instance();
-    if (!e.isStarted())
-    {
-        return true;
-    }
-
-    size_t offset = 20;
-
-    std::vector<unsigned char> from(packet->data()+offset, packet->data()+offset+20);
-    offset += 20;
-
-    uint256 txid(packet->data()+offset);
-    offset += 32;
-
-    std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binTxId.size()+1;
-
-    uint32_t innerSize = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
-
-    std::vector<unsigned char> innerScript(packet->data()+offset, packet->data()+offset+innerSize);
-    // offset += innerScript.size();
-
-    TransactionPtr tr = e.transaction(txid);
-
-    if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
-    {
-        WARN() << "invalid packet signature " << __FUNCTION__;
-        return true;
-    }
-
-    boost::mutex::scoped_lock l(tr->m_lock);
-
-    tr->updateTimestamp();
-
-    if (!isAddressInTransaction(from, tr))
-    {
-        ERR() << "invalid transaction address " << __FUNCTION__;
-        sendCancelTransaction(tr, crInvalidAddress);
-        return true;
-    }
-
-    if (e.updateTransactionWhenCreatedReceived(tr, from, binTxId, innerScript))
-    {
-        // wtf ?
-        ERR() << "invalid createdA " << __FUNCTION__;
-        sendCancelTransaction(tr, crInvalidAddress);
-        return true;
-    }
-
-    // TODO remove this log
-    LOG() << "send xbcTransactionCreate to "
-          << HexStr(tr->b_address());
-
-    XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionCreateB));
-    reply2->append(tr->b_address());
-    reply2->append(m_myid);
-    reply2->append(txid.begin(), 32);
-    reply2->append(tr->a_destination());
-    reply2->append(tr->a_datatxid().begin(), 32);
-    reply2->append(tr->a_pk1());
-    reply2->append(binTxId);
-
-    reply2->sign(e.pubKey(), e.privKey());
-
-    sendPacket(tr->b_address(), reply2);
-
-    LOG() << __FUNCTION__ << tr;
 
     return true;
 }
@@ -2272,6 +2316,14 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         WARN() << "invalid packet signature " << __FUNCTION__;
         return true;
     }
+    if (xtx->state >= TransactionDescr::trCommited)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
+        return true;
+    }
 
     WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
     if (!conn)
@@ -2281,12 +2333,15 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         return true;
     }
 
+    double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
+    double checkAmount = outAmount;
+
     // check B deposit tx
     {
         // TODO check tx in blockchain and move packet to pending if not
 
-        bool isGood = false;
-        if (!conn->checkTransaction(binTxId, std::string(), 0, isGood))
+        bool   isGood      = false;
+        if (!conn->checkDepositTransaction(binTxId, std::string(), checkAmount, isGood))
         {
             xapp.processLater(txid, packet);
             return true;
@@ -2303,15 +2358,14 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 
     // payTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(binTxId, 0));
+        inputs.emplace_back(binTxId, 0, checkAmount);
 
         // outputs
         {
-            double outAmount = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
             outputs.push_back(std::make_pair(conn->fromXAddr(xtx->to), outAmount));
         }
 
@@ -2356,10 +2410,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     }
 
     xtx->state = TransactionDescr::trCommited;
-
-    LOG() << __FUNCTION__ << xtx;
-
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
+
+    // LOG() << __FUNCTION__ << xtx;
 
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedA));
@@ -2509,6 +2562,14 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         WARN() << "invalid packet signature " << __FUNCTION__;
         return true;
     }
+    if (xtx->state >= TransactionDescr::trCommited)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
+        return true;
+    }
 
     WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
     if (!conn)
@@ -2520,15 +2581,27 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
 
     // payTx
     {
-        std::vector<std::pair<std::string, int> >    inputs;
+        double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
+        double checkAmount = outAmount;
+
+        bool isGood = false;
+        if (!conn->checkDepositTransaction(binTxId, std::string(), checkAmount, isGood) || !isGood)
+        {
+            // oops....shit happens, alert needed
+            // this tx already checked before deposit created
+            WARN() << "deposit not found " << binTxId << " " << __FUNCTION__;
+            sendCancelTransaction(xtx, crBadADepositTx);
+            return true;
+        }
+
+        std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.push_back(std::make_pair(binTxId, 0));
+        inputs.emplace_back(binTxId, 0, checkAmount);
 
         // outputs
         {
-            double outAmount = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
             outputs.push_back(std::make_pair(conn->fromXAddr(xtx->to), outAmount));
         }
 
@@ -2574,10 +2647,9 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
     }
 
     xtx->state = TransactionDescr::trCommited;
-
-    LOG() << __FUNCTION__ << xtx;
-
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
+
+    // LOG() << __FUNCTION__ << xtx;
 
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedB));
@@ -2687,7 +2759,9 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         TransactionPtr tr = e.pendingTransaction(txid);
 
         if(!tr->isValid())
+        {
             tr = e.transaction(txid);
+        }
 
         if(!tr->isValid())
         {
@@ -2942,6 +3016,8 @@ void Session::eraseExpiredPendingTransactions() const
     // check xbridge transactions
     Exchange & e = Exchange::instance();
     e.eraseExpiredTransactions();
+
+    // check client transactions
 }
 
 //*****************************************************************************
