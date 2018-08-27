@@ -6,6 +6,7 @@
 
 #include "xbridgesession.h"
 #include "xbridgepacket.h"
+#include "xbridgeservicespacket.h"
 #include "uint256.h"
 #include "xbridgetransactiondescr.h"
 #include "util/xbridgeerror.h"
@@ -336,6 +337,34 @@ public:
      * @return true, if packet found and removed
      */
     bool removePackets(const uint256 & txid);
+
+    /**
+     * @brief Sends the services ping to the network (including supported xwallets).
+     * @return
+     */
+    bool sendServicePing();
+
+    /**
+     * @brief Returns true if the current node supports the specified service.
+     * @return
+     */
+    bool hasNodeService(const std::string &service);
+    /**
+     * @brief Returns true if the specified node supports the service.
+     * @return
+     */
+    bool hasNodeService(const ::CPubKey &nodePubKey, const std::string &service);
+
+    /**
+     * @brief Returns the all services across all nodes.
+     * @return
+     */
+    std::map<::CPubKey, std::map<std::string, bool> > allServices();
+    /**
+     * @brief Returns the node services supported by the specified node.
+     * @return
+     */
+    std::map<std::string, bool> nodeServices(const ::CPubKey &nodePubKey);
 
 private:
     std::unique_ptr<Impl> m_p;

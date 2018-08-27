@@ -7,6 +7,7 @@
 #include "protocol.h"
 #include "spork.h"
 #include "xbridge/xbridgeexchange.h"
+#include "xbridge/xbridgeapp.h"
 
 //
 // Bootup the Servicenode, look for a 5000 BlocknetDX input and register on the network
@@ -203,6 +204,9 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool for
 
         mnp.Relay();
 
+        // Send the services ping
+        xbridge::App::instance().sendServicePing();
+
         /*
          * IT'S SAFE TO REMOVE THIS IN FURTHER VERSIONS
          * AFTER MIGRATION TO V12 IS DONE
@@ -307,8 +311,7 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
 
     mnb = CServicenodeBroadcast(service, vin,
                                 pubKeyCollateralAddress, pubKeyServicenode,
-                                PROTOCOL_VERSION,
-                                e.isEnabled() ? e.connectedWallets() : std::vector<std::string>());
+                                PROTOCOL_VERSION);
     mnb.lastPing = mnp;
     if (!mnb.Sign(keyCollateralAddress)) {
         errorMessage = strprintf("Failed to sign broadcast, vin: %s", vin.ToString());
@@ -333,6 +336,9 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
     //send to all peers
     LogPrintf("CActiveServicenode::Register() - RelayElectionEntry vin = %s\n", vin.ToString());
     mnb.Relay();
+
+    // Send the services ping
+    xbridge::App::instance().sendServicePing();
 
     /*
      * IT'S SAFE TO REMOVE THIS IN FURTHER VERSIONS
@@ -511,26 +517,6 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
     //The values below are needed for signing mnping messages going forward
     vin = newVin;
     service = newService;
-
-    // update xbridge info for my servicenode
-    CServicenode * mn = mnodeman.Find(vin);
-    if (mn)
-    {
-        xbridge::Exchange & e = xbridge::Exchange::instance();
-        if (e.isEnabled())
-        {
-            mn->connectedWallets.clear();
-            for(const std::string & walletName : e.connectedWallets())
-                mn->connectedWallets.push_back(CServicenodeXWallet(walletName));
-
-            CServicenodeBroadcast mnb(*mn);
-            uint256 hash = mnb.GetHash();
-            if (mnodeman.mapSeenServicenodeBroadcast.count(hash))
-            {
-                mnodeman.mapSeenServicenodeBroadcast[hash].connectedWallets = mn->connectedWallets;
-            }
-        }
-    }
 
     LogPrintf("CActiveServicenode::EnableHotColdServiceNode() - Enabled! You may shut down the cold daemon.\n");
 
