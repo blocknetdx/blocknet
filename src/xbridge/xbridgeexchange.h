@@ -7,7 +7,6 @@
 #include "uint256.h"
 #include "xbridgetransaction.h"
 #include "xbridgewallet.h"
-#include "xbridgepacket.h"
 
 #include <string>
 #include <set>
@@ -85,12 +84,6 @@ public:
      */
     std::vector<std::string> connectedWallets() const;
 
-    /**
-     * @brief Creates a services packet that can be sent to the network.
-     * @param nonWalletServices All services not specific to exchange wallets (e.g. XRouter services).
-     * @return
-     */
-    XBridgePacketPtr servicesPingPacket(const std::vector<std::string> &nonWalletServices);
 
     bool checkUtxoItems(const uint256 & txid,
                         const std::vector<wallet::UtxoEntry> & items);
