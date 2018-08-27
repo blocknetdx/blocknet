@@ -250,7 +250,15 @@ enum XBridgeCommand
     //    uint160 client address
     //    uint256 hub transaction id
     //
-    xbcTransactionFinished = 24
+    xbcTransactionFinished = 24,
+
+    //
+    // xbcServicesPing
+    //    array of supported services
+    //        string Service name
+    //        ... (max 10000 bytes)
+    //
+    xbcServicesPing = 50
 };
 
 //******************************************************************************
@@ -496,7 +504,7 @@ public:
     bool verify();
     bool verify(const std::vector<unsigned char> & pubkey);
 
-private:
+protected:
     template<uint32_t INDEX>
     uint32_t & field32()
         { return *static_cast<uint32_t *>(static_cast<void *>(&m_body[INDEX * 4])); }

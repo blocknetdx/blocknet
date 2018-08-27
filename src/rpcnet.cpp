@@ -16,6 +16,8 @@
 #include "timedata.h"
 #include "util.h"
 #include "version.h"
+#include "activeservicenode.h"
+#include "xbridge/xbridgeapp.h"
 
 #include <boost/foreach.hpp>
 
@@ -55,6 +57,23 @@ Value ping(const Array& params, bool fHelp)
     BOOST_FOREACH (CNode* pNode, vNodes) {
         pNode->fPingQueued = true;
     }
+
+    return Value::null;
+}
+
+Value sendserviceping(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+        throw runtime_error(
+            "sendserviceping\n"
+            "\nRequests that a service ping be sent to all other nodes.\n"
+            "\nExamples:\n" +
+            HelpExampleCli("sendserviceping", "") + HelpExampleRpc("sendserviceping", ""));
+
+    if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
+        throw runtime_error("Service ping not sent: This is not a Servicenode or it hasn't started yet");
+
+    xbridge::App::instance().sendServicePing();
 
     return Value::null;
 }
