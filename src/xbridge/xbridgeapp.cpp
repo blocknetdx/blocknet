@@ -626,8 +626,8 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
             XBridgePacketPtr p(new XBridgeServicesPacket);
             p->copyFrom(message);
             auto success = ptr->processPacket(p);
-            if (!success) {
-                state.DoS(1, error("Bad services ping"), REJECT_INVALID, "bad-services-ping");
+            if (!success) { // TODO Handle DoS before relay
+                state.DoS(0, error("Bad services ping"), REJECT_INVALID, "bad-services-ping");
                 return;
             }
             // Store updated services list for this node
@@ -1491,17 +1491,22 @@ bool App::sendServicePing() {
     }
 
     Exchange & e = Exchange::instance();
+    std::map<std::string, bool> nodup;
 
     // TODO Add xrouter services
-    std::vector<std::string> nonWalletServices;// = {"xrSendTransaction","xrGetBlock","xrGetTransaction"};
+    std::vector<std::string> nonWalletServices;// = xrouter.services() {"xrSendTransaction","xrGetBlock","xrGetTransaction"};
+    for (const auto &s : nonWalletServices)
+        nodup[s] = true;
 
-    // Add connected wallets
+    // Add xbridge connected wallets
+    for (const auto &wallet : e.connectedWallets())
+        nodup[wallet] = true;
+
+    // All services
     std::vector<std::string> services;
-    for (const auto & wallet : e.connectedWallets()) // TODO Only add wallets that are currently on and accessible
-        services.push_back(wallet);
-
-    // Concatenate non-wallet services
-    services.insert(services.end(), nonWalletServices.begin(), nonWalletServices.end());
+    services.reserve(nodup.size());
+    for (const auto &item : nodup)
+        services.push_back(item.first);
 
     // Create the ping packet
     auto ping = e.servicesPingPacket(services);
