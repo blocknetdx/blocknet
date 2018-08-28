@@ -462,9 +462,10 @@ Value setmocktime(const Array& params, bool fHelp)
 }
 
 #ifdef ENABLE_WALLET
-Value getstakingstatus(const Array& params, bool fHelp)
+Value getstakingstatus(const Array & params, bool fHelp)
 {
-    if (fHelp || params.size() != 0)
+    if (fHelp)
+    {
         throw runtime_error(
             "getstakingstatus\n"
             "Returns an object containing various staking information.\n"
@@ -480,6 +481,7 @@ Value getstakingstatus(const Array& params, bool fHelp)
             "}\n"
             "\nExamples:\n" +
             HelpExampleCli("getstakingstatus", "") + HelpExampleRpc("getstakingstatus", ""));
+    }
 
     Object obj;
     obj.push_back(Pair("validtime", chainActive.Tip()->nTime > 1471482000));
@@ -499,5 +501,134 @@ Value getstakingstatus(const Array& params, bool fHelp)
     obj.push_back(Pair("staking status", nStaking));
 
     return obj;
+}
+#endif // ENABLE_WALLET
+
+#ifdef ENABLE_WALLET
+Value gettradingdata(const Array& params, bool fHelp)
+{
+    if (fHelp || params.size() > 1)
+        throw runtime_error(
+            "gettradingdata blocks\n"
+            "Returns an object containing xbridge trading records.\n"
+            "\nArguments:\n"
+            "1. blocks  (integer, optional) count of blocks for search\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"timestamp\":  \"timestamp\",       (uint64) block date in unixtime format\n"
+            "  \"txid\":       \"transaction id\",  (string) blocknet transaction id\n"
+            "  \"to\":         \"address\",         (string) receiver address\n"
+            "  \"xid\":        \"transaction id\",  (string) xbridge transaction id\n"
+            "  \"from\":       \"XXX\",             (string) from currency\n"
+            "  \"fromAmount\": 0,                   (uint64) from amount\n"
+            "  \"to\":         \"XXX\",             (string) to currency\n"
+            "  \"toAmount\":   0,                   (uint64) toAmount\n"
+            "}\n"
+            "\nExamples:\n" +
+            HelpExampleCli("gettradingdata", "") + HelpExampleRpc("gettradingdata", ""));
+
+    uint32_t countOfBlocks = std::numeric_limits<uint32_t>::max();
+    if (params.size() == 1)
+    {
+        RPCTypeCheck(params, boost::assign::list_of(int_type));
+        countOfBlocks = params[0].get_int();
+    }
+
+    LOCK(cs_main);
+
+    Array records;
+
+    CBlockIndex * pindex = chainActive.Tip();
+    int64_t timeBegin = chainActive.Tip()->GetBlockTime();
+    for (; pindex->pprev && pindex->GetBlockTime() > (timeBegin-30*24*60*60) && countOfBlocks > 0;
+             pindex = pindex->pprev, --countOfBlocks)
+    {
+        CBlock block;
+        if (!ReadBlockFromDisk(block, pindex))
+        {
+            // throw
+            continue;
+        }
+        for (const CTransaction & tx : block.vtx)
+        {
+            for (const CTxOut & out : tx.vout)
+            {
+                if (!out.scriptPubKey.size())
+                {
+                    continue;
+                }
+
+                Object o;
+                o.push_back(Pair("timestamp", block.GetBlockTime()));
+
+                std::vector<std::vector<unsigned char> > solutions;
+                txnouttype type = TX_NONSTANDARD;
+                if (!Solver(out.scriptPubKey, type, solutions))
+                {
+                    // wrong pubkey, need to check it
+                    o.push_back(Pair("txid", tx.GetHash().GetHex()));
+                    o.push_back(Pair("xid", "not solved"));
+                    records.push_back(o);
+                    continue;
+                }
+                if (type == TX_MULTISIG)
+                {
+                    if (solutions.size() < 4)
+                    {
+                        o.push_back(Pair("xid", "bad multisig, count of items"));
+                        continue;
+                    }
+
+                    std::string json;
+
+                    o.push_back(Pair("txid", tx.GetHash().GetHex()));
+
+                    {
+                        // second item is real pubkey of service node
+                        CBitcoinAddress snodeAddr(CPubKey(solutions[1]).GetID());
+                        o.push_back(Pair("to", snodeAddr.ToString()));
+                    }
+
+                    for (uint32_t i = 2; i < solutions.size()-1; ++i)
+                    {
+                        const std::vector<unsigned char> & sol = solutions[i];
+                        if (sol.size() != 65)
+                        {
+                            o.push_back(Pair("xid", "unknown multisig, size != 65"));
+                            break;
+                        }
+                        std::copy(sol.begin()+1, sol.end(), std::back_inserter(json));
+                    }
+
+                    Value readed;
+                    if (!read_string(json, readed) || readed.type() != array_type)
+                    {
+                        o.push_back(Pair("xid", "unknown multisig, json error"));
+                    }
+                    else
+                    {
+                        Array xtx = readed.get_array();
+                        if (xtx.size() == 5)
+                        {
+                            o.push_back(Pair("xid",        xtx[0].get_str()));
+                            o.push_back(Pair("from",       xtx[1].get_str()));
+                            o.push_back(Pair("fromAmount", xtx[2].get_int()));
+                            o.push_back(Pair("to",         xtx[3].get_str()));
+                            o.push_back(Pair("toAmount",   xtx[4].get_int()));
+                        }
+                        else
+                        {
+                            o.push_back(Pair("xid", "unknown multisig, bad records count"));
+                        }
+                    }
+
+                    records.push_back(o);
+                    continue;
+                }
+            }
+        }
+    }
+
+    return records;
 }
 #endif // ENABLE_WALLET
