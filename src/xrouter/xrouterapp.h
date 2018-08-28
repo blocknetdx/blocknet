@@ -111,6 +111,8 @@ public:
      */
     bool init(int argc, char *argv[]);
 
+    std::vector<std::string>& getServicesList();
+    
     /**
      * @brief send packet from client side with the selected command
      * @param command XRouter command code

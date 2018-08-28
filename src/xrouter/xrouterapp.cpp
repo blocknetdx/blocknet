@@ -130,6 +130,12 @@ bool App::init(int argc, char *argv[])
     return true;
 }
 
+std::vector<std::string>& App::getServicesList() 
+{
+    std::vector<std::string> result;
+    return result;
+}
+
 static std::vector<pair<int, CServicenode> > getServiceNodes()
 {
     int nHeight;

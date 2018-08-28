@@ -1478,7 +1478,7 @@ T random_element(T begin, T end)
  * @brief Sends the service ping to the network on behalf of the current Servicenode.
  * @return
  */
-bool App::sendServicePing() {
+bool App::sendServicePing(std::vector<std::string> &nonWalletServices) {
     if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED) {
         ERR() << "This servicenode must be started in order to report report services to the network " << __FUNCTION__;
         return false;
@@ -1493,8 +1493,6 @@ bool App::sendServicePing() {
     Exchange & e = Exchange::instance();
     std::map<std::string, bool> nodup;
 
-    // TODO Add xrouter services
-    std::vector<std::string> nonWalletServices;// = xrouter.services() {"xrSendTransaction","xrGetBlock","xrGetTransaction"};
     for (const auto &s : nonWalletServices)
         nodup[s] = true;
 
