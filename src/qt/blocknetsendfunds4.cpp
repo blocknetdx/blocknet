@@ -334,9 +334,10 @@ void BlocknetSendFunds4::onSubmit() {
 
         CAmount fees{0};
         CAmount amount{0};
+        bool unlocked = false;
         auto coinControl = model->getCoinControl(walletModel);
         auto *sendFundsRequest = new BlocknetSendFundsRequest(this, walletModel, &coinControl);
-        auto result = sendFundsRequest->send(model->txRecipients, fees, amount);
+        auto result = sendFundsRequest->send(model->txRecipients, fees, amount, unlocked);
 
         model->txFees = fees;
         model->txAmount = amount;

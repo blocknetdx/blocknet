@@ -13,9 +13,10 @@
 #include "base58.h"
 
 #include <QMessageBox>
+#include <QLineEdit>
 #include <QKeyEvent>
 
-BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QFrame *parent) : QFrame(parent), walletModel(w),
+BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QWidget *parent) : QFrame(parent), walletModel(w),
                                                                        layout(new QVBoxLayout) {
 //    this->setStyleSheet("border: 1px solid red");
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -108,6 +109,7 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QFrame *parent) : QFrame(pa
 
     confirmBtn = new BlocknetFormBtn;
     confirmBtn->setText(tr("Confirm Payment"));
+    confirmBtn->setFocusPolicy(Qt::TabFocus);
     cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");
     cancelBtn->setText(tr("Cancel"));
@@ -138,7 +140,7 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QFrame *parent) : QFrame(pa
     layout->addWidget(btnBox);
     layout->addStretch(1);
 
-    connect(amountTi, SIGNAL(textChanged(const QString&)), this, SLOT(onAmountChanged(const QString&)));
+    connect(amountTi, &BlocknetLineEdit::editingFinished, this, &BlocknetQuickSend::onAmountChanged);
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
     connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
 
@@ -158,6 +160,23 @@ void BlocknetQuickSend::keyPressEvent(QKeyEvent *event) {
         onSubmit();
 }
 
+bool BlocknetQuickSend::focusNextPrevChild(bool next) {
+    if (next && amountTi->hasFocus()) {
+        amountTi->clearFocus();
+        this->setFocus(Qt::FocusReason::ActiveWindowFocusReason);
+        return true;
+    }
+    return QFrame::focusNextPrevChild(next);
+}
+
+void BlocknetQuickSend::mouseReleaseEvent(QMouseEvent *event) {
+    QWidget::mouseReleaseEvent(event);
+    if (this->amountTi->hasFocus() && !this->amountTi->rect().contains(event->pos())) {
+        this->amountTi->clearFocus();
+        this->setFocus(Qt::FocusReason::ActiveWindowFocusReason);
+    }
+}
+
 void BlocknetQuickSend::showEvent(QShowEvent *event) {
     QWidget::showEvent(event);
     if (!addressTi->hasFocus() && !amountTi->hasFocus())
@@ -172,11 +191,17 @@ void BlocknetQuickSend::hideEvent(QHideEvent *event) {
     disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
 }
 
-void BlocknetQuickSend::onAmountChanged(const QString &text) {
+void BlocknetQuickSend::onAmountChanged() {
     if (!validated()) {
-        CAmount fees = walletModel->estimatedFee(1).GetFeePerK();
-        feeValueLbl->setText(QString("%1/kB %2").arg(BitcoinUnits::formatWithUnit(displayUnit, fees), tr("(estimated)")));
-        totalValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, BlocknetTransaction::stringToInt(amountTi->text(), displayUnit) + fees));
+        bool feesKnown = txFees > 0;
+        if (!feesKnown) {
+            CAmount fees = walletModel->estimatedFee(1).GetFeePerK();
+            feeValueLbl->setText(QString("%1/kB %2").arg(BitcoinUnits::formatWithUnit(displayUnit, fees), tr("(estimated)")));
+            totalValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, BlocknetTransaction::stringToInt(amountTi->text(), displayUnit) + fees));
+            return;
+        }
+        feeValueLbl->setText(QString("%1 %2").arg(BitcoinUnits::formatWithUnit(displayUnit, txFees), walletModel->isWalletLocked() ? tr("(estimated)") : QString()));
+        totalValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, BlocknetTransaction::stringToInt(amountTi->text(), displayUnit) + txFees));
         return;
     }
     // Do not process unless the amounts changed
@@ -185,18 +210,7 @@ void BlocknetQuickSend::onAmountChanged(const QString &text) {
         return;
     lastAmount = cur;
 
-    auto result = processFunds();
-    if (result.status != WalletModel::OK && result.status != WalletModel::Cancel) {
-        // Handle errors
-        feeValueLbl->setText(tr("n/a"));
-        totalValueLbl->setText(tr("n/a"));
-        warningLbl->setText(walletModel->messageForSendCoinsReturn(result));
-        return;
-    }
-
-    feeValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, txFees));
-    totalValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, totalAmount));
-    warningLbl->clear();
+    processFunds();
 }
 
 void BlocknetQuickSend::onSubmit() {
@@ -206,84 +220,56 @@ void BlocknetQuickSend::onSubmit() {
         return;
     }
 
-    auto result = processFunds(true);
-    if (result.status != WalletModel::OK && result.status != WalletModel::Cancel) {
-        // Handle errors
-        feeValueLbl->setText(tr("n/a"));
-        totalValueLbl->setText(tr("n/a"));
-        warningLbl->setText(walletModel->messageForSendCoinsReturn(result));
-        return;
-    }
-
-    warningLbl->clear();
+    processFunds(true);
 }
 
 WalletModel::SendCoinsReturn BlocknetQuickSend::processFunds(bool submitFunds) {
+    walletUnlockedFee = false;
+
     BlocknetSendFundsModel model;
     model.addRecipient(addressTi->text(), BlocknetTransaction::stringToInt(amountTi->text(), displayUnit));
     model.userFee = walletModel->estimatedFee(1).GetFeePerK();
     model.customFee = false;
 
-    QList<SendCoinsRecipient> recipients;
-
-    for (const BlocknetTransaction &tx : model.recipients) {
-        SendCoinsRecipient recipient;
-        recipient.address = tx.address;
-        recipient.amount = tx.amount;
-        recipient.useSwiftTX = false;
-        recipient.inputType = ALL_COINS;
-        recipients << recipient;
-    }
-
-    if (recipients.isEmpty())
-        return WalletModel::InvalidAddress;
+    WalletModel::SendCoinsReturn result;
+    walletModel->attemptToSendZeroFee();
 
     // Coin control options
-    CCoinControl coinControl;
-    if (walletModel->validateAddress(model.changeAddress)) {
-        CBitcoinAddress addr(model.changeAddress.toStdString());
-        if (addr.IsValid())
-            coinControl.destChange     = addr.Get();
-    }
-    coinControl.fAllowOtherInputs      = true;
-    coinControl.fOverrideFeeRate       = model.customFee;
-    if (model.customFee)
-        coinControl.nFeeRate           = CFeeRate(model.userFee);
-    coinControl.fAllowZeroValueOutputs = false;
+    auto coinControl = model.getCoinControl(walletModel);
 
-    WalletModel::SendCoinsReturn result;
-
-    if (submitFunds) {
-        auto *sendFundsRequest = new BlocknetSendFundsRequest(this, walletModel, &coinControl);
-        result = sendFundsRequest->send(recipients, txFees, txAmount);
-        if (result.status == WalletModel::OK) {
-            totalAmount = txAmount + txFees;
-            emit submit();
-            return result;
-        } else {
-            txFees = 0;
-            txAmount = 0;
-            totalAmount = 0;
-        }
+    // calculate the fees
+    result = model.prepareFunds(walletModel, &coinControl);
+    txFees = model.txActiveFee();
+    txAmount = model.txAmount;
+    totalAmount = model.txTotalAmount();
+    if (result.status != WalletModel::OK && result.status != WalletModel::Cancel) {
+        walletModel->attemptToSendZeroFee(false);
+        updateLabels(result);
         return result;
     }
 
-    WalletModelTransaction walletTx(recipients);
+    // Submit the transaction
+    if (submitFunds) {
+        CAmount fees{0};
+        CAmount amount{0};
+        bool unlocked = false;
+        auto *sendFundsRequest = new BlocknetSendFundsRequest(this, walletModel, &coinControl);
+        result = sendFundsRequest->send(model.txRecipients, fees, amount, unlocked);
+        if (unlocked) {
+            model.txFees = fees;
+            model.txAmount = amount;
+            totalAmount = model.txTotalAmount();
+            txFees = model.txActiveFee();
+            txAmount = model.txAmount;
+            walletUnlockedFee = true;
+        }
 
-    if (walletModel->isWalletLocked())
-        result = walletModel->prepareTransaction(walletTx, &coinControl, 0, false);
-    else
-        result = walletModel->prepareTransaction(walletTx, &coinControl);
-
-    if (result.status == WalletModel::OK || result.status == WalletModel::Cancel) {
-        txFees = walletTx.getTransactionFee();
-        txAmount = walletTx.getTotalTransactionAmount();
-        totalAmount = txAmount + txFees;
-    } else {
-        txFees = 0;
-        txAmount = 0;
-        totalAmount = 0;
+        if (result.status == WalletModel::OK)
+            emit submit();
     }
+
+    walletModel->attemptToSendZeroFee(false);
+    updateLabels(result);
 
     return result;
 }
@@ -297,4 +283,17 @@ void BlocknetQuickSend::onDisplayUnit(int unit) {
     displayUnit = unit;
     amountTi->setValidator(new BlocknetNumberValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
     onAmountChanged();
+}
+
+void BlocknetQuickSend::updateLabels(WalletModel::SendCoinsReturn &result) {
+    // Handle errors
+    if (result.status != WalletModel::OK && result.status != WalletModel::Cancel) {
+        warningLbl->setText(walletModel->messageForSendCoinsReturn(result));
+    } else {
+        warningLbl->clear();
+    }
+
+    feeValueLbl->setText(QString("%1 %2").arg(BitcoinUnits::formatWithUnit(displayUnit, txFees), walletModel->isWalletLocked()
+                                                           && !walletUnlockedFee ? tr("(estimated since wallet is locked)") : ""));
+    totalValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, totalAmount));
 }

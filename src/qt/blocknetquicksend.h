@@ -11,6 +11,7 @@
 
 #include "walletmodel.h"
 
+#include <QWidget>
 #include <QFrame>
 #include <QLabel>
 #include <QVBoxLayout>
@@ -22,7 +23,7 @@ class BlocknetQuickSend : public QFrame
 {
     Q_OBJECT
 public:
-    explicit BlocknetQuickSend(WalletModel *w, QFrame *parent = nullptr);
+    explicit BlocknetQuickSend(WalletModel *w, QWidget *parent = nullptr);
     bool validated();
 
 signals:
@@ -37,9 +38,11 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void showEvent(QShowEvent *event) override;
     void hideEvent(QHideEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    bool focusNextPrevChild(bool next) override;
 
 private slots:
-    void onAmountChanged(const QString &text = QString());
+    void onAmountChanged();
     void onDisplayUnit(int);
     void onEncryptionStatus(int encStatus);
 
@@ -60,8 +63,10 @@ private:
     QLabel *warningLbl;
     BlocknetFormBtn *cancelBtn;
     BlocknetFormBtn *confirmBtn;
+    bool walletUnlockedFee = false;
 
     WalletModel::SendCoinsReturn processFunds(bool submitFunds = false);
+    void updateLabels(WalletModel::SendCoinsReturn &result);
 };
 
 #endif // BLOCKNETQUICKSEND_H

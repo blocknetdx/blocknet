@@ -16,7 +16,7 @@ class BlocknetSendFundsRequest : public QObject {
 
 public:
     explicit BlocknetSendFundsRequest(QWidget *widget, WalletModel *w, CCoinControl *coinControl = nullptr, QObject *parent = nullptr);
-    WalletModel::SendCoinsReturn send(QList<SendCoinsRecipient> &recipients, CAmount &txFees, CAmount &txAmount);
+    WalletModel::SendCoinsReturn send(QList<SendCoinsRecipient> &recipients, CAmount &txFees, CAmount &txAmount, bool &walletWasUnlocked);
     QString sendStatusMsg(const WalletModel::SendCoinsReturn &scr, const QString &txFeeStr, int displayUnit);
 
 private:

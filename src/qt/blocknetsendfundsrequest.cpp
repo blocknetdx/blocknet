@@ -17,9 +17,10 @@ BlocknetSendFundsRequest::BlocknetSendFundsRequest(QWidget *widget, WalletModel 
  * @param walletTx Prepared tx
  * @param txFees Mutated, assigned the most recent fee for this request
  * @param txAmount Mutated, assigned the most recent amount for this request
+ * @param walletWasUnlocked Mutated, indicates that wallet was unlocked
  * @return
  */
-WalletModel::SendCoinsReturn BlocknetSendFundsRequest::send(QList<SendCoinsRecipient> &recipients, CAmount &txFees, CAmount &txAmount) {
+WalletModel::SendCoinsReturn BlocknetSendFundsRequest::send(QList<SendCoinsRecipient> &recipients, CAmount &txFees, CAmount &txAmount, bool &walletWasUnlocked) {
     if (recipients.isEmpty())
         return WalletModel::InvalidAddress;
 
@@ -85,7 +86,10 @@ WalletModel::SendCoinsReturn BlocknetSendFundsRequest::send(QList<SendCoinsRecip
             // Unlock wallet was cancelled
             return WalletModel::Cancel;
         }
+        walletWasUnlocked = true;
         return sendInt(wtx, txFees, txAmount);
+    } else { // wallet already unlocked
+        walletWasUnlocked = true;
     }
 
     return sendInt(wtx, txFees, txAmount);
