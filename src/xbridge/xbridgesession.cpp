@@ -356,7 +356,8 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     uint32_t servicesCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
     offset += sizeof(uint32_t);
     std::string rawServices(reinterpret_cast<const char *>(packet->data() + offset));
-    boost::split(services, rawServices, boost::is_any_of(","));
+    if (rawServices.length() > 0)
+        boost::split(services, rawServices, boost::is_any_of(","));
     if (services.size() != servicesCount) {
         ERR() << "Rejecting Services packet, the reported services count doesn't match the actual count "
               << __FUNCTION__;
