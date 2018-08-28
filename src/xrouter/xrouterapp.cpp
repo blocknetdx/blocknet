@@ -137,8 +137,11 @@ std::vector<std::string> App::getServicesList()
     if (!xrouter_on)
         return result;
     result.push_back("XRouter");
-    for (std::string s : xrouter_settings.getPlugins())
+    LOG() << "Adding XRouter to servicenode ping";
+    for (std::string s : xrouter_settings.getPlugins()) {
         result.push_back("XRouter::" + s);
+        LOG() << "Adding XRouter plugin " << s << " to servicenode ping";
+    }
     return result;
 }
 
@@ -242,6 +245,9 @@ std::string App::updateConfigs()
                 break;
             }
         }
+        
+        // TODO: this code needs revision
+        break;
         
         if (!found) {
             LOG() << "Broadcasting request for config of snode " << s.second.addr.ToString();
