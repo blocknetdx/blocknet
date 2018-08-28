@@ -130,9 +130,15 @@ bool App::init(int argc, char *argv[])
     return true;
 }
 
-std::vector<std::string>& App::getServicesList() 
+std::vector<std::string> App::getServicesList() 
 {
     std::vector<std::string> result;
+    int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
+    if (!xrouter_on)
+        return result;
+    result.push_back("XRouter");
+    for (std::string s : xrouter_settings.getPlugins())
+        result.push_back("XRouter::" + s);
     return result;
 }
 
@@ -154,7 +160,7 @@ bool App::start()
 {
     updateConfigs();
     bool res = server->start();
-    //openConnections();
+    openConnections();
     return res;
 }
 
@@ -164,6 +170,12 @@ void App::openConnections()
     LOG() << "Current peers count = " << vNodes.size();
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+        if (!s.second.HasService("XRouter"))
+            continue;
+        
+        // TODO: connect only to nodes with a specific service (specified in function parameters)
+        std::string servicesList = s.second.GetServices();
+        
         bool connected = false;
         for (CNode* pnode : vNodes) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
@@ -324,6 +336,8 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
     // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
 
+    openConnections();
+    
     std::vector<CNode*> selectedNodes;
     
     LOCK(cs_vNodes);
@@ -338,7 +352,7 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
         CNode* res = NULL;
         for (CNode* pnode : vNodes) {
             if (key == pnode->addr.ToString()) {
-                // This node is a running xrouter
+                // This node is running xrouter
                 res = pnode;
                 break;
             }
@@ -382,7 +396,8 @@ CNode* App::getNodeForService(std::string name)
 {
     // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
-
+    openConnections();
+    
     if (name.find("/") != string::npos) {
         std::vector<std::string> parts;
         boost::split(parts, name, boost::is_any_of("/"));

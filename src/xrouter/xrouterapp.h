@@ -111,7 +111,7 @@ public:
      */
     bool init(int argc, char *argv[]);
 
-    std::vector<std::string>& getServicesList();
+    std::vector<std::string> getServicesList();
     
     /**
      * @brief send packet from client side with the selected command
