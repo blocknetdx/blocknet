@@ -354,6 +354,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
   xbridge/xbridgepacket.cpp \
+  xbridge/xbridgeservicespacket.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
@@ -378,6 +379,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgeapp.h \
   xbridge/xbridgeexchange.h \
   xbridge/xbridgepacket.h \
+  xbridge/xbridgeservicespacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
   xbridge/xbridgetransaction.h \
