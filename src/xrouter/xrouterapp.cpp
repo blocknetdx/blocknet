@@ -189,7 +189,7 @@ void App::openConnections()
         if (!connected) {
             CAddress addr;
             CNode* res = ConnectNode(addr, s.second.addr.ToString().c_str());
-            LOG() << "Trying to connect to " << s.second.addr.ToString() << "; result=" << ((res == NULL) ? "fail" : "success");
+            LOG() << "Trying to connect to " << CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString() << "; result=" << ((res == NULL) ? "fail" : "success");
             if (res)
                 this->getXrouterConfig(res);
         }
