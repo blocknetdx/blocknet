@@ -162,41 +162,6 @@ Transaction::State Transaction::increaseStateCounter(const Transaction::State st
         }
         return m_state;
     }
-//    else if (state == trSigned && m_state == state)
-//    {
-//        if (from == m_a.source())
-//        {
-//            m_a_stateChanged = true;
-//        }
-//        else if (from == m_b.source())
-//        {
-//            m_b_stateChanged = true;
-//        }
-//        if (m_a_stateChanged && m_b_stateChanged)
-//        {
-//            m_state = trCommited;
-//            m_a_stateChanged = m_b_stateChanged = false;
-//        }
-//        return m_state;
-//    }
-//    else if (state == trCommited && m_state == state)
-//    {
-//        if (from == m_a.dest())
-//        {
-//            m_a_stateChanged = true;
-//        }
-//        else if (from == m_b.dest())
-//        {
-//            m_b_stateChanged = true;
-//        }
-
-//        if (m_a_stateChanged && m_b_stateChanged)
-//        {
-//            m_state = trFinished;
-//            m_a_stateChanged = m_b_stateChanged = false;
-//        }
-//        return m_state;
-//    }
 
     return trInvalid;
 }
@@ -363,13 +328,6 @@ std::vector<unsigned char> Transaction::a_innerScript() const
 
 //*****************************************************************************
 //*****************************************************************************
-uint256 Transaction::a_datatxid() const
-{
-    return m_a_datatxid;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 std::vector<unsigned char> Transaction::a_pk1() const
 {
     return m_a.mpubkey();
@@ -476,18 +434,15 @@ bool Transaction::tryJoin(const TransactionPtr other)
 //*****************************************************************************
 //*****************************************************************************
 bool Transaction::setKeys(const std::vector<unsigned char> & addr,
-                                 const uint256 & datatxid,
-                                 const std::vector<unsigned char> & pk)
+                          const std::vector<unsigned char> & pk)
 {
     if (m_b.dest() == addr)
     {
-        m_b_datatxid = datatxid;
         m_b.setMPubkey(pk);
         return true;
     }
     else if (m_a.dest() == addr)
     {
-        m_a_datatxid = datatxid;
         m_a.setMPubkey(pk);
         return true;
     }

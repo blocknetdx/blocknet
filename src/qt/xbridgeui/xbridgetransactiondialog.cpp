@@ -264,34 +264,26 @@ void XBridgeTransactionDialog::onWalletListReceivedHandler(const QStringList & w
 //******************************************************************************
 void XBridgeTransactionDialog::onSendTransaction()
 {
-//    std::string f = util::base64_decode(m_addressFrom->text().toStdString());
-//    std::vector<unsigned char> from(f.begin(), f.end());
-//    std::string t = util::base64_decode(m_addressTo->text().toStdString().c_str());
-//    std::vector<unsigned char> to(t.begin(), t.end());
-//    if (from.size() != 20 || to.size() != 20)
+    std::string from = m_addressFrom->text().toStdString();
+    std::string to   = m_addressTo->text().toStdString();
+
+//    if (from.size() < 32 || from.size() > 36)
 //    {
-//        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid address"));
+//        m_addressFrom->setFocus();
+//        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid from address"));
 //        return;
 //    }
 
-    std::string from = m_addressFrom->text().toStdString();
-    std::string to   = m_addressTo->text().toStdString().c_str();
-    if (from.size() < 32 || from.size() > 36)
-    {
-        m_addressFrom->setFocus();
-        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid from address"));
-        return;
-    }
+//    if (to.size() < 32 || to.size() > 36)
+//    {
+//        m_addressTo->setFocus();
+//        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid to address"));
+//        return;
+//    }
 
-    if (to.size() < 32 || to.size() > 36)
-    {
-        m_addressTo->setFocus();
-        QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid to address"));
-        return;
-    }
+    std::string fromCurrency = m_currencyFrom->currentText().toStdString();
+    std::string toCurrency   = m_currencyTo->currentText().toStdString();
 
-    std::string fromCurrency        = m_currencyFrom->currentText().toStdString();
-    std::string toCurrency          = m_currencyTo->currentText().toStdString();
     if (fromCurrency.size() == 0 || toCurrency.size() == 0)
     {
         QMessageBox::warning(this, trUtf8("check parameters"), trUtf8("Invalid currency"));
