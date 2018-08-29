@@ -30,7 +30,7 @@ static const char UNUSED* blocknetdx_strings[] = {
                                    "notation for IPv6. This option can be specified multiple times (default: "
                                    "bind to all interfaces)"),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
-                                   "Cannot obtain a lock on data directory %s. BlocknetDX Core is probably already "
+                                   "Cannot obtain a lock on data directory %s. Blocknet is probably already "
                                    "running."),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
                                    "Change automatic finalized budget voting behavior. mode=auto: Vote for only "
@@ -162,7 +162,7 @@ static const char UNUSED* blocknetdx_strings[] = {
                                    "It is also recommended to set alertnotify so you are notified of problems;\n"
                                    "for example: alertnotify=echo %%s | mail -s \"BlocknetDX Alert\" admin@foo.com\n"),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
-                                   "Unable to bind to %s on this computer. BlocknetDX Core is probably already running."),
+                                   "Unable to bind to %s on this computer. Blocknet is probably already running."),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
                                    "Unable to locate enough Obfuscation denominated funds for this transaction."),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
@@ -182,7 +182,7 @@ static const char UNUSED* blocknetdx_strings[] = {
                                    "pay if you send a transaction."),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
                                    "Warning: Please check that your computer's date and time are correct! If "
-                                   "your clock is wrong BlocknetDX Core will not work properly."),
+                                   "your clock is wrong Blocknet will not work properly."),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
                                    "Warning: The network does not appear to fully agree! Some miners appear to "
                                    "be experiencing issues."),
@@ -236,7 +236,8 @@ static const char UNUSED* blocknetdx_strings[] = {
     QT_TRANSLATE_NOOP("blocknetdx-core", "Connection options:"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Copyright (C) 2009-%i The Bitcoin Core Developers"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Copyright (C) 2014-%i The Dash Core Developers"),
-    QT_TRANSLATE_NOOP("blocknetdx-core", "Copyright (C) 2015-%i The BlocknetDX Core Developers"),
+    QT_TRANSLATE_NOOP("blocknetdx-core", "Copyright (C) 2015-%i The PIVX Core Developers"),
+    QT_TRANSLATE_NOOP("blocknetdx-core", "Copyright (C) 2015-%i The Blocknet Core Developers"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Corrupted block database detected"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Could not parse -rpcbind value %s as network address"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Could not parse servicenode.conf"),
@@ -254,7 +255,7 @@ static const char UNUSED* blocknetdx_strings[] = {
     QT_TRANSLATE_NOOP("blocknetdx-core", "Error loading block database"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Error loading wallet.dat"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Error loading wallet.dat: Wallet corrupted"),
-    QT_TRANSLATE_NOOP("blocknetdx-core", "Error loading wallet.dat: Wallet requires newer version of BlocknetDX Core"),
+    QT_TRANSLATE_NOOP("blocknetdx-core", "Error loading wallet.dat: Wallet requires newer version of Blocknet"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Error opening block database"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Error reading from database, shutting down."),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Error recovering public key."),
@@ -282,7 +283,7 @@ static const char UNUSED* blocknetdx_strings[] = {
     QT_TRANSLATE_NOOP("blocknetdx-core", "Incompatible version."),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Incorrect or no genesis block found. Wrong datadir for network?"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Information"),
-    QT_TRANSLATE_NOOP("blocknetdx-core", "Initialization sanity check failed. BlocknetDX Core is shutting down."),
+    QT_TRANSLATE_NOOP("blocknetdx-core", "Initialization sanity check failed. Blocknet is shutting down."),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Input is not valid."),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Insufficient funds."),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Invalid -onion address: '%s'"),
@@ -426,7 +427,7 @@ static const char UNUSED* blocknetdx_strings[] = {
     QT_TRANSLATE_NOOP("blocknetdx-core", "Verifying wallet..."),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Wallet %s resides outside data directory %s"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Wallet is locked."),
-    QT_TRANSLATE_NOOP("blocknetdx-core", "Wallet needed to be rewritten: restart BlocknetDX Core to complete"),
+    QT_TRANSLATE_NOOP("blocknetdx-core", "Wallet needed to be rewritten: restart Blocknet to complete"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Wallet options:"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Wallet window title"),
     QT_TRANSLATE_NOOP("blocknetdx-core", "Warning"),

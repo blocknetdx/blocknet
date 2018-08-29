@@ -14,6 +14,7 @@
 #endif
 
 #include "amount.h"
+#include "autotruncatelog.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "coins.h"
@@ -113,6 +114,7 @@ struct BlockHasher {
     size_t operator()(const uint256& hash) const { return hash.GetLow64(); }
 };
 
+extern AutoTruncateLog global_auto_truncate_log;
 extern CScript COINBASE_FLAGS;
 extern CCriticalSection cs_main;
 extern CTxMemPool mempool;

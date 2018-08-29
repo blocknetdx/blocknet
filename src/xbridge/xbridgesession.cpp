@@ -11,6 +11,7 @@
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xbridgepacket.h"
+#include "xbridgeservicespacket.h"
 #include "xuiconnector.h"
 #include "util/xutil.h"
 #include "util/logger.h"
@@ -90,6 +91,7 @@ protected:
     bool processInvalid(XBridgePacketPtr packet) const;
     bool processZero(XBridgePacketPtr packet) const;
     bool processXChatMessage(XBridgePacketPtr packet) const;
+    bool processServicesPing(XBridgePacketPtr packet) const;
 
     bool processTransaction(XBridgePacketPtr packet) const;
     bool processPendingTransaction(XBridgePacketPtr packet) const;
@@ -201,6 +203,9 @@ void Session::Impl::init()
 
     // xchat ()
     m_handlers[xbcXChatMessage].bind(this, &Impl::processXChatMessage);
+
+    // Services ping (xwallets)
+    m_handlers[xbcServicesPing].bind(this, &Impl::processServicesPing);
 }
 
 //*****************************************************************************
@@ -296,6 +301,74 @@ bool Session::processPacket(XBridgePacketPtr packet)
     }
 
     setNotWorking();
+    return true;
+}
+
+/**
+ * @brief Process and verify the received services ping. This will enforce a maximum size for the packet. Packets
+ *        in excess of the max size will be rejected. The pubkey of the packet will be used to associate the services.
+ *        The sending node is required to sign the packet with its private key, this will mitigate MITM.
+ * @param packet
+ * @return
+ */
+bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
+{
+    if (packet->size() > 10000) { // enforce a limit of max bytes
+        ERR() << "Services packet too large, a max of 10000 bytes is supported "
+              << __FUNCTION__;
+        return false;
+    } else if (packet->size() < (sizeof(uint32_t) + 1)) { // service count (4 bytes) + service name (at least 1 byte)
+        ERR() << "Rejecting Services packet, it's too small "
+              << __FUNCTION__;
+        return false;
+    }
+
+    ::CPubKey nodePubKey;
+    std::vector<std::string> services;
+
+    uint32_t offset = 0;
+
+    // Get pubkey from the packet so that we can check if it's in the snode list
+    {
+        uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
+        if (len != 33) {
+            LOG() << "Bad Servicenode public key, length: " << len << " " << __FUNCTION__;
+            return false;
+        }
+        nodePubKey.Set(packet->pubkey(), packet->pubkey() + len);
+    }
+
+    // Find Servicenode in list
+    CServicenode *pmn = mnodeman.Find(nodePubKey);
+    if (pmn == nullptr) {
+        // try to uncompress pubkey and search
+        if (nodePubKey.Decompress())
+            pmn = mnodeman.Find(nodePubKey);
+        if (pmn == nullptr) {
+            ERR() << "Bad Services packet, Servicenode not found with vin "
+                  << nodePubKey.GetHex() << " "
+                  << __FUNCTION__;
+            return false;
+        }
+    }
+
+    // Services
+    uint32_t servicesCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
+    offset += sizeof(uint32_t);
+    std::string rawServices(reinterpret_cast<const char *>(packet->data() + offset));
+    if (rawServices.length() > 0)
+        boost::split(services, rawServices, boost::is_any_of(","));
+    if (services.size() != servicesCount) {
+        ERR() << "Rejecting Services packet, the reported services count doesn't match the actual count "
+              << __FUNCTION__;
+        return false;
+    }
+
+    // Store results on the packet
+    auto servicesPacket = static_pointer_cast<XBridgeServicesPacket>(packet);
+    servicesPacket->services = services;
+    servicesPacket->nodePubKey = nodePubKey;
+
     return true;
 }
 
