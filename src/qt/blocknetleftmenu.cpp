@@ -74,11 +74,11 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     group->addButton(dashboard, DASHBOARD);
     group->addButton(addressBook, ADDRESSBOOK);
     group->addButton(sendFunds, SEND);
-    group->addButton(requestFunds, REQUEST);
+//    group->addButton(requestFunds, REQUEST);
     group->addButton(transactionHistory, HISTORY);
     group->addButton(snodes, SNODES);
     group->addButton(proposals, PROPOSALS);
-    group->addButton(announcements, ANNOUNCEMENTS);
+//    group->addButton(announcements, ANNOUNCEMENTS);
     group->addButton(settings, SETTINGS);
     group->addButton(tools, TOOLS);
 
@@ -116,14 +116,14 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     box3->setLayout(new QVBoxLayout);
     box3->layout()->setSpacing(8);
     box3->layout()->addWidget(sendFunds);
-    box3->layout()->addWidget(requestFunds);
+//    box3->layout()->addWidget(requestFunds);
     box3->layout()->addWidget(transactionHistory);
     QSettings qSettings;
     if (qSettings.value("fShowServicenodesTab").toBool()) {
         box3->layout()->addWidget(snodes);
     }
     box3->layout()->addWidget(proposals);
-    box3->layout()->addWidget(announcements);
+//    box3->layout()->addWidget(announcements);
 
     auto *box4 = new QFrame;
     box4->setContentsMargins(leftPadding);
