@@ -279,7 +279,7 @@ std::string App::printConfigs()
     
     for (const auto& it : this->snodeConfigs) {
         Object val;
-        val.emplace_back("node", it.first);
+        //val.emplace_back("node", it.first);
         val.emplace_back("config", it.second.rawText());
         result.push_back(Value(val));
     }
@@ -1024,7 +1024,7 @@ std::string App::getStatus() {
     Array nodes;
     for (auto& it : this->snodeConfigs) {
         Object val;
-        val.emplace_back("node", it.first);
+        //val.emplace_back("node", it.first);
         val.emplace_back("config", it.second.rawText());
         Object plugins;
         for (std::string s : it.second.getPlugins())
