@@ -28,6 +28,10 @@ bool CoinValidator::IsCoinValid(uint256 &txId) const {
     boost::mutex::scoped_lock l(lock);
     return infMap.count(txId.ToString()) == 0;
 }
+bool CoinValidator::IsCoinValid(const std::string &txId) const {
+    boost::mutex::scoped_lock l(lock);
+    return infMap.count(txId) == 0;
+}
 
 /**
  * Returns true if the exploited coin is being sent to the redeem address. This checks amounts against

@@ -82,6 +82,7 @@ BITCOIN_CORE_H = \
   addrman.h \
   alert.h \
   allocators.h \
+  autotruncatelog.h \
   amount.h \
   base58.h \
   bip38.h \
@@ -197,6 +198,7 @@ libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
 libbitcoin_server_a_SOURCES = \
   addrman.cpp \
+  autotruncatelog.cpp \
   alert.cpp \
   bloom.cpp \
   chain.cpp \

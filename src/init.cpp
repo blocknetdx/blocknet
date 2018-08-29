@@ -15,6 +15,7 @@
 #include "activeservicenode.h"
 #include "addrman.h"
 #include "amount.h"
+#include "autotruncatelog.h"
 #include "checkpoints.h"
 #include "compat/sanity.h"
 #include "key.h"
@@ -458,6 +459,14 @@ std::string HelpMessage(HelpMessageMode mode)
             _("In this mode -genproclimit controls how many blocks are generated immediately."));
     }
     strUsage += HelpMessageOpt("-shrinkdebugfile", _("Shrink debug.log file on client startup (default: 1 when no -debug)"));
+    {
+        using K = AutoTruncateLog;
+        strUsage += HelpMessageOpt("-autotruncatelog=<n>", strprintf(_("Set truncate size in MB when debug.log over %u MB,"
+                                                                       " checked %u times a day (0-%u, default:"
+                                                                       " %u for Servicenodes, %u otherwise)"),
+                                                                     K::BIG_MB(), K::CHECKS_PER_DAY(), K::MAX_MB(),
+                                                                     K::SERVICENODE_MB(), K::NON_SERVICENODE_MB()));
+    }
     strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
     strUsage += HelpMessageOpt("-litemode=<n>", strprintf(_("Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0));
 
@@ -528,7 +537,9 @@ std::string LicenseInfo()
            "\n" +
            FormatParagraph(strprintf(_("Copyright (C) 2014-%i The Dash Core Developers"), COPYRIGHT_YEAR)) + "\n" +
            "\n" +
-           FormatParagraph(strprintf(_("Copyright (C) 2015-%i The BlocknetDX Core Developers"), COPYRIGHT_YEAR)) + "\n" +
+           FormatParagraph(strprintf(_("Copyright (C) 2015-%i The PIVX Core Developers"), COPYRIGHT_YEAR)) + "\n" +
+           "\n" +
+           FormatParagraph(strprintf(_("Copyright (C) 2015-%i The Blocknet Core Developers"), COPYRIGHT_YEAR)) + "\n" +
            "\n" +
            FormatParagraph(_("This is experimental software.")) + "\n" +
            "\n" +
@@ -918,7 +929,7 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // Sanity check
     if (!InitSanityCheck())
-        return InitError(_("Initialization sanity check failed. BlocknetDX Core is shutting down."));
+        return InitError(_("Initialization sanity check failed. Blocknet is shutting down."));
 
     std::string strDataDir = GetDataDir().string();
 #ifdef ENABLE_WALLET
@@ -934,13 +945,37 @@ bool AppInit2(boost::thread_group& threadGroup)
 
     // Wait maximum 10 seconds if an old wallet is still running. Avoids lockup during restart
     if (!lock.timed_lock(boost::get_system_time() + boost::posix_time::seconds(10)))
-        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. BlocknetDX Core is probably already running."), strDataDir));
+        return InitError(strprintf(_("Cannot obtain a lock on data directory %s. Blocknet is probably already running."), strDataDir));
 
 #ifndef WIN32
     CreatePidFile(GetPidFile(), getpid());
 #endif
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
+
+    /**
+     * -autotruncatelog feature is disabled if it is:
+     *    - not specified, or
+     *    - "0", or
+     *    - an empty string (defaults apply) and a Servicenode (which defaults to "0")
+     *
+     * In order to detect the empty string special case, we use the GetArg
+     * function overload with the string 2nd parameter instead of integer
+     */
+    {
+        std::string atl{GetArg("-autotruncatelog","0")};
+        int rc{global_auto_truncate_log.init(atl, GetBoolArg("-servicenode", false))};
+        if (rc != 0) {
+            using K = AutoTruncateLog;
+            return InitError(strprintf(_("Invalid value for -autotruncatelog=<n>: '%s' rc=%d\n"
+                                         "'n' is MB to truncate once debug.log size reaches %u MB\n"
+                                         "valid range is 0 to %u, 0=disable"),
+                                       atl, rc, K::BIG_MB(), K::MAX_MB()));
+        }
+        // Forced check during initialization
+        global_auto_truncate_log.check();
+    }
+
     LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     LogPrintf("BlocknetDX version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
     LogPrintf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
@@ -1380,9 +1415,9 @@ bool AppInit2(boost::thread_group& threadGroup)
                              " or address book entries might be missing or incorrect."));
                 InitWarning(msg);
             } else if (nLoadWalletRet == DB_TOO_NEW)
-                strErrors << _("Error loading wallet.dat: Wallet requires newer version of BlocknetDX Core") << "\n";
+                strErrors << _("Error loading wallet.dat: Wallet requires newer version of Blocknet") << "\n";
             else if (nLoadWalletRet == DB_NEED_REWRITE) {
-                strErrors << _("Wallet needed to be rewritten: restart BlocknetDX Core to complete") << "\n";
+                strErrors << _("Wallet needed to be rewritten: restart Blocknet to complete") << "\n";
                 LogPrintf("%s", strErrors.str());
                 return InitError(strErrors.str());
             } else

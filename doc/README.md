@@ -1,9 +1,9 @@
-BlocknetDX Core
+Blocknet
 =====================
 
 Setup
 ---------------------
-[BlocknetDX Core](https://github.com/BlocknetDX/BlockDX/releases/tag/v3.7.36) is the original BlocknetDX client and it builds the backbone of the network. However, it downloads and stores the entire history of BlocknetDX transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
+[Blocknet](https://github.com/BlocknetDX/BlockDX/releases/tag/v3.9.22) is the original BlocknetDX client and it builds the backbone of the network. However, it downloads and stores the entire history of BlocknetDX transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
 
 Running
 ---------------------
