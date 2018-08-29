@@ -1541,7 +1541,7 @@ bool App::hasNodeService(const std::string &service) {
  * @return
  */
 bool App::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service) {
-    return m_p->hasNodeService(activeServicenode.pubKeyServicenode, service);
+    return m_p->hasNodeService(nodePubKey, service);
 }
 
 /**
