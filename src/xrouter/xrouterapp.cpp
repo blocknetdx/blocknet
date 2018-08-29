@@ -228,7 +228,7 @@ std::string App::updateConfigs()
          
         if (TEST_RUN_ON_CLIENT) {
             std::string uuid = this->getXrouterConfig(pnode);
-            LOG() << "Getting config from node " << CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString()  << " request id = " << uuid;
+            LOG() << "Getting config from node " << pnode->addr.ToString()  << " request id = " << uuid;
             lastConfigUpdates[pnode] = time;
             continue;
         }

@@ -549,7 +549,7 @@ Value xrOpenConnections(const Array & params, bool fHelp)
 Value xrRegisterDomain(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrOpenConnections\nOpens connections to all available service nodes.");
+        throw std::runtime_error("xrRegisterDomain\nNot implemented yet");
     }
     
     //Object result;
@@ -560,7 +560,7 @@ Value xrRegisterDomain(const Array & params, bool fHelp)
 Value xrQueryDomain(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrOpenConnections\nOpens connections to all available service nodes.");
+        throw std::runtime_error("xrQueryDomain\nNot implemented yet");
     }
     
     //Object result;
