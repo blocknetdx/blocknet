@@ -167,7 +167,7 @@ bool App::start()
     return res;
 }
 
-void App::openConnections()
+void App::openConnections(std::string wallet, std::string plugin)
 {
     //LOCK(cs_vNodes);
     LOG() << "Current peers count = " << vNodes.size();
@@ -176,8 +176,13 @@ void App::openConnections()
         if (!s.second.HasService("XRouter"))
             continue;
         
-        // TODO: connect only to nodes with a specific service (specified in function parameters)
-        std::string servicesList = s.second.GetServices();
+        if (wallet != "")
+            if (!s.second.HasService(wallet))
+                continue;
+        
+        if (plugin != "")
+            if (!s.second.HasService("XRouter::" + plugin))
+                continue;
         
         bool connected = false;
         for (CNode* pnode : vNodes) {
@@ -223,7 +228,7 @@ std::string App::updateConfigs()
          
         if (TEST_RUN_ON_CLIENT) {
             std::string uuid = this->getXrouterConfig(pnode);
-            LOG() << "Getting config from node " << pnode->addrName << " request id = " << uuid;
+            LOG() << "Getting config from node " << CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString()  << " request id = " << uuid;
             lastConfigUpdates[pnode] = time;
             continue;
         }
@@ -231,7 +236,7 @@ std::string App::updateConfigs()
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
                 std::string uuid = this->getXrouterConfig(pnode);
-                LOG() << "Getting config from node " << pnode->addrName << " request id = " << uuid;
+                LOG() << "Getting config from node " << CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString() << " request id = " << uuid;
                 lastConfigUpdates[pnode] = time;
             }
         }

@@ -84,8 +84,10 @@ public:
 
     /**
      * @brief try to open connections to all service nodes in order
+     * @param wallet
+     * @param plugin
      */
-    void openConnections();
+    void openConnections(std::string wallet="", std::string plugin="");
     
     /**
      * @brief send config update requests to all nodes
