@@ -15,6 +15,7 @@
 #include "pubkey.h"
 
 #include <algorithm>
+#include <boost/algorithm/string/join.hpp>
 
 //******************************************************************************
 //******************************************************************************
@@ -789,5 +790,20 @@ bool Exchange::unlockUtxos(const uint256 &id)
     return true;
 }
 
-} // namespace xbridge
+/**
+ * @brief Creates a services packet that can be sent to the network.
+ * @param services All services to be reported to the network.
+ * @return
+ */
+XBridgePacketPtr Exchange::servicesPingPacket(const std::vector<std::string> &services) {
+    std::string servicesStr = boost::algorithm::join(services, ",");
 
+    XBridgePacketPtr ping(new XBridgePacket(xbcServicesPing));
+    ping->append(static_cast<uint32_t>(services.size()));
+    ping->append(servicesStr);
+    ping->sign(this->pubKey(), this->privKey());
+
+    return ping;
+}
+
+} // namespace xbridge
