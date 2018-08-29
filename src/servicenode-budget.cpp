@@ -479,6 +479,38 @@ void CBudgetManager::CheckAndRemove()
     LogPrintf("CBudgetManager::CheckAndRemove - PASSED\n");
 }
 
+int CBudgetManager::NextBudgetBlock() {
+    int chainHeight = -1;
+    {
+        bool fail = false;
+        TRY_LOCK(cs_main, locked);
+        if (!locked) fail = true;
+        if (!chainActive.Tip()) fail = true;
+        if (fail) {
+            return -1;
+        }
+        chainHeight = chainActive.Height();
+    }
+    int nBlockStart = chainHeight - chainHeight % GetBudgetPaymentCycleBlocks() + GetBudgetPaymentCycleBlocks();
+    int nNextSuperblock = nBlockStart + GetBudgetPaymentCycleBlocks() - 1;
+    return nNextSuperblock;
+}
+
+int CBudgetManager::GetChainHeight() {
+    int chainHeight = -1;
+    {
+        bool fail = false;
+        TRY_LOCK(cs_main, locked);
+        if (!locked) fail = true;
+        if (!chainActive.Tip()) fail = true;
+        if (fail) {
+            return chainHeight;
+        }
+        chainHeight = chainActive.Height();
+    }
+    return chainHeight;
+}
+
 /**
  * Adds all valid finalized budget payees to a single transaction.
  * @param txNew
@@ -729,18 +761,9 @@ struct sortProposalsByVotes {
  */
 std::vector<CBudgetProposal*> CBudgetManager::GetBudget() {
     std::vector<CBudgetProposal*> vBudgetProposalsRet;
-    int chainHeight = -1;
-    {
-        bool fail = false;
-        TRY_LOCK(cs_main, locked);
-        if (!locked) fail = true;
-        if (!chainActive.Tip()) fail = true;
-        if (fail) {
-            LogPrintf("CBudgetManager::GetBudget - Failed to get chain tip\n");
-            return vBudgetProposalsRet;
-        }
-        chainHeight = chainActive.Height();
-    }
+    int chainHeight = GetChainHeight();
+    if (chainHeight == -1)
+        LogPrintf("CBudgetManager::GetBudget - Failed to get chain tip\n");
     if (chainHeight <= 0)
         return vBudgetProposalsRet;
     
@@ -1495,20 +1518,20 @@ bool CBudgetProposal::AddOrUpdateVote(CBudgetVote& vote, std::string& strError)
 
     if (mapVotes.count(hash)) {
         if (mapVotes[hash].nTime > vote.nTime) {
-            strError = strprintf("new vote older than existing vote - %s\n", vote.GetHash().ToString());
-            LogPrint("mnbudget", "CBudgetProposal::AddOrUpdateVote - %s\n", strError);
+            strError = "new vote older than existing vote";
+            LogPrint("mnbudget", "CBudgetProposal::AddOrUpdateVote %s - %s\n", vote.GetHash().ToString(), strError);
             return false;
         }
         if (vote.nTime - mapVotes[hash].nTime < BUDGET_VOTE_UPDATE_MIN) {
-            strError = strprintf("time between votes is too soon - %s - %lli\n", vote.GetHash().ToString(), vote.nTime - mapVotes[hash].nTime);
-            LogPrint("mnbudget", "CBudgetProposal::AddOrUpdateVote - %s\n", strError);
+            strError = strprintf("time between votes is too soon, you must wait %lli minutes before resubmitting", static_cast<int>((mapVotes[hash].nTime + BUDGET_VOTE_UPDATE_MIN - vote.nTime)/60));
+            LogPrint("mnbudget", "CBudgetProposal::AddOrUpdateVote %s - %s\n", vote.GetHash().ToString(), strError);
             return false;
         }
     }
 
     if (vote.nTime > GetTime() + (60 * 60)) {
-        strError = strprintf("new vote is too far ahead of current time - %s - nTime %lli - Max Time %lli\n", vote.GetHash().ToString(), vote.nTime, GetTime() + (60 * 60));
-        LogPrint("mnbudget", "CBudgetProposal::AddOrUpdateVote - %s\n", strError);
+        strError = strprintf("new vote is too far ahead of current time - nTime %lli - Max Time %lli", vote.nTime, GetTime() + (60 * 60));
+        LogPrint("mnbudget", "CBudgetProposal::AddOrUpdateVote %s - %s\n", vote.GetHash().ToString(), strError);
         return false;
     }
 
@@ -1630,6 +1653,11 @@ int CBudgetProposal::GetRemainingPaymentCount()
     return std::min(nPayments, GetTotalPaymentCount());
 }
 
+bool CBudgetProposal::IsPassing() {
+    return  this->Votes() > (double)mnodeman.CountEnabled(ActiveProtocol()) / 10 &&
+            this->IsEstablished();
+}
+
 CBudgetProposalBroadcast::CBudgetProposalBroadcast(std::string strProposalNameIn, std::string strURLIn, int nPaymentCount, CScript addressIn, CAmount nAmountIn, int nBlockStartIn, uint256 nFeeTXHashIn)
 {
     strProposalName = strProposalNameIn;
@@ -1675,6 +1703,7 @@ CBudgetVote::CBudgetVote(CTxIn vinIn, uint256 nProposalHashIn, int nVoteIn)
 
 void CBudgetVote::Relay()
 {
+    LogPrintf("CBudgetVote::Relay - Sending vote %s %s", nProposalHash.GetHex(), this->GetVoteString());
     CInv inv(MSG_BUDGET_VOTE, GetHash());
     RelayInv(inv);
 }

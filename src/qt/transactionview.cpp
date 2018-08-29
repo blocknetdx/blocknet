@@ -17,6 +17,7 @@
 #include "walletmodel.h"
 
 #include "ui_interface.h"
+#include "blocknetlineedit.h"
 
 #include <QComboBox>
 #include <QDateTimeEdit>
@@ -39,13 +40,17 @@ TransactionView::TransactionView(QWidget* parent) : QWidget(parent), model(0), t
                                                     transactionView(0)
 {
     QSettings settings;
+
+    styles = GUIUtil::loadStyleSheet();
+    stylesOld = GUIUtil::loadStyleSheetv1();
+
     // Build filter row
-    setContentsMargins(0, 0, 0, 0);
+    setContentsMargins(46, 10, 50, 0);
 
     QHBoxLayout* hlayout = new QHBoxLayout();
     hlayout->setContentsMargins(0, 0, 0, 0);
 #ifdef Q_OS_MAC
-    hlayout->setSpacing(5);
+    hlayout->setSpacing(10);
     hlayout->addSpacing(26);
 #else
     hlayout->setSpacing(0);
@@ -53,6 +58,7 @@ TransactionView::TransactionView(QWidget* parent) : QWidget(parent), model(0), t
 #endif
 
     watchOnlyWidget = new QComboBox(this);
+    watchOnlyWidget->setStyleSheet(stylesOld);
     watchOnlyWidget->setFixedWidth(24);
     watchOnlyWidget->addItem("", TransactionFilterProxy::WatchOnlyFilter_All);
     watchOnlyWidget->addItem(QIcon(":/icons/eye_plus"), "", TransactionFilterProxy::WatchOnlyFilter_Yes);
@@ -60,6 +66,7 @@ TransactionView::TransactionView(QWidget* parent) : QWidget(parent), model(0), t
     hlayout->addWidget(watchOnlyWidget);
 
     dateWidget = new QComboBox(this);
+    dateWidget->setStyleSheet(stylesOld);
 #ifdef Q_OS_MAC
     dateWidget->setFixedWidth(121);
 #else
@@ -76,6 +83,7 @@ TransactionView::TransactionView(QWidget* parent) : QWidget(parent), model(0), t
     hlayout->addWidget(dateWidget);
 
     typeWidget = new QComboBox(this);
+    typeWidget->setStyleSheet(stylesOld);
 #ifdef Q_OS_MAC
     typeWidget->setFixedWidth(TYPE_COLUMN_WIDTH + 1);
 #else
@@ -100,45 +108,52 @@ TransactionView::TransactionView(QWidget* parent) : QWidget(parent), model(0), t
 
     hlayout->addWidget(typeWidget);
 
-    addressWidget = new QLineEdit(this);
+    addressWidget = new BlocknetLineEdit;
+    addressWidget->setStyleSheet(styles);
+    addressWidget->setParent(this);
 #if QT_VERSION >= 0x040700
     addressWidget->setPlaceholderText(tr("Enter address or label to search"));
 #endif
     hlayout->addWidget(addressWidget);
 
-    amountWidget = new QLineEdit(this);
+    amountWidget = new BlocknetLineEdit;
+    amountWidget->setStyleSheet(styles);
+    amountWidget->setParent(this);
 #if QT_VERSION >= 0x040700
     amountWidget->setPlaceholderText(tr("Min amount"));
 #endif
 #ifdef Q_OS_MAC
-    amountWidget->setFixedWidth(97);
+    amountWidget->setFixedWidth(120);
 #else
     amountWidget->setFixedWidth(100);
 #endif
     amountWidget->setValidator(new QDoubleValidator(0, 1e20, 8, this));
     hlayout->addWidget(amountWidget);
 
+    auto *titleLbl = new QLabel(tr("Transaction History"));
+    titleLbl->setObjectName("h4");
+    titleLbl->setStyleSheet(styles);
+
     QVBoxLayout* vlayout = new QVBoxLayout(this);
     vlayout->setContentsMargins(0, 0, 0, 0);
     vlayout->setSpacing(0);
 
     QTableView* view = new QTableView(this);
-    vlayout->addLayout(hlayout);
+    view->setObjectName("transactionHistory");
+    view->setStyleSheet(styles);
+    vlayout->addWidget(titleLbl);
+    vlayout->addSpacing(40);
+    vlayout->addLayout(hlayout, 1);
+    vlayout->addSpacing(5);
     vlayout->addWidget(createDateRangeWidget());
+    vlayout->addSpacing(5);
     vlayout->addWidget(view);
     vlayout->setSpacing(0);
-    int width = view->verticalScrollBar()->sizeHint().width();
-// Cover scroll bar width with spacing
-#ifdef Q_OS_MAC
-    hlayout->addSpacing(width + 2);
-#else
-    hlayout->addSpacing(width);
-#endif
+
     // Always show scroll bar
     view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     view->setTabKeyNavigation(false);
     view->setContextMenuPolicy(Qt::CustomContextMenu);
-
     view->installEventFilter(this);
 
     transactionView = view;
@@ -180,6 +195,7 @@ TransactionView::TransactionView(QWidget* parent) : QWidget(parent), model(0), t
     connect(copyTxIDAction, SIGNAL(triggered()), this, SLOT(copyTxID()));
     connect(editLabelAction, SIGNAL(triggered()), this, SLOT(editLabel()));
     connect(showDetailsAction, SIGNAL(triggered()), this, SLOT(showDetails()));
+    connect(view, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(showDetails()));
 }
 
 void TransactionView::setModel(WalletModel* model)
@@ -424,6 +440,7 @@ void TransactionView::editLabel()
 
             EditAddressDialog dlg(
                 type == AddressTableModel::Receive ? EditAddressDialog::EditReceivingAddress : EditAddressDialog::EditSendingAddress, this);
+            dlg.setStyleSheet(stylesOld);
             dlg.setModel(addressBook);
             dlg.loadRow(idx);
             dlg.exec();
@@ -445,6 +462,7 @@ void TransactionView::showDetails()
     QModelIndexList selection = transactionView->selectionModel()->selectedRows();
     if (!selection.isEmpty()) {
         TransactionDescDialog dlg(selection.at(0));
+        dlg.setStyleSheet(stylesOld);
         dlg.exec();
     }
 }
@@ -478,6 +496,7 @@ void TransactionView::openThirdPartyTxUrl(QString url)
 QWidget* TransactionView::createDateRangeWidget()
 {
     dateRangeWidget = new QFrame();
+    dateRangeWidget->setStyleSheet(stylesOld);
     dateRangeWidget->setFrameStyle(QFrame::Panel | QFrame::Raised);
     dateRangeWidget->setContentsMargins(1, 1, 1, 1);
     QHBoxLayout* layout = new QHBoxLayout(dateRangeWidget);
@@ -486,6 +505,7 @@ QWidget* TransactionView::createDateRangeWidget()
     layout->addWidget(new QLabel(tr("Range:")));
 
     dateFrom = new QDateTimeEdit(this);
+    dateFrom->setStyleSheet(stylesOld);
     dateFrom->setDisplayFormat("dd/MM/yy");
     dateFrom->setCalendarPopup(true);
     dateFrom->setMinimumWidth(100);
@@ -494,6 +514,7 @@ QWidget* TransactionView::createDateRangeWidget()
     layout->addWidget(new QLabel(tr("to")));
 
     dateTo = new QDateTimeEdit(this);
+    dateTo->setStyleSheet(stylesOld);
     dateTo->setDisplayFormat("dd/MM/yy");
     dateTo->setCalendarPopup(true);
     dateTo->setMinimumWidth(100);

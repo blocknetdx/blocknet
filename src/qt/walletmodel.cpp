@@ -21,7 +21,9 @@
 #include "ui_interface.h"
 #include "wallet.h"
 #include "walletdb.h" // for BackupWallet
+#include <algorithm>
 #include <stdint.h>
+#include <coincontrol.h>
 
 #include <QDebug>
 #include <QSet>
@@ -200,17 +202,17 @@ bool WalletModel::validateAddress(const QString& address)
     return addressParsed.IsValid();
 }
 
-WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction& transaction, const CCoinControl* coinControl)
+WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransaction& transaction, const CCoinControl* coinControl, CAmount payFee, bool sign)
 {
     CAmount total = 0;
     QList<SendCoinsRecipient> recipients = transaction.getRecipients();
-    std::vector<std::pair<CScript, CAmount> > vecSend;
+    std::vector<CRecipient> vecSend;
 
     if (recipients.empty()) {
         return OK;
     }
 
-    if (isAnonymizeOnlyUnlocked()) {
+    if (isAnonymizeOnlyUnlocked() && sign) { // only raise issue if signing was requested
         return AnonymizeOnlyUnlocked;
     }
 
@@ -218,7 +220,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
     int nAddresses = 0;
 
     // Pre-check input data for validity
-    foreach (const SendCoinsRecipient& rcp, recipients) {
+    for (const SendCoinsRecipient& rcp : recipients) {
         if (rcp.paymentRequest.IsInitialized()) { // PaymentRequest...
             CAmount subtotal = 0;
             const payments::PaymentDetails& details = rcp.paymentRequest.getDetails();
@@ -228,7 +230,9 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
                 subtotal += out.amount();
                 const unsigned char* scriptStr = (const unsigned char*)out.script().data();
                 CScript scriptPubKey(scriptStr, scriptStr + out.script().size());
-                vecSend.push_back(std::pair<CScript, CAmount>(scriptPubKey, out.amount()));
+                CAmount nAmount = out.amount();
+                CRecipient recipient = {scriptPubKey, nAmount, rcp.subtractFee};
+                vecSend.push_back(recipient);
             }
             if (subtotal <= 0) {
                 return InvalidAmount;
@@ -245,7 +249,8 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
             ++nAddresses;
 
             CScript scriptPubKey = GetScriptForDestination(CBitcoinAddress(rcp.address.toStdString()).Get());
-            vecSend.push_back(std::pair<CScript, CAmount>(scriptPubKey, rcp.amount));
+            CRecipient recipient = {scriptPubKey, rcp.amount, rcp.subtractFee};
+            vecSend.push_back(recipient);
 
             total += rcp.amount;
         }
@@ -270,15 +275,27 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         CWalletTx* newTx = transaction.getTransaction();
         CReserveKey* keyChange = transaction.getPossibleKeyChange();
 
-
         if (recipients[0].useSwiftTX && total > GetSporkValue(SPORK_5_MAX_VALUE) * COIN) {
             emit message(tr("Send Coins"), tr("SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 BLOCK.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
                 CClientUIInterface::MSG_ERROR);
             return TransactionCreationFailed;
         }
 
-        bool fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX);
+        int changePosition = -1;
+        bool fCreated = wallet->CreateTransaction(vecSend, *newTx, *keyChange, nFeeRequired, strFailReason, coinControl, recipients[0].inputType, recipients[0].useSwiftTX, payFee, &changePosition, sign);
         transaction.setTransactionFee(nFeeRequired);
+
+        bool subtractFee = false;
+        for (auto &recipient : recipients) {
+            if (recipient.subtractFee) {
+                subtractFee = true;
+                break;
+            }
+        }
+
+        // Reassign amounts if subtracting fee from amount
+        if (fCreated && subtractFee)
+            transaction.reassignAmounts(changePosition);
 
         if (recipients[0].useSwiftTX && newTx->GetValueOut() > GetSporkValue(SPORK_5_MAX_VALUE) * COIN) {
             emit message(tr("Send Coins"), tr("SwiftTX doesn't support sending values that high yet. Transactions are currently limited to %1 BLOCK.").arg(GetSporkValue(SPORK_5_MAX_VALUE)),
@@ -287,7 +304,7 @@ WalletModel::SendCoinsReturn WalletModel::prepareTransaction(WalletModelTransact
         }
 
         if (!fCreated) {
-            if ((total + nFeeRequired) > nBalance) {
+            if (!subtractFee && (total + nFeeRequired) > nBalance) {
                 return SendCoinsReturn(AmountWithFeeExceedsBalance);
             }
             emit message(tr("Send Coins"), QString::fromStdString(strFailReason),
@@ -445,6 +462,120 @@ bool WalletModel::changePassphrase(const SecureString& oldPass, const SecureStri
 bool WalletModel::backupWallet(const QString& filename)
 {
     return BackupWallet(*wallet, filename.toLocal8Bit().data());
+}
+
+WalletModel::FeeResult WalletModel::getFeeInfo(QVector<CoinInput> &inputs, CAmount payAmount, uint splitCount, bool freeTransaction) {
+    CAmount nPayAmount = payAmount;
+    bool fDust = false;
+    uint nInputCount = static_cast<uint>(inputs.size());
+
+    vector<COutPoint> vInputs;
+    CMutableTransaction txDummy;
+    for (const auto &p : inputs) {
+        if (p.amount > 0) {
+            CTxOut txout(p.amount, (CScript)vector<unsigned char>(24, 0));
+            txDummy.vout.push_back(txout);
+            if (txout.IsDust(::minRelayTxFee))
+                fDust = true;
+        }
+        vInputs.push_back(p.outpoint());
+    }
+
+    CAmount nAmount = 0;
+    CAmount nPayFee = 0;
+    CAmount nAfterFee = 0;
+    CAmount nChange = 0;
+    unsigned int nBytes = 0;
+    unsigned int nBytesInputs = 0;
+    double dPriority = 0;
+    double dPriorityInputs = 0;
+    unsigned int nQuantity = 0;
+    int nQuantityUncompressed = 0;
+    bool fAllowFree = false;
+
+    vector<COutput> vOutputs;
+    this->getOutputs(vInputs, vOutputs);
+
+    for (const COutput& out : vOutputs) {
+        // Quantity
+        nQuantity++;
+
+        // Amount
+        nAmount += out.tx->vout[out.i].nValue;
+
+        // Priority
+        dPriorityInputs += (double)out.tx->vout[out.i].nValue * (out.nDepth + 1);
+
+        // Bytes
+        CTxDestination address;
+        if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address)) {
+            CPubKey pubkey;
+            CKeyID* keyid = boost::get<CKeyID>(&address);
+            if (keyid && this->getPubKey(*keyid, pubkey)) {
+                nBytesInputs += (pubkey.IsCompressed() ? 148 : 180);
+                if (!pubkey.IsCompressed())
+                    nQuantityUncompressed++;
+            } else
+                nBytesInputs += 148; // in all error cases, simply assume 148 here
+        } else
+            nBytesInputs += 148;
+    }
+
+    // calculation
+    if (nQuantity > 0) {
+        // Bytes
+        nBytes = nBytesInputs + ((nInputCount > 0 ? nInputCount + std::max(1, static_cast<int>(splitCount)) : 2) * 34) + 10; // always assume +1 output for change here
+
+        // Priority
+        double mempoolEstimatePriority = mempool.estimatePriority(nTxConfirmTarget);
+        dPriority = dPriorityInputs / (nBytes - nBytesInputs + (nQuantityUncompressed * 29)); // 29 = 180 - 151 (uncompressed public keys are over the limit. max 151 bytes of the input are ignored for priority)
+
+        // Fee
+        nPayFee = CWallet::GetMinimumFee(nBytes, nTxConfirmTarget, mempool);
+
+        // Allow free?
+        double dPriorityNeeded = mempoolEstimatePriority;
+        if (dPriorityNeeded <= 0)
+            dPriorityNeeded = AllowFreeThreshold(); // not enough data, back to hard-coded
+        fAllowFree = (dPriority >= dPriorityNeeded);
+
+        if (freeTransaction)
+            if (fAllowFree && nBytes <= MAX_FREE_TRANSACTION_CREATE_SIZE)
+                nPayFee = 0;
+
+        if (nPayAmount > 0) {
+            nChange = nAmount - nPayFee - nPayAmount;
+
+            // Never create dust outputs; if we would, just add the dust to the fee.
+            if (nChange > 0 && nChange < CENT) {
+                CTxOut txout(nChange, (CScript)vector<unsigned char>(24, 0));
+                if (txout.IsDust(::minRelayTxFee)) {
+                    nPayFee += nChange;
+                    nChange = 0;
+                }
+            }
+
+            if (nChange == 0)
+                nBytes -= 34;
+        }
+
+        // after fee
+        nAfterFee = nAmount - nPayFee;
+        if (nAfterFee < 0)
+            nAfterFee = 0;
+    }
+
+    return FeeResult{
+        nAmount,
+        nPayFee,
+        nAfterFee,
+        nChange,
+        nInputCount,
+        nBytes,
+        dPriority,
+        fDust,
+        fAllowFree
+    };
 }
 
 // Handlers for core signals

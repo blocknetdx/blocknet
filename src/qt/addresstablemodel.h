@@ -7,6 +7,7 @@
 
 #include <QAbstractTableModel>
 #include <QStringList>
+#include <QHash>
 
 class AddressTablePriv;
 class WalletModel;
@@ -65,7 +66,7 @@ public:
 
     /* Look up label for address in address book, if not found return empty string.
      */
-    QString labelForAddress(const QString& address) const;
+    QString labelForAddress(const QString& address);
 
     /* Look up row index of an address in the model.
        Return -1 if not found.
@@ -80,6 +81,7 @@ private:
     AddressTablePriv* priv;
     QStringList columns;
     EditStatus editStatus;
+    QHash<QString, QString> labelHash;
 
     /** Notify listeners that data changed. */
     void emitDataChanged(int index);

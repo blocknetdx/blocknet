@@ -96,8 +96,36 @@ QT_MOC_CPP = \
   qt/xbridgeui/moc_xbridgeaddressbookview.cpp \
   qt/xbridgeui/moc_xbridgetransactiondialog.cpp \
   qt/xbridgeui/moc_xbridgetransactionsmodel.cpp \
-  qt/xbridgeui/moc_xbridgetransactionsview.cpp
-
+  qt/xbridgeui/moc_xbridgetransactionsview.cpp \
+  qt/moc_blocknetaddresseditor.cpp \
+  qt/moc_blocknetbreadcrumb.cpp \
+  qt/moc_blocknetcircle.cpp \
+  qt/moc_blocknetclosebtn.cpp \
+  qt/moc_blocknetdashboard.cpp \
+  qt/moc_blocknetfontmgr.cpp \
+  qt/moc_blocknetformbtn.cpp \
+  qt/moc_blocknethdiv.cpp \
+  qt/moc_blocknetdropdown.cpp \
+  qt/moc_blockneticonbtn.cpp \
+  qt/moc_blockneticonaltbtn.cpp \
+  qt/moc_blockneticonlabel.cpp \
+  qt/moc_blocknetleftmenu.cpp \
+  qt/moc_blocknetlineedit.cpp \
+  qt/moc_blocknetlineeditwithtitle.cpp \
+  qt/moc_blocknetlockmenu.cpp \
+  qt/moc_blocknetquicksend.cpp \
+  qt/moc_blocknetsendfunds.cpp \
+  qt/moc_blocknetsendfunds1.cpp \
+  qt/moc_blocknetsendfunds2.cpp \
+  qt/moc_blocknetsendfunds3.cpp \
+  qt/moc_blocknetsendfunds4.cpp \
+  qt/moc_blocknetsendfundsdone.cpp \
+  qt/moc_blocknetsendfundsutil.cpp \
+  qt/moc_blocknetproposals.cpp \
+  qt/moc_blocknettoolbar.cpp \
+  qt/moc_blocknetwallet.cpp \
+  qt/moc_blocknetcoincontrol.cpp \
+  qt/moc_blocknetsendfundsrequest.cpp
 
 BITCOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -179,10 +207,40 @@ BITCOIN_QT_H = \
   qt/xbridgeui/xbridgeaddressbookview.h \
   qt/xbridgeui/xbridgetransactiondialog.h \
   qt/xbridgeui/xbridgetransactionsmodel.h \
-  qt/xbridgeui/xbridgetransactionsview.h
-
+  qt/xbridgeui/xbridgetransactionsview.h \
+  qt/blocknetaddresseditor.h \
+  qt/blocknetbreadcrumb.h \
+  qt/blocknetcircle.h \
+  qt/blocknetclosebtn.h \
+  qt/blocknetdashboard.h \
+  qt/blocknetfontmgr.h \
+  qt/blocknetformbtn.h \
+  qt/blocknethdiv.h \
+  qt/blocknetdropdown.h \
+  qt/blockneticonbtn.h \
+  qt/blockneticonaltbtn.h \
+  qt/blockneticonlabel.h \
+  qt/blocknetleftmenu.h \
+  qt/blocknetlineedit.h \
+  qt/blocknetlineeditwithtitle.h \
+  qt/blocknetlockmenu.h \
+  qt/blocknetquicksend.h \
+  qt/blocknetsendfunds.h \
+  qt/blocknetsendfunds1.h \
+  qt/blocknetsendfunds2.h \
+  qt/blocknetsendfunds3.h \
+  qt/blocknetsendfunds4.h \
+  qt/blocknetsendfundsdone.h \
+  qt/blocknetsendfundsutil.h \
+  qt/blocknetproposals.h \
+  qt/blocknettoolbar.h \
+  qt/blocknetvars.h \
+  qt/blocknetwallet.h \
+  qt/blocknetcoincontrol.h \
+  qt/blocknetsendfundsrequest.h
 
 RES_ICONS = \
+  qt/res/icons/accordion-arrow.png \
   qt/res/icons/add.png \
   qt/res/icons/address-book.png \
   qt/res/icons/address-book-white.png \
@@ -271,7 +329,26 @@ BITCOIN_QT_CPP = \
   qt/xbridgeui/xbridgeaddressbookview.cpp \
   qt/xbridgeui/xbridgetransactiondialog.cpp \
   qt/xbridgeui/xbridgetransactionsmodel.cpp \
-  qt/xbridgeui/xbridgetransactionsview.cpp
+  qt/xbridgeui/xbridgetransactionsview.cpp \
+  qt/blocknetaddresseditor.cpp \
+  qt/blocknetbreadcrumb.cpp \
+  qt/blocknetcircle.cpp \
+  qt/blocknetclosebtn.cpp \
+  qt/blocknetdashboard.cpp \
+  qt/blocknetproposals.cpp \
+  qt/blocknetfontmgr.cpp \
+  qt/blocknetformbtn.cpp \
+  qt/blocknethdiv.cpp \
+  qt/blocknetdropdown.cpp \
+  qt/blockneticonbtn.cpp \
+  qt/blockneticonaltbtn.cpp \
+  qt/blockneticonlabel.cpp \
+  qt/blocknetleftmenu.cpp \
+  qt/blocknetlineedit.cpp \
+  qt/blocknetlineeditwithtitle.cpp \
+  qt/blocknetlockmenu.cpp \
+  qt/blocknettoolbar.cpp \
+  qt/blocknetsendfundsrequest.cpp
 
 if ENABLE_WALLET
 BITCOIN_QT_CPP += \
@@ -305,7 +382,16 @@ BITCOIN_QT_CPP += \
   qt/walletframe.cpp \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
-  qt/walletview.cpp
+  qt/walletview.cpp \
+  qt/blocknetquicksend.cpp \
+  qt/blocknetsendfunds.cpp \
+  qt/blocknetsendfunds1.cpp \
+  qt/blocknetsendfunds2.cpp \
+  qt/blocknetsendfunds3.cpp \
+  qt/blocknetsendfunds4.cpp \
+  qt/blocknetsendfundsdone.cpp \
+  qt/blocknetcoincontrol.cpp \
+  qt/blocknetwallet.cpp
 
 endif
 
@@ -333,10 +419,66 @@ RES_IMAGES = \
   qt/res/images/qtreeview_selected.png \
   qt/res/images/walletFrame.png \
   qt/res/images/walletFrame_bg.png \
-  qt/res/images/walletFrame_bg.png
+  qt/res/redesign/icons/NavBarIcons/Active/AddressBookIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/AnnouncementsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/DashboardIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/ProposalIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/RequestFundsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/SendFundsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/ServiceNodesIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/SettingsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/TransactionHistoryIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Active/ToolsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/AddressBookIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/AnnouncementsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/DashboardIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/ProposalIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/RequestFundsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/SendFundsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/ServiceNodesIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/SettingsIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/TransactionHistoryIcon.png \
+  qt/res/redesign/icons/NavBarIcons/Inactive/ToolsIcon.png \
+  qt/res/redesign/icons/QuickActions/AddressBookIcon.png \
+  qt/res/redesign/icons/QuickActions/ProposalsIcon.png \
+  qt/res/redesign/icons/QuickActions/QuickSendIcon.png \
+  qt/res/redesign/icons/UtilityBar/LockedIcon.png \
+  qt/res/redesign/icons/UtilityBar/Peers.png \
+  qt/res/redesign/icons/UtilityBar/StakingNodeIconActive.png \
+  qt/res/redesign/icons/UtilityBar/StakingNodeIconInactive.png \
+  qt/res/redesign/icons/UtilityBar/UnlockedIcon.png \
+  qt/res/redesign/icons/Table/HeaderViewArrowUp.png \
+  qt/res/redesign/icons/Table/HeaderViewArrowDown.png \
+  qt/res/redesign/icons/checkmark-on.png \
+  qt/res/redesign/icons/checkmark-off.png \
+  qt/res/redesign/fonts/Roboto/Roboto-Black.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-BlackItalic.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-Bold.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-BoldItalic.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-Italic.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-Light.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-LightItalic.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-Medium.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-MediumItalic.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-Regular.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-Thin.ttf \
+  qt/res/redesign/fonts/Roboto/Roboto-ThinItalic.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-Bold.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-BoldItalic.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-Italic.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-Light.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-LightItalic.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-Medium.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-MediumItalic.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-Regular.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-Thin.ttf \
+  qt/res/redesign/fonts/RobotoMono/RobotoMono-ThinItalic.ttf \
+  qt/res/redesign/white_blocknet_logo.png \
+  qt/res/redesign/BlocknetSplash.png
 
 RES_CSS = \
-  qt/res/css/default.css
+  qt/res/css/default.css \
+  qt/res/redesign/css/stylesheet.qss
 
 RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
 
@@ -442,4 +584,3 @@ moc_%.cpp: %.h
 	@test -f $(LRELEASE)
 	@$(MKDIR_P) $(@D)
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LRELEASE) -silent $< -qm $@
-

@@ -82,6 +82,7 @@ BITCOIN_CORE_H = \
   addrman.h \
   alert.h \
   allocators.h \
+  autotruncatelog.h \
   amount.h \
   base58.h \
   bip38.h \
@@ -197,6 +198,7 @@ libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
 libbitcoin_server_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS)
 libbitcoin_server_a_SOURCES = \
   addrman.cpp \
+  autotruncatelog.cpp \
   alert.cpp \
   bloom.cpp \
   chain.cpp \
@@ -352,6 +354,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
   xbridge/xbridgepacket.cpp \
+  xbridge/xbridgeservicespacket.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgesession.cpp \
@@ -360,13 +363,10 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgetransactionmember.cpp \
   xbridge/xbridgewalletconnector.cpp \
   xbridge/xbridgewalletconnectorbtc.cpp \
-  xbridge/xbridgewalletconnectorbcc.cpp \
-  xbridge/xbridgewalletconnectorsys.cpp \
+  xbridge/xbridgecryptoproviderbtc.cpp \
+  xbridge/xbridgewalletconnectorbch.cpp \
   xbridge/xbridgewalletconnectordgb.cpp \
-  xbridge/xkey.cpp \
-  xbridge/xpubkey.cpp \
   xbridge/xbitcoinaddress.cpp \
-  xbridge/xbitcoinsecret.cpp \
   xbridge/xbitcointransaction.cpp \
   xbridge/rpcxbridge.cpp \
   xbridge/posixtimeconversion.cpp \
@@ -374,12 +374,12 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/config.h \
   xbridge/version.h \
   xbridge/xbitcoinaddress.h \
-  xbridge/xbitcoinsecret.h \
   xbridge/xbitcointransaction.h \
   xbridge/xbridgedef.h \
   xbridge/xbridgeapp.h \
   xbridge/xbridgeexchange.h \
   xbridge/xbridgepacket.h \
+  xbridge/xbridgeservicespacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
   xbridge/xbridgetransaction.h \
@@ -387,16 +387,15 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/xbridgetransactionmember.h \
   xbridge/xbridgewalletconnector.h \
   xbridge/xbridgewalletconnectorbtc.h \
-  xbridge/xbridgewalletconnectorbcc.h \
-  xbridge/xbridgewalletconnectorsys.h \
+  xbridge/xbridgecryptoproviderbtc.h \
+  xbridge/xbridgewalletconnectorbch.h \
   xbridge/xbridgewalletconnectordgb.h \
   xbridge/xbridgewallet.h \
-  xbridge/xkey.h \
-  xbridge/xpubkey.h \
   xbridge/xuiconnector.h \
   xbridge/util/logger.h \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
+  xbridge/util/xassert.h \
   xbridge/util/xutil.h \
   xbridge/util/xbridgeerror.h \
   xbridge/posixtimeconversion.h \

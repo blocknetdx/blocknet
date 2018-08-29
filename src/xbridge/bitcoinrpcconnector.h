@@ -26,18 +26,10 @@ namespace rpc
      * @param txid
      * @return
      */
-    bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstAddress,
+    bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
                                  const double amount,
                                  const std::vector<unsigned char> & data,
                                  std::string & txid);
-    /**
-     * @brief getDataFromTx
-     * @param txid
-     * @param data
-     * @return
-     */
-    bool getDataFromTx(const std::string & txid, std::vector<unsigned char> & data);
-
 } // namespace rpc
 
 } // namespace xbridge

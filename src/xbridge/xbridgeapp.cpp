@@ -7,21 +7,22 @@
 #include "util/logger.h"
 #include "util/settings.h"
 #include "util/xbridgeerror.h"
+#include "util/xassert.h"
 #include "version.h"
 #include "config.h"
 #include "xuiconnector.h"
 #include "rpcserver.h"
 #include "net.h"
 #include "util.h"
-#include "xkey.h"
 #include "ui_interface.h"
 #include "init.h"
 #include "wallet.h"
 #include "servicenodeman.h"
+#include "activeservicenode.h"
 #include "xbridgewalletconnector.h"
 #include "xbridgewalletconnectorbtc.h"
-#include "xbridgewalletconnectorbcc.h"
-#include "xbridgewalletconnectorsys.h"
+#include "xbridgecryptoproviderbtc.h"
+#include "xbridgewalletconnectorbch.h"
 #include "xbridgewalletconnectordgb.h"
 
 #include <assert.h>
@@ -33,11 +34,16 @@
 #include <boost/thread/mutex.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <openssl/rand.h>
 #include <openssl/md5.h>
 
 #include "posixtimeconversion.h"
+
+using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
+using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
+namespace bpt = boost::posix_time;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -138,6 +144,9 @@ protected:
      */
     bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
 
+    bool addNodeServices(const ::CPubKey &node, const std::vector<std::string> &services);
+    bool hasNodeService(const ::CPubKey &node, const std::string &service);
+
 protected:
     // workers
     std::deque<IoServicePtr>                           m_services;
@@ -179,6 +188,10 @@ protected:
     // network packets queue
     boost::mutex                                       m_ppLocker;
     std::map<uint256, XBridgePacketPtr>                m_pendingPackets;
+
+    // services and xwallets
+    boost::mutex                                       m_xwalletsLocker;
+    std::map<::CPubKey, std::map<std::string, bool> >  m_xwallets;
 };
 
 //*****************************************************************************
@@ -282,16 +295,17 @@ bool App::Impl::start()
                 wp.m_port                      = s.get<std::string>(*i + ".Port");
                 wp.m_user                      = s.get<std::string>(*i + ".Username");
                 wp.m_passwd                    = s.get<std::string>(*i + ".Password");
-                wp.addrPrefix[0]               = s.get<int>(*i + ".AddressPrefix", 0);
-                wp.scriptPrefix[0]             = s.get<int>(*i + ".ScriptPrefix", 0);
-                wp.secretPrefix[0]             = s.get<int>(*i + ".SecretPrefix", 0);
-                wp.COIN                        = s.get<uint64_t>(*i + ".COIN", 0);
-                wp.txVersion                   = s.get<uint32_t>(*i + ".TxVersion", 1);
-                wp.minTxFee                    = s.get<uint64_t>(*i + ".MinTxFee", 0);
-                wp.feePerByte                  = s.get<uint64_t>(*i + ".FeePerByte", 200);
+                wp.addrPrefix                  = s.get<std::string>(*i + ".AddressPrefix");
+                wp.scriptPrefix                = s.get<std::string>(*i + ".ScriptPrefix");
+                wp.secretPrefix                = s.get<std::string>(*i + ".SecretPrefix");
+                wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
+                wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
+                wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
                 wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
-                wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
-                wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
+                wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
+                wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
+                wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
+                wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
 
                 if (wp.m_ip.empty() || wp.m_port.empty() ||
                     wp.m_user.empty() || wp.m_passwd.empty() ||
@@ -300,11 +314,9 @@ bool App::Impl::start()
                     LOG() << "read wallet " << *i << " with empty parameters>";
                     continue;
                 }
-                else
-                {
-                    LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
-                          << ":" << wp.m_port; // << " COIN=" << wp.COIN;
-                }
+
+                LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
+                      << ":" << wp.m_port; // << " COIN=" << wp.COIN;
 
                 xbridge::WalletConnectorPtr conn;
                 if (wp.method == "ETHER")
@@ -312,19 +324,14 @@ bool App::Impl::start()
                     LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
                     // session.reset(new XBridgeSessionEthereum(wp));
                 }
-                else if (wp.method == "BTC")
+                else if (wp.method == "BTC" || wp.method == "SYS")
                 {
-                    conn.reset(new BtcWalletConnector);
+                    conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
                     *conn = wp;
                 }
-                else if (wp.method == "BCC")
+                else if (wp.method == "BCH")
                 {
-                    conn.reset(new BccWalletConnector);
-                    *conn = wp;
-                }
-                else if (wp.method == "SYS")
-                {
-                    conn.reset(new SysWalletConnector);
+                    conn.reset(new BchWalletConnector);
                     *conn = wp;
                 }
                 else if (wp.method == "DGB")
@@ -332,14 +339,8 @@ bool App::Impl::start()
                     conn.reset(new DgbWalletConnector);
                     *conn = wp;
                 }
-//                else if (wp.method == "RPC")
-//                {
-//                    LOG() << "wp.method RPC not implemented" << __FUNCTION__;
-//                    // session.reset(new XBridgeSessionRpc(wp));
-//                }
                 else
                 {
-                    // session.reset(new XBridgeSession(wp));
                     ERR() << "unknown session type " << __FUNCTION__;
                 }
                 if (!conn)
@@ -380,13 +381,6 @@ bool App::init(int argc, char *argv[])
         LOG() << "Finished loading config" << path;
     }
 
-    // init secp256
-    if(!ECC_Start()) {
-
-        ERR() << "can't start secp256, xbridgeApp not started " << __FUNCTION__;
-        throw  std::runtime_error("can't start secp256, xbridgeApp not started ");
-
-    }
     // init exchange
     Exchange & e = Exchange::instance();
     e.init();
@@ -435,9 +429,6 @@ bool App::Impl::stop()
     }
 
     m_threads.join_all();
-
-    // secp stop
-    ECC_Stop();
 
     return true;
 }
@@ -567,6 +558,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     {
         ptr->processPacket(packet);
     }
+
     else
     {
         {
@@ -595,7 +587,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 //*****************************************************************************
 //*****************************************************************************
 void App::onBroadcastReceived(const std::vector<unsigned char> & message,
-                                     CValidationState & /*state*/)
+                                     CValidationState & state)
 {
     if (isKnownMessage(message))
     {
@@ -629,7 +621,21 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
     SessionPtr ptr = m_p->getSession();
     if (ptr)
     {
-        ptr->processPacket(packet);
+        // Handle services ping
+        if (packet->command() == xbcServicesPing) {
+            XBridgePacketPtr p(new XBridgeServicesPacket);
+            p->copyFrom(message);
+            auto success = ptr->processPacket(p);
+            if (!success) { // TODO Handle DoS before relay
+                state.DoS(0, error("Bad services ping"), REJECT_INVALID, "bad-services-ping");
+                return;
+            }
+            // Store updated services list for this node
+            auto servicesPacket = static_pointer_cast<XBridgeServicesPacket>(p);
+            m_p->addNodeServices(servicesPacket->nodePubKey, servicesPacket->services);
+        } else {
+            ptr->processPacket(packet);
+        }
     }
 }
 
@@ -807,6 +813,33 @@ std::map<uint256, xbridge::TransactionDescrPtr> App::history() const
 
 //******************************************************************************
 //******************************************************************************
+std::vector<App::FlushedOrder>
+App::flushCancelledOrders(bpt::time_duration minAge) const
+{
+    std::vector<App::FlushedOrder> list{};
+    const bpt::ptime keepTime{bpt::microsec_clock::universal_time() - minAge};
+    const std::vector<TransactionMap*> maps{&m_p->m_transactions, &m_p->m_historicTransactions};
+
+    boost::mutex::scoped_lock l{m_p->m_txLocker};
+
+    for(auto mp : maps) {
+        for(auto it = mp->begin(); it != mp->end(); ) {
+            const TransactionDescrPtr & ptr = it->second;
+            if (ptr->state == xbridge::TransactionDescr::trCancelled
+                && ptr->txtime < keepTime) {
+                list.emplace_back(ptr->id,ptr->txtime,ptr.use_count());
+                mp->erase(it++);
+            } else {
+                ++it;
+            }
+        }
+    }
+
+    return list;
+}
+
+//******************************************************************************
+//******************************************************************************
 void App::appendTransaction(const TransactionDescrPtr & ptr)
 {
     boost::mutex::scoped_lock l(m_p->m_txLocker);
@@ -915,11 +948,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    if(pwalletMain->GetBalance() < connTo->serviceNodeFee)
-    {
-        return xbridge::Error::INSIFFICIENT_FUNDS_DX;
-    }
-
     uint64_t utxoAmount = 0;
     uint64_t fee1       = 0;
     uint64_t fee2       = 0;
@@ -960,18 +988,18 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
 
-        if(entry.signature.size() != 65)
+        if (entry.signature.size() != 65)
         {
             ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
             return xbridge::Error::INVALID_SIGNATURE;
         }
-//        assert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        if(entry.rawAddress.size() != 20)
+        xassert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        if (entry.rawAddress.size() != 20)
         {
             ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
             return  xbridge::Error::INVALID_ADDRESS;
         }
-//        assert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+        xassert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
@@ -1054,63 +1082,54 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
 //******************************************************************************
 bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
 {
-    // if (!ptr->packet)
+    if (ptr->from.size() == 0 || ptr->to.size() == 0)
     {
-        if (ptr->from.size() == 0 || ptr->to.size() == 0)
-        {
-            // TODO temporary
-            return false;
-        }
-
-        if (ptr->packet && ptr->packet->command() != xbcTransaction)
-        {
-            // not send pending packets if not an xbcTransaction
-            return false;
-        }
-        ptr->packet.reset(new XBridgePacket(xbcTransaction));
-
-        // field length must be 8 bytes
-        std::vector<unsigned char> fc(8, 0);
-        std::copy(ptr->fromCurrency.begin(), ptr->fromCurrency.end(), fc.begin());
-
-        // field length must be 8 bytes
-        std::vector<unsigned char> tc(8, 0);
-        std::copy(ptr->toCurrency.begin(), ptr->toCurrency.end(), tc.begin());
-
-        // 32 bytes - id of transaction
-        // 2x
-        // 20 bytes - address
-        //  8 bytes - currency
-        //  8 bytes - amount
-        // 32 bytes - hash of block when tr created
-        ptr->packet->append(ptr->id.begin(), 32);
-        ptr->packet->append(ptr->from);
-        ptr->packet->append(fc);
-        ptr->packet->append(ptr->fromAmount);
-        ptr->packet->append(ptr->to);
-        ptr->packet->append(tc);
-        ptr->packet->append(ptr->toAmount);
-        ptr->packet->append(util::timeToInt(ptr->created));
-        ptr->packet->append(ptr->blockHash.begin(), 32);
-
-
-        // utxo items
-        ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
-        for (const wallet::UtxoEntry & entry : ptr->usedCoins)
-        {
-            uint256 txid(entry.txId);
-            ptr->packet->append(txid.begin(), 32);
-            ptr->packet->append(entry.vout);
-            ptr->packet->append(entry.rawAddress);
-            ptr->packet->append(entry.signature);
-        }
-
+        // TODO temporary
+        return false;
     }
 
-    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
+    XBridgePacketPtr packet(new XBridgePacket(xbcTransaction));
+
+    // field length must be 8 bytes
+    std::vector<unsigned char> fc(8, 0);
+    std::copy(ptr->fromCurrency.begin(), ptr->fromCurrency.end(), fc.begin());
+
+    // field length must be 8 bytes
+    std::vector<unsigned char> tc(8, 0);
+    std::copy(ptr->toCurrency.begin(), ptr->toCurrency.end(), tc.begin());
+
+    // 32 bytes - id of transaction
+    // 2x
+    // 20 bytes - address
+    //  8 bytes - currency
+    //  8 bytes - amount
+    // 32 bytes - hash of block when tr created
+    packet->append(ptr->id.begin(), 32);
+    packet->append(ptr->from);
+    packet->append(fc);
+    packet->append(ptr->fromAmount);
+    packet->append(ptr->to);
+    packet->append(tc);
+    packet->append(ptr->toAmount);
+    packet->append(util::timeToInt(ptr->created));
+    packet->append(ptr->blockHash.begin(), 32);
+
+
+    // utxo items
+    packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
+    for (const wallet::UtxoEntry & entry : ptr->usedCoins)
+    {
+        uint256 txid(entry.txId);
+        packet->append(txid.begin(), 32);
+        packet->append(entry.vout);
+        packet->append(entry.rawAddress);
+        packet->append(entry.signature);
+    }
+
+    packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
     static std::vector<unsigned char> addr(20, 0);
-    onSend(addr, ptr->packet->body());
+    onSend(addr, packet->body());
 
     return true;
 }
@@ -1159,6 +1178,11 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         return xbridge::Error::DUST;
     }
 
+    if (pwalletMain->GetBalance() < connTo->serviceNodeFee)
+    {
+        return xbridge::Error::INSIFFICIENT_FUNDS_DX;
+    }
+
     uint64_t utxoAmount = 0;
     uint64_t fee1       = 0;
     uint64_t fee2       = 0;
@@ -1173,11 +1197,6 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
     }
-
-    LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
-    LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
-    LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
-          << " required amount + fees: " << (static_cast<double>(ptr->fromAmount + fee1 + fee2) / TransactionDescr::COIN);
 
     // sign used coins
     for (wallet::UtxoEntry & entry : outputsForUse)
@@ -1249,7 +1268,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 //******************************************************************************
 bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
 {
-    ptr->packet.reset(new XBridgePacket(xbcTransactionAccepting));
+    XBridgePacketPtr packet(new XBridgePacket(xbcTransactionAccepting));
 
     // field length must be 8 bytes
     std::vector<unsigned char> fc(8, 0);
@@ -1264,29 +1283,29 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
     // 20 bytes - address
     //  8 bytes - currency
     //  4 bytes - amount
-    ptr->packet->append(ptr->hubAddress);
-    ptr->packet->append(ptr->id.begin(), 32);
-    ptr->packet->append(ptr->from);
-    ptr->packet->append(fc);
-    ptr->packet->append(ptr->fromAmount);
-    ptr->packet->append(ptr->to);
-    ptr->packet->append(tc);
-    ptr->packet->append(ptr->toAmount);
+    packet->append(ptr->hubAddress);
+    packet->append(ptr->id.begin(), 32);
+    packet->append(ptr->from);
+    packet->append(fc);
+    packet->append(ptr->fromAmount);
+    packet->append(ptr->to);
+    packet->append(tc);
+    packet->append(ptr->toAmount);
 
     // utxo items
-    ptr->packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
+    packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
     for (const wallet::UtxoEntry & entry : ptr->usedCoins)
     {
         uint256 txid(entry.txId);
-        ptr->packet->append(txid.begin(), 32);
-        ptr->packet->append(entry.vout);
-        ptr->packet->append(entry.rawAddress);
-        ptr->packet->append(entry.signature);
+        packet->append(txid.begin(), 32);
+        packet->append(entry.vout);
+        packet->append(entry.rawAddress);
+        packet->append(entry.signature);
     }
 
-    ptr->packet->sign(ptr->mPubKey, ptr->mPrivKey);
+    packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
-    onSend(ptr->hubAddress, ptr->packet->body());
+    onSend(ptr->hubAddress, packet->body());
 
     ptr->state = TransactionDescr::trAccepting;
     xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
@@ -1402,7 +1421,8 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const 
         return xbridge::TRANSACTION_NOT_FOUND;
     }
 
-    return checkAmount(ptr->toCurrency, ptr->toAmount, ""); // TODO enforce by address after improving addressbook
+    // TODO enforce by address after improving addressbook
+    return checkAmount(ptr->toCurrency, ptr->toAmount, "");
 }
 
 //******************************************************************************
@@ -1454,7 +1474,124 @@ T random_element(T begin, T end)
     return begin;
 }
 
+/**
+ * @brief Sends the service ping to the network on behalf of the current Servicenode.
+ * @return
+ */
+bool App::sendServicePing() {
+    if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED) {
+        ERR() << "This servicenode must be started in order to report report services to the network " << __FUNCTION__;
+        return false;
+    }
 
+    CServicenode *pmn = mnodeman.Find(activeServicenode.vin);
+    if (pmn == nullptr) {
+        ERR() << "couldn't find the active servicenode " << __FUNCTION__;
+        return false;
+    }
+
+    Exchange & e = Exchange::instance();
+    std::map<std::string, bool> nodup;
+
+    // TODO Add xrouter services
+    std::vector<std::string> nonWalletServices;// = xrouter.services() {"xrSendTransaction","xrGetBlock","xrGetTransaction"};
+    for (const auto &s : nonWalletServices)
+        nodup[s] = true;
+
+    // Add xbridge connected wallets
+    for (const auto &wallet : e.connectedWallets())
+        nodup[wallet] = true;
+
+    // All services
+    std::vector<std::string> services;
+    services.reserve(nodup.size());
+    for (const auto &item : nodup)
+        services.push_back(item.first);
+
+    // Create the ping packet
+    auto ping = e.servicesPingPacket(services);
+    if (ping->size() > 10000) {
+        ERR() << "Service ping too big, too many services. Max of 10000 bytes supported " << __FUNCTION__;
+        return false;
+    }
+
+    // Update node services on self
+    m_p->addNodeServices(pmn->pubKeyServicenode, services);
+
+    std::string servicesStr = boost::algorithm::join(services, ",");
+    LOG() << "Sending service ping: " << servicesStr << __FUNCTION__;
+
+    sendPacket(ping);
+    return true;
+}
+
+/**
+ * @brief Returns true if the current node supports the specified service.
+ * @param service Service to lookup
+ * @return
+ */
+bool App::hasNodeService(const std::string &service) {
+    return m_p->hasNodeService(activeServicenode.pubKeyServicenode, service);
+}
+
+/**
+ * @brief Returns true if the specified node supports the service.
+ * @param nodePubKey Node to lookup
+ * @param service Service to lookup
+ * @return
+ */
+bool App::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service) {
+    return m_p->hasNodeService(nodePubKey, service);
+}
+
+/**
+ * @brief Returns all services across all nodes.
+ * @return
+ */
+std::map<::CPubKey, std::map<std::string, bool> > App::allServices() {
+    boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
+    return m_p->m_xwallets;
+}
+
+/**
+ * @brief Returns the node services supported by the specified node.
+ * @return
+ */
+std::map<std::string, bool> App::nodeServices(const ::CPubKey &nodePubKey) {
+    boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
+    return m_p->m_xwallets[nodePubKey];
+}
+
+/**
+ * @brief Stores the specified services for the node.
+ * @param nodePubKey Pubkey of the node
+ * @param services List of supported services
+ * @return True if success, otherwise false
+ */
+bool App::Impl::addNodeServices(const ::CPubKey &nodePubKey, const std::vector<std::string> &services) {
+    std::map<std::string, bool> map1;
+    for (const std::string &s : services)
+        map1[s] = true;
+    {
+        boost::mutex::scoped_lock l(m_xwalletsLocker);
+        m_xwallets[nodePubKey] = map1;
+    }
+    return true;
+}
+
+/**
+ * @brief Returns true if the service exists.
+ * @param nodePubKey Pubkey of the node
+ * @param service Service to search for
+ * @return True if service is supported, otherwise false
+ */
+bool App::Impl::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service) {
+    boost::mutex::scoped_lock l(m_xwalletsLocker);
+    if (m_xwallets.count(nodePubKey) && m_xwallets[nodePubKey].count(service))
+        return m_xwallets[nodePubKey][service];
+
+    return false;
+}
 
 //******************************************************************************
 //******************************************************************************
