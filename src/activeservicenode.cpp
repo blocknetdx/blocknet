@@ -8,6 +8,7 @@
 #include "spork.h"
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 
 //
 // Bootup the Servicenode, look for a 5000 BlocknetDX input and register on the network
@@ -205,7 +206,8 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool for
         mnp.Relay();
 
         // Send the services ping
-        xbridge::App::instance().sendServicePing();
+        std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
+        xbridge::App::instance().sendServicePing(nonWalletServices);
 
         /*
          * IT'S SAFE TO REMOVE THIS IN FURTHER VERSIONS
@@ -338,7 +340,8 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
     mnb.Relay();
 
     // Send the services ping
-    xbridge::App::instance().sendServicePing();
+    std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
+    xbridge::App::instance().sendServicePing(nonWalletServices);
 
     /*
      * IT'S SAFE TO REMOVE THIS IN FURTHER VERSIONS

@@ -34,6 +34,7 @@
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 #include "coinvalidator.h"
 
 #ifdef ENABLE_WALLET
@@ -1696,6 +1697,14 @@ bool AppInit2(boost::thread_group& threadGroup)
     {
         uiInterface.InitMessage(_("Init xbridge service"));
         xbridge::App & xapp = xbridge::App::instance();
+        xapp.start();
+    }
+
+    // start xrouter
+    if (!fRequestShutdown)
+    {
+        uiInterface.InitMessage(_("Init xrouter service"));
+        xrouter::App & xapp = xrouter::App::instance();
         xapp.start();
     }
 

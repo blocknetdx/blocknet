@@ -98,7 +98,7 @@ public:
 
     virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
     virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;
-
+    
 public:
     // helper functions
     virtual bool hasValidAddressPrefix(const std::string & addr) const = 0;
