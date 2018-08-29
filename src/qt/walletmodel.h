@@ -53,6 +53,7 @@ public:
     CAmount amount;
     // If from a payment request, this is used for storing the memo
     QString message;
+    bool subtractFee;
 
     // If from a payment request, paymentRequest.IsInitialized() will be true
     PaymentRequestPlus paymentRequest;
@@ -115,7 +116,8 @@ public:
         TransactionCreationFailed, // Error returned when wallet is still locked
         TransactionCommitFailed,
         AnonymizeOnlyUnlocked,
-        InsaneFee
+        InsaneFee,
+        Cancel
     };
 
     enum EncryptionStatus {
@@ -144,6 +146,27 @@ public:
     void encryptKey(const CKey key, const std::string& pwd, const std::string& slt, std::vector<unsigned char>& crypted);
     void decryptKey(const std::vector<unsigned char>& crypted, const std::string& slt, const std::string& pwd, CKey& key);
 
+    CFeeRate estimatedFee(int blocks) {
+        CFeeRate fee = mempool.estimateFee(blocks);
+        if (fee <= CFeeRate(0))
+            return CWallet::minTxFee;
+        return fee;
+    }
+
+    void attemptToSendZeroFee(bool flag = true) {
+        fSendFreeTransactions = flag; // global variable
+    }
+
+    bool isInsaneFee(CAmount fee) {
+        auto cfee = estimatedFee(1);
+        return fee > cfee.GetFeePerK() * 10000;
+    }
+
+    bool isWalletLocked() {
+        EncryptionStatus encStatus = this->getEncryptionStatus();
+        return encStatus == this->Locked || encStatus == this->UnlockedForAnonymizationOnly;
+    }
+
     // Check address for validity
     bool validateAddress(const QString& address);
 
@@ -153,8 +176,35 @@ public:
         StatusCode status;
     };
 
+    QString messageForSendCoinsReturn(SendCoinsReturn &status) {
+        switch (status.status) {
+            case WalletModel::InvalidAddress:
+                return tr("The recipient address is not valid, please recheck.");
+            case WalletModel::InvalidAmount:
+                return tr("The amount to pay must be larger than 0.");
+            case WalletModel::AmountExceedsBalance:
+                return tr("The amount exceeds your balance.");
+            case WalletModel::AmountWithFeeExceedsBalance:
+                return tr("The total exceeds your balance when the transaction fee is included.");
+            case WalletModel::DuplicateAddress:
+                return tr("Duplicate address found, can only send to each address once per send operation.");
+            case WalletModel::TransactionCreationFailed:
+                return tr("Transaction creation failed!");
+            case WalletModel::TransactionCommitFailed:
+                return tr("The transaction was rejected! This might happen if some of the coins in your wallet were already spent.");
+            case WalletModel::AnonymizeOnlyUnlocked:
+                return tr("Error: The wallet was unlocked only to anonymize coins.");
+            case WalletModel::InsaneFee:
+                return tr("Fee is too large.");
+            case WalletModel::OK:
+            default:
+                break;
+        }
+        return QString();
+    }
+
     // prepare transaction for getting txfee before sending coins
-    SendCoinsReturn prepareTransaction(WalletModelTransaction& transaction, const CCoinControl* coinControl = NULL);
+    SendCoinsReturn prepareTransaction(WalletModelTransaction& transaction, const CCoinControl* coinControl = NULL, const CAmount payFee = 0, const bool sign = true);
 
     // Send coins to a list of recipients
     SendCoinsReturn sendCoins(WalletModelTransaction& transaction);
@@ -168,6 +218,29 @@ public:
     bool isAnonymizeOnlyUnlocked();
     // Wallet backup
     bool backupWallet(const QString& filename);
+
+    // Get fee info
+    struct FeeResult {
+        CAmount amount;
+        CAmount fee;
+        CAmount afterFee;
+        CAmount change;
+        uint quantity;
+        uint64_t bytes;
+        double priority;
+        bool dust;
+        bool allowFree;
+    };
+    struct CoinInput {
+        uint256 hash;
+        uint32_t n;
+        QString address;
+        CAmount amount;
+        COutPoint outpoint() const {
+            return COutPoint(hash, n);
+        }
+    };
+    FeeResult getFeeInfo(QVector<CoinInput> &inputs, CAmount payAmount = 0, uint splitCount = 0, bool freeTransaction = false);
 
     // RAI object for unlocking wallet, returned by requestUnlock()
     class UnlockContext

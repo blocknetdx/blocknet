@@ -469,8 +469,8 @@ void BitcoinApplication::initializeResult(int retval)
         if (pwalletMain) {
             walletModel = new WalletModel(pwalletMain, optionsModel);
 
-            window->addWallet(BitcoinGUI::DEFAULT_WALLET, walletModel);
-            window->setCurrentWallet(BitcoinGUI::DEFAULT_WALLET);
+            window->addWallet(BitcoinGUI::DEFAULT_WALLET(), walletModel);
+            window->setCurrentWallet(BitcoinGUI::DEFAULT_WALLET());
 
             connect(walletModel, SIGNAL(coinsSent(CWallet*, SendCoinsRecipient, QByteArray)),
                 paymentServer, SLOT(fetchPaymentACK(CWallet*, const SendCoinsRecipient&, QByteArray)));

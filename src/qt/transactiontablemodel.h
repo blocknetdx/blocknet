@@ -74,16 +74,6 @@ public:
     QModelIndex index(int row, int column, const QModelIndex& parent = QModelIndex()) const;
     bool processingQueuedTransactions() { return fProcessingQueuedTransactions; }
 
-private:
-    CWallet* wallet;
-    WalletModel* walletModel;
-    QStringList columns;
-    TransactionTablePriv* priv;
-    bool fProcessingQueuedTransactions;
-
-    void subscribeToCoreSignals();
-    void unsubscribeFromCoreSignals();
-
     QString lookupAddress(const std::string& address, bool tooltip) const;
     QVariant addressColor(const TransactionRecord* wtx) const;
     QString formatTxStatus(const TransactionRecord* wtx) const;
@@ -95,6 +85,16 @@ private:
     QVariant txStatusDecoration(const TransactionRecord* wtx) const;
     QVariant txWatchonlyDecoration(const TransactionRecord* wtx) const;
     QVariant txAddressDecoration(const TransactionRecord* wtx) const;
+
+private:
+    CWallet* wallet;
+    WalletModel* walletModel;
+    QStringList columns;
+    TransactionTablePriv* priv;
+    bool fProcessingQueuedTransactions;
+
+    void subscribeToCoreSignals();
+    void unsubscribeFromCoreSignals();
 
 public slots:
     /* New transaction, or transaction changed status */

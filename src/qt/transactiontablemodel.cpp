@@ -318,9 +318,13 @@ QString TransactionTableModel::lookupAddress(const std::string& address, bool to
     QString description;
     if (!label.isEmpty()) {
         description += label;
-    }
-    if (label.isEmpty() || tooltip) {
-        description += QString(" (") + QString::fromStdString(address) + QString(")");
+        if (tooltip)
+            description += QString("(") + QString::fromStdString(address) + QString(")");
+    } else if (label.isEmpty()) {
+        if (tooltip)
+            description += QString("(") + QString::fromStdString(address) + QString(")");
+        else
+            description += QString::fromStdString(address);
     }
     return description;
 }
@@ -401,8 +405,8 @@ QString TransactionTableModel::formatTxToAddress(const TransactionRecord* wtx, b
     case TransactionRecord::Obfuscated:
         return lookupAddress(wtx->address, tooltip) + watchAddress;
     case TransactionRecord::SendToOther:
-        return QString::fromStdString(wtx->address) + watchAddress;
     case TransactionRecord::SendToSelf:
+        return QString::fromStdString(wtx->address) + watchAddress;
     default:
         return tr("(n/a)") + watchAddress;
     }

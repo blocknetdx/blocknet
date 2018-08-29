@@ -36,18 +36,27 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
     // define text to place
     QString titleText = tr("Blocknet");
     QString versionText = QString(tr("Version %1")).arg(QString::fromStdString(FormatFullVersion()));
-    QString copyrightTextBtc = QChar(0xA9) + QString(" 2009-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Bitcoin Core developers"));
-    QString copyrightTextDash = QChar(0xA9) + QString(" 2014-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Dash Core developers"));
-    QString copyrightTextBlocknetDX = QChar(0xA9) + QString(" 2015-%1 ").arg(COPYRIGHT_YEAR) + QString(tr("The Blocknet developers"));
-    QString titleAddText = networkStyle->getTitleAddText();
+    QString copyrightTextBtc = QChar(0xA9) + QString(" 2009-2017 ") + QString(tr("The Bitcoin Core developers"));
+    QString copyrightTextDash = QChar(0xA9) + QString(" 2014-2017 ") + QString(tr("The Dash Core developers"));
+    QString copyrightTextPivx = QChar(0xA9) + QString(" 2015-2017 ") + QString(tr("The PIVX Core developers"));
+    QString copyrightTextBlocknetDX = QChar(0xA9) + QString(" 2015-2018 ") + QString(tr("The Blocknet Core developers"));
+    const QString &titleAddText = networkStyle->getTitleAddText();
 
     QString font = QApplication::font().toString();
 
     // load the bitmap for writing some text over it
-    pixmap = networkStyle->getSplashImage();
+    bg = new QLabel;
+    auto pixmap = networkStyle->getSplashImage();
+    QSize splashSize = QSize(pixmap.width(), pixmap.height());
+    if (splashSize.width() > 1600)
+        splashSize = QSize(splashSize.width()/2, splashSize.height()/2); // TODO HDPI
+    pixmap.setDevicePixelRatio(2);
+    pixmap = pixmap.scaled(static_cast<int>(splashSize.width()*pixmap.devicePixelRatio()), static_cast<int>(splashSize.height()*pixmap.devicePixelRatio()),
+                           Qt::KeepAspectRatio, Qt::SmoothTransformation);
 
     QPainter pixPaint(&pixmap);
-    pixPaint.setPen(QColor(200, 200, 200));
+    pixPaint.setPen(QColor("white"));
+    pixPaint.setRenderHint(QPainter::HighQualityAntialiasing);
 
     // check font size and drawing with
     pixPaint.setFont(QFont(font, 28 * fontFactor));
@@ -70,7 +79,8 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
     pixPaint.setFont(QFont(font, 10 * fontFactor));
     pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace, copyrightTextBtc);
     pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace + 12, copyrightTextDash);
-    pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace + 24, copyrightTextBlocknetDX);
+    pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace + 24, copyrightTextPivx);
+    pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace + 36, copyrightTextBlocknetDX);
 
     // draw additional text if special network
     if (!titleAddText.isEmpty()) {
@@ -79,16 +89,19 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
         pixPaint.setFont(boldFont);
         fm = pixPaint.fontMetrics();
         int titleAddTextWidth = fm.width(titleAddText);
-        pixPaint.drawText(pixmap.width() - titleAddTextWidth - 10, pixmap.height() - 25, titleAddText);
+        pixPaint.drawText(splashSize.width() - titleAddTextWidth - 10, splashSize.height() - 25, titleAddText);
     }
 
     pixPaint.end();
+
+    bg->setPixmap(pixmap);
+    bg->setFixedSize(splashSize);
 
     // Set window title
     setWindowTitle(titleText + " " + titleAddText);
 
     // Resize window and move to center of desktop, disallow resizing
-    QRect r(QPoint(), pixmap.size());
+    QRect r(QPoint(), bg->size());
     resize(r.size());
     setFixedSize(r.size());
     move(QApplication::desktop()->screenGeometry().center() - r.center());
@@ -113,7 +126,7 @@ static void InitMessage(SplashScreen* splash, const std::string& message)
         Qt::QueuedConnection,
         Q_ARG(QString, QString::fromStdString(message)),
         Q_ARG(int, Qt::AlignBottom | Qt::AlignHCenter),
-        Q_ARG(QColor, QColor(100, 100, 100)));
+        Q_ARG(QColor, QColor(0xCD, 0xCD, 0xCD)));
 }
 
 static void ShowProgress(SplashScreen* splash, const std::string& title, int nProgress)
@@ -160,7 +173,7 @@ void SplashScreen::showMessage(const QString& message, int alignment, const QCol
 void SplashScreen::paintEvent(QPaintEvent* /*event*/)
 {
     QPainter painter(this);
-    painter.drawPixmap(0, 0, pixmap);
+    painter.drawPixmap(0, 0, *bg->pixmap());
     QRect r = rect().adjusted(5, 5, -5, -5);
     painter.setPen(curColor);
     painter.drawText(r, curAlignment, curMessage);
