@@ -5,6 +5,7 @@
 #define XBRIDGEWALLETCONNECTOR_H
 
 #include "xbridgewallet.h"
+#include "uint256.h"
 
 #include <vector>
 #include <string>
@@ -14,6 +15,19 @@
 //*****************************************************************************
 namespace xbridge
 {
+
+struct XTxIn
+{
+    std::string txid;
+    uint32_t    n;
+    double      amount;
+
+    XTxIn(std::string _txid, uint32_t _n, double _amount)
+        : txid(_txid)
+        , n(_n)
+        , amount(_amount)
+    {}
+};
 
 //*****************************************************************************
 //*****************************************************************************
@@ -65,10 +79,15 @@ public:
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
-    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withoutDust = true) const = 0;
+    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const = 0;
 
+    // if lock returns false if already locked
+    // if unlock always return true
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
-                             const bool lock = true) const = 0;
+                           const bool lock = true);
+
+    // remove locked coins (lockedCoins) from array
+    void removeLocked(std::vector<wallet::UtxoEntry> & inputs) const;
 
     virtual bool getTxOut(wallet::UtxoEntry & entry) = 0;
 
@@ -82,7 +101,7 @@ public:
 
 public:
     // helper functions
-    bool hasValidAddressPrefix(const std::string & addr) const;
+    virtual bool hasValidAddressPrefix(const std::string & addr) const = 0;
 
     virtual bool isDustAmount(const double & amount) const = 0;
 
@@ -95,10 +114,10 @@ public:
     virtual double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const = 0;
     virtual double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const = 0;
 
-    virtual bool checkTransaction(const std::string & depositTxId,
-                                  const std::string & /*destination*/,
-                                  const uint64_t & /*amount*/,
-                                  bool & isGood) = 0;
+    virtual bool checkDepositTransaction(const std::string & depositTxId,
+                                         const std::string & /*destination*/,
+                                         double & amount,
+                                         bool & isGood) = 0;
 
     virtual uint32_t lockTime(const char role) const = 0;
 
@@ -108,12 +127,12 @@ public:
                                            const uint32_t lockTime,
                                            std::vector<unsigned char> & resultSript) = 0;
 
-    virtual bool createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    virtual bool createDepositTransaction(const std::vector<XTxIn> & inputs,
                                           const std::vector<std::pair<std::string, double> > & outputs,
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 
-    virtual bool createRefundTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    virtual bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                          const std::vector<std::pair<std::string, double> > & outputs,
                                          const std::vector<unsigned char> & mpubKey,
                                          const std::vector<unsigned char> & mprivKey,
@@ -122,7 +141,7 @@ public:
                                          std::string & txId,
                                          std::string & rawTx) = 0;
 
-    virtual bool createPaymentTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    virtual bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
                                           const std::vector<std::pair<std::string, double> > & outputs,
                                           const std::vector<unsigned char> & mpubKey,
                                           const std::vector<unsigned char> & mprivKey,

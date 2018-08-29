@@ -598,6 +598,31 @@ extern json_spirit::Value dxGetLockedUtxos(const json_spirit::Array& params, boo
  * @return list of currences with balance
  */
 extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief Flush cancelled orders older than given milliseconds
+ * @param params The list of input params:<br>
+ * params[0] : optional parameter, the minimum age of order in milliseconds, the default is to flush all cancelled orders (0 milliseconds) <br>
+ * @param fHelp If is true then an exception with parameter description message will be thrown
+ * @return The list of flushed orders
+ * * Example:<br>
+ * \verbatim
+    dxFlushCancelledOrders 2500
+    {
+        "ageMillis" : 2500,
+        "now" : "20180619T042505.249373",
+        "durationMicrosec" : 7,
+        "flushedOrders" : [
+            {
+                "id" : "1632417312d5ea676abb88b8fb48ace1a11e9b1a937fc24ff79296d9d2963b32",
+                "txtime" : "20180619T042309.149572",
+                "use_count" : 1
+            }
+        ]
+    }
+ * \endverbatim
+ */
+extern json_spirit::Value dxFlushCancelledOrders(const json_spirit::Array& params, bool fHelp);
 /** @} */
 
 

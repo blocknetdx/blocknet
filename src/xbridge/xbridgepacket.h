@@ -167,45 +167,43 @@ enum XBridgeCommand
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
-    //    uint256 data transaction id
+    //    uint256 fee transaction id
     xbcTransactionInitialized = 9,
 
     //
-    // xbcTransactionCreateA (157 bytes min)
+    // xbcTransactionCreateA (105 bytes min)
     //    uint160  client address
     //    uint160  hub address
     //    uint256  hub transaction id
-    //    20 bytes source address
-    //    uint256  data tx id, 32 bytes
-    //    opponent public key, 33 bytes
+    //    bytes    B public key (33 bytes)
     xbcTransactionCreateA = 10,
     //
-    // xbcTransactionCreatedA (72 bytes min)
+    // xbcTransactionCreatedA (92 bytes min)
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
-    //    string  deposit tx id
-    //    string  inner script (TODO delete later)
+    //    string  A deposit tx id
+    //    bytes   hashed secret (20 bytes)
+    //    uint32  A inner script size // TODO remove!!!
+    //    bytes   A inner script      // TODO remove!!!
     xbcTransactionCreatedA = 11,
     //
-    // xbcTransactionCreateB (205 bytes min)
+    // xbcTransactionCreateB (125 bytes min)
     //    uint160  client address
     //    uint160  hub address
     //    uint256  hub transaction id
-    //    string destination address (33-34 byte + 0)
-    //    string hub wallet address (33-34 byte + 0)
-    //    uint32_t fee in percent, *1000 (0.3% == 300)
-    //    uint256 data tx id, 32 bytes
-    //    opponent public key, 33 bytes
-    //    string A deposit tx id
+    //    bytes    A public key (33 bytes)
+    //    string   A deposit tx id
+    //    bytes    hashed secret (20 bytes)
     xbcTransactionCreateB = 12,
     //
     // xbcTransactionCreatedB (72 bytes min)
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
-    //    string deposit tx id
-    //    string inner script (TODO delete later)
+    //    string  B deposit tx id
+    //    uint32  B inner script size // TODO remove!!!
+    //    bytes   B inner script      // TODO remove!!!
     xbcTransactionCreatedB = 13,
 
     //
@@ -213,24 +211,26 @@ enum XBridgeCommand
     //    uint160 client address
     //    uint160 hub address
     //    uint256 hub transaction id
-    //    string B deposit tx id
-    //    string B inner script (TODO delete later)
+    //    string  B deposit tx id
+    //    uint32  B inner script size // TODO remove!!!
+    //    bytes   B inner script      // TODO remove!!!
     xbcTransactionConfirmA = 18,
     //
     // xbcTransactionConfirmedA (72 bytes min)
-    //    uint160 hub address
-    //    uint160 client address
-    //    uint256 hub transaction id
+    //    uint160  hub address
+    //    uint160  client address
+    //    uint256  hub transaction id
     //    x public key, 33 bytes
     xbcTransactionConfirmedA = 19,
     //
     // xbcTransactionConfirmB (105 bytes min)
-    //    uint160 client address
-    //    uint160 hub address
-    //    uint256 hub transaction id
+    //    uint160  client address
+    //    uint160  hub address
+    //    uint256  hub transaction id
     //    x public key, 33 bytes
-    //    string A deposit tx id
-    //    string A inner script (TODO delete later)
+    //    string   A deposit tx id
+    //    uint32   A inner script size // TODO remove!!!
+    //    string   A inner script      // TODO remove!!!
     xbcTransactionConfirmB = 20,
     //
     // xbcTransactionConfirmedB (72 bytes min)
@@ -286,15 +286,22 @@ public:
     enum
     {
         // header, size, version, command, timestamp, pubkey, signature
-        headerSize       = 8*sizeof(uint32_t)+33+64,
-        commandSize      = sizeof(uint32_t),
-        timestampSize    = sizeof(uint32_t),
-        addressSize      = 20,
-        hashSize         = 32,
-        privkeySize      = 32,
-        pubkeySize       = 33,
-        rawSignatureSize = 64,
-        signatureSize    = 65
+        headerSize                = 8*sizeof(uint32_t)+33+64,
+        commandSize               = sizeof(uint32_t),
+        timestampSize             = sizeof(uint32_t),
+        addressSize               = 20,
+
+        hashSize                  = 32,
+
+        privkeySize               = 32,
+
+        pubkeySizeRaw             = 32,
+        pubkeySize                = 33,
+        uncompressedPubkeySizeRaw = 64,
+        uncompressedPubkeySize    = 65,
+
+        rawSignatureSize          = 64,
+        signatureSize             = 65
     };
 
     uint32_t     size()    const     { return sizeField(); }

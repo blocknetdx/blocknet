@@ -9,6 +9,7 @@
 #include <set>
 #include <stdint.h>
 #include <cstring>
+#include <mutex>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -27,6 +28,7 @@ struct UtxoEntry
     uint32_t    vout;
     double      amount;
     std::string address;
+    std::string scriptPubKey;
 
     std::vector<unsigned char> rawAddress;
     std::vector<unsigned char> signature;
@@ -36,6 +38,11 @@ struct UtxoEntry
     bool operator < (const UtxoEntry & r) const
     {
         return (txId < r.txId) || ((txId == r.txId) && (vout < r.vout));
+    }
+
+    bool operator == (const UtxoEntry & r) const
+    {
+        return (txId == r.txId) && (vout ==r.vout);
     }
 };
 
@@ -54,11 +61,13 @@ public:
         , dustAmount(0)
         , blockTime(0)
         , requiredConfirmations(0)
-        , serviceNodeFee(.005)
+        , serviceNodeFee(.015)
+        , txWithTimeField(false)
+        , isLockCoinsSupported(false)
     {
-        memset(addrPrefix,   0, sizeof(addrPrefix));
-        memset(scriptPrefix, 0, sizeof(scriptPrefix));
-        memset(secretPrefix, 0, sizeof(secretPrefix));
+        addrPrefix.resize(1, '\0');
+        scriptPrefix.resize(1, '\0');
+        secretPrefix.resize(1, '\0');
     }
 
     WalletParam & operator = (const WalletParam & other)
@@ -72,9 +81,9 @@ public:
         m_user                      = other.m_user;
         m_passwd                    = other.m_passwd;
 
-        memcpy(addrPrefix,   other.addrPrefix,   sizeof(addrPrefix)*sizeof(addrPrefix[0]));
-        memcpy(scriptPrefix, other.scriptPrefix, sizeof(scriptPrefix)*sizeof(scriptPrefix[0]));
-        memcpy(secretPrefix, other.secretPrefix, sizeof(secretPrefix)*sizeof(secretPrefix[0]));
+        addrPrefix                  = other.addrPrefix;
+        scriptPrefix                = other.scriptPrefix;
+        secretPrefix                = other.secretPrefix;
 
         txVersion                   = other.txVersion;
         COIN                        = other.COIN;
@@ -84,41 +93,50 @@ public:
         method                      = other.method;
         blockTime                   = other.blockTime;
         requiredConfirmations       = other.requiredConfirmations;
-        // serviceNodeFee = other.serviceNodeFee;
+        txWithTimeField             = other.txWithTimeField;
+        isLockCoinsSupported        = other.isLockCoinsSupported;
 
         return *this;
     }
 
 // TODO temporary public
 public:
-    std::string                title;
-    std::string                currency;
+    std::string                  title;
+    std::string                  currency;
 
-    std::string                address;
+    std::string                  address;
 
-    std::string                m_ip;
-    std::string                m_port;
-    std::string                m_user;
-    std::string                m_passwd;
+    std::string                  m_ip;
+    std::string                  m_port;
+    std::string                  m_user;
+    std::string                  m_passwd;
 
-    char                       addrPrefix[8];
-    char                       scriptPrefix[8];
-    char                       secretPrefix[8];
-    uint32_t                   txVersion;
-    uint64_t                   COIN;
-    uint64_t                   minTxFee;
-    uint64_t                   feePerByte;
-    uint64_t                   dustAmount;
-    std::string                method;
+    std::string                  addrPrefix;
+    std::string                  scriptPrefix;
+    std::string                  secretPrefix;
+    uint32_t                     txVersion;
+    uint64_t                     COIN;
+    uint64_t                     minTxFee;
+    uint64_t                     feePerByte;
+    uint64_t                     dustAmount;
+    std::string                  method;
 
     // block time in seconds
-    uint32_t                   blockTime;
+    uint32_t                     blockTime;
 
     // required confirmations for tx
-    uint32_t                   requiredConfirmations;
+    uint32_t                     requiredConfirmations;
 
     //service node fee, see rpc::storeDataIntoBlockchain
-    const double               serviceNodeFee;
+    const double                 serviceNodeFee;
+
+    // serialized transaction contains time field (default not)
+    bool                         txWithTimeField;
+
+    // support for lock/unlock coins (default off)
+    bool                         isLockCoinsSupported;
+    mutable std::mutex           lockedCoinsLocker;
+    std::set<wallet::UtxoEntry>  lockedCoins;
 };
 
 } // namespace xbridge
