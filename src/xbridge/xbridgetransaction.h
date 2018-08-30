@@ -159,7 +159,6 @@ public:
     // TODO remove script
     std::vector<unsigned char> a_innerScript() const;
 
-    uint256                    a_datatxid() const;
     std::vector<unsigned char> a_pk1() const;
 
     // uint256                    secondId() const;
@@ -174,13 +173,11 @@ public:
     // TODO remove script
     std::vector<unsigned char> b_innerScript() const;
 
-    // uint256                    b_datatxid() const;
     std::vector<unsigned char> b_pk1() const;
 
     bool tryJoin(const TransactionPtr other);
 
     bool                       setKeys(const std::vector<unsigned char> & addr,
-                                       const uint256 & datatxid,
                                        const std::vector<unsigned char> & pk);
     bool                       setBinTxId(const std::vector<unsigned char> &addr,
                                           const std::string & id,
@@ -220,9 +217,6 @@ private:
 
     XBridgeTransactionMember   m_a;
     XBridgeTransactionMember   m_b;
-
-    uint256                    m_a_datatxid;
-    uint256                    m_b_datatxid;
 };
 
 } // namespace xbridge

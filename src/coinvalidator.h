@@ -47,6 +47,7 @@ public:
     static const int CHAIN_HEIGHT;
     bool IsCoinValid(const uint256 &txId) const;
     bool IsCoinValid(uint256 &txId) const;
+    bool IsCoinValid(const std::string &txId) const;
     bool RedeemAddressVerified(std::vector<RedeemData> &exploited,
                                std::vector<RedeemData> &recipients);
     bool Load(int loadHeight);

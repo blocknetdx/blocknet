@@ -2,6 +2,7 @@
 #define XBRIDGEWALLETCONNECTORDGB_H
 
 #include "xbridgewalletconnectorbtc.h"
+#include "xbridgecryptoproviderbtc.h"
 
 //*****************************************************************************
 //*****************************************************************************
@@ -10,13 +11,13 @@ namespace xbridge
 
 //******************************************************************************
 //******************************************************************************
-class DgbWalletConnector : public BtcWalletConnector
+class DgbWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
 {
 public:
     DgbWalletConnector();
 
 public:
-    bool createDepositTransaction(const std::vector<std::pair<std::string, int> > & inputs,
+    bool createDepositTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
                                   std::string & txId,
                                   std::string & rawTx);
