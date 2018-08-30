@@ -132,6 +132,7 @@ bool App::init(int argc, char *argv[])
 
 std::vector<std::string> App::getServicesList() 
 {
+    // We append "XRouter" if XRouter is activated at all, and "XRouter::service_name" for each activated plugin
     std::vector<std::string> result;
     int xrouter_on = xrouter_settings.get<int>("Main.xrouter", 0);
     if (!xrouter_on)
@@ -169,7 +170,7 @@ bool App::start()
 
 void App::openConnections(std::string wallet, std::string plugin)
 {
-    //LOCK(cs_vNodes);
+    // Open connections to all service nodes that are not already our peers, but have XRouter functionality accroding to serviceping
     LOG() << "Current peers count = " << vNodes.size();
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
@@ -232,6 +233,7 @@ std::string App::updateConfigs()
             lastConfigUpdates[pnode] = time;
             continue;
         }
+        
         BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
             if (s.second.addr.ToString() == pnode->addr.ToString()) {
                 // This node is a service node
@@ -316,7 +318,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
         confirmation_count++;
 
     if(confirmation_count <= confirmations / 2) {
-        error.emplace_back(Pair("error", "Failed to get response"));
+        error.emplace_back(Pair("error", "Failed to get response in time. Try xrReply command later."));
         error.emplace_back(Pair("uuid", id));
         return json_spirit::write_string(Value(error), true);
     }
@@ -363,17 +365,19 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
         CNode* res = NULL;
         for (CNode* pnode : vNodes) {
             if (key == pnode->addr.ToString()) {
-                // This node is running xrouter
+                // This is the node whose config we are looking at now
                 res = pnode;
                 break;
             }
         }
         
+        // If the service node is not among peers, we try to connect to it right now
         if (!res) {
             CAddress addr;
             res = ConnectNode(addr, key.c_str());
         }
         
+        // Could not connect to service node
         if (!res)
             continue;
         
@@ -405,8 +409,9 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
 
 CNode* App::getNodeForService(std::string name)
 {
-    // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
+    
+    // TODO: this is a temporary solution. We need it to open connections to snodes before XRouter calls in case they re not among peers
     openConnections();
     
     if (name.find("/") != string::npos) {
@@ -500,7 +505,6 @@ CNode* App::getNodeForService(std::string name)
 //*****************************************************************************
 bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
 {
-    // Send only to the service nodes that have the required wallet
     std::vector<CNode*> selectedNodes = getAvailableNodes(packet, wallet);
     
     if ((int)selectedNodes.size() < confirmations)
@@ -525,7 +529,8 @@ bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, 
     return false;
 }
 
-std::string App::processGetXrouterConfig(XRouterSettings cfg, std::string addr) {
+std::string App::processGetXrouterConfig(XRouterSettings cfg, std::string addr)
+{
     Object result;
     result.emplace_back(Pair("config", cfg.rawText()));
     Object plugins;
@@ -539,7 +544,8 @@ std::string App::processGetXrouterConfig(XRouterSettings cfg, std::string addr) 
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::processReply(XRouterPacketPtr packet) {
+bool App::processReply(XRouterPacketPtr packet)
+{
     uint32_t offset = 0;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -562,7 +568,8 @@ bool App::processReply(XRouterPacketPtr packet) {
     return true;
 }
 
-bool App::processConfigReply(XRouterPacketPtr packet) {
+bool App::processConfigReply(XRouterPacketPtr packet)
+{
     uint32_t offset = 0;
 
     std::string uuid((const char *)packet->data()+offset);
@@ -571,8 +578,6 @@ bool App::processConfigReply(XRouterPacketPtr packet) {
     offset += reply.size() + 1;
 
     LOG() << "Got reply to query " << uuid;
-    
-    
     LOG() << "Got xrouter config from node " << configQueries[uuid]->addrName;
     LOG() << reply;
     Value reply_val;
@@ -589,14 +594,19 @@ bool App::processConfigReply(XRouterPacketPtr packet) {
         psettings.read(std::string(plugins[i].value_.get_str()));
         settings.addPlugin(std::string(plugins[i].name_), psettings);
     }
-     if (configQueries.count(uuid)) {   
+    if (configQueries.count(uuid)) {
+        // This is a reply from service node itself
         snodeConfigs[configQueries[uuid]->addr.ToString()] = settings;
+        
+        // Add IP and possibly domain name to table of domains
         snodeDomains[configQueries[uuid]->addr.ToString()] = configQueries[uuid]->addr.ToString();
         if (settings.get<std::string>("domain", "") != "") {
             snodeDomains[settings.get<std::string>("domain")] = configQueries[uuid]->addr.ToString();
         }
         return true;
     } else {
+        // This is a reply from another client node
+        
         std::string addr = find_value(reply_obj, "addr").get_str();
         snodeConfigs[addr] = settings;
         snodeDomains[addr] = addr;
@@ -943,6 +953,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
 
 std::string App::getPaymentAddress(CNode* node)
 {
+    // Payment address = pubkey Collateral address of snode
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
         for (CNode* pnode : vNodes) {

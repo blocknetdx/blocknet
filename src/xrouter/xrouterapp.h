@@ -113,6 +113,10 @@ public:
      */
     bool init(int argc, char *argv[]);
 
+    /**
+     * @brief this function is called when serviceping packet is generated (see details in Xbridge) 
+     * @return list of XRouter services activated on this node
+     */
     std::vector<std::string> getServicesList();
     
     /**
