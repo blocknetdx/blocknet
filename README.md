@@ -1,21 +1,29 @@
-BlocknetDX repository
+Welcome to the Blocknet repository. Despite the repository name, this repo is for the Blocknet protocol. The repository for Block DX can be found [here](https://github.com/BlocknetDX/blockdx-ui).
 
-BlocknetDX is an open source community driven project building a blockchain based P2P atomic swap exchange using BIP65 capable chains
+Join the community on [Discord](https://discord.gg/2e6s7H8).
 
-Join the community on slack
+#### Blocknet
+Started in 2014, Blocknet is a decentralized, community-governed, self-funded, open-source project that serves as a connector between different blockchains, markets, and communities. 
 
-Contributors are welcome
+#### The Blocknet Protocol
+The Blocknet protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of P2P atomic swaps using BIP65 and a DHT overlay network(Service Nodes). 
 
-BlocknetDX Specs:
-- 1 Minute Block Time
-- 5k for servicenodes
-- Diff. adjustment per block
-- Supports Fast Transactions w/ SwiftTX
-- Supports Decentralized voting/funding
+#### Block DX
+Block DX is a completely decentralized and trustless exchange built on the Blocknet protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/blockdx-ui]
+
+[Contributors are welcome!](https://github.com/BlocknetDX/BlockDX/blob/master/CONTRIBUTING.md)
+
+#### Blocknet Specifications:
+- Block Time: 1 Minute
+- Algo: Quark
+- Difficulty: Adjusted Per Block
+- Block Reward: 1.0 BLOCK (30% to stakers, 70% to Service Nodes)
+- Service Node Requirement: 5000 BLOCK
+- Staking Requirement: No Minimum
+- Governance: Decentralized Voting/Funding With Superblocks
 
 
-## BlocknetDX
--- Decentralized Atomic Swap algo summary
+#### Decentralized Atomic Swap Algo Summary
 
 ```Step1.
 Initiator creates secret X, and hashes it to create H(X). Initiator also creates public private key pair (pubkey i1,i2 / privkey i2,i2). Responder creates public private key pair (pubkey r1,r2 / privkey r1,r2).

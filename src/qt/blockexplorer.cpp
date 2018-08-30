@@ -471,7 +471,7 @@ void BlockExplorer::showEvent(QShowEvent*)
 
         if (!GetBoolArg("-txindex", false)) {
             QString Warning = tr("Not all transactions will be shown. To view all transactions you need to set txindex=1 in the configuration file (blocknetdx.conf).");
-            QMessageBox::warning(this, "BlocknetDX Core Blockchain Explorer", Warning, QMessageBox::Ok);
+            QMessageBox::warning(this, "Blocknet Blockchain Explorer", Warning, QMessageBox::Ok);
         }
     }
 }

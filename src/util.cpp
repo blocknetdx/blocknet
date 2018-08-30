@@ -13,6 +13,7 @@
 #include "util.h"
 
 #include "allocators.h"
+#include "autotruncatelog.h"
 #include "chainparamsbase.h"
 #include "random.h"
 #include "serialize.h"
@@ -23,6 +24,8 @@
 #include <stdarg.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/iostreams/device/file.hpp>
+#include <boost/iostreams/positioning.hpp>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/crypto.h> // for OPENSSL_cleanse()
@@ -134,7 +137,7 @@ bool fServer = false;
 string strMiscWarning;
 bool fLogTimestamps = false;
 bool fLogIPs = false;
-volatile bool fReopenDebugLog = false;
+std::atomic<bool> fReopenDebugLog{false}; // set asynchronously by SIGHUP handler
 
 /** Init OpenSSL library multithreading support */
 static CCriticalSection** ppmutexOpenSSL;
@@ -252,6 +255,52 @@ bool LogAcceptCategory(const char* category)
     return true;
 }
 
+/**
+ * @brief Truncate the "debug.log" file if too big, keep most recent lines
+ * @param[in] bigSz threshold in bytes that triggers truncation
+ * @param[in] newSz size of the file after truncation
+ */
+void TruncateLogKeepRecent(size_t bigSz, size_t newSz)
+{
+    namespace bfs = boost::filesystem;
+    namespace bio = boost::iostreams;
+
+    const bfs::path pathLog{GetDataDir()/"debug.log"};
+    const auto fileSz = bfs::file_size(pathLog);
+
+    LogPrintf("%s: fileSz=%u bigSz=%u newSz=%u\n", __func__, fileSz, bigSz, newSz);
+
+    if (fileSz >= bigSz) {
+        const auto path_c_str = pathLog.string().c_str();
+
+        boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
+
+        const bool wasOpen{fileout != nullptr};
+        if (wasOpen) {
+            fclose(fileout);       // fileout is unbuffered, no need to flush
+            fileout = nullptr;
+        }
+        std::vector<char> buf(newSz);
+        { // use boost for portable support of seek offset greater than 32-bits
+            bio::file_source in{path_c_str};
+            (void) bio::seek(in, -(buf.size()), BOOST_IOS::end);
+            buf.resize(in.read(buf.data(), buf.size()));
+        }
+        fileout = fopen(path_c_str, "w"); // truncates to empty file
+        if (fileout != nullptr) {
+            setbuf(fileout, nullptr); // unbuffered
+            // discard the first line, probably a partial line
+            char* newline = (char*)::memchr( (void*)buf.data(), '\n', buf.size());
+            size_t nskip = newline ? (newline - buf.data() + 1) : 0;
+            (void) fwrite(buf.data()+nskip, 1, buf.size()-nskip, fileout);
+            if (not wasOpen) {
+                fclose(fileout);
+                fileout = nullptr;
+            }
+        }
+    }
+}
+
 int LogPrintStr(const std::string& str)
 {
     int ret = 0; // Returns total number of characters written
@@ -273,7 +322,7 @@ int LogPrintStr(const std::string& str)
             fReopenDebugLog = false;
             boost::filesystem::path pathDebug = GetDataDir() / "debug.log";
             if (freopen(pathDebug.string().c_str(), "a", fileout) != NULL)
-                setbuf(fileout, NULL); // unbuffered
+                setbuf(fileout, nullptr); // unbuffered
         }
 
         // Debug print useful for profiling
@@ -677,23 +726,9 @@ void AllocateFileRange(FILE* file, unsigned int offset, unsigned int length)
 
 void ShrinkDebugFile()
 {
-    // Scroll debug.log if it's getting too big
-    boost::filesystem::path pathLog = GetDataDir() / "debug.log";
-    FILE* file = fopen(pathLog.string().c_str(), "r");
-    if (file && boost::filesystem::file_size(pathLog) > 10 * 1000000) {
-        // Restart the file with some of the end
-        std::vector<char> vch(200000, 0);
-        fseek(file, -((long)vch.size()), SEEK_END);
-        int nBytes = fread(begin_ptr(vch), 1, vch.size(), file);
-        fclose(file);
-
-        file = fopen(pathLog.string().c_str(), "w");
-        if (file) {
-            fwrite(begin_ptr(vch), 1, nBytes, file);
-            fclose(file);
-        }
-    } else if (file != NULL)
-        fclose(file);
+    constexpr size_t bigSz{10 * 1000000}; // ~  10 MB
+    constexpr size_t newSz{200000};       // ~ 200 KB
+    TruncateLogKeepRecent(bigSz, newSz);
 }
 
 #ifdef WIN32
