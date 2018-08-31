@@ -15,7 +15,6 @@
 #include "activeservicenode.h"
 #include "addrman.h"
 #include "amount.h"
-#include "autotruncatelog.h"
 #include "checkpoints.h"
 #include "compat/sanity.h"
 #include "key.h"
@@ -459,14 +458,6 @@ std::string HelpMessage(HelpMessageMode mode)
             _("In this mode -genproclimit controls how many blocks are generated immediately."));
     }
     strUsage += HelpMessageOpt("-shrinkdebugfile", _("Shrink debug.log file on client startup (default: 1 when no -debug)"));
-    {
-        using K = AutoTruncateLog;
-        strUsage += HelpMessageOpt("-autotruncatelog=<n>", strprintf(_("Set truncate size in MB when debug.log over %u MB,"
-                                                                       " checked %u times a day (0-%u, default:"
-                                                                       " %u for Servicenodes, %u otherwise)"),
-                                                                     K::BIG_MB(), K::CHECKS_PER_DAY(), K::MAX_MB(),
-                                                                     K::SERVICENODE_MB(), K::NON_SERVICENODE_MB()));
-    }
     strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
     strUsage += HelpMessageOpt("-litemode=<n>", strprintf(_("Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0));
 
@@ -952,30 +943,6 @@ bool AppInit2(boost::thread_group& threadGroup)
 #endif
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
-
-    /**
-     * -autotruncatelog feature is disabled if it is:
-     *    - not specified, or
-     *    - "0", or
-     *    - an empty string (defaults apply) and a Servicenode (which defaults to "0")
-     *
-     * In order to detect the empty string special case, we use the GetArg
-     * function overload with the string 2nd parameter instead of integer
-     */
-    {
-        std::string atl{GetArg("-autotruncatelog","0")};
-        int rc{global_auto_truncate_log.init(atl, GetBoolArg("-servicenode", false))};
-        if (rc != 0) {
-            using K = AutoTruncateLog;
-            return InitError(strprintf(_("Invalid value for -autotruncatelog=<n>: '%s' rc=%d\n"
-                                         "'n' is MB to truncate once debug.log size reaches %u MB\n"
-                                         "valid range is 0 to %u, 0=disable"),
-                                       atl, rc, K::BIG_MB(), K::MAX_MB()));
-        }
-        // Forced check during initialization
-        global_auto_truncate_log.check();
-    }
-
     LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
     LogPrintf("BlocknetDX version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
     LogPrintf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));

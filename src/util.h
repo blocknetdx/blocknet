@@ -21,7 +21,6 @@
 #include "tinyformat.h"
 #include "utiltime.h"
 
-#include <atomic>
 #include <exception>
 #include <map>
 #include <stdint.h>
@@ -57,7 +56,7 @@ extern bool fServer;
 extern std::string strMiscWarning;
 extern bool fLogTimestamps;
 extern bool fLogIPs;
-extern std::atomic<bool> fReopenDebugLog;
+extern volatile bool fReopenDebugLog;
 
 void SetupEnvironment();
 
@@ -126,14 +125,6 @@ void ReadConfigFile(std::map<std::string, std::string>& mapSettingsRet, std::map
 boost::filesystem::path GetSpecialFolderPath(int nFolder, bool fCreate = true);
 #endif
 boost::filesystem::path GetTempPath();
-
-/**
- * @brief Truncate the "debug.log" file if too big, keep most recent lines
- * @param[in] bigSz threshold in bytes that triggers truncation
- * @param[in] newSz size of the file after truncation
- */
-void TruncateLogKeepRecent(size_t bigSz, size_t newSz);
-
 void ShrinkDebugFile();
 void runCommand(std::string strCommand);
 
