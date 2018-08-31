@@ -117,6 +117,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"dxGetOrderBook", 4},
         {"dxFlushCancelledOrders",0},
         {"dxFlushCancelledOrders",1},
+        {"gettradingdata",0},
     };
 
 class CRPCConvertTable

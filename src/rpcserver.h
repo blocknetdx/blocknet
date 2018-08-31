@@ -625,6 +625,13 @@ extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, 
 extern json_spirit::Value dxFlushCancelledOrders(const json_spirit::Array& params, bool fHelp);
 /** @} */
 
+/**
+ * @brief gettradingdata
+ * @param params
+ * @param fHelp
+ * @return
+ */
+extern json_spirit::Value gettradingdata(const json_spirit::Array & params, bool fHelp);
 
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection* conn,
