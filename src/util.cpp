@@ -21,11 +21,13 @@
 #include "utilstrencodings.h"
 #include "utiltime.h"
 
+#include <assert.h>
 #include <stdarg.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/iostreams/device/file.hpp>
 #include <boost/iostreams/positioning.hpp>
+#include <boost/system/error_code.hpp>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/crypto.h> // for OPENSSL_cleanse()
@@ -266,38 +268,81 @@ void TruncateLogKeepRecent(size_t bigSz, size_t newSz)
     namespace bio = boost::iostreams;
 
     const bfs::path pathLog{GetDataDir()/"debug.log"};
+    const auto path_c_str = pathLog.string().c_str();
     const auto fileSz = bfs::file_size(pathLog);
 
     LogPrintf("%s: fileSz=%u bigSz=%u newSz=%u\n", __func__, fileSz, bigSz, newSz);
 
-    if (fileSz >= bigSz) {
-        const auto path_c_str = pathLog.string().c_str();
+    if (fileSz < bigSz || fileSz <= newSz) return;
 
-        boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
+    // Helper class remembers whether file was open, closes it, and restores when going out of scope
+    class scopedFileHelper {
+        FILE* & f;
+        const char* path;
+        const bool wasOpen;
+    public:
+        scopedFileHelper(FILE* & f, const char* path)
+            : f{f}, path{path}, wasOpen{f != nullptr}
+        {
+            if (f == nullptr) return;
+            fclose(f);
+            f = nullptr;
+        }
+        ~scopedFileHelper() {
+            if (not wasOpen) return;
+            f = fopen(path, "a");
+            if (f) setbuf(f, nullptr); // unbuffered
+        }
+    };
 
-        const bool wasOpen{fileout != nullptr};
-        if (wasOpen) {
-            fclose(fileout);       // fileout is unbuffered, no need to flush
-            fileout = nullptr;
-        }
-        std::vector<char> buf(newSz);
-        { // use boost for portable support of seek offset greater than 32-bits
-            bio::file_source in{path_c_str};
-            (void) bio::seek(in, -(buf.size()), BOOST_IOS::end);
-            buf.resize(in.read(buf.data(), buf.size()));
-        }
-        fileout = fopen(path_c_str, "w"); // truncates to empty file
-        if (fileout != nullptr) {
-            setbuf(fileout, nullptr); // unbuffered
-            // discard the first line, probably a partial line
-            char* newline = (char*)::memchr( (void*)buf.data(), '\n', buf.size());
-            size_t nskip = newline ? (newline - buf.data() + 1) : 0;
-            (void) fwrite(buf.data()+nskip, 1, buf.size()-nskip, fileout);
-            if (not wasOpen) {
-                fclose(fileout);
-                fileout = nullptr;
+    try {
+
+        // In low memory situations, especially in Windows, even a 200KB buffer request may get std::bad_alloc.
+        // Optimistically attempt to allocate a buffer as large as the new desired size for the debug.log
+        // ... on failure to allocate, repeatedly attempt to allocate half the previous size.
+        // Note: newSz == 0 is a valid request (truncate debug.log to empty).
+        //
+        std::vector<char> buf{};
+        for(size_t bufSz = newSz; bufSz != buf.size(); ) {
+            try {
+                buf.resize(bufSz);
+            } catch (const std::bad_alloc & /* e */) {
+                bufSz /= 2;
             }
         }
+
+        boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
+        scopedFileHelper scoped_fileout{fileout, path_c_str};
+
+        // move newSz bytes to beginning of file, do not use temp file in case low in disk space
+        // use boost for portable support of seek offset greater than 32-bits
+        if (newSz > 0) {
+            bio::file f{path_c_str};
+            for (size_t outSz = 0; outSz < newSz; ) {
+                size_t remainSz = newSz - outSz;
+                if (remainSz < buf.size()) buf.resize(remainSz);
+                (void) bio::seek(f, -(remainSz), BOOST_IOS::end);
+                buf.resize(f.read(buf.data(), buf.size()));
+                assert(not buf.empty());
+                (void) bio::seek(f, outSz, BOOST_IOS::end);
+                size_t nskip = 0;
+                // discard the first line, probably a partial line
+                if (outSz == 0) {
+                    char* newline = (char*)::memchr((void*)buf.data(), '\n', buf.size());
+                    if (newline) nskip = newline - buf.data() + 1;
+                    newSz -= nskip;
+                }
+                outSz += f.write(buf.data()+nskip, buf.size()-nskip);
+            }
+        }
+
+        // after moving newSz bytes to beginning of file, truncate the file
+        bfs::resize_file(pathLog, newSz);
+
+    } catch (const boost::system::error_code & ec) {
+        throw std::runtime_error(std::string{__func__} + ": " + ec.message());
+    } catch (const std::exception & e) {
+        throw std::runtime_error(std::string{__func__} + ": " + e.what());
     }
 }
 
