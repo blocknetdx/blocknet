@@ -9,7 +9,7 @@
 #include <set>
 #include <stdint.h>
 #include <cstring>
-#include <mutex>
+#include <boost/thread.hpp>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -135,7 +135,7 @@ public:
 
     // support for lock/unlock coins (default off)
     bool                         isLockCoinsSupported;
-    mutable std::mutex           lockedCoinsLocker;
+    mutable boost::mutex         lockedCoinsLocker;
     std::set<wallet::UtxoEntry>  lockedCoins;
 };
 

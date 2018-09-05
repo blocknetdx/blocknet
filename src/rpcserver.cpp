@@ -380,7 +380,8 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxGetMyOrders",                        &dxGetMyOrders,              true, true, true},
         {"xbridge", "dxGetLockedUtxos",                     &dxGetLockedUtxos,           true, true, true},
         {"xbridge", "dxFlushCancelledOrders",               &dxFlushCancelledOrders,     true, true, true},
-
+        {"xbridge", "gettradingdata",                       &gettradingdata,             true, true, true},
+        
         {"xrouter", "xrGetBlockCount",                      &xrGetBlockCount,            true, true, true},
         {"xrouter", "xrGetBlockHash",                       &xrGetBlockHash,             true, true, true},
         {"xrouter", "xrGetBlock",                           &xrGetBlock,                 true, true, true},

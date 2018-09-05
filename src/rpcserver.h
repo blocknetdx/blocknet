@@ -623,7 +623,17 @@ extern json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, 
  * \endverbatim
  */
 extern json_spirit::Value dxFlushCancelledOrders(const json_spirit::Array& params, bool fHelp);
+
+/**
+ * @brief gettradingdata
+ * @param params
+ * @param fHelp
+ * @return
+ */
+extern json_spirit::Value gettradingdata(const json_spirit::Array & params, bool fHelp);
+
 /** @} */
+
 
 /** \defgroup xRouterAPI xRouter API
  * @brief XBridge functions exposed to RPC
@@ -669,7 +679,6 @@ extern json_spirit::Value xrQueryDomain(const json_spirit::Array& params, bool f
 extern json_spirit::Value xrOpenConnections(const json_spirit::Array& params, bool fHelp);
 
 /** @} */
-
 
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection* conn,
