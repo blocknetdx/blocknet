@@ -85,13 +85,6 @@ public:
      */
     std::vector<std::string> connectedWallets() const;
 
-    /**
-     * @brief Creates a services packet that can be sent to the network.
-     * @param nonWalletServices All services not specific to exchange wallets (e.g. XRouter services).
-     * @return
-     */
-    XBridgePacketPtr servicesPingPacket(const std::vector<std::string> &nonWalletServices);
-
     bool checkUtxoItems(const uint256 & txid,
                         const std::vector<wallet::UtxoEntry> & items);
     bool getUtxoItems(const uint256 & txid,

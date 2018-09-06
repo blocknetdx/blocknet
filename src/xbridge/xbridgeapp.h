@@ -6,7 +6,6 @@
 
 #include "xbridgesession.h"
 #include "xbridgepacket.h"
-#include "xbridgeservicespacket.h"
 #include "uint256.h"
 #include "xbridgetransactiondescr.h"
 #include "util/xbridgeerror.h"
@@ -364,7 +363,9 @@ public:
      * @brief Returns the node services supported by the specified node.
      * @return
      */
-    std::map<std::string, bool> nodeServices(const ::CPubKey &nodePubKey);
+    std::map<std::string, bool> nodeServices(const ::CPubKey & nodePubKey);
+    bool addNodeServices(const ::CPubKey & nodePubKey,
+                         const std::vector<std::string> & services);
 
 private:
     std::unique_ptr<Impl> m_p;

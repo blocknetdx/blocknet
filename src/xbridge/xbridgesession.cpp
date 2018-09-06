@@ -11,7 +11,6 @@
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xbridgepacket.h"
-#include "xbridgeservicespacket.h"
 #include "xuiconnector.h"
 #include "util/xutil.h"
 #include "util/logger.h"
@@ -268,7 +267,7 @@ bool Session::Impl::checkPacketAddress(XBridgePacketPtr packet) const
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::processPacket(XBridgePacketPtr packet)
+bool Session::processPacket(XBridgePacketPtr packet, CValidationState * state)
 {
     // DEBUG_TRACE();
 
@@ -295,6 +294,8 @@ bool Session::processPacket(XBridgePacketPtr packet)
 
     if (!m_p->m_handlers.at(c)(packet))
     {
+        state->DoS(0, error("Xbridge packet processing error"), REJECT_INVALID, "bad-xbridge-packet");
+
         ERR() << "packet processing error <" << c << "> " << __FUNCTION__;
         setNotWorking();
         return false;
@@ -304,6 +305,7 @@ bool Session::processPacket(XBridgePacketPtr packet)
     return true;
 }
 
+//*****************************************************************************
 /**
  * @brief Process and verify the received services ping. This will enforce a maximum size for the packet. Packets
  *        in excess of the max size will be rejected. The pubkey of the packet will be used to associate the services.
@@ -311,13 +313,19 @@ bool Session::processPacket(XBridgePacketPtr packet)
  * @param packet
  * @return
  */
+//*****************************************************************************
 bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
 {
-    if (packet->size() > 10000) { // enforce a limit of max bytes
+    if (packet->size() > 10000)
+    {
+        // enforce a limit of max bytes
         ERR() << "Services packet too large, a max of 10000 bytes is supported "
               << __FUNCTION__;
         return false;
-    } else if (packet->size() < (sizeof(uint32_t) + 1)) { // service count (4 bytes) + service name (at least 1 byte)
+    }
+    else if (packet->size() < (sizeof(uint32_t) + 1))
+    {
+        // service count (4 bytes) + service name (at least 1 byte)
         ERR() << "Rejecting Services packet, it's too small "
               << __FUNCTION__;
         return false;
@@ -331,7 +339,8 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     // Get pubkey from the packet so that we can check if it's in the snode list
     {
         uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
-        if (len != 33) {
+        if (len != 33)
+        {
             LOG() << "Bad Servicenode public key, length: " << len << " " << __FUNCTION__;
             return false;
         }
@@ -340,11 +349,15 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
 
     // Find Servicenode in list
     CServicenode *pmn = mnodeman.Find(nodePubKey);
-    if (pmn == nullptr) {
+    if (pmn == nullptr)
+    {
         // try to uncompress pubkey and search
         if (nodePubKey.Decompress())
+        {
             pmn = mnodeman.Find(nodePubKey);
-        if (pmn == nullptr) {
+        }
+        if (pmn == nullptr)
+        {
             ERR() << "Bad Services packet, Servicenode not found with vin "
                   << nodePubKey.GetHex() << " "
                   << __FUNCTION__;
@@ -357,17 +370,19 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     offset += sizeof(uint32_t);
     std::string rawServices(reinterpret_cast<const char *>(packet->data() + offset));
     if (rawServices.length() > 0)
+    {
         boost::split(services, rawServices, boost::is_any_of(","));
-    if (services.size() != servicesCount) {
+    }
+
+    if (services.size() != servicesCount)
+    {
         ERR() << "Rejecting Services packet, the reported services count doesn't match the actual count "
               << __FUNCTION__;
         return false;
     }
 
-    // Store results on the packet
-    auto servicesPacket = static_pointer_cast<XBridgeServicesPacket>(packet);
-    servicesPacket->services = services;
-    servicesPacket->nodePubKey = nodePubKey;
+    // Store updated services list for this node
+    App::instance().addNodeServices(nodePubKey, services);
 
     return true;
 }

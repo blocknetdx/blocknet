@@ -556,6 +556,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     SessionPtr ptr = m_p->getSession(id);
     if (ptr)
     {
+        // TODO use post or future
         ptr->processPacket(packet);
     }
 
@@ -579,6 +580,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 
         if (ptr)
         {
+            // TODO use post or future
             ptr->processPacket(packet);
         }
     }
@@ -587,7 +589,7 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 //*****************************************************************************
 //*****************************************************************************
 void App::onBroadcastReceived(const std::vector<unsigned char> & message,
-                                     CValidationState & state)
+                              CValidationState & state)
 {
     if (isKnownMessage(message))
     {
@@ -621,21 +623,8 @@ void App::onBroadcastReceived(const std::vector<unsigned char> & message,
     SessionPtr ptr = m_p->getSession();
     if (ptr)
     {
-        // Handle services ping
-        if (packet->command() == xbcServicesPing) {
-            XBridgePacketPtr p(new XBridgeServicesPacket);
-            p->copyFrom(message);
-            auto success = ptr->processPacket(p);
-            if (!success) { // TODO Handle DoS before relay
-                state.DoS(0, error("Bad services ping"), REJECT_INVALID, "bad-services-ping");
-                return;
-            }
-            // Store updated services list for this node
-            auto servicesPacket = static_pointer_cast<XBridgeServicesPacket>(p);
-            m_p->addNodeServices(servicesPacket->nodePubKey, servicesPacket->services);
-        } else {
-            ptr->processPacket(packet);
-        }
+        // TODO use post or future
+        ptr->processPacket(packet);
     }
 }
 
@@ -1358,6 +1347,8 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
     return xbridge::SUCCESS;
 }
 
+//******************************************************************************
+//******************************************************************************
 void App::cancelMyXBridgeTransactions()
 {
     for(const auto &transaction : transactions())
@@ -1403,7 +1394,7 @@ bool App::Impl::sendCancelTransaction(const uint256 & txid,
 
 //******************************************************************************
 //******************************************************************************
-bool App::isValidAddress(const string &address) const
+bool App::isValidAddress(const string & address) const
 {
     // TODO need refactoring
     return ((address.size() >= 32) && (address.size() <= 36));
@@ -1411,7 +1402,9 @@ bool App::isValidAddress(const string &address) const
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const string &fromAddress)
+Error App::checkAcceptParams(const uint256       & id,
+                             TransactionDescrPtr & ptr,
+                             const std::string   & /*fromAddress*/)
 {
     // TODO need refactoring
     ptr = transaction(id);
@@ -1427,10 +1420,10 @@ Error App::checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const 
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkCreateParams(const string &fromCurrency,
-                             const string &toCurrency,
-                             const uint64_t &fromAmount,
-                             const string &fromAddress)
+Error App::checkCreateParams(const string   & fromCurrency,
+                             const string   & toCurrency,
+                             const uint64_t & fromAmount,
+                             const string   & /*fromAddress*/)
 {
     // TODO need refactoring
     if (fromCurrency.size() > 8 || toCurrency.size() > 8)
@@ -1443,7 +1436,9 @@ Error App::checkCreateParams(const string &fromCurrency,
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAmount(const string & currency, const uint64_t & amount, const string & address)
+Error App::checkAmount(const string   & currency,
+                       const uint64_t & amount,
+                       const string   & address)
 {
     // check amount
     WalletConnectorPtr conn = connectorByCurrency(currency);
@@ -1461,6 +1456,180 @@ Error App::checkAmount(const string & currency, const uint64_t & amount, const s
     return xbridge::SUCCESS;
 }
 
+//******************************************************************************
+/**
+ * @brief Sends the service ping to the network on behalf of the current Servicenode.
+ * @return
+ */
+//******************************************************************************
+bool App::sendServicePing()
+{
+    if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
+    {
+        ERR() << "This servicenode must be started in order to report report services to the network " << __FUNCTION__;
+        return false;
+    }
+
+    CServicenode *pmn = mnodeman.Find(activeServicenode.vin);
+    if (pmn == nullptr)
+    {
+        ERR() << "couldn't find the active servicenode " << __FUNCTION__;
+        return false;
+    }
+
+    Exchange & e = Exchange::instance();
+    std::map<std::string, bool> nodup;
+
+    // TODO Add xrouter services
+    std::vector<std::string> nonWalletServices;// = xrouter.services() {"xrSendTransaction","xrGetBlock","xrGetTransaction"};
+    for (const auto &s : nonWalletServices)
+    {
+        nodup[s] = true;
+    }
+
+    // Add xbridge connected wallets
+    for (const auto &wallet : e.connectedWallets())
+    {
+        nodup[wallet] = true;
+    }
+
+    // All services
+    std::vector<std::string> services;
+    services.reserve(nodup.size());
+    for (const auto &item : nodup)
+    {
+        services.push_back(item.first);
+    }
+
+    std::string servicesStr = boost::algorithm::join(services, ",");
+
+    // Create the ping packet
+    XBridgePacketPtr ping(new XBridgePacket(xbcServicesPing));
+    {
+        ping->append(static_cast<uint32_t>(services.size()));
+        ping->append(servicesStr);
+        ping->sign(e.pubKey(), e.privKey());
+    }
+
+    if (ping->size() > 10000)
+    {
+
+        ERR() << "Service ping too big, too many services. Max of 10000 bytes supported " << __FUNCTION__;
+        return false;
+    }
+
+    // Update node services on self
+    m_p->addNodeServices(pmn->pubKeyServicenode, services);
+
+    LOG() << "Sending service ping: " << servicesStr << __FUNCTION__;
+
+    sendPacket(ping);
+    return true;
+}
+
+//******************************************************************************
+/**
+ * @brief Returns true if the current node supports the specified service.
+ * @param service Service to lookup
+ * @return
+ */
+//******************************************************************************
+bool App::hasNodeService(const std::string &service)
+{
+    return m_p->hasNodeService(activeServicenode.pubKeyServicenode, service);
+}
+
+//******************************************************************************
+/**
+ * @brief Returns true if the specified node supports the service.
+ * @param nodePubKey Node to lookup
+ * @param service Service to lookup
+ * @return
+ */
+//******************************************************************************
+bool App::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service)
+{
+    return m_p->hasNodeService(nodePubKey, service);
+}
+
+//******************************************************************************
+/**
+ * @brief Returns all services across all nodes.
+ * @return
+ */
+//******************************************************************************
+std::map<::CPubKey, std::map<std::string, bool> > App::allServices()
+{
+    boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
+    return m_p->m_xwallets;
+}
+
+//******************************************************************************
+/**
+ * @brief Returns the node services supported by the specified node.
+ * @return
+ */
+//******************************************************************************
+std::map<std::string, bool> App::nodeServices(const ::CPubKey &nodePubKey)
+{
+    boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
+    return m_p->m_xwallets[nodePubKey];
+}
+
+//******************************************************************************
+//******************************************************************************
+bool App::addNodeServices(const ::CPubKey & nodePubKey,
+                          const std::vector<std::string> & services)
+{
+    return m_p->addNodeServices(nodePubKey, services);
+}
+
+//******************************************************************************
+/**
+ * @brief Stores the specified services for the node.
+ * @param nodePubKey Pubkey of the node
+ * @param services List of supported services
+ * @return True if success, otherwise false
+ */
+//******************************************************************************
+bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
+                                const std::vector<std::string> & services)
+{
+    std::map<std::string, bool> map1;
+    for (const std::string &s : services)
+    {
+        map1[s] = true;
+    }
+
+    {
+        boost::mutex::scoped_lock l(m_xwalletsLocker);
+        m_xwallets[nodePubKey] = map1;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+/**
+ * @brief Returns true if the service exists.
+ * @param nodePubKey Pubkey of the node
+ * @param service Service to search for
+ * @return True if service is supported, otherwise false
+ */
+//******************************************************************************
+bool App::Impl::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service)
+{
+    boost::mutex::scoped_lock l(m_xwalletsLocker);
+    if (m_xwallets.count(nodePubKey) && m_xwallets[nodePubKey].count(service))
+    {
+        return m_xwallets[nodePubKey][service];
+    }
+
+    return false;
+}
+
+//******************************************************************************
+//******************************************************************************
 template <typename T>
 T random_element(T begin, T end)
 {
@@ -1472,125 +1641,6 @@ T random_element(T begin, T end)
 
     std::advance(begin, k);
     return begin;
-}
-
-/**
- * @brief Sends the service ping to the network on behalf of the current Servicenode.
- * @return
- */
-bool App::sendServicePing() {
-    if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED) {
-        ERR() << "This servicenode must be started in order to report report services to the network " << __FUNCTION__;
-        return false;
-    }
-
-    CServicenode *pmn = mnodeman.Find(activeServicenode.vin);
-    if (pmn == nullptr) {
-        ERR() << "couldn't find the active servicenode " << __FUNCTION__;
-        return false;
-    }
-
-    Exchange & e = Exchange::instance();
-    std::map<std::string, bool> nodup;
-
-    // TODO Add xrouter services
-    std::vector<std::string> nonWalletServices;// = xrouter.services() {"xrSendTransaction","xrGetBlock","xrGetTransaction"};
-    for (const auto &s : nonWalletServices)
-        nodup[s] = true;
-
-    // Add xbridge connected wallets
-    for (const auto &wallet : e.connectedWallets())
-        nodup[wallet] = true;
-
-    // All services
-    std::vector<std::string> services;
-    services.reserve(nodup.size());
-    for (const auto &item : nodup)
-        services.push_back(item.first);
-
-    // Create the ping packet
-    auto ping = e.servicesPingPacket(services);
-    if (ping->size() > 10000) {
-        ERR() << "Service ping too big, too many services. Max of 10000 bytes supported " << __FUNCTION__;
-        return false;
-    }
-
-    // Update node services on self
-    m_p->addNodeServices(pmn->pubKeyServicenode, services);
-
-    std::string servicesStr = boost::algorithm::join(services, ",");
-    LOG() << "Sending service ping: " << servicesStr << __FUNCTION__;
-
-    sendPacket(ping);
-    return true;
-}
-
-/**
- * @brief Returns true if the current node supports the specified service.
- * @param service Service to lookup
- * @return
- */
-bool App::hasNodeService(const std::string &service) {
-    return m_p->hasNodeService(activeServicenode.pubKeyServicenode, service);
-}
-
-/**
- * @brief Returns true if the specified node supports the service.
- * @param nodePubKey Node to lookup
- * @param service Service to lookup
- * @return
- */
-bool App::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service) {
-    return m_p->hasNodeService(nodePubKey, service);
-}
-
-/**
- * @brief Returns all services across all nodes.
- * @return
- */
-std::map<::CPubKey, std::map<std::string, bool> > App::allServices() {
-    boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
-    return m_p->m_xwallets;
-}
-
-/**
- * @brief Returns the node services supported by the specified node.
- * @return
- */
-std::map<std::string, bool> App::nodeServices(const ::CPubKey &nodePubKey) {
-    boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
-    return m_p->m_xwallets[nodePubKey];
-}
-
-/**
- * @brief Stores the specified services for the node.
- * @param nodePubKey Pubkey of the node
- * @param services List of supported services
- * @return True if success, otherwise false
- */
-bool App::Impl::addNodeServices(const ::CPubKey &nodePubKey, const std::vector<std::string> &services) {
-    std::map<std::string, bool> map1;
-    for (const std::string &s : services)
-        map1[s] = true;
-    {
-        boost::mutex::scoped_lock l(m_xwalletsLocker);
-        m_xwallets[nodePubKey] = map1;
-    }
-    return true;
-}
-
-/**
- * @brief Returns true if the service exists.
- * @param nodePubKey Pubkey of the node
- * @param service Service to search for
- * @return True if service is supported, otherwise false
- */
-bool App::Impl::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service) {
-    boost::mutex::scoped_lock l(m_xwalletsLocker);
-    if (m_xwallets.count(nodePubKey) && m_xwallets[nodePubKey].count(service))
-        return m_xwallets[nodePubKey][service];
-
-    return false;
 }
 
 //******************************************************************************
@@ -1850,7 +1900,7 @@ void App::Impl::onTimer()
 
                     xbridge::SessionPtr s = getSession();
                     XBridgePacketPtr packet   = item.second;
-                    io->post(boost::bind(&xbridge::Session::processPacket, s, packet));
+                    io->post(boost::bind(&xbridge::Session::processPacket, s, packet, nullptr));
 
                 }
             }
