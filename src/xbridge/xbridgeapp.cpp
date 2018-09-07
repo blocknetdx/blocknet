@@ -142,10 +142,12 @@ protected:
      * @param reason - cancel reason
      * @return
      */
-    bool sendCancelTransaction(const uint256 &txid, const TxCancelReason &reason);
+    bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
 
-    bool addNodeServices(const ::CPubKey &node, const std::vector<std::string> &services);
-    bool hasNodeService(const ::CPubKey &node, const std::string &service);
+    bool addNodeServices(const ::CPubKey & node, const std::vector<std::string> & services);
+    bool hasNodeService(const ::CPubKey & node, const std::string & service);
+
+    bool findNodeWithService(const std::set<string> & services, CPubKey & node) const;
 
 protected:
     // workers
@@ -190,8 +192,8 @@ protected:
     std::map<uint256, XBridgePacketPtr>                m_pendingPackets;
 
     // services and xwallets
-    boost::mutex                                       m_xwalletsLocker;
-    std::map<::CPubKey, std::map<std::string, bool> >  m_xwallets;
+    mutable boost::mutex                               m_xwalletsLocker;
+    std::map<::CPubKey, std::set<std::string> >        m_xwallets;
 };
 
 //*****************************************************************************
@@ -906,6 +908,22 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
+    // search for service node
+    std::vector<unsigned char> snodeAddress(20);
+    {
+        std::set<std::string> currencies;
+        currencies.insert(fromCurrency);
+        currencies.insert(toCurrency);
+        CPubKey snode;
+        if (!findNodeWithService(currencies, snode))
+        {
+            return xbridge::Error::NO_SERVICE_NODE;
+        }
+
+        CKeyID id = snode.GetID();
+        std::copy(id.begin(), id.end(), snodeAddress.begin());
+    }
+
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
     if(statusCode != xbridge::SUCCESS)
     {
@@ -1009,6 +1027,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
               firstUtxoSig.begin(), firstUtxoSig.end());
 
     TransactionDescrPtr ptr(new TransactionDescr);
+    ptr->hubAddress   = snodeAddress;
     ptr->created      = timestamp;
     ptr->txtime       = timestamp;
     ptr->id           = id;
@@ -1071,6 +1090,12 @@ bool App::sendPendingTransaction(const TransactionDescrPtr & ptr)
 //******************************************************************************
 bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
 {
+    if (ptr->hubAddress.size() == 0)
+    {
+        xassert(!"not defined service node for transaction");
+        return false;
+    }
+
     if (ptr->from.size() == 0 || ptr->to.size() == 0)
     {
         // TODO temporary
@@ -1103,7 +1128,6 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
     packet->append(util::timeToInt(ptr->created));
     packet->append(ptr->blockHash.begin(), 32);
 
-
     // utxo items
     packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
     for (const wallet::UtxoEntry & entry : ptr->usedCoins)
@@ -1117,8 +1141,7 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
 
     packet->sign(ptr->mPubKey, ptr->mPrivKey);
 
-    static std::vector<unsigned char> addr(20, 0);
-    onSend(addr, packet->body());
+    onSend(ptr->hubAddress, packet->body());
 
     return true;
 }
@@ -1558,7 +1581,7 @@ bool App::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service
  * @return
  */
 //******************************************************************************
-std::map<::CPubKey, std::map<std::string, bool> > App::allServices()
+std::map<::CPubKey, std::set<std::string> > App::allServices()
 {
     boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
     return m_p->m_xwallets;
@@ -1570,7 +1593,7 @@ std::map<::CPubKey, std::map<std::string, bool> > App::allServices()
  * @return
  */
 //******************************************************************************
-std::map<std::string, bool> App::nodeServices(const ::CPubKey &nodePubKey)
+std::set<std::string> App::nodeServices(const ::CPubKey &nodePubKey)
 {
     boost::mutex::scoped_lock l(m_p->m_xwalletsLocker);
     return m_p->m_xwallets[nodePubKey];
@@ -1585,6 +1608,44 @@ bool App::addNodeServices(const ::CPubKey & nodePubKey,
 }
 
 //******************************************************************************
+//******************************************************************************
+bool App::findNodeWithService(const std::set<std::string> & services,
+                              CPubKey & node) const
+{
+    return m_p->findNodeWithService(services, node);
+}
+
+//******************************************************************************
+//******************************************************************************
+bool App::Impl::findNodeWithService(const std::set<std::string> & services,
+                                    CPubKey & node) const
+{
+    boost::mutex::scoped_lock l(m_xwalletsLocker);
+
+    for (const std::pair<CPubKey, std::set<std::string> > & n : m_xwallets)
+    {
+        uint32_t searchCounter = services.size();
+        for (const std::string & serv : services)
+        {
+            if (n.second.count(serv))
+            {
+                if (--searchCounter == 0)
+                {
+                    node = n.first;
+                    return true;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    return false;
+}
+
+//******************************************************************************
 /**
  * @brief Stores the specified services for the node.
  * @param nodePubKey Pubkey of the node
@@ -1595,15 +1656,15 @@ bool App::addNodeServices(const ::CPubKey & nodePubKey,
 bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
                                 const std::vector<std::string> & services)
 {
-    std::map<std::string, bool> map1;
-    for (const std::string &s : services)
+    if (!services.empty())
     {
-        map1[s] = true;
-    }
+        std::set<std::string> map1;
+        std::copy(services.begin(), services.end(), std::inserter(map1, map1.end()));
 
-    {
-        boost::mutex::scoped_lock l(m_xwalletsLocker);
-        m_xwallets[nodePubKey] = map1;
+        {
+            boost::mutex::scoped_lock l(m_xwalletsLocker);
+            m_xwallets[nodePubKey] = map1;
+        }
     }
 
     return true;
@@ -1617,12 +1678,13 @@ bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
  * @return True if service is supported, otherwise false
  */
 //******************************************************************************
-bool App::Impl::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service)
+bool App::Impl::hasNodeService(const ::CPubKey & nodePubKey,
+                               const std::string & service)
 {
     boost::mutex::scoped_lock l(m_xwalletsLocker);
-    if (m_xwallets.count(nodePubKey) && m_xwallets[nodePubKey].count(service))
+    if (m_xwallets.count(nodePubKey))
     {
-        return m_xwallets[nodePubKey][service];
+        return m_xwallets[nodePubKey].count(service) > 0;
     }
 
     return false;

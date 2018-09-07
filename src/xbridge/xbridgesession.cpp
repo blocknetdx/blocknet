@@ -294,7 +294,10 @@ bool Session::processPacket(XBridgePacketPtr packet, CValidationState * state)
 
     if (!m_p->m_handlers.at(c)(packet))
     {
-        state->DoS(0, error("Xbridge packet processing error"), REJECT_INVALID, "bad-xbridge-packet");
+        if (state)
+        {
+            state->DoS(0, error("Xbridge packet processing error"), REJECT_INVALID, "bad-xbridge-packet");
+        }
 
         ERR() << "packet processing error <" << c << "> " << __FUNCTION__;
         setNotWorking();

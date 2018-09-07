@@ -358,14 +358,16 @@ public:
      * @brief Returns the all services across all nodes.
      * @return
      */
-    std::map<::CPubKey, std::map<std::string, bool> > allServices();
+    std::map<CPubKey, std::set<string> > allServices();
     /**
      * @brief Returns the node services supported by the specified node.
      * @return
      */
-    std::map<std::string, bool> nodeServices(const ::CPubKey & nodePubKey);
+    std::set<std::string> nodeServices(const ::CPubKey & nodePubKey);
     bool addNodeServices(const ::CPubKey & nodePubKey,
                          const std::vector<std::string> & services);
+
+    bool findNodeWithService(const std::set<std::string> & services, CPubKey & node) const;
 
 private:
     std::unique_ptr<Impl> m_p;
