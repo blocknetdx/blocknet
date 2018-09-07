@@ -576,6 +576,8 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
         }
         return json_spirit::write_string(Value(result), true);
     } else if (callType == "shell") {
+        return "Shell plugins are currently disabled";
+        
         std::string cmd = psettings.getParam("cmd");
         int count = psettings.getMaxParamCount();
         std::string p;
