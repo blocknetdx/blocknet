@@ -124,6 +124,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetsendfundsdone.cpp \
   qt/moc_blocknetsendfundsutil.cpp \
   qt/moc_blocknetproposals.cpp \
+  qt/moc_blocknetaddressbook.cpp \
   qt/moc_blocknetaddressedit.cpp \
   qt/moc_blocknettoolbar.cpp \
   qt/moc_blocknetwallet.cpp \
@@ -238,6 +239,7 @@ BITCOIN_QT_H = \
   qt/blocknetsendfundsdone.h \
   qt/blocknetsendfundsutil.h \
   qt/blocknetproposals.h \
+  qt/blocknetaddressbook.h \
   qt/blocknetaddressedit.h \
   qt/blocknettoolbar.h \
   qt/blocknetvars.h \
@@ -392,6 +394,7 @@ BITCOIN_QT_CPP += \
   qt/walletmodel.cpp \
   qt/walletmodeltransaction.cpp \
   qt/walletview.cpp \
+  qt/blocknetaddressbook.cpp \
   qt/blocknetquicksend.cpp \
   qt/blocknetsendfunds.cpp \
   qt/blocknetsendfunds1.cpp \
@@ -451,6 +454,8 @@ RES_IMAGES = \
   qt/res/redesign/icons/QuickActions/AddressBookIcon.png \
   qt/res/redesign/icons/QuickActions/ProposalsIcon.png \
   qt/res/redesign/icons/QuickActions/QuickSendIcon.png \
+  qt/res/redesign/icons/QuickActions/AddressButtonIcon.png \
+  qt/res/redesign/icons/QuickActions/ActionButtonIcon.png \
   qt/res/redesign/icons/UtilityBar/LockedIcon.png \
   qt/res/redesign/icons/UtilityBar/Peers.png \
   qt/res/redesign/icons/UtilityBar/StakingNodeIconActive.png \

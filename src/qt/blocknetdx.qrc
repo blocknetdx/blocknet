@@ -147,6 +147,8 @@
         <file alias="QuickActions/AddressBookIcon.png">res/redesign/icons/QuickActions/AddressBookIcon.png</file>
         <file alias="QuickActions/ProposalsIcon.png">res/redesign/icons/QuickActions/ProposalsIcon.png</file>
         <file alias="QuickActions/QuickSendIcon.png">res/redesign/icons/QuickActions/QuickSendIcon.png</file>
+        <file alias="QuickActions/AddressButtonIcon.png">res/redesign/icons/QuickActions/AddressButtonIcon.png</file>
+        <file alias="QuickActions/ActionButtonIcon.png">res/redesign/icons/QuickActions/ActionButtonIcon.png</file>
         <file alias="UtilityBar/LockedIcon.png">res/redesign/icons/UtilityBar/LockedIcon.png</file>
         <file alias="UtilityBar/Peers.png">res/redesign/icons/UtilityBar/Peers.png</file>
         <file alias="UtilityBar/StakingNodeIconActive.png">res/redesign/icons/UtilityBar/StakingNodeIconActive.png</file>

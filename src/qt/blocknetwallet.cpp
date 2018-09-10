@@ -5,6 +5,7 @@
 #include "blocknetwallet.h"
 #include "blocknetfontmgr.h"
 #include "blocknetquicksend.h"
+#include "blocknetaddressbook.h"
 
 #include "optionsmodel.h"
 #include "transactiontablemodel.h"
@@ -101,7 +102,7 @@ void BlocknetWallet::setLock(const bool lock, const bool stakingOnly) {
 }
 
 void BlocknetWallet::setPage(BlocknetPage page) {
-    if (page == BlocknetPage::ADDRESSBOOK || page == BlocknetPage::SETTINGS || page == BlocknetPage::TOOLS) {
+    if (page == BlocknetPage::SETTINGS || page == BlocknetPage::TOOLS) {
         switch (page) {
             case BlocknetPage::ADDRESSBOOK:
                 emit addressbook();
@@ -139,7 +140,11 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             screen = dashboard;
             break;
         }
-//        case BlocknetPage::ADDRESSBOOK:
+        case BlocknetPage::ADDRESSBOOK: {
+            auto *addressBook = new BlocknetAddressBook(walletModel);
+            screen = addressBook;
+            break;
+        }
         case BlocknetPage::SEND: {
             sendFunds->show();
             screen = sendFunds;

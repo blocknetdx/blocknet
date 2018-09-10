@@ -149,6 +149,9 @@ BlocknetSendFunds #body { font-size: 13px; color: #6F8097; font-family: "Roboto"
 
 BlocknetQuickSend #address { max-width: 500px; }
 
+BlocknetAddressBook #h4 { padding-left: 1px; }
+BlocknetAddressBook #title { font-size: 12px; color: white; font-family: "Roboto"; }
+
 BlocknetAddressEdit #h2 { padding-left: 10px; }
 BlocknetAddressEdit #h4 { padding-left: 10px; }
 BlocknetAddressEdit #radioGrid { padding-left: 10px; }
