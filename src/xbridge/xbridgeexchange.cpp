@@ -790,4 +790,31 @@ bool Exchange::unlockUtxos(const uint256 &id)
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::updateTimestampOrRemoveExpired(const TransactionPtr & tx)
+{
+    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+
+    auto txid = tx->id();
+    m_p->m_pendingTransactions[txid]->m_lock.lock();
+
+    // found, check if expired
+    if (!m_p->m_pendingTransactions[txid]->isExpired())
+    {
+        m_p->m_pendingTransactions[txid]->updateTimestamp();
+
+        m_p->m_pendingTransactions[txid]->m_lock.unlock();
+        return true;
+    }
+    else
+    {
+        m_p->m_pendingTransactions[txid]->m_lock.unlock();
+
+        // if expired - delete old transaction
+        m_p->m_pendingTransactions.erase(txid);
+        return false;
+    }
+}
+
 } // namespace xbridge

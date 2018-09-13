@@ -242,6 +242,13 @@ public:
      */
     bool unlockUtxos(const uint256 & id);
 
+    /**
+     * @brief Update the transaction timestamp. Also removes expired transactions from pending data store.
+     * @param tx - Transaction pointer
+     * @return true if transaction timestamp was updated, otherwise false if it expired
+     */
+    bool updateTimestampOrRemoveExpired(const TransactionPtr & tx);
+
 private:
     std::unique_ptr<Impl> m_p;
 };
