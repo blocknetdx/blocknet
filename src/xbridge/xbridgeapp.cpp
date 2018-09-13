@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <numeric>
+#include <string.h>
 
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
@@ -560,8 +561,8 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
     {
         // TODO use post or future
         ptr->processPacket(packet);
+        return;
     }
-
     else
     {
         {
@@ -583,6 +584,27 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
         if (ptr)
         {
             // TODO use post or future
+            ptr->processPacket(packet);
+            return;
+        }
+
+    }
+
+    // If Servicenode w/ exchange, process packets for this snode only
+    Exchange & e = Exchange::instance();
+    if (e.isStarted())
+    {
+        auto snodeID = activeServicenode.pubKeyServicenode.GetID();
+        std::vector<unsigned char> snodeAddr(20);
+        std::copy(snodeID.begin(), snodeID.end(), snodeAddr.begin());
+
+        // check that ids match
+        if (memcmp(&snodeAddr[0], &id[0], 20) != 0)
+            return;
+
+        SessionPtr ptr = m_p->getSession();
+        if (ptr)
+        {
             ptr->processPacket(packet);
         }
     }
@@ -910,6 +932,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 {
     // search for service node
     std::vector<unsigned char> snodeAddress(20);
+    std::vector<unsigned char> sPubKey(33);
     {
         std::set<std::string> currencies;
         currencies.insert(fromCurrency);
@@ -922,6 +945,11 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         CKeyID id = snode.GetID();
         std::copy(id.begin(), id.end(), snodeAddress.begin());
+
+        if (!snode.IsCompressed()) {
+            snode.Compress();
+        }
+        sPubKey = std::vector<unsigned char>(snode.begin(), snode.end());
     }
 
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
@@ -1028,6 +1056,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     TransactionDescrPtr ptr(new TransactionDescr);
     ptr->hubAddress   = snodeAddress;
+    ptr->sPubKey      = sPubKey;
     ptr->created      = timestamp;
     ptr->txtime       = timestamp;
     ptr->id           = id;
