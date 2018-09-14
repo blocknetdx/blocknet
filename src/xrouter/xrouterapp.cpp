@@ -917,7 +917,10 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     std::string strtxid;
     std::string dest = getPaymentAddress(pnode);
-    xbridge::rpc::storeDataIntoBlockchain(std::vector<unsigned char>(dest.begin(), dest.end()), snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee(), std::vector<unsigned char>(), strtxid);
+    float fee = snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee();
+    if (fee > 0) {
+        xbridge::rpc::storeDataIntoBlockchain(std::vector<unsigned char>(dest.begin(), dest.end()), fee, std::vector<unsigned char>(), strtxid);
+    }
     
     packet->append(txHash.begin(), 32);
     packet->append(vout);
