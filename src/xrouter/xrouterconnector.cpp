@@ -101,12 +101,6 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
 {
-//    if (mapArgs["-rpcuser"] == "" && mapArgs["-rpcpassword"] == "")
-//        throw runtime_error(strprintf(
-//            _("You must set rpcpassword=<password> in the configuration file:\n%s\n"
-//              "If the file does not exist, create it with owner-readable-only file permissions."),
-//                GetConfigFile().string().c_str()));
-
     // Connect to localhost
     bool fUseSSL = false;//GetBoolArg("-rpcssl");
     asio::io_service io_service;
@@ -154,6 +148,44 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
         throw runtime_error("expected reply to have result, error and id properties");
 
     return reply;
+}
+
+std::string CallURL(std::string ip, std::string port, std::string url)
+{
+    // Connect to localhost
+    bool fUseSSL = false;//GetBoolArg("-rpcssl");
+    asio::io_service io_service;
+    ssl::context context(io_service, ssl::context::sslv23);
+    context.set_options(ssl::context::no_sslv2);
+    asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
+    SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
+    iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
+    if (!d.connect(ip, port))
+        throw runtime_error("couldn't connect to server");
+
+    // Send request
+    ostringstream s;
+    s << "GET " << url << "\r\n" << "Host: 127.0.0.1\r\n";
+    string strRequest = s.str();
+
+    LOG() << "HTTP: req  " << strRequest;
+
+    map<string, string> mapRequestHeaders;
+    stream << strRequest << std::flush;
+
+    // Receive reply
+    map<string, string> mapHeaders;
+    string strReply;
+    int nStatus = readHTTP(stream, mapHeaders, strReply);
+
+    LOG() << "HTTP: resp " << nStatus << " " << strReply;
+
+    if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
+        throw runtime_error("server returned HTTP error " + nStatus);
+    else if (strReply.empty())
+        throw runtime_error("no response from server");
+
+    return strReply;
 }
 
 std::string CallCMD(std::string cmd) {

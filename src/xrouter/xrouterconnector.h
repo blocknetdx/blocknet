@@ -14,6 +14,8 @@ namespace xrouter
 {
 
 std::string CallCMD(std::string cmd);
+std::string CallURL(std::string ip, std::string port, std::string url);
+
 Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params);

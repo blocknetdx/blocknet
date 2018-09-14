@@ -589,6 +589,20 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
         std::string result = CallCMD(cmd);
         return result;
     } else if (callType == "url") {
+        return "Shell plugins are currently disabled";
+        
+        std::string ip, port;
+        ip = psettings.getParam("ip");
+        port = psettings.getParam("port");
+        std::string cmd = psettings.getParam("url");
+        int count = psettings.getMaxParamCount();
+        for (int i = 0; i < count; i++) {
+            cmd = cmd.replace(cmd.find("%s"), 2, params[i]);
+        }
+        
+        LOG() << "Executing url command " << cmd;
+        std::string result = CallURL(ip, port, cmd);
+        return result;
     }
     
     return "Unknown type";
