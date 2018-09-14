@@ -570,7 +570,7 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
         command = psettings.getParam("rpcCommand");
         Object result;
         try {
-            result = xbridge::rpc::CallRPC(user, passwd, ip, port, command, jsonparams);
+            result = CallRPC(user, passwd, ip, port, command, jsonparams);
         } catch (...) {
             return "Internal error in the plugin";
         }
@@ -588,7 +588,8 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
         LOG() << "Executing shell command " << cmd;
         std::string result = CallCMD(cmd);
         return result;
-    }  
+    } else if (callType == "url") {
+    }
     
     return "Unknown type";
 }
