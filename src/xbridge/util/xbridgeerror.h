@@ -38,7 +38,8 @@ namespace xbridge
         INVALID_STATE           = 1028,
         NOT_EXCHANGE_NODE       = 1029,
         DUST                    = 1030,
-        INSIFFICIENT_FUNDS_DX   = 1031
+        INSIFFICIENT_FUNDS_DX   = 1031,
+        NO_SERVICE_NODE         = 1032
     };
 
     /**

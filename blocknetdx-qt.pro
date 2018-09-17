@@ -299,7 +299,6 @@ SOURCES += \
     src/xbridge/xbridgewalletconnectorbch.cpp \
     src/xbridge/xbridgecryptoproviderbtc.cpp \
     src/xbridge/xbridgepacket.cpp \
-    src/xbridge/xbridgeservicespacket.cpp
     src/qt/blocknetdxstrings.cpp \
     src/qt/blocknetfontmgr.cpp \
     src/qt/blocknetformbtn.cpp \
@@ -584,7 +583,6 @@ HEADERS += \
     src/xbridge/xbridgeapp.h \
     src/xbridge/xbridgeexchange.h \
     src/xbridge/xbridgepacket.h \
-    src/xbridge/xbridgeservicespacket.h \
     src/xbridge/xbridgesession.h \
     src/xbridge/xbridgetransaction.h \
     src/xbridge/xbridgetransactiondescr.h \
