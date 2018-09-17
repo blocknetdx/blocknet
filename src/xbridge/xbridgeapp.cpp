@@ -27,6 +27,7 @@
 
 #include <assert.h>
 #include <numeric>
+#include <string.h>
 
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
@@ -589,10 +590,18 @@ void App::onMessageReceived(const std::vector<unsigned char> & id,
 
     }
 
-    // If Servicenode w/ exchange, process packet
+    // If Servicenode w/ exchange, process packets for this snode only
     Exchange & e = Exchange::instance();
     if (e.isStarted())
     {
+        auto snodeID = activeServicenode.pubKeyServicenode.GetID();
+        std::vector<unsigned char> snodeAddr(20);
+        std::copy(snodeID.begin(), snodeID.end(), snodeAddr.begin());
+
+        // check that ids match
+        if (memcmp(&snodeAddr[0], &id[0], 20) != 0)
+            return;
+
         SessionPtr ptr = m_p->getSession();
         if (ptr)
         {
