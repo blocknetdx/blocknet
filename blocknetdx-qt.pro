@@ -568,7 +568,6 @@ HEADERS += \
     src/xbridge/xbridgeapp.h \
     src/xbridge/xbridgeexchange.h \
     src/xbridge/xbridgepacket.h \
-    src/xbridge/xbridgeservicespacket.h \
     src/xbridge/xbridgesession.h \
     src/xbridge/xbridgetransaction.h \
     src/xbridge/xbridgetransactiondescr.h \

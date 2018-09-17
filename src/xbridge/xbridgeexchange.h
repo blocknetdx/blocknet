@@ -85,13 +85,6 @@ public:
      */
     std::vector<std::string> connectedWallets() const;
 
-    /**
-     * @brief Creates a services packet that can be sent to the network.
-     * @param nonWalletServices All services not specific to exchange wallets (e.g. XRouter services).
-     * @return
-     */
-    XBridgePacketPtr servicesPingPacket(const std::vector<std::string> &nonWalletServices);
-
     bool checkUtxoItems(const uint256 & txid,
                         const std::vector<wallet::UtxoEntry> & items);
     bool getUtxoItems(const uint256 & txid,
@@ -248,6 +241,13 @@ public:
      * @return true, if utxo's were removed
      */
     bool unlockUtxos(const uint256 & id);
+
+    /**
+     * @brief Update the transaction timestamp. Also removes expired transactions from pending data store.
+     * @param tx - Transaction pointer
+     * @return true if transaction timestamp was updated, otherwise false if it expired
+     */
+    bool updateTimestampOrRemoveExpired(const TransactionPtr & tx);
 
 private:
     std::unique_ptr<Impl> m_p;
