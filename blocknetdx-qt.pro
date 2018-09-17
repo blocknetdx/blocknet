@@ -302,6 +302,8 @@ SOURCES += \
     src/qt/blocknetdxstrings.cpp \
     src/qt/blocknetfontmgr.cpp \
     src/qt/blocknetformbtn.cpp \
+    src/qt/blocknetlabelbtn.cpp \
+    src/qt/blocknetactionbtn.cpp \
     src/qt/blocknethdiv.cpp \
     src/qt/blocknetdropdown.cpp \
     src/qt/blockneticonbtn.cpp \
@@ -310,6 +312,7 @@ SOURCES += \
     src/qt/blocknetleftmenu.cpp \
     src/qt/blocknetlineedit.cpp \
     src/qt/blocknetlockmenu.cpp \
+    src/qt/blocknetfundsmenu.cpp \
     src/qt/blocknetquicksend.cpp \
     src/qt/blocknetsendfunds.cpp \
     src/qt/blocknetsendfunds1.cpp \
@@ -319,6 +322,7 @@ SOURCES += \
     src/qt/blocknetsendfundsdone.cpp \
     src/qt/blocknettoolbar.cpp \
     src/qt/blocknetcircle.cpp \
+    src/qt/blocknetavatar.cpp \
     src/qt/blocknetclosebtn.cpp \
     src/qt/blocknetwallet.cpp \
     src/qt/blocknetcoincontrol.cpp \
@@ -616,6 +620,8 @@ HEADERS += \
     src/xbridge/xbridgecryptoproviderbtc.h \
     src/qt/blocknetfontmgr.h \
     src/qt/blocknetformbtn.h \
+    src/qt/blocknetlabelbtn.h \
+    src/qt/blocknetactionbtn.h \
     src/qt/blocknethdiv.h \
     src/qt/blocknetdropdown.h \
     src/qt/blockneticonbtn.h \
@@ -624,6 +630,7 @@ HEADERS += \
     src/qt/blocknetleftmenu.h \
     src/qt/blocknetlineedit.h \
     src/qt/blocknetlockmenu.h \
+    src/qt/blocknetfundsmenu.h \
     src/qt/blocknetquicksend.h \
     src/qt/blocknetsendfunds.h \
     src/qt/blocknetsendfunds1.h \
@@ -634,6 +641,7 @@ HEADERS += \
     src/qt/blocknetsendfundsutil.h \
     src/qt/blocknettoolbar.h \
     src/qt/blocknetcircle.h \
+    src/qt/blocknetavatar.h \
     src/qt/blocknetclosebtn.h \
     src/qt/blocknetvars.h \
     src/qt/blocknetwallet.h \

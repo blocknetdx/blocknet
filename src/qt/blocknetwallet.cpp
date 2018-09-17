@@ -141,7 +141,8 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             break;
         }
         case BlocknetPage::ADDRESSBOOK: {
-            auto *addressBook = new BlocknetAddressBook(walletModel);
+            auto *addressBook = new BlocknetAddressBook(this);
+            addressBook->setWalletModel(walletModel);
             screen = addressBook;
             break;
         }

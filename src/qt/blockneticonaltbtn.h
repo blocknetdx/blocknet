@@ -28,7 +28,7 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
 public:
-    explicit BlocknetIconAltBtn(const QString &img, QFrame *parent = nullptr);
+    explicit BlocknetIconAltBtn(const QString &img, int padding = 0, QFrame *parent = nullptr);
     QSize sizeHint() const override;
 
 signals:

@@ -7,7 +7,7 @@
 #include <QPainter>
 #include <QMouseEvent>
 
-BlocknetIconAltBtn::BlocknetIconAltBtn(const QString &img, QFrame *parent) : QFrame(parent), layout(new QVBoxLayout) {
+BlocknetIconAltBtn::BlocknetIconAltBtn(const QString &img, int padding, QFrame *parent) : QFrame(parent), layout(new QVBoxLayout) {
     this->setCursor(Qt::PointingHandCursor);
     this->setFixedSize(86, 86);
     this->setLayout(layout);
@@ -18,11 +18,11 @@ BlocknetIconAltBtn::BlocknetIconAltBtn(const QString &img, QFrame *parent) : QFr
     auto *icon = new QLabel();
     icon->setFixedSize(pm.width()/2, pm.height()/2);
     icon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-    icon->setFixedSize(QSize(icon->width() + 5, icon->height()));
+    icon->setFixedSize(QSize(icon->width() + 5 - padding, icon->height()));
     icon->setPixmap(pm.scaled(icon->width()*pm.devicePixelRatio(), icon->height()*pm.devicePixelRatio(),
                               Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    layout->setContentsMargins(0, circleh/2 - icon->height(), circlew/2 - icon->width(), 0);
+    layout->setContentsMargins(0, (circleh - padding)/2 - icon->height(), circlew/2 - icon->width(), 0);
     layout->addWidget(icon, 0, Qt::AlignCenter | Qt::AlignVCenter);
 }
 

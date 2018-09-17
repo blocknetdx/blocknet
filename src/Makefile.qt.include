@@ -100,11 +100,14 @@ QT_MOC_CPP = \
   qt/moc_blocknetaddresseditor.cpp \
   qt/moc_blocknetbreadcrumb.cpp \
   qt/moc_blocknetcircle.cpp \
+  qt/moc_blocknetavatar.cpp \
   qt/moc_blocknetclosebtn.cpp \
   qt/moc_blocknetdashboard.cpp \
   qt/moc_blocknettransactionhistory.cpp \
   qt/moc_blocknetfontmgr.cpp \
   qt/moc_blocknetformbtn.cpp \
+  qt/moc_blocknetlabelbtn.cpp \
+  qt/moc_blocknetactionbtn.cpp \
   qt/moc_blocknethdiv.cpp \
   qt/moc_blocknetdropdown.cpp \
   qt/moc_blockneticonbtn.cpp \
@@ -115,6 +118,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetlineeditwithtitle.cpp \
   qt/moc_blocknetdialog.cpp \
   qt/moc_blocknetlockmenu.cpp \
+  qt/moc_blocknetfundsmenu.cpp \
   qt/moc_blocknetquicksend.cpp \
   qt/moc_blocknetsendfunds.cpp \
   qt/moc_blocknetsendfunds1.cpp \
@@ -215,11 +219,14 @@ BITCOIN_QT_H = \
   qt/blocknetaddresseditor.h \
   qt/blocknetbreadcrumb.h \
   qt/blocknetcircle.h \
+  qt/blocknetavatar.h \
   qt/blocknetclosebtn.h \
   qt/blocknetdashboard.h \
   qt/blocknettransactionhistory.h \
   qt/blocknetfontmgr.h \
   qt/blocknetformbtn.h \
+  qt/blocknetlabelbtn.h \
+  qt/blocknetactionbtn.h \
   qt/blocknethdiv.h \
   qt/blocknetdropdown.h \
   qt/blockneticonbtn.h \
@@ -230,6 +237,7 @@ BITCOIN_QT_H = \
   qt/blocknetlineeditwithtitle.h \
   qt/blocknetdialog.h \
   qt/blocknetlockmenu.h \
+  qt/blocknetfundsmenu.h \
   qt/blocknetquicksend.h \
   qt/blocknetsendfunds.h \
   qt/blocknetsendfunds1.h \
@@ -341,6 +349,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetaddresseditor.cpp \
   qt/blocknetbreadcrumb.cpp \
   qt/blocknetcircle.cpp \
+  qt/blocknetavatar.cpp \
   qt/blocknetclosebtn.cpp \
   qt/blocknetdashboard.cpp \
   qt/blocknettransactionhistory.cpp \
@@ -348,6 +357,8 @@ BITCOIN_QT_CPP = \
   qt/blocknetaddressedit.cpp \
   qt/blocknetfontmgr.cpp \
   qt/blocknetformbtn.cpp \
+  qt/blocknetlabelbtn.cpp \
+  qt/blocknetactionbtn.cpp \
   qt/blocknethdiv.cpp \
   qt/blocknetdropdown.cpp \
   qt/blockneticonbtn.cpp \
@@ -358,6 +369,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetlineeditwithtitle.cpp \
   qt/blocknetdialog.cpp \
   qt/blocknetlockmenu.cpp \
+  qt/blocknetfundsmenu.cpp \
   qt/blocknettoolbar.cpp \
   qt/blocknetsendfundsrequest.cpp
 
