@@ -790,20 +790,31 @@ bool Exchange::unlockUtxos(const uint256 &id)
     return true;
 }
 
-/**
- * @brief Creates a services packet that can be sent to the network.
- * @param services All services to be reported to the network.
- * @return
- */
-XBridgePacketPtr Exchange::servicesPingPacket(const std::vector<std::string> &services) {
-    std::string servicesStr = boost::algorithm::join(services, ",");
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::updateTimestampOrRemoveExpired(const TransactionPtr & tx)
+{
+    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
 
-    XBridgePacketPtr ping(new XBridgePacket(xbcServicesPing));
-    ping->append(static_cast<uint32_t>(services.size()));
-    ping->append(servicesStr);
-    ping->sign(this->pubKey(), this->privKey());
+    auto txid = tx->id();
+    m_p->m_pendingTransactions[txid]->m_lock.lock();
 
-    return ping;
+    // found, check if expired
+    if (!m_p->m_pendingTransactions[txid]->isExpired())
+    {
+        m_p->m_pendingTransactions[txid]->updateTimestamp();
+
+        m_p->m_pendingTransactions[txid]->m_lock.unlock();
+        return true;
+    }
+    else
+    {
+        m_p->m_pendingTransactions[txid]->m_lock.unlock();
+
+        // if expired - delete old transaction
+        m_p->m_pendingTransactions.erase(txid);
+        return false;
+    }
 }
 
 } // namespace xbridge

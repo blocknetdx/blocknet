@@ -60,6 +60,8 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "Amount is dust (very small)";
         case INSIFFICIENT_FUNDS_DX:
             return "Blocknet wallet amount is too small to cover the fee payment";
+        case NO_SERVICE_NODE:
+            return "Not found cervice node with required services: " + argument;
     }
     return "invalid error value";
 }
