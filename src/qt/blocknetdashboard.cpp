@@ -293,9 +293,7 @@ bool BlocknetDashboardFilterProxy::lessThan(const QModelIndex &left, const QMode
     if (left.column() == BlocknetDashboardFilterProxy::DashboardDate) {
         QVariant leftData = sourceModel()->index(left.row(), TransactionTableModel::Date).data(Qt::EditRole);
         QVariant rightData = sourceModel()->index(right.row(), TransactionTableModel::Date).data(Qt::EditRole);
-        auto l = QDateTime::fromTime_t(static_cast<uint>(leftData.toLongLong()));
-        auto r = QDateTime::fromTime_t(static_cast<uint>(rightData.toLongLong()));
-        return l < r;
+        return leftData.toLongLong() < rightData.toLongLong();
     }
     return QSortFilterProxyModel::lessThan(left, right);
 }
