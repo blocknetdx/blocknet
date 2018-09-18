@@ -28,6 +28,7 @@ signals:
 public slots:
     void clear();
     void addressChanged();
+    void createAddressChanged();
     void aliasChanged();
     void onApply() { emit next(); }
 protected:
@@ -42,6 +43,7 @@ private:
     QLabel *addressLbl;
     QLabel *titleLbl;
     BlocknetLineEditWithTitle *addressTi;
+    BlocknetLineEditWithTitle *createAddressTi;
     BlocknetLineEditWithTitle *aliasTi;
     QRadioButton *myAddressBtn;
     QRadioButton *otherUserBtn;

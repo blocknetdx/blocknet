@@ -23,6 +23,7 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, QString t, QString b, Q
     titleLbl->setObjectName("h2");
 
     addressTi = new BlocknetLineEditWithTitle(tr("Address"), tr("Enter Address..."));
+    createAddressTi = new BlocknetLineEditWithTitle(tr("Create new address from Private Key"), tr("Enter Address..."));
     aliasTi = new BlocknetLineEditWithTitle(tr("Alias (optional)"), tr("Enter alias..."));
 
     auto *radioGrid = new QFrame;
@@ -35,7 +36,7 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, QString t, QString b, Q
     radioGrid->setLayout(radioLayout);
 
     myAddressBtn = new QRadioButton(tr("My Address"));
-    otherUserBtn = new QRadioButton(tr("Other User"));
+    otherUserBtn = new QRadioButton(tr("Watch Address (other user)"));
     otherUserBtn->setObjectName("otherUserBtn");
 
     radioLayout->addWidget(myAddressBtn, 0, 0);
@@ -64,6 +65,7 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, QString t, QString b, Q
     layout->addWidget(titleLbl);
     layout->addSpacing(20);
     layout->addWidget(addressTi);
+    layout->addWidget(createAddressTi);
     layout->addWidget(aliasTi);
     layout->addSpacing(20);
     layout->addWidget(radioGrid);
@@ -74,12 +76,14 @@ BlocknetAddressEdit::BlocknetAddressEdit(WalletModel *w, QString t, QString b, Q
     layout->addStretch(1);
 
     connect(addressTi, SIGNAL(textChanged()), this, SLOT(addressChanged()));
+    connect(createAddressTi, SIGNAL(textChanged()), this, SLOT(createAddressChanged()));
     connect(aliasTi, SIGNAL(textChanged()), this, SLOT(aliasChanged()));
     connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onApply()));
 }
 
 void BlocknetAddressEdit::clear() {
     addressTi->lineEdit->clear();
+    createAddressTi->lineEdit->clear();
     aliasTi->lineEdit->clear();
 }
 
@@ -100,6 +104,10 @@ bool BlocknetAddressEdit::validated() {
 
 void BlocknetAddressEdit::addressChanged() {
     //auto addresses = addressTi->getAddresses();
+}
+
+void BlocknetAddressEdit::createAddressChanged() {
+    //auto addresses = createAddressTi->getAddresses();
 }
 
 void BlocknetAddressEdit::aliasChanged() {
