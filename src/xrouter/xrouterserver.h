@@ -164,7 +164,7 @@ protected:
      * @param params plugin parameters
      * @return
      */
-    std::string processCustomCall(std::string name, std::vector<std::string> params);
+    std::string processCustomCall(std::string name, std::vector<std::string> params, std::string feetx, bool local=false);
 };
 
 } // namespace
