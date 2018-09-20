@@ -27,7 +27,11 @@
 
 #include "rpcserver.h"
 #include "rpcprotocol.h"
+#include "rpcclient.h"
 #include "base58.h"
+#include "wallet.h"
+#include "init.h"
+#include "key.h"
 
 namespace xrouter
 {
@@ -199,5 +203,218 @@ std::string CallCMD(std::string cmd) {
     }
     return result;
 }
+
+// TODO: make this common with xbridge or use xbridge function for storing
+static CCriticalSection cs_rpcBlockchainStore;
+
+bool createAndSignTransaction(const std::vector<unsigned char> & dstScript,
+                             const double amount,
+                             const std::vector<unsigned char> & data,
+                             string & raw_tx)
+{
+    LOCK(cs_rpcBlockchainStore);
+
+    const static std::string createCommand("createrawtransaction");
+    const static std::string fundCommand("fundrawtransaction");
+    const static std::string signCommand("signrawtransaction");
+    const static std::string sendCommand("sendrawtransaction");
+
+    int         errCode = 0;
+    std::string errMessage;
+    std::string rawtx;
+
+    try
+    {
+        Array outputs;
+
+        if (data.size() > 0)
+        {
+            Object out;
+            std::string strdata = HexStr(data.begin(), data.end());
+            out.push_back(Pair("data", strdata));
+            outputs.push_back(out);
+        }
+
+        {
+            Object out;
+            out.push_back(Pair("script", HexStr(dstScript)));
+            out.push_back(Pair("amount", amount));
+            outputs.push_back(out);
+        }
+
+        std::vector<COutput> used;
+
+        Array inputs;
+        for (const COutput & out : used)
+        {
+            Object tmp;
+            tmp.push_back(Pair("txid", out.tx->GetHash().ToString()));
+            tmp.push_back(Pair("vout", out.i));
+            inputs.push_back(tmp);
+        }
+
+        Value result;
+
+        {
+            Array params;
+            params.push_back(inputs);
+            params.push_back(outputs);
+
+            // call create
+            result = tableRPC.execute(createCommand, params);
+            if (result.type() != str_type)
+            {
+                throw std::runtime_error("Create transaction command finished with error");
+            }
+
+            rawtx = result.get_str();
+        }
+
+        {
+            Array params;
+            params.push_back(rawtx);
+
+            // call fund
+            result = tableRPC.execute(fundCommand, params);
+            if (result.type() != obj_type)
+            {
+                throw std::runtime_error("Fund transaction command finished with error");
+            }
+
+            Object obj = result.get_obj();
+            const Value  & tx = find_value(obj, "hex");
+            if (tx.type() != str_type)
+            {
+                throw std::runtime_error("Fund transaction error or not completed");
+            }
+
+            rawtx = tx.get_str();
+        }
+
+        {
+            std::vector<std::string> params;
+            params.push_back(rawtx);
+
+            result = tableRPC.execute(signCommand, RPCConvertValues(signCommand, params));
+            if (result.type() != obj_type)
+            {
+                throw std::runtime_error("Sign transaction command finished with error");
+            }
+
+            Object obj = result.get_obj();
+            const Value  & tx = find_value(obj, "hex");
+            const Value & cpl = find_value(obj, "complete");
+
+            if (tx.type() != str_type || cpl.type() != bool_type || !cpl.get_bool())
+            {
+                throw std::runtime_error("Sign transaction error or not completed");
+            }
+
+            rawtx = tx.get_str();
+        }
+    }
+    catch (json_spirit::Object & obj)
+    {
+        //
+        errCode = find_value(obj, "code").get_int();
+        errMessage = find_value(obj, "message").get_str();
+    }
+    catch (std::runtime_error & e)
+    {
+        // specified error
+        errCode = -1;
+        errMessage = e.what();
+    }
+    catch (...)
+    {
+        errCode = -1;
+        errMessage = "unknown error";
+    }
+
+    if (errCode != 0)
+    {
+        LOG() << "xdata sendrawtransaction " << rawtx;
+        LOG() << "error send xdata transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
+        return false;
+    }
+
+    raw_tx = rawtx;
+    
+    return true;
+}
+
+bool storeDataIntoBlockchain(std::string raw_tx, std::string & txid)
+{
+    LOCK(cs_rpcBlockchainStore);
+
+    const static std::string createCommand("createrawtransaction");
+    const static std::string fundCommand("fundrawtransaction");
+    const static std::string signCommand("signrawtransaction");
+    const static std::string sendCommand("sendrawtransaction");
+
+    int         errCode = 0;
+    std::string errMessage;
+    Value result;
+    
+    try
+    {
+        {
+            std::vector<std::string> params;
+            params.push_back(raw_tx);
+
+            result = tableRPC.execute(sendCommand, RPCConvertValues(sendCommand, params));
+            if (result.type() != str_type)
+            {
+                throw std::runtime_error("Send transaction command finished with error");
+            }
+
+            txid = result.get_str();
+        }
+
+        LOG() << "xdata sendrawtransaction " << raw_tx;
+    }
+    catch (json_spirit::Object & obj)
+    {
+        //
+        errCode = find_value(obj, "code").get_int();
+        errMessage = find_value(obj, "message").get_str();
+    }
+    catch (std::runtime_error & e)
+    {
+        // specified error
+        errCode = -1;
+        errMessage = e.what();
+    }
+    catch (...)
+    {
+        errCode = -1;
+        errMessage = "unknown error";
+    }
+
+    if (errCode != 0)
+    {
+        LOG() << "xdata sendrawtransaction " << raw_tx;
+        LOG() << "error send xdata transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
+                             const double amount,
+                             const std::vector<unsigned char> & data,
+                             string & txid)
+{
+    std::string raw_tx;
+    bool res = createAndSignTransaction(dstScript, amount, data, raw_tx);
+    if (!res) {
+        return false;
+    }
+    
+    res = storeDataIntoBlockchain(raw_tx, txid);
+    return res;
+}
+
 
 } // namespace xrouter

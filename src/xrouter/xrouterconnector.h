@@ -19,6 +19,10 @@ std::string CallURL(std::string ip, std::string port, std::string url);
 Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params);
+
+bool createAndSignTransaction(const std::vector<unsigned char> & dstScript, const double amount, const std::vector<unsigned char> & data, std::string & txid);
+bool storeDataIntoBlockchain(std::string raw_tx, std::string & txid);
+bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript, const double amount, const std::vector<unsigned char> & data, std::string & txid);
     
 class WalletConnectorXRouter : public xbridge::WalletParam
 {
