@@ -104,6 +104,7 @@ BITCOIN_CORE_H = \
   primitives/transaction.h \
   core_io.h \
   crypter.h \
+  currencypair.h \
   obfuscation.h \
   obfuscation-relay.h \
   db.h \
@@ -348,6 +349,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/settings.cpp \
   xbridge/util/logger.cpp \
   xbridge/util/txlog.cpp \
+  xbridge/util/xseries.cpp \
   xbridge/util/xutil.cpp \
   xbridge/util/xbridgeerror.cpp \
   xbridge/bitcoinrpcconnector.cpp \
@@ -392,6 +394,7 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/util/settings.h \
   xbridge/util/txlog.h \
   xbridge/util/xassert.h \
+  xbridge/util/xseries.h \
   xbridge/util/xutil.h \
   xbridge/util/xbridgeerror.h \
   xbridge/posixtimeconversion.h \

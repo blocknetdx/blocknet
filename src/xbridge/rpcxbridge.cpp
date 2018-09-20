@@ -19,12 +19,14 @@
 #include <boost/range/algorithm/copy.hpp>
 
 #include <stdio.h>
+#include <array>
 #include <atomic>
 #include <numeric>
 #include <math.h>
 #include "util/settings.h"
 #include "util/logger.h"
 #include "util/xbridgeerror.h"
+#include "util/xseries.h"
 #include "util/xutil.h"
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
@@ -40,13 +42,11 @@ using namespace boost;
 using namespace boost::asio;
 
 using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
-
 using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
-
 using RealVector        = std::vector<double>;
-
 using TransactionVector = std::vector<xbridge::TransactionDescrPtr>;
-using ArrayValue = Array::value_type;
+using ArrayValue        = Array::value_type;
+using ArrayIL           = std::initializer_list<ArrayValue>;
 
 namespace bpt           = boost::posix_time;
 
@@ -235,202 +235,83 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
     return arr;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+
 Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 {
-
     if (fHelp) {
-
-        throw runtime_error("dxGetOrderHistory (maker) (taker) (start time) (end time) (granularity) (order_ids, default=false)[optional]\n"
-                            "Returns the order history over a specified time interval. [start_time] and [end_time] are \n"
-                            "in unix time seconds [granularity] in seconds of supported time interval lengths include: \n"
-                            "60,300,900,3600,21600,86400. [order_ids] is a boolean, defaults to false (not showing ids).");
-
+        throw runtime_error("dxGetOrderHistory (maker) (taker) (start time) (end time)"
+                            " (granularity) (order_ids, default=false)[optional]\n"
+                            " (with_inverse, default=false)[optional]\n"
+                            " (limit, default="+std::to_string(xQuery::IntervalLimit{}.count)+")[optional]\n"
+                            "Returns the order history over a specified time interval."
+                            " [start_time] and [end_time] are \n"
+                            "in unix time seconds [granularity] in seconds of supported"
+                            " time interval lengths include: \n"
+                            + xQuery::supported_seconds_csv() + ". [order_ids] is a boolean,"
+                            " defaults to false (not showing ids).\n"
+                            "[with_inverse] is a boolean, defaults to false (not aggregating inverse currency pair).\n"
+                            "[limit] is the maximum number of intervals to return,"
+                            " default="+std::to_string(xQuery::IntervalLimit{}.count)+
+                            " maximum="+std::to_string(xQuery::IntervalLimit::max())+".\n"
+                            );
     }
-    if (params.size() < 5) {
 
+    //--Validate query parameters
+    if (params.size() < 5 || params.size() > 8)
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "(maker) (taker) (start time) (end time) (granularity) "
-                               "(order_ids, default=false)[optional]");
-    }
+                               "(order_ids, default=false)[optional] "
+                               "(with_inverse, default=false)[optional] "
+                               "(limit, default="+std::to_string(xQuery::IntervalLimit{}.count)+")[optional]"
+                               );
+    const xQuery query{
+        params[0].get_str(),    // maker
+        params[1].get_str(),    // taker
+        params[4].get_int(),    // granularity (need before start/end time)
+        params[2].get_int64(),  // start time
+        params[3].get_int64(),  // end time
+        params.size() > 5 && params[5].get_bool()
+            ? xQuery::WithTxids::Included
+            : xQuery::WithTxids::Excluded,
+        params.size() > 6 && params[6].get_bool()
+            ? xQuery::WithInverse::Included
+            : xQuery::WithInverse::Excluded,
+        params.size() > 7
+            ? xQuery::IntervalLimit{params[7].get_uint64()}
+            : xQuery::IntervalLimit{}
+    };
 
-    Array arr;
-    TransactionMap history = xbridge::App::instance().history();
+    if (query.error())
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, query.what() );
 
-    if(history.empty()) {
+    try {
+        //--Process query, get result
+        auto& xseries = xbridge::App::instance().getXSeriesCache();
+        std::vector<xAggregate> result = xseries.getXAggregateSeries(query);
 
-        LOG() << "empty history transactions list";
-        return arr;
-
-    }
-
-    const auto fromCurrency     = params[0].get_str();
-    const auto toCurrency       = params[1].get_str();
-    const auto startTimeFrame   = params[2].get_int();
-    auto endTimeFrame           = params[3].get_int();
-    const auto granularity      = params[4].get_int();
-
-    // Validate start time (no start date less than 2/25/2018)
-    if (startTimeFrame < 1519540000) {
-
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Start time too early.");
-
-    }
-
-    // Validate start and end times (no times too far in the future)
-    std::time_t currentTime = std::time(nullptr);
-    std::time_t oneDayFromNow = currentTime + 86400;
-    if (startTimeFrame > oneDayFromNow || endTimeFrame > oneDayFromNow) {
-        Object error;
-        error.emplace_back(Pair("error", "Start/end times are too large."));
-        error.emplace_back(Pair("code", xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",  __FUNCTION__));
-        return error;
-    }
-    if (endTimeFrame > currentTime)
-        endTimeFrame = (int)currentTime + 1;
-
-    // Validate granularity
-    switch (granularity) {
-        case 60:
-        case 300:
-        case 900:
-        case 3600:
-        case 21600:
-        case 86400:
-            break;
-        default:
-            return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                                   "granularity must be one of: 60,300,900,3600,21600,86400");
-    }
-
-    bool isShowTxids = params.size() == 6 ? params[5].get_bool() : false;
-
-    TransactionMap trList;
-    std::vector<xbridge::TransactionDescrPtr> trVector;
-
-    //copy all transactions between startTimeFrame and endTimeFrame
-    std::copy_if(history.begin(), history.end(), std::inserter(trList, trList.end()),
-                 [&startTimeFrame, &endTimeFrame, &toCurrency, &fromCurrency](const TransactionPair &transaction){
-        return  ((transaction.second->created)   <=  bpt::from_time_t(endTimeFrame)) &&
-                ((transaction.second->created)   >=  bpt::from_time_t(startTimeFrame)) &&
-                ((transaction.second->toCurrency == toCurrency && transaction.second->fromCurrency == fromCurrency) || // return requested and inverse trading pairs
-                (transaction.second->toCurrency  == fromCurrency && transaction.second->fromCurrency == toCurrency)) &&
-                (transaction.second->state       == xbridge::TransactionDescr::trFinished);
-    });
-
-    if(trList.empty()) {
-
-        LOG() << "No orders for the specified period " << __FUNCTION__;
-        return  arr;
-
-    }
-
-    //copy values into vector
-    for (const auto &trEntry : trList) {
-        const auto &tr = trEntry.second;
-        trVector.push_back(tr);
-    }
-
-    // Sort ascending by updated time
-    std::sort(trVector.begin(), trVector.end(),
-              [](const xbridge::TransactionDescrPtr &a, const xbridge::TransactionDescrPtr &b)
-    {
-         return (a->txtime) < (b->txtime);
-    });
-
-    // Setup intervals. Each time period (interval) has a high,low,open,close,volume. This code is
-    // responsible for calculating the results for each interval.
-    int jstart = 0;
-    for (int timeInterval = startTimeFrame; timeInterval < endTimeFrame; timeInterval += granularity) {
-        Array interval;
-
-        double volume = 0; // store total volume for interval
-        xbridge::TransactionDescrPtr open = nullptr; // open order
-        xbridge::TransactionDescrPtr close = nullptr; // close order
-        xbridge::TransactionDescrPtr high = nullptr; // high order
-        xbridge::TransactionDescrPtr low = nullptr; // low order
-        bool orderFound = false;
-        Array orderIds;
-
-        // start searching from point of last checked order (since orders are only processed once)
-        for (int j = jstart; j < (int)trVector.size(); j++) {
-            const auto &tr = trVector[j];
-            auto t = (int)(util::timeToInt(tr->txtime)/1000/1000); // need seconds, timeToInt is in microseconds
-            // only check orders within boundaries (time interval)
-            if (t >= timeInterval && t < timeInterval + granularity) {
-                // Record if order found
-                orderFound = true;
-                // open is always first order
-                if (open == nullptr)
-                    open = tr;
-                // defaults
-                if (high == nullptr)
-                    high = tr;
-                if (low == nullptr)
-                    low = tr;
-                // close is always last order
-                close = tr;
-
-                // volume is based in "to amount" (track volume of what we're priced in, in this case orders are priced in "to amount")
-                volume += fromCurrency == tr->fromCurrency ? util::xBridgeValueFromAmount(tr->fromAmount) :
-                          util::xBridgeValueFromAmount(tr->toAmount);
-
-                // calc prices, algo: to/from = price (in terms of to). e.g. LTC-SYS price = SYS-size / LTC-size = SYS per unit priced in LTC
-                double high_price    = fromCurrency == high->fromCurrency ? util::price(high) : util::priceBid(high);
-                double low_price     = fromCurrency == low->fromCurrency  ? util::price(low)  : util::priceBid(low);
-                double current_price = fromCurrency == tr->fromCurrency   ? util::price(tr)   : util::priceBid(tr);
-
-                // record highest if current price larger than highest price
-                if (current_price > high_price)
-                    high = tr;
-                // record lowest if current price is lower than lowest price
-                if (current_price < low_price)
-                    low = tr;
-
-                // store order id if necessary
-                if (isShowTxids)
-                    orderIds.emplace_back(tr->id.GetHex());
-
-                jstart = j; // want to skip already searched orders
+        //--Serialize result
+        Array arr{};
+        for (const auto& x : result) {
+            double volume = util::xBridgeValueFromAmount(x.toVolume);
+            Array ohlc{
+                ArrayIL{util::iso8601(x.timeEnd), x.low, x.high, x.open, x.close, volume}
+            };
+            if (query.with_txids == xQuery::WithTxids::Included) {
+                Array orderIds{};
+                for (const auto& id : x.orderIds)
+                    orderIds.emplace_back(id);
+                ohlc.emplace_back(orderIds);
             }
+            arr.emplace_back(ohlc);
         }
-
-        // Process if at least 1 order is found
-        if (orderFound) {
-            // latest prices
-            double open_price  = fromCurrency == open->fromCurrency  ? util::price(open)  : util::priceBid(open);
-            double close_price = fromCurrency == close->fromCurrency ? util::price(close) : util::priceBid(close);
-            double high_price  = fromCurrency == high->fromCurrency  ? util::price(high)  : util::priceBid(high);
-            double low_price   = fromCurrency == low->fromCurrency   ? util::price(low)   : util::priceBid(low);
-
-            // format: [ time, low, high, open, close, volume ]
-            interval.emplace_back(util::iso8601(boost::posix_time::from_time_t(timeInterval + granularity)));
-            interval.emplace_back(low_price);
-            interval.emplace_back(high_price);
-            interval.emplace_back(open_price);
-            interval.emplace_back(close_price);
-            interval.emplace_back(volume);
-
-            if (isShowTxids)
-                interval.emplace_back(orderIds);
-
-        } else { // if no orders for time interval, return empty data
-            // format: [ time, low, high, open, close, volume ]
-            interval.emplace_back(util::iso8601(boost::posix_time::from_time_t(timeInterval + granularity)));
-            interval.emplace_back(0);
-            interval.emplace_back(0);
-            interval.emplace_back(0);
-            interval.emplace_back(0);
-            interval.emplace_back(0);
-            if (isShowTxids)
-                interval.emplace_back(Array());
-        }
-
-        arr.emplace_back(interval);
+        return arr;
+    } catch(const std::exception& e) {
+        return util::makeError(xbridge::UNKNOWN_ERROR, __FUNCTION__, e.what() );
+    } catch( ... ) {
+        return util::makeError(xbridge::UNKNOWN_ERROR, __FUNCTION__, "unknown exception" );
     }
-
-    return arr;
 }
 
 //*****************************************************************************
