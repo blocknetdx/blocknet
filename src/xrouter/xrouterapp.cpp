@@ -918,8 +918,13 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     std::string strtxid;
     std::string dest = getPaymentAddress(pnode);
     float fee = snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee();
+    float deposit = xrouter_settings.get<int>("Main.deposit", 0.0);
+    int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
+    std::string payment_tx;
     if (fee > 0) {
-        xbridge::rpc::storeDataIntoBlockchain(std::vector<unsigned char>(dest.begin(), dest.end()), fee, std::vector<unsigned char>(), strtxid);
+        if (deposit == 0) {
+            xbridge::rpc::storeDataIntoBlockchain(std::vector<unsigned char>(dest.begin(), dest.end()), fee, std::vector<unsigned char>(), strtxid);
+        }
     }
     
     packet->append(txHash.begin(), 32);
