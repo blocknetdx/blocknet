@@ -113,7 +113,7 @@ BlocknetDashboard::BlocknetDashboard(QFrame *parent) : QFrame(parent), layout(ne
     auto *recentTransactionsGridLayout = new QVBoxLayout;
     recentTransactionsGridLayout->setContentsMargins(QMargins());
     recentTransactions->setLayout(recentTransactionsGridLayout);
-    transactionsTbl = new BlocknetDashboardTable(recentTransactions);
+    transactionsTbl = new BlocknetDashboardTable;
     transactionsTbl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     transactionsTbl->setEditTriggers(QAbstractItemView::NoEditTriggers);
     transactionsTbl->setSelectionBehavior(QAbstractItemView::SelectRows);
@@ -273,10 +273,6 @@ void BlocknetDashboardFilterProxy::setLimit(int limit) {
 
 bool BlocknetDashboardFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex& sourceParent) const {
     QModelIndex index = sourceModel()->index(sourceRow, 0, sourceParent);
-
-    auto type = index.data(TransactionTableModel::TypeRole).toInt();
-    if (!(TYPE(type)))
-        return false;
 
     auto involvesWatchAddress = index.data(TransactionTableModel::WatchonlyRole).toBool();
     if (involvesWatchAddress)
