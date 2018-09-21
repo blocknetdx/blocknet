@@ -880,7 +880,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     if (this->xrouter_settings.hasPlugin(name)) {
         // Run the plugin locally
-        return server->processCustomCall(name, params);
+        return server->processCustomCall(name, params, "", true);
     }
     
     updateConfigs();
@@ -920,10 +920,15 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     float fee = snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee();
     float deposit = xrouter_settings.get<int>("Main.deposit", 0.0);
     int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
-    std::string payment_tx;
+    std::string payment_tx = "nofee";
+    bool res;
     if (fee > 0) {
         if (deposit == 0) {
-            xbridge::rpc::storeDataIntoBlockchain(std::vector<unsigned char>(dest.begin(), dest.end()), fee, std::vector<unsigned char>(), strtxid);
+            try {
+                res = createAndSignTransaction(std::vector<unsigned char>(dest.begin(), dest.end()), fee, std::vector<unsigned char>(), payment_tx);
+            } catch (...) {
+                return "Failed to create payment transaction";
+            }
         }
     }
     
@@ -931,7 +936,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     packet->append(vout);
     packet->append(id);
     packet->append(name);
-    packet->append(strtxid);
+    packet->append(payment_tx);
     for (std::string param: params)
         packet->append(param);
     packet->sign(key);
