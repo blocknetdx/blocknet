@@ -28,6 +28,7 @@
 #include <QPainter>
 #include <QMenu>
 #include <QDateTimeEdit>
+#include <QKeyEvent>
 
 class BlocknetTransactionHistoryTable;
 
@@ -68,8 +69,9 @@ private slots:
     void copyLabel();
     void copyAmount();
     void copyTxID();
-    void showDetails(const QModelIndex &index);
+    void showDetails();
     void exportClicked();
+    void displayTotalSelected(const QItemSelection &, const QItemSelection &);
 
 private:
     WalletModel *walletModel;
@@ -85,6 +87,7 @@ private:
     QFrame *dateRangeWidget;
     QDateTimeEdit *dateFrom;
     QDateTimeEdit *dateTo;
+    QLabel *totalSelectedLbl;
 };
 
 class BlocknetTransactionHistoryTable : public QTableView {
@@ -99,8 +102,6 @@ public:
     void setMinAmount(const CAmount &minimum);
     void setTypeFilter(quint32 types);
     void setDateRange(const QDateTime &from, const QDateTime &to);
-
-signals:
 
 private:
     WalletModel *walletModel;

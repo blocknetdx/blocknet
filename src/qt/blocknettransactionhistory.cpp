@@ -6,6 +6,7 @@
 #include "blocknetformbtn.h"
 #include "blocknetvars.h"
 #include "blocknetformbtn.h"
+#include "blocknetsendfundsutil.h"
 
 #include "bitcoinunits.h"
 #include "transactionrecord.h"
@@ -84,6 +85,8 @@ BlocknetTransactionHistory::BlocknetTransactionHistory(WalletModel *w, QWidget *
     amountTi->setFixedWidth(120);
     amountTi->setParent(this);
     amountTi->setPlaceholderText(tr("Min amount"));
+    amountTi->setValidator(new BlocknetNumberValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
+    amountTi->setMaxLength(BLOCKNETGUI_MAXCHARS);
 
     searchBoxLayout->addWidget(dateCb);
     searchBoxLayout->addWidget(typeCb);
@@ -125,21 +128,26 @@ BlocknetTransactionHistory::BlocknetTransactionHistory(WalletModel *w, QWidget *
     transactionsTbl->setAlternatingRowColors(true);
     transactionsTbl->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     transactionsTbl->setShowGrid(false);
-    transactionsTbl->setFocusPolicy(Qt::NoFocus);
     transactionsTbl->setContextMenuPolicy(Qt::CustomContextMenu);
     transactionsTbl->setSortingEnabled(true);
     transactionsTbl->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    transactionsTbl->verticalHeader()->setDefaultSectionSize(60);
+    transactionsTbl->verticalHeader()->setDefaultSectionSize(30);
     transactionsTbl->verticalHeader()->setVisible(false);
     transactionsTbl->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     transactionsTbl->horizontalHeader()->setSortIndicatorShown(true);
     transactionsTbl->horizontalHeader()->setSectionsClickable(true);
+
+    // Displays total amount selected
+    totalSelectedLbl = new QLabel;
+    totalSelectedLbl->setObjectName("h6");
+    totalSelectedLbl->hide();
 
     layout->addWidget(titleBox);
     layout->addSpacing(30);
     layout->addWidget(searchBox);
     layout->addWidget(dateRangeWidget);
     layout->addWidget(transactionsTbl);
+    layout->addWidget(totalSelectedLbl, 0, Qt::AlignRight);
 
     // Actions
     QAction *copyAddressAction = new QAction(tr("Copy address"), this);
@@ -155,8 +163,6 @@ BlocknetTransactionHistory::BlocknetTransactionHistory(WalletModel *w, QWidget *
     contextMenu->addAction(copyTxIDAction);
     contextMenu->addAction(showDetailsAction);
 
-    displayUnit = walletModel->getOptionsModel()->getDisplayUnit();
-
     // Set transaction data and adjust section sizes
     transactionsTbl->setWalletModel(walletModel);
     transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetTransactionHistoryFilterProxy::HistoryStatus, QHeaderView::Fixed);
@@ -166,7 +172,7 @@ BlocknetTransactionHistory::BlocknetTransactionHistory(WalletModel *w, QWidget *
     transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetTransactionHistoryFilterProxy::HistoryType, QHeaderView::ResizeToContents);
     transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetTransactionHistoryFilterProxy::HistoryAmount, QHeaderView::ResizeToContents);
     transactionsTbl->setColumnWidth(BlocknetTransactionHistoryFilterProxy::HistoryStatus, 3);
-    transactionsTbl->setColumnWidth(BlocknetTransactionHistoryFilterProxy::HistoryDate, 60);
+    transactionsTbl->setColumnWidth(BlocknetTransactionHistoryFilterProxy::HistoryDate, 105);
     transactionsTbl->setColumnWidth(BlocknetTransactionHistoryFilterProxy::HistoryTime, 72);
 
     // Restore from last visit
@@ -180,10 +186,12 @@ BlocknetTransactionHistory::BlocknetTransactionHistory(WalletModel *w, QWidget *
     connect(copyLabelAction, SIGNAL(triggered()), this, SLOT(copyLabel()));
     connect(copyAmountAction, SIGNAL(triggered()), this, SLOT(copyAmount()));
     connect(copyTxIDAction, SIGNAL(triggered()), this, SLOT(copyTxID()));
-    connect(showDetailsAction, SIGNAL(triggered()), this, SLOT(showDetails(const QModelIndex &)));
+    connect(showDetailsAction, SIGNAL(triggered()), this, SLOT(showDetails()));
     connect(dateFrom, SIGNAL(dateChanged(QDate)), this, SLOT(dateRangeChanged()));
     connect(dateTo, SIGNAL(dateChanged(QDate)), this, SLOT(dateRangeChanged()));
     connect(exportBtn, SIGNAL(clicked()), this, SLOT(exportClicked()));
+    connect(transactionsTbl->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)), this,
+            SLOT(displayTotalSelected(const QItemSelection &, const QItemSelection &)));
 }
 
 void BlocknetTransactionHistory::showEvent(QShowEvent *event) {
@@ -193,7 +201,7 @@ void BlocknetTransactionHistory::showEvent(QShowEvent *event) {
     connect(amountTi, SIGNAL(textChanged(QString)), this, SLOT(amountChanged(QString)));
     connect(dateCb, SIGNAL(activated(int)), this, SLOT(dateChanged(int)));
     connect(typeCb, SIGNAL(activated(int)), this, SLOT(typeChanged(int)));
-    connect(transactionsTbl, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(showDetails(const QModelIndex &)));
+    connect(transactionsTbl, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(showDetails()));
     connect(transactionsTbl, SIGNAL(clicked(QModelIndex)), this, SLOT(computeSum()));
     connect(transactionsTbl, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
 }
@@ -205,14 +213,14 @@ void BlocknetTransactionHistory::hideEvent(QHideEvent *event) {
     disconnect(amountTi, SIGNAL(textChanged(QString)), this, SLOT(amountChanged(QString)));
     disconnect(dateCb, SIGNAL(activated(int)), this, SLOT(dateChanged(int)));
     disconnect(typeCb, SIGNAL(activated(int)), this, SLOT(typeChanged(int)));
-    disconnect(transactionsTbl, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(showDetails(const QModelIndex &)));
+    disconnect(transactionsTbl, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(showDetails()));
     disconnect(transactionsTbl, SIGNAL(clicked(QModelIndex)), this, SLOT(computeSum()));
     disconnect(transactionsTbl, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
 }
 
 void BlocknetTransactionHistory::onDisplayUnit(int unit) {
     displayUnit = unit;
-    // TODO Reload table with new unit?
+    amountTi->setValidator(new BlocknetNumberValidator(0, BLOCKNETGUI_FUNDS_MAX, BitcoinUnits::decimals(displayUnit)));
 }
 
 void BlocknetTransactionHistory::addressChanged(const QString &prefix) {
@@ -312,11 +320,11 @@ void BlocknetTransactionHistory::copyTxID() {
     GUIUtil::copyEntryData(transactionsTbl, 0, TransactionTableModel::TxIDRole);
 }
 
-void BlocknetTransactionHistory::showDetails(const QModelIndex &) {
+void BlocknetTransactionHistory::showDetails() {
     auto selection = transactionsTbl->selectionModel()->selectedRows();
     if (!selection.isEmpty()) {
         TransactionDescDialog dlg(selection.at(0));
-        dlg.setStyleSheet(GUIUtil::loadStyleSheetv1());
+        dlg.setStyleSheet(GUIUtil::loadStyleSheet());
         dlg.exec();
     }
 }
@@ -330,15 +338,14 @@ void BlocknetTransactionHistory::exportClicked() {
         return;
 
     CSVModelWriter writer(filename);
-    auto *model = transactionsTbl->model();
 
     // name, column, role
-    writer.setModel(model);
+    writer.setModel(transactionsTbl->model());
     writer.addColumn(tr("Confirmed"), 0, TransactionTableModel::ConfirmedRole);
 //    if (model && model->haveWatchOnly())
 //        writer.addColumn(tr("Watch-only"), TransactionTableModel::Watchonly);
     writer.addColumn(tr("Date"), 0, TransactionTableModel::DateRole);
-    writer.addColumn(tr("Type"), TransactionTableModel::Type, Qt::EditRole);
+    writer.addColumn(tr("Type"), BlocknetTransactionHistoryFilterProxy::HistoryType, Qt::DisplayRole);
     writer.addColumn(tr("Label"), 0, TransactionTableModel::LabelRole);
     writer.addColumn(tr("Address"), 0, TransactionTableModel::AddressRole);
     writer.addColumn(BitcoinUnits::getAmountColumnTitle(displayUnit), 0, TransactionTableModel::FormattedAmountRole);
@@ -348,6 +355,27 @@ void BlocknetTransactionHistory::exportClicked() {
         QMessageBox::warning(this->parentWidget(), tr("Export Failed"), tr("There was an error trying to save the transaction history to %1.").arg(filename), QMessageBox::Ok);
     else
         QMessageBox::warning(this->parentWidget(), tr("Export Successful"), tr("The transaction history was successfully saved to %1.").arg(filename), QMessageBox::Ok);
+}
+
+void BlocknetTransactionHistory::displayTotalSelected(const QItemSelection &, const QItemSelection &) {
+    if (!transactionsTbl->selectionModel()) {
+        totalSelectedLbl->clear();
+        totalSelectedLbl->hide();
+        return;
+    }
+
+    QModelIndexList selection = transactionsTbl->selectionModel()->selectedRows();
+
+    qint64 amount = 0;
+    foreach (QModelIndex index, selection)
+        amount += index.data(TransactionTableModel::AmountRole).toLongLong();
+
+    QString strAmount(BitcoinUnits::formatWithUnit(displayUnit, amount, true, BitcoinUnits::separatorAlways));
+    if (amount < 0)
+        strAmount = "<span style='color:red;'>" + strAmount + "</span>";
+
+    totalSelectedLbl->setText(strAmount);
+    totalSelectedLbl->show();
 }
 
 BlocknetTransactionHistoryTable::BlocknetTransactionHistoryTable(QWidget *parent) : QTableView(parent),
@@ -365,7 +393,6 @@ void BlocknetTransactionHistoryTable::setWalletModel(WalletModel *w) {
     }
 
     this->setItemDelegateForColumn(BlocknetTransactionHistoryFilterProxy::HistoryStatus, new BlocknetTransactionHistoryCellItem(this));
-    this->setItemDelegateForColumn(BlocknetTransactionHistoryFilterProxy::HistoryDate, new BlocknetTransactionHistoryCellItem(this));
 
     // Set up transaction list
     auto *filter = new BlocknetTransactionHistoryFilterProxy(walletModel->getOptionsModel(), this);
@@ -470,10 +497,27 @@ bool BlocknetTransactionHistoryFilterProxy::filterAcceptsRow(int sourceRow, cons
 }
 
 bool BlocknetTransactionHistoryFilterProxy::lessThan(const QModelIndex &left, const QModelIndex &right) const {
-    if (left.column() == BlocknetTransactionHistoryFilterProxy::HistoryDate) {
-        QVariant leftData = sourceModel()->index(left.row(), TransactionTableModel::Date).data(Qt::EditRole);
-        QVariant rightData = sourceModel()->index(right.row(), TransactionTableModel::Date).data(Qt::EditRole);
-        return leftData.toLongLong() < rightData.toLongLong();
+    switch (left.column()) {
+        case HistoryDate: {
+            auto l1 = sourceModel()->index(left.row(), TransactionTableModel::Date).data(Qt::EditRole);
+            auto r1 = sourceModel()->index(right.row(), TransactionTableModel::Date).data(Qt::EditRole);
+            return l1.toLongLong() < r1.toLongLong();
+        }
+        case HistoryToAddress: {
+            auto l2 = sourceModel()->index(left.row(), TransactionTableModel::ToAddress).data(Qt::DisplayRole);
+            auto r2 = sourceModel()->index(right.row(), TransactionTableModel::ToAddress).data(Qt::DisplayRole);
+            return l2.toString() < r2.toString();
+        }
+        case HistoryType: {
+            auto l3 = sourceModel()->index(left.row(), TransactionTableModel::Type).data(Qt::DisplayRole);
+            auto r3 = sourceModel()->index(right.row(), TransactionTableModel::Type).data(Qt::DisplayRole);
+            return l3.toString() < r3.toString();
+        }
+        case HistoryAmount: {
+            auto l4 = sourceModel()->index(left.row(), TransactionTableModel::Amount).data(Qt::EditRole);
+            auto r4 = sourceModel()->index(right.row(), TransactionTableModel::Amount).data(Qt::EditRole);
+            return l4.toLongLong() < r4.toLongLong();
+        }
     }
     return QSortFilterProxyModel::lessThan(left, right);
 }
@@ -509,12 +553,7 @@ QVariant BlocknetTransactionHistoryFilterProxy::headerData(int section, Qt::Orie
                     return tr("");
             }
         } else if (role == Qt::TextAlignmentRole) {
-            switch (section) {
-                case HistoryDate:
-                    return Qt::AlignCenter;
-                default:
-                    return Qt::AlignLeft;
-            }
+            return Qt::AlignLeft;
         }
     }
     return QSortFilterProxyModel::headerData(section, orientation, role);
@@ -613,72 +652,39 @@ QVariant BlocknetTransactionHistoryFilterProxy::data(const QModelIndex &index, i
 BlocknetTransactionHistoryCellItem::BlocknetTransactionHistoryCellItem(QObject *parent) : QStyledItemDelegate(parent) { }
 
 void BlocknetTransactionHistoryCellItem::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const {
-    painter->save();
-
-    switch (index.column()) {
-        case BlocknetTransactionHistoryFilterProxy::HistoryStatus: {
-            QColor color;
-            auto status = static_cast<TransactionStatus::Status>(index.data(Qt::DisplayRole).toInt());
-            switch (status) {
-                case TransactionStatus::Status::Confirmed:
-                case TransactionStatus::Status::Confirming:
-                    color.setRgb(0x4B, 0xF5, 0xC6);
-                    break;
-                case TransactionStatus::Status::OpenUntilDate:
-                case TransactionStatus::Status::OpenUntilBlock:
-                case TransactionStatus::Status::Offline:
-                case TransactionStatus::Status::Unconfirmed:
-                case TransactionStatus::Status::Immature:
-                    color.setRgb(0xF8, 0xBF, 0x1C);
-                    break;
-                case TransactionStatus::Status::Conflicted:
-                case TransactionStatus::Status::MaturesWarning:
-                case TransactionStatus::Status::NotAccepted:
-                default:
-                    color.setRgb(0xFB, 0x7F, 0x70);
-                    break;
-            }
-            // Draw the status indicator, leave some room on top and bottom
-            int pad = 2;
-            QRect r(option.rect.x(), option.rect.y()+pad/2, option.rect.width(), option.rect.height()-pad);
-            painter->fillRect(r, color);
-            break;
+    if (index.column() == BlocknetTransactionHistoryFilterProxy::HistoryStatus) {
+        painter->save();
+        QColor color;
+        auto status = static_cast<TransactionStatus::Status>(index.data(Qt::DisplayRole).toInt());
+        switch (status) {
+            case TransactionStatus::Status::Confirmed:
+            case TransactionStatus::Status::Confirming:
+                color.setRgb(0x4B, 0xF5, 0xC6);
+                break;
+            case TransactionStatus::Status::OpenUntilDate:
+            case TransactionStatus::Status::OpenUntilBlock:
+            case TransactionStatus::Status::Offline:
+            case TransactionStatus::Status::Unconfirmed:
+            case TransactionStatus::Status::Immature:
+                color.setRgb(0xF8, 0xBF, 0x1C);
+                break;
+            case TransactionStatus::Status::Conflicted:
+            case TransactionStatus::Status::MaturesWarning:
+            case TransactionStatus::Status::NotAccepted:
+            default:
+                color.setRgb(0xFB, 0x7F, 0x70);
+                break;
         }
-        case BlocknetTransactionHistoryFilterProxy::HistoryDate: {
-            auto date = QDateTime::fromTime_t(index.data(Qt::EditRole).toULongLong());
-            auto month = date.toString("MMM").toUpper();
-            auto dt = date.toString("dd");
-            painter->setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
-            if (option.showDecorationSelected && (option.state & QStyle::State_Selected)) {
-                QColor color;
-                color.setRgb(0x01, 0x6A, 0xFF);
-                painter->fillRect(option.rect, color);
-            }
-            // Draw the month
-            painter->save();
-            painter->setPen(QColor("white"));
-            painter->setFont(QFont("Roboto", 13, 25));
-            painter->drawText(QRect(option.rect.x(), option.rect.y() + 5, option.rect.width(), option.rect.height()*0.4), month, Qt::AlignCenter | Qt::AlignVCenter);
-            painter->restore();
-            // Draw the date
-            painter->save();
-            painter->setFont(QFont("Roboto", 21, 25));
-            painter->setPen(QColor("white"));
-            painter->drawText(QRect(option.rect.x(), option.rect.y() + 20, option.rect.width(), option.rect.height()*0.6), dt, Qt::AlignCenter | Qt::AlignVCenter);
-            painter->restore();
-            break;
-        }
+        // Draw the status indicator, leave some room on top and bottom
+        int pad = 2;
+        QRect r(option.rect.x(), option.rect.y()+pad/2, option.rect.width(), option.rect.height()-pad);
+        painter->fillRect(r, color);
+        painter->restore();
     }
-
-    painter->restore();
 }
 
 QSize BlocknetTransactionHistoryCellItem::sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const {
-    switch (index.column()) {
-        case BlocknetTransactionHistoryFilterProxy::HistoryStatus:
-            return {3, option.rect.height()};
-        case BlocknetTransactionHistoryFilterProxy::HistoryDate:
-            return {60, option.rect.height()};
-    }
+    if (index.column() == BlocknetTransactionHistoryFilterProxy::HistoryStatus)
+        return {3, option.rect.height()};
     return QStyledItemDelegate::sizeHint(option, index);
 }
