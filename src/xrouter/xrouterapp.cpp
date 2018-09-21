@@ -925,7 +925,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     if (fee > 0) {
         if (deposit == 0) {
             try {
-                res = createAndSignTransaction(std::vector<unsigned char>(dest.begin(), dest.end()), fee, std::vector<unsigned char>(), payment_tx);
+                res = createAndSignTransaction(dest, fee, payment_tx);
             } catch (...) {
                 return "Failed to create payment transaction";
             }

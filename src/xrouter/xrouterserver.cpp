@@ -537,7 +537,7 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
             // Direct payment, no CLTV channel
             std::string txid;
             try {
-                storeDataIntoBlockchain(feetx, txid);
+                sendTransactionBlockchain(feetx, txid);
             } catch(...) {
                 return "Invalid payment";
             }

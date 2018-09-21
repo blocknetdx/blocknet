@@ -207,17 +207,13 @@ std::string CallCMD(std::string cmd) {
 // TODO: make this common with xbridge or use xbridge function for storing
 static CCriticalSection cs_rpcBlockchainStore;
 
-bool createAndSignTransaction(const std::vector<unsigned char> & dstScript,
-                             const double amount,
-                             const std::vector<unsigned char> & data,
-                             string & raw_tx)
+bool createAndSignTransaction(std::string address, const double amount, string & raw_tx)
 {
     LOCK(cs_rpcBlockchainStore);
 
     const static std::string createCommand("createrawtransaction");
     const static std::string fundCommand("fundrawtransaction");
     const static std::string signCommand("signrawtransaction");
-    const static std::string sendCommand("sendrawtransaction");
 
     int         errCode = 0;
     std::string errMessage;
@@ -226,33 +222,10 @@ bool createAndSignTransaction(const std::vector<unsigned char> & dstScript,
     try
     {
         Array outputs;
-
-        if (data.size() > 0)
-        {
-            Object out;
-            std::string strdata = HexStr(data.begin(), data.end());
-            out.push_back(Pair("data", strdata));
-            outputs.push_back(out);
-        }
-
-        {
-            Object out;
-            out.push_back(Pair("script", HexStr(dstScript)));
-            out.push_back(Pair("amount", amount));
-            outputs.push_back(out);
-        }
-
-        std::vector<COutput> used;
-
+        Object out;
+        out.push_back(Pair("address", address));
+        outputs.push_back(out);
         Array inputs;
-        for (const COutput & out : used)
-        {
-            Object tmp;
-            tmp.push_back(Pair("txid", out.tx->GetHash().ToString()));
-            tmp.push_back(Pair("vout", out.i));
-            inputs.push_back(tmp);
-        }
-
         Value result;
 
         {
@@ -343,13 +316,10 @@ bool createAndSignTransaction(const std::vector<unsigned char> & dstScript,
     return true;
 }
 
-bool storeDataIntoBlockchain(std::string raw_tx, std::string & txid)
+bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
 {
     LOCK(cs_rpcBlockchainStore);
 
-    const static std::string createCommand("createrawtransaction");
-    const static std::string fundCommand("fundrawtransaction");
-    const static std::string signCommand("signrawtransaction");
     const static std::string sendCommand("sendrawtransaction");
 
     int         errCode = 0;
@@ -401,20 +371,20 @@ bool storeDataIntoBlockchain(std::string raw_tx, std::string & txid)
     return true;
 }
 
-bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
-                             const double amount,
-                             const std::vector<unsigned char> & data,
-                             string & txid)
+bool sendTransactionBlockchain(std::string address, const double amount, std::string & txid)
 {
     std::string raw_tx;
-    bool res = createAndSignTransaction(dstScript, amount, data, raw_tx);
+    bool res = createAndSignTransaction(address, amount, raw_tx);
     if (!res) {
         return false;
     }
     
-    res = storeDataIntoBlockchain(raw_tx, txid);
+    res = sendTransactionBlockchain(raw_tx, txid);
     return res;
 }
 
+bool createPaymentChannel(std::string address, double deposit, std::string raw_tx)
+{
+}
 
 } // namespace xrouter

@@ -20,9 +20,10 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params);
 
-bool createAndSignTransaction(const std::vector<unsigned char> & dstScript, const double amount, const std::vector<unsigned char> & data, std::string & txid);
-bool storeDataIntoBlockchain(std::string raw_tx, std::string & txid);
-bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript, const double amount, const std::vector<unsigned char> & data, std::string & txid);
+bool createAndSignTransaction(std::string address, const double amount, std::string & raw_tx);
+bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
+bool sendTransactionBlockchain(std::string address, const double amount, std::string & raw_tx);
+bool createPaymentChannel(std::string address, double deposit, std::string raw_tx);
     
 class WalletConnectorXRouter : public xbridge::WalletParam
 {
