@@ -979,6 +979,21 @@ std::string App::getPaymentAddress(CNode* node)
     return "";
 }
 
+CPubKey App::getPaymentPubkey(CNode* node)
+{
+    // Payment address = pubkey Collateral address of snode
+    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
+    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
+        for (CNode* pnode : vNodes) {
+            if (s.second.addr.ToString() == pnode->addr.ToString()) {
+                return s.second.pubKeyCollateralAddress;
+            }
+        }
+    }
+    
+    return CPubKey();
+}
+
 std::string App::getXrouterConfig(CNode* node, std::string addr) {
     XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
 

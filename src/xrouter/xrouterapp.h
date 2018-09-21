@@ -244,6 +244,7 @@ public:
      * @return
      */
     std::string getPaymentAddress(CNode* node);
+    CPubKey getPaymentPubkey(CNode* node);
     
     /**
      * @brief fetches the xrouter config of a service node

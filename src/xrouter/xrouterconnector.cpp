@@ -383,8 +383,18 @@ bool sendTransactionBlockchain(std::string address, const double amount, std::st
     return res;
 }
 
-bool createPaymentChannel(std::string address, double deposit, std::string raw_tx)
+bool createPaymentChannel(CPubKey address, double deposit, int date, std::string raw_tx)
 {
+    CScript inner;
+    inner << OP_IF
+                << date << OP_CHECKLOCKTIMEVERIFY << OP_DROP
+                << OP_DUP << OP_HASH160 << pwalletMain->GenerateNewKey().GetID() << OP_EQUALVERIFY << OP_CHECKSIG
+          << OP_ELSE
+                << OP_DUP << OP_HASH160 << address.GetID() << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
+                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << OP_EQUAL
+          << OP_ENDIF;
+
+    std::string resultSript = std::string(inner.begin(), inner.end());
 }
 
 } // namespace xrouter
