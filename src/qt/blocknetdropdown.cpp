@@ -11,16 +11,18 @@
 #include <QStyleFactory>
 #include <QPoint>
 
-BlocknetDropdown::BlocknetDropdown(const QStringList &list, QWidget* parent) : QComboBox(parent) {
+BlocknetDropdown::BlocknetDropdown(const QStringList &list, QWidget* parent) : BlocknetDropdown(parent) {
+    for (int i = 0; i < list.size(); i++)
+        this->addItem(list[i]);
+}
+
+BlocknetDropdown::BlocknetDropdown(QWidget* parent) : QComboBox(parent) {
 #if defined(Q_OS_MAC)
     this->setStyle(QStyleFactory::create("Windows"));
 #endif
     this->setObjectName("dropdown");
     this->setFixedSize(ddW, ddH);
-    for (int i = 0; i < list.size(); i++) {
-        this->addItem(list[i]);
-    }
-    QGridLayout *layout = new QGridLayout;
+    auto *layout = new QGridLayout;
     QLabel *label = new QLabel;
     QImage *icon = new QImage(":/icons/accordion-arrow");
     label->setPixmap(QPixmap::fromImage(*icon));

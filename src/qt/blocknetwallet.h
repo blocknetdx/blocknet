@@ -10,6 +10,7 @@
 #include "blocknetdashboard.h"
 #include "blocknetsendfunds.h"
 #include "blocknetproposals.h"
+#include "blocknettransactionhistory.h"
 #include "blocknettoolbar.h"
 
 #include "clientmodel.h"

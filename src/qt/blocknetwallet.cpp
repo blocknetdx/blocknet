@@ -160,8 +160,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             break;
         }
         case BlocknetPage::HISTORY: {
-            auto *transactionView = new TransactionView;
-            transactionView->setModel(walletModel);
+            auto *transactionView = new BlocknetTransactionHistory(walletModel);
             screen = transactionView;
             break;
         }

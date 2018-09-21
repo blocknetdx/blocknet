@@ -17,6 +17,7 @@ class BlocknetDropdown : public QComboBox
     Q_PROPERTY(QVariant value READ value WRITE setValue NOTIFY valueChanged USER true)
 
 public:
+    explicit BlocknetDropdown(QWidget* parent = nullptr);
     explicit BlocknetDropdown(const QStringList &list, QWidget* parent = nullptr);
 
     QVariant value() const;

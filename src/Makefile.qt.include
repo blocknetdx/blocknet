@@ -102,6 +102,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetcircle.cpp \
   qt/moc_blocknetclosebtn.cpp \
   qt/moc_blocknetdashboard.cpp \
+  qt/moc_blocknettransactionhistory.cpp \
   qt/moc_blocknetfontmgr.cpp \
   qt/moc_blocknetformbtn.cpp \
   qt/moc_blocknethdiv.cpp \
@@ -213,6 +214,7 @@ BITCOIN_QT_H = \
   qt/blocknetcircle.h \
   qt/blocknetclosebtn.h \
   qt/blocknetdashboard.h \
+  qt/blocknettransactionhistory.h \
   qt/blocknetfontmgr.h \
   qt/blocknetformbtn.h \
   qt/blocknethdiv.h \
@@ -335,6 +337,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetcircle.cpp \
   qt/blocknetclosebtn.cpp \
   qt/blocknetdashboard.cpp \
+  qt/blocknettransactionhistory.cpp \
   qt/blocknetproposals.cpp \
   qt/blocknetfontmgr.cpp \
   qt/blocknetformbtn.cpp \

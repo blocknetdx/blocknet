@@ -60,7 +60,17 @@ QRadioButton:indicator:disabled { background-color: transparent; }
 QCheckBox { font-size: 13px; font-family: "Roboto"; color: white; spacing: 10px; }
 QCheckBox::indicator:checked { image: url(:/redesign/checkmark-on); max-width: 20px; }
 QCheckBox::indicator:unchecked { image: url(:/redesign/checkmark-off); max-width: 20px; }
-QTableView, QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; }
+QDateTimeEdit { padding-left: 5px; padding-right: 5px; background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); selection-color: #FFFFFF; selection-background-color: #016AFF; border: 1px solid #6F8097; color: #FFFFFF; font-size: 13px; font-family: "Roboto"; }
+QDateTimeEdit::drop-down { image: url(:/icons/accordion-arrow); width: 22px; border: 0; }
+QDateTimeEdit QAbstractItemView { background-color: #051937; }
+QCalendarWidget QWidget#qt_calendar_navigationbar { background-color: #051937; }
+QCalendarWidget QWidget { alternate-background-color: #051937; }
+QCalendarWidget QAbstractItemView:enabled { color: white; background-color: #051937; font-size: 13px; font-family: "Roboto"; }
+QCalendarWidget QAbstractItemView:disabled { color: #666; }
+QCalendarWidget QMenu { color: white; background-color: #6F8097; font-size: 13px; font-family: "Roboto"; }
+QCalendarWidget QSpinBox { color: white; background-color: #051937; font-size: 13px; font-family: "Roboto"; }
+QCalendarWidget QToolButton { color: white; background-color: #051937; font-family: "Roboto"; }
+QTableView, QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; border-style: none; border: 0; }
 QTableView::item, QTableWidget::item { font-size: 13px; font-family: "Roboto"; background-color: #172F49; }
 QTableView::item:alternate, QTableWidget::item:alternate { background-color: #0F2743; }
 QTableView::item::selected, QTableWidget::item::selected { color: white; background-color: #016AFF; }
@@ -136,11 +146,12 @@ BlocknetSendFunds #body { font-size: 13px; color: #6F8097; font-family: "Roboto"
 
 BlocknetQuickSend #address { max-width: 500px; }
 
-#transactionHistory, .QTableView { border: 0; background-color: transparent; }
-#transactionHistory::item { border: 0; qproperty-alignment:left; font-size: 12px; font-family: "Roboto"; color: white; alternate-background-color: #0F2743; background-color: #172F49; }
-#transactionHistory::item:selected { background-color: #1F487E; color: white; }
-#transactionHistory QHeaderView { border: 0; background-color: transparent; outline: 0; }
-#transactionHistory QHeaderView::section { border: 0; qproperty-alignment:left; background-color:transparent; font-size: 12px; font-family: "Roboto"; color:#6F8097; min-height:30px; }
+BlocknetTransactionHistory { border: 0; }
+BlocknetTransactionHistory::item { border: 0; qproperty-alignment:left; }
+BlocknetTransactionHistory::item:selected { color: white; selection-background-color: #016AFF; }
+BlocknetTransactionHistory QHeaderView { border: 0; background-color: #000D20; outline: 0; }
+BlocknetTransactionHistory QHeaderView::section { border: 0; qproperty-alignment:left; background-color: #000D20; font-size: 12px; font-family: "Roboto"; color:#6F8097; min-height:30px; }
+BlocknetTransactionHistory #dateRange QLabel { color: white; }
 
 BlocknetCoinControl QTableWidget { color: white; }
 #coinControlDialog { background-color: #172F49; }
