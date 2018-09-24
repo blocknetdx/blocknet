@@ -44,9 +44,6 @@
         <layout class="QHBoxLayout" name="horizontalLayout_1_ENC">
          <item>
           <widget class="QLabel" name="label_5">
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
            <property name="minimumSize">
             <size>
              <width>85</width>
@@ -55,6 +52,9 @@
            </property>
            <property name="text">
             <string>Address:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -69,6 +69,9 @@
           <widget class="QToolButton" name="addressBookButton_ENC">
            <property name="toolTip">
             <string>Choose previously used address</string>
+           </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
            </property>
            <property name="text">
             <string/>
@@ -105,9 +108,6 @@
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QLabel" name="label_6">
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
            <property name="minimumSize">
             <size>
              <width>85</width>
@@ -116,6 +116,9 @@
            </property>
            <property name="text">
             <string>Passphrase: </string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -132,9 +135,6 @@
         <layout class="QHBoxLayout" name="horizontalLayout_2_ENC">
          <item>
           <widget class="QLabel" name="encryptedKeyLabel_ENC">
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
            <property name="minimumSize">
             <size>
              <width>85</width>
@@ -146,6 +146,9 @@
            </property>
            <property name="textFormat">
             <enum>Qt::PlainText</enum>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -187,10 +190,6 @@
            <property name="text">
             <string>Encrypt &amp;Key</string>
            </property>
-           <property name="icon">
-            <iconset resource="../phore.qrc">
-             <normaloff>:/icons/edit</normaloff>:/icons/edit</iconset>
-           </property>
            <property name="autoDefault">
             <bool>false</bool>
            </property>
@@ -203,10 +202,6 @@
            </property>
            <property name="text">
             <string>Clear &amp;All</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../phore.qrc">
-             <normaloff>:/icons/remove</normaloff>:/icons/remove</iconset>
            </property>
            <property name="autoDefault">
             <bool>false</bool>
@@ -281,9 +276,6 @@
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QLabel" name="label_2">
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
            <property name="minimumSize">
             <size>
              <width>85</width>
@@ -292,6 +284,9 @@
            </property>
            <property name="text">
             <string>Encrypted Key:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -325,9 +320,6 @@
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <widget class="QLabel" name="label">
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
            <property name="minimumSize">
             <size>
              <width>85</width>
@@ -336,6 +328,9 @@
            </property>
            <property name="text">
             <string>Passphrase: </string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -358,10 +353,6 @@
            <property name="text">
             <string>Decrypt &amp;Key</string>
            </property>
-           <property name="icon">
-            <iconset resource="../phore.qrc">
-             <normaloff>:/icons/transaction_0</normaloff>:/icons/transaction_0</iconset>
-           </property>
            <property name="autoDefault">
             <bool>false</bool>
            </property>
@@ -374,10 +365,6 @@
            </property>
            <property name="text">
             <string>Clear &amp;All</string>
-           </property>
-           <property name="icon">
-            <iconset resource="../phore.qrc">
-             <normaloff>:/icons/remove</normaloff>:/icons/remove</iconset>
            </property>
            <property name="autoDefault">
             <bool>false</bool>

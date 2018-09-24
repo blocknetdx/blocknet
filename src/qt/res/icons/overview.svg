@@ -1,1 +1,11 @@
-<svg id="49fe7cb9-b4f2-4415-8c99-ee91feb004c7" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 232.83"><title>overview</title><path d="M-264.31,369.45" transform="translate(364.31 -252.9)" style="fill:none;stroke:#ce00b6;stroke-miterlimit:10;stroke-width:0.25px"/><path d="M-264.31,369.45" transform="translate(364.31 -252.9)" style="fill:none;stroke:#ce00b6;stroke-miterlimit:10;stroke-width:0.25px"/><path d="M-164.31,252.9l-.25,143.55c0,12.14-8.08,20-19.78,23.23l-126,30.69v22.26l-54,13.1V277.13c-.18-14.39,9.88-24.23,24.88-24.23Zm-146,54v88.42l92.08-22.06V306.86Z" transform="translate(364.31 -252.9)" style="fill:#00d188"/><path d="M-264.31,369.45" transform="translate(364.31 -252.9)" style="fill:none;stroke:#ce00b6;stroke-miterlimit:10;stroke-width:0.25px"/><path d="M-264.31,369.45" transform="translate(364.31 -252.9)" style="fill:none;stroke:#ce00b6;stroke-miterlimit:10;stroke-width:0.25px"/></svg>
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 22.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="_x32_338fba0-a4e5-4ce3-9728-722fabb38851"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 256 256"
+	 style="enable-background:new 0 0 256 256;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:#00D188;}
+</style>
+<path class="st0" d="M234,0.6l-0.3,152.2c0,12.9-8.6,21.2-21,24.6L79.2,209.9v23.6L22,247.4V26.3C21.8,11,32.5,0.6,48.4,0.6H234z
+	 M79.2,57.8v93.7l97.6-23.4V57.8H79.2z"/>
+</svg>

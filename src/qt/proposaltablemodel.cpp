@@ -33,13 +33,13 @@
 
 static int column_alignments[] = {
         Qt::AlignLeft|Qt::AlignVCenter,
-        Qt::AlignRight|Qt::AlignVCenter,
-        Qt::AlignRight|Qt::AlignVCenter,
-        Qt::AlignRight|Qt::AlignVCenter,
-        Qt::AlignRight|Qt::AlignVCenter,
-        Qt::AlignRight|Qt::AlignVCenter,
-        Qt::AlignRight|Qt::AlignVCenter,
-        Qt::AlignRight|Qt::AlignVCenter
+        Qt::AlignLeft|Qt::AlignVCenter,
+        Qt::AlignLeft|Qt::AlignVCenter,
+        Qt::AlignLeft|Qt::AlignVCenter,
+        Qt::AlignLeft|Qt::AlignVCenter,
+        Qt::AlignLeft|Qt::AlignVCenter,
+        Qt::AlignLeft|Qt::AlignVCenter,
+        Qt::AlignLeft|Qt::AlignVCenter
     };
 
 ProposalTableModel::ProposalTableModel( QObject *parent):
@@ -244,7 +244,7 @@ QVariant ProposalTableModel::headerData(int section, Qt::Orientation orientation
         }
         else if (role == Qt::TextAlignmentRole)
         {
-            return Qt::AlignCenter;
+            return Qt::AlignLeft;
         } 
         else if (role == Qt::ToolTipRole)
         {
