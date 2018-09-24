@@ -929,6 +929,17 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             } catch (...) {
                 return "Failed to create payment transaction";
             }
+        } else {
+            // Create payment channel first
+            if (!this->paymentChannels.count(pnode)) {
+                std::string txid;
+                bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, txid);
+                if (!res)
+                    return "Failed to create payment channel";
+                this->paymentChannels[pnode] = txid;
+            }
+            
+            // Submit payment via channel
         }
     }
     
