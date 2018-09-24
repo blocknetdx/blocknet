@@ -207,7 +207,7 @@ std::string CallCMD(std::string cmd) {
 // TODO: make this common with xbridge or use xbridge function for storing
 static CCriticalSection cs_rpcBlockchainStore;
 
-bool createAndSignTransaction(std::string address, const double amount, string & raw_tx)
+bool createAndSignTransaction(Array txparams, std::string & raw_tx)
 {
     LOCK(cs_rpcBlockchainStore);
 
@@ -221,20 +221,11 @@ bool createAndSignTransaction(std::string address, const double amount, string &
 
     try
     {
-        Array outputs;
-        Object out;
-        out.push_back(Pair("address", address));
-        outputs.push_back(out);
-        Array inputs;
         Value result;
 
         {
-            Array params;
-            params.push_back(inputs);
-            params.push_back(outputs);
-
             // call create
-            result = tableRPC.execute(createCommand, params);
+            result = tableRPC.execute(createCommand, txparams);
             if (result.type() != str_type)
             {
                 throw std::runtime_error("Create transaction command finished with error");
@@ -306,14 +297,29 @@ bool createAndSignTransaction(std::string address, const double amount, string &
 
     if (errCode != 0)
     {
-        LOG() << "xdata sendrawtransaction " << rawtx;
-        LOG() << "error send xdata transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
+        LOG() << "xdata signrawtransaction " << rawtx;
+        LOG() << "error sign transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
         return false;
     }
 
     raw_tx = rawtx;
     
     return true;
+}
+
+bool createAndSignTransaction(std::string address, const double amount, string & raw_tx)
+{
+    Array outputs;
+    Object out;
+    out.push_back(Pair("address", address));
+    outputs.push_back(out);
+    Array inputs;
+    Value result;
+
+    Array params;
+    params.push_back(inputs);
+    params.push_back(outputs);
+    return createAndSignTransaction(params, raw_tx);
 }
 
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
@@ -395,6 +401,8 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
           << OP_ENDIF;
 
     std::string resultSript = std::string(inner.begin(), inner.end());
+    
+
 }
 
 } // namespace xrouter
