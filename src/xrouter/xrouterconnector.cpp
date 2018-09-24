@@ -400,9 +400,23 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
                 << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << OP_EQUAL
           << OP_ENDIF;
 
-    std::string resultSript = std::string(inner.begin(), inner.end());
-    
+    std::string resultScript = std::string(inner.begin(), inner.end());
 
+    Array outputs;
+    Object out;
+    out.push_back(Pair("script", resultScript));
+    outputs.push_back(out);
+    Array inputs;
+    Value result;
+
+    Array params;
+    params.push_back(inputs);
+    params.push_back(outputs);    
+    bool res = createAndSignTransaction(params, raw_tx);
+    if (!res)
+        return false;
+    
+    return true;
 }
 
 } // namespace xrouter
