@@ -48,6 +48,7 @@ private:
     boost::container::map<std::string, CNode* > configQueries;
     boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
     boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
+    boost::container::map<CNode*, std::string > paymentChannels;
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
     boost::container::map<std::string, XRouterSettings > snodeConfigs;
     static boost::container::map<CNode*, double > snodeScore;

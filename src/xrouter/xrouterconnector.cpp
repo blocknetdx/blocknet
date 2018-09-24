@@ -389,7 +389,7 @@ bool sendTransactionBlockchain(std::string address, const double amount, std::st
     return res;
 }
 
-bool createPaymentChannel(CPubKey address, double deposit, int date, std::string raw_tx)
+bool createPaymentChannel(CPubKey address, double deposit, int date, std::string txid)
 {
     CScript inner;
     inner << OP_IF
@@ -402,6 +402,7 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
 
     std::string resultScript = std::string(inner.begin(), inner.end());
 
+    std::string raw_tx;
     Array outputs;
     Object out;
     out.push_back(Pair("script", resultScript));
@@ -416,7 +417,7 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     if (!res)
         return false;
     
-    return true;
+    return sendTransactionBlockchain(raw_tx, txid);
 }
 
 } // namespace xrouter
