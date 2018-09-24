@@ -196,28 +196,6 @@
                        </layout>
                       </item>
                       <item>
-                       <widget class="Line" name="lineUpperLeft">
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>1</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>1</height>
-                         </size>
-                        </property>
-                        <property name="frameShadow">
-                         <enum>QFrame::Sunken</enum>
-                        </property>
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_4">
                         <item>
                          <widget class="QPushButton" name="pushButtonMintzPHR">
@@ -1027,25 +1005,6 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                        </layout>
                       </item>
                       <item>
-                       <widget class="Line" name="line_1_right">
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>1</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>1</height>
-                         </size>
-                        </property>
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
                        <spacer name="verticalSpacer">
                         <property name="orientation">
                          <enum>Qt::Vertical</enum>
@@ -1627,25 +1586,6 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                        </layout>
                       </item>
                       <item>
-                       <widget class="Line" name="line_2_right">
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>1</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>1</height>
-                         </size>
-                        </property>
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                       </widget>
-                      </item>
-                      <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_25">
                         <item>
                          <widget class="QLabel" name="label_AutoMintStatus">
@@ -1682,23 +1622,17 @@ To change the percentage (no restart required):
                        </layout>
                       </item>
                       <item>
-                       <widget class="Line" name="line_3">
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>1</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>1</height>
-                         </size>
-                        </property>
+                       <spacer name="verticalSpacer_4">
                         <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
+                         <enum>Qt::Vertical</enum>
                         </property>
-                       </widget>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>20</width>
+                          <height>40</height>
+                         </size>
+                        </property>
+                       </spacer>
                       </item>
                       <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_23">

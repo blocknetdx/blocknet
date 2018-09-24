@@ -50,13 +50,14 @@ ProposalList::ProposalList(   QWidget *parent) :
     proposalTableModel = new ProposalTableModel( this); 
     QSettings settings;
 
-    setContentsMargins(0,0,0,0);
+    setContentsMargins(20,0,20,0);
 
     hlayout = new ColumnAlignedLayout();
     hlayout->setContentsMargins(0,0,0,0);
     hlayout->setSpacing(0);
-
+    
     proposalWidget = new QLineEdit(this);
+    proposalWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     proposalWidget->setPlaceholderText(tr("Enter proposal name"));
 #endif
@@ -64,6 +65,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(proposalWidget);
 
     amountWidget = new QLineEdit(this);
+    amountWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     amountWidget->setPlaceholderText(tr("Min amount"));
 #endif
@@ -72,6 +74,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(amountWidget);
 
     startDateWidget = new QLineEdit(this);
+    startDateWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     startDateWidget->setPlaceholderText(tr("Start Block"));
 #endif
@@ -80,6 +83,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(startDateWidget);
 
     endDateWidget = new QLineEdit(this);
+    endDateWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     endDateWidget->setPlaceholderText(tr("End Block"));
 #endif
@@ -88,6 +92,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(endDateWidget);	
 	
     yesVotesWidget = new QLineEdit(this);
+    yesVotesWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     yesVotesWidget->setPlaceholderText(tr("Min yes votes"));
 #endif
@@ -96,6 +101,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(yesVotesWidget);
 
     noVotesWidget = new QLineEdit(this);
+    noVotesWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     noVotesWidget->setPlaceholderText(tr("Min no votes"));
 #endif
@@ -104,6 +110,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(noVotesWidget);
 
     abstainVotesWidget = new QLineEdit(this);
+    abstainVotesWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     abstainVotesWidget->setPlaceholderText(tr("Min abstain votes"));
 #endif
@@ -153,7 +160,8 @@ ProposalList::ProposalList(   QWidget *parent) :
     connect(view->horizontalHeader(), SIGNAL(sectionResized(int,int,int)), SLOT(invalidateAlignedLayout()));
     connect(view->horizontalScrollBar(), SIGNAL(valueChanged(int)), SLOT(invalidateAlignedLayout()));
 
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    // view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     view->setTabKeyNavigation(false);
     view->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -161,7 +169,7 @@ ProposalList::ProposalList(   QWidget *parent) :
 
     QHBoxLayout *actionBar = new QHBoxLayout();
     actionBar->setSpacing(11);
-    actionBar->setContentsMargins(0,20,0,20);
+    actionBar->setContentsMargins(0,20,0,4);
 
     QPushButton *voteYesButton = new QPushButton(tr("Vote Yes"), this);
     voteYesButton->setToolTip(tr("Yote Yes on the selected proposal"));

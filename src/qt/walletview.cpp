@@ -135,6 +135,7 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     }
 	
     proposalListPage = new ProposalList();
+    
     addWidget(proposalListPage);	
 	
 
