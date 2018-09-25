@@ -53,6 +53,12 @@
         <property name="toolTip">
          <string>The Phore address to send the payment to</string>
         </property>
+        <property name="inputMask">
+         <string/>
+        </property>
+        <property name="placeholderText">
+         <string>Enter a Phore address (e.g. PCYiHgGJJ6xGHqivmdZrYjRnhaYf6AJ2Mp)</string>
+        </property>
        </widget>
       </item>
       <item>
@@ -66,6 +72,12 @@
         <property name="icon">
          <iconset resource="../phore.qrc">
           <normaloff>:/icons/address-book</normaloff>:/icons/address-book</iconset>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>16</width>
+          <height>16</height>
+         </size>
         </property>
         <property name="shortcut">
          <string>Alt+A</string>
@@ -122,6 +134,12 @@
      <widget class="QLineEdit" name="addAsLabel">
       <property name="toolTip">
        <string>Enter a label for this address to add it to the list of used addresses</string>
+      </property>
+      <property name="inputMask">
+       <string/>
+      </property>
+      <property name="placeholderText">
+       <string>Enter a label for this address to add it to your address book</string>
       </property>
      </widget>
     </item>
@@ -1215,6 +1233,7 @@
    <class>BitcoinAmountField</class>
    <extends>QLineEdit</extends>
    <header>bitcoinamountfield.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>

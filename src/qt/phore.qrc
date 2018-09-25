@@ -64,7 +64,6 @@
         <file alias="browse">res/icons/browse.png</file>
         <file alias="staking_active">res/icons/staking_active.svg</file>
         <file alias="staking_inactive">res/icons/staking_inactive.svg</file>
-
     </qresource>
     <qresource prefix="/css">
         <file alias="default">res/css/default.css</file>
@@ -83,8 +82,9 @@
         <file alias="qtreeview_selected">res/images/qtreeview_selected.png</file>
         <file alias="walletFrame_bg">res/images/walletFrame_bg.png</file>
         <file alias="walletFrame">res/images/walletFrame.png</file>
-        <file alias="splash">res/images/splash.png</file>
+        <file alias="splash">res/images/splash.svg</file>
         <file alias="splash_testnet">res/images/splash_testnet.png</file>
+
     </qresource>
     <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.svg</file>
