@@ -420,6 +420,27 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     return sendTransactionBlockchain(raw_tx, txid);
 }
 
+bool createAndSignChannelTransaction(std::string address, double deposit, double amount, string& raw_tx)
+{
+    Array outputs;
+    Object out_me;
+    out_me.push_back(Pair("address", CBitcoinAddress(pwalletMain->GenerateNewKey().GetID()).ToString()));
+    out_me.push_back(Pair("amount", deposit-amount));
+    outputs.push_back(out_me);
+    Object out_srv;
+    out_srv.push_back(Pair("address", address));
+    out_srv.push_back(Pair("amount", amount));
+    outputs.push_back(out_srv);
+    Array inputs;
+    Value result;
+
+    
+    Array params;
+    params.push_back(inputs);
+    params.push_back(outputs);
+    return createAndSignTransaction(params, raw_tx);
+}
+
 double getTxValue(std::string rawtx, int vout_number) {
     const static std::string decodeCommand("decoderawtransaction");
     std::vector<std::string> params;
