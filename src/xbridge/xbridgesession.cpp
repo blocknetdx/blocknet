@@ -11,7 +11,6 @@
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
 #include "xbridgepacket.h"
-#include "xbridgeservicespacket.h"
 #include "xuiconnector.h"
 #include "util/xutil.h"
 #include "util/logger.h"
@@ -268,7 +267,7 @@ bool Session::Impl::checkPacketAddress(XBridgePacketPtr packet) const
 
 //*****************************************************************************
 //*****************************************************************************
-bool Session::processPacket(XBridgePacketPtr packet)
+bool Session::processPacket(XBridgePacketPtr packet, CValidationState * state)
 {
     // DEBUG_TRACE();
 
@@ -295,6 +294,11 @@ bool Session::processPacket(XBridgePacketPtr packet)
 
     if (!m_p->m_handlers.at(c)(packet))
     {
+        if (state)
+        {
+            state->DoS(0, error("Xbridge packet processing error"), REJECT_INVALID, "bad-xbridge-packet");
+        }
+
         ERR() << "packet processing error <" << c << "> " << __FUNCTION__;
         setNotWorking();
         return false;
@@ -304,6 +308,7 @@ bool Session::processPacket(XBridgePacketPtr packet)
     return true;
 }
 
+//*****************************************************************************
 /**
  * @brief Process and verify the received services ping. This will enforce a maximum size for the packet. Packets
  *        in excess of the max size will be rejected. The pubkey of the packet will be used to associate the services.
@@ -311,13 +316,19 @@ bool Session::processPacket(XBridgePacketPtr packet)
  * @param packet
  * @return
  */
+//*****************************************************************************
 bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
 {
-    if (packet->size() > 10000) { // enforce a limit of max bytes
+    if (packet->size() > 10000)
+    {
+        // enforce a limit of max bytes
         ERR() << "Services packet too large, a max of 10000 bytes is supported "
               << __FUNCTION__;
         return false;
-    } else if (packet->size() < (sizeof(uint32_t) + 1)) { // service count (4 bytes) + service name (at least 1 byte)
+    }
+    else if (packet->size() < (sizeof(uint32_t) + 1))
+    {
+        // service count (4 bytes) + service name (at least 1 byte)
         ERR() << "Rejecting Services packet, it's too small "
               << __FUNCTION__;
         return false;
@@ -331,7 +342,8 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     // Get pubkey from the packet so that we can check if it's in the snode list
     {
         uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
-        if (len != 33) {
+        if (len != 33)
+        {
             LOG() << "Bad Servicenode public key, length: " << len << " " << __FUNCTION__;
             return false;
         }
@@ -340,11 +352,15 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
 
     // Find Servicenode in list
     CServicenode *pmn = mnodeman.Find(nodePubKey);
-    if (pmn == nullptr) {
+    if (pmn == nullptr)
+    {
         // try to uncompress pubkey and search
         if (nodePubKey.Decompress())
+        {
             pmn = mnodeman.Find(nodePubKey);
-        if (pmn == nullptr) {
+        }
+        if (pmn == nullptr)
+        {
             ERR() << "Bad Services packet, Servicenode not found with vin "
                   << nodePubKey.GetHex() << " "
                   << __FUNCTION__;
@@ -357,17 +373,19 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     offset += sizeof(uint32_t);
     std::string rawServices(reinterpret_cast<const char *>(packet->data() + offset));
     if (rawServices.length() > 0)
+    {
         boost::split(services, rawServices, boost::is_any_of(","));
-    if (services.size() != servicesCount) {
+    }
+
+    if (services.size() != servicesCount)
+    {
         ERR() << "Rejecting Services packet, the reported services count doesn't match the actual count "
               << __FUNCTION__;
         return false;
     }
 
-    // Store results on the packet
-    auto servicesPacket = static_pointer_cast<XBridgeServicesPacket>(packet);
-    servicesPacket->services = services;
-    servicesPacket->nodePubKey = nodePubKey;
+    // Store updated services list for this node
+    App::instance().addNodeServices(nodePubKey, services);
 
     return true;
 }
@@ -473,6 +491,17 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     // read packet data
     uint256 id(packet->data());
     uint32_t offset = XBridgePacket::hashSize;
+
+    // Check if order already exists, if it does ignore processing
+    TransactionPtr t = e.pendingTransaction(id);
+    if (t->id() == id) {
+        // Update the transaction timestamp
+        if (e.updateTimestampOrRemoveExpired(t)) {
+            LOG() << "order already received " << id.ToString()
+                  << " " << __FUNCTION__;
+            return true;
+        }
+    }
 
     // source
     std::vector<unsigned char> saddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
@@ -724,13 +753,6 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
-    if (!packet->verify(spubkey))
-    {
-        WARN() << "invalid packet signature " << __FUNCTION__;
-        return true;
-    }
-
     uint256 txid = uint256(packet->data());
     uint32_t offset = XBridgePacket::hashSize;
 
@@ -744,7 +766,29 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     uint64_t damount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
     offset += sizeof(uint64_t);
 
+    auto hubAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
+
     xbridge::App & xapp = App::instance();
+    TransactionDescrPtr ptr = xapp.transaction(txid);
+
+    // Servicenode pubkey assigned to order
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+
+    // Reject if snode key doesn't match original (prevent order manipulation)
+    if (ptr && !packet->verify(ptr->sPubKey)) {
+        WARN() << "wrong servicenode handling order, expected " << HexStr(ptr->sPubKey)
+               << " but received pubkey " << HexStr(spubkey)
+               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        return true;
+    }
+
+    // All traders verify sig, important when tx ptr is not known yet
+    if (!packet->verify(spubkey))
+    {
+        WARN() << "invalid packet signature " << __FUNCTION__;
+        return true;
+    }
+
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
     if (!sconn || !dconn)
@@ -753,7 +797,6 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         return true;
     }
 
-    TransactionDescrPtr ptr = xapp.transaction(txid);
     if (ptr)
     {
         if (ptr->state > TransactionDescr::trPending)
@@ -770,10 +813,6 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
             LOG() << "received confirmed order from snode, setting status to pending " << __FUNCTION__;
             ptr->state = TransactionDescr::trPending;
         }
-
-        // update snode addr and pubkey ( ???? )
-        // ptr->hubAddress   = std::vector<unsigned char>(packet->data()+64, packet->data()+84);
-        // ptr->sPubKey      = spubkey;
 
         // update timestamp
         ptr->updateTimestamp();
@@ -795,7 +834,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     ptr->toCurrency   = dcurrency;
     ptr->toAmount     = damount;
 
-    ptr->hubAddress   = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
+    ptr->hubAddress   = hubAddress;
     offset += XBridgePacket::addressSize;
 
     ptr->created      = util::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+offset));
@@ -869,6 +908,13 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += sizeof(uint64_t);
 
     std::vector<unsigned char> mpubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+
+    // If order already accepted, ignore further attempts
+    TransactionPtr trExists = e.transaction(id);
+    if (trExists && trExists->id() == id) {
+        WARN() << "order already accepted " << id.GetHex() << __FUNCTION__;
+        return true;
+    }
 
     if (!packet->verify(mpubkey))
     {
@@ -1028,6 +1074,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         return false;
     }
 
+    xbridge::App & xapp = xbridge::App::instance();
     uint32_t offset = 0;
 
     // servicenode addr
@@ -1039,7 +1086,25 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     uint256 id(packet->data()+offset);
     offset += XBridgePacket::hashSize;
 
-    // service node pub key
+    // pubkey from packet
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+
+    TransactionDescrPtr xtx = xapp.transaction(id);
+    if (!xtx)
+    {
+        LOG() << "unknown order " << id.GetHex() << " " << __FUNCTION__;
+        return true;
+    }
+    // Reject if snode key doesn't match original (prevent order manipulation)
+    if (!packet->verify(xtx->sPubKey))
+    {
+        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
+               << " but received pubkey " << HexStr(spubkey)
+               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        return true;
+    }
+
+    // Make sure that servicenode is still valid and in the snode list
     CPubKey pksnode;
 
     {
@@ -1071,13 +1136,6 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         }
     }
 
-    std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
-    if (!packet->verify(pubkey))
-    {
-        WARN() << "invalid packet signature " << __FUNCTION__;
-        return true;
-    }
-
     LOG() << "use service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
 
     {
@@ -1099,25 +1157,6 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
             return true;
         }
-    }
-
-    xbridge::App & xapp = xbridge::App::instance();
-    TransactionDescrPtr xtx = xapp.transaction(id);
-    if (!xtx)
-    {
-        LOG() << "unknown order " << id.GetHex() << " " << __FUNCTION__;
-        return true;
-    }
-
-    // TODO temporary
-    // update service node key
-    xtx->sPubKey = pubkey;
-
-    // second signature check
-    if (!packet->verify(xtx->sPubKey))
-    {
-        WARN() << "invalid packet signature " << __FUNCTION__;
-        return true;
     }
 
     if (xtx->state >= TransactionDescr::trHold)
@@ -1205,6 +1244,8 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     // transaction id
     uint256 id(packet->data()+offset);
+    // packet pubkey
+    std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     TransactionPtr tr = e.transaction(id);
 
@@ -1212,7 +1253,9 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "bad trader packet signature, received " << HexStr(pubkey)
+               << " expected " << HexStr(tr->a_pk1()) << " or " << HexStr(tr->b_pk1()) << " "
+               << __FUNCTION__;
         return true;
     }
 
@@ -1309,6 +1352,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         return false;
     }
 
+    xbridge::App & xapp = xbridge::App::instance();
     uint32_t offset = 0;
 
     std::vector<unsigned char> thisAddress(packet->data(),
@@ -1323,23 +1367,32 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     uint256 txid(packet->data()+offset);
     offset += XBridgePacket::hashSize;
 
-    // service node pub key
-    ::CPubKey pksnode;
+    TransactionDescrPtr xtx = xapp.transaction(txid);
+    if (!xtx)
     {
-        uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
-        if (len != 33)
-        {
-            LOG() << "bad public key, len " << len
-                  << " startsWith " << *(char *)(packet->data()+offset) << " " << __FUNCTION__;
-            return false;
-        }
-
-        pksnode.Set(packet->pubkey(), packet->pubkey()+len);
+        LOG() << "unknown transaction " << txid.ToString() << " " << __FUNCTION__;
+        return true;
     }
-
-    if (!packet->verify())
+    if (!xtx->isLocal())
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        ERR() << "not local transaction " << txid.ToString() << " " << __FUNCTION__;
+        return true;
+    }
+    // Reject if snode key doesn't match original (prevent order manipulation)
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(xtx->sPubKey))
+    {
+        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
+               << " but received pubkey " << HexStr(spubkey)
+               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        return true;
+    }
+    if (xtx->state >= TransactionDescr::trInitialized)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
         return true;
     }
 
@@ -1357,9 +1410,33 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     std::string   toCurrency(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
     uint64_t      toAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
-    // offset += sizeof(uint64_t);
 
-    // check servicenode
+    if(xtx->id           != txid &&
+       xtx->from         != from &&
+       xtx->fromCurrency != fromCurrency &&
+       xtx->fromAmount   != fromAmount &&
+       xtx->to           != to &&
+       xtx->toCurrency   != toCurrency &&
+       xtx->toAmount     != toAmount)
+    {
+        LOG() << "not equal transaction body" << __FUNCTION__;
+        return true;
+    }
+
+    // service node pub key
+    ::CPubKey pksnode;
+    {
+        uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
+        if (len != 33)
+        {
+            LOG() << "bad public key, len " << len
+                  << " startsWith " << *(char *)(packet->data()+offset) << " " << __FUNCTION__;
+            return false;
+        }
+
+        pksnode.Set(packet->pubkey(), packet->pubkey()+len);
+    }
+    // Get servicenode collateral address
     std::vector<unsigned char> snodePubKey;
     {
         CServicenode * snode = mnodeman.Find(pksnode);
@@ -1382,43 +1459,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
 
         LOG() << "use service node " << HexStr(snodePubKey) << " " << __FUNCTION__;
     }
-
-    xbridge::App & xapp = xbridge::App::instance();
-
-    TransactionDescrPtr xtx = xapp.transaction(txid);
-    if (!xtx)
-    {
-        LOG() << "unknown transaction " << txid.ToString() << " " << __FUNCTION__;
-        return true;
-    }
-    if (!xtx->isLocal())
-    {
-        ERR() << "not local transaction " << txid.ToString() << " " << __FUNCTION__;
-        return true;
-    }
-    if (xtx->state >= TransactionDescr::trInitialized)
-    {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
-        return true;
-    }
-
-    if(xtx->id           != txid &&
-       xtx->from         != from &&
-       xtx->fromCurrency != fromCurrency &&
-       xtx->fromAmount   != fromAmount &&
-       xtx->to           != to &&
-       xtx->toCurrency   != toCurrency &&
-       xtx->toAmount     != toAmount)
-    {
-        LOG() << "not equal transaction body" << __FUNCTION__;
-        return true;
-    }
-
-    // store service node public key
-    xtx->sPubKey = std::vector<unsigned char>(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // acceptor fee
     uint256 feetxtd;
@@ -1529,7 +1569,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
     // transaction id
     uint256 id(packet->data()+40);
 
-    // opponent publick key
+    // opponent public key
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // TODO check fee transaction
@@ -1537,7 +1577,9 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
     TransactionPtr tr = e.transaction(id);
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "bad trader packet signature, received " << HexStr(pk1)
+               << " expected " << HexStr(tr->a_pk1()) << " or " << HexStr(tr->b_pk1()) << " "
+               << __FUNCTION__;
         return true;
     }
 
@@ -1637,14 +1679,18 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         ERR() << "not local transaction " << txid.GetHex() << " " << __FUNCTION__;
         return true;
     }
+    // Reject if snode key doesn't match original (prevent order manipulation)
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
+               << " but received pubkey " << HexStr(spubkey)
+               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
         return true;
     }
     if (xtx->role != 'A')
     {
-        ERR() << "recieved packet for wrong role, expected role A " << __FUNCTION__;
+        ERR() << "received packet for wrong role, expected role A " << __FUNCTION__;
         return true;
     }
 
@@ -1906,9 +1952,11 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 
     TransactionPtr tr = e.transaction(txid);
 
-    if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
+    std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(tr->a_pk1()))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "bad traderA packet signature, received " << HexStr(pk1)
+               << " expected " << HexStr(tr->a_pk1()) << " " << __FUNCTION__;
         return true;
     }
 
@@ -1997,9 +2045,13 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         ERR() << "not local transaction " << txid.GetHex() << " " << __FUNCTION__;
         return true;
     }
+    // Reject if snode key doesn't match original (prevent order manipulation)
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
+               << " but received pubkey " << HexStr(spubkey)
+               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
         return true;
     }
     if (binATxId.size() == 0)
@@ -2010,7 +2062,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     }
     if (xtx->role != 'B')
     {
-        ERR() << "recieved packet for wrong role, expected role B " << __FUNCTION__;
+        ERR() << "received packet for wrong role, expected role B " << __FUNCTION__;
         return true;
     }
     if(xtx->xPubKey.size() != 0)
@@ -2293,9 +2345,11 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
 
     TransactionPtr tr = e.transaction(txid);
 
-    if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
+    std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(tr->b_pk1()))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "bad traderB packet signature, received " << HexStr(pk1)
+               << " expected " << HexStr(tr->b_pk1()) << " " << __FUNCTION__;
         return true;
     }
 
@@ -2384,9 +2438,13 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         ERR() << "not local transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
     }
+    // Reject if servicenode key doesn't match original (prevent order manipulation)
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
+               << " but received pubkey " << HexStr(spubkey)
+               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
         return true;
     }
     if (xtx->state >= TransactionDescr::trCommited)
@@ -2471,13 +2529,13 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         if (errCode == -25)
         {
             // missing inputs, wait deposit tx
-            LOG() << "payment A not send, no deposit tx, move to pending";
+            LOG() << "payment A not sent, no deposit tx, move to pending";
 
             xapp.processLater(txid, packet);
             return true;
         }
 
-        LOG() << "payment A tx not send, transaction canceled " << __FUNCTION__;
+        LOG() << "payment A tx not sent, transaction canceled " << __FUNCTION__;
         sendCancelTransaction(xtx, crRpcError);
         return true;
     }
@@ -2536,9 +2594,11 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
 
     TransactionPtr tr = e.transaction(txid);
 
-    if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
+    std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(tr->a_pk1()))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "bad traderA packet signature, received " << HexStr(pk1)
+               << " expected " << HexStr(tr->a_pk1()) << " " << __FUNCTION__;
         return true;
     }
 
@@ -2630,9 +2690,13 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         ERR() << "not local transaction " << txid.GetHex() << " " << __FUNCTION__;
         return true;
     }
+    // Reject if servicenode key doesn't match original (prevent order manipulation)
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
+               << " but received pubkey " << HexStr(spubkey)
+               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
         return true;
     }
     if (xtx->state >= TransactionDescr::trCommited)
@@ -2708,13 +2772,13 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         {
             // missing inputs, wait deposit tx
             // move packet to pending
-            LOG() << "payment B not send, no deposit tx, move to pending";
+            LOG() << "payment B not sent, no deposit tx, move to pending";
 
             xapp.processLater(txid, packet);
             return true;
         }
 
-        LOG() << "payment B tx not send, transaction canceled " << __FUNCTION__;
+        LOG() << "payment B tx not sent, transaction canceled " << __FUNCTION__;
         sendCancelTransaction(xtx, crRpcError);
         return true;
     }
@@ -2770,9 +2834,11 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
 
     TransactionPtr tr = e.transaction(txid);
 
-    if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
+    std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(tr->b_pk1()))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        WARN() << "bad traderB packet signature, received " << HexStr(pk1)
+               << " expected " << HexStr(tr->b_pk1()) << " " << __FUNCTION__;
         return true;
     }
 
@@ -3202,9 +3268,11 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
         LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
     }
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        LOG() << "bad signature " << __FUNCTION__;
+        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
+               << " but received pubkey " << HexStr(spubkey) << " " << __FUNCTION__;
         return true;
     }
 

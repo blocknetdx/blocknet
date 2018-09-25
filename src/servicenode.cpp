@@ -350,7 +350,7 @@ std::string CServicenode::GetServices() const
 
     std::string result;
     for (const auto &service : services)
-        result += (result.length() > 0 ? "," : "") + service.first;
+        result += (result.length() > 0 ? "," : "") + service;
 
     return result;
 }
