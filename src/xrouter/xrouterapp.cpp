@@ -936,10 +936,16 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
                 bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, txid);
                 if (!res)
                     return "Failed to create payment channel";
-                this->paymentChannels[pnode] = txid;
+                this->paymentChannels[pnode] = std::pair<std::string, std::string>(txid, "");
             }
             
             // Submit payment via channel
+            double paid = 0.0;
+            if (this->paymentChannels[pnode].second != "") {
+                paid = getTxValue(this->paymentChannels[pnode].second, 1);
+            }
+            
+            
         }
     }
     

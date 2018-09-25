@@ -274,7 +274,12 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             }
             
             if (paymentChannels.count(node)) {
-                paymentChannels[node] = std::pair<std::string, double>(feetx, getTxValue(feetx));
+                double paid = getTxValue(feetx, 0);
+                if (paid - paymentChannels[node].second < fee) {
+                    LOG() << "Fee paid is not enough";
+                    return;
+                }
+                paymentChannels[node] = std::pair<std::string, double>(feetx, paid);
             }
         }
         

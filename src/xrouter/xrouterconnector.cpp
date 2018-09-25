@@ -420,7 +420,7 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     return sendTransactionBlockchain(raw_tx, txid);
 }
 
-double getTxValue(std::string rawtx) {
+double getTxValue(std::string rawtx, int vout_number) {
     const static std::string decodeCommand("decoderawtransaction");
     std::vector<std::string> params;
     params.push_back(rawtx);
@@ -433,8 +433,7 @@ double getTxValue(std::string rawtx) {
 
     Object obj = result.get_obj();
     Array vout = find_value(obj, "vout").get_array();
-    return find_value(vout[0].get_obj(), "value").get_real();
-    
+    return find_value(vout[vout_number].get_obj(), "value").get_real();    
 }
 
 } // namespace xrouter
