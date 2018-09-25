@@ -28,6 +28,8 @@ class XRouterServer
 
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
     
+    boost::container::map<CNode*, std::string > paymentChannels;
+    
 protected:
     /**
      * @brief Impl - default constructor, init
@@ -164,7 +166,7 @@ protected:
      * @param params plugin parameters
      * @return
      */
-    std::string processCustomCall(std::string name, std::vector<std::string> params, std::string feetx, bool local=false);
+    std::string processCustomCall(std::string name, std::vector<std::string> params);
 };
 
 } // namespace

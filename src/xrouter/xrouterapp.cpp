@@ -880,7 +880,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     if (this->xrouter_settings.hasPlugin(name)) {
         // Run the plugin locally
-        return server->processCustomCall(name, params, "", true);
+        return server->processCustomCall(name, params);
     }
     
     updateConfigs();

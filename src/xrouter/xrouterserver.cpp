@@ -239,6 +239,32 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         std::string feetx((const char *)packet->data()+offset);
         offset += feetx.size() + 1;
         
+        double fee = psettings.getFee();
+        if (fee > 0) {
+            if (!paymentChannels.count(node)) {
+                // There is no payment channel with this node
+                
+                if (feetx.find(";") != std::string::npos) {
+                    // Direct payment, no CLTV channel
+                    std::string txid;
+                    
+                    // TODO: verify the transaction correctness
+                    try {
+                        sendTransactionBlockchain(feetx, txid);
+                    } catch(...) {
+                        // TODO: return error message
+                        return;
+                    }
+                } else {
+                    // TODO: verify the channel's correctness
+                    
+                    paymentChannels[node] = feetx;
+                }
+            }
+            
+            
+        }
+        
         std::vector<std::string> params;
         int count = psettings.getMaxParamCount();
         std::string p;
@@ -248,7 +274,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             offset += p.size() + 1;
         }
         
-        reply = processCustomCall(currency, params, feetx);
+        reply = processCustomCall(currency, params);
     } else {
         std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
         double timeout = app.xrouter_settings.getCommandTimeout(packet->command(), currency);
@@ -524,28 +550,13 @@ std::string XRouterServer::processSendTransaction(XRouterPacketPtr packet, uint3
     return json_spirit::write_string(Value(result), true);
 }
 
-std::string XRouterServer::processCustomCall(std::string name, std::vector<std::string> params, std::string feetx, bool local)
+std::string XRouterServer::processCustomCall(std::string name, std::vector<std::string> params)
 {
     App& app = App::instance();    
     if (!app.xrouter_settings.hasPlugin(name))
         return "Custom call not found";
-
-    XRouterPluginSettings psettings = app.xrouter_settings.getPluginSettings(name);
-    double fee = psettings.getFee();
-    if (!local && (fee > 0)) {
-        if (feetx.find(";") != std::string::npos) {
-            // Direct payment, no CLTV channel
-            std::string txid;
-            try {
-                sendTransactionBlockchain(feetx, txid);
-            } catch(...) {
-                return "Invalid payment";
-            }
-        } else {
-            // Create CLTV channel
-        }
-    }
     
+    XRouterPluginSettings psettings = app.xrouter_settings.getPluginSettings(name);
     std::string callType = psettings.getParam("type");
     LOG() << "Plugin call " << name << " type = " << callType; 
     if (callType == "rpc") {
