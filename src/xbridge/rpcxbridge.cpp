@@ -244,7 +244,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
         throw runtime_error("dxGetOrderHistory (maker) (taker) (start time) (end time)"
                             " (granularity) (order_ids, default=false)[optional]\n"
                             " (with_inverse, default=false)[optional]\n"
-                            " (limit, default="+std::to_string(xQuery::IntervalLimit{}.count)+")[optional]\n"
+                            " (limit, default="+std::to_string(xQuery::IntervalLimit{}.count())+")[optional]\n"
                             "Returns the order history over a specified time interval."
                             " [start_time] and [end_time] are \n"
                             "in unix time seconds [granularity] in seconds of supported"
@@ -253,7 +253,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
                             " defaults to false (not showing ids).\n"
                             "[with_inverse] is a boolean, defaults to false (not aggregating inverse currency pair).\n"
                             "[limit] is the maximum number of intervals to return,"
-                            " default="+std::to_string(xQuery::IntervalLimit{}.count)+
+                            " default="+std::to_string(xQuery::IntervalLimit{}.count())+
                             " maximum="+std::to_string(xQuery::IntervalLimit::max())+".\n"
                             "[interval_timestamp] is one of [at_start | at_end], defaults to at_start (timestamp at start of the interval)[optional]\n"
                             );
@@ -265,7 +265,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
                                "(maker) (taker) (start time) (end time) (granularity) "
                                "(order_ids, default=false)[optional] "
                                "(with_inverse, default=false)[optional] "
-                               "(limit, default="+std::to_string(xQuery::IntervalLimit{}.count)+")[optional]"
+                               "(limit, default="+std::to_string(xQuery::IntervalLimit{}.count())+")[optional]"
                                "(interval_timestamp, one of [at_start | at_end])[optional] "
                                );
     const xQuery query{
@@ -281,7 +281,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             ? xQuery::WithInverse::Included
             : xQuery::WithInverse::Excluded,
         params.size() > 7
-            ? xQuery::IntervalLimit{params[7].get_uint64()}
+            ? xQuery::IntervalLimit{params[7].get_int()}
             : xQuery::IntervalLimit{},
         params.size() > 8
             ? xQuery::IntervalTimestamp{params[8].get_str()}

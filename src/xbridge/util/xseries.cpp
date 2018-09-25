@@ -104,7 +104,7 @@ xSeriesCache::getChainXAggregateSeries(const xQuery& query)
     const size_t query_seconds = q.period.length().total_seconds();
     const size_t granularity_seconds = q.granularity.total_seconds();
     const size_t num_intervals = std::min(query_seconds / granularity_seconds,
-                                          q.interval_limit.count);
+                                          static_cast<size_t>(q.interval_limit.count()));
     time_duration adjusted_duration = boost::posix_time::seconds{
         static_cast<long>(num_intervals * granularity_seconds)};
     q.period = time_period{q.period.end() - adjusted_duration, q.period.end()};
@@ -153,10 +153,10 @@ xSeriesCache::getXAggregateRange(const pairSymbol& key, const time_period& perio
     auto& q = getXAggregateContainer(key);
     auto low = std::lower_bound(q.begin(), q.end(), period.begin(),
                                    [](const xAggregate& a, const ptime& b) {
-                                       return a.end_time() <= b; });
+                                       return a.timeEnd <= b; });
     auto up = std::upper_bound(low, q.end(), period.end(),
                                 [](const ptime& period_end, const xAggregate& b) {
-                                   return period_end <= b.end_time(); });
+                                   return period_end <= b.timeEnd; });
     return {low, up};
 }
 

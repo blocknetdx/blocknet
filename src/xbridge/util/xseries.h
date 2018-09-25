@@ -10,8 +10,9 @@
 
 #include <cstdint>
 #include <deque>
-#include <unordered_map>
+#include <limits>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include "currencypair.h"
 #include "xutil.h"
@@ -33,26 +34,25 @@ public:
     enum class WithTxids { Excluded, Included };
     enum class WithInverse { Excluded, Included };
     enum class Transform { None, Invert };
-    enum class WithTimestamp { Invalid, AtStart, AtEnd };
     class IntervalLimit {
+        using value_type = int;
+        value_type limit{max()};
     public:
-        size_t count{10};
         IntervalLimit() = default;
-        IntervalLimit(size_t x) : count(x) {}
-        bool is_valid() const { return min() <= count && count <= max(); }
-        static inline constexpr size_t min() { return 1; }
-        static inline constexpr size_t max() { return 50; }
+        IntervalLimit(value_type x) : limit(x < min() || x > max() ? 0 : x) {}
+        value_type count() const { return limit; }
+        bool is_valid() const { return min() <= limit && limit <= max(); }
+        static inline constexpr value_type min() { return 1; }
+        static inline constexpr value_type max() { return std::numeric_limits<value_type>::max(); }
     };
     class IntervalTimestamp {
-        WithTimestamp where{WithTimestamp::AtStart};
+        enum { Invalid, AtStart, AtEnd } where { AtStart };
     public:
         IntervalTimestamp() = default;
         IntervalTimestamp(const std::string& x)
-            : where{ x == "at_start"
-                ? WithTimestamp::AtStart
-                : ( x == "at_end" ? WithTimestamp::AtEnd : WithTimestamp::Invalid )} {}
-        bool is_valid() const { return where != WithTimestamp::Invalid; }
-        bool at_start() const { return where == WithTimestamp::AtStart; }
+            : where{x == "at_start" ? AtStart : x == "at_end" ? AtEnd : Invalid} {}
+        bool is_valid() const { return where != Invalid; }
+        bool at_start() const { return where == AtStart; }
     };
 // variables
     std::string fromCurrency;
@@ -89,9 +89,7 @@ public:
         : (period.begin() < earliestTime()) ? "Start time too early."
         : (period.is_null()) ? "Start time >= end time."
         : (period.end() > oneDayFromNow) ? "Start/end times are too large."
-        : (not interval_limit.is_valid()) ? ("Given limit="
-                                             + std::to_string(interval_limit.count)
-                                             + " must be in range "+std::to_string(IntervalLimit::min())
+        : (not interval_limit.is_valid()) ? ("interval_limit must be in range "+std::to_string(IntervalLimit::min())
                                              +" to "+std::to_string(IntervalLimit::max())+".")
         : (not interval_timestamp.is_valid()) ? "interval_timestamp not one of { at_start, at_end }."
         : ""}
@@ -176,7 +174,6 @@ public:
 
     // accessors
     xAggregate inverse() const;
-    ptime end_time() const { return timeEnd; }
 
     // mutators
     void update(const xAggregate& x, xQuery::WithTxids);
