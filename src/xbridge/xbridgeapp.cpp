@@ -1685,17 +1685,8 @@ bool App::Impl::findNodeWithService(const std::set<std::string> & services,
 bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
                                 const std::vector<std::string> & services)
 {
-    if (!services.empty())
-    {
-        std::set<std::string> map1;
-        std::copy(services.begin(), services.end(), std::inserter(map1, map1.end()));
-
-        {
-            boost::mutex::scoped_lock l(m_xwalletsLocker);
-            m_xwallets[nodePubKey] = map1;
-        }
-    }
-
+    boost::mutex::scoped_lock l(m_xwalletsLocker);
+    m_xwallets[nodePubKey] = std::set<std::string>{services.begin(), services.end()};
     return true;
 }
 
