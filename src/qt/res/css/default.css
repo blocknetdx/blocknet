@@ -1914,3 +1914,18 @@ QGroupBox::title {
 	border: 2px solid #707780;
     color: #707780;
 }
+
+
+#labelBalancez, #labelTotalz {
+    font-size:40px;
+    
+   
+}
+
+#labelTotalz {
+    font-weight:bold;
+}
+
+#labelBalance, #labelUnconfirmed, #labelImmature, #labelLockedBalance, #labelTotal, #labelzBalanceMature, #labelzBalance{
+    font-size:24px;
+}

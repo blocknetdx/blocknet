@@ -188,6 +188,12 @@
                      <enum>QFrame::Raised</enum>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_5">
+                     <property name="spacing">
+                      <number>6</number>
+                     </property>
+                     <property name="sizeConstraint">
+                      <enum>QLayout::SetNoConstraint</enum>
+                     </property>
                      <item>
                       <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="0,0,0">
                        <item>
@@ -249,8 +255,11 @@
                      </item>
                      <item>
                       <layout class="QGridLayout" name="gridLayout_3">
-                       <property name="spacing">
+                       <property name="horizontalSpacing">
                         <number>12</number>
+                       </property>
+                       <property name="verticalSpacing">
+                        <number>0</number>
                        </property>
                        <item row="1" column="0">
                         <widget class="QLabel" name="labelBalanceTextz">
@@ -324,7 +333,7 @@
                          <property name="sizeHint" stdset="0">
                           <size>
                            <width>40</width>
-                           <height>20</height>
+                           <height>0</height>
                           </size>
                          </property>
                         </spacer>
@@ -402,8 +411,11 @@
                      </item>
                      <item>
                       <layout class="QGridLayout" name="gridLayout">
-                       <property name="spacing">
+                       <property name="horizontalSpacing">
                         <number>12</number>
+                       </property>
+                       <property name="verticalSpacing">
+                        <number>0</number>
                        </property>
                        <item row="0" column="1">
                         <widget class="QLabel" name="labelSpendable">
@@ -802,8 +814,11 @@
                      </item>
                      <item>
                       <layout class="QGridLayout" name="gridLayout_5">
-                       <property name="spacing">
+                       <property name="horizontalSpacing">
                         <number>12</number>
+                       </property>
+                       <property name="verticalSpacing">
+                        <number>0</number>
                        </property>
                        <item row="1" column="0">
                         <widget class="QLabel" name="labelzBalanceMatureText">
