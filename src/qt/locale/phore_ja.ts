@@ -1352,6 +1352,10 @@ Address: %4
         <translation>Form</translation>
     </message>
     <message>
+        <source>Masternodes</source>
+        <translation>マスターノード</translation>
+    </message>
+    <message>
         <source>My Masternodes</source>
         <translation>My Masternodes</translation>
     </message>
@@ -1938,16 +1942,56 @@ https://www.transifex.com/phore-project/phore-project-translations</translation>
 <context>
     <name>OverviewPage</name>
     <message>
-        <source>Form</source>
-        <translation>Form</translation>
+        <source>Overview</source>
+        <translation>概要</translation>
+    </message>
+    <message>
+        <source>Combined Balance (including unconfirmed and immature coins)</source>
+        <translation>合計の残高(未確認・未成熟を含む)</translation>
+    </message>
+    <message>
+        <source>Combined Balance</source>
+        <translation>合計の残高</translation>
+    </message>
+    <message>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Phore network after a connection is established, but this process has not completed yet.</source>
+        <translation>表示されている情報は最新ではありません。ネットワークへ接続され次第ウォレットは同期されますが、まだ未完了です。</translation>
+    </message>
+    <message>
+        <source>out of sync</source>
+        <translation>未同期</translation>
     </message>
     <message>
         <source>Available:</source>
-        <translation>利用可能:</translation>
+        <translation>利用可能な残高:</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
-        <translation>あなたの現在利用可能な残高です</translation>
+        <translation>現在の利用可能な残高</translation>
+    </message>
+    <message>
+        <source>Total:</source>
+        <translation>合計の残高:</translation>
+    </message>
+    <message>
+        <source>Total Balance, including all unavailable coins.</source>
+        <translation>利用不可能な通貨も含んだ、現在の合計の残高</translation>
+    </message>
+    <message>
+        <source>PHR Balance</source>
+        <translation>PHRの残高</translation>
+    </message>
+    <message>
+        <source>Spendable:</source>
+        <translation>利用可能な残高:</translation>
+    </message>
+    <message>
+        <source>Watch-only:</source>
+        <translation>Watch-onlyアドレスの残高:</translation>
+    </message>
+    <message>
+        <source>Your current balance in watch-only addresses</source>
+        <translation>watch-onlyアドレスの現在の残高</translation>
     </message>
     <message>
         <source>Pending:</source>
@@ -1958,6 +2002,10 @@ https://www.transifex.com/phore-project/phore-project-translations</translation>
         <translation>確認中・未確認のトランザクションの合計で、利用可能になっていない</translation>
     </message>
     <message>
+        <source>Unconfirmed transactions to watch-only addresses</source>
+        <translation>watch-onlyアドレスへの未確認のトランザクション</translation>
+    </message>
+    <message>
         <source>Immature:</source>
         <translation>未成熟:</translation>
     </message>
@@ -1966,269 +2014,42 @@ https://www.transifex.com/phore-project/phore-project-translations</translation>
         <translation>まだ未成熟なステーキング・マスターノード報酬</translation>
     </message>
     <message>
-        <source>Balances</source>
-        <translation>残高</translation>
-    </message>
-    <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Phore network after a connection is established, but this process has not completed yet.</source>
-        <translation>表示されている情報は最新ではありません。ネットワークへ接続され次第ウォレットは同期されますが、まだ未完了です。</translation>
-    </message>
-    <message>
-        <source>Unconfirmed transactions to watch-only addresses</source>
-        <translation>watch-onlyアドレスへの未確認のトランザクション</translation>
-    </message>
-    <message>
         <source>Staked or masternode rewards in watch-only addresses that has not yet matured</source>
         <translation>watch-onlyアドレスへの未成熟なステーキング・マスターノード報酬</translation>
-    </message>
-    <message>
-        <source>Total:</source>
-        <translation>合計:</translation>
-    </message>
-    <message>
-        <source>Your current total balance</source>
-        <translation>あなたの合計の残高</translation>
-    </message>
-    <message>
-        <source>Current total balance in watch-only addresses</source>
-        <translation>watch-only アドレスの合計残高</translation>
-    </message>
-    <message>
-        <source>Watch-only:</source>
-        <translation>チェックのみ:</translation>
-    </message>
-    <message>
-        <source>Your current balance in watch-only addresses</source>
-        <translation>watch-onlyアドレスの現在の残高</translation>
-    </message>
-    <message>
-        <source>Spendable:</source>
-        <translation>利用可能:</translation>
-    </message>
-    <message>
-        <source>Status:</source>
-        <translation>ステータス:</translation>
-    </message>
-    <message>
-        <source>Obfuscation Balance:</source>
-        <translation>Obfuscation Balance:</translation>
-    </message>
-    <message>
-        <source>0 PHR / 0 Rounds</source>
-        <translation>0 PHR / 0 Rounds</translation>
-    </message>
-    <message>
-        <source>Enabled/Disabled</source>
-        <translation>有効/無効</translation>
-    </message>
-    <message>
-        <source>Try to manually submit a Obfuscation request.</source>
-        <translation>Try to manually submit a Obfuscation request.</translation>
-    </message>
-    <message>
-        <source>Reset the current status of Obfuscation (can interrupt Obfuscation if it&apos;s in the process of Mixing, which can cost you money!)</source>
-        <translation>Reset the current status of Obfuscation (can interrupt Obfuscation if it&apos;s in the process of Mixing, which can cost you money!)</translation>
-    </message>
-    <message>
-        <source>Obfuscation</source>
-        <translation>Obfuscation</translation>
-    </message>
-    <message>
-        <source>Completion:</source>
-        <translation>Completion:</translation>
-    </message>
-    <message>
-        <source>Amount and Rounds:</source>
-        <translation>Amount and Rounds:</translation>
-    </message>
-    <message>
-        <source>Submitted Denom:</source>
-        <translation>Submitted Denom:</translation>
-    </message>
-    <message>
-        <source>n/a</source>
-        <translation>n/a</translation>
-    </message>
-    <message>
-        <source>Recent transactions</source>
-        <translation>Recent transactions</translation>
-    </message>
-    <message>
-        <source>Start/Stop Mixing</source>
-        <translation>Start/Stop Mixing</translation>
-    </message>
-    <message>
-        <source>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</source>
-        <translation>The denominations you submitted to the Masternode.&lt;br&gt;To mix, other users must submit the exact same denominations.</translation>
-    </message>
-    <message>
-        <source>(Last Message)</source>
-        <translation>(Last Message)</translation>
-    </message>
-    <message>
-        <source>Try Mix</source>
-        <translation>Try Mix</translation>
-    </message>
-    <message>
-        <source>Reset</source>
-        <translation>Reset</translation>
-    </message>
-    <message>
-        <source>out of sync</source>
-        <translation>out of sync</translation>
-    </message>
-    <message>
-        <source>Disabled</source>
-        <translation>無効</translation>
-    </message>
-    <message>
-        <source>No inputs detected</source>
-        <translation>No inputs detected</translation>
-    </message>
-    <message numerus="yes">
-        <source>%n Rounds</source>
-        <translation>
-            <numerusform>%n Round</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Not enough compatible inputs to anonymize &lt;span style=&apos;color:red;&apos;&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style=&apos;color:red;&apos;&gt;%2&lt;/span&gt; instead</source>
-        <translation>Not enough compatible inputs to anonymize &lt;span style=&apos;color:red;&apos;&gt;%1&lt;/span&gt;,&lt;br&gt;will anonymize &lt;span style=&apos;color:red;&apos;&gt;%2&lt;/span&gt; instead</translation>
-    </message>
-    <message>
-        <source>Overall progress</source>
-        <translation>Overall progress</translation>
-    </message>
-    <message>
-        <source>Denominated</source>
-        <translation>Denominated</translation>
-    </message>
-    <message>
-        <source>Anonymized</source>
-        <translation>Anonymized</translation>
-    </message>
-    <message numerus="yes">
-        <source>Denominated inputs have %5 of %n rounds on average</source>
-        <translation>
-            <numerusform>Denominated inputs have %5 of %n rounds on average</numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Last Obfuscation message:
-</source>
-        <translation>Last Obfuscation message:
-</translation>
-    </message>
-    <message>
-        <source>Obfuscation was successfully reset.</source>
-        <translation>Obfuscation was successfully reset.</translation>
-    </message>
-    <message>
-        <source>If you don&apos;t want to see internal Obfuscation fees/transactions select &quot;Most Common&quot; as Type on the &quot;Transactions&quot; tab.</source>
-        <translation>If you don&apos;t want to see internal Obfuscation fees/transactions select &quot;Most Common&quot; as Type on the &quot;Transactions&quot; tab.</translation>
-    </message>
-    <message>
-        <source>Obfuscation requires at least %1 to use.</source>
-        <translation>Obfuscation requires at least %1 to use.</translation>
-    </message>
-    <message>
-        <source>Wallet is locked and user declined to unlock. Disabling Obfuscation.</source>
-        <translation>Wallet is locked and user declined to unlock. Disabling Obfuscation.</translation>
-    </message>
-    <message>
-        <source>Found enough compatible inputs to anonymize %1</source>
-        <translation>Found enough compatible inputs to anonymize %1</translation>
-    </message>
-    <message>
-        <source>Start Obfuscation</source>
-        <translation>Start Obfuscation</translation>
-    </message>
-    <message>
-        <source>Stop Obfuscation</source>
-        <translation>Stop Obfuscation</translation>
-    </message>
-    <message>
-        <source>Mixed</source>
-        <translation>Mixed</translation>
-    </message>
-    <message>
-        <source>Enabled</source>
-        <translation>有効</translation>
-    </message>
-    <message>
-        <source>N/A</source>
-        <translation>N/A</translation>
-    </message>
-    <message>
-        <source>PHR Balances</source>
-        <translation>PHRの残高</translation>
-    </message>
-    <message>
-        <source>Combined Balances (including unconfirmed and immature coins)</source>
-        <translation>合計の残高(未確認・未成熟を含む)</translation>
-    </message>
-    <message>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Combined Balances&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;合計の残高&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
-    </message>
-    <message>
-        <source>Total Balance, including unconfirmed and immature coins.</source>
-        <translation>未確認・未成熟を含んだ全残高。</translation>
-    </message>
-    <message>
-        <source>PHR:</source>
-        <translation>PHR:</translation>
-    </message>
-    <message>
-        <source>zPHR:</source>
-        <translation>zPHR:</translation>
-    </message>
-    <message>
-        <source>Current percentage of zPHR.
-If AutoMint is enabled this percentage will settle around the configured AutoMint percentage (default = 10%)</source>
-        <translation>現在のzPHRの総所持数への比率。自動変換を有効にしている場合、その比率前後になっています。(デフォルト=10%)</translation>
-    </message>
-    <message>
-        <source>0 %</source>
-        <translation>0 %</translation>
     </message>
     <message>
         <source>Locked PHR or Masternode collaterals. These are excluded from zPHR minting.</source>
         <translation>ロックされたPHR・マスターノードの担保。zPHRの変換対象から除外されます。</translation>
     </message>
     <message>
-        <source>0.000 000 00 PHR</source>
-        <translation>0 PHR {0.000 000 00 ?}</translation>
-    </message>
-    <message>
         <source>Locked:</source>
         <translation>ロック済:</translation>
     </message>
     <message>
-        <source>Unlocked PHRs. These can be used for zPHR minting.</source>
-        <translation>未ロックのPHR。zPHRへの変換に利用可能です。</translation>
+        <source>Current locked balance in watch-only addresses</source>
+        <translation>現在watch-onlyアドレスにロックされている残高</translation>
     </message>
     <message>
-        <source>Unlocked:</source>
-        <translation>未ロック:</translation>
+        <source>Balances</source>
+        <translation>残高</translation>
     </message>
     <message>
-        <source>Zerocoin Balance</source>
-        <translation>ゼロコイン残高</translation>
+        <source>Current total balance in watch-only addresses</source>
+        <translation>watch-only アドレスの合計残高</translation>
+    </message>
+    <message>
+        <source>Your current Phore balance, unconfirmed and immature transactions included</source>
+        <translation>未承認・未成熟の送金を含んだ現在のPhoreの残高</translation>
+    </message>
+    <message>
+        <source>zPHR Balance</source>
+        <translation>zPHRの残高</translation>
     </message>
     <message>
         <source>Mature: more than 20 confirmation and more than 3 mints of the same denomination after it was minted.
 These zPHR are spendable.</source>
         <translation>成熟: 20確認と同じdenominationでの3変換が必要です。
 その後zPHRは使用可能になります。</translation>
-    </message>
-    <message>
-        <source>Mature:</source>
-        <translation>成熟:</translation>
-    </message>
-    <message>
-        <source>All available zPHR, unconfirmed and immature zPHR included.</source>
-        <translation>全zPHRの合計。未確認・未成熟のzPHRを含みます。</translation>
     </message>
     <message>
         <source>Unconfirmed: less than 20 confirmations
@@ -2238,29 +2059,19 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Unconfirmed:</source>
-        <translation>未確認:</translation>
+        <translation>未確認残高:</translation>
     </message>
     <message>
-        <source>Current percentage of zPHR.
-If AutoMint is enabled this percentage will settle around the configured AutoMint percentage (default = 10%).
-</source>
-        <translation>現在の所持数とzPHRの比率です。
-自動変換が有効であれば指定された比率程度になります (デフォルト = 10%)。
-</translation>
+        <source>Your current zPHR balance, unconfirmed and immature zPHR included.</source>
+        <translation>未承認・未成熟の送金を含んだ現在のzPHR残高</translation>
     </message>
     <message>
-        <source>AutoMint is currently enabled and set to </source>
-        <translation>自動変換は有効です </translation>
+        <source>Recent transactions</source>
+        <translation>最近の送金履歴</translation>
     </message>
     <message>
-        <source>To disable AutoMint delete set &apos;enablezeromint=1&apos; to &apos;enablezeromint=0&apos; in phore.conf.</source>
-        <translation>自動変換を無効化するには、phore.conf の中の &apos;enablezeromint=1&apos; を &apos;enablezeromint=0&apos; へ変えてください。</translation>
-    </message>
-    <message>
-        <source>AutoMint is currently disabled.
-To enable AutoMint add &apos;enablezeromint=1&apos; in phore.conf</source>
-        <translation>自動変換は現在無効です。
-自動変換を有効化して、phore.conf の中の &apos;enablezeromint=1&apos; を追記してください</translation>
+        <source>(out of sync)</source>
+        <translation>(未同期)</translation>
     </message>
 </context>
 <context>
@@ -2793,6 +2604,10 @@ To enable AutoMint add &apos;enablezeromint=1&apos; in phore.conf</source>
 <context>
     <name>ReceiveCoinsDialog</name>
     <message>
+        <source>Receive</source>
+        <translation>受け取り</translation>
+    </message>
+    <message>
         <source>Reuse one of the previously used receiving addresses.&lt;br&gt;Reusing addresses has security and privacy issues.&lt;br&gt;Do not use this unless re-generating a payment request made before.</source>
         <translation>既にあるアドレスを用いて受け取りをします。&lt;br&gt;セキュリティ・匿名性の問題がありますので、再利用は既存の支払いリクエストのみにしてください。</translation>
     </message>
@@ -2815,6 +2630,10 @@ To enable AutoMint add &apos;enablezeromint=1&apos; in phore.conf</source>
     <message>
         <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Phore network.</source>
         <translation>支払いリクエストに紐づくメッセージで、リクエストを開いた際に表示されます。 &lt;br&gt;注:支払い時に表示されるメッセージではありません。</translation>
+    </message>
+    <message>
+        <source>An optional message to attach to the payment request.</source>
+        <translation>支払いリクエストに紐付けるメッセージ</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -2965,6 +2784,10 @@ To enable AutoMint add &apos;enablezeromint=1&apos; in phore.conf</source>
 </context>
 <context>
     <name>SendCoinsDialog</name>
+    <message>
+        <source>Send</source>
+        <translation>送金</translation>
+    </message>
     <message>
         <source>Send Coins</source>
         <translation>コインの送金</translation>
@@ -4030,7 +3853,7 @@ To enable AutoMint add &apos;enablezeromint=1&apos; in phore.conf</source>
     </message>
     <message>
         <source>Most Common</source>
-        <translation>一般の</translation>
+        <translation>一般</translation>
     </message>
     <message>
         <source>Received with</source>
@@ -4224,6 +4047,10 @@ To enable AutoMint add &apos;enablezeromint=1&apos; in phore.conf</source>
 </context>
 <context>
     <name>WalletView</name>
+    <message>
+        <source>Transactions</source>
+        <translation>トランザクション</translation>
+    </message>
     <message>
         <source>&amp;Export</source>
         <translation>&amp;エクスポート</translation>
@@ -5752,6 +5579,18 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
 <context>
     <name>PrivacyDialog</name>
     <message>
+        <source>Privacy</source>
+        <translation>プライバシー</translation>
+    </message>
+    <message>
+        <source>zPHR Control</source>
+        <translation>zPHR コントロール</translation>
+    </message>
+    <message>
+        <source>zPHR Selected:</source>
+        <translation>選択された zPHR:</translation>
+    </message>
+    <message>
         <source>PHR which were anonymized via Zerocin Protocol</source>
         <translation>ゼロコインプロトコルにより匿名化されるPHR</translation>
     </message>
@@ -5818,10 +5657,6 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     <message>
         <source>zPhr Control</source>
         <translation>zPHR コントロール</translation>
-    </message>
-    <message>
-        <source>zPhr Selected:</source>
-        <translation>選択された zPHR:</translation>
     </message>
     <message>
         <source>Quantity Selected:</source>
@@ -5900,6 +5735,10 @@ zPHR are mature when they have more than 20 confirmations AND more than 2 mints 
     <message>
         <source>Minimize Change</source>
         <translation>お釣りの最小化</translation>
+    </message>
+    <message>
+        <source>Global Supply:</source>
+        <translation>全体の流通枚数:</translation>
     </message>
     <message>
         <source>Zerocoin Stats:</source>
@@ -6038,6 +5877,30 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
     <message>
         <source>Change:</source>
         <translation>お釣り:</translation>
+    </message>
+    <message>
+        <source>AutoMint Status</source>
+        <translation>自動ミントのステータス</translation>
+    </message>
+    <message>
+        <source>Show the current status of automatic zPHR minting.
+
+To change the status (restart required):
+- enable: add &apos;enablezeromint=1&apos; to phore.conf
+- disable: add &apos;enablezeromint=0&apos; to phore.conf
+
+To change the percentage (no restart required):
+- menu Settings-&gt;Options-&gt;Percentage of autominted zPHR
+
+</source>
+        <translation>現在の自動zPHRミンティング設定について表しています。
+
+再起動が必要ですが、設定を変更するには:
+- 有効化: &apos;enablezeromint=1&apos; を phore.conf へ追記
+- 無効化: &apos;enablezeromint=0&apos; を phore.conf へ追記
+
+変換する割合を変更するには(再起動は必要ありません):
+- メニューの設定-&gt;オプション-&gt;zPHRの自動ミントの割合 より変更</translation>
     </message>
 </context>
 <context>
@@ -6181,6 +6044,160 @@ Please be patient after clicking import.</source>
     <message>
         <source>Sign with only private keys (Not Recommened)</source>
         <translation>プライベートキーのみで署名(非推奨)</translation>
+    </message>
+</context>
+<context>
+    <name>ProposalList</name>
+    <message>
+        <source>Enter proposal name</source>
+        <translation>予算案名を入力</translation>
+    </message>
+    <message>
+        <source>Min amount</source>
+        <translation>最小枚数</translation>
+    </message>
+    <message>
+        <source>Start Block</source>
+        <translation>開始ブロック</translation>
+    </message>
+    <message>
+        <source>End Block</source>
+        <translation>終了ブロック</translation>
+    </message>
+    <message>
+        <source>Min yes votes</source>
+        <translation>最小賛成投票数</translation>
+    </message>
+    <message>
+        <source>Min no votes</source>
+        <translation>最小反対投票数</translation>
+    </message>
+    <message>
+        <source>Min abstain votes</source>
+        <translation>最小保留投票数</translation>
+    </message>
+    <message>
+        <source>Min percentage</source>
+        <translation>最小賛成比率</translation>
+    </message>
+    <message>
+        <source>Proposals</source>
+        <translation>予算案</translation>
+    </message>
+    <message>
+        <source>Vote Yes</source>
+        <translation>賛成に投票</translation>
+    </message>
+    <message>
+        <source>Vote Yes on the selected proposal</source>
+        <translation>選択した予算案に賛成する</translation>
+    </message>
+    <message>
+        <source>Vote Abstain</source>
+        <translation>保留に投票</translation>
+    </message>
+    <message>
+        <source>Vote Abstain on the selected proposal</source>
+        <translation>選択した予算案を保留する</translation>
+    </message>
+    <message>
+        <source>Vote No</source>
+        <translation>反対に投票</translation>
+    </message>
+    <message>
+        <source>Vote No on the selected proposal</source>
+        <translation>選択した予算案に反対する</translation>
+    </message>
+    <message>
+        <source>Vote yes</source>
+        <translation>賛成に投票</translation>
+    </message>
+    <message>
+        <source>Vote abstain</source>
+        <translation>保留に投票</translation>
+    </message>
+    <message>
+        <source>Vote no</source>
+        <translation>反対に投票</translation>
+    </message>
+    <message>
+        <source>Visit proposal website</source>
+        <translation>予算案のウェブサイトを閲覧</translation>
+    </message>
+    <message>
+        <source>List will be updated in %1 %2</source>
+        <translation>%1 %2中にリストは更新されます</translation>
+    </message>
+    <message>
+        <source>List will be updated in 0 second(s)</source>
+        <translation>リストは0秒以内に更新されます</translation>
+    </message>
+    <message>
+        <source>Confirm vote</source>
+        <translation>投票の確認</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to vote &lt;strong&gt;%1&lt;/strong&gt; on the proposal &lt;strong&gt;%2&lt;/strong&gt;?</source>
+        <translation>予算案 &lt;strong&gt;%2&lt;/strong&gt;において&lt;strong&gt;%1&lt;/strong&gt;に投票しますか?</translation>
+    </message>
+    <message>
+        <source>Voting</source>
+        <translation>投票中</translation>
+    </message>
+    <message>
+        <source>You voted %1 %2 time(s) successfully and failed %3 time(s) on %4</source>
+        <translation>予算案%4 で %1 に%2 回投票成功し、%3 回投票失敗しました</translation>
+    </message>
+</context>
+<context>
+    <name>ProposalTableModel</name>
+    <message>
+        <source>Proposal</source>
+        <translation>予算案</translation>
+    </message>
+    <message>
+        <source>Amount</source>
+        <translation>枚数</translation>
+    </message>
+    <message>
+        <source>Start Date</source>
+        <translation>開始ブロック</translation>
+    </message>
+    <message>
+        <source>End Date</source>
+        <translation>終了ブロック</translation>
+    </message>
+    <message>
+        <source>Proposal Name</source>
+        <translation>予算案名</translation>
+    </message>
+    <message>
+        <source>Date and time that the proposal starts.</source>
+        <translation>予算案の執行開始ブロック</translation>
+    </message>
+    <message>
+        <source>Date and time that the proposal ends.</source>
+        <translation>予算案の執行終了ブロック</translation>
+    </message>
+    <message>
+        <source>Obtained yes votes.</source>
+        <translation>賛成投票数を取得</translation>
+    </message>
+    <message>
+        <source>Obtained no votes.</source>
+        <translation>反対投票数を取得</translation>
+    </message>
+    <message>
+        <source>Obtained abstain votes.</source>
+        <translation>保留投票数を取得</translation>
+    </message>
+    <message>
+        <source>Proposed amount.</source>
+        <translation>予算案の要求枚数</translation>
+    </message>
+    <message>
+        <source>Current vote percentage.</source>
+        <translation>現在の投票率</translation>
     </message>
 </context>
 </TS>
