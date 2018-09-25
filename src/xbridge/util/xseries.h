@@ -16,17 +16,11 @@
 #include "currencypair.h"
 #include "xutil.h"
 
-#include "json/json_spirit_utils.h"
-#include "json/json_spirit_value.h"
-
 using boost::posix_time::ptime;
 using boost::posix_time::time_period;
 using boost::posix_time::time_duration;
 using boost::posix_time::from_time_t;
 using boost::posix_time::to_time_t;
-using json_spirit::Object;
-using ObjectValue  = Object::value_type;
-using ObjectIL = std::initializer_list<ObjectValue>;
 
 /**
  * @brief validate and hold parameters used by dxGetOrderHistory() and others
@@ -39,6 +33,7 @@ public:
     enum class WithTxids { Excluded, Included };
     enum class WithInverse { Excluded, Included };
     enum class Transform { None, Invert };
+    enum class WithTimestamp { Invalid, AtStart, AtEnd };
     class IntervalLimit {
     public:
         size_t count{10};
@@ -48,6 +43,17 @@ public:
         static inline constexpr size_t min() { return 1; }
         static inline constexpr size_t max() { return 50; }
     };
+    class IntervalTimestamp {
+        WithTimestamp where{WithTimestamp::AtStart};
+    public:
+        IntervalTimestamp() = default;
+        IntervalTimestamp(const std::string& x)
+            : where{ x == "at_start"
+                ? WithTimestamp::AtStart
+                : ( x == "at_end" ? WithTimestamp::AtEnd : WithTimestamp::Invalid )} {}
+        bool is_valid() const { return where != WithTimestamp::Invalid; }
+        bool at_start() const { return where == WithTimestamp::AtStart; }
+    };
 // variables
     std::string fromCurrency;
     std::string toCurrency;
@@ -56,6 +62,7 @@ public:
     WithTxids with_txids;
     WithInverse with_inverse;
     IntervalLimit interval_limit;
+    IntervalTimestamp interval_timestamp;
     std::string reason;
 
 // constructors
@@ -67,7 +74,8 @@ public:
            int64_t end_time,
            WithTxids with_txids,
            WithInverse with_inverse,
-           IntervalLimit limit
+           IntervalLimit limit,
+           IntervalTimestamp interval_timestamp
         )
         : fromCurrency{fc}, toCurrency{tc}
         , granularity{validate_granularity(g)}
@@ -75,6 +83,7 @@ public:
         , with_txids{with_txids}
         , with_inverse{with_inverse}
         , interval_limit{limit}
+        , interval_timestamp{interval_timestamp}
         , reason{(not is_valid_granularity(granularity)) ? ("granularity=" +std::to_string(g)
                                                         + " must be one of: " + supported_seconds_csv())
         : (period.begin() < earliestTime()) ? "Start time too early."
@@ -84,6 +93,7 @@ public:
                                              + std::to_string(interval_limit.count)
                                              + " must be in range "+std::to_string(IntervalLimit::min())
                                              +" to "+std::to_string(IntervalLimit::max())+".")
+        : (not interval_timestamp.is_valid()) ? "interval_timestamp not one of { at_start, at_end }."
         : ""}
     {}
 
