@@ -255,6 +255,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
                             "[limit] is the maximum number of intervals to return,"
                             " default="+std::to_string(xQuery::IntervalLimit{}.count)+
                             " maximum="+std::to_string(xQuery::IntervalLimit::max())+".\n"
+                            "[interval_timestamp] is one of [at_start | at_end], defaults to at_start (timestamp at start of the interval)[optional]\n"
                             );
     }
 
@@ -265,6 +266,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
                                "(order_ids, default=false)[optional] "
                                "(with_inverse, default=false)[optional] "
                                "(limit, default="+std::to_string(xQuery::IntervalLimit{}.count)+")[optional]"
+                               "(interval_timestamp, one of [at_start | at_end])[optional] "
                                );
     const xQuery query{
         params[0].get_str(),    // maker
@@ -280,7 +282,10 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             : xQuery::WithInverse::Excluded,
         params.size() > 7
             ? xQuery::IntervalLimit{params[7].get_uint64()}
-            : xQuery::IntervalLimit{}
+            : xQuery::IntervalLimit{},
+        params.size() > 8
+            ? xQuery::IntervalTimestamp{params[8].get_str()}
+            : xQuery::IntervalTimestamp{}
     };
 
     if (query.error())
@@ -293,10 +298,13 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 
         //--Serialize result
         Array arr{};
+        const time_duration offset = query.interval_timestamp.at_start()
+            ? query.granularity
+            : boost::posix_time::seconds{0};
         for (const auto& x : result) {
             double volume = util::xBridgeValueFromAmount(x.toVolume);
             Array ohlc{
-                ArrayIL{util::iso8601(x.timeEnd), x.low, x.high, x.open, x.close, volume}
+                ArrayIL{util::iso8601(x.timeEnd - offset), x.low, x.high, x.open, x.close, volume}
             };
             if (query.with_txids == xQuery::WithTxids::Included) {
                 Array orderIds{};
