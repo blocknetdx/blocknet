@@ -274,8 +274,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             }
             
             if (paymentChannels.count(node)) {
-                paymentChannels[node] = std::pair<std::string, double>(feetx, 0.0);
-                
+                paymentChannels[node] = std::pair<std::string, double>(feetx, getTxValue(feetx));
             }
         }
         

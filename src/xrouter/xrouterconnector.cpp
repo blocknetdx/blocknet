@@ -420,4 +420,21 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     return sendTransactionBlockchain(raw_tx, txid);
 }
 
+double getTxValue(std::string rawtx) {
+    const static std::string decodeCommand("decoderawtransaction");
+    std::vector<std::string> params;
+    params.push_back(rawtx);
+
+    Value result = tableRPC.execute(decodeCommand, RPCConvertValues(decodeCommand, params));
+    if (result.type() != obj_type)
+    {
+        throw std::runtime_error("Decode transaction command finished with error");
+    }
+
+    Object obj = result.get_obj();
+    Array vout = find_value(obj, "vout").get_array();
+    return find_value(vout[0].get_obj(), "value").get_real();
+    
+}
+
 } // namespace xrouter
