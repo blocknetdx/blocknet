@@ -256,13 +256,27 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                         return;
                     }
                 } else {
+                    std::vector<std::string> parts;
+                    boost::split(parts, feetx, boost::is_any_of(";"));
+                    if (parts.size() != 3) {
+                        LOG() << "Incorrect channel creation parameters";
+                        return;
+                    }
+                    
+                    std::string channeltx = parts[0];
+                    std::string channeltxid = parts[1];
+                    feetx = parts[2];
+                    
                     // TODO: verify the channel's correctness
                     
-                    paymentChannels[node] = feetx;
+                    paymentChannels[node] = std::pair<std::string, double>("", 0.0);
                 }
             }
             
-            
+            if (paymentChannels.count(node)) {
+                paymentChannels[node] = std::pair<std::string, double>(feetx, 0.0);
+                
+            }
         }
         
         std::vector<std::string> params;

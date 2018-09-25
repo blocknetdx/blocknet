@@ -28,7 +28,7 @@ class XRouterServer
 
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
     
-    boost::container::map<CNode*, std::string > paymentChannels;
+    boost::container::map<CNode*, std::pair<std::string, double> > paymentChannels;
     
 protected:
     /**
