@@ -84,7 +84,6 @@
         <file alias="walletFrame">res/images/walletFrame.png</file>
         <file alias="splash">res/images/splash.svg</file>
         <file alias="splash_testnet">res/images/splash_testnet.png</file>
-
     </qresource>
     <qresource prefix="/movies">
         <file alias="spinner-000">res/movies/spinner-000.svg</file>
