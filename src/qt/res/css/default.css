@@ -128,15 +128,21 @@ QTabBar::tab:hover:!selected {
 }
 QTabBar::tab {
     color:#fff;
+    border-top-color:transparent;
+    border-left-color:transparent;
+    border-right-color:transparent;
 }
 QTabBar::tab:selected {
     border-bottom: 3px solid #00d188;
     background-color:transparent;
 }
+QTabBar::tab:pressed {
+    outline:0;
+}
 QWidget {
 	selection-background-color: #313d4b;
 	/* Object highlight color */
-	selection-color: #fff;
+	selection-color: transparent;
 	outline: 0;
 	/* Remove Annoying Focus Rectangle */
 }
@@ -340,7 +346,8 @@ QAbstractSpinBox::down-arrow {
 QHeaderView {
 	/* Table Header */
 	background-color: transparent;
-	outline: 0;
+    outline: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 QHeaderView::section {
 	/* Table Header Sections */
@@ -386,7 +393,7 @@ QTableView::item,
 	color: white;
 	border: 0;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-	border-top: 1px solid rgba(255, 255, 255, 0.05);
+	/* border-top: 1px solid rgba(255, 255, 255, 0.05); */
 	padding-right: 12px;
 	qproperty-alignment: 'AlignLeft';
 	text-align: left;
@@ -786,14 +793,14 @@ QWidget#PrivacyDialog QPushButton {
 	padding-bottom: 5px;
 }
 QWidget#PrivacyDialog QPushButton:hover {
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #01906E, stop: .1 #01905E, stop: .95 #01905E, stop: 1 #00CD8D);
+	/* background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #01906E, stop: .1 #01905E, stop: .95 #01905E, stop: 1 #00CD8D); */
 }
 QWidget#PrivacyDialog QPushButton:focus {
-	border: none;
-	outline: none;
+	/* border: none;
+	outline: none; */
 }
 QWidget#PrivacyDialog QPushButton:pressed {
-	border: 1px solid #333;
+	/* border: 1px solid #333; */
 }
 QWidget#PrivacyDialog QProgressBar#obfuscationProgress {
 	/* Obfuscation Completion */
@@ -803,6 +810,7 @@ QWidget#PrivacyDialog QProgressBar#obfuscationProgress {
 	text-align: right;
 	color: #818181;
 }
+
 QWidget#PrivacyDialog QProgressBar#obfuscationProgress::chunk {
 	background-color: #00A56C;
 	width: 1px;
@@ -1325,12 +1333,7 @@ QDialog#SendCoinsDialog .QFrame#frameCoinControl > .QLabel {
 	/* Default Font Color and  Size */
 	font-weight: normal;
 }
-QDialog#SendCoinsDialog .QFrame#frameCoinControl .QPushButton#pushButtonCoinControl {
-	/* Coin Control Inputs Button */
-	/* padding-left:10px;
-padding-right:10px;
-min-height:25px; */
-}
+
 QDialog#SendCoinsDialog .QFrame#frameCoinControl .QLabel#labelCoinControlFeatures {
 	/* Coin Control Header */
 	color: #00A56C;
@@ -1412,8 +1415,8 @@ QDialog#SendCoinsDialog .QCheckBox#checkUseObfuscation {
 }
 QDialog#SendCoinsDialog .QCheckBox#checkSwiftTX {
 	/* SwiftTX Checkbox */
-	color: #616161;
-	font-weight: bold;
+	color: #fff;
+	font-weight: normal;
 	background: transparent;
 	/*background: qradialgradient(cx:0.5, cy:0.5, radius: 0.5, fx:0.5, fy:0.5, stop:0 rgba(248, 246, 246, 128), stop: 1 rgba(0, 0, 0, 0));*/
 	border-radius: 5px;
@@ -1737,7 +1740,8 @@ background-color:#fff;
 
 QWidget#PrivacyDialog .QFrame[frameShape="4"] {
 	/* QFrame::HLine == 0x0004 */
-	border: 1px solid #372f44;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    
 }
 QWidget#PrivacyDialog .QFrame#frame_Content {
 	background-color: transparent;
@@ -1875,6 +1879,38 @@ AmountSpinBox::down-arrow {
     background-color:transparent;
 }
 
-#TEMintStatus {
+#TEMintStatus, #labelExplanation, #labelSmartFee2, #labelFeeEstimation {
     color: #747c83;
+}
+
+#labelSmartFee3, #labelForBalance, #labelCoinControlQuantityText, #labelCoinControlAmountText, #labelzPHRSelected, #labelQuantitySelected, #labelzPHRBalanceText, #labelSecurityLevel, #labelzAvailableText, #labelZsupplyText, #labelzPHRAmountText, #labelBalanceTextz, #labelTotalTextz, #labelBalanceText, #labelPendingText, #labelImmatureText, #labelLockedBalanceText, #labelTotalText, #labelzBalanceMatureText, #labelzBalanceUnconfirmedText, #labelzBalanceImmatureText, #labelzBalanceText {
+    font-weight:bold;
+}
+
+
+QPushButton#pushButtonSpentReset, QPushButton#pushButtonMintReset {
+    /* background-color: transparent; */
+	border: 2px solid #707780;
+    color: #707780;
+    border-radius:0px;
+    padding-left: 20px;
+	padding-right: 20px;
+}
+
+
+QGroupBox {
+    margin-top: 6px;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    padding: 0px 5px 20px 0px;
+    font-size:18px;
+}
+
+
+#resetButton, #cancelButton {
+    background-color: transparent;
+	border: 2px solid #707780;
+    color: #707780;
 }

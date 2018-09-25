@@ -44,9 +44,14 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
     QString font = QApplication::font().toString();
 
     // load the bitmap for writing some text over it
+    
     pixmap = networkStyle->getSplashImage();
+    pixmap = pixmap.scaled(QSize(400,400), Qt::KeepAspectRatio,Qt::SmoothTransformation);
+    
 
     QPainter pixPaint(&pixmap);
+    pixPaint.setRenderHint(QPainter::Antialiasing);
+    pixPaint.setRenderHint(QPainter::HighQualityAntialiasing);
     pixPaint.setPen(QColor(100, 100, 100));
 
     // check font size and drawing with
