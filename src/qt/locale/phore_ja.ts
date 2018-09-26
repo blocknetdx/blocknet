@@ -626,6 +626,14 @@
         <translation>マスターノードを参照</translation>
     </message>
     <message>
+        <source>&amp;Proposals</source>
+        <translation>&amp;予算案</translation>
+    </message>
+    <message>
+        <source>Browse proposals</source>
+        <translation>予算案を参照</translation>
+    </message>
+    <message>
         <source>&amp;About Phore Core</source>
         <translation>&amp;Phore コアについて</translation>
     </message>
@@ -3428,19 +3436,19 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>conflicted</source>
-        <translation>矛盾</translation>
+        <translation>チェーン分岐の矛盾</translation>
     </message>
     <message>
         <source>%1/offline (verified via swifttx)</source>
-        <translation>%1/オフライン (swifttxにより確認)</translation>
+        <translation>%1/オフライン (swifttxにより承認済)</translation>
     </message>
     <message>
         <source>%1/confirmed (verified via swifttx)</source>
-        <translation>%1/確認済み (swifttxにより確認)</translation>
+        <translation>%1/確認済み (swifttxにより承認済)</translation>
     </message>
     <message>
         <source>%1 confirmations (verified via swifttx)</source>
-        <translation>%1 確認 (swifttxにより確認)</translation>
+        <translation>%1 確認 (swifttxにより承認済)</translation>
     </message>
     <message>
         <source>%1/offline</source>
@@ -3456,23 +3464,23 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>%1/offline (SwiftTX verification in progress - %2 of %3 signatures)</source>
-        <translation>%1/オフライン (SwiftTX verification in progress - %2 of %3 signatures)</translation>
+        <translation>%1/オフライン (SwiftTX 承認作業中 - 必要数%3 中%2 署名済)</translation>
     </message>
     <message>
         <source>%1/confirmed (SwiftTX verification in progress - %2 of %3 signatures )</source>
-        <translation>%1/確認済み (SwiftTX verification in progress - %2 of %3 signatures )</translation>
+        <translation>%1/確認済み (SwiftTX 承認作業中 - 必要数%3 中%2 署名済)</translation>
     </message>
     <message>
         <source>%1 confirmations (SwiftTX verification in progress - %2 of %3 signatures)</source>
-        <translation>%1 確認 (SwiftTX verification in progress - %2 of %3 signatures)</translation>
+        <translation>%1 確認 (SwiftTX 承認作業中 - 必要数%3 中%2 署名済)</translation>
     </message>
     <message>
         <source>%1/offline (SwiftTX verification failed)</source>
-        <translation>%1/オフライン (SwiftTX verification failed)</translation>
+        <translation>%1/オフライン (SwiftTX 承認に失敗)</translation>
     </message>
     <message>
         <source>%1/confirmed (SwiftTX verification failed)</source>
-        <translation>%1/確認済み (SwiftTX verification failed)</translation>
+        <translation>%1/確認済み (SwiftTX 承認に失敗)</translation>
     </message>
     <message>
         <source>Status</source>
@@ -3498,19 +3506,19 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Generated</source>
-        <translation>生成された</translation>
+        <translation>生成されたコイン</translation>
     </message>
     <message>
         <source>From</source>
-        <translation>から</translation>
+        <translation>送り元</translation>
     </message>
     <message>
         <source>unknown</source>
-        <translation>未知の</translation>
+        <translation>不明</translation>
     </message>
     <message>
         <source>To</source>
-        <translation>へ</translation>
+        <translation>送り先</translation>
     </message>
     <message>
         <source>own address</source>
@@ -3698,7 +3706,7 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Conflicted</source>
-        <translation>矛盾</translation>
+        <translation>チェーン分岐による矛盾</translation>
     </message>
     <message>
         <source>Immature (%1 confirmations, will be available after %2)</source>
@@ -3889,11 +3897,11 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Mined</source>
-        <translation>マイン</translation>
+        <translation>マイニング報酬</translation>
     </message>
     <message>
         <source>Minted</source>
-        <translation>ステーク</translation>
+        <translation>ステーキング報酬</translation>
     </message>
     <message>
         <source>Masternode Reward</source>
@@ -4096,7 +4104,7 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</source>
-        <translation>Allow JSON-RPC connections from specified source. Valid for &lt;ip&gt; are a single IP (e.g. 1.2.3.4), a network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be specified multiple times</translation>
+        <translation>外部の指定されたソースからの JSON-RPC 接続を許可します。 &lt;IP&gt; は単一IPで (例 1.2.3.4), ネットワーク/ネットマスク (例 1.2.3.4/255.255.255.0), ネットワーク/CIDR (e.g. 1.2.3.4/24)で設定できます。このオプションは複数回設定できます</translation>
     </message>
     <message>
         <source>An error occurred while setting up the RPC address %s port %u for listening: %s</source>
@@ -4104,15 +4112,15 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Bind to given address and always listen on it. Use [host]:port notation for IPv6</source>
-        <translation>Bind to given address and always listen on it. Use [host]:port notation for IPv6</translation>
+        <translation>与えられたアドレスにバインドし常にlistenします。IPv6では [ホスト]:ポート が記法です</translation>
     </message>
     <message>
         <source>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</source>
-        <translation>Bind to given address and whitelist peers connecting to it. Use [host]:port notation for IPv6</translation>
+        <translation>与えられたアドレスにバインドしホワイトリストのピアと接続します。IPv6では [ホスト]:ポート が記法です</translation>
     </message>
     <message>
         <source>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</source>
-        <translation>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</translation>
+        <translation>JSON-RPC 接続のために与えられたアドレスでバインドし常にlistenします。IPv6では [ホスト]:ポート が記法です。このオプションは複数回設定できます (デフォルト: 全インターフェースに対しバインド)</translation>
     </message>
     <message>
         <source>Cannot obtain a lock on data directory %s. Phore Core is probably already running.</source>
@@ -4124,115 +4132,115 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Continuously rate-limit free transactions to &lt;n&gt;*1000 bytes per minute (default:%u)</source>
-        <translation>Continuously rate-limit free transactions to &lt;n&gt;*1000 bytes per minute (default:%u)</translation>
+        <translation>上限 &lt;n&gt;*1000 バイト/分 での継続的な無料トランザクションへの制限 (デフォルト:%u)</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
-        <translation>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</translation>
+        <translation>umask 077 でなく、システムのデフォルト権限を持って新しいファイルを生成する(ウォレット機能が無効な場合のみ有効化可能)</translation>
     </message>
     <message>
         <source>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</source>
-        <translation>Delete all wallet transactions and only recover those parts of the blockchain through -rescan on startup</translation>
+        <translation>−rescanを起動時に使用し全てのトランザクションを削除してブロックチェーンからデータを再取得</translation>
     </message>
     <message>
         <source>Disable all Phore specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
-        <translation>Disable all Phore specific functionality (Masternodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</translation>
+        <translation>Phoreの全機能を無効化 (マスターノード, 匿名化, SwiftTX, 予算案) (0-1, デフォルト: %u)</translation>
     </message>
     <message>
         <source>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</source>
-        <translation>Distributed under the MIT software license, see the accompanying file COPYING or &lt;http://www.opensource.org/licenses/mit-license.php&gt;.</translation>
+        <translation>MITソフトウェアライセンスに基づいて配布されます。添付ファイルのCOPYINGか&lt;http://www.opensource.org/licenses/mit-license.php&gt;を確認して下さい。</translation>
     </message>
     <message>
         <source>Enable spork administration functionality with the appropriate private key.</source>
-        <translation>Enable spork administration functionality with the appropriate private key.</translation>
+        <translation>正しいプライベートキーを使ってspork 管理者権限を有効化します。</translation>
     </message>
     <message>
         <source>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</source>
-        <translation>Enable swifttx, show confirmations for locked transactions (bool, default: %s)</translation>
+        <translation>SwiftTxを有効化し, ロックされたトランザクションの確認数を表示する (bool, デフォルト: %s)</translation>
     </message>
     <message>
         <source>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</source>
-        <translation>Enable use of automated obfuscation for funds stored in this wallet (0-1, default: %u)</translation>
+        <translation>ウォレットに保管されている通貨を自動的に難読化する (0-1, デフォルト: %u)</translation>
     </message>
     <message>
         <source>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</source>
-        <translation>Enter regression test mode, which uses a special chain in which blocks can be solved instantly.</translation>
+        <translation>ブロックを即時に解決することができる特別なチェーンを利用する回帰テストモードに入ります。</translation>
     </message>
     <message>
         <source>Error: Listening for incoming connections failed (listen returned error %s)</source>
-        <translation>Error: Listening for incoming connections failed (listen returned error %s)</translation>
+        <translation>エラー: 内向き接続のListenに失敗 (エラー: %s )</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -socks found. Setting SOCKS version isn&apos;t possible anymore, only SOCKS5 proxies are supported.</source>
-        <translation>Error: Unsupported argument -socks found. Setting SOCKS version isn&apos;t possible anymore, only SOCKS5 proxies are supported.</translation>
+        <translation>エラー: -socks に対応していない引数があります。SOCKSのバージョンは既にセットできないので、SOCKS5 プロキシを利用して下さい。</translation>
     </message>
     <message>
         <source>Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)</source>
-        <translation>Execute command when a relevant alert is received or we see a really long fork (%s in cmd is replaced by message)</translation>
+        <translation>関連するアラートを受信した時か、非常に長いフォークを確認した時に実行するコマンド (%s in cmd is replaced by message)</translation>
     </message>
     <message>
         <source>Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)</source>
-        <translation>Execute command when a wallet transaction changes (%s in cmd is replaced by TxID)</translation>
+        <translation>トランザクションに変更が起きた時に実行するコマンド (%s in cmd is replaced by TxID)</translation>
     </message>
     <message>
         <source>Execute command when the best block changes (%s in cmd is replaced by block hash)</source>
-        <translation>Execute command when the best block changes (%s in cmd is replaced by block hash)</translation>
+        <translation>Best block に変更が起きた時に実行するコマンド (%s in cmd is replaced by block hash)</translation>
     </message>
     <message>
         <source>Fees (in PHR/Kb) smaller than this are considered zero fee for relaying (default: %s)</source>
-        <translation>Fees (in PHR/Kb) smaller than this are considered zero fee for relaying (default: %s)</translation>
+        <translation>伝搬の0手数料としてみなす最小手数料 (in PHR/Kb) (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Fees (in PHR/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</source>
-        <translation>Fees (in PHR/Kb) smaller than this are considered zero fee for transaction creation (default: %s)</translation>
+        <translation>トランザクション生成時に0手数料としてみなす最小手数料 (in PHR/Kb) (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</source>
-        <translation>Flush database activity from memory pool to disk log every &lt;n&gt; megabytes (default: %u)</translation>
+        <translation>&lt;n&gt; MBごとにメモリプールからディスクへデータベースの活動状況をフラッシュします (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Found unconfirmed denominated outputs, will wait till they confirm to continue.</source>
-        <translation>Found unconfirmed denominated outputs, will wait till they confirm to continue.</translation>
+        <translation>未確認の denominate 出力が見つかった場合、続行を確認するまで待機する。</translation>
     </message>
     <message>
         <source>How thorough the block verification of -checkblocks is (0-4, default: %u)</source>
-        <translation>How thorough the block verification of -checkblocks is (0-4, default: %u)</translation>
+        <translation>-checkblocks によりどのようにブロックの検証を行うか設定できます (0-4, デフォルト: %u)</translation>
     </message>
     <message>
         <source>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</source>
-        <translation>If paytxfee is not set, include enough fee so transactions begin confirmation on average within n blocks (default: %u)</translation>
+        <translation>paytxfee が設定されていない場合、n ブロック内で平均的に確認されるのに十分な手数料を設定します (デフォルト: %u)</translation>
     </message>
     <message>
         <source>In this mode -genproclimit controls how many blocks are generated immediately.</source>
-        <translation>In this mode -genproclimit controls how many blocks are generated immediately.</translation>
+        <translation>このモードでは -genproclimit により即時に生成するブロックを何ブロックにするか設定できます。</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least the minrelay fee of %s to prevent stuck transactions)</source>
-        <translation>Invalid amount for -maxtxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least the minrelay fee of %s to prevent stuck transactions)</translation>
+        <translation>-maxtxfee=&lt;枚数&gt;: &apos;%s&apos; が間違っているようです (トランザクションのstuckを防止するために、少なくとも %s の最小伝搬手数料が必要)</translation>
     </message>
     <message>
         <source>Keep the specified amount available for spending at all times (default: 0)</source>
-        <translation>Keep the specified amount available for spending at all times (default: 0)</translation>
+        <translation>指定された枚数を常に消費可能にしておく (デフォルト: 0)</translation>
     </message>
     <message>
         <source>Log transaction priority and fee per kB when mining blocks (default: %u)</source>
-        <translation>Log transaction priority and fee per kB when mining blocks (default: %u)</translation>
+        <translation>ブロックのマイニングの際の1kBあたりの手数料、取引優先度を記録する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</source>
-        <translation>Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)</translation>
+        <translation>RPC 呼び出し getrawtransaction で使われる完全なトランザクションインデックスを保持する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Maximum size of data in data carrier transactions we relay and mine (default: %u)</source>
-        <translation>Maximum size of data in data carrier transactions we relay and mine (default: %u)</translation>
+        <translation>伝搬・マイニングする data carrier transactions の最大サイズ (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)</source>
-        <translation>Maximum total fees to use in a single wallet transaction, setting too low may abort large transactions (default: %s)</translation>
+        <translation>単一のトランザクションで利用する最大合計手数料, 低すぎると大きいトランザクションは送信できないかもしれません (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</source>
-        <translation>Number of seconds to keep misbehaving peers from reconnecting (default: %u)</translation>
+        <translation>正しくない振る舞いをするピアを再接続させない秒数 (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Obfuscation uses exact denominated amounts to send funds, you might simply need to anonymize some more coins.</source>
@@ -4240,7 +4248,7 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</source>
-        <translation>Output debugging information (default: %u, supplying &lt;category&gt; is optional)</translation>
+        <translation>デバッグ情報を出力する (デフォルト: %u, &lt;カテゴリ&gt; をオプションで与えられます)</translation>
     </message>
     <message>
         <source>Provide liquidity to Obfuscation by infrequently mixing coins on a continual basis (0-100, default: %u, 1=very frequent, high fees, 100=very infrequent, low fees)</source>
@@ -4248,43 +4256,43 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
     <message>
         <source>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</source>
-        <translation>Query for peer addresses via DNS lookup, if low on addresses (default: 1 unless -connect)</translation>
+        <translation>DNS lookup によりピアのアドレスをクエリします (デフォルト: -connect がない限り 1)</translation>
     </message>
     <message>
         <source>Require high priority for relaying free or low-fee transactions (default:%u)</source>
-        <translation>Require high priority for relaying free or low-fee transactions (default:%u)</translation>
+        <translation>無料・低額の取引を伝搬するために高い優先度を要求する (デフォルト:%u)</translation>
     </message>
     <message>
         <source>Send trace/debug info to console instead of debug.log file (default: %u)</source>
-        <translation>Send trace/debug info to console instead of debug.log file (default: %u)</translation>
+        <translation>トレース/デバッグ情報をコンソールの代わりに debug.log へ出力する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</source>
-        <translation>Set maximum size of high-priority/low-fee transactions in bytes (default: %d)</translation>
+        <translation>高優先度/低手数料 トランザクションの最大サイズをバイト単位で設定 (デフォルト: %d)</translation>
     </message>
     <message>
         <source>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</source>
-        <translation>Set the number of script verification threads (%u to %d, 0 = auto, &lt;0 = leave that many cores free, default: %d)</translation>
+        <translation>スクリプトの検証を行うスレッド数を設定 (%u から %d まで, 0 = 自動, &lt;0 = より少ないコアを利用, デフォルト: %d)</translation>
     </message>
     <message>
         <source>Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)</source>
-        <translation>Set the number of threads for coin generation if enabled (-1 = all cores, default: %d)</translation>
+        <translation>コインのマイニングを行うスレッド数を設定 (-1 = 全コア, デフォルト: %d)</translation>
     </message>
     <message>
         <source>Show N confirmations for a successfully locked transaction (0-9999, default: %u)</source>
-        <translation>Show N confirmations for a successfully locked transaction (0-9999, default: %u)</translation>
+        <translation>N 確認をロックされたトランザクションに対し表示 (0-9999, デフォルト: %u)</translation>
     </message>
     <message>
         <source>Support filtering of blocks and transaction with bloom filters (default: %u)</source>
-        <translation>Support filtering of blocks and transaction with bloom filters (default: %u)</translation>
+        <translation>ブロックとトランザクションへのフィルタリング (デフォルト: %u)</translation>
     </message>
     <message>
         <source>SwiftTX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.</source>
-        <translation>SwiftTX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.</translation>
+        <translation>SwiftTXは入力に6確認数を必要とします。数分お待ちの上、もう一度お試しください。</translation>
     </message>
     <message>
         <source>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit &lt;https://www.openssl.org/&gt; and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</source>
-        <translation>This product includes software developed by the OpenSSL Project for use in the OpenSSL Toolkit &lt;https://www.openssl.org/&gt; and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</translation>
+        <translation>この製品には、OpenSSL Project により開発されたソフトウェアが含まれ、OpenSSL Toolkitが使用されています。&lt;https://www.openssl.org/&gt; and cryptographic software written by Eric Young and UPnP software written by Thomas Bernard.</translation>
     </message>
     <message>
         <source>
@@ -4318,59 +4326,59 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Unable to locate enough Obfuscation denominated funds for this transaction.</source>
-        <translation>Unable to locate enough Obfuscation denominated funds for this transaction.</translation>
+        <translation>このトランザクションに利用できる十分な難読化された資金を見つけることができませんでした。</translation>
     </message>
     <message>
         <source>Unable to locate enough Obfuscation non-denominated funds for this transaction that are not equal 10000 PHR.</source>
-        <translation>Unable to locate enough Obfuscation non-denominated funds for this transaction that are not equal 10000 PHR.</translation>
+        <translation>このトランザクションに利用できる 10000 PHRに満たない難読化されていない十分な資金を見つけることができませんでした。</translation>
     </message>
     <message>
         <source>Unable to locate enough funds for this transaction that are not equal 10000 PHR.</source>
-        <translation>Unable to locate enough funds for this transaction that are not equal 10000 PHR.</translation>
+        <translation>このトランザクションに利用できる 10000 PHRに満たない十分な資金を見つけることができませんでした。</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</source>
-        <translation>Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)</translation>
+        <translation>Torなどの匿名化サービスを用いてピアに接続するためにセパレートされた SOCKS5 プロキシを利用する (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Warning: -maxtxfee is set very high! Fees this large could be paid on a single transaction.</source>
-        <translation>Warning: -maxtxfee is set very high! Fees this large could be paid on a single transaction.</translation>
+        <translation>警告: -maxtxfee のオプションは非常に高額な手数料をセットします!この高額な手数料は1回のトランザクションで消費されます。</translation>
     </message>
     <message>
         <source>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</source>
-        <translation>Warning: -paytxfee is set very high! This is the transaction fee you will pay if you send a transaction.</translation>
+        <translation>警告: -paytxfee のオプションが非常に高額に設定されています!これはトランザクションの送信時に支払うことになる手数料です。</translation>
     </message>
     <message>
         <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Phore Core will not work properly.</source>
-        <translation>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Phore Core will not work properly.</translation>
+        <translation>警告: あなたのコンピュータの日付と時刻が正しいか確認して下さい!もし時刻が異なる場合、正常にPhore Coreが動作しません。</translation>
     </message>
     <message>
         <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
-        <translation>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</translation>
+        <translation>警告: ネットワークは完全な合意には達していません!一部のマイナーが問題を抱えているようです。</translation>
     </message>
     <message>
         <source>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</source>
-        <translation>Warning: We do not appear to fully agree with our peers! You may need to upgrade, or other nodes may need to upgrade.</translation>
+        <translation>警告: ピアに対して完全な合意を表明しません!あなたか、他のノードがアップデートが必要です。</translation>
     </message>
     <message>
         <source>Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</source>
-        <translation>Warning: error reading wallet.dat! All keys read correctly, but transaction data or address book entries might be missing or incorrect.</translation>
+        <translation>警告: wallet.dat の読み込みにエラーが発生しました! 全てのキーは正常に読み込まれましたが、トランザクションデータ・アドレス帳が正しく読み込まれていない可能性があります。</translation>
     </message>
     <message>
         <source>Warning: wallet.dat corrupt, data salvaged! Original wallet.dat saved as wallet.{timestamp}.bak in %s; if your balance or transactions are incorrect you should restore from a backup.</source>
-        <translation>Warning: wallet.dat corrupt, data salvaged! Original wallet.dat saved as wallet.{timestamp}.bak in %s; if your balance or transactions are incorrect you should restore from a backup.</translation>
+        <translation>警告: wallet.dat が破損しており、データを復旧しました! オリジナルの wallet.dat は wallet.{timestamp}.bak として %s; に保存されています。もし残高やトランザクションが正しくなければ、バックアップから復元する必要があるでしょう。</translation>
     </message>
     <message>
         <source>Whitelist peers connecting from the given netmask or IP address. Can be specified multiple times.</source>
-        <translation>Whitelist peers connecting from the given netmask or IP address. Can be specified multiple times.</translation>
+        <translation>指定されたネットマスク、IPアドレスから接続するホワイトリストです。複数回指定することができます。</translation>
     </message>
     <message>
         <source>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</source>
-        <translation>Whitelisted peers cannot be DoS banned and their transactions are always relayed, even if they are already in the mempool, useful e.g. for a gateway</translation>
+        <translation>ホワイトリストのピアはDoSスコアによるBANがなされず、既に送金情報がmempoolにあろうと、常にその送金がピアに共有されます。この設定はゲートウェイなどに便利です。</translation>
     </message>
     <message>
         <source>You must specify a masternodeprivkey in the configuration. Please see documentation for help.</source>
-        <translation>設定ファイルにおいてmasternodeprivkey を設定してください。詳しくはガイドを確認ください。</translation>
+        <translation>設定ファイルにおいて masternodeprivkey を設定してください。詳しくはガイドを確認ください。</translation>
     </message>
     <message>
         <source>(11771 could be used only on mainnet)</source>
@@ -4394,35 +4402,35 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Accept connections from outside (default: 1 if no -proxy or -connect)</source>
-        <translation>Accept connections from outside (default: 1 if no -proxy or -connect)</translation>
+        <translation>外部からの接続を許可する(デフォルト: 1 もし -proxy か -connect オプションが無ければ)</translation>
     </message>
     <message>
         <source>Accept public REST requests (default: %u)</source>
-        <translation>Accept public REST requests (default: %u)</translation>
+        <translation>パブリックなRESTリクエストを受け付ける (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Acceptable ciphers (default: %s)</source>
-        <translation>Acceptable ciphers (default: %s)</translation>
+        <translation>許容される暗号 (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Add a node to connect to and attempt to keep the connection open</source>
-        <translation>Add a node to connect to and attempt to keep the connection open</translation>
+        <translation>接続するノードを追加し、常時接続を行います</translation>
     </message>
     <message>
         <source>Allow DNS lookups for -addnode, -seednode and -connect</source>
-        <translation>Allow DNS lookups for -addnode, -seednode and -connect</translation>
+        <translation>-addnode, -seednode, -connect によるDNS lookup を許可</translation>
     </message>
     <message>
         <source>Already have that input.</source>
-        <translation>Already have that input.</translation>
+        <translation>既にその入力は行われています。</translation>
     </message>
     <message>
         <source>Always query for peer addresses via DNS lookup (default: %u)</source>
-        <translation>Always query for peer addresses via DNS lookup (default: %u)</translation>
+        <translation>DNS lookup を使い、ピアのアドレスを常にクエリする (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Attempt to recover private keys from a corrupt wallet.dat</source>
-        <translation>Attempt to recover private keys from a corrupt wallet.dat</translation>
+        <translation>破損した wallet.dat からプライベートキーの復旧を試みる</translation>
     </message>
     <message>
         <source>Block creation options:</source>
@@ -4430,11 +4438,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Can&apos;t denominate: no compatible inputs left.</source>
-        <translation>Can&apos;t denominate: no compatible inputs left.</translation>
+        <translation>denominate できません: 互換する入力がありません。</translation>
     </message>
     <message>
         <source>Can&apos;t find random Masternode.</source>
-        <translation>Can&apos;t find random Masternode.</translation>
+        <translation>random マスターノードを発見できません。</translation>
     </message>
     <message>
         <source>Can&apos;t mix while sync in progress.</source>
@@ -4442,43 +4450,43 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Cannot downgrade wallet</source>
-        <translation>Cannot downgrade wallet</translation>
+        <translation>ウォレットのダウングレードはできません</translation>
     </message>
     <message>
         <source>Cannot resolve -bind address: &apos;%s&apos;</source>
-        <translation>Cannot resolve -bind address: &apos;%s&apos;</translation>
+        <translation>-bind アドレスを解決できませんでした: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Cannot resolve -externalip address: &apos;%s&apos;</source>
-        <translation>Cannot resolve -externalip address: &apos;%s&apos;</translation>
+        <translation>-externalip アドレスを解決できませんでした: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Cannot resolve -whitebind address: &apos;%s&apos;</source>
-        <translation>Cannot resolve -whitebind address: &apos;%s&apos;</translation>
+        <translation>−whitebind アドレスを解決できませんでした: &apos;%s&apos;</translation>
     </message>
     <message>
         <source>Cannot write default address</source>
-        <translation>Cannot write default address</translation>
+        <translation>デフォルトアドレスを記載出来ません</translation>
     </message>
     <message>
         <source>Collateral not valid.</source>
-        <translation>Collateral not valid.</translation>
+        <translation>担保が正しくありません。</translation>
     </message>
     <message>
         <source>Connect only to the specified node(s)</source>
-        <translation>Connect only to the specified node(s)</translation>
+        <translation>特定のノードにのみ接続する</translation>
     </message>
     <message>
         <source>Connect through SOCKS5 proxy</source>
-        <translation>Connect through SOCKS5 proxy</translation>
+        <translation>SOCKS5 プロキシを通じて接続する</translation>
     </message>
     <message>
         <source>Connect to a node to retrieve peer addresses, and disconnect</source>
-        <translation>Connect to a node to retrieve peer addresses, and disconnect</translation>
+        <translation>ノードに接続してピアのアドレスを取得したのち、切断する</translation>
     </message>
     <message>
         <source>Connection options:</source>
-        <translation>Connection options:</translation>
+        <translation>接続オプション:</translation>
     </message>
     <message>
         <source>Copyright (C) 2009-%i The Bitcoin Core Developers</source>
@@ -4498,7 +4506,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Could not parse -rpcbind value %s as network address</source>
-        <translation>Could not parse -rpcbind value %s as network address</translation>
+        <translation>-rpcbind の値である %s をネットワークのアドレスとして読み取り出来ませんでした</translation>
     </message>
     <message>
         <source>Could not parse masternode.conf</source>
@@ -4510,7 +4518,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Disable safemode, override a real safe mode event (default: %u)</source>
-        <translation>Disable safemode, override a real safe mode event (default: %u)</translation>
+        <translation>セーフモードを無効化し、セーフモードイベントを無効化 (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Discover own IP address (default: 1 when listening and no -externalip)</source>
@@ -4518,7 +4526,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Do not load the wallet and disable wallet RPC calls</source>
-        <translation>Do not load the wallet and disable wallet RPC calls</translation>
+        <translation>ウォレットを読み込まず、RPCによる呼び出しを無効化</translation>
     </message>
     <message>
         <source>Do you want to rebuild the block database now?</source>
@@ -4534,7 +4542,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Entries are full.</source>
-        <translation>Entries are full.</translation>
+        <translation>エントリは満杯です。</translation>
     </message>
     <message>
         <source>Error connecting to Masternode.</source>
@@ -4586,7 +4594,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Error: Can&apos;t select current denominated inputs</source>
-        <translation>Error: Can&apos;t select current denominated inputs</translation>
+        <translation>エラー: 現在の denominate 入力を選択できません。</translation>
     </message>
     <message>
         <source>Error: Disk space is low!</source>
@@ -4602,11 +4610,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Error: You already have pending entries in the Obfuscation pool</source>
-        <translation>Error: You already have pending entries in the Obfuscation pool</translation>
+        <translation>エラー: 既に難読化プールにてエントリを消費したようです</translation>
     </message>
     <message>
         <source>Failed to listen on any port. Use -listen=0 if you want this.</source>
-        <translation>ポートでのlistenが失敗しました。 -listen=0 オプションを使用してください。</translation>
+        <translation>ポートのlistenが失敗しました。 -listen=0 オプションを使用してください。</translation>
     </message>
     <message>
         <source>Failed to read block</source>
@@ -4614,7 +4622,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Fee (in PHR/kB) to add to transactions you send (default: %s)</source>
-        <translation>Fee (in PHR/kB) to add to transactions you send (default: %s)</translation>
+        <translation>トランザクションを送信する際の手数料 (PHR/kB) (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Finalizing transaction.</source>
@@ -4622,31 +4630,31 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Force safe mode (default: %u)</source>
-        <translation>Force safe mode (default: %u)</translation>
+        <translation>強制セーフモード (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Found enough users, signing ( waiting %s )</source>
-        <translation>Found enough users, signing ( waiting %s )</translation>
+        <translation>十分なユーザーを発見しました。署名中 ( %s を待機)</translation>
     </message>
     <message>
         <source>Found enough users, signing ...</source>
-        <translation>Found enough users, signing ...</translation>
+        <translation>十分なユーザーを発見しました。署名中...</translation>
     </message>
     <message>
         <source>Generate coins (default: %u)</source>
-        <translation>Generate coins (default: %u)</translation>
+        <translation>マイニングをする (デフォルト: %u)</translation>
     </message>
     <message>
         <source>How many blocks to check at startup (default: %u, 0 = all)</source>
-        <translation>How many blocks to check at startup (default: %u, 0 = all)</translation>
+        <translation>起動時に何ブロックの検証を行うか (デフォルト: %u, 0 = 全ブロック)</translation>
     </message>
     <message>
         <source>If &lt;category&gt; is not supplied, output all debugging information.</source>
-        <translation>If &lt;category&gt; is not supplied, output all debugging information.</translation>
+        <translation>もし &lt;カテゴリ&gt; が与えられなければ、全てのデバッグ情報を出力します。</translation>
     </message>
     <message>
         <source>Importing...</source>
-        <translation>インポート</translation>
+        <translation>インポート中...</translation>
     </message>
     <message>
         <source>Imports blocks from external blk000??.dat file</source>
@@ -4654,7 +4662,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Include IP addresses in debug output (default: %u)</source>
-        <translation>Include IP addresses in debug output (default: %u)</translation>
+        <translation>デバッグ情報の出力にIPアドレスを含む (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Incompatible mode.</source>
@@ -4694,35 +4702,31 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: &apos;%s&apos;</source>
-        <translation>間違った枚数が指定されています。 -maxtxfee=&lt;枚数&gt;: &apos;%s&apos;</translation>
+        <translation>-maxtxfee=&lt;枚数&gt;: &apos;%s&apos; として与えられている枚数が間違っています</translation>
     </message>
     <message>
         <source>Invalid amount for -minrelaytxfee=&lt;amount&gt;: &apos;%s&apos;</source>
-        <translation>Invalid amount for -minrelaytxfee=&lt;amount&gt;: &apos;%s&apos;</translation>
+        <translation>-minrelaytxfee=&lt;枚数&gt;: &apos;%s&apos; として与えられている枚数が間違っています</translation>
     </message>
     <message>
         <source>Invalid amount for -mintxfee=&lt;amount&gt;: &apos;%s&apos;</source>
-        <translation>Invalid amount for -mintxfee=&lt;amount&gt;: &apos;%s&apos;</translation>
+        <translation>-mintxfee=&lt;枚数&gt;: &apos;%s&apos; として与えられている枚数が間違っています</translation>
     </message>
     <message>
         <source>Invalid amount for -paytxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least %s)</source>
-        <translation>Invalid amount for -paytxfee=&lt;amount&gt;: &apos;%s&apos; (must be at least %s)</translation>
-    </message>
-    <message>
-        <source>Invalid amount for -paytxfee=&lt;amount&gt;: &apos;%s&apos;</source>
-        <translation>Invalid amount for -paytxfee=&lt;amount&gt;: &apos;%s&apos;</translation>
+        <translation>-paytxfee=&lt;枚数&gt;: &apos;%s&apos; として与えられている枚数が間違っています</translation>
     </message>
     <message>
         <source>Invalid amount for -reservebalance=&lt;amount&gt;</source>
-        <translation>Invalid amount for -reservebalance=&lt;amount&gt;</translation>
+        <translation>-reservebalance=&lt;枚数&gt; として与えられている枚数が間違っています</translation>
     </message>
     <message>
         <source>Invalid masternodeprivkey. Please see documenation.</source>
-        <translation>masternodeprivkeyが間違っています。確認してください。</translation>
+        <translation>masternodeprivkey が間違っています。確認してください。</translation>
     </message>
     <message>
         <source>Invalid netmask specified in -whitelist: &apos;%s&apos;</source>
-        <translation>Invalid netmask specified in -whitelist: &apos;%s&apos;</translation>
+        <translation>-whitelist: &apos;%s&apos; で与えられるネットマスクが間違っています</translation>
     </message>
     <message>
         <source>Invalid port detected in masternode.conf</source>
@@ -4738,63 +4742,63 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>This is a pre-release test build - use at your own risk - do not use for staking or merchant applications!</source>
-        <translation>This is a pre-release test build - use at your own risk - do not use for staking or merchant applications!</translation>
+        <translation>これはプレリリース(テストビルド)です - 自己責任でご利用の上、ステーキング・事業用アプリには利用しないで下さい! -</translation>
     </message>
     <message>
         <source>&lt;category&gt; can be:</source>
-        <translation>&lt;category&gt; can be:</translation>
+        <translation>&lt;カテゴリ&gt; :</translation>
     </message>
     <message>
         <source>Attempt to force blockchain corruption recovery</source>
-        <translation>Attempt to force blockchain corruption recovery</translation>
+        <translation>強制的にブロックチェーンの破損の復旧を試みる</translation>
     </message>
     <message>
         <source>Display the stake modifier calculations in the debug.log file.</source>
-        <translation>Display the stake modifier calculations in the debug.log file.</translation>
+        <translation>Stake modifier の計算を debug.log に表示します。</translation>
     </message>
     <message>
         <source>Display verbose coin stake messages in the debug.log file.</source>
-        <translation>Display verbose coin stake messages in the debug.log file.</translation>
+        <translation>debug.log に詳細なコインのステーキングメッセージを表示します。</translation>
     </message>
     <message>
         <source>Enable publish hash block in &lt;address&gt;</source>
-        <translation>Enable publish hash block in &lt;address&gt;</translation>
+        <translation>&lt;アドレス&gt; のブロックのハッシュのリリースを有効化</translation>
     </message>
     <message>
         <source>Enable publish hash transaction (locked via SwiftTX) in &lt;address&gt;</source>
-        <translation>Enable publish hash transaction (locked via SwiftTX) in &lt;address&gt;</translation>
+        <translation>&lt;アドレス&gt; のトランザクションハッシュ (SwiftTX でロックされた)のリリースを有効化</translation>
     </message>
     <message>
         <source>Enable publish hash transaction in &lt;address&gt;</source>
-        <translation>Enable publish hash transaction in &lt;address&gt;</translation>
+        <translation>&lt;アドレス&gt; のトランザクションハッシュのリリースを有効化</translation>
     </message>
     <message>
         <source>Enable publish raw block in &lt;address&gt;</source>
-        <translation>Enable publish raw block in &lt;address&gt;</translation>
+        <translation>&lt;アドレス&gt;のブロックデータのリリースを有効化</translation>
     </message>
     <message>
         <source>Enable publish raw transaction (locked via SwiftTX) in &lt;address&gt;</source>
-        <translation>Enable publish raw transaction (locked via SwiftTX) in &lt;address&gt;</translation>
+        <translation>&lt;アドレス&gt; のトランザクションデータ (SwiftTX でロックされた)のリリースを有効化</translation>
     </message>
     <message>
         <source>Enable publish raw transaction in &lt;address&gt;</source>
-        <translation>Enable publish raw transaction in &lt;address&gt;</translation>
+        <translation>&lt;アドレス&gt;のトランザクションデータのリリースを有効化</translation>
     </message>
     <message>
         <source>Enable staking functionality (0-1, default: %u)</source>
-        <translation>Enable staking functionality (0-1, default: %u)</translation>
+        <translation>ステーキングの有効化 (0-1, デフォルト: %u)</translation>
     </message>
     <message>
         <source>Keep N PHR anonymized (default: %u)</source>
-        <translation>Keep N PHR anonymized (default: %u)</translation>
+        <translation>N PHR を匿名にしておく (default: %u)</translation>
     </message>
     <message>
         <source>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</source>
-        <translation>Keep at most &lt;n&gt; unconnectable transactions in memory (default: %u)</translation>
+        <translation>&lt;n&gt; 個の接続できないトランザクションをメモリに保管する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Last Obfuscation was too recent.</source>
-        <translation>Last Obfuscation was too recent.</translation>
+        <translation>直近の難読化が最近すぎます。</translation>
     </message>
     <message>
         <source>Last successful Obfuscation action was too recent.</source>
@@ -4810,11 +4814,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Listen for JSON-RPC connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Listen for JSON-RPC connections on &lt;port&gt; (default: %u or testnet: %u)</translation>
+        <translation>JSON-RPC 接続を待機する&lt;ポート&gt; (デフォルト: %u , テストネット: %u)</translation>
     </message>
     <message>
         <source>Listen for connections on &lt;port&gt; (default: %u or testnet: %u)</source>
-        <translation>Listen for connections on &lt;port&gt; (default: %u or testnet: %u)</translation>
+        <translation>接続を待機する&lt;ポート&gt; (デフォルト: %u , テストネット: %u)</translation>
     </message>
     <message>
         <source>Loading addresses...</source>
@@ -4846,7 +4850,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Lock is already in place.</source>
-        <translation>Lock is already in place.</translation>
+        <translation>ロックは既に行われています。</translation>
     </message>
     <message>
         <source>Lock masternodes from masternode configuration file (default: %u)</source>
@@ -4854,7 +4858,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Maintain at most &lt;n&gt; connections to peers (default: %u)</source>
-        <translation>Maintain at most &lt;n&gt; connections to peers (default: %u)</translation>
+        <translation>&lt;n&gt; 個のピアへの接続が維持されます (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Masternode options:</source>
@@ -4870,15 +4874,15 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Maximum per-connection receive buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Maximum per-connection receive buffer, &lt;n&gt;*1000 bytes (default: %u)</translation>
+        <translation>接続するピアごとの受け取るバッファの最大値, &lt;n&gt;*1000 バイト (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Maximum per-connection send buffer, &lt;n&gt;*1000 bytes (default: %u)</source>
-        <translation>Maximum per-connection send buffer, &lt;n&gt;*1000 bytes (default: %u)</translation>
+        <translation>接続するピアごとの送信するバッファの最大値, &lt;n&gt;*1000 バイト (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Missing input transaction information.</source>
-        <translation>Missing input transaction information.</translation>
+        <translation>入力されたトランザクション情報が間違っています。</translation>
     </message>
     <message>
         <source>Mixing in progress...</source>
@@ -4886,7 +4890,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Need to specify a port with -whitebind: &apos;%s&apos;</source>
-        <translation>Need to specify a port with -whitebind: &apos;%s&apos;</translation>
+        <translation>-whitebind: &apos;%s&apos; でポートを指定して下さい</translation>
     </message>
     <message>
         <source>No Masternodes detected.</source>
@@ -4906,19 +4910,19 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Node relay options:</source>
-        <translation>Node relay options:</translation>
+        <translation>ノードのデータ伝搬オプション:</translation>
     </message>
     <message>
         <source>Non-standard public key detected.</source>
-        <translation>Non-standard public key detected.</translation>
+        <translation>異常なパブリックキーが確認されました。</translation>
     </message>
     <message>
         <source>Not compatible with existing transactions.</source>
-        <translation>Not compatible with existing transactions.</translation>
+        <translation>現存するトランザクションと適合しません。</translation>
     </message>
     <message>
         <source>Not enough file descriptors available.</source>
-        <translation>Not enough file descriptors available.</translation>
+        <translation>十分に利用できるファイル記述子がありません。</translation>
     </message>
     <message>
         <source>Not in the Masternode list.</source>
@@ -4946,11 +4950,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Only accept block chain matching built-in checkpoints (default: %u)</source>
-        <translation>Only accept block chain matching built-in checkpoints (default: %u)</translation>
+        <translation>ビルトインのチェックポイントに一致するブロックチェーンのみ受け入れる (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</source>
-        <translation>Only connect to nodes in network &lt;net&gt; (ipv4, ipv6 or onion)</translation>
+        <translation>次のタイプのノードにのみ接続する&lt;ネット&gt; (ipv4, ipv6, onion)</translation>
     </message>
     <message>
         <source>Options:</source>
@@ -4962,7 +4966,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Prepend debug output with timestamp (default: %u)</source>
-        <translation>Prepend debug output with timestamp (default: %u)</translation>
+        <translation>デバッグ情報の出力の前にタイムスタンプをつける (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Print version and exit</source>
@@ -4970,7 +4974,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>RPC SSL options: (see the Bitcoin Wiki for SSL setup instructions)</source>
-        <translation>RPC SSL options: (see the Bitcoin Wiki for SSL setup instructions)</translation>
+        <translation>RPC SSL オプション: (Bitcoin Wiki でSSL設定ガイドを確認して下さい)</translation>
     </message>
     <message>
         <source>RPC server options:</source>
@@ -4978,11 +4982,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>RPC support for HTTP persistent connections (default: %d)</source>
-        <translation>RPC support for HTTP persistent connections (default: %d)</translation>
+        <translation>HTTP 永続接続に対して RPCのサポートをする (デフォルト: %d)</translation>
     </message>
     <message>
         <source>Randomly drop 1 of every &lt;n&gt; network messages</source>
-        <translation>Randomly drop 1 of every &lt;n&gt; network messages</translation>
+        <translation>&lt;n&gt; に一つランダムにネットワークにメッセージが流されます</translation>
     </message>
     <message>
         <source>Randomly fuzz 1 of every &lt;n&gt; network messages</source>
@@ -4994,19 +4998,19 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Receive and display P2P network alerts (default: %u)</source>
-        <translation>Receive and display P2P network alerts (default: %u)</translation>
+        <translation>P2P ネットワークの警告を受信・表示する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Relay and mine data carrier transactions (default: %u)</source>
-        <translation>Relay and mine data carrier transactions (default: %u)</translation>
+        <translation>data carrier トランザクションを伝搬・マイニングする (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Relay non-P2SH multisig (default: %u)</source>
-        <translation>Relay non-P2SH multisig (default: %u)</translation>
+        <translation>non-P2SH マルチシグを伝播する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Rescan the block chain for missing wallet transactions</source>
-        <translation>Rescan the block chain for missing wallet transactions</translation>
+        <translation>表示されていないトランザクションのためブロックチェックを再スキャンする</translation>
     </message>
     <message>
         <source>Rescanning...</source>
@@ -5014,7 +5018,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Run a thread to flush wallet periodically (default: %u)</source>
-        <translation>Run a thread to flush wallet periodically (default: %u)</translation>
+        <translation>定期的にウォレットをフラッシュするようなスレッドを実行する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Run in the background as a daemon and accept commands</source>
@@ -5026,7 +5030,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Server certificate file (default: %s)</source>
-        <translation>Server certificate file (default: %s)</translation>
+        <translation>サーバーの認証 (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Server private key (default: %s)</source>
@@ -5042,23 +5046,23 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Set database cache size in megabytes (%d to %d, default: %d)</source>
-        <translation>Set database cache size in megabytes (%d to %d, default: %d)</translation>
+        <translation>データベースのキャッシュサイズをMBで指定する (%d から %d まで, デフォルト: %d)</translation>
     </message>
     <message>
         <source>Set external address:port to get to this masternode (example: %s)</source>
-        <translation>Set external address:port to get to this masternode (example: %s)</translation>
+        <translation>このマスターノードを識別するための外部アドレス:ポートを指定する (例: %s)</translation>
     </message>
     <message>
         <source>Set key pool size to &lt;n&gt; (default: %u)</source>
-        <translation>Set key pool size to &lt;n&gt; (default: %u)</translation>
+        <translation>キープールのサイズを &lt;n&gt; に設定する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Set maximum block size in bytes (default: %d)</source>
-        <translation>Set maximum block size in bytes (default: %d)</translation>
+        <translation>最大ブロックサイズをバイトで指定する (デフォルト: %d)</translation>
     </message>
     <message>
         <source>Set minimum block size in bytes (default: %u)</source>
-        <translation>Set minimum block size in bytes (default: %u)</translation>
+        <translation>最小ブロックサイズをバイトで指定する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Set the masternode private key</source>
@@ -5066,19 +5070,19 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Set the number of threads to service RPC calls (default: %d)</source>
-        <translation>Set the number of threads to service RPC calls (default: %d)</translation>
+        <translation>RPC 呼び出しのサービスを提供するスレッド数を指定する (デフォルト: %d)</translation>
     </message>
     <message>
         <source>Sets the DB_PRIVATE flag in the wallet db environment (default: %u)</source>
-        <translation>Sets the DB_PRIVATE flag in the wallet db environment (default: %u)</translation>
+        <translation>DB_PRIVATE フラグをウォレットのデータベースにセットする (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Show all debugging options (usage: --help -help-debug)</source>
-        <translation>Show all debugging options (usage: --help -help-debug)</translation>
+        <translation>全てのデバッグオプションを確認する (利用法: --help -help-debug)</translation>
     </message>
     <message>
         <source>Shrink debug.log file on client startup (default: 1 when no -debug)</source>
-        <translation>Shrink debug.log file on client startup (default: 1 when no -debug)</translation>
+        <translation>クライアント起動時に debug.log を縮小する (デフォルト: -debugが無ければ 1)</translation>
     </message>
     <message>
         <source>Signing failed.</source>
@@ -5086,7 +5090,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Signing timed out.</source>
-        <translation>署名はタイムアウトしました。</translation>
+        <translation>署名はタイムアウトしました</translation>
     </message>
     <message>
         <source>Signing transaction failed</source>
@@ -5094,15 +5098,15 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Specify configuration file (default: %s)</source>
-        <translation>Specify configuration file (default: %s)</translation>
+        <translation>設定ファイルを指定 (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Specify connection timeout in milliseconds (minimum: 1, default: %d)</source>
-        <translation>Specify connection timeout in milliseconds (minimum: 1, default: %d)</translation>
+        <translation>接続のタイムアウトをミリ秒で指定 (最小: 1, デフォルト: %d)</translation>
     </message>
     <message>
         <source>Specify data directory</source>
-        <translation>Specify data directory</translation>
+        <translation>データフォルダの位置を指定</translation>
     </message>
     <message>
         <source>Specify masternode configuration file (default: %s)</source>
@@ -5110,19 +5114,19 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Specify pid file (default: %s)</source>
-        <translation>Specify pid file (default: %s)</translation>
+        <translation>pidファイルを指定 (デフォルト: %s)</translation>
     </message>
     <message>
         <source>Specify wallet file (within data directory)</source>
-        <translation>Specify wallet file (within data directory)</translation>
+        <translation>ウォレットファイルを指定 (データディレクトリ内で)</translation>
     </message>
     <message>
         <source>Specify your own public address</source>
-        <translation>Specify your own public address</translation>
+        <translation>自身のパブリックアドレスを指定</translation>
     </message>
     <message>
         <source>Spend unconfirmed change when sending transactions (default: %u)</source>
-        <translation>Spend unconfirmed change when sending transactions (default: %u)</translation>
+        <translation>トランザクションの送信時に未確認のお釣りを消費する (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Staking options:</source>
@@ -5130,23 +5134,23 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Stop running after importing blocks from disk (default: %u)</source>
-        <translation>Stop running after importing blocks from disk (default: %u)</translation>
+        <translation>ディスクからブロックデータをインポートした後に終了 (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Submitted following entries to masternode: %u / %d</source>
-        <translation>Submitted following entries to masternode: %u / %d</translation>
+        <translation>マスターノードへ次のエントリを送信しました: %u / %d</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting for more entries ( %u / %d ) %s</source>
-        <translation>Submitted to masternode, waiting for more entries ( %u / %d ) %s</translation>
+        <translation>マスターノードへ送信済、他のエントリを待機中 ( %u / %d ) %s</translation>
     </message>
     <message>
         <source>Submitted to masternode, waiting in queue %s</source>
-        <translation>Submitted to masternode, waiting in queue %s</translation>
+        <translation>マスターノードへ送信済で、キューを待機中 %s</translation>
     </message>
     <message>
         <source>SwiftTX options:</source>
-        <translation>SwiftTX options:</translation>
+        <translation>SwiftTX オプション:</translation>
     </message>
     <message>
         <source>Synchronization failed</source>
@@ -5162,7 +5166,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Synchronizing budgets...</source>
-        <translation>budgetの同期中...</translation>
+        <translation>予算案の同期中...</translation>
     </message>
     <message>
         <source>Synchronizing masternode winners...</source>
@@ -5186,7 +5190,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>This is intended for regression testing tools and app development.</source>
-        <translation>This is intended for regression testing tools and app development.</translation>
+        <translation>これは、回帰的なテストツールとアプリ開発を目的としています。</translation>
     </message>
     <message>
         <source>This is not a Masternode.</source>
@@ -5194,7 +5198,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Threshold for disconnecting misbehaving peers (default: %u)</source>
-        <translation>Threshold for disconnecting misbehaving peers (default: %u)</translation>
+        <translation>誤った振る舞いをするピアを切断するスコア (デフォルト: %u)</translation>
     </message>
     <message>
         <source>Transaction amount too small</source>
@@ -5230,19 +5234,19 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Unable to bind to %s on this computer (bind returned error %s)</source>
-        <translation>Unable to bind to %s on this computer (bind returned error %s)</translation>
+        <translation>このコンピュータの %s へバインドできません (%s がバインドのエラーとして戻ります)</translation>
     </message>
     <message>
         <source>Unable to sign spork message, wrong key?</source>
-        <translation>Unable to sign spork message, wrong key?</translation>
+        <translation>spork メッセージへ署名できません。キーが間違っている?</translation>
     </message>
     <message>
         <source>Unknown network specified in -onlynet: &apos;%s&apos;</source>
-        <translation>Unknown network specified in -onlynet: &apos;%s&apos;</translation>
+        <translation>-onlynet: &apos;%s&apos; に不明なネットワークが設定されています</translation>
     </message>
     <message>
         <source>Unknown state: id = %u</source>
-        <translation>Unknown state: id = %u</translation>
+        <translation>不明な状態: id = %u</translation>
     </message>
     <message>
         <source>Upgrade wallet to latest format</source>
@@ -5250,7 +5254,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Use N separate masternodes to anonymize funds  (2-8, default: %u)</source>
-        <translation>Use N separate masternodes to anonymize funds  (2-8, default: %u)</translation>
+        <translation>N 個のマスターノードを匿名化のために使用する (2-8, デフォルト: %u)</translation>
     </message>
     <message>
         <source>Use OpenSSL (https) for JSON-RPC connections</source>
@@ -5274,7 +5278,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Value more than Obfuscation pool maximum allows.</source>
-        <translation>Value more than Obfuscation pool maximum allows.</translation>
+        <translation>難読化プールの最大値以上の値です。</translation>
     </message>
     <message>
         <source>Verifying blocks...</source>
@@ -5326,27 +5330,27 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>You need to rebuild the database using -reindex to change -txindex</source>
-        <translation>You need to rebuild the database using -reindex to change -txindex</translation>
+        <translation>-txindex を変更するには、−reindex を用いデータベースを再構築しなければなりません</translation>
     </message>
     <message>
         <source>Your entries added successfully.</source>
-        <translation>Your entries added successfully.</translation>
+        <translation>あなたのエントリは追加されました。</translation>
     </message>
     <message>
         <source>Your transaction was accepted into the pool!</source>
-        <translation>Your transaction was accepted into the pool!</translation>
+        <translation>トランザクションはプールに承認されました!</translation>
     </message>
     <message>
         <source>Zapping all transactions from wallet...</source>
-        <translation>Zapping all transactions from wallet...</translation>
+        <translation>全てのトランザクションをウォレットからzapしています...</translation>
     </message>
     <message>
         <source>ZeroMQ notification options:</source>
-        <translation>ZeroMQ notification options:</translation>
+        <translation>ZeroMQ 通知オプション:</translation>
     </message>
     <message>
         <source>on startup</source>
-        <translation>on startup</translation>
+        <translation>起動時</translation>
     </message>
     <message>
         <source>wallet.dat corrupt, salvage failed</source>
@@ -5355,34 +5359,32 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     <message>
         <source> mints deleted
 </source>
-        <translation> 変換は消去されました
-</translation>
+        <translation>ミントは削除されました</translation>
     </message>
     <message>
         <source> mints updated, </source>
-        <translation> 変換は更新されました </translation>
+        <translation>ミントは更新されました</translation>
     </message>
     <message>
         <source> unconfirmed transactions removed
 </source>
-        <translation> 未確認のトランザクションが削除されました
-</translation>
+        <translation>未確認のトランザクションが削除されました</translation>
     </message>
     <message>
         <source>Calculated accumulator checkpoint is not what is recorded by block index</source>
-        <translation></translation>
+        <translation>計算されたアキュムレーターチェックポイントはブロックインデックスで記録されたものではありません</translation>
     </message>
     <message>
         <source>Disable all Phore specific functionality (Masternodes, Obfuscation, SwiftX, Budgeting) (0-1, default: %u)</source>
-        <translation>Phoreの全特徴を無効化する(マスターノード/匿名化/SwiftX/Budget) (0-1, デフォルト: %u)</translation>
+        <translation>Phoreの全特徴を無効化する(マスターノード/匿名化/SwiftX/予算案) (0-1, デフォルト: %u)</translation>
     </message>
     <message>
         <source>Enable automatic wallet backups triggered after each zPhr minting (0-1, default: %u)</source>
-        <translation>zPHRへの変換後自動でウォレットをバックアップする( 0-1, デフォルト: %u)</translation>
+        <translation>zPHRへの変換後自動でウォレットをバックアップする(0-1, デフォルト: %u)</translation>
     </message>
     <message>
         <source>Enable SwiftX, show confirmations for locked transactions (bool, default: %s)</source>
-        <translation></translation>
+        <translation>SwiftTXを有効化し、ロックされたトランザクションの確認数を表示します (bool, デフォルト: %s)</translation>
     </message>
     <message>
         <source>Error: The transaction was rejected! This might happen if some of the coins in your wallet were already spent, such as if you used a copy of wallet.dat and coins were spent in the copy but not marked as spent here.</source>
@@ -5390,11 +5392,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Error: This transaction requires a transaction fee of at least %s because of its amount, complexity, or use of recently received funds!</source>
-        <translation></translation>
+        <translation>エラー: このトランザクションは金額、複雑さ、受け取ったばかりの資金の利用などがあるために少なくとも %s の手数料が必要です!</translation>
     </message>
     <message>
         <source>Error: Unsupported argument -checklevel found. Checklevel must be level 4.</source>
-        <translation></translation>
+        <translation>エラー: サポートされていない引数が -checklevel に見つかりました。Checklevel はレベル 4でなければなりません。</translation>
     </message>
     <message>
         <source>Insufficient or insufficient confirmed funds, you might need to wait a few minutes and try again.</source>
@@ -5406,11 +5408,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Randomize credentials for every proxy connection. This enables Tor stream isolation (default: %u)</source>
-        <translation></translation>
+        <translation>各プロキシ接続ごとに資格情報をランダム化します。これによりTorの分離が可能になります (デフォルト: %u)</translation>
     </message>
     <message>
         <source>SwiftX requires inputs with at least 6 confirmations, you might need to wait a few minutes and try again.</source>
-        <translation></translation>
+        <translation>SwiftTX は6確認を必要とします。数分お待ちの上、再度お試しください。</translation>
     </message>
     <message>
         <source>To use phored, or the -server option to phore-qt, you must set an rpcpassword in the configuration file:
@@ -6130,7 +6132,7 @@ Please be patient after clicking import.</source>
     </message>
     <message>
         <source>List will be updated in 0 second(s)</source>
-        <translation>リストは0秒以内に更新されます</translation>
+        <translation>リストは 0 秒以内に更新されます</translation>
     </message>
     <message>
         <source>Confirm vote</source>
@@ -6147,6 +6149,14 @@ Please be patient after clicking import.</source>
     <message>
         <source>You voted %1 %2 time(s) successfully and failed %3 time(s) on %4</source>
         <translation>予算案%4 で %1 に%2 回投票成功し、%3 回投票失敗しました</translation>
+    </message>
+    <message>
+        <source>minute(s)</source>
+        <translation>分</translation>
+    </message>
+    <message>
+        <source>second(s)</source>
+        <translation>秒</translation>
     </message>
 </context>
 <context>
@@ -6166,6 +6176,22 @@ Please be patient after clicking import.</source>
     <message>
         <source>End Date</source>
         <translation>終了ブロック</translation>
+    </message>
+    <message>
+        <source>Yes</source>
+        <translation>賛成</translation>
+    </message>
+    <message>
+        <source>No</source>
+        <translation>反対</translation>
+    </message>
+    <message>
+        <source>Abstain</source>
+        <translation>保留</translation>
+    </message>
+    <message>
+        <source>Percentage</source>
+        <translation>賛成比率</translation>
     </message>
     <message>
         <source>Proposal Name</source>
