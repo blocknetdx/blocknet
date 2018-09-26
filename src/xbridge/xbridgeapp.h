@@ -64,7 +64,7 @@ public:
      * @brief isEnabled
      * @return enabled by default
      */
-    static bool isEnabled();
+    bool isEnabled();
 
     /**
      * @brief init init xbridge settings, secp256, exchange,
@@ -285,11 +285,13 @@ public:
      * @return true, if message known and processing
      */
     bool isKnownMessage(const std::vector<unsigned char> & message);
+    bool isKnownMessage(const uint256 & hash);
     /**
      * @brief addToKnown - add message to queue of processed messages
      * @param message
      */
     void addToKnown(const std::vector<unsigned char> & message);
+    void addToKnown(const uint256 & hash);
 
     //
     /**
@@ -368,6 +370,9 @@ public:
                          const std::vector<std::string> & services);
 
     bool findNodeWithService(const std::set<std::string> & services, CPubKey & node) const;
+
+protected:
+    void clearMempool();
 
 private:
     std::unique_ptr<Impl> m_p;
