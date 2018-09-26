@@ -95,17 +95,13 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
 
     }
 
-    return dxGetLocalTokens(params, fHelp); // TODO Remove when xwallet broadcast is ready
-
-    Array r;
-
-    std::vector<std::string> currencies = xbridge::App::instance().networkCurrencies();
-    for (std::string currency : currencies) {
-
-        r.emplace_back(currency);
-
+    std::set<std::string> services;
+    auto nodeServices = xbridge::App::instance().allServices();
+    for (auto & serviceItem : nodeServices) {
+        services.insert(serviceItem.second.begin(), serviceItem.second.end());
     }
-    return r;
+
+    return Array{services.begin(), services.end()};
 }
 
 //******************************************************************************
