@@ -115,7 +115,9 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
                                                                             spinnerFrame(0)
 {
     QFontDatabase::addApplicationFont(":/fonts/Hind-Bold");
+    QFontDatabase::addApplicationFont(":/fonts/Hind-SemiBold");
     QFontDatabase::addApplicationFont(":/fonts/Hind-Regular");
+    QFontDatabase::addApplicationFont(":/fonts/Hind-Light");
 	QFontDatabase::addApplicationFont(":/fonts/Montserrat-Bold");
     /* Open CSS when configured */
     this->setStyleSheet(GUIUtil::loadStyleSheet());
