@@ -142,7 +142,7 @@ QTabBar::tab:pressed {
 QWidget {
 	selection-background-color: #313d4b;
 	/* Object highlight color */
-	selection-color: transparent;
+	selection-color: #fff;
 	outline: 0;
 	/* Remove Annoying Focus Rectangle */
 }
