@@ -178,6 +178,15 @@ static bool verifyBlockRequirement(const XRouterPacketPtr& packet)
     return true;
 }
 
+inline void XRouterServer::sendReply(CNode* node, std::string uuid, std::string reply)
+{
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
+    rpacket->append(uuid);
+    rpacket->append(reply);
+    sendPacketToClient(rpacket, node);
+    LOG() << reply;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CValidationState& state)
@@ -259,7 +268,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     std::vector<std::string> parts;
                     boost::split(parts, feetx, boost::is_any_of(";"));
                     if (parts.size() != 3) {
-                        LOG() << "Incorrect channel creation parameters";
+                        sendReply(node, uuid, "Incorrect channel creation parameters");
                         return;
                     }
                     
@@ -276,7 +285,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             if (paymentChannels.count(node)) {
                 double paid = getTxValue(feetx, 0);
                 if (paid - paymentChannels[node].second < fee) {
-                    LOG() << "Fee paid is not enough";
+                    sendReply(node, uuid, "Fee paid is not enough");
                     return;
                 }
                 paymentChannels[node] = std::pair<std::string, double>(feetx, paid);

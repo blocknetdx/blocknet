@@ -64,6 +64,8 @@ protected:
      */
     void sendPacketToClient(const XRouterPacketPtr & packet, CNode* pnode);
     
+    inline void sendReply(CNode* node, std::string uuid, std::string reply);
+    
     /**
      * @brief onMessageReceived  call when message from xrouter network received
      * @param node source CNode
