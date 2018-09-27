@@ -25,8 +25,8 @@ bool createAndSignTransaction(std::string address, const double amount, std::str
 bool createAndSignTransaction(Array txparams, std::string & raw_tx);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
 bool sendTransactionBlockchain(std::string address, const double amount, std::string & raw_tx);
-bool createPaymentChannel(CPubKey address, double deposit, int date, std::string txid);
-bool createAndSignChannelTransaction(std::string address, double deposit, double amount, string& raw_tx);
+bool createPaymentChannel(CPubKey address, double deposit, int date, std::string & raw_tx, std::string & txid);
+bool createAndSignChannelTransaction(std::string address, double deposit, double amount, std::string & raw_tx);
 double getTxValue(std::string rawtx, int vout_number=0);
     
 class WalletConnectorXRouter : public xbridge::WalletParam

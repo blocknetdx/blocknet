@@ -931,9 +931,9 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             }
         } else {
             // Create payment channel first
+            std::string raw_tx, txid;
             if (!this->paymentChannels.count(pnode)) {
-                std::string txid;
-                bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, txid);
+                bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, raw_tx, txid);
                 if (!res)
                     return "Failed to create payment channel";
                 this->paymentChannels[pnode] = std::pair<std::string, std::string>(txid, "");
@@ -949,6 +949,9 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             if (!res)
                 return "Failed to pay to payment channel";
             this->paymentChannels[pnode].second = payment_tx;
+            
+            // Send channel tx, channel tx id, payment tx in one string
+            payment_tx = raw_tx + ";" + txid + ";" + payment_tx;
         }
     }
     

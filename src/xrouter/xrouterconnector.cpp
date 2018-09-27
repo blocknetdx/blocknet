@@ -389,7 +389,7 @@ bool sendTransactionBlockchain(std::string address, const double amount, std::st
     return res;
 }
 
-bool createPaymentChannel(CPubKey address, double deposit, int date, std::string txid)
+bool createPaymentChannel(CPubKey address, double deposit, int date, std::string& raw_tx, std::string& txid)
 {
     CScript inner;
     inner << OP_IF
@@ -402,7 +402,6 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
 
     std::string resultScript = std::string(inner.begin(), inner.end());
 
-    std::string raw_tx;
     Array outputs;
     Object out;
     out.push_back(Pair("script", resultScript));
@@ -420,7 +419,7 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     return sendTransactionBlockchain(raw_tx, txid);
 }
 
-bool createAndSignChannelTransaction(std::string address, double deposit, double amount, string& raw_tx)
+bool createAndSignChannelTransaction(std::string address, double deposit, double amount, std::string& raw_tx)
 {
     Array outputs;
     Object out_me;
