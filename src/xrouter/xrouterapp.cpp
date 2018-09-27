@@ -924,9 +924,8 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     bool res;
     if (fee > 0) {
         if (deposit == 0) {
-            try {
-                res = createAndSignTransaction(dest, fee, payment_tx);
-            } catch (...) {
+            res = createAndSignTransaction(dest, fee, payment_tx);
+            if(!res) {
                 return "Failed to create payment transaction";
             }
         } else {
@@ -953,6 +952,8 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             // Send channel tx, channel tx id, payment tx in one string
             payment_tx = raw_tx + ";" + txid + ";" + payment_tx;
         }
+        
+        LOG() << "Payment transaction: " << payment_tx;
     }
     
     packet->append(txHash.begin(), 32);

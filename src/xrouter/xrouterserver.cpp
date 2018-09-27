@@ -257,11 +257,15 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     // Direct payment, no CLTV channel
                     std::string txid;
                     
-                    // TODO: verify the transaction correctness
-                    try {
-                        sendTransactionBlockchain(feetx, txid);
-                    } catch(...) {
-                        // TODO: return error message
+                    double paid = getTxValue(feetx, 0);
+                    if (paid < fee) {
+                        sendReply(node, uuid, "Fee paid is not enough");
+                        return;
+                    }
+
+                    bool res = sendTransactionBlockchain(feetx, txid);
+                    if (!res) {
+                        sendReply(node, uuid, "Could not send transaction " + feetx + " to blockchain");
                         return;
                     }
                 } else {
@@ -277,6 +281,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     feetx = parts[2];
                     
                     // TODO: verify the channel's correctness
+                    
+                    // TODO: create a timer to broadcast the final tx before the locktime
                     
                     paymentChannels[node] = std::pair<std::string, double>("", 0.0);
                 }
