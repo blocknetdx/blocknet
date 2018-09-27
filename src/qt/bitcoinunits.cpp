@@ -10,6 +10,7 @@
 
 #include <QSettings>
 #include <QStringList>
+#include <QLocale>
 
 BitcoinUnits::BitcoinUnits(QObject* parent) : QAbstractListModel(parent),
                                               unitlist(availableUnits())
@@ -206,12 +207,43 @@ QString BitcoinUnits::floorWithUnit(int unit, const CAmount& amount, bool plussi
     return result + QString(" ") + name(unit);
 }
 
+QString BitcoinUnits::floorWithOutUnit(int unit, const CAmount& amount, bool plussign, SeparatorStyle separators)
+{
+    QSettings settings;
+    int digits = settings.value("digits").toInt();
+
+    QString result = format(unit, amount, plussign, separators);
+    if (decimals(unit) > digits) result.chop(decimals(unit) - digits);
+
+    return result;
+}
+
 QString BitcoinUnits::floorHtmlWithUnit(int unit, const CAmount& amount, bool plussign, SeparatorStyle separators)
 {
     QString str(floorWithUnit(unit, amount, plussign, separators));
     str.replace(QChar(THIN_SP_CP), QString(THIN_SP_HTML));
     return QString("<span style='white-space: nowrap;'>%1</span>").arg(str);
 }
+
+QString BitcoinUnits::floorHtmlWithUnitComma(int unit, const CAmount& amount, bool plussign, SeparatorStyle separators)
+{
+    // QString local = QLocale::languageToString(QLocale::system().language());
+
+    QSettings settings;
+    QString local = settings.value("language", "").toString();
+
+    QStringList list;
+    list << "en" << "en_US";
+
+    QString str(floorWithOutUnit(unit, amount, plussign, separators));
+
+    if(list.contains(local)){
+        str.replace(QChar(THIN_SP_CP), QString(","));
+    }
+    
+    return QString("<div style='white-space: nowrap;'>%1</div>").arg(str) + QString(" ") + name(unit);
+}
+
 
 bool BitcoinUnits::parse(int unit, const QString& value, CAmount* val_out)
 {
