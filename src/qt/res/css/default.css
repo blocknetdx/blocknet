@@ -1915,8 +1915,11 @@ QGroupBox::title {
 }
 
 #labelBalancez, #labelTotalz {
-    font-size:40px;
-       
+    font-size:36px;
+}
+
+#labelTotalz span {
+    color:red;
 }
 
 #labelTotalz {
@@ -1932,7 +1935,6 @@ QGroupBox::title {
 .negative-sum {
     color:#fff;
 }
-
 
 #labelBalance, #labelUnconfirmed, #labelImmature, #labelLockedBalance, #labelTotal, #labelzBalanceMature, #labelzBalance, #labelBalancez {
     font-weight:100;
