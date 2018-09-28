@@ -9,6 +9,7 @@
 #include "blocknetleftmenu.h"
 #include "blocknetdashboard.h"
 #include "blocknetsendfunds.h"
+#include "blocknetcreateproposal.h"
 #include "blocknetproposals.h"
 #include "blocknettransactionhistory.h"
 #include "blocknettoolbar.h"
@@ -61,6 +62,8 @@ protected slots:
     void goToDashboard();
     void goToQuickSend();
     void goToHistory();
+    void goToCreateProposal();
+    void goToProposals();
     void onChangePassphrase() { emit passphrase(); };
     void onLockRequest(bool locked, bool stakingOnly) { emit lock(locked, stakingOnly); }
     void balanceChanged(CAmount walletBalance, CAmount unconfirmed, CAmount immature, CAmount anonymized,
@@ -78,6 +81,7 @@ private:
     BlocknetToolBar *toolbar;
     BlocknetSendFunds *sendFunds = nullptr;
     BlocknetDashboard *dashboard = nullptr;
+    BlocknetCreateProposal *createProposal = nullptr;
     QWidget *screen = nullptr;
 };
 

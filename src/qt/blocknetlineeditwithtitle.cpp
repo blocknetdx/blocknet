@@ -6,23 +6,26 @@
 #include "blocknetlineeditwithtitle.h"
 
 BlocknetLineEditWithTitle::BlocknetLineEditWithTitle(QString title, QString placeholder, int w, int h, QFrame *parent) : QFrame(parent), layout(new QVBoxLayout) {
-<<<<<<< HEAD
-=======
     this->setMinimumSize(w, h);
->>>>>>> abe48f5f5... Implemented Create Proposal screens
+    this->setContentsMargins(QMargins());
+    layout->setContentsMargins(QMargins());
+    layout->setSpacing(3);
     this->setLayout(layout);
 
     titleLbl = new QLabel(title);
     titleLbl->setObjectName("h1");
+    titleLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
     layout->addWidget(titleLbl);
 
-<<<<<<< HEAD
-    lineEdit = new BlocknetLineEdit(w, h);
-=======
     lineEdit = new BlocknetLineEdit;
->>>>>>> abe48f5f5... Implemented Create Proposal screens
     lineEdit->setPlaceholderText(placeholder);
     layout->addWidget(lineEdit);
+
+    this->setFocusProxy(lineEdit);
+}
+
+bool BlocknetLineEditWithTitle::isEmpty() {
+    return lineEdit->text().trimmed().isEmpty();
 }
 
 void BlocknetLineEditWithTitle::setID(const QString id) {
@@ -32,4 +35,3 @@ void BlocknetLineEditWithTitle::setID(const QString id) {
 QString BlocknetLineEditWithTitle::getID() {
     return this->id;
 }
-

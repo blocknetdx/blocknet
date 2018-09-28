@@ -5,16 +5,28 @@
 #ifndef BLOCKNETCREATEPROPOSALUTIL_H
 #define BLOCKNETCREATEPROPOSALUTIL_H
 
-#include "walletmodel.h"
+#include "uint256.h"
+#include "base58.h"
 
 #include <QFrame>
+#include <QWidget>
+
+struct BlocknetCreateProposalPageModel {
+    std::string name;
+    std::string url;
+    int paymentCount;
+    int superblock;
+    int amount;
+    CBitcoinAddress address;
+    uint256 collateral;
+};
 
 class BlocknetCreateProposalPage : public QFrame {
     Q_OBJECT
 public:
-    explicit BlocknetCreateProposalPage(WalletModel *w, int id, QFrame *parent = nullptr) : QFrame(parent), walletModel(w), pageID(id) { }
-    void setWalletModel(WalletModel *w) { walletModel = w; }
+    explicit BlocknetCreateProposalPage(int id, QWidget *parent = nullptr) : QFrame(parent), pageID(id) { }
     virtual void clear() {};
+    virtual bool validated() { return true; };
 
 signals:
     void next(int pageID);
@@ -22,12 +34,11 @@ signals:
     void cancel(int pageID);
 
 public slots:
-    void onNext() { emit next(pageID); }
-    void onBack() { emit back(pageID); }
-    void onCancel() { emit cancel(pageID); }
+    virtual void onNext() { emit next(pageID); }
+    virtual void onBack() { emit back(pageID); }
+    virtual void onCancel() { emit cancel(pageID); }
 
 protected:
-    WalletModel *walletModel;
     int pageID{0};
 };
 

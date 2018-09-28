@@ -9,9 +9,10 @@
 #include "blocknetcreateproposalutil.h"
 #include "blocknetcreateproposal1.h"
 #include "blocknetcreateproposal2.h"
-#include "walletmodel.h"
+#include "blocknetcreateproposal3.h"
 
 #include <QFrame>
+#include <QWidget>
 #include <QVBoxLayout>
 #include <QSet>
 
@@ -20,37 +21,36 @@ class BlocknetCreateProposal : public QFrame
     Q_OBJECT
 
 public:
-    explicit BlocknetCreateProposal(WalletModel *w, QFrame *parent = nullptr);
-    void setWalletModel(WalletModel *w) {
-        walletModel = w;
-        page1->setWalletModel(walletModel);
-        page2->setWalletModel(walletModel);
-    }
+    explicit BlocknetCreateProposal(QWidget *parent = nullptr);
     void clear() {
-        //this->model->reset();
         page1->clear();
         page2->clear();
+        page3->clear();
     }
+
+signals:
+    void done();
 
 protected:
     bool event(QEvent *event) override;
+    void focusInEvent(QFocusEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
 private slots:
     void crumbChanged(int crumb);
     void nextCrumb(int crumb);
     void prevCrumb(int crumb);
     void onCancel(int crumb);
-    void goToDashboard() { /*emit dashboard();*/ };
-    void onDoneDashboard();
+    void onDone();
     void reset();
 
 private:
-    WalletModel *walletModel;
     QVector<BlocknetCreateProposalPage*> pages;
 
     QVBoxLayout *layout;
     BlocknetCreateProposal1 *page1;
     BlocknetCreateProposal2 *page2;
+    BlocknetCreateProposal3 *page3;
     BlocknetBreadCrumb *breadCrumb;
     BlocknetCreateProposalPage *screen = nullptr;
 

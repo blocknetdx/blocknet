@@ -7,46 +7,71 @@
 #include <QEvent>
 #include <QLineEdit>
 
-enum BCreateProposalCrumbs {
+enum BlocknetCreateProposalCrumbs {
     CREATE = 1,
     REVIEW,
-    VOTE,
+    SUBMIT,
 };
 
-BlocknetCreateProposal::BlocknetCreateProposal(WalletModel *w, QFrame *parent) : QFrame(parent), walletModel(w),
-                                                                       layout(new QVBoxLayout) {
+BlocknetCreateProposal::BlocknetCreateProposal(QWidget *parent) : QFrame(parent), layout(new QVBoxLayout) {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     layout->setContentsMargins(QMargins());
     this->setLayout(layout);
 
-    page1 = new BlocknetCreateProposal1(walletModel, CREATE);
-    page2 = new BlocknetCreateProposal2(walletModel, REVIEW);
-    pages = { page1, page2 };
-
-    //done = new BlocknetSendFundsDone;
-    //done->hide();
+    page1 = new BlocknetCreateProposal1(CREATE);
+    page2 = new BlocknetCreateProposal2(REVIEW);
+    page3 = new BlocknetCreateProposal3(SUBMIT);
+    pages = { page1, page2, page3 };
 
     breadCrumb = new BlocknetBreadCrumb;
     breadCrumb->setParent(this);
     breadCrumb->addCrumb(tr("Create Proposal"), CREATE);
-    breadCrumb->addCrumb(tr("Review Proposal"), REVIEW);
+    breadCrumb->addCrumb(tr("Pay Submission Fee"), REVIEW);
+    breadCrumb->addCrumb(tr("Submit Proposal"), SUBMIT);
     breadCrumb->show();
 
     connect(breadCrumb, SIGNAL(crumbChanged(int)), this, SLOT(crumbChanged(int)));
     connect(page1, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
     connect(page2, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
+    connect(page3, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
     connect(page2, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
     connect(page1, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
     connect(page2, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
+    connect(page3, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
+    connect(page3, SIGNAL(done()), this, SLOT(onDone()));
 
     // Estimated position
     positionCrumb(QPoint(175, -4));
     breadCrumb->goToCrumb(CREATE);
 }
 
+void BlocknetCreateProposal::focusInEvent(QFocusEvent *event) {
+    QWidget::focusInEvent(event);
+    if (screen)
+        screen->setFocus();
+}
+
+void BlocknetCreateProposal::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    if (screen)
+        screen->setFocus();
+}
+
 void BlocknetCreateProposal::crumbChanged(int crumb) {
-    //if (screen && crumb > breadCrumb->getCrumb() && breadCrumb->showCrumb(breadCrumb->getCrumb()) /*&& !screen->validated()*/)
-      //  return;
+    // Prevent users from jumping around the crumb widget without validating previous pages
+    auto validatePages = [](const int toPage, const QVector<BlocknetCreateProposalPage*> &pages) -> bool {
+        if (toPage - 1 > pages.count())
+            return false;
+        for (int i = 0; i < toPage - 1; ++i) {
+            auto *page = pages[i];
+            if (!page->validated())
+                return false;
+        }
+        return true;
+    };
+
+    if (screen && crumb > breadCrumb->getCrumb() && breadCrumb->showCrumb(breadCrumb->getCrumb()) && !validatePages(crumb, pages))
+        return;
     breadCrumb->showCrumb(crumb);
 
     if (screen) {
@@ -54,10 +79,7 @@ void BlocknetCreateProposal::crumbChanged(int crumb) {
         screen->hide();
     }
 
-    /*if (!done->isHidden()) {
-        layout->removeWidget(done);
-        done->hide();
-    }*/
+    breadCrumb->setEnabled(true);
 
     switch(crumb) {
         case CREATE:
@@ -65,6 +87,12 @@ void BlocknetCreateProposal::crumbChanged(int crumb) {
             break;
         case REVIEW:
             screen = page2;
+            page2->setModel(page1->getModel());
+            break;
+        case SUBMIT:
+            screen = page3;
+            page3->setModel(page2->getModel());
+            breadCrumb->setEnabled(false); // don't let the user change screens here (unless explicit cancel), to prevent them from inadvertently losing fee hash
             break;
         default:
             return;
@@ -78,9 +106,9 @@ void BlocknetCreateProposal::crumbChanged(int crumb) {
 }
 
 void BlocknetCreateProposal::nextCrumb(int crumb) {
-    if (screen && crumb > breadCrumb->getCrumb() && breadCrumb->showCrumb(breadCrumb->getCrumb()) /*&& !screen->validated()*/)
+    if (screen && crumb > breadCrumb->getCrumb() && breadCrumb->showCrumb(breadCrumb->getCrumb()) && !screen->validated())
         return;
-    if (crumb >= REVIEW) // do nothing if at the end
+    if (crumb >= SUBMIT) // do nothing if at the end
         return;
     breadCrumb->goToCrumb(++crumb);
 }
@@ -94,17 +122,13 @@ void BlocknetCreateProposal::prevCrumb(int crumb) {
 }
 
 void BlocknetCreateProposal::onCancel(int crumb) {
-    clear();
-    breadCrumb->goToCrumb(CREATE);
-    //emit dashboard();
+    reset();
+    emit done();
 }
 
-void BlocknetCreateProposal::onDoneDashboard() {
-    //model->reset();
-    for (BlocknetCreateProposalPage *page : pages)
-        page->clear();
-    breadCrumb->goToCrumb(CREATE);
-    //emit dashboard();
+void BlocknetCreateProposal::onDone() {
+    reset();
+    emit done();
 }
 
 bool BlocknetCreateProposal::event(QEvent *event) {
@@ -119,7 +143,6 @@ bool BlocknetCreateProposal::event(QEvent *event) {
 }
 
 void BlocknetCreateProposal::reset() {
-    //model->reset();
     for (BlocknetCreateProposalPage *page : pages)
         page->clear();
     breadCrumb->goToCrumb(CREATE);
@@ -141,7 +164,5 @@ void BlocknetCreateProposal::positionCrumb(QPoint pt) {
 void BlocknetCreateProposal::goToDone() {
     layout->removeWidget(screen);
     screen->hide();
-    //layout->addWidget(done);
-    //done->show();
 }
 

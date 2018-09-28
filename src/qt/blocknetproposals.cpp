@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "blocknetproposals.h"
+#include "blocknetcreateproposal.h"
 #include "blocknetvars.h"
 #include "blockneticonaltbtn.h"
 #include "blocknetdropdown.h"
@@ -56,8 +57,8 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     QStringList list{tr("All Proposals"), tr("Active"), tr("Upcoming"), tr("Completed")};
     proposalsDropdown = new BlocknetDropdown(list);
 
-//    topBoxLayout->addWidget(createProposal, 0, Qt::AlignLeft);
-//    topBoxLayout->addWidget(buttonLbl, 0, Qt::AlignLeft);
+    topBoxLayout->addWidget(createProposal, 0, Qt::AlignLeft);
+    topBoxLayout->addWidget(buttonLbl, 0, Qt::AlignLeft);
     topBoxLayout->addStretch(1);
     topBoxLayout->addWidget(filterLbl);
     topBoxLayout->addWidget(proposalsDropdown);
@@ -137,7 +138,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     });
     timer->start(timerInterval);
 
-    //connect(createproposal, SIGNAL(clicked()), this, SLOT(onCreateProposal()));
+    connect(createProposal, SIGNAL(clicked()), this, SLOT(onCreateProposal()));
     connect(table, &QTableWidget::itemSelectionChanged, this, [this]() {
         lastSelection = QDateTime::currentMSecsSinceEpoch();
     });

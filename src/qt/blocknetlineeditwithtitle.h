@@ -18,6 +18,7 @@ public:
     explicit BlocknetLineEditWithTitle(QString title = "", QString placeholder = "", int w = 250, int h = 40, QFrame *parent = nullptr);
     void setID(QString id);
     QString getID();
+    bool isEmpty();
     BlocknetLineEdit *lineEdit;
 
 signals:

@@ -129,7 +129,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
     if (screen) {
         screen->hide();
         contentBox->layout()->removeWidget(screen);
-        if (screen != sendFunds && screen != dashboard)
+        if (screen != sendFunds && screen != dashboard && screen != createProposal)
             screen->deleteLater();
     }
 
@@ -183,8 +183,18 @@ void BlocknetWallet::setPage(BlocknetPage page) {
         }
         case BlocknetPage::PROPOSALS: {
             auto *proposals = new BlocknetProposals;
+            connect(proposals, SIGNAL(createProposal()), this, SLOT(goToCreateProposal()));
             proposals->setWalletModel(walletModel);
             screen = proposals;
+            break;
+        }
+        case BlocknetPage::CREATEPROPOSAL: {
+            if (createProposal == nullptr) {
+                createProposal = new BlocknetCreateProposal;
+                connect(createProposal, SIGNAL(done()), this, SLOT(goToProposals()));
+            }
+            createProposal->show();
+            screen = createProposal;
             break;
         }
 //        case BlocknetPage::ANNOUNCEMENTS:
@@ -213,6 +223,14 @@ void BlocknetWallet::goToQuickSend() {
 
 void BlocknetWallet::goToHistory() {
     setPage(BlocknetPage::HISTORY);
+}
+
+void BlocknetWallet::goToProposals() {
+    setPage(BlocknetPage::PROPOSALS);
+}
+
+void BlocknetWallet::goToCreateProposal() {
+    setPage(BlocknetPage::CREATEPROPOSAL);
 }
 
 void BlocknetWallet::balanceChanged(const CAmount walletBalance, const CAmount unconfirmed, const CAmount immature,

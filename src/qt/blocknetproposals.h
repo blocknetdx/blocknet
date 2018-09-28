@@ -9,6 +9,7 @@
 #include "blocknetdropdown.h"
 
 #include "walletmodel.h"
+#include "servicenode-sync.h"
 
 #include <QFrame>
 #include <QLabel>
@@ -22,6 +23,7 @@
 #include <QDialog>
 #include <QTimer>
 #include <QMenu>
+#include <QMessageBox>
 
 class BlocknetProposals : public QFrame
 {
@@ -62,11 +64,18 @@ public:
     }
 
 signals:
-    //void createproposal();
+    void createProposal();
     void tableUpdated();
 
 public slots:
-    //void onCreateProposal() { emit createproposal(); }
+    void onCreateProposal() {
+        if (!servicenodeSync.IsBlockchainSynced()) {
+            QMessageBox::warning(this->parentWidget(), tr("Issue"),
+                                 tr("Please wait until syncing has finished before creating a new proposal."));
+            return;
+        }
+        emit createProposal();
+    }
     void onVote();
 
 private slots:

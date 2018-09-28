@@ -23,6 +23,7 @@ enum BlocknetPage {
     HISTORY,
     SNODES,
     PROPOSALS,
+    CREATEPROPOSAL,
     ANNOUNCEMENTS,
     SETTINGS,
     TOOLS,

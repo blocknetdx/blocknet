@@ -320,6 +320,11 @@ SOURCES += \
     src/qt/blocknetsendfunds3.cpp \
     src/qt/blocknetsendfunds4.cpp \
     src/qt/blocknetsendfundsdone.cpp \
+    src/qt/blocknetcreateproposal.cpp \
+    src/qt/blocknetcreateproposal1.cpp \
+    src/qt/blocknetcreateproposal2.cpp \
+    src/qt/blocknetcreateproposal3.cpp \
+    src/qt/blocknetlineeditwithtitle.cpp \
     src/qt/blocknettoolbar.cpp \
     src/qt/blocknetcircle.cpp \
     src/qt/blocknetavatar.cpp \
@@ -639,6 +644,12 @@ HEADERS += \
     src/qt/blocknetsendfunds4.h \
     src/qt/blocknetsendfundsdone.h \
     src/qt/blocknetsendfundsutil.h \
+    src/qt/blocknetcreateproposal.h \
+    src/qt/blocknetcreateproposal1.h \
+    src/qt/blocknetcreateproposal2.h \
+    src/qt/blocknetcreateproposal3.h \
+    src/qt/blocknetcreateproposalutil.h \
+    src/qt/blocknetlineeditwithtitle.h \
     src/qt/blocknettoolbar.h \
     src/qt/blocknetcircle.h \
     src/qt/blocknetavatar.h \
