@@ -6,6 +6,7 @@
 #include "blockneticonaltbtn.h"
 #include "blocknetlabelbtn.h"
 #include "blocknetavatar.h"
+#include "addresstablemodel.h"
 
 #include <QHeaderView>
 
@@ -100,28 +101,28 @@ void BlocknetAddressBook::initialize() {
 
     dataModel.clear();
 
-    Address ad1 = {
-        tr("funds"),
-        tr("MlgLuhfsFDJFjhabcscdIOJbdancacjttt")
-    };
-    Address ad2 = {
-        tr("Nick Roman"),
-        tr("KlrnuhfsFDJFjhabjnvkIOJbdancacnksd")
-    };
-    Address ad3 = {
-        tr("Retirement"),
-        tr("POKLuhfsFDJFjhabcscdIOJbdancacnksd")
-    };
-    Address ad4 = {
-        tr("Zandaya Jordan"),
-        tr("YUinuhfsFDJFjhabcscdIOJbdancavvxzl")
-    };
-    Address ad5 = {
-        tr(""),
-        tr("UUibHJkdslJFjhabcscdIOJbdancawpfnn")
-    };
+    AddressTableModel *addressTableModel = walletModel->getAddressTableModel();
+    int rowCount = addressTableModel->rowCount(QModelIndex());
+    int columnCount = addressTableModel->columnCount(QModelIndex());
 
-    dataModel << ad1 << ad2 << ad3 << ad4 << ad5;
+    for (int row=0; row<rowCount; row++) {
+        QString alias = "";
+        QString address = "";
+        for (int column=0; column<columnCount; column++) {
+            QModelIndex index = addressTableModel->index(row, column, QModelIndex());
+            QVariant variant = addressTableModel->data(index, Qt::DisplayRole);
+            if (column == 0) {
+                alias = variant.toString();
+            } else {
+                address = variant.toString();
+            }
+        }
+        Address a = {
+            alias,
+            address
+        };
+        dataModel << a;
+    }
 
     // Sort on alias descending
     std::sort(dataModel.begin(), dataModel.end(), [](const Address &a, const Address &b) {

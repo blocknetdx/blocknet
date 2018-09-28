@@ -36,7 +36,10 @@ void BlocknetAvatar::paintEvent(QPaintEvent *) {
     QStringList list = title.split(" ", QString::SkipEmptyParts);
     QString s = "";
     int size = 0;
-    if (list.size() > 0) {
+    if (title == "(no label)") {
+        s = "";
+    }
+    else if (list.size() > 0) {
         for (auto& c: list) {
             s.append(c.at(0).toUpper());
             size++;
