@@ -32,7 +32,7 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     proposalTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9-_]+"), this));
     proposalTi->lineEdit->setMaxLength(50);
 
-    urlTi = new BlocknetLineEditWithTitle(tr("URL (max 150 characters)"), tr("Enter URL..."));
+    urlTi = new BlocknetLineEditWithTitle(tr("URL (max 64 characters)"), tr("Enter URL..."));
     urlTi->setObjectName("url");
     urlTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"), this));
     urlTi->lineEdit->setMaxLength(150);
