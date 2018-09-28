@@ -148,6 +148,10 @@ bool BlocknetCreateProposal1::validated() {
         QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad proposal url"));
         return false;
     }
+    if (url.length() > 64) {
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad url, it's too long. The url is limited to 64 characters"));
+        return false;
+    }
 
     auto paymentCount = boost::lexical_cast<int>(paymentCountTi->lineEdit->text().toStdString());
     if (paymentCount == 0 || paymentCount > 12) { // bad payment count
