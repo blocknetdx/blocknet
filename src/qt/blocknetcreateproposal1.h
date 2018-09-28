@@ -55,6 +55,8 @@ private:
     BlocknetLineEditWithTitle *paymentAddrTi;
     BlocknetFormBtn *continueBtn;
     BlocknetFormBtn *cancelBtn;
+
+    int nextSuperblock();
 };
 
 #endif // BLOCKNETCREATEPROPOSAL1_H

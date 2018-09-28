@@ -48,11 +48,12 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     paymentCountTi->lineEdit->setValidator(new QIntValidator(1, 12));
     paymentCountTi->lineEdit->setText("1");
 
-    auto nextSuperblock = budget.NextBudgetBlock() + 1;
-    superBlockTi = new BlocknetLineEditWithTitle(tr("Superblock #: Next is %1").arg(nextSuperblock), tr("Enter Superblock #..."));
+    auto superblock = nextSuperblock();
+    auto superblockStr = superblock == -1 ? QString() : QString::number(superblock);
+    superBlockTi = new BlocknetLineEditWithTitle(tr("Superblock #: Next is %1").arg(superblockStr), tr("Enter Superblock #..."));
     superBlockTi->setObjectName("block");
     superBlockTi->lineEdit->setValidator(new QIntValidator(1, 100000000));
-    superBlockTi->lineEdit->setText(QString::number(nextSuperblock));
+    superBlockTi->lineEdit->setText(superblockStr);
 
     amountTi = new BlocknetLineEditWithTitle(tr("Amount (10 minimum)"), tr("Enter amount..."));
     amountTi->setObjectName("amount");
@@ -200,4 +201,13 @@ void BlocknetCreateProposal1::clear() {
     superBlockTi->lineEdit->clear();
     amountTi->lineEdit->clear();
     paymentAddrTi->lineEdit->clear();
+}
+
+int BlocknetCreateProposal1::nextSuperblock() {
+    CBlockIndex *pindexPrev = chainActive.Tip();
+    if (!pindexPrev)
+        return -1;
+
+    int nNext = pindexPrev->nHeight - pindexPrev->nHeight % GetBudgetPaymentCycleBlocks() + GetBudgetPaymentCycleBlocks();
+    return nNext;
 }
