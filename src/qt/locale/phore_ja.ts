@@ -611,7 +611,7 @@
     </message>
     <message>
         <source>Send coins to a Phore address</source>
-        <translation>Phore addressへ送金する</translation>
+        <translation>Phoreアドレスへ送金する</translation>
     </message>
     <message>
         <source>Request payments (generates QR codes and phore: URIs)</source>
@@ -1945,6 +1945,14 @@ https://www.transifex.com/phore-project/phore-project-translations</translation>
     <message>
         <source>I don&apos;t care</source>
         <translation>十分理解した</translation>
+    </message>
+    <message>
+        <source>Stake split threshold:</source>
+        <translation>ステーキング分割しきい値:</translation>
+    </message>
+    <message>
+        <source>Hide empty balances</source>
+        <translation>残高0の物を隠す</translation>
     </message>
 </context>
 <context>
@@ -5645,7 +5653,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
         <translation>枚数:</translation>
     </message>
     <message>
-        <source>Rescan the complete blockchain for  Zerocoin mints and their meta-data.</source>
+        <source>Rescan the complete blockchain for Zerocoin mints and their meta-data.</source>
         <translation>ゼロコインへの変換・メタデータのためにブロックチェーンを再スキャンしてください。</translation>
     </message>
     <message>
@@ -5683,7 +5691,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     <message>
         <source>Available (mature and spendable) zPHR for spending
 
-zPHR are mature when they have more than 20 confirmations AND more than 2 mints of the same denomination after them were minted</source>
+zPHR are mature when they have more than 20 confirmations AND more than 1 mint of the same denomination after them were minted</source>
         <translation>zPHRは20確認と同じdenominationでの3変換がされたのちに利用可能になります</translation>
     </message>
     <message>
@@ -5760,11 +5768,11 @@ zPHR are mature when they have more than 20 confirmations AND more than 2 mints 
     </message>
     <message>
         <source>Denominations with value 1:</source>
-        <translation>1 zPHR の塊(denomination):</translation>
+        <translation>1 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 1:</source>
-        <translation>1 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;1&lt;/b&gt;:</source>
+        <translation>1 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Unconfirmed: less than 20 confirmations
@@ -5774,59 +5782,59 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
     </message>
     <message>
         <source>Denominations with value 5:</source>
-        <translation>5 zPHR の塊(denomination):</translation>
+        <translation>5 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 5:</source>
-        <translation>5 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;5&lt;/b&gt;:</source>
+        <translation>5 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Denominations with value 10:</source>
-        <translation>10 zPHR の塊(denomination):</translation>
+        <translation>10 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 10:</source>
-        <translation>10 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;10&lt;/b&gt;:</source>
+        <translation>10 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Denominations with value 50:</source>
-        <translation>50 zPHR の塊(denomination):</translation>
+        <translation>50 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 50:</source>
-        <translation>50 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;50&lt;/b&gt;:</source>
+        <translation>50 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Denominations with value 100:</source>
-        <translation>100 zPHR の塊(denomination):</translation>
+        <translation>100 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 100:</source>
-        <translation>100 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;100&lt;/b&gt;:</source>
+        <translation>100 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Denominations with value 500:</source>
-        <translation>500 zPHR の塊(denomination):</translation>
+        <translation>500 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 500:</source>
-        <translation>500 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;500&lt;/b&gt;:</source>
+        <translation>500 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Denominations with value 1000:</source>
-        <translation>1000 zPHR の塊(denomination):</translation>
+        <translation>1000 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 1000:</source>
-        <translation>1000 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;1000&lt;/b&gt;:</source>
+        <translation>1000 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Denominations with value 5000:</source>
-        <translation>5000 zPHR の塊(denomination):</translation>
+        <translation>5000 zPHRの塊(denomination):</translation>
     </message>
     <message>
-        <source>Denom. with value 5000:</source>
-        <translation>5000 zPHR のdenom.:</translation>
+        <source>Denom. with value &lt;b&gt;5000&lt;/b&gt;:</source>
+        <translation>5000 zPHRのdenom.:</translation>
     </message>
     <message>
         <source>Priority:</source>
@@ -5881,10 +5889,6 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
         <translation>お釣り:</translation>
     </message>
     <message>
-        <source>AutoMint Status</source>
-        <translation>自動ミントのステータス</translation>
-    </message>
-    <message>
         <source>Show the current status of automatic zPHR minting.
 
 To change the status (restart required):
@@ -5895,14 +5899,144 @@ To change the percentage (no restart required):
 - menu Settings-&gt;Options-&gt;Percentage of autominted zPHR
 
 </source>
-        <translation>現在の自動zPHRミンティング設定について表しています。
-
+        <translation>現在の自動zPHRミント設定について表しています。
 再起動が必要ですが、設定を変更するには:
 - 有効化: &apos;enablezeromint=1&apos; を phore.conf へ追記
 - 無効化: &apos;enablezeromint=0&apos; を phore.conf へ追記
-
 変換する割合を変更するには(再起動は必要ありません):
 - メニューの設定-&gt;オプション-&gt;zPHRの自動ミントの割合 より変更</translation>
+    </message>
+    <message>
+        <source>out of sync</source>
+        <translation>未同期</translation>
+    </message>
+    <message>
+        <source>Mint Status: Okay</source>
+        <translation>ミントステータス: 成功</translation>
+    </message>
+    <message>
+        <source>Copy quantity</source>
+        <translation>個数をコピー</translation>
+    </message>
+    <message>
+        <source>Copy amount</source>
+        <translation>枚数をコピー</translation>
+    </message>
+    <message>
+        <source>AutoMint Status:</source>
+        <translation>自動ミント ステータス:</translation>
+    </message>
+    <message>
+        <source>zPHR is currently undergoing maintenance.</source>
+        <translation>ゼロコイン機能は現在メンテナンス中です。</translation>
+    </message>
+    <message>
+        <source>Error: Your wallet is locked. Please enter the wallet passphrase first.</source>
+        <translation>エラー: ウォレットはロックされています。先にウォレットをアンロックして下さい。</translation>
+    </message>
+    <message>
+        <source>Message: Enter an amount > 0.</source>
+        <translation>メッセージ: 0より大きい枚数を入力して下さい。</translation>
+    </message>
+    <message>
+        <source>Minting</source>
+        <translation>ミント中</translation>
+    </message>
+    <message>
+        <source>Successfully minted </source>
+        <translation></translation>
+    </message>
+    <message>
+        <source> zPHR in </source>
+        <translation>zPHRを</translation>
+    </message>
+    <message>
+        <source> sec. Used denominations:\n</source>
+        <translation>秒でミント完了。使用した denom.:\n</translation>
+    </message>
+    <message>
+        <source>Starting ResetMintZerocoin: rescanning complete blockchain, this will need up to 30 minutes depending on your hardware. \nPlease be patient...</source>
+        <translation>ミントしたゼロコインのリセットを開始: ブロックチェーン全体を再スキャン中です。コンピュータの性能に応じ、30分程度かかることがあります。\nしばらくお待ち下さい...</translation>
+    </message>
+    <message>
+        <source>Duration: </source>
+        <translation>経過時間: </translation>
+    </message>
+    <message>
+        <source> sec.\n</source>
+        <translation> 秒\n</translation>
+    </message>
+    <message>
+        <source>Starting ResetSpentZerocoin: </source>
+        <translation>使用したゼロコインのリセットを開始:</translation>
+    </message>
+    <message>
+        <source>No 'Pay To' address provided, creating local payment</source>
+        <translation>支払い先に何も入力されない場合、自身への支払いを実行します</translation>
+    </message>
+    <message>
+        <source>Invalid Phore Address</source>
+        <translation>Phoreアドレスが間違っています</translation>
+    </message>
+    <message>
+        <source>Invalid Send Amount</source>
+        <translation>送金する枚数が間違っています</translation>
+    </message>
+    <message>
+        <source>Confirm additional Fees</source>
+        <translation>追加手数料の確認</translation>
+    </message>
+    <message>
+        <source>Are you sure you want to send?&lt;br /&gt;&lt;br /&gt;</source>
+        <translation>送金してよろしいですか?</translation>
+    </message>
+    <message>
+        <source> to a newly generated (unused and therefore anonymous) local address &lt;br /&gt;</source>
+        <translation>匿名化に利用されていないアドレスを生成し、送金します</translation>
+    </message>
+    <message>
+        <source>with Security Level </source>
+        <translation>次のセキュリティレベルで</translation>
+    </message>
+    <message>
+        <source>Confirm send coins</source>
+        <translation>送金の確認</translation>
+    </message>
+    <message>
+        <source>Spending Zerocoin.\nComputationally expensive, might need several minutes depending on the selected Security Level and your hardware. \nPlease be patient...</source>
+        <translation>ゼロコインの送金中です。\nコンピューティングリソースを使用しますので、性能、選択したセキュリティレベルに応じ時間がかかります。\nしばらくお待ち下さい...</translation>
+    </message>
+    <message>
+        <source>Version 1 zPHR require a security level of 100 to successfully spend.</source>
+        <translation>バージョン1のゼロコインプロトコルは送金を行うのにセキュリティレベル100が必要です。</translation>
+    </message>
+    <message>
+        <source>Failed to spend zPHR</source>
+        <translation>zPHRの送金に失敗</translation>
+    </message>
+    <message>
+        <source>Failed to fetch mint associated with serial hash</source>
+        <translation>シリアルハッシュと紐付くミントを取得できません</translation>
+    </message>
+    <message>
+        <source>Spend Zerocoin failed with status = </source>
+        <translation>zPHRの送金は失敗しました。ステータス = </translation>
+    </message>
+    <message>
+        <source>Sending successful, return code: </source>
+        <translation>送金成功。ステータス: </translation>
+    </message>
+    <message>
+        <source>fee: </source>
+        <translation>手数料: </translation>
+    </message>
+    <message>
+        <source>Enter an amount of PHR to convert to zPHR</source>
+        <translation>zPHRに変換したいPHRの枚数を入力</translation>
+    </message>
+    <message>
+        <source>\nEither mint higher denominations (so fewer inputs are needed) or reduce the amount to spend.</source>
+        <translation>\nもしくはより高額のdenom.をミントし入力の個数を減らすか、送金する枚数を減らして下さい。</translation>
     </message>
 </context>
 <context>
