@@ -249,11 +249,9 @@ std::string App::version()
 
 //*****************************************************************************
 //*****************************************************************************
-// static
 bool App::isEnabled()
 {
-    // enabled by default
-    return true;
+    return connectors().size() > 0 || xbridge::Exchange::instance().isEnabled();
 }
 
 //*****************************************************************************
@@ -468,13 +466,11 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
 
     uint256 hash = Hash(msg.begin(), msg.end());
 
-    LOCK(cs_vNodes);
-    for  (CNode * pnode : vNodes)
+    App::instance().addToKnown(hash);
     {
-        if (pnode->setKnown.insert(hash).second)
-        {
+        LOCK(cs_vNodes);
+        for (CNode * pnode : vNodes)
             pnode->PushMessage("xbridge", msg);
-        }
     }
 }
 
@@ -776,11 +772,32 @@ bool App::isKnownMessage(const std::vector<unsigned char> & message)
 
 //*****************************************************************************
 //*****************************************************************************
+bool App::isKnownMessage(const uint256 & hash)
+{
+    boost::mutex::scoped_lock l(m_p->m_messagesLock);
+    return m_p->m_processedMessages.count(hash) > 0;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 void App::addToKnown(const std::vector<unsigned char> & message)
 {
     // add to known
     boost::mutex::scoped_lock l(m_p->m_messagesLock);
+    // clear memory if it's larger than mempool threshold
+    clearMempool();
     m_p->m_processedMessages.insert(Hash(message.begin(), message.end()));
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void App::addToKnown(const uint256 & hash)
+{
+    // add to known
+    boost::mutex::scoped_lock l(m_p->m_messagesLock);
+    // clear memory if it's larger than mempool threshold
+    clearMempool();
+    m_p->m_processedMessages.insert(hash);
 }
 
 //******************************************************************************
@@ -1991,6 +2008,16 @@ void App::Impl::onTimer()
 
     m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
     m_timer.async_wait(boost::bind(&Impl::onTimer, this));
+}
+
+/**
+ * Clears the xbridge message mempool. This is not threadsafe, locks required outside this func.
+ */
+void App::clearMempool() {
+    auto count = m_p->m_processedMessages.size();
+    auto maxMBytes = static_cast<unsigned int>(GetArg("-maxmempoolxbridge", 128)) * 1000000;
+    if (count * 64 > maxMBytes) // estimated 64 bytes per hash
+        m_p->m_processedMessages.clear();
 }
 
 } // namespace xbridge

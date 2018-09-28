@@ -88,7 +88,7 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     addWidget(sendCoinsPage);
     addWidget(explorerWindow);
 
-    if (xbridge::App::isEnabled())
+    if (xbridge::App::instance().isEnabled())
     {
         addWidget(xbridgePage);
     }

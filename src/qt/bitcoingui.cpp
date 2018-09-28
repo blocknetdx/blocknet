@@ -345,7 +345,7 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     xbridgeAction->setToolTip(tr("Show xbridge dialog"));
     // xbridgeAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     xbridgeAction->setCheckable(true);
-    if (xbridge::App::isEnabled())
+    if (xbridge::App::instance().isEnabled())
     {
         tabGroup->addAction(xbridgeAction);
     }
@@ -541,7 +541,7 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
 
-        if (xbridge::App::isEnabled())
+        if (xbridge::App::instance().isEnabled())
         {
             toolbar->addAction(xbridgeAction);
         }
