@@ -36,13 +36,8 @@ public:
     {}
 
     // accessors
-    template<typename T> T price() const {
-        if (to.accumulator() == 0)
-            return static_cast<T>(0);
-        auto basis = from.currency().basis();
-        auto ratio = (from.amount() / to.amount()) + 2/basis;
-        auto fxpt = boost::rational_cast<uintmax_t>(basis * ratio);
-        return boost::rational_cast<T>(boost::rational<uintmax_t>{fxpt, basis});
+    template<typename T = double> T price() const {
+        return ccy::Asset::Price<T>{to, from}.value();
     }
     std::string xid() const { return tag == Tag::Valid ? xid_or_error : std::string{}; }
     std::string error() const { return tag == Tag::Error ? xid_or_error : std::string{}; }

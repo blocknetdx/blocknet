@@ -23,7 +23,6 @@ using boost::posix_time::ptime;
 using boost::posix_time::time_period;
 using boost::posix_time::time_duration;
 using boost::posix_time::from_time_t;
-using boost::posix_time::to_time_t;
 
 /**
  * @brief validate and hold parameters used by dxGetOrderHistory() and others
@@ -59,8 +58,8 @@ public:
 // variables
     ccy::Currency fromCurrency;
     ccy::Currency toCurrency;
-    time_duration granularity;
-    time_period period;
+    time_duration granularity{boost::date_time::not_a_date_time};
+    time_period period{ptime{},ptime{}};
     WithTxids with_txids;
     WithInverse with_inverse;
     IntervalLimit interval_limit;
@@ -78,7 +77,7 @@ public:
            WithInverse with_inverse,
            IntervalLimit limit,
            IntervalTimestamp interval_timestamp
-    ) try // catch any exception during initialization list
+    )
         : fromCurrency{fromSymbol,xbridge::TransactionDescr::COIN}
         , toCurrency{toSymbol,xbridge::TransactionDescr::COIN}
         , granularity{validate_granularity(g)}
@@ -98,11 +97,7 @@ public:
               : (not interval_timestamp.is_valid()) ?
                   "interval_timestamp not one of { at_start, at_end }."
               : ""}
-    { /* empty constructor body */ } catch (const std::exception& e) {
-        reason = e.what();
-    } catch ( ... ) {
-        reason = "unknown exception";
-    }
+    {}
 
 // functions
     bool error() const { return not reason.empty(); }

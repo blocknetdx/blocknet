@@ -93,6 +93,7 @@ namespace ccy {
         bool operator<(const Currency& other ) const { return _sym < other._sym; }
     };
 
+
 /**
  * @brief Asset - keeps track of an amount and the associated currency
  */
@@ -102,6 +103,24 @@ namespace ccy {
         Amount _amount{0};
 
     public:
+
+        template<typename T>
+        class Price {
+            T _value;
+        public:
+            Price() : _value{0} {}
+            Price(const Asset& to, const Asset& from) {
+                if (to.accumulator() == 0) return;
+                auto ratio = from.amount_rational() / to.amount_rational();
+                using Rational = decltype(ratio);
+                using IntType = Rational::int_type;
+                IntType basis = from.currency().basis();
+                auto roundUp = Rational{1,2*basis};
+                auto rounded = boost::rational_cast<IntType>(basis * (ratio + roundUp));
+                _value = boost::rational_cast<T>(Rational{rounded, basis});
+            }
+            T value() const { return _value; }
+        };
 
         // ctors
         Asset() = default;
@@ -113,8 +132,14 @@ namespace ccy {
         Amount& accumulator() { return _amount; }
         const Amount& accumulator() const { return _amount; }
         const Currency& currency() const { return _currency; }
-        template<typename T = boost::rational<Amount>> T amount() const {
-            return {_amount, currency().basis()};
+
+        template<typename IntType = uintmax_t>
+        boost::rational<IntType> amount_rational() const {
+            return boost::rational<IntType>{_amount, currency().basis()};
+        }
+
+        template<typename T = double> T amount() const {
+            return boost::rational_cast<T>(amount_rational());
         }
 
         Asset& operator+=(const Asset& x) {
@@ -122,10 +147,6 @@ namespace ccy {
             return *this;
         }
     };
-
-    template<> double Asset::amount<double>() const {
-        return boost::rational_cast<double>(amount());
-    }
 
 } // namespace ccy
 

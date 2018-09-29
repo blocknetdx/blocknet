@@ -97,6 +97,10 @@ namespace {
             return from_time_t(0);
         return from_time_t(((end_secs + psec - 1) / psec) * psec);
     }
+    ptime get_end_time(ptime end_time, time_duration period = boost::posix_time::seconds{60}) {
+        auto epoch_duration = end_time - from_time_t(0);
+        return get_end_time(epoch_duration.total_seconds(), period);
+    }
 }
 
 //******************************************************************************
@@ -184,7 +188,7 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
         auto& q = getXAggregateContainer(key);
         if (q.empty() || q.back().timeEnd <= p.timeStamp) {
             q.emplace_back(xAggregate{p.from.currency(), p.to.currency()});
-            q.back().timeEnd = get_end_time(to_time_t(p.timeStamp));
+            q.back().timeEnd = get_end_time(p.timeStamp);
         }
         q.back().update(p,xQuery::WithTxids::Included);
     }
@@ -195,8 +199,6 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
 //******************************************************************************
 xAggregate xAggregate::inverse() const {
     xAggregate x{*this};
-    x.timeEnd = timeEnd;
-    x.orderIds = orderIds;
     x.open = inverse(open);
     x.high  = inverse(high);
     x.low   = inverse(low);
