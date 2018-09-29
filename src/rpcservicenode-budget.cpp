@@ -448,11 +448,16 @@ if(strCommand == "vote-alias")
         if (params.size() == 2)
             std::string strProposalName = params[1].get_str();
 
-        Object resultObj;
+        Array resultObj;
         int64_t nTotalAllotted = 0;
 
         std::vector<CBudgetProposal*> winningProps = budget.GetAllProposals();
-        BOOST_FOREACH (CBudgetProposal* pbudgetProposal, winningProps) {
+        // Sort descending
+        sort(winningProps.begin(), winningProps.end(), [](CBudgetProposal *a, CBudgetProposal *b) -> bool {
+            return a->GetBlockStart() > b->GetBlockStart();
+        });
+
+        for (CBudgetProposal* pbudgetProposal : winningProps) {
             if (strShow == "valid" && !pbudgetProposal->fValid) continue;
 
             nTotalAllotted += pbudgetProposal->GetAllotted();
@@ -485,7 +490,7 @@ if(strCommand == "vote-alias")
             bObj.push_back(Pair("IsValidReason", strError.c_str()));
             bObj.push_back(Pair("fValid", pbudgetProposal->fValid));
 
-            resultObj.push_back(Pair(pbudgetProposal->GetName(), bObj));
+            resultObj.push_back(bObj);
         }
 
         return resultObj;
