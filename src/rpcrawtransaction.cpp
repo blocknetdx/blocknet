@@ -74,12 +74,12 @@ CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey
         return {"unknown multisig, bad records count"};
 
     return CurrencyPair{
-            xtx[0].get_str(),    // xid
-            xtx[1].get_str(),    // fromCurrency
-            xtx[2].get_uint64(), // fromAmount
-            xtx[3].get_str(),    // toCurrency
-            xtx[4].get_uint64()  // toAmount
-            };
+        xtx[0].get_str(),    // xid
+        {ccy::Currency{xtx[1].get_str(),COIN}, // fromCurrency
+                xtx[2].get_uint64()},          // fromAmount
+        {ccy::Currency{xtx[3].get_str(),COIN}, // toCurrency
+                xtx[4].get_uint64()}           // toAmount
+    };
 }
 
 void ScriptPubKeyToJSON(const CScript& scriptPubKey, Object& out, bool fIncludeHex)

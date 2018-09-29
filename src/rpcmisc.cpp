@@ -574,10 +574,10 @@ Value gettradingdata(const Array& params, bool fHelp)
                                 Pair{"txid",       txid},
                                 Pair{"to",         snode_pubkey},
                                 Pair{"xid",        p.xid()},
-                                Pair{"from",       p.fromCurrency},
-                                Pair{"fromAmount", p.fromAmount},
-                                Pair{"to",         p.toCurrency},
-                                Pair{"toAmount",   p.toAmount},
+                                Pair{"from",       p.from.currency().to_string()},
+                                Pair{"fromAmount", p.from.amount<double>()},
+                                Pair{"to",         p.to.currency().to_string()},
+                                Pair{"toAmount",   p.to.amount<double>()},
                                 });
                     break;
                 case CurrencyPair::Tag::Empty:

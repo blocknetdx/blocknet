@@ -290,7 +290,6 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 
     if (query.error())
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, query.what() );
-
     try {
         //--Process query, get result
         auto& xseries = xbridge::App::instance().getXSeriesCache();
@@ -302,7 +301,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             ? query.granularity
             : boost::posix_time::seconds{0};
         for (const auto& x : result) {
-            double volume = util::xBridgeValueFromAmount(x.toVolume);
+            double volume = x.toVolume.amount<double>();
             Array ohlc{
                 ArrayIL{util::iso8601(x.timeEnd - offset), x.low, x.high, x.open, x.close, volume}
             };

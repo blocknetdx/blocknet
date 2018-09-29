@@ -5,6 +5,10 @@
 #ifndef XSERIES_H
 #define XSERIES_H
 
+#include "currencypair.h"
+#include "xutil.h"
+#include "xbridge/xbridgetransactiondescr.h"
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
@@ -14,8 +18,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "currencypair.h"
-#include "xutil.h"
 
 using boost::posix_time::ptime;
 using boost::posix_time::time_period;
@@ -55,8 +57,8 @@ public:
         bool at_start() const { return where == AtStart; }
     };
 // variables
-    std::string fromCurrency;
-    std::string toCurrency;
+    ccy::Currency fromCurrency;
+    ccy::Currency toCurrency;
     time_duration granularity;
     time_period period;
     WithTxids with_txids;
@@ -67,8 +69,8 @@ public:
 
 // constructors
     xQuery() = delete;
-    xQuery(const std::string& fc,
-           const std::string& tc,
+    xQuery(const std::string& fromSymbol,
+           const std::string& toSymbol,
            int g,
            int64_t start_time,
            int64_t end_time,
@@ -76,24 +78,31 @@ public:
            WithInverse with_inverse,
            IntervalLimit limit,
            IntervalTimestamp interval_timestamp
-        )
-        : fromCurrency{fc}, toCurrency{tc}
+    ) try // catch any exception during initialization list
+        : fromCurrency{fromSymbol,xbridge::TransactionDescr::COIN}
+        , toCurrency{toSymbol,xbridge::TransactionDescr::COIN}
         , granularity{validate_granularity(g)}
         , period{get_start_time(start_time,granularity), get_end_time(end_time,granularity)}
         , with_txids{with_txids}
         , with_inverse{with_inverse}
         , interval_limit{limit}
         , interval_timestamp{interval_timestamp}
-        , reason{(not is_valid_granularity(granularity)) ? ("granularity=" +std::to_string(g)
-                                                        + " must be one of: " + supported_seconds_csv())
-        : (period.begin() < earliestTime()) ? "Start time too early."
-        : (period.is_null()) ? "Start time >= end time."
-        : (period.end() > oneDayFromNow) ? "Start/end times are too large."
-        : (not interval_limit.is_valid()) ? ("interval_limit must be in range "+std::to_string(IntervalLimit::min())
-                                             +" to "+std::to_string(IntervalLimit::max())+".")
-        : (not interval_timestamp.is_valid()) ? "interval_timestamp not one of { at_start, at_end }."
-        : ""}
-    {}
+        , reason{not is_valid_granularity(granularity) ?
+                 ("granularity=" +std::to_string(g)+" must be one of: "+supported_seconds_csv())
+              : (period.begin() < earliestTime()) ? "Start time too early."
+              : (period.is_null()) ? "Start time >= end time."
+              : (period.end() > oneDayFromNow) ? "Start/end times are too large."
+              : (not interval_limit.is_valid()) ?
+                  ("interval_limit must be in range "+std::to_string(IntervalLimit::min())
+                   +" to "+std::to_string(IntervalLimit::max())+".")
+              : (not interval_timestamp.is_valid()) ?
+                  "interval_timestamp not one of { at_start, at_end }."
+              : ""}
+    { /* empty constructor body */ } catch (const std::exception& e) {
+        reason = e.what();
+    } catch ( ... ) {
+        reason = "unknown exception";
+    }
 
 // functions
     bool error() const { return not reason.empty(); }
@@ -144,8 +153,7 @@ class xAggregate {
 public:
 
     // types
-    using price_t = float;
-    using amount_t = uint64_t;
+    using price_t = double;
 
     // variables
     ptime timeEnd{};
@@ -153,18 +161,14 @@ public:
     price_t high{0};
     price_t low{0};
     price_t close{0};
-    amount_t fromVolume{0};
-    amount_t toVolume{0};
+    ccy::Asset fromVolume{};
+    ccy::Asset toVolume{};
     std::vector<xid_t> orderIds{};
 
     // ctors
-    xAggregate() = default;
-    xAggregate(ptime timeEnd,
-               price_t open, price_t high, price_t low, price_t close,
-               amount_t fromVolume, amount_t toVolume)
-    : timeEnd{timeEnd}
-    , open{open}, high{high}, low{low}, close{close}
-    , fromVolume{fromVolume}, toVolume{toVolume}
+    xAggregate() = delete;
+    xAggregate(ccy::Currency fromCurrency, ccy::Currency toCurrency)
+    : fromVolume{fromCurrency}, toVolume{toCurrency}
     {}
 
     // helpers
@@ -179,6 +183,7 @@ public:
     void update(const xAggregate& x, xQuery::WithTxids);
     void update(const CurrencyPair& x, xQuery::WithTxids);
 };
+
 
 /**
  * @brief Cache of open,high,low,close transaction aggregated series

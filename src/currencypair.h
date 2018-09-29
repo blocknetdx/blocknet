@@ -5,45 +5,45 @@
 #ifndef CURRENCYPAIR_H
 #define CURRENCYPAIR_H
 
+#include "currency.h"
+
 #include <boost/date_time/posix_time/ptime.hpp>
 using boost::posix_time::ptime;
 
-#include <cstdint>
 #include <string>
 
 using xid_t = std::string;
-using currencySymbol = std::string;
 
 /**
  * @brief common structure for currency pair trade details from local history or blockchain
  */
 class CurrencyPair {
 public:
-    // types
-    using amount_t = uint64_t;
 
     // variables
     ptime timeStamp{};
-    std::string xid_or_error;
-    std::string fromCurrency;
-    amount_t fromAmount;
-    std::string toCurrency;
-    amount_t toAmount;
-    enum class Tag { Empty, Error, Valid } tag;
+    std::string xid_or_error{};
+    ccy::Asset from{};
+    ccy::Asset to{};
+    enum class Tag{Empty, Error, Valid} tag{Tag::Empty};
 
     // ctors
-    CurrencyPair() : tag{Tag::Empty} {}
+    CurrencyPair() = default;
     CurrencyPair(const std::string& e) : xid_or_error{e}, tag{Tag::Error} {}
-    CurrencyPair(const xid_t& xid,
-                 std::string fromCurrency, amount_t fromAmount,
-                 std::string toCurrency, amount_t toAmount, ptime ts = ptime{})
-        : timeStamp(ts), xid_or_error(xid)
-        , fromCurrency(fromCurrency), fromAmount(fromAmount)
-        , toCurrency(toCurrency), toAmount(toAmount)
-        , tag{Tag::Valid}
+    CurrencyPair(const xid_t& xid, const ccy::Asset& from,
+                 const ccy::Asset& to, ptime ts = ptime{})
+        : timeStamp(ts), xid_or_error(xid), from(from), to(to), tag{Tag::Valid}
     {}
 
     // accessors
+    template<typename T> T price() const {
+        if (to.accumulator() == 0)
+            return static_cast<T>(0);
+        auto basis = from.currency().basis();
+        auto ratio = (from.amount() / to.amount()) + 2/basis;
+        auto fxpt = boost::rational_cast<uintmax_t>(basis * ratio);
+        return boost::rational_cast<T>(boost::rational<uintmax_t>{fxpt, basis});
+    }
     std::string xid() const { return tag == Tag::Valid ? xid_or_error : std::string{}; }
     std::string error() const { return tag == Tag::Error ? xid_or_error : std::string{}; }
 };

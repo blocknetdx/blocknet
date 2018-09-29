@@ -18,9 +18,11 @@ extern CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode
 namespace {
     // Helper functions to filter transactions in a query
     //
-    template<class A, class B> bool is_equivalent_pair(const A& a, const B& b) {
-        return (a.toCurrency == b.toCurrency && a.fromCurrency == b.fromCurrency) ||
-               (a.toCurrency == b.fromCurrency && a.fromCurrency == b.toCurrency);
+    template<class A> bool is_equivalent_pair(const A& a, const xQuery& b) {
+        return (a.toCurrency == b.toCurrency.to_string()
+                && a.fromCurrency == b.fromCurrency.to_string()) ||
+               (a.toCurrency == b.fromCurrency.to_string()
+                && a.fromCurrency == b.toCurrency.to_string());
     }
     template<typename T> bool is_too_small(T amount) {
         return ::fabs(amount) < std::numeric_limits<double>::epsilon();
@@ -35,8 +37,10 @@ namespace {
         if (is_too_small(tr.fromAmount) || is_too_small(tr.toAmount)) return;
         matches.emplace_back(query.with_txids == xQuery::WithTxids::Included
                              ? tr.id.GetHex() : xid_t{},
-                             tr.fromCurrency, tr.fromAmount,
-                             tr.toCurrency,   tr.toAmount,
+                             ccy::Asset{ccy::Currency{tr.fromCurrency,
+                                         xbridge::TransactionDescr::COIN}, tr.fromAmount},
+                             ccy::Asset{ccy::Currency{tr.toCurrency,
+                                         xbridge::TransactionDescr::COIN},   tr.toAmount},
                              tr.txtime);
     }
     void updateXSeries(std::vector<xAggregate>& series,
@@ -109,7 +113,7 @@ xSeriesCache::getChainXAggregateSeries(const xQuery& query)
         static_cast<long>(num_intervals * granularity_seconds)};
     q.period = time_period{q.period.end() - adjusted_duration, q.period.end()};
     std::vector<xAggregate> series{};
-    series.resize(num_intervals,xAggregate{ptime{},0,0,0,0,0,0});
+    series.resize(num_intervals,xAggregate{q.fromCurrency, q.toCurrency});
 
     auto t = q.period.begin();
     for (size_t i = 0; i < num_intervals; ++i) {
@@ -120,11 +124,11 @@ xSeriesCache::getChainXAggregateSeries(const xQuery& query)
     if (not m_cache_period.contains(q.period))
         updateSeriesCache(q.period);
 
-    pairSymbol key = q.fromCurrency +"/"+ q.toCurrency;
+    pairSymbol key = q.fromCurrency.to_string() +"/"+ q.toCurrency.to_string();
     auto range = getXAggregateRange(key, q.period);
     updateXSeries(series, range, q, xQuery::Transform::None);
     if (q.with_inverse == xQuery::WithInverse::Included) {
-        key = q.toCurrency +"/"+ q.fromCurrency;
+        key = q.toCurrency.to_string() +"/"+ q.fromCurrency.to_string();
         range = getXAggregateRange(key, q.period);
         updateXSeries(series, range, q, xQuery::Transform::Invert);
     }
@@ -176,10 +180,10 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
 
     mSparseSeries.clear();
     for (const auto& p : pairs) {
-        pairSymbol key = p.fromCurrency +"/"+ p.toCurrency;
+        pairSymbol key = p.from.currency().to_string() +"/"+ p.to.currency().to_string();
         auto& q = getXAggregateContainer(key);
         if (q.empty() || q.back().timeEnd <= p.timeStamp) {
-            q.emplace_back(xAggregate{});
+            q.emplace_back(xAggregate{p.from.currency(), p.to.currency()});
             q.back().timeEnd = get_end_time(to_time_t(p.timeStamp));
         }
         q.back().update(p,xQuery::WithTxids::Included);
@@ -190,7 +194,7 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
 //******************************************************************************
 //******************************************************************************
 xAggregate xAggregate::inverse() const {
-    xAggregate x;
+    xAggregate x{*this};
     x.timeEnd = timeEnd;
     x.orderIds = orderIds;
     x.open = inverse(open);
@@ -203,17 +207,15 @@ xAggregate xAggregate::inverse() const {
 }
 
 void xAggregate::update(const CurrencyPair& x, xQuery::WithTxids with_txids) {
-    price_t price = x.toAmount == 0
-        ? 0.
-        : static_cast<double>(x.fromAmount) / static_cast<double>(x.toAmount);
+    price_t price{x.price<price_t>()};
     if (open == 0) {
         open = high = low = price;
     }
     high = std::max(high,price);
     low  = std::min(low,price);
     close = price;
-    fromVolume += x.fromAmount;
-    toVolume += x.toAmount;
+    fromVolume += x.from;
+    toVolume += x.to;
     if (with_txids == xQuery::WithTxids::Included)
         orderIds.push_back(x.xid());
 }

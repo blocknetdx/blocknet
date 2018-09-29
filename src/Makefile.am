@@ -104,6 +104,7 @@ BITCOIN_CORE_H = \
   primitives/transaction.h \
   core_io.h \
   crypter.h \
+  currency.h \
   currencypair.h \
   obfuscation.h \
   obfuscation-relay.h \

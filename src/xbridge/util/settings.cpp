@@ -5,6 +5,7 @@
 #include "logger.h"
 #include "../config.h"
 
+#include "../../currency.h"
 #include "../../main.h"
 
 #include <algorithm>
@@ -139,7 +140,18 @@ std::vector<std::string> Settings::exchangeWallets() const
     std::vector<std::string> strs;
     if (list.size() > 0)
     {
-        boost::split(strs, list, boost::is_any_of(",;:"));
+        std::vector<std::string> raw_symbols;
+        boost::split(raw_symbols, list, boost::is_any_of(",;:"));
+        for (const auto& raw : raw_symbols) {
+            std::string sym{ccy::Symbol::validate(raw)};
+            if (sym.empty()) {
+                // TODO warn and ignore
+                continue;
+            } else if (sym != raw) {
+                // TODO warn and accept
+            }
+            strs.push_back(sym);
+        }
     }
 
     return strs;
