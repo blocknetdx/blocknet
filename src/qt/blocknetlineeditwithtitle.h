@@ -19,6 +19,7 @@ public:
     void setID(QString id);
     QString getID();
     bool isEmpty();
+    void setTitle(const QString &title);
     BlocknetLineEdit *lineEdit;
 
 signals:

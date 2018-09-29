@@ -17,7 +17,7 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
                                                                            layout(new QVBoxLayout) {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setLayout(layout);
-    layout->setContentsMargins(46, 10, 50, 0);
+    layout->setContentsMargins(52, 9, 50, 0);
 
     titleLbl = new QLabel(tr("Proposals"));
     titleLbl->setObjectName("h4");
@@ -155,7 +155,7 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
     layout->addSpacing(40);
     layout->addStretch(1);
     layout->addWidget(btnBox);
-    layout->addSpacing(15);
+    layout->addSpacing(30);
 
     connect(submitBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));

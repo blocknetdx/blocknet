@@ -26,11 +26,11 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     QLabel *subtitleLbl = new QLabel(tr("Create Proposal"));
     subtitleLbl->setObjectName("h2");
 
-    proposalTi = new BlocknetLineEditWithTitle(tr("Proposal name (max 50 characters)"), tr("Enter proposal name..."), 675);
+    proposalTi = new BlocknetLineEditWithTitle(tr("Proposal name (max 20 characters)"), tr("Enter proposal name..."), 675);
     proposalTi->setObjectName("proposal");
     proposalTi->lineEdit->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
     proposalTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9-_]+"), this));
-    proposalTi->lineEdit->setMaxLength(50);
+    proposalTi->lineEdit->setMaxLength(20);
 
     urlTi = new BlocknetLineEditWithTitle(tr("URL (max 64 characters)"), tr("Enter URL..."));
     urlTi->setObjectName("url");
@@ -46,7 +46,6 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     paymentCountTi = new BlocknetLineEditWithTitle(tr("Payment count (1-12)"), tr("Enter payment count..."));
     paymentCountTi->setObjectName("payment");
     paymentCountTi->lineEdit->setValidator(new QIntValidator(1, 12));
-    paymentCountTi->lineEdit->setText("1");
 
     auto superblock = nextSuperblock();
     auto superblockStr = superblock == -1 ? QString() : QString::number(superblock);
@@ -124,7 +123,7 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     layout->addSpacing(40);
     layout->addStretch(1);
     layout->addWidget(buttonGrid);
-    layout->addSpacing(15);
+    layout->addSpacing(30);
 
     connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
@@ -132,13 +131,19 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
 
 bool BlocknetCreateProposal1::validated() {
     bool empty = proposalTi->isEmpty()
-        && urlTi->isEmpty()
-        && paymentCountTi->isEmpty()
-        && superBlockTi->isEmpty()
-        && amountTi->isEmpty()
-        && paymentAddrTi->isEmpty();
+        || urlTi->isEmpty()
+        || paymentCountTi->isEmpty()
+        || superBlockTi->isEmpty()
+        || amountTi->isEmpty()
+        || paymentAddrTi->isEmpty();
     if (empty) {
         QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Please fill out the entire form"));
+        return false;
+    }
+
+    auto proposal = proposalTi->lineEdit->text();
+    if (proposal.length() > 20) {
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad name, it's too long. The name is limited to 20 characters"));
         return false;
     }
 
@@ -188,6 +193,18 @@ bool BlocknetCreateProposal1::validated() {
 void BlocknetCreateProposal1::focusInEvent(QFocusEvent *event) {
     QWidget::focusInEvent(event);
     proposalTi->setFocus();
+}
+
+void BlocknetCreateProposal1::showEvent(QShowEvent *event) {
+    QWidget::showEvent(event);
+    if (superBlockTi->isEmpty()) {
+        auto superblock = nextSuperblock();
+        auto superblockStr = superblock == -1 ? QString() : QString::number(superblock);
+        superBlockTi->setTitle(tr("Superblock #: Next is %1").arg(superblockStr));
+        superBlockTi->lineEdit->setText(superblockStr);
+    }
+    if (paymentCountTi->isEmpty())
+        paymentCountTi->lineEdit->setText("1");
 }
 
 void BlocknetCreateProposal1::keyPressEvent(QKeyEvent *event) {

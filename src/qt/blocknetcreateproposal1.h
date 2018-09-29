@@ -41,6 +41,7 @@ public slots:
 protected:
     void keyPressEvent(QKeyEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
+    void showEvent(QShowEvent *event) override;
 
 private:
     QVBoxLayout *layout;

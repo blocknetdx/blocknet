@@ -17,7 +17,7 @@ BlocknetLineEditWithTitle::BlocknetLineEditWithTitle(QString title, QString plac
     titleLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
     layout->addWidget(titleLbl);
 
-    lineEdit = new BlocknetLineEdit;
+    lineEdit = new BlocknetLineEdit(w, h - 2);
     lineEdit->setPlaceholderText(placeholder);
     layout->addWidget(lineEdit);
 
@@ -26,6 +26,10 @@ BlocknetLineEditWithTitle::BlocknetLineEditWithTitle(QString title, QString plac
 
 bool BlocknetLineEditWithTitle::isEmpty() {
     return lineEdit->text().trimmed().isEmpty();
+}
+
+void BlocknetLineEditWithTitle::setTitle(const QString &title) {
+    titleLbl->setText(title);
 }
 
 void BlocknetLineEditWithTitle::setID(const QString id) {
