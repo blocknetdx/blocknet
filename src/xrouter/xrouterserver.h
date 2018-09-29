@@ -169,6 +169,8 @@ protected:
      * @return
      */
     std::string processCustomCall(std::string name, std::vector<std::string> params);
+    
+    void closePaymentChannel(CNode* node);
 };
 
 } // namespace

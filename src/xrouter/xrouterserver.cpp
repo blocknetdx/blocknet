@@ -18,6 +18,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/adaptor/map.hpp>
+#include <boost/asio.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -282,9 +283,15 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     
                     // TODO: verify the channel's correctness
                     
-                    // TODO: create a timer to broadcast the final tx before the locktime
+                    // TODO: get actual nLockTime from parsed tx
                     
                     paymentChannels[node] = std::pair<std::string, double>("", 0.0);
+                    
+                    boost::asio::io_service io;
+
+                    boost::asio::deadline_timer t(io, boost::posix_time::seconds(1));
+                    t.async_wait([this, node](const boost::system::error_code& /*e*/){
+                        this->closePaymentChannel(node); });
                 }
             }
             
@@ -665,6 +672,13 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
     }
     
     return "Unknown type";
+}
+
+void XRouterServer::closePaymentChannel(CNode* node)
+{
+    std::string txid;
+    sendTransactionBlockchain(this->paymentChannels[node].first, txid);
+    this->paymentChannels.erase(node);
 }
 
 } // namespace xrouter
