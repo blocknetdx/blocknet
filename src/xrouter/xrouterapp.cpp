@@ -39,7 +39,7 @@
 #include <vector>
 #include <chrono>
 
-#define TEST_RUN_ON_CLIENT 0
+#define TEST_RUN_ON_CLIENT 1
 #define DEFAULT_TIMEOUT 20000
 
 #ifdef _WIN32
@@ -1000,6 +1000,9 @@ std::string App::getPaymentAddress(CNode* node)
         }
     }
     
+    if (TEST_RUN_ON_CLIENT)
+        return "yKQyDJ2CJLaQfZKdi8yM7nQHZZqGXYNhUt";
+    
     return "";
 }
 
@@ -1013,6 +1016,11 @@ CPubKey App::getPaymentPubkey(CNode* node)
                 return s.second.pubKeyCollateralAddress;
             }
         }
+    }
+    
+    if (TEST_RUN_ON_CLIENT) {
+        std::string test = "0258c89fd899b3a8f08a11fe0de803a7e685127b3b770a10896f97d7371d4c75fa";
+        return CPubKey(std::vector<unsigned char>(test.begin(), test.end()));
     }
     
     return CPubKey();

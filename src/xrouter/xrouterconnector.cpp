@@ -226,6 +226,7 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
         {
             // call create
             result = tableRPC.execute(createCommand, txparams);
+            LOG() << "Create transaction: " << json_spirit::write_string(Value(result), true);
             if (result.type() != str_type)
             {
                 throw std::runtime_error("Create transaction command finished with error");
@@ -240,6 +241,7 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
 
             // call fund
             result = tableRPC.execute(fundCommand, params);
+            LOG() << "Fund transaction: " << json_spirit::write_string(Value(result), true);
             if (result.type() != obj_type)
             {
                 throw std::runtime_error("Fund transaction command finished with error");
@@ -260,6 +262,7 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
             params.push_back(rawtx);
 
             result = tableRPC.execute(signCommand, RPCConvertValues(signCommand, params));
+            LOG() << "Sign transaction: " << json_spirit::write_string(Value(result), true);
             if (result.type() != obj_type)
             {
                 throw std::runtime_error("Sign transaction command finished with error");
@@ -312,6 +315,7 @@ bool createAndSignTransaction(std::string address, const double amount, string &
     Array outputs;
     Object out;
     out.push_back(Pair("address", address));
+    out.push_back(Pair("amount", amount));
     outputs.push_back(out);
     Array inputs;
     Value result;

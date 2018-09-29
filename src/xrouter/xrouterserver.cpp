@@ -253,7 +253,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             if (!paymentChannels.count(node)) {
                 // There is no payment channel with this node
                 
-                if (feetx.find(";") != std::string::npos) {
+                if (feetx.find(";") == std::string::npos) {
                     // Direct payment, no CLTV channel
                     std::string txid;
                     
