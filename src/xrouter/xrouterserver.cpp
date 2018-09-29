@@ -282,14 +282,14 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     feetx = parts[2];
                     
                     // TODO: verify the channel's correctness
-                    
-                    // TODO: get actual nLockTime from parsed tx
+
+                    int date = getChannelExpiryTime(channeltx);
                     
                     paymentChannels[node] = std::pair<std::string, double>("", 0.0);
                     
                     boost::asio::io_service io;
 
-                    boost::asio::deadline_timer t(io, boost::posix_time::seconds(1));
+                    boost::asio::deadline_timer t(io, boost::posix_time::seconds(date));
                     t.async_wait([this, node](const boost::system::error_code& /*e*/){
                         this->closePaymentChannel(node); });
                 }
