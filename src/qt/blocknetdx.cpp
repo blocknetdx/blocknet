@@ -543,7 +543,9 @@ int main(int argc, char* argv[])
     Q_INIT_RESOURCE(blocknetdx);
 
     // stg An attempt to resolve the scaling issues for small high DPI screens
-    //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling); // Needs QT5.6 or higher
+#if QT_VERSION >= 0x050600
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling); // Needs QT5.6 or higher
+#endif
     //QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     BitcoinApplication app(argc, argv);
