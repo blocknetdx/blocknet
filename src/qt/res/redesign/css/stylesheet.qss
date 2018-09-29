@@ -11,7 +11,8 @@ BlocknetLeftMenu #versionLbl { font-size: 11px; color: #40526A; font-family: "Ro
 
 BlocknetToolBar { padding-right: 10px; }
 BlocknetToolBar #progress { background-color: #000E1C; }
-BlocknetToolBar #progress QProgressBar { font-size: 10px; color: white; font-family: "Roboto"; background-color: #000E1C; }
+BlocknetToolBar #progress QProgressBar { font-size: 10px; color: white; font-family: "Roboto"; background-color: transparent; }
+BlocknetToolBar #progress QProgressBar[os="win"] { color: black; }
 BlocknetToolBar #progress QProgressBar::chunk { background-color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); }
 BlocknetToolBar #peersLbl { font-size: 13px; color: #74B2FE; font-family: "Roboto"; }
 BlocknetToolBar #lock { background-color: #016AFF; border-radius: 3px; }

@@ -27,6 +27,9 @@ BlocknetToolBar::BlocknetToolBar(QWidget *popup, QFrame *parent) : QFrame(parent
     progressIndicator->setLayout(new QHBoxLayout);
     progressIndicator->layout()->setContentsMargins(QMargins());
     progressBar = new QProgressBar;
+#if defined(Q_OS_WIN)
+    progressBar->setProperty("os", "win"); // work-around bug in Qt windows QProgressBar background
+#endif
     progressBar->setAlignment(Qt::AlignVCenter);
     progressIndicator->layout()->addWidget(progressBar);
 
