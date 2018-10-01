@@ -5,6 +5,8 @@
 #include "xrouterlogger.h"
 #include "xbridge/util/settings.h"
 #include "xrouterapp.h"
+#include "servicenodeman.h"
+#include "activeservicenode.h"
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
@@ -681,6 +683,17 @@ void XRouterServer::closePaymentChannel(CNode* node)
     std::string txid;
     sendTransactionBlockchain(this->paymentChannels[node].first, txid);
     this->paymentChannels.erase(node);
+}
+
+std::string XRouterServer::getMyPaymentAddress()
+{
+    try {
+        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
+        std::string result = CBitcoinAddress(pmn->pubKeyCollateralAddress.GetID()).ToString();
+        return result;
+    } catch (...) {
+        return "yKQyDJ2CJLaQfZKdi8yM7nQHZZqGXYNhUt";
+    }
 }
 
 } // namespace xrouter
