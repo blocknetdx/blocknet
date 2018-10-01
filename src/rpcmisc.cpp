@@ -18,6 +18,7 @@
 #include "timedata.h"
 #include "util.h"
 #ifdef ENABLE_WALLET
+#include "currencypair.h"
 #include "wallet.h"
 #include "walletdb.h"
 #endif
@@ -32,6 +33,8 @@ using namespace boost;
 using namespace boost::assign;
 using namespace json_spirit;
 using namespace std;
+
+extern CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey);
 
 /**
  * @note Do not add or change anything in the information returned by this
@@ -549,81 +552,37 @@ Value gettradingdata(const Array& params, bool fHelp)
             // throw
             continue;
         }
+        const auto timestamp = block.GetBlockTime();
         for (const CTransaction & tx : block.vtx)
         {
+            const auto txid = tx.GetHash().GetHex();
             for (const CTxOut & out : tx.vout)
             {
-                if (!out.scriptPubKey.size())
-                {
-                    continue;
-                }
-
-                Object o;
-                o.push_back(Pair("timestamp", block.GetBlockTime()));
-
-                std::vector<std::vector<unsigned char> > solutions;
-                txnouttype type = TX_NONSTANDARD;
-                if (!Solver(out.scriptPubKey, type, solutions))
-                {
-                    // wrong pubkey, need to check it
-                    o.push_back(Pair("txid", tx.GetHash().GetHex()));
-                    o.push_back(Pair("xid", "not solved"));
-                    records.push_back(o);
-                    continue;
-                }
-                if (type == TX_MULTISIG)
-                {
-                    if (solutions.size() < 4)
-                    {
-                        o.push_back(Pair("xid", "bad multisig, count of items"));
-                        continue;
-                    }
-
-                    std::string json;
-
-                    o.push_back(Pair("txid", tx.GetHash().GetHex()));
-
-                    {
-                        // second item is real pubkey of service node
-                        CBitcoinAddress snodeAddr(CPubKey(solutions[1]).GetID());
-                        o.push_back(Pair("to", snodeAddr.ToString()));
-                    }
-
-                    for (uint32_t i = 2; i < solutions.size()-1; ++i)
-                    {
-                        const std::vector<unsigned char> & sol = solutions[i];
-                        if (sol.size() != 65)
-                        {
-                            o.push_back(Pair("xid", "unknown multisig, size != 65"));
-                            break;
-                        }
-                        std::copy(sol.begin()+1, sol.end(), std::back_inserter(json));
-                    }
-
-                    Value readed;
-                    if (!read_string(json, readed) || readed.type() != array_type)
-                    {
-                        o.push_back(Pair("xid", "unknown multisig, json error"));
-                    }
-                    else
-                    {
-                        Array xtx = readed.get_array();
-                        if (xtx.size() == 5)
-                        {
-                            o.push_back(Pair("xid",        xtx[0].get_str()));
-                            o.push_back(Pair("from",       xtx[1].get_str()));
-                            o.push_back(Pair("fromAmount", xtx[2].get_int()));
-                            o.push_back(Pair("to",         xtx[3].get_str()));
-                            o.push_back(Pair("toAmount",   xtx[4].get_int()));
-                        }
-                        else
-                        {
-                            o.push_back(Pair("xid", "unknown multisig, bad records count"));
-                        }
-                    }
-
-                    records.push_back(o);
-                    continue;
+                std::string snode_pubkey{};
+                const CurrencyPair p = TxOutToCurrencyPair(out, snode_pubkey);
+                switch(p.tag) {
+                case CurrencyPair::Tag::Error:
+                    records.emplace_back(Object{
+                                Pair{"timestamp",  timestamp},
+                                Pair{"txid",       txid},
+                                Pair{"xid",        p.error()}
+                            });
+                    break;
+                case CurrencyPair::Tag::Valid:
+                    records.emplace_back(Object{
+                                Pair{"timestamp",  timestamp},
+                                Pair{"txid",       txid},
+                                Pair{"to",         snode_pubkey},
+                                Pair{"xid",        p.xid()},
+                                Pair{"from",       p.from.currency().to_string()},
+                                Pair{"fromAmount", p.from.amount<double>()},
+                                Pair{"to",         p.to.currency().to_string()},
+                                Pair{"toAmount",   p.to.amount<double>()},
+                                });
+                    break;
+                case CurrencyPair::Tag::Empty:
+                default:
+                    break;
                 }
             }
         }

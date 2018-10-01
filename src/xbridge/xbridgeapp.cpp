@@ -8,6 +8,7 @@
 #include "util/settings.h"
 #include "util/xbridgeerror.h"
 #include "util/xassert.h"
+#include "util/xseries.h"
 #include "version.h"
 #include "config.h"
 #include "xuiconnector.h"
@@ -187,6 +188,7 @@ protected:
     boost::mutex                                       m_txLocker;
     std::map<uint256, TransactionDescrPtr>             m_transactions;
     std::map<uint256, TransactionDescrPtr>             m_historicTransactions;
+    xSeriesCache                                       m_xSeriesCache;
 
     // network packets queue
     boost::mutex                                       m_ppLocker;
@@ -840,6 +842,23 @@ std::map<uint256, xbridge::TransactionDescrPtr> App::history() const
     boost::mutex::scoped_lock l(m_p->m_txLocker);
     return m_p->m_historicTransactions;
 }
+
+//******************************************************************************
+//******************************************************************************
+std::vector<CurrencyPair> App::history_matches(const App::TransactionFilter& filter,
+                                          const xQuery& query)
+{
+    std::vector<CurrencyPair> matches{};
+    {
+        boost::mutex::scoped_lock l(m_p->m_txLocker);
+        for(const auto& it : m_p->m_historicTransactions) {
+            filter(matches, *it.second, query);
+        }
+    }
+    return matches;
+}
+
+xSeriesCache& App::getXSeriesCache() { return m_p->m_xSeriesCache; }
 
 //******************************************************************************
 //******************************************************************************
