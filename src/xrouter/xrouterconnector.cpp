@@ -409,9 +409,12 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
 
     Array outputs;
     Object out;
-    out.push_back(Pair("script", resultScript));
-    out.push_back(Pair("data", date));
+    out.push_back(Pair("data", std::to_string(date)));
+    Object out2;
+    out2.push_back(Pair("script", resultScript));
+    out2.push_back(Pair("amount", deposit));
     outputs.push_back(out);
+    outputs.push_back(out2);
     Array inputs;
     Value result;
 
@@ -475,7 +478,7 @@ int getChannelExpiryTime(std::string rawtx) {
 
     Object obj = result.get_obj();
     Array vout = find_value(obj, "vout").get_array();
-    return find_value(vout[1].get_obj(), "data").get_int();    
+    return stoi(find_value(vout[0].get_obj(), "data").get_str());    
 }
 
 } // namespace xrouter

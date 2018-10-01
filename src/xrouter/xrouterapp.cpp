@@ -918,10 +918,11 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     std::string strtxid;
     std::string dest = getPaymentAddress(pnode);
     float fee = snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee();
-    float deposit = xrouter_settings.get<int>("Main.deposit", 0.0);
+    float deposit = xrouter_settings.get<double>("Main.deposit", 0.0);
     int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
     std::string payment_tx = "nofee";
     bool res;
+    std::cout << deposit << " " << channeldate << std::endl;
     if (fee > 0) {
         if (deposit == 0) {
             res = createAndSignTransaction(dest, fee, payment_tx);
