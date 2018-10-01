@@ -681,7 +681,9 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
 void XRouterServer::closePaymentChannel(CNode* node)
 {
     std::string txid;
-    sendTransactionBlockchain(this->paymentChannels[node].first, txid);
+    LOG() << "Closing payment channel: " << this->paymentChannels[node].first << " Value = " << this->paymentChannels[node].second;
+    
+    sendTransactionBlockchain(signTransaction(this->paymentChannels[node].first), txid);
     this->paymentChannels.erase(node);
 }
 

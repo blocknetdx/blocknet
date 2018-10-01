@@ -328,6 +328,24 @@ bool createAndSignTransaction(std::string address, const double amount, string &
     return createAndSignTransaction(params, raw_tx);
 }
 
+std::string signTransaction(std::string& raw_tx)
+{
+    std::vector<std::string> params;
+    params.push_back(raw_tx);
+
+    const static std::string signCommand("signrawtransaction");
+    Value result = tableRPC.execute(signCommand, RPCConvertValues(signCommand, params));
+    LOG() << "Sign transaction: " << json_spirit::write_string(Value(result), true);
+    if (result.type() != obj_type)
+    {
+        throw std::runtime_error("Sign transaction command finished with error");
+    }
+
+    Object obj = result.get_obj();
+    const Value& tx = find_value(obj, "hex");
+    return tx.get_str();
+}
+
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
 {
     LOCK(cs_rpcBlockchainStore);
