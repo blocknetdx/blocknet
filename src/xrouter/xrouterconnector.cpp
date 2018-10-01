@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <string>
 #include <array>
+#include <ctime>
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_utils.h"
@@ -397,7 +398,7 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
 {
     CScript inner;
     inner << OP_IF
-                << date << OP_CHECKLOCKTIMEVERIFY << OP_DROP
+                << std::time(0) + date << OP_CHECKLOCKTIMEVERIFY << OP_DROP
                 << OP_DUP << OP_HASH160 << pwalletMain->GenerateNewKey().GetID() << OP_EQUALVERIFY << OP_CHECKSIG
           << OP_ELSE
                 << OP_DUP << OP_HASH160 << address.GetID() << OP_EQUALVERIFY << OP_CHECKSIGVERIFY

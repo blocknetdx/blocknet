@@ -283,13 +283,15 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     
                     // TODO: verify the channel's correctness
 
+                    // Send the closing tx 5 seconds before the deadline
                     int date = getChannelExpiryTime(channeltx);
+                    int deadline = date - std::time(0) - 5000;
                     
                     paymentChannels[node] = std::pair<std::string, double>("", 0.0);
                     
                     boost::asio::io_service io;
 
-                    boost::asio::deadline_timer t(io, boost::posix_time::seconds(date));
+                    boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(deadline));
                     t.async_wait([this, node](const boost::system::error_code& /*e*/){
                         this->closePaymentChannel(node); });
                 }
