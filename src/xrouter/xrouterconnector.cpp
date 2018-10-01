@@ -208,7 +208,7 @@ std::string CallCMD(std::string cmd) {
 // TODO: make this common with xbridge or use xbridge function for storing
 static CCriticalSection cs_rpcBlockchainStore;
 
-bool createAndSignTransaction(Array txparams, std::string & raw_tx)
+bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund)
 {
     LOCK(cs_rpcBlockchainStore);
 
@@ -236,6 +236,7 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
             rawtx = result.get_str();
         }
 
+        if (fund)
         {
             Array params;
             params.push_back(rawtx);
@@ -397,19 +398,29 @@ bool sendTransactionBlockchain(std::string address, const double amount, std::st
 bool createPaymentChannel(CPubKey address, double deposit, int date, std::string& raw_tx, std::string& txid)
 {
     CScript inner;
+    
+    int locktime = std::time(0) + date;
     inner << OP_IF
-                << std::time(0) + date << OP_CHECKLOCKTIMEVERIFY << OP_DROP
+                << locktime << OP_CHECKLOCKTIMEVERIFY << OP_DROP
                 << OP_DUP << OP_HASH160 << pwalletMain->GenerateNewKey().GetID() << OP_EQUALVERIFY << OP_CHECKSIG
           << OP_ELSE
                 << OP_DUP << OP_HASH160 << address.GetID() << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
                 << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << OP_EQUAL
           << OP_ENDIF;
 
-    std::string resultScript = std::string(inner.begin(), inner.end());
-
+    CScriptID id = CScriptID(inner);
+    CBitcoinAddress scriptaddr;
+    scriptaddr.Set(id);
+    std::string resultScript = scriptaddr.ToString();
+    resultScript = HexStr(inner.begin(), inner.end());
+    
+    
     Array outputs;
     Object out;
-    out.push_back(Pair("data", std::to_string(date)));
+    std::stringstream sstream;
+    sstream << std::hex << locktime;
+    std::string hexdate = sstream.str();
+    out.push_back(Pair("data", hexdate));
     Object out2;
     out2.push_back(Pair("script", resultScript));
     out2.push_back(Pair("amount", deposit));
@@ -428,7 +439,7 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     return sendTransactionBlockchain(raw_tx, txid);
 }
 
-bool createAndSignChannelTransaction(std::string address, double deposit, double amount, std::string& raw_tx)
+bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string& raw_tx)
 {
     Array outputs;
     Object out_me;
@@ -440,13 +451,17 @@ bool createAndSignChannelTransaction(std::string address, double deposit, double
     out_srv.push_back(Pair("amount", amount));
     outputs.push_back(out_srv);
     Array inputs;
+    Object inp;
+    inp.push_back(Pair("txid", txin));
+    inp.push_back(Pair("vout", 1));
+    inputs.push_back(inp);
     Value result;
 
     
     Array params;
     params.push_back(inputs);
     params.push_back(outputs);
-    return createAndSignTransaction(params, raw_tx);
+    return createAndSignTransaction(params, raw_tx, false);
 }
 
 double getTxValue(std::string rawtx, int vout_number) {
@@ -478,7 +493,16 @@ int getChannelExpiryTime(std::string rawtx) {
 
     Object obj = result.get_obj();
     Array vout = find_value(obj, "vout").get_array();
-    return stoi(find_value(vout[0].get_obj(), "data").get_str());    
+    Object script = find_value(vout[0].get_obj(), "scriptPubKey").get_obj();
+    std::string asmscript = find_value(script, "hex").get_str();
+    if (asmscript.substr(0, 4) != "6a04") {
+        // TODO: a better check of the script?
+        return -1;
+    }
+    
+    std::string hexdate = "0x" + asmscript.substr(4);
+    int res = stoi(hexdate, 0, 16);
+    return res;    
 }
 
 } // namespace xrouter

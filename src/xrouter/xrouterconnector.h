@@ -22,11 +22,11 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & strMethod, const Array & params);
 
 bool createAndSignTransaction(std::string address, const double amount, std::string & raw_tx);
-bool createAndSignTransaction(Array txparams, std::string & raw_tx);
+bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund=true);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
 bool sendTransactionBlockchain(std::string address, const double amount, std::string & raw_tx);
 bool createPaymentChannel(CPubKey address, double deposit, int date, std::string & raw_tx, std::string & txid);
-bool createAndSignChannelTransaction(std::string address, double deposit, double amount, std::string & raw_tx);
+bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string & raw_tx);
 double getTxValue(std::string rawtx, int vout_number=0);
 int getChannelExpiryTime(std::string rawtx);
     

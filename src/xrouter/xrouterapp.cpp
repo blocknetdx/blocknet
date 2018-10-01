@@ -922,7 +922,6 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
     std::string payment_tx = "nofee";
     bool res;
-    std::cout << deposit << " " << channeldate << std::endl;
     if (fee > 0) {
         if (deposit == 0) {
             res = createAndSignTransaction(dest, fee, payment_tx);
@@ -932,11 +931,13 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         } else {
             // Create payment channel first
             std::string raw_tx, txid;
+            payment_tx = "";
             if (!this->paymentChannels.count(pnode)) {
                 bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, raw_tx, txid);
                 if (!res)
                     return "Failed to create payment channel";
                 this->paymentChannels[pnode] = std::pair<std::string, std::string>(txid, "");
+                payment_tx = raw_tx + ";" + txid + ";";
             }
             
             // Submit payment via channel
@@ -945,16 +946,19 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
                 paid = getTxValue(this->paymentChannels[pnode].second, 1);
             }
             
-            bool res = createAndSignChannelTransaction(dest, deposit, fee + paid, payment_tx);
+            std::string paytx;
+            bool res = createAndSignChannelTransaction(this->paymentChannels[pnode].first, dest, deposit, fee + paid, paytx);
             if (!res)
                 return "Failed to pay to payment channel";
-            this->paymentChannels[pnode].second = payment_tx;
+            this->paymentChannels[pnode].second = paytx;
             
             // Send channel tx, channel tx id, payment tx in one string
-            payment_tx = raw_tx + ";" + txid + ";" + payment_tx;
+            payment_tx += paytx;
         }
         
         LOG() << "Payment transaction: " << payment_tx;
+        //std::cout << "Payment transaction: " << payment_tx << std::endl << std::flush;
+        
     }
     
     packet->append(txHash.begin(), 32);
