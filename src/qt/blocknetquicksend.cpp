@@ -3,9 +3,11 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "blocknetquicksend.h"
-#include "blocknethdiv.h"
 #include "blocknetsendfundsrequest.h"
 #include "blocknetsendfundsutil.h"
+#include "blocknetaddressbook.h"
+#include "blocknethdiv.h"
+#include "blockneticonbtn.h"
 
 #include "optionsmodel.h"
 #include "amount.h"
@@ -32,11 +34,20 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QWidget *parent) : QFrame(p
     QLabel *subtitleLbl = new QLabel(tr("Who would you like to send funds to?"));
     subtitleLbl->setObjectName("h2");
 
-    addressTi = new BlocknetLineEdit;
+    auto *addrBox = new QFrame;
+    addrBox->setContentsMargins(QMargins());
+    auto *addrBoxLayout = new QHBoxLayout;
+    addrBoxLayout->setContentsMargins(QMargins());
+    addrBox->setLayout(addrBoxLayout);
+    addressTi = new BlocknetLineEdit(400);
     addressTi->setObjectName("address");
     addressTi->setPlaceholderText(tr("Enter Blocknet Address..."));
     addressTi->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
     addressTi->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]{33,35}"), this));
+    auto *addAddressBtn = new BlocknetIconBtn(QString(), ":/redesign/QuickActions/AddressBookIcon.png");
+    addrBoxLayout->addWidget(addressTi, 0, Qt::AlignTop);
+    addrBoxLayout->addSpacing(20);
+    addrBoxLayout->addWidget(addAddressBtn, 0, Qt::AlignTop);
 
     QLabel *amountLbl = new QLabel(tr("How much would you like to send?"));
     amountLbl->setObjectName("h2");
@@ -127,22 +138,23 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QWidget *parent) : QFrame(p
     layout->addSpacing(40);
     layout->addWidget(subtitleLbl, 0, Qt::AlignTop);
     layout->addSpacing(20);
-    layout->addWidget(addressTi, 0);
-    layout->addSpacing(40);
+    layout->addWidget(addrBox, 0, Qt::AlignLeft);
+    layout->addSpacing(10);
     layout->addWidget(div1, 0);
-    layout->addSpacing(35);
+    layout->addSpacing(20);
     layout->addWidget(amountLbl, 0);
     layout->addSpacing(20);
     layout->addWidget(amountBox, 0);
-    layout->addSpacing(40);
+    layout->addSpacing(20);
     layout->addWidget(totalGrid, 0);
-    layout->addSpacing(40);
+    layout->addSpacing(20);
     layout->addWidget(btnBox);
     layout->addStretch(1);
 
     connect(amountTi, &BlocknetLineEdit::editingFinished, this, &BlocknetQuickSend::onAmountChanged);
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
     connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
+    connect(addAddressBtn, SIGNAL(clicked()), this, SLOT(openAddressBook()));
 
     onAmountChanged();
 }
@@ -189,6 +201,19 @@ void BlocknetQuickSend::hideEvent(QHideEvent *event) {
     QWidget::hideEvent(event);
     disconnect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
     disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
+}
+
+void BlocknetQuickSend::addAddress(const QString &address) {
+    addressTi->setText(address);
+}
+
+void BlocknetQuickSend::openAddressBook() {
+    BlocknetAddressBookDialog dlg(walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
+    dlg.singleShotMode();
+    connect(&dlg, &BlocknetAddressBookDialog::send, this, [this](const QString &address) {
+        addAddress(address);
+    });
+    dlg.exec();
 }
 
 void BlocknetQuickSend::onAmountChanged() {

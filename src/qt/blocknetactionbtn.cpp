@@ -8,7 +8,7 @@
 #include <QStyle>
 #include <QStyleOption>
 
-BlocknetActionBtn::BlocknetActionBtn(QPushButton *parent) : QPushButton(parent) {
+BlocknetActionBtn::BlocknetActionBtn(QPushButton *parent) : QPushButton(parent), id(QString()) {
     this->setFlat(true);
     this->setCursor(Qt::PointingHandCursor);
     this->setFixedSize(s, s);

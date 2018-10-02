@@ -67,6 +67,11 @@ BlocknetSendFunds::BlocknetSendFunds(WalletModel *w, QFrame *parent) : QFrame(pa
     breadCrumb->goToCrumb(RECIPIENT);
 }
 
+void BlocknetSendFunds::addAddress(const QString &address) {
+    breadCrumb->goToCrumb(RECIPIENT);
+    page1->addAddress(address);
+}
+
 void BlocknetSendFunds::focusInEvent(QFocusEvent *event) {
     QWidget::focusInEvent(event);
     if (screen)

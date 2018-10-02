@@ -38,6 +38,7 @@ public:
         page3->clear();
         page4->clear();
     }
+    void addAddress(const QString &address);
 
 signals:
     void sent();
