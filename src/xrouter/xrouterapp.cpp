@@ -943,7 +943,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             // Submit payment via channel
             double paid = 0.0;
             if (this->paymentChannels[pnode].second != "") {
-                paid = getTxValue(this->paymentChannels[pnode].second, 1);
+                paid = deposit - getTxValue(this->paymentChannels[pnode].second, getPaymentAddress(pnode));
             }
             
             std::string paytx;
@@ -957,7 +957,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         }
         
         LOG() << "Payment transaction: " << payment_tx;
-        //std::cout << "Payment transaction: " << payment_tx << std::endl << std::flush;
+        std::cout << "Payment transaction: " << payment_tx << std::endl << std::flush;
         
     }
     

@@ -482,7 +482,7 @@ bool createAndSignChannelTransaction(std::string txin, std::string address, doub
     return createAndSignTransaction(params, raw_tx, false);
 }
 
-double getTxValue(std::string rawtx, int vout_number) {
+double getTxValue(std::string rawtx, std::string address, std::string type) {
     const static std::string decodeCommand("decoderawtransaction");
     std::vector<std::string> params;
     params.push_back(rawtx);
@@ -494,8 +494,32 @@ double getTxValue(std::string rawtx, int vout_number) {
     }
 
     Object obj = result.get_obj();
-    Array vout = find_value(obj, "vout").get_array();
-    return find_value(vout[vout_number].get_obj(), "value").get_real();    
+    Array vouts = find_value(obj, "vout").get_array();
+    for (Value vout : vouts) {
+        double val = find_value(vout.get_obj(), "value").get_real();
+        std::string vouttype = find_value(vout.get_obj(), "type").get_str();
+        if (type == "nulldata")
+            if (vouttype == "nulldata")
+                return val;
+            
+        if (type == "nonstandard")
+            if (vouttype == "nonstandard")
+                return val;
+        
+        Object src = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+        const Value & addr_val = find_value(src, "addresses");
+        if (addr_val.is_null())
+            continue;
+        Array addr = addr_val.get_array();
+
+        for (unsigned int k = 0; k != addr.size(); k++ ) {
+            std::string cur_addr = Value(addr[k]).get_str();
+            if (cur_addr == address)
+                return val;
+        }
+    }
+    
+    return 0.0;
 }
 
 int getChannelExpiryTime(std::string rawtx) {
