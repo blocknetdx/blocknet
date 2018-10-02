@@ -260,7 +260,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     // Direct payment, no CLTV channel
                     std::string txid;
                     
-                    double paid = getTxValue(feetx, 0);
+                    double paid = getTxValue(feetx, getMyPaymentAddress());
                     if (paid < fee) {
                         sendReply(node, uuid, "Fee paid is not enough");
                         return;
@@ -300,7 +300,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             }
             
             if (paymentChannels.count(node)) {
-                double paid = getTxValue(feetx, 0);
+                double paid = getTxValue(feetx, getMyPaymentAddress());
                 if (paid - paymentChannels[node].second < fee) {
                     sendReply(node, uuid, "Fee paid is not enough");
                     return;

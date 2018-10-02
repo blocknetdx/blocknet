@@ -534,17 +534,25 @@ int getChannelExpiryTime(std::string rawtx) {
     }
 
     Object obj = result.get_obj();
-    Array vout = find_value(obj, "vout").get_array();
-    Object script = find_value(vout[0].get_obj(), "scriptPubKey").get_obj();
-    std::string asmscript = find_value(script, "hex").get_str();
-    if (asmscript.substr(0, 4) != "6a04") {
-        // TODO: a better check of the script?
-        return -1;
+    Array vouts = find_value(obj, "vout").get_array();
+    for (Value vout : vouts) {
+        std::string vouttype = find_value(vout.get_obj(), "type").get_str();
+        if (vouttype != "nulldata")
+            continue;
+            
+        Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+        std::string asmscript = find_value(script, "hex").get_str();
+        if (asmscript.substr(0, 4) != "6a04") {
+            // TODO: a better check of the script?
+            return -1;
+        }
+        
+        std::string hexdate = "0x" + asmscript.substr(4);
+        int res = stoi(hexdate, 0, 16);
+        return res;    
     }
     
-    std::string hexdate = "0x" + asmscript.substr(4);
-    int res = stoi(hexdate, 0, 16);
-    return res;    
+    return -1;
 }
 
 } // namespace xrouter
