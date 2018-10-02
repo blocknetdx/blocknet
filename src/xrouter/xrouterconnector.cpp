@@ -208,7 +208,7 @@ std::string CallCMD(std::string cmd) {
 // TODO: make this common with xbridge or use xbridge function for storing
 static CCriticalSection cs_rpcBlockchainStore;
 
-bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund)
+bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund, bool check_complete)
 {
     LOCK(cs_rpcBlockchainStore);
 
@@ -274,11 +274,18 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund)
             const Value  & tx = find_value(obj, "hex");
             const Value & cpl = find_value(obj, "complete");
 
-            if (tx.type() != str_type || cpl.type() != bool_type || !cpl.get_bool())
+            if (tx.type() != str_type)
             {
-                throw std::runtime_error("Sign transaction error or not completed");
+                throw std::runtime_error("Sign transaction error");
             }
 
+            if (check_complete) {
+                if (cpl.type() != bool_type || !cpl.get_bool())
+                {
+                    throw std::runtime_error("Sign transaction not complete");
+                }
+            }
+            
             rawtx = tx.get_str();
         }
     }
@@ -465,7 +472,9 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     Array vouts = find_value(obj, "vout").get_array();
     int i = 0;
     for (Value vout : vouts) {
-        std::string vouttype = find_value(vout.get_obj(), "type").get_str();
+        std::cout << json_spirit::write_string(vout, true) << std::endl << std::flush;
+        Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+        std::string vouttype = find_value(script, "type").get_str();
         if (vouttype == "nonstandard") {
             vout = i;
             break;
@@ -504,7 +513,7 @@ bool createAndSignChannelTransaction(std::string txin, std::string address, doub
     Array params;
     params.push_back(inputs);
     params.push_back(outputs);
-    return createAndSignTransaction(params, raw_tx, false);
+    return createAndSignTransaction(params, raw_tx, false, false);
 }
 
 double getTxValue(std::string rawtx, std::string address, std::string type) {
@@ -521,8 +530,9 @@ double getTxValue(std::string rawtx, std::string address, std::string type) {
     Object obj = result.get_obj();
     Array vouts = find_value(obj, "vout").get_array();
     for (Value vout : vouts) {
-        double val = find_value(vout.get_obj(), "value").get_real();
-        std::string vouttype = find_value(vout.get_obj(), "type").get_str();
+        double val = find_value(vout.get_obj(), "value").get_real();        
+        Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+        std::string vouttype = find_value(script, "type").get_str();
         if (type == "nulldata")
             if (vouttype == "nulldata")
                 return val;
@@ -530,9 +540,8 @@ double getTxValue(std::string rawtx, std::string address, std::string type) {
         if (type == "nonstandard")
             if (vouttype == "nonstandard")
                 return val;
-        
-        Object src = find_value(vout.get_obj(), "scriptPubKey").get_obj();
-        const Value & addr_val = find_value(src, "addresses");
+            
+        const Value & addr_val = find_value(script, "addresses");
         if (addr_val.is_null())
             continue;
         Array addr = addr_val.get_array();
@@ -560,12 +569,12 @@ int getChannelExpiryTime(std::string rawtx) {
 
     Object obj = result.get_obj();
     Array vouts = find_value(obj, "vout").get_array();
-    for (Value vout : vouts) {
-        std::string vouttype = find_value(vout.get_obj(), "type").get_str();
+    for (Value vout : vouts) {            
+        std::cout << json_spirit::write_string(vout, true) << std::endl << std::flush;
+        Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+        std::string vouttype = find_value(script, "type").get_str();
         if (vouttype != "nulldata")
             continue;
-            
-        Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
         std::string asmscript = find_value(script, "hex").get_str();
         if (asmscript.substr(0, 4) != "6a04") {
             // TODO: a better check of the script?
@@ -573,6 +582,8 @@ int getChannelExpiryTime(std::string rawtx) {
         }
         
         std::string hexdate = "0x" + asmscript.substr(4);
+        std::cout << hexdate << std::endl << std::flush;
+        
         int res = stoi(hexdate, 0, 16);
         return res;    
     }

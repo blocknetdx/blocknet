@@ -944,7 +944,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             // Submit payment via channel
             double paid = 0.0;
             if (this->paymentChannels[pnode].second != "") {
-                paid = deposit - getTxValue(this->paymentChannels[pnode].second, getPaymentAddress(pnode));
+                paid = getTxValue(this->paymentChannels[pnode].second, getPaymentAddress(pnode));
             }
             
             std::string paytx;

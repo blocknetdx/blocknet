@@ -271,6 +271,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                         sendReply(node, uuid, "Could not send transaction " + feetx + " to blockchain");
                         return;
                     }
+                    
+                    LOG() << "Got direct payment; value = " << paid << " tx = " << feetx; 
                 } else {
                     std::vector<std::string> parts;
                     boost::split(parts, feetx, boost::is_any_of(";"));
@@ -293,21 +295,21 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     std::cout << "Created payment channel date = " << date << " expiry = " << deadline << " ms" <<std::endl << std::flush; 
                     
                     paymentChannels[node] = std::pair<std::string, double>("", 0.0);
-                    
-                    boost::asio::io_service io;
 
-                    boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(deadline));
-                    t.async_wait([this, node](const boost::system::error_code& /*e*/){
-                        this->closePaymentChannel(node); });
+                    boost::asio::deadline_timer* t = new boost::asio::deadline_timer(this->timer_io);
+                    t->expires_from_now(boost::posix_time::milliseconds(deadline));
+                    t->async_wait(boost::bind(&xrouter::XRouterServer::closePaymentChannel, this, boost::asio::placeholders::error, node));
                 }
             }
             
             if (paymentChannels.count(node)) {
                 double paid = getTxValue(feetx, getMyPaymentAddress());
+                LOG() << "Got payment via channel; value = " << paid - paymentChannels[node].second << " total value = " << paid << " tx = " << feetx; 
                 if (paid - paymentChannels[node].second < fee) {
                     sendReply(node, uuid, "Fee paid is not enough");
                     return;
                 }
+                
                 paymentChannels[node] = std::pair<std::string, double>(feetx, paid);
             }
         }
@@ -681,7 +683,7 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
     return "Unknown type";
 }
 
-void XRouterServer::closePaymentChannel(CNode* node)
+void XRouterServer::closePaymentChannel(const boost::system::error_code& /*e*/, CNode* node)
 {
     std::string txid;
     LOG() << "Closing payment channel: " << this->paymentChannels[node].first << " Value = " << this->paymentChannels[node].second;
@@ -694,6 +696,8 @@ std::string XRouterServer::getMyPaymentAddress()
 {
     try {
         CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
+        if (!pmn)
+            return "yKQyDJ2CJLaQfZKdi8yM7nQHZZqGXYNhUt";
         std::string result = CBitcoinAddress(pmn->pubKeyCollateralAddress.GetID()).ToString();
         return result;
     } catch (...) {
