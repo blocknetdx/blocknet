@@ -24,6 +24,8 @@
 
 #include <algorithm>
 #include <iostream>
+#include <chrono>
+#include <future>
 
 namespace xrouter
 {  
@@ -296,9 +298,14 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     
                     paymentChannels[node] = std::pair<std::string, double>("", 0.0);
 
-                    boost::asio::deadline_timer* t = new boost::asio::deadline_timer(this->timer_io);
-                    t->expires_from_now(boost::posix_time::milliseconds(deadline));
-                    t->async_wait(boost::bind(&xrouter::XRouterServer::closePaymentChannel, this, boost::asio::placeholders::error, node));
+                    std::thread([deadline, this, node]() {
+                        std::this_thread::sleep_for(std::chrono::milliseconds(deadline));
+                        std::string txid;
+                        LOG() << "Closing payment channel: " << this->paymentChannels[node].first << " Value = " << this->paymentChannels[node].second;
+                        
+                        sendTransactionBlockchain(signTransaction(this->paymentChannels[node].first), txid);
+                        this->paymentChannels.erase(node);
+                    }).detach();
                 }
             }
             

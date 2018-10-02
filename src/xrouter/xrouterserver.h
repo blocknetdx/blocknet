@@ -11,7 +11,6 @@
 #include "xrouterdef.h"
 #include <chrono>
 #include <boost/container/map.hpp>
-#include <boost/asio.hpp>
 
 namespace xrouter
 {
@@ -26,7 +25,6 @@ class XRouterServer
     xrouter::Connectors m_connectors;
     xrouter::ConnectorsAddrMap m_connectorAddressMap;
     xrouter::ConnectorsCurrencyMap m_connectorCurrencyMap;
-    boost::asio::io_service timer_io;
 
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
     
@@ -37,7 +35,7 @@ protected:
      * @brief Impl - default constructor, init
      * services and timer
      */
-    XRouterServer() : timer_io() { timer_io.run(); }
+    XRouterServer() { }
 
     /**
      * @brief start - run sessions, threads and services
