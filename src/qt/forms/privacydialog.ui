@@ -783,6 +783,9 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                             <property name="toolTip">
                              <string>The Phore address to send the payment to. Creates local payment to yourself when empty.</string>
                             </property>
+                            <property name="placeholderText">
+                             <string>Enter a Phore address (e.g. PCYiHgGJJ6xGHqivmdZrYjRnhaYf6AJ2Mp)</string>
+                            </property>
                            </widget>
                           </item>
                           <item>
@@ -844,6 +847,9 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                          <widget class="QLineEdit" name="addAsLabel">
                           <property name="toolTip">
                            <string>Enter a label for this address to add it to the list of used addresses</string>
+                          </property>
+                          <property name="placeholderText">
+                           <string>Enter a label for this address to add it to your address book</string>
                           </property>
                          </widget>
                         </item>
