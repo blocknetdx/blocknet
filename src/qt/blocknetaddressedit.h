@@ -8,39 +8,52 @@
 #include "blocknetformbtn.h"
 #include "blocknetlineeditwithtitle.h"
 
+#include "base58.h"
 #include "walletmodel.h"
+#include "addresstablemodel.h"
 
 #include <QFrame>
+#include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QRadioButton>
+#include <QDialog>
 
 class BlocknetAddressEdit : public QFrame {
     Q_OBJECT
 public:
-    explicit BlocknetAddressEdit(WalletModel *w, QString title = "Edit Address", QString buttonString = "Apply", QFrame *parent = nullptr);
-
+    explicit BlocknetAddressEdit(bool editMode, const QString &title, const QString &buttonString, QWidget *parent = nullptr);
+    QSize sizeHint() const override;
     bool validated();
+    void setData(const QString &address, const QString &alias, const int &type, const QString &key);
+    QString getAddress();
+    QString getAlias();
+    QString getKey();
+    QString getType();
+    CKeyID getKeyID();
 
 signals:
-    void next();
+    void cancel();
+    void accept();
 
 public slots:
     void clear();
-    void addressChanged();
-    void createAddressChanged();
-    void aliasChanged();
-    void onApply() { emit next(); }
+    void onApply();
+    void onCancel() { emit cancel(); }
+
 protected:
-    void keyPressEvent(QKeyEvent *event);
-    void focusInEvent(QFocusEvent *event);
+    void keyPressEvent(QKeyEvent *event) override;
+    void focusInEvent(QFocusEvent *event) override;
+
+private slots:
+    void onPrivateKey(const QString &text);
+    void onAddressChanged(const QString &text);
 
 private:
-    WalletModel *walletModel;
+    QVBoxLayout *layout;
     QString title;
     QString buttonString;
-    QVBoxLayout *layout;
-    QLabel *addressLbl;
+    bool editMode;
     QLabel *titleLbl;
     BlocknetLineEditWithTitle *addressTi;
     BlocknetLineEditWithTitle *createAddressTi;
@@ -49,6 +62,35 @@ private:
     QRadioButton *otherUserBtn;
     BlocknetFormBtn *confirmBtn;
     BlocknetFormBtn *cancelBtn;
+    CKeyID keyID;
+
+    bool generateAddress(QString &newAddress);
+};
+
+class BlocknetAddressEditDialog : public QDialog {
+    Q_OBJECT
+public:
+    explicit BlocknetAddressEditDialog(AddressTableModel *model, Qt::WindowFlags f, QWidget *parent = nullptr);
+    void accept() override;
+    void setData(const QString &address, const QString &alias, const int &type, const QString &key);
+    BlocknetAddressEdit *form;
+protected:
+    void resizeEvent(QResizeEvent *evt) override;
+private:
+    AddressTableModel *model;
+};
+
+class BlocknetAddressAddDialog : public QDialog {
+    Q_OBJECT
+public:
+    explicit BlocknetAddressAddDialog(AddressTableModel *model, WalletModel *walletModel, Qt::WindowFlags f, QWidget *parent = nullptr);
+    void accept() override;
+    BlocknetAddressEdit *form;
+protected:
+    void resizeEvent(QResizeEvent *evt) override;
+private:
+    AddressTableModel *model;
+    WalletModel *walletModel;
 };
 
 #endif // BLOCKNETADDRESSEDIT_H

@@ -14,6 +14,21 @@ class WalletModel;
 
 class CWallet;
 
+struct AddressTableEntry {
+    enum Type {
+        Sending,
+        Receiving,
+        Hidden /* QSortFilterProxyModel will filter these out */
+    };
+
+    Type type;
+    QString label;
+    QString address;
+
+    AddressTableEntry() {}
+    AddressTableEntry(Type type, const QString& label, const QString& address) : type(type), label(label), address(address) {}
+};
+
 /**
    Qt model of the address book in the core. This allows views to access and modify the address book.
  */
@@ -72,6 +87,16 @@ public:
        Return -1 if not found.
      */
     int lookupAddress(const QString& address) const;
+
+    /**
+     * @brief Removes the label cache for the specified address. Useful if the label was recently changed
+     *        for the address.
+     * @param label
+     */
+    void invalidateLabel(const QString& address) {
+        if (labelHash.contains(address))
+            labelHash.remove(address);
+    }
 
     EditStatus getEditStatus() const { return editStatus; }
 

@@ -45,6 +45,7 @@ private slots:
     void onAmountChanged();
     void onDisplayUnit(int);
     void onEncryptionStatus(int encStatus);
+    void openAddressBook();
 
 private:
     WalletModel *walletModel;
@@ -65,6 +66,7 @@ private:
     BlocknetFormBtn *confirmBtn;
     bool walletUnlockedFee = false;
 
+    void addAddress(const QString &address);
     WalletModel::SendCoinsReturn processFunds(bool submitFunds = false);
     void updateLabels(WalletModel::SendCoinsReturn &result);
 };

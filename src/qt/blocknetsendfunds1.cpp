@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "blocknetsendfunds1.h"
+#include "blocknetaddressbook.h"
+#include "blockneticonbtn.h"
 
 #include <QMessageBox>
 #include <QKeyEvent>
@@ -28,6 +30,13 @@ BlocknetSendFunds1::BlocknetSendFunds1(WalletModel *w, int id, QFrame *parent) :
         else return w->validateAddress(addr);
     });
 
+    auto *addressBtnBox = new QFrame;
+    addressBtnBox->setContentsMargins(QMargins());
+    auto *addressBtnBoxLayout = new QHBoxLayout(addressBtnBox);
+    addressBtnBoxLayout->setContentsMargins(QMargins());
+    auto *addAddressBtn = new BlocknetIconBtn(QString("Open Address Book"), ":/redesign/QuickActions/AddressBookIcon.png");
+    addressBtnBoxLayout->addWidget(addAddressBtn);
+
     continueBtn = new BlocknetFormBtn;
     continueBtn->setText(tr("Continue"));
     continueBtn->setDisabled(true);
@@ -41,6 +50,8 @@ BlocknetSendFunds1::BlocknetSendFunds1(WalletModel *w, int id, QFrame *parent) :
     layout->addWidget(subtitleLbl, 0, Qt::AlignTop);
     layout->addSpacing(25);
     layout->addWidget(addressTi);
+    layout->addSpacing(20);
+    layout->addWidget(addressBtnBox, 0, Qt::AlignLeft);
     layout->addSpacing(45);
     layout->addWidget(hdiv);
     layout->addSpacing(45);
@@ -50,6 +61,7 @@ BlocknetSendFunds1::BlocknetSendFunds1(WalletModel *w, int id, QFrame *parent) :
     connect(addressTi, SIGNAL(textChanged()), this, SLOT(textChanged()));
     connect(addressTi, SIGNAL(addresses()), this, SLOT(onAddressesChanged()));
     connect(addressTi, SIGNAL(returnPressed()), this, SLOT(onNext()));
+    connect(addAddressBtn, SIGNAL(clicked()), this, SLOT(openAddressBook()));
     connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
 }
 
@@ -60,6 +72,18 @@ void BlocknetSendFunds1::setData(BlocknetSendFundsModel *model) {
     for (const BlocknetTransaction &b : model->recipients)
         addressTi->addAddress(b.address);
     addressTi->blockSignals(false);
+}
+
+void BlocknetSendFunds1::addAddress(const QString &address) {
+    addressTi->addAddress(address);
+}
+
+void BlocknetSendFunds1::openAddressBook() {
+    BlocknetAddressBookDialog dlg(walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
+    connect(&dlg, &BlocknetAddressBookDialog::send, this, [this](const QString &address) {
+        addAddress(address);
+    });
+    dlg.exec();
 }
 
 void BlocknetSendFunds1::clear() {

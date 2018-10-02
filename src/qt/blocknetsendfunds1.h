@@ -25,11 +25,13 @@ public:
     explicit BlocknetSendFunds1(WalletModel *w, int id, QFrame *parent = nullptr);
     void setData(BlocknetSendFundsModel *model) override;
     bool validated() override;
+    void addAddress(const QString &address);
 
 public slots:
     void clear() override;
     void textChanged();
     void onAddressesChanged();
+    void openAddressBook();
 
 private:
     QVBoxLayout *layout;

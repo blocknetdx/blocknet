@@ -19,21 +19,6 @@
 const QString AddressTableModel::Send = "S";
 const QString AddressTableModel::Receive = "R";
 
-struct AddressTableEntry {
-    enum Type {
-        Sending,
-        Receiving,
-        Hidden /* QSortFilterProxyModel will filter these out */
-    };
-
-    Type type;
-    QString label;
-    QString address;
-
-    AddressTableEntry() {}
-    AddressTableEntry(Type type, const QString& label, const QString& address) : type(type), label(label), address(address) {}
-};
-
 struct AddressTableEntryLessThan {
     bool operator()(const AddressTableEntry& a, const AddressTableEntry& b) const
     {

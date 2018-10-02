@@ -16,8 +16,13 @@ BlocknetAvatar::BlocknetAvatar(QString title, qreal w, qreal h, QColor color1,
     this->setFixedSize(static_cast<int>(w), static_cast<int>(h));
 }
 
+BlocknetAvatarBlue::BlocknetAvatarBlue(QString title, qreal w, qreal h, QColor color1,
+                                       QColor color2, QWidget *parent) : BlocknetAvatar(title, w, h,
+                                                                                        color1, color2, parent) { }
+
 void BlocknetAvatar::paintEvent(QPaintEvent *) {
     QPainter p(this);
+    p.setRenderHint(QPainter::HighQualityAntialiasing);
     p.setPen(Qt::NoPen);
 
     // draw circle
@@ -36,7 +41,10 @@ void BlocknetAvatar::paintEvent(QPaintEvent *) {
     QStringList list = title.split(" ", QString::SkipEmptyParts);
     QString s = "";
     int size = 0;
-    if (list.size() > 0) {
+    if (title == "(no label)") {
+        s = "";
+    }
+    else if (list.size() > 0) {
         for (auto& c: list) {
             s.append(c.at(0).toUpper());
             size++;

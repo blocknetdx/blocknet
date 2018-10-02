@@ -70,7 +70,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     tools->setLabel(tr("Tools"));
 
     group = new QButtonGroup;
-    group->setExclusive(true);
+    group->setExclusive(false);
     group->addButton(dashboard, DASHBOARD);
     group->addButton(addressBook, ADDRESSBOOK);
     group->addButton(sendFunds, SEND);
@@ -81,6 +81,11 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
 //    group->addButton(announcements, ANNOUNCEMENTS);
     group->addButton(settings, SETTINGS);
     group->addButton(tools, TOOLS);
+
+    // Manually handle the button events
+    btns = group->buttons();
+    for (auto *btn : btns)
+        connect(btn, SIGNAL(clicked(bool)), this, SLOT(onMenuClicked(bool)));
 
     versionLbl = new QLabel(QString::fromStdString(FormatFullVersion()));
     versionLbl->setObjectName("versionLbl");
@@ -151,8 +156,6 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     layout->addStretch(1);
     layout->addWidget(boxVersion);
 
-    connect(group, SIGNAL(buttonToggled(int, bool)), this, SLOT(onMenuSelected(int, bool)));
-
     announcements->setObjectName("disabled"); announcements->setEnabled(false); announcements->setToolTip(tr("Coming soon"));
 }
 
@@ -161,15 +164,20 @@ void BlocknetLeftMenu::setBalance(CAmount balance, int unit) {
 }
 
 void BlocknetLeftMenu::selectMenu(BlocknetPage menuType) {
-    for (QAbstractButton *b : group->buttons()) {
-        if (group->id(b) == menuType) {
-            b->setChecked(true);
-            break;
-        }
+    for (auto *btn : btns) {
+        auto btnID = group->id(btn);
+        if (btnID == DASHBOARD && menuType == QUICKSEND) // quicksend is alias of dashboard // TODO Handle dynamically
+            btn->setChecked(true);
+        else btn->setChecked(btnID == menuType);
     }
 }
 
-void BlocknetLeftMenu::onMenuSelected(int menuType, bool selected) {
-    if (selected)
-        emit menuChanged((BlocknetPage)menuType);
+void BlocknetLeftMenu::onMenuClicked(bool) {
+    auto *btn = qobject_cast<QAbstractButton*>(sender());
+    // Always allow going to the dashboard
+    auto page = static_cast<BlocknetPage>(group->id(btn));
+    if (selected != page || page == DASHBOARD) {
+        selected = page;
+        emit menuChanged(page);
+    }
 }

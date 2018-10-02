@@ -13,6 +13,7 @@
 #include <QWidget>
 #include <QFrame>
 #include <QLabel>
+#include <QAbstractButton>
 
 class BlocknetLeftMenu : public QFrame
 {
@@ -29,7 +30,7 @@ signals:
 public slots:
 
 private slots:
-    void onMenuSelected(int menuType, bool selected);
+    void onMenuClicked(bool);
 
 private:
     QVBoxLayout *layout;
@@ -48,8 +49,10 @@ private:
     BlocknetIconLabel *announcements;
     BlocknetIconLabel *settings;
     BlocknetIconLabel *tools;
+    QList<QAbstractButton*> btns;
 
     QLabel *versionLbl;
+    int selected;
 };
 
 #endif // BLOCKNETLEFTMENU_H

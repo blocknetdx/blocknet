@@ -59,6 +59,7 @@ public slots:
 
 protected slots:
     void onSendFunds();
+    void onSendToAddress(const QString &);
     void goToDashboard();
     void goToQuickSend();
     void goToHistory();

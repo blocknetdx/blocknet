@@ -33,6 +33,7 @@
 #include "blockexplorer.h"
 #include "multisenddialog.h"
 #include "signverifymessagedialog.h"
+#include "blocknetaddressbook.h"
 #endif // ENABLE_WALLET
 
 #ifdef Q_OS_MAC
@@ -901,22 +902,16 @@ void BitcoinGUI::usedSendingAddresses()
 {
     if (!walletModel)
         return;
-    AddressBookPage* dlg = new AddressBookPage(AddressBookPage::ForEditing, AddressBookPage::SendingTab, this);
-    dlg->setStyleSheet(stylesOld);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setModel(walletModel->getAddressTableModel());
-    dlg->show();
+    BlocknetAddressBookDialog dlg(walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint, BlocknetAddressBook::FILTER_SENDING);
+    dlg.exec();
 }
 
 void BitcoinGUI::usedReceivingAddresses()
 {
     if (!walletModel)
         return;
-    AddressBookPage* dlg = new AddressBookPage(AddressBookPage::ForEditing, AddressBookPage::ReceivingTab, this);
-    dlg->setStyleSheet(stylesOld);
-    dlg->setAttribute(Qt::WA_DeleteOnClose);
-    dlg->setModel(walletModel->getAddressTableModel());
-    dlg->show();
+    BlocknetAddressBookDialog dlg(walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint, BlocknetAddressBook::FILTER_RECEIVING);
+    dlg.exec();
 }
 
 void BitcoinGUI::lockRequest(bool locked, bool stakingOnly) {
@@ -1240,18 +1235,18 @@ void BitcoinGUI::detectShutdown()
 
 void BitcoinGUI::showProgress(const QString& title, int nProgress)
 {
-    if (nProgress == 0) {
-        progressDialog = new QProgressDialog(title, "", 0, 100);
-//        progressDialog->setStyleSheet(stylesOld);
+    if (nProgress == 0 && !progressDialog) {
+        progressDialog = new QProgressDialog(title, "", 0, 100, this);
         progressDialog->setWindowModality(Qt::ApplicationModal);
         progressDialog->setMinimumDuration(0);
-        progressDialog->setCancelButton(0);
+        progressDialog->setCancelButton(nullptr);
         progressDialog->setAutoClose(false);
         progressDialog->setValue(0);
     } else if (nProgress == 100) {
         if (progressDialog) {
             progressDialog->close();
             progressDialog->deleteLater();
+            progressDialog = nullptr;
         }
     } else if (progressDialog)
         progressDialog->setValue(nProgress);

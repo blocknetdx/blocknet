@@ -23,10 +23,6 @@ BlocknetLockMenu QPushButton { font-size: 13px; font-family: "Roboto"; text-alig
 BlocknetLockMenu QPushButton:!hover { color: #016AFF; background-color: white; }
 BlocknetLockMenu QPushButton:hover { color: white; background-color: #016AFF; }
 BlocknetLockMenu #hdiv { background-color: #CCCCCC; }
-BlocknetFundsMenu { border: 1px solid #CCCCCC; background-color: white; }
-BlocknetFundsMenu QPushButton { font-size: 13px; font-family: "Roboto"; text-align: left; padding-left: 20px; border: none; }
-BlocknetFundsMenu QPushButton:!hover { color: #016AFF; background-color: white; }
-BlocknetFundsMenu QPushButton:hover { color: white; background-color: #016AFF; }
 
 BlocknetDropdown { background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); selection-color: #FFFFFF; selection-background-color: #37475C; border: 1px solid #6F8097; color: #FFFFFF; font-size: 13px; font-family: "Roboto"; }
 BlocknetDropdown::drop-down { width: 35px; border: 0px; }
@@ -89,6 +85,7 @@ QTableView QHeaderView::up-arrow, QTableView QHeaderView::up-arrow { image: url(
 
 BlocknetLineEdit, QLineEdit { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
 BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #333333; color: #333333; }
+BlocknetLineEdit[error=true] { border: 1px solid red; }
 BlocknetLineEditWithTitle #h1 { font-size: 12px; color: #6F8097 }
 BlocknetAddressEditor { font-size: 13px; color: white; font-family: "Roboto"; padding-top: 3px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
 BlocknetAddressEditor:disabled { border: 1px solid #333333; color: #333333; }
@@ -111,6 +108,9 @@ BlocknetActionBtn:hover { background-color: #37475C; }
 BlocknetBreadCrumb QPushButton { font-size: 13px; color: #6F8097; font-family: "Roboto"; border: none; }
 BlocknetBreadCrumb QPushButton:checked { color: #74B2FE; }
 BlocknetIconBtn #title { font-size: 12px; color: white; font-family: "Roboto"; }
+BlocknetLabelBtn { color: #016AFF; font-size: 13px; font-family: "Roboto"; text-align: left; padding-left: 20px; border: none; background-color: transparent; }
+BlocknetLabelBtn:!hover { color: #016AFF; }
+BlocknetLabelBtn:hover { color: white; }
 BlocknetDialog { background-color: #172F49; }
 BlocknetDialog #h2 { background-color: #172F49; border: 0; }
 
@@ -161,21 +161,22 @@ BlocknetSendFunds #body { font-size: 13px; color: #6F8097; font-family: "Roboto"
 
 BlocknetQuickSend #address { max-width: 500px; }
 
+BlocknetFundsMenu { border: 1px solid #CCCCCC; background-color: white; }
+BlocknetFundsMenu QPushButton { font-size: 13px; font-family: "Roboto"; text-align: left; padding-left: 20px; border: none; }
+BlocknetFundsMenu QPushButton:!hover { color: #016AFF; background-color: white; }
+BlocknetFundsMenu QPushButton:hover { color: white; background-color: #016AFF; }
+
 BlocknetAddressBook #h4 { padding-left: 1px; }
 BlocknetAddressBook #title { font-size: 12px; color: white; font-family: "Roboto"; }
 BlocknetAddressBook QTableWidget { color: white; background-color: transparent; }
-BlocknetAddressBook QTableWidget QHeaderView { color: #37475C; background-color: transparent; }
-BlocknetAddressBook QTableWidget QHeaderView::section { background-color: transparent; }
-BlocknetAddressBook QTableWidget #indicator[state="0"] { background-color: #4BF5C6; }
-BlocknetAddressBook QTableWidget #indicator[state="1"] { background-color: #F8BF1C; }
-BlocknetAddressBook QTableWidget #indicator[state="2"] { background-color: #FB7F70; }
+BlocknetAddressBook QTableWidget QHeaderView { color: #37475C; }
 BlocknetAddressBook QTableWidget::item { padding: 3px; }
+BlocknetAddressBook QTableWidget::item::selected BlocknetLabelBtn { color: white; }
+BlocknetAddressBookDialog { background-color: #172F49; }
 
-BlocknetAddressEdit #h2 { padding-left: 10px; }
-BlocknetAddressEdit #h4 { padding-left: 10px; }
-BlocknetAddressEdit #radioGrid { padding-left: 10px; }
-BlocknetAddressEdit #otherUserBtn { padding-left: 50px; }
-BlocknetAddressEdit BlocknetLineEdit { max-width: 500px; }
+BlocknetAddressEditDialog, BlocknetAddressAddDialog { background-color: #172F49; }
+BlocknetAddressEditDialog #h2, BlocknetAddressAddDialog #h2 { background-color: #172F49; border: 0; }
+BlocknetAddressEditDialog QLineEdit:disabled, BlocknetAddressAddDialog QLineEdit:disabled { color: #CCCCCC; border: 1px solid #CCCCCC; }
 
 BlocknetTransactionHistory { border: 0; }
 BlocknetTransactionHistory::item { border: 0; qproperty-alignment:left; }

@@ -37,11 +37,10 @@ signals:
 public slots:
 
 private:
-    const int circlew = 84;
-    const int circleh = circlew;
-    QVBoxLayout *layout;
+    const int circlew;
+    const int circleh;
+    bool hoverState;
     QLabel *iconLbl;
-    bool hoverState = false;
 };
 
 #endif // BLOCKNETICONBTN_H

@@ -15,11 +15,13 @@ class BlocknetLineEditWithTitle : public QFrame
 {
     Q_OBJECT
 public:
-    explicit BlocknetLineEditWithTitle(QString title = "", QString placeholder = "", int w = 250, int h = 40, QFrame *parent = nullptr);
+    explicit BlocknetLineEditWithTitle(QString title = "", QString placeholder = "", int w = 250, int h = 50, QFrame *parent = nullptr);
     void setID(QString id);
+    void setError(bool flag = true);
+    void setTitle(const QString &title);
     QString getID();
     bool isEmpty();
-    void setTitle(const QString &title);
+    QSize sizeHint() const override;
     BlocknetLineEdit *lineEdit;
 
 signals:

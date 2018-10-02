@@ -104,27 +104,23 @@ void BlocknetWallet::setLock(const bool lock, const bool stakingOnly) {
 void BlocknetWallet::setPage(BlocknetPage page) {
     if (page == BlocknetPage::SETTINGS || page == BlocknetPage::TOOLS) {
         switch (page) {
-            case BlocknetPage::ADDRESSBOOK:
-                emit addressbook();
-                break;
             case BlocknetPage::SETTINGS:
                 emit settings();
                 break;
             case BlocknetPage::TOOLS:
                 emit tools();
                 break;
-            default:
-                break;
         }
         leftMenu->selectMenu(this->page);
         return;
     }
 
-    if (this->page == page)
-        return;
-
-    this->page = page;
+    bool same = this->page == page;
     leftMenu->selectMenu(page);
+
+    if (same)
+        return;
+    this->page = page;
 
     if (screen) {
         screen->hide();
@@ -135,14 +131,14 @@ void BlocknetWallet::setPage(BlocknetPage page) {
 
     switch (page) {
         case BlocknetPage::DASHBOARD: {
-            dashboard->setWalletModel(walletModel);
             dashboard->show();
             screen = dashboard;
             break;
         }
         case BlocknetPage::ADDRESSBOOK: {
-            auto *addressBook = new BlocknetAddressBook(this);
+            auto *addressBook = new BlocknetAddressBook;
             addressBook->setWalletModel(walletModel);
+            connect(addressBook, SIGNAL(send(const QString &)), this, SLOT(onSendToAddress(const QString &)));
             screen = addressBook;
             break;
         }
@@ -211,6 +207,12 @@ void BlocknetWallet::setPage(BlocknetPage page) {
 
 void BlocknetWallet::onSendFunds() {
     goToDashboard();
+}
+
+void BlocknetWallet::onSendToAddress(const QString &address) {
+    setPage(BlocknetPage::SEND);
+    if (sendFunds != nullptr)
+        sendFunds->addAddress(address);
 }
 
 void BlocknetWallet::goToDashboard() {
