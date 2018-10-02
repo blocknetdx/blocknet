@@ -32,10 +32,10 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     proposalTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9-_]+"), this));
     proposalTi->lineEdit->setMaxLength(20);
 
-    urlTi = new BlocknetLineEditWithTitle(tr("URL (max 64 characters)"), tr("Enter URL..."));
+    urlTi = new BlocknetLineEditWithTitle(tr("URL must start with http:// or https:// (max 64 characters)"), tr("Enter URL..."));
     urlTi->setObjectName("url");
     urlTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"), this));
-    urlTi->lineEdit->setMaxLength(150);
+    urlTi->lineEdit->setMaxLength(64);
 
     auto *compactGrid = new QFrame;
     QGridLayout *gridLayout = new QGridLayout;
@@ -45,14 +45,16 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
 
     paymentCountTi = new BlocknetLineEditWithTitle(tr("Payment count (1-12)"), tr("Enter payment count..."));
     paymentCountTi->setObjectName("payment");
-    paymentCountTi->lineEdit->setValidator(new QIntValidator(1, 12));
+    paymentCountTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9]+"), this));
+    paymentCountTi->lineEdit->setMaxLength(2);
 
     auto superblock = nextSuperblock();
     auto superblockStr = superblock == -1 ? QString() : QString::number(superblock);
     superBlockTi = new BlocknetLineEditWithTitle(tr("Superblock #: Next is %1").arg(superblockStr), tr("Enter Superblock #..."));
     superBlockTi->setObjectName("block");
-    superBlockTi->lineEdit->setValidator(new QIntValidator(1, 100000000));
+    superBlockTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9]+"), this));
     superBlockTi->lineEdit->setText(superblockStr);
+    paymentCountTi->lineEdit->setMaxLength(8);
 
     amountTi = new BlocknetLineEditWithTitle(tr("Amount (10 minimum)"), tr("Enter amount..."));
     amountTi->setObjectName("amount");
@@ -160,13 +162,17 @@ bool BlocknetCreateProposal1::validated() {
 
     auto paymentCount = boost::lexical_cast<int>(paymentCountTi->lineEdit->text().toStdString());
     if (paymentCount == 0 || paymentCount > 12) { // bad payment count
-        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Payment count cannot be 0"));
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Payment count must be within 1-12"));
         return false;
     }
 
     auto superblock = boost::lexical_cast<int>(superBlockTi->lineEdit->text().toStdString());
+    if (superblock < nextSuperblock()) {
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad Superblock, please enter a future Superblock"));
+        return false;
+    }
     if (superblock % GetBudgetPaymentCycleBlocks() != 0) { // bad superblock
-        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad Superblock #"));
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad Superblock, the number you entered is not a Superblock"));
         return false;
     }
 

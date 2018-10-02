@@ -79,7 +79,7 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
     auto *urlGridLayout = new QGridLayout;
     urlGridLayout->setContentsMargins(QMargins());
     urlGrid->setLayout(urlGridLayout);
-    urlLbl = new QLabel(tr("Url"));
+    urlLbl = new QLabel(tr("URL"));
     urlLbl->setObjectName("h4");
     urlValLbl = new QLabel;
     urlValLbl->setObjectName("detail");

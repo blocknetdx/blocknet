@@ -25,7 +25,7 @@ BlocknetCreateProposal3::BlocknetCreateProposal3(int id, QFrame *parent) : Block
     subtitleLbl = new QLabel;
     subtitleLbl->setObjectName("h2");
 
-    auto *descLbl = new QLabel(tr("You are required to wait until your Proposal Submission Fee collateral has finished confirming to the network. You must have at least %1 confirmations.")
+    auto *descLbl = new QLabel(tr("You are required to wait until your Proposal Submission Fee collateral has finished confirming to the network. You must have at least %1 confirmations. An mnbudget submit command has been logged to your debug.log in case you lose your place on this screen.")
                                        .arg(QString::number(BUDGET_FEE_CONFIRMATIONS)));
     descLbl->setObjectName("h6");
     descLbl->setWordWrap(true);
