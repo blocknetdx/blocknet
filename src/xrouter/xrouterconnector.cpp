@@ -371,7 +371,7 @@ bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
             txid = result.get_str();
         }
 
-        LOG() << "xdata sendrawtransaction " << raw_tx;
+        LOG() << "sendrawtransaction " << raw_tx;
     }
     catch (json_spirit::Object & obj)
     {
@@ -413,7 +413,7 @@ bool sendTransactionBlockchain(std::string address, const double amount, std::st
     return res;
 }
 
-bool createPaymentChannel(CPubKey address, double deposit, int date, std::string& raw_tx, std::string& txid)
+bool createPaymentChannel(CPubKey address, double deposit, int date, std::string& raw_tx, std::string& txid, int& vout)
 {
     CScript inner;
     
@@ -445,7 +445,6 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     outputs.push_back(out);
     outputs.push_back(out2);
     Array inputs;
-    Value result;
 
     Array params;
     params.push_back(inputs);
@@ -454,7 +453,28 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     if (!res)
         return false;
     
-    return sendTransactionBlockchain(raw_tx, txid);
+    res = sendTransactionBlockchain(raw_tx, txid);
+    
+    // Get the CLTV vout number
+    const static std::string decodeCommand("decoderawtransaction");
+    std::vector<std::string> dparams;
+    dparams.push_back(raw_tx);
+
+    Value result = tableRPC.execute(decodeCommand, RPCConvertValues(decodeCommand, dparams));
+    Object obj = result.get_obj();
+    Array vouts = find_value(obj, "vout").get_array();
+    int i = 0;
+    for (Value vout : vouts) {
+        std::string vouttype = find_value(vout.get_obj(), "type").get_str();
+        if (vouttype == "nonstandard") {
+            vout = i;
+            break;
+        }
+        
+        i++;
+    }
+    
+    return res;
 }
 
 bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string& raw_tx)
@@ -468,10 +488,15 @@ bool createAndSignChannelTransaction(std::string txin, std::string address, doub
     out_srv.push_back(Pair("address", address));
     out_srv.push_back(Pair("amount", amount));
     outputs.push_back(out_srv);
+    
+    std::vector<std::string> parts;
+    // TODO: error processing?
+    boost::split(parts, txin, boost::is_any_of(":"));
+    
     Array inputs;
     Object inp;
-    inp.push_back(Pair("txid", txin));
-    inp.push_back(Pair("vout", 1));
+    inp.push_back(Pair("txid", parts[0]));
+    inp.push_back(Pair("vout", stoi(parts[1])));
     inputs.push_back(inp);
     Value result;
 

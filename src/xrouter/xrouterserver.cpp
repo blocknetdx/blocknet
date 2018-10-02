@@ -289,6 +289,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     int date = getChannelExpiryTime(channeltx);
                     int deadline = date - std::time(0) - 5000;
                     
+                    LOG() << "Created payment channel date = " << date << " expiry = " << deadline << " ms"; 
+                    std::cout << "Created payment channel date = " << date << " expiry = " << deadline << " ms" <<std::endl << std::flush; 
+                    
                     paymentChannels[node] = std::pair<std::string, double>("", 0.0);
                     
                     boost::asio::io_service io;

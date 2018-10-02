@@ -931,12 +931,13 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         } else {
             // Create payment channel first
             std::string raw_tx, txid;
+            int vout;
             payment_tx = "";
             if (!this->paymentChannels.count(pnode)) {
-                bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, raw_tx, txid);
+                bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, raw_tx, txid, vout);
                 if (!res)
                     return "Failed to create payment channel";
-                this->paymentChannels[pnode] = std::pair<std::string, std::string>(txid, "");
+                this->paymentChannels[pnode] = std::pair<std::string, std::string>(txid + ":" + std::to_string(vout), "");
                 payment_tx = raw_tx + ";" + txid + ";";
             }
             

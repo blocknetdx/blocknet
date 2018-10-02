@@ -26,7 +26,7 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund=tr
 std::string signTransaction(std::string& raw_tx);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
 bool sendTransactionBlockchain(std::string address, const double amount, std::string & raw_tx);
-bool createPaymentChannel(CPubKey address, double deposit, int date, std::string & raw_tx, std::string & txid);
+bool createPaymentChannel(CPubKey address, double deposit, int date, std::string & raw_tx, std::string & txid, int& vout);
 bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string & raw_tx);
 double getTxValue(std::string rawtx, std::string address, std::string type="address");
 int getChannelExpiryTime(std::string rawtx);
