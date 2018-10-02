@@ -11,16 +11,13 @@
 
 #include "compat.h"
 #include "serialize.h"
+#include "util.h" // for nConnectTimeout
 
 #include <stdint.h>
 #include <string>
 #include <vector>
 
-extern int nConnectTimeout;
 extern bool fNameLookup;
-
-/** -timeout default */
-static const int DEFAULT_CONNECT_TIMEOUT = 5000;
 
 #ifdef WIN32
 // In MSVC, this is defined as a macro, undefine it to prevent a compile and link error
