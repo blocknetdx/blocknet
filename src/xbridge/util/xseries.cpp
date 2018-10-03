@@ -5,8 +5,6 @@
 #include "json/json_spirit_utils.h"
 #include "json/json_spirit_value.h"
 
-#include <assert.h>
-#include "currencypair.h"
 #include "xseries.h"
 #include "xbridge/xbridgetransactiondescr.h"
 #include "xbridge/xbridgeapp.h"
@@ -43,10 +41,10 @@ namespace {
                                          xbridge::TransactionDescr::COIN},   tr.toAmount},
                              tr.txtime);
     }
-    void updateXSeries(std::vector<xAggregate>& series,
-                       const xSeriesCache::xRange& r,
-                       const xQuery& q,
-                       xQuery::Transform tf)
+    void updateXSeriesHelper(std::vector<xAggregate>& series,
+                             const xSeriesCache::xRange& r,
+                             const xQuery& q,
+                             xQuery::Transform tf)
     {
         for (auto it=r.begin(); it != r.end(); ++it) {
             auto offset = it->timeEnd - q.period.begin();
@@ -54,8 +52,6 @@ namespace {
             series.at(idx).update(tf == xQuery::Transform::Invert ? it->inverse() : *it, q.with_txids);
         }
     }
-
-
     std::vector<CurrencyPair> get_tradingdata(time_period query)
     {
         LOCK(cs_main);
@@ -91,15 +87,15 @@ namespace {
         return records;
     }
 
-    ptime get_end_time(int64_t end_secs, time_duration period = boost::posix_time::seconds{60}) {
-        const int64_t psec = period.total_seconds();
+    ptime get_end_time(int64_t end_secs, time_duration cache_granularity) {
+        const int64_t psec = cache_granularity.total_seconds();
         if (end_secs < 0 || psec < 1)
             return from_time_t(0);
         return from_time_t(((end_secs + psec - 1) / psec) * psec);
     }
-    ptime get_end_time(ptime end_time, time_duration period = boost::posix_time::seconds{60}) {
+    ptime get_end_time(ptime end_time, time_duration cache_granularity) {
         auto epoch_duration = end_time - from_time_t(0);
-        return get_end_time(epoch_duration.total_seconds(), period);
+        return get_end_time(epoch_duration.total_seconds(), cache_granularity);
     }
 }
 
@@ -128,13 +124,11 @@ xSeriesCache::getChainXAggregateSeries(const xQuery& query)
     if (not m_cache_period.contains(q.period))
         updateSeriesCache(q.period);
 
-    pairSymbol key = q.fromCurrency.to_string() +"/"+ q.toCurrency.to_string();
-    auto range = getXAggregateRange(key, q.period);
-    updateXSeries(series, range, q, xQuery::Transform::None);
+    updateXSeries(series, q.fromCurrency, q.toCurrency,
+                  q, xQuery::Transform::None);
     if (q.with_inverse == xQuery::WithInverse::Included) {
-        key = q.toCurrency.to_string() +"/"+ q.fromCurrency.to_string();
-        range = getXAggregateRange(key, q.period);
-        updateXSeries(series, range, q, xQuery::Transform::Invert);
+        updateXSeries(series, q.toCurrency, q.fromCurrency,
+                      q, xQuery::Transform::Invert);
     }
     return series;
 }
@@ -148,24 +142,8 @@ xSeriesCache::getXAggregateContainer(const pairSymbol& key)
     if (f == mSparseSeries.end()) {
         mSparseSeries[key] = {};
         f = mSparseSeries.find(key);
-        assert(f != mSparseSeries.end());
     }
     return f->second;
-}
-
-//******************************************************************************
-//******************************************************************************
-xSeriesCache::xRange
-xSeriesCache::getXAggregateRange(const pairSymbol& key, const time_period& period)
-{
-    auto& q = getXAggregateContainer(key);
-    auto low = std::lower_bound(q.begin(), q.end(), period.begin(),
-                                   [](const xAggregate& a, const ptime& b) {
-                                       return a.timeEnd <= b; });
-    auto up = std::upper_bound(low, q.end(), period.end(),
-                                [](const ptime& period_end, const xAggregate& b) {
-                                   return period_end <= b.timeEnd; });
-    return {low, up};
 }
 
 //******************************************************************************
@@ -188,7 +166,7 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
         auto& q = getXAggregateContainer(key);
         if (q.empty() || q.back().timeEnd <= p.timeStamp) {
             q.emplace_back(xAggregate{p.from.currency(), p.to.currency()});
-            q.back().timeEnd = get_end_time(p.timeStamp);
+            q.back().timeEnd = get_end_time(p.timeStamp,m_cache_granularity);
         }
         q.back().update(p,xQuery::WithTxids::Included);
     }
@@ -239,6 +217,20 @@ void xAggregate::update(const xAggregate& x, xQuery::WithTxids with_txids) {
 
 //******************************************************************************
 //******************************************************************************
+void xSeriesCache::updateXSeries(std::vector<xAggregate>& series,
+                                 const ccy::Currency& from,
+                                 const ccy::Currency& to,
+                                 const xQuery& q,
+                                 xQuery::Transform tf)
+{
+    pairSymbol key = from.to_string() +"/"+ to.to_string();
+    auto& xac = getXAggregateContainer(key);
+    const auto& range = getXAggregateRange(xac.begin(), xac.end(), q.period);
+    updateXSeriesHelper(series, range, q, tf);
+}
+
+//******************************************************************************
+//******************************************************************************
 std::vector<xAggregate> xSeriesCache::getXAggregateSeries(const xQuery& query)
 {
     auto& app = xbridge::App::instance();
@@ -256,9 +248,9 @@ std::vector<xAggregate> xSeriesCache::getXAggregateSeries(const xQuery& query)
     auto end = series.end();
     if (it != end) {
         for (const auto& x : local_matches) {
-            for ( ; it != end && x.timeStamp < (it->timeEnd - query.granularity); ++it)
-                ;;
-            assert(it != end && x.timeStamp < it->timeEnd);
+            it = std::lower_bound(it, end, x.timeStamp,
+                                  [](const xAggregate& a, const ptime& b) {
+                                      return a.timeEnd <= b; });
             it->update(x,query.with_txids);
         }
     }

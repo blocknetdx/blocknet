@@ -5,6 +5,7 @@
 #ifndef XSERIES_H
 #define XSERIES_H
 
+#include "chainparams.h"
 #include "currencypair.h"
 #include "xutil.h"
 #include "xbridge/xbridgetransactiondescr.h"
@@ -12,6 +13,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <deque>
 #include <limits>
@@ -113,7 +115,6 @@ public:
         }
         return str;
     }
-
 private:
     static inline constexpr std::array<int,6> supported_seconds() {
         return {{ 1*60, 5*60, 15*60, 1*60*60, 6*60*60, 24*60*60 }};
@@ -138,6 +139,13 @@ private:
         if (end_secs < 0 || psec < 1)
             return from_time_t(0);
         return from_time_t(((end_secs + psec - 1) / psec) * psec);
+    }
+
+public:
+    static inline time_duration min_granularity() {
+        constexpr auto s = supported_seconds();
+        const auto* m = std::min_element(s.begin(), s.end());
+        return boost::posix_time::seconds{*m};
     }
 };
 
@@ -202,10 +210,39 @@ public:
     std::vector<xAggregate> getChainXAggregateSeries(const xQuery&);
     std::vector<xAggregate> getXAggregateSeries(const xQuery&);
     xAggregateContainer& getXAggregateContainer(const pairSymbol&);
-    xRange getXAggregateRange(const pairSymbol&, const time_period&);
+    template <class Iterator>
+    xRange getXAggregateRange(const Iterator& begin,
+                              const Iterator& end,
+                              const time_period& period)
+    {
+        auto low = std::lower_bound(begin, end, period.begin(),
+                                    [](const xAggregate& a, const ptime& b) {
+                                        return a.timeEnd <= b; });
+        auto up = std::upper_bound(low, end, period.end(),
+                                   [](const ptime& period_end, const xAggregate& b) {
+                                       return period_end <= b.timeEnd; });
+        return {low, up};
+    }
+
     void updateSeriesCache(const time_period&);
+
+private:
+    void updateXSeries(std::vector<xAggregate>& series,
+                       const ccy::Currency& from,
+                       const ccy::Currency& to,
+                       const xQuery& q,
+                       xQuery::Transform tf);
 private:
     boost::mutex m_xSeriesCacheUpdateLock;
+    /**
+     * The cache keeps data in intervals of the minimum of
+     *    - the granularity of time in the blockchain (TargetSpacing), and
+     *    - the minimum granularity supported in a query.
+     * There may be gaps between intervals, so it is potentially sparse.
+     */
+    time_duration m_cache_granularity{
+        std::min(xQuery::min_granularity(),
+                 time_duration{boost::posix_time::seconds{Params().TargetSpacing()}})};
     time_period m_cache_period{ptime{},ptime{}};
     std::unordered_map<pairSymbol, xAggregateContainer> mSparseSeries;
 };
