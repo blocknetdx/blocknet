@@ -51,6 +51,7 @@ AskPassphraseDialog::AskPassphraseDialog(Mode mode, QWidget* parent, WalletModel
         ui->anonymizationCheckBox->setChecked(true);
         ui->anonymizationCheckBox->show();
     case Unlock: // Ask passphrase
+    case DirectUnlock:
         ui->warningLabel->setText(tr("This operation needs your wallet passphrase to unlock the wallet."));
         ui->passLabel2->hide();
         ui->passEdit2->hide();
@@ -72,7 +73,10 @@ AskPassphraseDialog::AskPassphraseDialog(Mode mode, QWidget* parent, WalletModel
         break;
     }
 
-//    ui->anonymizationCheckBox->setChecked(model->isAnonymizeOnlyUnlocked());
+    if (mode == Unlock || mode == DirectUnlock) {
+        ui->anonymizationCheckBox->setChecked(mode == DirectUnlock ? false : model->isAnonymizeOnlyUnlocked());
+        ui->anonymizationCheckBox->show();
+    }
 
     textChanged();
     connect(ui->passEdit1, SIGNAL(textChanged(QString)), this, SLOT(textChanged()));
@@ -143,6 +147,7 @@ void AskPassphraseDialog::accept()
     } break;
     case UnlockAnonymize:
     case Unlock:
+    case DirectUnlock:
         if (!model->setWalletLocked(false, oldpass, ui->anonymizationCheckBox->isChecked())) {
             QMessageBox::critical(this, tr("Wallet unlock failed"),
                 tr("The passphrase entered for the wallet decryption was incorrect."));
@@ -186,6 +191,7 @@ void AskPassphraseDialog::textChanged()
         break;
     case UnlockAnonymize: // Old passphrase x1
     case Unlock:          // Old passphrase x1
+    case DirectUnlock:    // Old passphrase x1
     case Decrypt:
         acceptable = !ui->passEdit1->text().isEmpty();
         break;

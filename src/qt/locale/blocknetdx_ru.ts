@@ -136,7 +136,7 @@
         <translation>Служит для простейшего отключения функции sendmoney в случае компрометации аккаунта ОС. Не обеспечивает существенной безопасности.</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>Только для анонимизации</translation>
     </message>
     <message>

@@ -136,7 +136,7 @@
         <translation>当OS帐号被盗就禁止发送币。这并不提供真正的安全性。</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>仅限匿名</translation>
     </message>
     <message>

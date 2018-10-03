@@ -136,7 +136,7 @@
         <translation>當OS帳戶被盜時就停止發送幣。不能提供真正的保護</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>只限匿名</translation>
     </message>
     <message>

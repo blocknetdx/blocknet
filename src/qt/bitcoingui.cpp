@@ -884,11 +884,9 @@ void BitcoinGUI::unlockWallet()
     if (!walletModel)
         return;
     // Unlock wallet when requested by wallet model
-    if (walletModel->getEncryptionStatus() == WalletModel::Locked || walletModel->getEncryptionStatus() == WalletModel::UnlockedForAnonymizationOnly) {
-        AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this, walletModel);
-        dlg.setStyleSheet(stylesOld);
-        dlg.exec();
-    }
+    AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this, walletModel);
+    dlg.setStyleSheet(stylesOld);
+    dlg.exec();
 }
 
 void BitcoinGUI::lockWallet()
@@ -919,11 +917,9 @@ void BitcoinGUI::lockRequest(bool locked, bool stakingOnly) {
         walletModel->setWalletLocked(locked);
     } else {
         // Unlock wallet when requested by wallet model
-        if (walletModel->getEncryptionStatus() == WalletModel::Locked || walletModel->getEncryptionStatus() == WalletModel::UnlockedForAnonymizationOnly) {
-            AskPassphraseDialog dlg(stakingOnly ? AskPassphraseDialog::UnlockAnonymize : AskPassphraseDialog::Unlock, this, walletModel);
-            dlg.setStyleSheet(stylesOld);
-            dlg.exec();
-        }
+        AskPassphraseDialog dlg(stakingOnly ? AskPassphraseDialog::UnlockAnonymize : AskPassphraseDialog::DirectUnlock, this, walletModel);
+        dlg.setStyleSheet(stylesOld);
+        dlg.exec();
     }
     setEncryptionStatus(walletModel->getEncryptionStatus());
 }

@@ -136,7 +136,7 @@
         <translation>Sirve  para desactivar sendmoney trivial cuando una cuenta del SO se ve comprometida . No ofrece seguridad real.</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>Solo para anonimizar</translation>
     </message>
     <message>

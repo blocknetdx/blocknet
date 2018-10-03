@@ -136,7 +136,7 @@
         <translation>Служи да изключи изпращането на средства, когато акаунта на Операционната система е компрометиран. Не предоставя реална сигурност. </translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>Само за анонимизиране</translation>
     </message>
     <message>
