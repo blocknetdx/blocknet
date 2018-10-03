@@ -163,7 +163,8 @@ void BlocknetLeftMenu::setBalance(CAmount balance, int unit) {
     balanceAmountLbl->setText(BitcoinUnits::floorWithUnit(unit, balance, false, BitcoinUnits::separatorAlways));
 }
 
-void BlocknetLeftMenu::selectMenu(BlocknetPage menuType) {
+void BlocknetLeftMenu::selectMenu(const BlocknetPage menuType) {
+    selected = menuType;
     for (auto *btn : btns) {
         auto btnID = group->id(btn);
         if (btnID == DASHBOARD && menuType == QUICKSEND) // quicksend is alias of dashboard // TODO Handle dynamically
@@ -177,7 +178,6 @@ void BlocknetLeftMenu::onMenuClicked(bool) {
     // Always allow going to the dashboard
     auto page = static_cast<BlocknetPage>(group->id(btn));
     if (selected != page || page == DASHBOARD) {
-        selected = page;
         emit menuChanged(page);
     }
 }
