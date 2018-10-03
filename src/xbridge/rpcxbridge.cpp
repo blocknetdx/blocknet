@@ -389,9 +389,9 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     }
     if (params.size() < 7) {
 
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(taker) (taker size) (taker address) (type) (dryrun)[optional]\n"
-                               "Create a new order. dryrun will validate the order without submitting the order to the network.");
+        throw runtime_error("dxMakeOrder (maker) (maker size) (maker address) "
+                            "(taker) (taker size) (taker address) (type) (dryrun)[optional]\n"
+                            "Create a new order. dryrun will validate the order without submitting the order to the network.");
 
     }
 

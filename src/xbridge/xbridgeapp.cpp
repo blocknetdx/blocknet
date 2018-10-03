@@ -1609,7 +1609,7 @@ bool App::sendServicePing()
     // Update node services on self
     m_p->addNodeServices(pmn->pubKeyServicenode, services);
 
-    LOG() << "Sending service ping: " << servicesStr << __FUNCTION__;
+    LOG() << "Sending service ping: " << servicesStr << " " << __FUNCTION__;
 
     sendPacket(ping);
     return true;
