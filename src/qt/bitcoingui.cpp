@@ -950,7 +950,7 @@ void BitcoinGUI::setNumBlocks(int count)
         tooltip = tr("Up to date") + QString(".<br>") + tooltip;
 
         if (servicenodeSync.IsSynced()) {
-            walletFrame->setProgress(100, QString());
+            walletFrame->setProgress(100, tr("Fully synced: block %1").arg(chainActive.Height()));
         } else {
             int nAttempt;
             int progress = 0;

@@ -10,7 +10,8 @@
 
 #include <cmath>
 
-BlocknetToolBar::BlocknetToolBar(QWidget *popup, QFrame *parent) : QFrame(parent), popupWidget(popup), layout(new QHBoxLayout) {
+BlocknetToolBar::BlocknetToolBar(QWidget *popup, QFrame *parent) : QFrame(parent), popupWidget(popup),
+                                                                   layout(new QHBoxLayout) {
     layout->setAlignment(Qt::AlignRight);
     layout->setSpacing(18);
     this->setLayout(layout);
@@ -82,6 +83,7 @@ void BlocknetToolBar::setProgress(const int progress, const QString &msg, const 
     progressBar->setMaximum(maximum);
     progressBar->setValue(progress);
     progressBar->setStatusTip(msg);
+    progressBar->setToolTip(msg.arg(""));
     progressBar->setFormat(QString("  %1").arg(msg));
 }
 
