@@ -8,6 +8,7 @@
 #include "util/settings.h"
 #include "util/xbridgeerror.h"
 #include "util/xassert.h"
+#include "util/xseries.h"
 #include "version.h"
 #include "config.h"
 #include "xuiconnector.h"
@@ -187,6 +188,7 @@ protected:
     boost::mutex                                       m_txLocker;
     std::map<uint256, TransactionDescrPtr>             m_transactions;
     std::map<uint256, TransactionDescrPtr>             m_historicTransactions;
+    xSeriesCache                                       m_xSeriesCache;
 
     // network packets queue
     boost::mutex                                       m_ppLocker;
@@ -249,11 +251,9 @@ std::string App::version()
 
 //*****************************************************************************
 //*****************************************************************************
-// static
 bool App::isEnabled()
 {
-    // enabled by default
-    return true;
+    return connectors().size() > 0 || xbridge::Exchange::instance().isEnabled();
 }
 
 //*****************************************************************************
@@ -468,13 +468,11 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
 
     uint256 hash = Hash(msg.begin(), msg.end());
 
-    LOCK(cs_vNodes);
-    for  (CNode * pnode : vNodes)
+    App::instance().addToKnown(hash);
     {
-        if (pnode->setKnown.insert(hash).second)
-        {
+        LOCK(cs_vNodes);
+        for (CNode * pnode : vNodes)
             pnode->PushMessage("xbridge", msg);
-        }
     }
 }
 
@@ -776,11 +774,32 @@ bool App::isKnownMessage(const std::vector<unsigned char> & message)
 
 //*****************************************************************************
 //*****************************************************************************
+bool App::isKnownMessage(const uint256 & hash)
+{
+    boost::mutex::scoped_lock l(m_p->m_messagesLock);
+    return m_p->m_processedMessages.count(hash) > 0;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 void App::addToKnown(const std::vector<unsigned char> & message)
 {
     // add to known
     boost::mutex::scoped_lock l(m_p->m_messagesLock);
+    // clear memory if it's larger than mempool threshold
+    clearMempool();
     m_p->m_processedMessages.insert(Hash(message.begin(), message.end()));
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void App::addToKnown(const uint256 & hash)
+{
+    // add to known
+    boost::mutex::scoped_lock l(m_p->m_messagesLock);
+    // clear memory if it's larger than mempool threshold
+    clearMempool();
+    m_p->m_processedMessages.insert(hash);
 }
 
 //******************************************************************************
@@ -823,6 +842,23 @@ std::map<uint256, xbridge::TransactionDescrPtr> App::history() const
     boost::mutex::scoped_lock l(m_p->m_txLocker);
     return m_p->m_historicTransactions;
 }
+
+//******************************************************************************
+//******************************************************************************
+std::vector<CurrencyPair> App::history_matches(const App::TransactionFilter& filter,
+                                          const xQuery& query)
+{
+    std::vector<CurrencyPair> matches{};
+    {
+        boost::mutex::scoped_lock l(m_p->m_txLocker);
+        for(const auto& it : m_p->m_historicTransactions) {
+            filter(matches, *it.second, query);
+        }
+    }
+    return matches;
+}
+
+xSeriesCache& App::getXSeriesCache() { return m_p->m_xSeriesCache; }
 
 //******************************************************************************
 //******************************************************************************
@@ -1573,7 +1609,7 @@ bool App::sendServicePing()
     // Update node services on self
     m_p->addNodeServices(pmn->pubKeyServicenode, services);
 
-    LOG() << "Sending service ping: " << servicesStr << __FUNCTION__;
+    LOG() << "Sending service ping: " << servicesStr << " " << __FUNCTION__;
 
     sendPacket(ping);
     return true;
@@ -1685,17 +1721,8 @@ bool App::Impl::findNodeWithService(const std::set<std::string> & services,
 bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
                                 const std::vector<std::string> & services)
 {
-    if (!services.empty())
-    {
-        std::set<std::string> map1;
-        std::copy(services.begin(), services.end(), std::inserter(map1, map1.end()));
-
-        {
-            boost::mutex::scoped_lock l(m_xwalletsLocker);
-            m_xwallets[nodePubKey] = map1;
-        }
-    }
-
+    boost::mutex::scoped_lock l(m_xwalletsLocker);
+    m_xwallets[nodePubKey] = std::set<std::string>{services.begin(), services.end()};
     return true;
 }
 
@@ -2000,6 +2027,16 @@ void App::Impl::onTimer()
 
     m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
     m_timer.async_wait(boost::bind(&Impl::onTimer, this));
+}
+
+/**
+ * Clears the xbridge message mempool. This is not threadsafe, locks required outside this func.
+ */
+void App::clearMempool() {
+    auto count = m_p->m_processedMessages.size();
+    auto maxMBytes = static_cast<unsigned int>(GetArg("-maxmempoolxbridge", 128)) * 1000000;
+    if (count * 64 > maxMBytes) // estimated 64 bytes per hash
+        m_p->m_processedMessages.clear();
 }
 
 } // namespace xbridge

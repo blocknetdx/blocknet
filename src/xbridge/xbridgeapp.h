@@ -16,6 +16,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <functional>
 #include <map>
 #include <tuple>
 #include <set>
@@ -24,6 +25,11 @@
 #ifdef WIN32
 // #include <Ws2tcpip.h>
 #endif
+
+class xQuery;
+class CurrencyPair;
+class xAggregate;
+class xSeriesCache;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -64,7 +70,7 @@ public:
      * @brief isEnabled
      * @return enabled by default
      */
-    static bool isEnabled();
+    bool isEnabled();
 
     /**
      * @brief init init xbridge settings, secp256, exchange,
@@ -104,7 +110,6 @@ public:
     };
 
     // transactions
-
     /**
      * @brief transaction - find transaction by id
      * @param id - id of transaction
@@ -121,6 +126,25 @@ public:
      * @return map of historical transaction (local canceled and finished)
      */
     std::map<uint256, xbridge::TransactionDescrPtr> history() const;
+
+    /**
+     * @brief history_matches returns details of local transactions that match given filter,
+     * it is like the history() call but instead of copying the entire map container it
+     * includes only transactions matching TransactionFilter and xQuery
+     * @param - filter to apply and other query parameters
+     * @return - list of individual matching local transactions
+     */
+    using TransactionFilter = std::function<void(std::vector<CurrencyPair>& matches,
+                                                 const TransactionDescr& tr,
+                                                 const xQuery& query)>;
+    std::vector<CurrencyPair> history_matches(const TransactionFilter& filter, const xQuery& query);
+
+    /**
+     * @brief getXSeriesCache
+     * @return - reference to cache of open,high,low,close transaction aggregated series
+     */
+    xSeriesCache& getXSeriesCache();
+
     /**
      * @brief flushCancelledOrders with txtime older than minAge
      * @return list of all flushed orders
@@ -285,11 +309,13 @@ public:
      * @return true, if message known and processing
      */
     bool isKnownMessage(const std::vector<unsigned char> & message);
+    bool isKnownMessage(const uint256 & hash);
     /**
      * @brief addToKnown - add message to queue of processed messages
      * @param message
      */
     void addToKnown(const std::vector<unsigned char> & message);
+    void addToKnown(const uint256 & hash);
 
     //
     /**
@@ -368,6 +394,9 @@ public:
                          const std::vector<std::string> & services);
 
     bool findNodeWithService(const std::set<std::string> & services, CPubKey & node) const;
+
+protected:
+    void clearMempool();
 
 private:
     std::unique_ptr<Impl> m_p;

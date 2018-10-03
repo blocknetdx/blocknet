@@ -200,7 +200,7 @@ void RPCExecutor::request(const QString& command)
         else if (result.type() == json_spirit::str_type)
             strPrint = result.get_str();
         else
-            strPrint = write_string(result, true);
+            strPrint = write_string(result, json_spirit::single_line_arrays, 6);
 
         emit reply(RPCConsole::CMD_REPLY, QString::fromStdString(strPrint));
     } catch (json_spirit::Object& objError) {

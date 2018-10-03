@@ -19,6 +19,7 @@
 #include "script/standard.h"
 #include "uint256.h"
 #include "coincontrol.h"
+#include "currencypair.h"
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
@@ -33,6 +34,53 @@ using namespace boost;
 using namespace boost::assign;
 using namespace json_spirit;
 using namespace std;
+
+/**
+ * @brief TxOutToCurrencyPair inspects a CTxOut and returns currency pair transaction info
+ * @param tx - transaction with possible multisig
+ * @param snode_pubkey - (output) the service node public key
+ * @return - currency pair transaction details
+ */
+CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey)
+{
+    snode_pubkey.clear();
+
+    if (txout.scriptPubKey.empty())
+        return {};
+
+    std::vector<std::vector<unsigned char> > solutions;
+    txnouttype type = TX_NONSTANDARD;
+    if (not Solver(txout.scriptPubKey, type, solutions))
+        return {"not solved"}; // wrong pubkey, need to check it
+    if (type != TX_MULTISIG)
+        return {}; // only interested in multisig
+    if (solutions.size() < 4)
+        return {"bad multisig, count of items"};
+
+    // Second item is real pubkey of service node
+    snode_pubkey = CBitcoinAddress{CPubKey(solutions[1]).GetID()}.ToString();
+    std::string json;
+    for (size_t i = 2; i < solutions.size()-1; ++i) {
+        const auto& sol = solutions[i];
+        if (sol.size() != 65)
+            return {"unknown multisig, size != 65"};
+        std::copy(sol.begin()+1, sol.end(), std::back_inserter(json));
+    }
+    Value val;
+    if (not read_string(json, val) || val.type() != array_type)
+        return {"unknown multisig, json error"};
+    Array xtx = val.get_array();
+    if (xtx.size() != 5)
+        return {"unknown multisig, bad records count"};
+
+    return CurrencyPair{
+        xtx[0].get_str(),    // xid
+        {ccy::Currency{xtx[1].get_str(),COIN}, // fromCurrency
+                xtx[2].get_uint64()},          // fromAmount
+        {ccy::Currency{xtx[3].get_str(),COIN}, // toCurrency
+                xtx[4].get_uint64()}           // toAmount
+    };
+}
 
 void ScriptPubKeyToJSON(const CScript& scriptPubKey, Object& out, bool fIncludeHex)
 {
