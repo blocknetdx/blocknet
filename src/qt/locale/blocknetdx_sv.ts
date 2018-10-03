@@ -384,7 +384,7 @@
         <translation>Öppna konfigurationsfil</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Avsändaradresser...</translation>
     </message>
     <message>
@@ -392,7 +392,7 @@
         <translation>Visa listan för redan använda avsändaradresser och etiketter</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>&amp;Mottagaradresser...</translation>
     </message>
     <message>

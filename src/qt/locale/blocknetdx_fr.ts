@@ -423,7 +423,7 @@
         <translation>Afficher automatiquement les sauvegardes de portefeuille créés </translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>Adresses d'&amp;envoi...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Afficher la liste d'adresses d'envoi et d'étiquettes utilisées</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Adresses de &amp;réception...</translation>
     </message>
     <message>

@@ -423,7 +423,7 @@
         <translation>Mostra as cópias automáticas da carteira</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Endereços de envio...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Mostra a lista de endereços de envio e respectivos rótulos</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Endereços de &amp;Recepção...</translation>
     </message>
     <message>

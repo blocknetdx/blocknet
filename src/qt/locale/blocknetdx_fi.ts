@@ -423,7 +423,7 @@
         <translation>Näytä automaattisesti tehdyt lompakon varmistukset</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Lähettävät Osoitteet...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Näytä lähettämiseen käytettyjen osoitteiden ja nimien lista</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Va&amp;staanottavat Osoitteet...</translation>
     </message>
     <message>

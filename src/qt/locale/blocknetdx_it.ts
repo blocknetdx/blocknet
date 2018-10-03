@@ -415,7 +415,7 @@
         <translation>Mostra le copie del portafoglio create automaticamente</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Indirizzi d'invio...</translation>
     </message>
     <message>
@@ -423,7 +423,7 @@
         <translation>Mostra la lista degli indirizzi di invio utilizzati</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Indirizzi di &amp;ricezione...</translation>
     </message>
     <message>

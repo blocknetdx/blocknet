@@ -423,7 +423,7 @@
         <translation>顯示自動創建的錢包備份檔</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>付款位址(&amp;S)...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>顯示已使用過的付款位址和標記的清單</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>收款位址(&amp;R)...</translation>
     </message>
     <message>

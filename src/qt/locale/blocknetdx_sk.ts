@@ -423,7 +423,7 @@
         <translation>Zobraziť automaticky vytvorené zálohy peňaženky</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>Posielajúca adresa ...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Zobraziť zoznam použitých adries odosielateľa a ich popisy</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Prijímajúca adresa...</translation>
     </message>
     <message>

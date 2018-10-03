@@ -423,7 +423,7 @@
         <translation>Automatisch erzeugte Wallet-Sicherheitskopien anzeigen</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Zahlungsadressen...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Liste verwendeter Zahlungsadressen und Bezeichnungen anzeigen</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>&amp;Empfangsadressen...</translation>
     </message>
     <message>

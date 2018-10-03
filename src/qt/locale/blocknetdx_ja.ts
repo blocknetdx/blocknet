@@ -303,7 +303,7 @@
         <translation>情報 (&amp;I)</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>送金先アドレス一覧… (&amp;S)</translation>
     </message>
     <message>
@@ -311,7 +311,7 @@
         <translation>使用済みの送金用アドレスとラベルの一覧を表示する</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>受け取り用アドレス一覧… (&amp;R)</translation>
     </message>
     <message>

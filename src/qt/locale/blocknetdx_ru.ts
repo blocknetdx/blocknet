@@ -423,7 +423,7 @@
         <translation>Показать автоматически созданные резервные копии кошелька</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>Адреса &amp;отправки...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Показать список использованных адресов отправки и их меток</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Адреса &amp;получения...</translation>
     </message>
     <message>

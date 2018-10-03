@@ -423,7 +423,7 @@
         <translation>Покажи автоматично направените резервни копия на портфейла</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Адреси за изпращане...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Покажи списъкът от използваните адреси за изпращане и наименования</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>&amp;Адреси за получаване</translation>
     </message>
     <message>

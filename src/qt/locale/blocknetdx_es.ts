@@ -423,7 +423,7 @@
         <translation>Mostrar las copias de seguridad del monedero creadas automáticamente</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>Direcciones de &amp;envío...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Mostrar la lista de direcciones de envío y etiquetas</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Direcciones de &amp;recepción...</translation>
     </message>
     <message>

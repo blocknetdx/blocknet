@@ -84,8 +84,8 @@ BlocknetAddressBook::BlocknetAddressBook(bool slimMode, int filter, QWidget *par
 
     addressDropdown = new BlocknetDropdown;
     addressDropdown->addItem(tr("All Addresses"), FILTER_ALL);
-    addressDropdown->addItem(tr("Sending"),       FILTER_SENDING);
-    addressDropdown->addItem(tr("Receiving"),     FILTER_RECEIVING);
+    addressDropdown->addItem(tr("Contacts"),      FILTER_SENDING);
+    addressDropdown->addItem(tr("My Addresses"),  FILTER_RECEIVING);
 
     table = new QTableWidget;
     table->setContentsMargins(QMargins());
@@ -291,7 +291,7 @@ void BlocknetAddressBook::setData(const QVector<Address> &data) {
         avatarLayout->setSpacing(0);
         avatarWidget->setLayout(avatarLayout);
 
-        auto *avatar = d.alias.isEmpty() ? new BlocknetAvatar(d.alias) : new BlocknetAvatarBlue(d.alias);
+        auto *avatar = d.type == AddressTableEntry::Sending ? new BlocknetAvatar(d.alias) : new BlocknetAvatarBlue(d.alias);
         avatarLayout->addWidget(avatar, 0, Qt::AlignCenter);
         table->setCellWidget(i, COLUMN_AVATAR, avatarWidget);
         table->setItem(i, COLUMN_AVATAR, avatarItem);
