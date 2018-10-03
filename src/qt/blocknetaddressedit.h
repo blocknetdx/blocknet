@@ -48,6 +48,7 @@ protected:
 private slots:
     void onPrivateKey(const QString &text);
     void onAddressChanged(const QString &text);
+    void onOtherUser(bool checked);
 
 private:
     QVBoxLayout *layout;

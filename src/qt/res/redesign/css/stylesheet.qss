@@ -84,7 +84,7 @@ QTableView QHeaderView::down-arrow, QTableView QHeaderView::down-arrow { image: 
 QTableView QHeaderView::up-arrow, QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
 
 BlocknetLineEdit, QLineEdit { font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
-BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #333333; color: #333333; }
+BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #666666; color: #666666; }
 BlocknetLineEdit[error=true] { border: 1px solid red; }
 BlocknetLineEditWithTitle #h1 { font-size: 12px; color: #6F8097 }
 BlocknetAddressEditor { font-size: 13px; color: white; font-family: "Roboto"; padding-top: 3px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
@@ -176,7 +176,7 @@ BlocknetAddressBookDialog { background-color: #172F49; }
 
 BlocknetAddressEditDialog, BlocknetAddressAddDialog { background-color: #172F49; }
 BlocknetAddressEditDialog #h2, BlocknetAddressAddDialog #h2 { background-color: #172F49; border: 0; }
-BlocknetAddressEditDialog QLineEdit:disabled, BlocknetAddressAddDialog QLineEdit:disabled { color: #CCCCCC; border: 1px solid #CCCCCC; }
+BlocknetAddressEditDialog #readOnly:disabled, BlocknetAddressAddDialog #readOnly:disabled { color: #CCCCCC; border: 1px solid #CCCCCC; }
 
 BlocknetTransactionHistory { border: 0; }
 BlocknetTransactionHistory::item { border: 0; qproperty-alignment:left; }

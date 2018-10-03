@@ -154,19 +154,21 @@ BlocknetAddressEdit::BlocknetAddressEdit(bool editMode, const QString &t, const 
     aliasTi = new BlocknetLineEditWithTitle(tr("Alias (optional)"), tr("Enter alias..."));
     aliasTi->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     if (!editMode) {
-        createAddressTi = new BlocknetLineEditWithTitle(tr("Import address from Private Key"), tr("Enter Address..."));
+        createAddressTi = new BlocknetLineEditWithTitle(tr("Import Address from Private Key (debug console command: dumpprivkey)"), tr("Enter private key..."));
         createAddressTi->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
         createAddressTi->lineEdit->setEchoMode(QLineEdit::Password);
     }
-    if (editMode)
+    if (editMode) {
+        addressTi->lineEdit->setObjectName("readOnly");
         addressTi->setEnabled(false);
+    }
 
     auto *radioGrid = new QFrame;
     auto *radioLayout = new QHBoxLayout;
     radioLayout->setContentsMargins(QMargins());
     radioGrid->setLayout(radioLayout);
     myAddressBtn = new QRadioButton(tr("My Address"));
-    otherUserBtn = new QRadioButton(tr("Other User"));
+    otherUserBtn = new QRadioButton(tr("Other Contact"));
     otherUserBtn->setObjectName("otherUserBtn");
     otherUserBtn->setChecked(false);
     radioLayout->addWidget(myAddressBtn);
@@ -195,8 +197,10 @@ BlocknetAddressEdit::BlocknetAddressEdit(bool editMode, const QString &t, const 
     }
     layout->addSpacing(20);
     layout->addWidget(aliasTi);
-    layout->addSpacing(25);
-    layout->addWidget(radioGrid, 0, Qt::AlignCenter);
+    if (!editMode) {
+        layout->addSpacing(25);
+        layout->addWidget(radioGrid, 0, Qt::AlignCenter);
+    }
     layout->addSpacing(25);
     layout->addWidget(div1);
     layout->addSpacing(25);
@@ -206,6 +210,7 @@ BlocknetAddressEdit::BlocknetAddressEdit(bool editMode, const QString &t, const 
     connect(addressTi->lineEdit, SIGNAL(textEdited(const QString &)), this, SLOT(onAddressChanged(const QString &)));
     connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onApply()));
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
+    connect(otherUserBtn, SIGNAL(toggled(bool)), this, SLOT(onOtherUser(bool)));
     if (!editMode)
         connect(createAddressTi->lineEdit, SIGNAL(textEdited(const QString &)), this, SLOT(onPrivateKey(const QString &)));
 
@@ -227,8 +232,10 @@ void BlocknetAddressEdit::setData(const QString &address, const QString &alias, 
     aliasTi->lineEdit->setText(alias);
     myAddressBtn->setChecked(type == AddressTableEntry::Receiving);
     otherUserBtn->setChecked(type == AddressTableEntry::Sending);
-    if (!editMode)
+    if (!editMode) {
         createAddressTi->lineEdit->setText(key);
+        createAddressTi->setEnabled(!otherUserBtn->isChecked());
+    }
 }
 
 QString BlocknetAddressEdit::getAddress() {
@@ -327,6 +334,14 @@ void BlocknetAddressEdit::onApply() {
     if (!validated())
         return;
     emit accept();
+}
+
+void BlocknetAddressEdit::onOtherUser(bool checked) {
+    if (editMode)
+        return;
+    if (otherUserBtn->isChecked())
+        onAddressChanged(QString());
+    createAddressTi->setEnabled(!otherUserBtn->isChecked());
 }
 
 bool BlocknetAddressEdit::generateAddress(QString &newAddress) {
