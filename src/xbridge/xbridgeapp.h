@@ -1,3 +1,5 @@
+#include <utility>
+
 //*****************************************************************************
 //*****************************************************************************
 
@@ -54,6 +56,7 @@ private:
     virtual ~App();
 
 public:
+
     /**
      * @brief instance - the classical implementation of singletone
      * @return
@@ -96,6 +99,24 @@ public:
 
 public:
     // classes
+
+    /**
+     * @brief Stores the supported services on servicenodes (xwallets).
+     */
+    class XWallets {
+    public:
+        XWallets() :  _version(0), _nodePubKey(::CPubKey()), _services(std::set<std::string>()) {}
+        XWallets(const uint32_t version, const ::CPubKey & nodePubKey, const std::set<std::string> services)
+            :  _version(version), _nodePubKey(nodePubKey), _services(std::move(services)) {}
+        uint32_t version() const { return _version; };
+        ::CPubKey nodePubKey() const { return _nodePubKey; };
+        std::set<std::string> services() const { return _services; };
+    private:
+        uint32_t _version;
+        ::CPubKey _nodePubKey;
+        std::set<std::string> _services;
+    };
+
     /**
      * @brief summary info about old orders flushed by flushCancelledOrders()
      */
@@ -384,14 +405,15 @@ public:
      * @brief Returns the all services across all nodes.
      * @return
      */
-    std::map<CPubKey, std::set<string> > allServices();
+    std::map<CPubKey, XWallets> allServices();
     /**
      * @brief Returns the node services supported by the specified node.
      * @return
      */
     std::set<std::string> nodeServices(const ::CPubKey & nodePubKey);
     bool addNodeServices(const ::CPubKey & nodePubKey,
-                         const std::vector<std::string> & services);
+                         const std::vector<std::string> & services,
+                         const uint32_t version);
 
     bool findNodeWithService(const std::set<std::string> & services, CPubKey & node) const;
 

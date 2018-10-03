@@ -385,7 +385,7 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     }
 
     // Store updated services list for this node
-    App::instance().addNodeServices(nodePubKey, services);
+    App::instance().addNodeServices(nodePubKey, services, packet->version());
 
     return true;
 }
