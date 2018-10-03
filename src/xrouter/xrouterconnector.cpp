@@ -425,13 +425,13 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     CScript inner;
     
     int locktime = std::time(0) + date;
+          
     inner << OP_IF
-                << locktime << OP_CHECKLOCKTIMEVERIFY << OP_DROP
-                << OP_DUP << OP_HASH160 << pwalletMain->GenerateNewKey().GetID() << OP_EQUALVERIFY << OP_CHECKSIG
+                << address.GetID() << OP_CHECKSIGVERIFY
           << OP_ELSE
-                << OP_DUP << OP_HASH160 << address.GetID() << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
-                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << OP_EQUAL
-          << OP_ENDIF;
+                << locktime << OP_CHECKLOCKTIMEVERIFY << OP_DROP
+          << OP_ENDIF
+          << pwalletMain->GenerateNewKey().GetID() << OP_CHECKSIG;
 
     CScriptID id = CScriptID(inner);
     CBitcoinAddress scriptaddr;
