@@ -931,27 +931,25 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         } else {
             // Create payment channel first
             std::string raw_tx, txid;
-            int vout;
             payment_tx = "";
+            PaymentChannel channel;
             if (!this->paymentChannels.count(pnode)) {
-                bool res = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate, raw_tx, txid, vout);
-                if (!res)
+                channel = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate);
+                if (channel.txid == "")
                     return "Failed to create payment channel";
-                this->paymentChannels[pnode] = std::pair<std::string, std::string>(txid + ":" + std::to_string(vout), "");
-                payment_tx = raw_tx + ";" + txid + ";";
+                this->paymentChannels[pnode] = channel;
+                payment_tx = channel.raw_tx + ";" + channel.txid + ";";
             }
             
             // Submit payment via channel
-            double paid = 0.0;
-            if (this->paymentChannels[pnode].second != "") {
-                paid = getTxValue(this->paymentChannels[pnode].second, getPaymentAddress(pnode));
-            }
+            double paid = this->paymentChannels[pnode].value;
             
             std::string paytx;
-            bool res = createAndSignChannelTransaction(this->paymentChannels[pnode].first, dest, deposit, fee + paid, paytx);
+            bool res = createAndSignChannelTransaction(this->paymentChannels[pnode].txid, dest, deposit, fee + paid, paytx);
             if (!res)
                 return "Failed to pay to payment channel";
-            this->paymentChannels[pnode].second = paytx;
+            this->paymentChannels[pnode].latest_tx = paytx;
+            this->paymentChannels[pnode].value = fee + paid;
             
             // Send channel tx, channel tx id, payment tx in one string
             payment_tx += paytx;
@@ -959,7 +957,6 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         
         LOG() << "Payment transaction: " << payment_tx;
         std::cout << "Payment transaction: " << payment_tx << std::endl << std::flush;
-        
     }
     
     packet->append(txHash.begin(), 32);

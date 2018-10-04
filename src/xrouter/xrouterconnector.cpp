@@ -429,21 +429,25 @@ bool sendTransactionBlockchain(std::string address, const double amount, std::st
     return res;
 }
 
-bool createPaymentChannel(CPubKey address, double deposit, int date, std::string& raw_tx, std::string& txid, int& vout)
+PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
 {
+    PaymentChannel channel;
     CScript inner;
+    std::string raw_tx, txid;
+    int vout = 0;
     
     int locktime = std::time(0) + date;
     CPubKey my_pubkey = pwalletMain->GenerateNewKey();
     CKey mykey;
-    pwalletMain->GetKey(my_pubkey.GetID(), mykey);
+    CKeyID mykeyID = my_pubkey.GetID();
+    pwalletMain->GetKey(mykeyID, mykey);
           
     inner << OP_IF
                 << address.GetID() << OP_CHECKSIGVERIFY
           << OP_ELSE
                 << locktime << OP_CHECKLOCKTIMEVERIFY << OP_DROP
           << OP_ENDIF
-          << my_pubkey.GetID() << OP_CHECKSIG;
+          << mykeyID << OP_CHECKSIG;
 
     CScriptID id = CScriptID(inner);
     CBitcoinAddress scriptaddr;
@@ -470,7 +474,7 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     params.push_back(outputs);    
     bool res = createAndSignTransaction(params, raw_tx);
     if (!res)
-        return false;
+        return channel;
     
     res = sendTransactionBlockchain(raw_tx, txid);
     
@@ -495,7 +499,14 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
         i++;
     }
     
-    return res;
+    channel.raw_tx = raw_tx;
+    channel.txid = txid;
+    channel.value = 0.0;
+    channel.key = mykey;
+    channel.keyid = mykeyID;
+    channel.vout = vout;
+    
+    return channel;
 }
 
 bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string& raw_tx)

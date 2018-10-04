@@ -14,6 +14,17 @@ using namespace json_spirit;
 namespace xrouter
 {
 
+struct PaymentChannel
+{
+    CKey key;
+    CKeyID keyid;
+    std::string raw_tx;
+    std::string txid;
+    int vout;
+    double value;
+    std::string latest_tx;
+};
+    
 std::string CallCMD(std::string cmd);
 std::string CallURL(std::string ip, std::string port, std::string url);
 
@@ -26,21 +37,10 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund=tr
 std::string signTransaction(std::string& raw_tx);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
 bool sendTransactionBlockchain(std::string address, const double amount, std::string & raw_tx);
-bool createPaymentChannel(CPubKey address, double deposit, int date, std::string & raw_tx, std::string & txid, int& vout);
+PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date);
 bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string & raw_tx);
 double getTxValue(std::string rawtx, std::string address, std::string type="address");
 int getChannelExpiryTime(std::string rawtx);
-
-struct PaymentChannel
-{
-    CKey key;
-    CKeyID keyid;
-    std::string raw_tx;
-    std::string txid;
-    int vout;
-    double value;
-    std::string latest_tx;
-};
     
 class WalletConnectorXRouter : public xbridge::WalletParam
 {
