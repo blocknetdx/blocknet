@@ -102,6 +102,15 @@ std::string base64_encode(const std::string& s)
     return os.str();
 }
 
+static CMutableTransaction decodeTransaction(std::string tx)
+{
+    vector<unsigned char> txData(ParseHex(tx));
+    CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
+    CMutableTransaction result;
+    ssData >> result;
+    return result;
+}
+
 Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
@@ -425,13 +434,16 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
     CScript inner;
     
     int locktime = std::time(0) + date;
+    CPubKey my_pubkey = pwalletMain->GenerateNewKey();
+    CKey mykey;
+    pwalletMain->GetKey(my_pubkey.GetID(), mykey);
           
     inner << OP_IF
                 << address.GetID() << OP_CHECKSIGVERIFY
           << OP_ELSE
                 << locktime << OP_CHECKLOCKTIMEVERIFY << OP_DROP
           << OP_ENDIF
-          << pwalletMain->GenerateNewKey().GetID() << OP_CHECKSIG;
+          << my_pubkey.GetID() << OP_CHECKSIG;
 
     CScriptID id = CScriptID(inner);
     CBitcoinAddress scriptaddr;
@@ -490,7 +502,11 @@ bool createAndSignChannelTransaction(std::string txin, std::string address, doub
 {
     Array outputs;
     Object out_me;
-    out_me.push_back(Pair("address", CBitcoinAddress(pwalletMain->GenerateNewKey().GetID()).ToString()));
+    CPubKey my_pubkey = pwalletMain->GenerateNewKey();
+    CKey mykey;
+    pwalletMain->GetKey(my_pubkey.GetID(), mykey);
+    CKeyID mykeyID = my_pubkey.GetID();
+    out_me.push_back(Pair("address", CBitcoinAddress(mykeyID).ToString()));
     out_me.push_back(Pair("amount", deposit-amount));
     outputs.push_back(out_me);
     Object out_srv;
@@ -513,7 +529,87 @@ bool createAndSignChannelTransaction(std::string txin, std::string address, doub
     Array params;
     params.push_back(inputs);
     params.push_back(outputs);
-    return createAndSignTransaction(params, raw_tx, false, false);
+    
+    const static std::string createCommand("createrawtransaction");
+    const static std::string signCommand("signrawtransaction");
+
+    int         errCode = 0;
+    std::string errMessage;
+    std::string rawtx;
+
+    try
+    {
+        Value result;
+
+        {
+            // call create
+            result = tableRPC.execute(createCommand, params);
+            LOG() << "Create transaction: " << json_spirit::write_string(Value(result), true);
+            if (result.type() != str_type)
+            {
+                throw std::runtime_error("Create transaction command finished with error");
+            }
+
+            rawtx = result.get_str();
+        }
+
+        {
+            Array params;
+            params.push_back(rawtx);
+            Array signs;
+            Object sign;
+            sign.push_back(Pair("txid", parts[0]));
+            sign.push_back(Pair("vout", stoi(parts[1])));
+            sign.push_back(Pair("scriptPubKey", ""));
+            signs.push_back(sign);
+            params.push_back(signs);
+
+            result = tableRPC.execute(signCommand, params);
+            LOG() << "Sign transaction: " << json_spirit::write_string(Value(result), true);
+            if (result.type() != obj_type)
+            {
+                throw std::runtime_error("Sign transaction command finished with error");
+            }
+
+            Object obj = result.get_obj();
+            const Value  & tx = find_value(obj, "hex");
+
+            if (tx.type() != str_type)
+            {
+                throw std::runtime_error("Sign transaction error");
+            }
+            
+            rawtx = tx.get_str();
+        }
+    }
+    catch (json_spirit::Object & obj)
+    {
+        //
+        errCode = find_value(obj, "code").get_int();
+        errMessage = find_value(obj, "message").get_str();
+    }
+    catch (std::runtime_error & e)
+    {
+        // specified error
+        errCode = -1;
+        errMessage = e.what();
+    }
+    catch (...)
+    {
+        errCode = -1;
+        errMessage = "unknown error";
+    }
+
+    if (errCode != 0)
+    {
+        LOG() << "xdata signrawtransaction " << rawtx;
+        LOG() << "error sign transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
+        return false;
+    }
+
+    raw_tx = rawtx;
+    
+    return true;
 }
 
 double getTxValue(std::string rawtx, std::string address, std::string type) {
