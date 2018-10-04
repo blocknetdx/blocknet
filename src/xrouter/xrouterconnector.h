@@ -30,6 +30,17 @@ bool createPaymentChannel(CPubKey address, double deposit, int date, std::string
 bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string & raw_tx);
 double getTxValue(std::string rawtx, std::string address, std::string type="address");
 int getChannelExpiryTime(std::string rawtx);
+
+struct PaymentChannel
+{
+    CKey key;
+    CKeyID keyid;
+    std::string raw_tx;
+    std::string txid;
+    int vout;
+    double value;
+    std::string latest_tx;
+};
     
 class WalletConnectorXRouter : public xbridge::WalletParam
 {
