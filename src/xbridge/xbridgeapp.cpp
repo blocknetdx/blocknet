@@ -26,8 +26,10 @@
 #include "xbridgewalletconnectorbch.h"
 #include "xbridgewalletconnectordgb.h"
 
+#include <algorithm>
 #include <assert.h>
 #include <numeric>
+#include <random>
 #include <string.h>
 
 #include <boost/chrono/chrono.hpp>
@@ -149,7 +151,16 @@ protected:
     bool addNodeServices(const ::CPubKey & node, const std::vector<std::string> & services, const uint32_t version);
     bool hasNodeService(const ::CPubKey & node, const std::string & service);
 
-    bool findNodeWithService(const std::set<string> & services, CPubKey & node) const;
+    /**
+     * @brief findShuffledNodesWithService - finds nodes with given services
+     *        that have the given protocol version
+     * @param - requested services
+     * @param - protocol version
+     * @return - shuffled list of nodes with requested services
+     */
+    std::vector<CPubKey> findShuffledNodesWithService(
+        const std::set<string>& requested_services,
+        const uint32_t version) const;
 
 protected:
     // workers
@@ -970,9 +981,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     std::vector<unsigned char> snodeAddress(20);
     std::vector<unsigned char> sPubKey(33);
     {
-        std::set<std::string> currencies;
-        currencies.insert(fromCurrency);
-        currencies.insert(toCurrency);
+
+        std::set<std::string> currencies{fromCurrency, toCurrency};
         CPubKey snode;
         if (!findNodeWithService(currencies, snode))
         {
@@ -1678,37 +1688,40 @@ bool App::addNodeServices(const ::CPubKey & nodePubKey,
 bool App::findNodeWithService(const std::set<std::string> & services,
                               CPubKey & node) const
 {
-    return m_p->findNodeWithService(services, node);
+    const uint32_t version = static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
+    auto list = m_p->findShuffledNodesWithService(services,version);
+    if (list.empty())
+        return false;
+    node = list.front();
+    return true;
 }
 
 //******************************************************************************
 //******************************************************************************
-bool App::Impl::findNodeWithService(const std::set<std::string> & services,
-                                    CPubKey & node) const
+std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
+    const std::set<std::string>& requested_services,
+    const uint32_t version) const
 {
     boost::mutex::scoped_lock l(m_xwalletsLocker);
 
-    for (const std::pair<CPubKey, XWallets> & n : m_xwallets)
+    std::vector<CPubKey> list;
+    for (const auto& x : m_xwallets)
     {
-        uint32_t searchCounter = services.size();
-        for (const std::string & serv : services)
+        if (x.second.version() != version)
+            continue;
+        const auto& wallet_services = x.second.services();
+        auto searchCounter = requested_services.size();
+        for (const std::string & serv : requested_services)
         {
-            if (n.second.services().count(serv))
-            {
-                if (--searchCounter == 0)
-                {
-                    node = n.first;
-                    return true;
-                }
-            }
-            else
-            {
+            if (not wallet_services.count(serv))
                 break;
-            }
+            if (--searchCounter == 0)
+                list.push_back(x.first);
         }
     }
-
-    return false;
+    static std::default_random_engine rng{0};
+    std::shuffle(list.begin(), list.end(), rng);
+    return list;
 }
 
 //******************************************************************************

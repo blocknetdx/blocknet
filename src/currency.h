@@ -110,11 +110,11 @@ namespace ccy {
         public:
             Price() : _value{0} {}
             Price(const Asset& to, const Asset& from) {
-                if (to.accumulator() == 0) return;
-                auto ratio = from.amount_rational() / to.amount_rational();
+                if (from.accumulator() == 0) return;
+                auto ratio = to.amount_rational() / from.amount_rational();
                 using Rational = decltype(ratio);
                 using IntType = Rational::int_type;
-                IntType basis = from.currency().basis();
+                IntType basis = to.currency().basis();
                 auto roundUp = Rational{1,2*basis};
                 auto rounded = boost::rational_cast<IntType>(basis * (ratio + roundUp));
                 _value = boost::rational_cast<T>(Rational{rounded, basis});
