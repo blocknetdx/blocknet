@@ -362,7 +362,7 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
         if (pmn == nullptr)
         {
             ERR() << "Bad Services packet, Servicenode not found with vin "
-                  << nodePubKey.GetHex() << " "
+                  << nodePubKey.GetHash().ToString() << " "
                   << __FUNCTION__;
             return false;
         }
