@@ -72,6 +72,17 @@ CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey
     Array xtx = val.get_array();
     if (xtx.size() != 5)
         return {"unknown multisig, bad records count"};
+    // validate chain inputs
+    try { xtx[0].get_str(); } catch(...) {
+        return {"bad id" }; }
+    try { xtx[1].get_str(); } catch(...) {
+        return {"bad from currency" }; }
+    try { xtx[2].get_uint64(); } catch(...) {
+        return {"bad from amount" }; }
+    try { xtx[3].get_str(); } catch(...) {
+        return {"bad to currency" }; }
+    try { xtx[4].get_uint64(); } catch(...) {
+        return {"bad to amount" }; }
 
     return CurrencyPair{
         xtx[0].get_str(),    // xid
