@@ -945,7 +945,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             double paid = this->paymentChannels[pnode].value;
             
             std::string paytx;
-            bool res = createAndSignChannelTransaction(this->paymentChannels[pnode].txid, dest, deposit, fee + paid, paytx);
+            bool res = createAndSignChannelTransaction(this->paymentChannels[pnode], dest, deposit, fee + paid, paytx);
             if (!res)
                 return "Failed to pay to payment channel";
             this->paymentChannels[pnode].latest_tx = paytx;

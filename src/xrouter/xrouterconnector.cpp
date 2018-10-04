@@ -509,7 +509,7 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     return channel;
 }
 
-bool createAndSignChannelTransaction(std::string txin, std::string address, double deposit, double amount, std::string& raw_tx)
+bool createAndSignChannelTransaction(PaymentChannel channel, std::string address, double deposit, double amount, std::string& raw_tx)
 {
     Array outputs;
     Object out_me;
@@ -525,14 +525,10 @@ bool createAndSignChannelTransaction(std::string txin, std::string address, doub
     out_srv.push_back(Pair("amount", amount));
     outputs.push_back(out_srv);
     
-    std::vector<std::string> parts;
-    // TODO: error processing?
-    boost::split(parts, txin, boost::is_any_of(":"));
-    
     Array inputs;
     Object inp;
-    inp.push_back(Pair("txid", parts[0]));
-    inp.push_back(Pair("vout", stoi(parts[1])));
+    inp.push_back(Pair("txid", channel.txid));
+    inp.push_back(Pair("vout", channel.vout));
     inputs.push_back(inp);
     Value result;
 
@@ -569,8 +565,8 @@ bool createAndSignChannelTransaction(std::string txin, std::string address, doub
             params.push_back(rawtx);
             Array signs;
             Object sign;
-            sign.push_back(Pair("txid", parts[0]));
-            sign.push_back(Pair("vout", stoi(parts[1])));
+            //sign.push_back(Pair("txid", parts[0]));
+            //sign.push_back(Pair("vout", stoi(parts[1])));
             sign.push_back(Pair("scriptPubKey", ""));
             signs.push_back(sign);
             params.push_back(signs);
