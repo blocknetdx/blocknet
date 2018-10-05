@@ -938,7 +938,10 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
                 if (channel.txid == "")
                     return "Failed to create payment channel";
                 this->paymentChannels[pnode] = channel;
-                payment_tx = channel.raw_tx + ";" + channel.txid + ";" + HexStr(channel.redeemScript) + ";";
+                payment_tx = channel.raw_tx + ";" + channel.txid + ";" + HexStr(channel.redeemScript.begin(), channel.redeemScript.end()) + ";";
+                std::cout << "ToString() " << channel.redeemScript.ToString() << std::endl;
+                std::cout << "HexStr() " << HexStr(channel.redeemScript.begin(), channel.redeemScript.end()) << std::endl;
+                //std::cout << "Serialize() " << Serialize(channel.redeemScript) << std::endl;
             }
             
             // Submit payment via channel
@@ -1023,7 +1026,7 @@ CPubKey App::getPaymentPubkey(CNode* node)
     
     if (TEST_RUN_ON_CLIENT) {
         std::string test = "0258c89fd899b3a8f08a11fe0de803a7e685127b3b770a10896f97d7371d4c75fa";
-        return CPubKey(std::vector<unsigned char>(test.begin(), test.end()));
+        return CPubKey(ParseHex(test));
     }
     
     return CPubKey();

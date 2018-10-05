@@ -287,7 +287,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     paymentChannels[node].value = 0.0;
                     paymentChannels[node].raw_tx = parts[0];
                     paymentChannels[node].txid = parts[1];
-                    paymentChannels[node].redeemScript = CScript(ParseHex(parts[2]));
+                    std::vector<unsigned char> script = ParseHex(parts[2]);
+                    paymentChannels[node].redeemScript = CScript(script.begin(), script.end());
+                    std::cout << "Raw script " << parts[2] << "        " << paymentChannels[node].redeemScript.ToString() << std::endl;
                     feetx = parts[3];
                     
                     // TODO: verify the channel's correctness
@@ -320,7 +322,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     return;
                 }
                 
-                finalizeChannelTransaction(paymentChannels[node], CKey(), feetx, paymentChannels[node].latest_tx);
+                finalizeChannelTransaction(paymentChannels[node], this->getMyPaymentAddressKey(), feetx, paymentChannels[node].latest_tx);
                 paymentChannels[node].value = paid;
             }
         }
