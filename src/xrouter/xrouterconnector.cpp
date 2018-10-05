@@ -453,8 +453,8 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     CScriptID id = CScriptID(inner);
     CBitcoinAddress scriptaddr;
     scriptaddr.Set(id);
-    std::string resultScript = scriptaddr.ToString();
-    resultScript = HexStr(inner.begin(), inner.end());
+    std::string resultScript = id.ToString();
+    //resultScript = HexStr(inner.begin(), inner.end());
     
     
     Array outputs;
@@ -538,6 +538,22 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
     
     raw_tx = EncodeHexTx(signed_tx);
     
+    return true;
+}
+
+bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::string latest_tx, std::string & raw_tx)
+{
+    CMutableTransaction tx = decodeTransaction(latest_tx);
+    std::vector<unsigned char> signature;
+    uint256 sighash = SignatureHash(channel.redeemScript, tx, 0, SIGHASH_ALL);
+    snodekey.Sign(sighash, signature);
+    signature.push_back((unsigned char)SIGHASH_ALL);
+
+    CScript finalScript;
+    finalScript << tx.vin[0].scriptSig << signature << OP_TRUE << channel.redeemScript;
+
+    tx.vin[0].scriptSig = finalScript;
+    raw_tx = EncodeHexTx(tx);
     return true;
 }
 

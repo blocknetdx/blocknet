@@ -40,6 +40,7 @@ bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
 bool sendTransactionBlockchain(std::string address, const double amount, std::string & raw_tx);
 PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date);
 bool createAndSignChannelTransaction(PaymentChannel channel, std::string address, double deposit, double amount, std::string & raw_tx);
+bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::string latest_tx, std::string & raw_tx);
 double getTxValue(std::string rawtx, std::string address, std::string type="address");
 int getChannelExpiryTime(std::string rawtx);
     
