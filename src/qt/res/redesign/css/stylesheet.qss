@@ -189,3 +189,9 @@ BlocknetCoinControl QTableWidget { color: white; }
 #coinControlDialog { background-color: #172F49; }
 #coinControlDialog #feePanel { background-color: #172F49; }
 #coinControlDialog #feePanel QLabel { font-size: 13px; color: white; font-family: "Roboto"; }
+
+BlocknetSettings QScrollArea { background-color:transparent; }
+BlocknetSettings BlocknetLabelBtn { padding-left: 5px; }
+BlocknetSettings #title { font-size: 12px; color: white; font-family: "Roboto"; }
+BlocknetSettings #contentFrame { background-color:transparent; }
+BlocknetSettings #description { font-size: 12px; color: #6F8097 }

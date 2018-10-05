@@ -6,6 +6,7 @@
 #include "blocknetfontmgr.h"
 #include "blocknetquicksend.h"
 #include "blocknetaddressbook.h"
+#include "blocknetsettings.h"
 
 #include "optionsmodel.h"
 #include "transactiontablemodel.h"
@@ -102,11 +103,8 @@ void BlocknetWallet::setLock(const bool lock, const bool stakingOnly) {
 }
 
 void BlocknetWallet::setPage(BlocknetPage page) {
-    if (page == BlocknetPage::SETTINGS || page == BlocknetPage::TOOLS) {
+    if (page == BlocknetPage::TOOLS) {
         switch (page) {
-            case BlocknetPage::SETTINGS:
-                emit settings();
-                break;
             case BlocknetPage::TOOLS:
                 emit tools();
                 break;
@@ -186,15 +184,20 @@ void BlocknetWallet::setPage(BlocknetPage page) {
         }
         case BlocknetPage::CREATEPROPOSAL: {
             if (createProposal == nullptr) {
-                createProposal = new BlocknetCreateProposal;
+                createProposal = new BlocknetCreateProposal; 
                 connect(createProposal, SIGNAL(done()), this, SLOT(goToProposals()));
             }
             createProposal->show();
             screen = createProposal;
             break;
         }
+        case BlocknetPage::SETTINGS: {
+            auto *settings = new BlocknetSettings;
+            settings->setWalletModel(walletModel);
+            screen = settings;
+            break;
+        }
 //        case BlocknetPage::ANNOUNCEMENTS:
-//        case BlocknetPage::SETTINGS:
 //        case BlocknetPage::TOOLS:
         default:
             screen = new QFrame;
