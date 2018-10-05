@@ -33,6 +33,7 @@
 #include "wallet.h"
 #include "init.h"
 #include "key.h"
+#include "core_io.h"
 
 namespace xrouter
 {
@@ -505,116 +506,37 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     channel.key = mykey;
     channel.keyid = mykeyID;
     channel.vout = vout;
+    channel.redeemScript = inner;
     
     return channel;
 }
 
 bool createAndSignChannelTransaction(PaymentChannel channel, std::string address, double deposit, double amount, std::string& raw_tx)
 {
-    Array outputs;
-    Object out_me;
     CPubKey my_pubkey = pwalletMain->GenerateNewKey();
     CKey mykey;
     pwalletMain->GetKey(my_pubkey.GetID(), mykey);
     CKeyID mykeyID = my_pubkey.GetID();
-    out_me.push_back(Pair("address", CBitcoinAddress(mykeyID).ToString()));
-    out_me.push_back(Pair("amount", deposit-amount));
-    outputs.push_back(out_me);
-    Object out_srv;
-    out_srv.push_back(Pair("address", address));
-    out_srv.push_back(Pair("amount", amount));
-    outputs.push_back(out_srv);
+
+    CMutableTransaction unsigned_tx;
+
+    CTxIn in(COutPoint(ParseHashV(Value(channel.txid), "txin"), channel.vout));
+    unsigned_tx.vin.push_back(in);
+    unsigned_tx.vout.push_back(CTxOut(AmountFromValue(deposit-amount), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
+    unsigned_tx.vout.push_back(CTxOut(AmountFromValue(amount), GetScriptForDestination(CBitcoinAddress(address).Get())));
+
+    std::vector<unsigned char> signature;
+    uint256 sighash = SignatureHash(channel.redeemScript, unsigned_tx, 0, SIGHASH_ANYONECANPAY | SIGHASH_ALL);
+    channel.key.Sign(sighash, signature);
+    signature.push_back((unsigned char)(SIGHASH_ANYONECANPAY | SIGHASH_ALL));
+    CScript sigscript;
+    sigscript << signature;
     
-    Array inputs;
-    Object inp;
-    inp.push_back(Pair("txid", channel.txid));
-    inp.push_back(Pair("vout", channel.vout));
-    inputs.push_back(inp);
-    Value result;
-
+    CMutableTransaction signed_tx;
+    signed_tx.vout = unsigned_tx.vout;
+    signed_tx.vin.push_back(CTxIn(COutPoint(ParseHashV(Value(channel.txid), "txin"), channel.vout), sigscript));
     
-    Array params;
-    params.push_back(inputs);
-    params.push_back(outputs);
-    
-    const static std::string createCommand("createrawtransaction");
-    const static std::string signCommand("signrawtransaction");
-
-    int         errCode = 0;
-    std::string errMessage;
-    std::string rawtx;
-
-    try
-    {
-        Value result;
-
-        {
-            // call create
-            result = tableRPC.execute(createCommand, params);
-            LOG() << "Create transaction: " << json_spirit::write_string(Value(result), true);
-            if (result.type() != str_type)
-            {
-                throw std::runtime_error("Create transaction command finished with error");
-            }
-
-            rawtx = result.get_str();
-        }
-
-        {
-            Array params;
-            params.push_back(rawtx);
-            Array signs;
-            Object sign;
-            //sign.push_back(Pair("txid", parts[0]));
-            //sign.push_back(Pair("vout", stoi(parts[1])));
-            sign.push_back(Pair("scriptPubKey", ""));
-            signs.push_back(sign);
-            params.push_back(signs);
-
-            result = tableRPC.execute(signCommand, params);
-            LOG() << "Sign transaction: " << json_spirit::write_string(Value(result), true);
-            if (result.type() != obj_type)
-            {
-                throw std::runtime_error("Sign transaction command finished with error");
-            }
-
-            Object obj = result.get_obj();
-            const Value  & tx = find_value(obj, "hex");
-
-            if (tx.type() != str_type)
-            {
-                throw std::runtime_error("Sign transaction error");
-            }
-            
-            rawtx = tx.get_str();
-        }
-    }
-    catch (json_spirit::Object & obj)
-    {
-        //
-        errCode = find_value(obj, "code").get_int();
-        errMessage = find_value(obj, "message").get_str();
-    }
-    catch (std::runtime_error & e)
-    {
-        // specified error
-        errCode = -1;
-        errMessage = e.what();
-    }
-    catch (...)
-    {
-        errCode = -1;
-        errMessage = "unknown error";
-    }
-
-    if (errCode != 0)
-    {
-        LOG() << "xdata signrawtransaction " << rawtx;
-        LOG() << "error sign transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
-        return false;
-    }
-
-    raw_tx = rawtx;
+    raw_tx = EncodeHexTx(signed_tx);
     
     return true;
 }

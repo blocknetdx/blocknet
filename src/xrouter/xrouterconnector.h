@@ -20,6 +20,7 @@ struct PaymentChannel
     CKeyID keyid;
     std::string raw_tx;
     std::string txid;
+    CScript redeemScript;
     int vout;
     double value;
     std::string latest_tx;
