@@ -435,7 +435,6 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     PaymentChannel channel;
     CScript inner;
     std::string raw_tx, txid;
-    int vout = 0;
     
     int locktime = std::time(0) + date;
     CPubKey my_pubkey = pwalletMain->GenerateNewKey();
@@ -444,17 +443,17 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     pwalletMain->GetKey(mykeyID, mykey);
           
     inner << OP_IF
-                << address.GetID() << OP_CHECKSIGVERIFY
+                << address << OP_CHECKSIGVERIFY
           << OP_ELSE
                 << locktime << OP_CHECKLOCKTIMEVERIFY << OP_DROP
           << OP_ENDIF
-          << mykeyID << OP_CHECKSIG;
+          << my_pubkey << OP_CHECKSIG;
 
-    CScriptID id = CScriptID(inner);
-    CBitcoinAddress scriptaddr;
-    scriptaddr.Set(id);
-    std::string resultScript = id.ToString();
-    //resultScript = HexStr(inner.begin(), inner.end());
+    CScriptID scriptid = CScriptID(inner);
+    CScript p2shScript = GetScriptForDestination(scriptid);
+    //p2shScript << OP_HASH160 << id << OP_EQUAL;
+    std::string resultScript = scriptid.ToString();
+    resultScript = HexStr(p2shScript.begin(), p2shScript.end());
     
     
     Array outputs;
@@ -488,24 +487,29 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     Object obj = result.get_obj();
     Array vouts = find_value(obj, "vout").get_array();
     int i = 0;
+    int voutn = 0;
     for (Value vout : vouts) {
         std::cout << json_spirit::write_string(vout, true) << std::endl << std::flush;
         Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
         std::string vouttype = find_value(script, "type").get_str();
-        if (vouttype == "nonstandard") {
-            vout = i;
+        std::cout << "Vout type = " << vouttype << " number = " << i << std::endl;
+        if (vouttype == "scripthash") {
+            voutn = i;
+            std:: cout << "FOUND " << voutn << std::endl;
             break;
         }
         
         i++;
     }
     
+    std::cout << "Final vout = " << voutn << std::endl;
+    
     channel.raw_tx = raw_tx;
     channel.txid = txid;
     channel.value = 0.0;
     channel.key = mykey;
     channel.keyid = mykeyID;
-    channel.vout = vout;
+    channel.vout = voutn;
     channel.redeemScript = inner;
     
     return channel;
@@ -518,11 +522,15 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
     pwalletMain->GetKey(my_pubkey.GetID(), mykey);
     CKeyID mykeyID = my_pubkey.GetID();
 
+    std::cout << "channel outpoint " << channel.txid << " " << channel.vout << std::endl;
     CMutableTransaction unsigned_tx;
 
-    CTxIn in(COutPoint(ParseHashV(Value(channel.txid), "txin"), channel.vout));
+    COutPoint outp(ParseHashV(Value(channel.txid), "txin"), channel.vout);
+    CTxIn in(outp);
+    std::cout << "outpoint " << outp.ToString() << std::endl << std::endl;
     unsigned_tx.vin.push_back(in);
-    unsigned_tx.vout.push_back(CTxOut(AmountFromValue(deposit-amount), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
+    // TODO: get minimal fee from wallet
+    unsigned_tx.vout.push_back(CTxOut(AmountFromValue(deposit - amount - 0.001), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
     unsigned_tx.vout.push_back(CTxOut(AmountFromValue(amount), GetScriptForDestination(CBitcoinAddress(address).Get())));
 
     std::vector<unsigned char> signature;
@@ -534,7 +542,7 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
     
     CMutableTransaction signed_tx;
     signed_tx.vout = unsigned_tx.vout;
-    signed_tx.vin.push_back(CTxIn(COutPoint(ParseHashV(Value(channel.txid), "txin"), channel.vout), sigscript));
+    signed_tx.vin.push_back(CTxIn(outp, sigscript));
     
     raw_tx = EncodeHexTx(signed_tx);
     
@@ -544,16 +552,18 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
 bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::string latest_tx, std::string & raw_tx)
 {
     CMutableTransaction tx = decodeTransaction(latest_tx);
+    std::cout << "Before " << EncodeHexTx(tx) << std::endl;
     std::vector<unsigned char> signature;
     uint256 sighash = SignatureHash(channel.redeemScript, tx, 0, SIGHASH_ALL);
     snodekey.Sign(sighash, signature);
     signature.push_back((unsigned char)SIGHASH_ALL);
 
     CScript finalScript;
-    finalScript << tx.vin[0].scriptSig << signature << OP_TRUE << channel.redeemScript;
+    finalScript << tx.vin[0].scriptSig << signature << OP_TRUE << std::vector<unsigned char>(channel.redeemScript);
 
     tx.vin[0].scriptSig = finalScript;
     raw_tx = EncodeHexTx(tx);
+    std::cout << "After " << raw_tx << std::endl;
     return true;
 }
 
@@ -578,8 +588,8 @@ double getTxValue(std::string rawtx, std::string address, std::string type) {
             if (vouttype == "nulldata")
                 return val;
             
-        if (type == "nonstandard")
-            if (vouttype == "nonstandard")
+        if (type == "scripthash")
+            if (vouttype == "scripthash")
                 return val;
             
         const Value & addr_val = find_value(script, "addresses");
