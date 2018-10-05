@@ -28,7 +28,7 @@ class XRouterServer
 
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
     
-    boost::container::map<CNode*, std::pair<std::string, double> > paymentChannels;
+    boost::container::map<CNode*, PaymentChannel> paymentChannels;
     
 protected:
     /**
@@ -170,9 +170,8 @@ protected:
      */
     std::string processCustomCall(std::string name, std::vector<std::string> params);
     
-    void closePaymentChannel(const boost::system::error_code& /*e*/, CNode* node);
-    
     std::string getMyPaymentAddress();
+    CKey getMyPaymentAddressKey();
 };
 
 } // namespace

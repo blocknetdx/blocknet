@@ -296,14 +296,15 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     LOG() << "Created payment channel date = " << date << " expiry = " << deadline << " ms"; 
                     std::cout << "Created payment channel date = " << date << " expiry = " << deadline << " ms" <<std::endl << std::flush; 
                     
-                    paymentChannels[node] = std::pair<std::string, double>("", 0.0);
+                    paymentChannels[node] = PaymentChannel();
+                    paymentChannels[node].value = 0.0;
 
                     std::thread([deadline, this, node]() {
                         std::this_thread::sleep_for(std::chrono::milliseconds(deadline));
                         std::string txid;
-                        LOG() << "Closing payment channel: " << this->paymentChannels[node].first << " Value = " << this->paymentChannels[node].second;
+                        LOG() << "Closing payment channel: " << this->paymentChannels[node].txid << " Value = " << this->paymentChannels[node].value;
                         
-                        sendTransactionBlockchain(signTransaction(this->paymentChannels[node].first), txid);
+                        sendTransactionBlockchain(this->paymentChannels[node].latest_tx, txid);
                         this->paymentChannels.erase(node);
                     }).detach();
                 }
@@ -311,13 +312,14 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             
             if (paymentChannels.count(node)) {
                 double paid = getTxValue(feetx, getMyPaymentAddress());
-                LOG() << "Got payment via channel; value = " << paid - paymentChannels[node].second << " total value = " << paid << " tx = " << feetx; 
-                if (paid - paymentChannels[node].second < fee) {
+                LOG() << "Got payment via channel; value = " << paid - paymentChannels[node].value << " total value = " << paid << " tx = " << feetx; 
+                if (paid - paymentChannels[node].value < fee) {
                     sendReply(node, uuid, "Fee paid is not enough");
                     return;
                 }
                 
-                paymentChannels[node] = std::pair<std::string, double>(feetx, paid);
+                finalizeChannelTransaction(paymentChannels[node], CKey(), feetx, paymentChannels[node].latest_tx);
+                paymentChannels[node].value = paid;
             }
         }
         
@@ -690,15 +692,6 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
     return "Unknown type";
 }
 
-void XRouterServer::closePaymentChannel(const boost::system::error_code& /*e*/, CNode* node)
-{
-    std::string txid;
-    LOG() << "Closing payment channel: " << this->paymentChannels[node].first << " Value = " << this->paymentChannels[node].second;
-    
-    sendTransactionBlockchain(signTransaction(this->paymentChannels[node].first), txid);
-    this->paymentChannels.erase(node);
-}
-
 std::string XRouterServer::getMyPaymentAddress()
 {
     try {
@@ -710,6 +703,20 @@ std::string XRouterServer::getMyPaymentAddress()
     } catch (...) {
         return "yKQyDJ2CJLaQfZKdi8yM7nQHZZqGXYNhUt";
     }
+}
+
+CKey XRouterServer::getMyPaymentAddressKey()
+{
+    CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
+    CKeyID keyid;
+    if (!pmn)
+        CBitcoinAddress(getMyPaymentAddress()).GetKeyID(keyid);
+    else 
+        keyid = pmn->pubKeyCollateralAddress.GetID();
+    
+    CKey result;
+    pwalletMain->GetKey(keyid, result);
+    return result;
 }
 
 } // namespace xrouter
