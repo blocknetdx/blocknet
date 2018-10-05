@@ -5,7 +5,7 @@
 #include <QEvent>
 #include "blocknetdialog.h"
 
-BlocknetDialog::BlocknetDialog(QString message, QString actionMsg, QWidget *parent, Qt::WindowFlags flags) : QDialog(parent, flags), layout(new QVBoxLayout) {
+BlocknetDialog::BlocknetDialog(QString message, QString actionMsg, QString actionStyle, QWidget *parent, Qt::WindowFlags flags) : QDialog(parent, flags), layout(new QVBoxLayout) {
     this->setFixedSize(500, 250);
     this->setLayout(layout);
     this->setModal(true);
@@ -31,7 +31,7 @@ BlocknetDialog::BlocknetDialog(QString message, QString actionMsg, QWidget *pare
     btnBoxLayout->addWidget(cancelBtn);
 
     deleteBtn = new BlocknetFormBtn;
-    deleteBtn->setObjectName("delete");
+    deleteBtn->setObjectName(actionStyle);
     deleteBtn->setText(actionMsg);
     btnBoxLayout->addWidget(deleteBtn);
 

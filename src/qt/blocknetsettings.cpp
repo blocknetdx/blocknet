@@ -3,6 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "blocknetsettings.h"
+#include "blocknetdialog.h"
 
 BlocknetSettings::BlocknetSettings(QWidget *parent) : QFrame(parent), layout(new QVBoxLayout) {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -271,6 +272,8 @@ BlocknetSettings::BlocknetSettings(QWidget *parent) : QFrame(parent), layout(new
     contentLayout->addWidget(resetBtn);
 
     layout->addWidget(scrollArea);
+
+    connect(resetBtn, &BlocknetFormBtn::clicked, this, &BlocknetSettings::onResetSettingsToDefault);
 }
 
 void BlocknetSettings::setWalletModel(WalletModel *w) {
@@ -280,4 +283,14 @@ void BlocknetSettings::setWalletModel(WalletModel *w) {
     walletModel = w;
     if (!walletModel || !walletModel->getOptionsModel())
         return;
+}
+
+void BlocknetSettings::onResetSettingsToDefault() {
+
+    BlocknetDialog dlg(tr("Are you sure you want to reset all your settings to default?"), tr("Reset to Default"), tr(""), this);
+    dlg.setFixedSize(500, 280);
+    connect(&dlg, &QDialog::accepted, this, [this, &dlg]() {
+        // Reset
+    });
+    dlg.exec();
 }

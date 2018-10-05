@@ -15,7 +15,7 @@ class BlocknetDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit BlocknetDialog(QString message = "", QString actionMsg = "Delete", QWidget *parent = nullptr, Qt::WindowFlags f = Qt::CustomizeWindowHint);
+    explicit BlocknetDialog(QString message = "", QString actionMsg = "Delete", QString actionStyle = "delete", QWidget *parent = nullptr, Qt::WindowFlags f = Qt::CustomizeWindowHint);
 
 private:
     QTextEdit *messageLbl;

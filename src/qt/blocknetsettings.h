@@ -26,6 +26,9 @@ public:
     explicit BlocknetSettings(QWidget *parent = nullptr);
     void setWalletModel(WalletModel *w);
 
+private slots:
+    void onResetSettingsToDefault();
+
 private:
     QScrollArea *scrollArea;
     QFrame *content;
