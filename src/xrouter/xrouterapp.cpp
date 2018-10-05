@@ -938,7 +938,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
                 if (channel.txid == "")
                     return "Failed to create payment channel";
                 this->paymentChannels[pnode] = channel;
-                payment_tx = channel.raw_tx + ";" + channel.txid + ";";
+                payment_tx = channel.raw_tx + ";" + channel.txid + ";" + HexStr(channel.redeemScript) + ";";
             }
             
             // Submit payment via channel

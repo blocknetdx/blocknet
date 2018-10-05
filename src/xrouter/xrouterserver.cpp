@@ -278,26 +278,28 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 } else {
                     std::vector<std::string> parts;
                     boost::split(parts, feetx, boost::is_any_of(";"));
-                    if (parts.size() != 3) {
+                    if (parts.size() != 4) {
                         sendReply(node, uuid, "Incorrect channel creation parameters");
                         return;
                     }
                     
-                    std::string channeltx = parts[0];
-                    std::string channeltxid = parts[1];
-                    feetx = parts[2];
+                    paymentChannels[node] = PaymentChannel();
+                    paymentChannels[node].value = 0.0;
+                    paymentChannels[node].raw_tx = parts[0];
+                    paymentChannels[node].txid = parts[1];
+                    paymentChannels[node].redeemScript = CScript(ParseHex(parts[2]));
+                    feetx = parts[3];
                     
                     // TODO: verify the channel's correctness
 
                     // Send the closing tx 5 seconds before the deadline
-                    int date = getChannelExpiryTime(channeltx);
+                    int date = getChannelExpiryTime(paymentChannels[node].raw_tx);
                     int deadline = date - std::time(0) - 5000;
                     
                     LOG() << "Created payment channel date = " << date << " expiry = " << deadline << " ms"; 
                     std::cout << "Created payment channel date = " << date << " expiry = " << deadline << " ms" <<std::endl << std::flush; 
                     
-                    paymentChannels[node] = PaymentChannel();
-                    paymentChannels[node].value = 0.0;
+                    
 
                     std::thread([deadline, this, node]() {
                         std::this_thread::sleep_for(std::chrono::milliseconds(deadline));
