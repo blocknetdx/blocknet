@@ -534,9 +534,9 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
     unsigned_tx.vout.push_back(CTxOut(AmountFromValue(amount), GetScriptForDestination(CBitcoinAddress(address).Get())));
 
     std::vector<unsigned char> signature;
-    uint256 sighash = SignatureHash(channel.redeemScript, unsigned_tx, 0, SIGHASH_ANYONECANPAY | SIGHASH_ALL);
+    uint256 sighash = SignatureHash(channel.redeemScript, unsigned_tx, 0, SIGHASH_ALL);
     channel.key.Sign(sighash, signature);
-    signature.push_back((unsigned char)(SIGHASH_ANYONECANPAY | SIGHASH_ALL));
+    signature.push_back((unsigned char)SIGHASH_ALL);
     CScript sigscript;
     sigscript << signature;
     
@@ -559,9 +559,12 @@ bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::stri
     signature.push_back((unsigned char)SIGHASH_ALL);
 
     CScript finalScript;
-    finalScript << tx.vin[0].scriptSig << signature << OP_TRUE << std::vector<unsigned char>(channel.redeemScript);
-
+    // TODO: fix this dirty hack
+    finalScript << vector<unsigned char>(tx.vin[0].scriptSig.begin()+1, tx.vin[0].scriptSig.end());
+    finalScript << signature << OP_TRUE << std::vector<unsigned char>(channel.redeemScript);
+    std::cout << "Inside: " << finalScript.ToString();
     tx.vin[0].scriptSig = finalScript;
+    //tx.vin[0].scriptSig << signature << OP_TRUE << std::vector<unsigned char>(channel.redeemScript);
     raw_tx = EncodeHexTx(tx);
     std::cout << "After " << raw_tx << std::endl;
     return true;
