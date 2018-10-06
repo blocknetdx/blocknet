@@ -70,8 +70,11 @@ Value sendserviceping(const Array& params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("sendserviceping", "") + HelpExampleRpc("sendserviceping", ""));
 
-    if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
-        throw runtime_error("Service ping not sent: This is not a Servicenode or it hasn't started yet");
+    {
+        LOCK(cs_main);
+        if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
+            throw runtime_error("Service ping not sent: This is not a Servicenode or it hasn't started yet");
+    }
 
     xbridge::App::instance().sendServicePing();
 

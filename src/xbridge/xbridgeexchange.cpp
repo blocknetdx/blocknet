@@ -13,6 +13,7 @@
 
 #include "key.h"
 #include "pubkey.h"
+#include "sync.h"
 
 #include <algorithm>
 #include <boost/algorithm/string/join.hpp>
@@ -37,16 +38,17 @@ protected:
     // connected wallets
     typedef std::map<std::string, WalletParam> WalletList;
     WalletList                                         m_wallets;
+    mutable CCriticalSection                           m_walletsLock;
 
-    mutable boost::mutex                               m_pendingTransactionsLock;
+    mutable CCriticalSection                               m_pendingTransactionsLock;
     std::map<uint256, uint256>                         m_hashToIdMap;
     std::map<uint256, TransactionPtr>                  m_pendingTransactions;
 
-    mutable boost::mutex                               m_transactionsLock;
+    mutable CCriticalSection                               m_transactionsLock;
     std::map<uint256, TransactionPtr>                  m_transactions;
 
     // utxo records
-    boost::mutex                                       m_utxoLocker;
+    CCriticalSection                                       m_utxoLocker;
     std::set<wallet::UtxoEntry>                        m_utxoItems;
     std::map<uint256, std::vector<wallet::UtxoEntry> > m_utxoTxMap;
 
@@ -143,7 +145,11 @@ bool Exchange::init()
 //*****************************************************************************
 bool Exchange::isEnabled()
 {
-    return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false));
+    if (m_p) {
+        LOCK(m_p->m_walletsLock);
+        return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false));
+    }
+    return false;
 }
 
 //*****************************************************************************
@@ -216,6 +222,7 @@ const std::vector<unsigned char> & Exchange::privKey() const
 //*****************************************************************************
 bool Exchange::haveConnectedWallet(const std::string & walletName)
 {
+    LOCK(m_p->m_walletsLock);
     return m_p->m_wallets.count(walletName) > 0;
 }
 
@@ -223,6 +230,7 @@ bool Exchange::haveConnectedWallet(const std::string & walletName)
 //*****************************************************************************
 std::vector<std::string> Exchange::connectedWallets() const
 {
+    LOCK(m_p->m_walletsLock);
     std::vector<std::string> list;
     for (const auto & wallet : m_p->m_wallets)
     {
@@ -235,7 +243,7 @@ std::vector<std::string> Exchange::connectedWallets() const
 //*****************************************************************************
 bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::UtxoEntry> & items)
 {
-    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    LOCK(m_p->m_utxoLocker);
 
     if (m_p->m_utxoTxMap.count(txid))
     {
@@ -260,7 +268,7 @@ bool Exchange::checkUtxoItems(const uint256 & txid, const std::vector<wallet::Ut
 //*****************************************************************************
 bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry> & items)
 {
-    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    LOCK(m_p->m_utxoLocker);
 
     if(txid.IsNull())
     {
@@ -314,6 +322,8 @@ bool Exchange::createTransaction(const uint256                        & txid,
         return false;
     }
 
+    {
+    LOCK(m_p->m_walletsLock);
     const WalletParam & wp  = m_p->m_wallets[sourceCurrency];
     const WalletParam & wp2 = m_p->m_wallets[destCurrency];
 
@@ -331,6 +341,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
                   << " rejected because destAmount less than minimum payment";
             return false;
         }
+    }
     }
 
     TransactionPtr tr(new xbridge::Transaction(txid,
@@ -356,7 +367,7 @@ bool Exchange::createTransaction(const uint256                        & txid,
     }
 
     {
-        boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+        LOCK(m_p->m_pendingTransactionsLock);
 
         if (!m_p->m_pendingTransactions.count(txid))
         {
@@ -438,7 +449,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
     TransactionPtr tmp;
 
     {
-        boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+        LOCK(m_p->m_pendingTransactionsLock);
 
         if (!m_p->m_pendingTransactions.count(txid))
         {
@@ -484,11 +495,11 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
     {
         // move to transactions
         {
-            boost::mutex::scoped_lock l(m_p->m_transactionsLock);
+            LOCK(m_p->m_transactionsLock);
             m_p->m_transactions[txid] = tmp;
         }
         {
-            boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+            LOCK(m_p->m_pendingTransactionsLock);
             m_p->m_pendingTransactions.erase(txid);
         }
     }
@@ -503,7 +514,7 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
 //*****************************************************************************
 bool Exchange::deletePendingTransaction(const uint256 & id)
 {
-    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+    LOCK(m_p->m_pendingTransactionsLock);
 
     LOG() << "delete pending transaction <" << id.GetHex() << ">";
 
@@ -519,7 +530,7 @@ bool Exchange::deletePendingTransaction(const uint256 & id)
 //*****************************************************************************
 bool Exchange::deleteTransaction(const uint256 & txid)
 {
-    boost::mutex::scoped_lock l(m_p->m_transactionsLock);
+    LOCK(m_p->m_transactionsLock);
 
     LOG() << "delete transaction <" << txid.GetHex() << ">";
 
@@ -605,7 +616,7 @@ bool Exchange::updateTransactionWhenConfirmedReceived(const TransactionPtr & tx,
 const TransactionPtr Exchange::transaction(const uint256 & hash)
 {
     {
-        boost::mutex::scoped_lock l(m_p->m_transactionsLock);
+        LOCK(m_p->m_transactionsLock);
 
         if (m_p->m_transactions.count(hash))
         {
@@ -626,7 +637,7 @@ const TransactionPtr Exchange::transaction(const uint256 & hash)
 const TransactionPtr Exchange::pendingTransaction(const uint256 & hash)
 {
     {
-        boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+        LOCK(m_p->m_pendingTransactionsLock);
 
         if (m_p->m_pendingTransactions.count(hash))
         {
@@ -647,7 +658,7 @@ const TransactionPtr Exchange::pendingTransaction(const uint256 & hash)
 //*****************************************************************************
 std::list<TransactionPtr> Exchange::pendingTransactions() const
 {
-    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+    LOCK(m_p->m_pendingTransactionsLock);
 
     std::list<TransactionPtr> list;
 
@@ -664,7 +675,7 @@ std::list<TransactionPtr> Exchange::pendingTransactions() const
 //*****************************************************************************
 std::list<TransactionPtr> Exchange::Impl::transactions(bool onlyFinished) const
 {
-    boost::mutex::scoped_lock l(m_transactionsLock);
+    LOCK(m_transactionsLock);
 
     std::list<TransactionPtr> list;
 
@@ -710,14 +721,14 @@ size_t Exchange::eraseExpiredTransactions()
 
     size_t result = 0;
 
-    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+    LOCK(m_p->m_pendingTransactionsLock);
 
     // Use non-hoisted iterator to prevent invalidation during erase
     for (auto it = m_p->m_pendingTransactions.cbegin(); it != m_p->m_pendingTransactions.cend(); )
     {
         TransactionPtr ptr = it->second;
 
-        boost::mutex::scoped_lock l1(ptr->m_lock);
+        LOCK(ptr->m_lock);
 
         if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
         {
@@ -748,7 +759,7 @@ bool Exchange::lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry>
         return false;
     }
 
-    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    LOCK(m_p->m_utxoLocker);
     // use set to prevent overwriting utxo's from 'A' or 'B' role
     std::set<wallet::UtxoEntry> utxoTxMapItems;
     for (const wallet::UtxoEntry & item : m_p->m_utxoTxMap[id])
@@ -773,7 +784,7 @@ bool Exchange::lockUtxos(const uint256 &id, const std::vector<wallet::UtxoEntry>
 //******************************************************************************
 bool Exchange::unlockUtxos(const uint256 &id)
 {
-    boost::mutex::scoped_lock l(m_p->m_utxoLocker);
+    LOCK(m_p->m_utxoLocker);
 
     if (!m_p->m_utxoTxMap.count(id))
     {
@@ -794,7 +805,7 @@ bool Exchange::unlockUtxos(const uint256 &id)
 //*****************************************************************************
 bool Exchange::updateTimestampOrRemoveExpired(const TransactionPtr & tx)
 {
-    boost::mutex::scoped_lock l(m_p->m_pendingTransactionsLock);
+    LOCK(m_p->m_pendingTransactionsLock);
 
     auto txid = tx->id();
     m_p->m_pendingTransactions[txid]->m_lock.lock();

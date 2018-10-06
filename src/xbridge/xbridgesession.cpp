@@ -26,6 +26,7 @@
 #include "servicenodeman.h"
 #include "random.h"
 #include "FastDelegate.h"
+#include "sync.h"
 
 #include "json/json_spirit.h"
 #include "json/json_spirit_reader_template.h"
@@ -701,7 +702,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                 return false;
             }
 
-            boost::mutex::scoped_lock l(tr->m_lock);
+            LOCK(tr->m_lock);
 
             std::string firstCurrency = tr->a_currency();
             std::vector<unsigned char> fc(8, 0);
@@ -1029,7 +1030,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             // if trJoined = send hold to client
             TransactionPtr tr = e.transaction(id);
 
-            boost::mutex::scoped_lock l(tr->m_lock);
+            LOCK(tr->m_lock);
 
             if (tr->state() != xbridge::Transaction::trJoined)
             {
@@ -1146,7 +1147,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         {
             TransactionPtr tr = e.transaction(id);
 
-            boost::mutex::scoped_lock l(tr->m_lock);
+            LOCK(tr->m_lock);
 
             LOG() << __FUNCTION__ << tr;
 
@@ -1249,7 +1250,7 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     TransactionPtr tr = e.transaction(id);
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
@@ -1583,7 +1584,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -1960,7 +1961,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2353,7 +2354,7 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2602,7 +2603,7 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2842,7 +2843,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2908,7 +2909,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
             return true;
         }
 
-        boost::mutex::scoped_lock l(tr->m_lock);
+        LOCK(tr->m_lock);
 
         LOG() << __FUNCTION__ << tr;
 
@@ -3119,7 +3120,7 @@ void Session::sendListOfTransactions() const
     {
         TransactionPtr & ptr = *i;
 
-        boost::mutex::scoped_lock l(ptr->m_lock);
+        LOCK(ptr->m_lock);
 
         XBridgePacketPtr packet(new XBridgePacket(xbcPendingTransaction));
 
@@ -3175,7 +3176,7 @@ void Session::checkFinishedTransactions() const
     {
         TransactionPtr & ptr = *i;
 
-        boost::mutex::scoped_lock l(ptr->m_lock);
+        LOCK(ptr->m_lock);
 
         uint256 txid = ptr->id();
 

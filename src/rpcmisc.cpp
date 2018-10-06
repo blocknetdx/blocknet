@@ -85,6 +85,9 @@ Value getinfo(const Array& params, bool fHelp)
     Object obj;
     obj.push_back(Pair("version", CLIENT_VERSION));
     obj.push_back(Pair("protocolversion", PROTOCOL_VERSION));
+
+    LOCK(cs_main);
+
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
         obj.push_back(Pair("walletversion", pwalletMain->GetVersion()));
@@ -283,6 +286,8 @@ Value validateaddress(const Array& params, bool fHelp)
         string currentAddress = address.ToString();
         ret.push_back(Pair("address", currentAddress));
 #ifdef ENABLE_WALLET
+        {
+        LOCK(cs_main);
         isminetype mine = pwalletMain ? IsMine(*pwalletMain, dest) : ISMINE_NO;
         ret.push_back(Pair("ismine", (mine & ISMINE_SPENDABLE) ? true : false));
         if (mine != ISMINE_NO) {
@@ -290,8 +295,12 @@ Value validateaddress(const Array& params, bool fHelp)
             Object detail = boost::apply_visitor(DescribeAddressVisitor(mine), dest);
             ret.insert(ret.end(), detail.begin(), detail.end());
         }
+        {
+        LOCK(pwalletMain->cs_wallet);
         if (pwalletMain && pwalletMain->mapAddressBook.count(dest))
             ret.push_back(Pair("account", pwalletMain->mapAddressBook[dest].name));
+        }
+        }
 #endif
     }
     return ret;

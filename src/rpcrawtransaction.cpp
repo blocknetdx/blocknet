@@ -311,6 +311,8 @@ Value listunspent(const Array& params, bool fHelp)
         }
     }
 
+    LOCK(cs_main);
+
     Array results;
     vector<COutput> vecOutputs;
     assert(pwalletMain != NULL);
@@ -334,10 +336,14 @@ Value listunspent(const Array& params, bool fHelp)
         entry.push_back(Pair("txid", out.tx->GetHash().GetHex()));
         entry.push_back(Pair("vout", out.i));
         CTxDestination address;
+
+        {
+        LOCK(pwalletMain->cs_wallet);
         if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address)) {
             entry.push_back(Pair("address", CBitcoinAddress(address).ToString()));
             if (pwalletMain->mapAddressBook.count(address))
                 entry.push_back(Pair("account", pwalletMain->mapAddressBook[address].name));
+        }
         }
         entry.push_back(Pair("scriptPubKey", HexStr(pk.begin(), pk.end())));
         if (pk.IsPayToScriptHash()) {
@@ -942,7 +948,7 @@ Value signrawtransaction(const Array& params, bool fHelp)
     CCoinsView viewDummy;
     CCoinsViewCache view(&viewDummy);
     {
-        LOCK(mempool.cs);
+        LOCK2(cs_main, mempool.cs);
         CCoinsViewCache& viewChain = *pcoinsTip;
         CCoinsViewMemPool viewMempool(&viewChain, mempool);
         view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
@@ -1103,6 +1109,8 @@ Value sendrawtransaction(const Array& params, bool fHelp)
     bool fOverrideFees = false;
     if (params.size() > 1)
         fOverrideFees = params[1].get_bool();
+
+    LOCK(cs_main);
 
     CCoinsViewCache& view = *pcoinsTip;
     const CCoins* existingCoins = view.AccessCoins(hashTx);

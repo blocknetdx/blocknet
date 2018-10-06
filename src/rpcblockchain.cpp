@@ -427,6 +427,8 @@ Value gettxout(const Array& params, bool fHelp)
     if (params.size() > 2)
         fMempool = params[2].get_bool();
 
+    LOCK(cs_main);
+
     CCoins coins;
     if (fMempool) {
         LOCK(mempool.cs);
