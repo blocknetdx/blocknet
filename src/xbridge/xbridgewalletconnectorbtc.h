@@ -74,7 +74,7 @@ public:
 
     bool createDepositUnlockScript(const std::vector<unsigned char> & myPubKey,
                                    const std::vector<unsigned char> & otherPubKey,
-                                   const std::vector<unsigned char> & xdata,
+                                   const std::vector<unsigned char> & secretHash,
                                    const uint32_t lockTime,
                                    std::vector<unsigned char> & resultSript);
 

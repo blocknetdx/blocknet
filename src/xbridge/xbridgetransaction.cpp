@@ -321,13 +321,6 @@ std::string Transaction::a_bintxid() const
 
 //*****************************************************************************
 //*****************************************************************************
-std::vector<unsigned char> Transaction::a_innerScript() const
-{
-    return m_innerScript1;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 std::vector<unsigned char> Transaction::a_pk1() const
 {
     return m_a.mpubkey();
@@ -373,13 +366,6 @@ uint64_t Transaction::b_amount() const
 std::string Transaction::b_bintxid() const
 {
     return m_bintxid2;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::vector<unsigned char> Transaction::b_innerScript() const
-{
-    return m_innerScript2;
 }
 
 //*****************************************************************************
@@ -452,24 +438,23 @@ bool Transaction::setKeys(const std::vector<unsigned char> & addr,
 //*****************************************************************************
 //*****************************************************************************
 bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
-                                    const std::string & id,
-                                    const std::vector<unsigned char> & innerScript)
+                             const std::string & id)
 {
     if (m_b.source() == addr)
     {
         m_bintxid2     = id;
-        m_innerScript2 = innerScript;
         return true;
     }
     else if (m_a.source() == addr)
     {
         m_bintxid1     = id;
-        m_innerScript1 = innerScript;
         return true;
     }
     return false;
 }
 
+//*****************************************************************************
+//*****************************************************************************
 std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
 {
     if(!settings().isFullLog())

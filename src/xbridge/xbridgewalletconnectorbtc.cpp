@@ -1733,7 +1733,8 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         }
     }
 
-    // TODO check amount in tx, temporary only first vout
+    // TODO check lock time in tx
+    // TODO check amount in tx, temporary only first vout checked
     json_spirit::Array  vout    = json_spirit::find_value(txo, "vout").get_array();
     json_spirit::Object vout0   = vout[0].get_obj();
     json_spirit::Value  vamount = json_spirit::find_value(vout0, "value");
@@ -1786,7 +1787,7 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
         // lt = info.blocks + 259200 / 2 / m_wallet.blockTime;
 
         // 1h in seconds
-        lt = info.blocks + 36 / blockTime;
+        lt = info.blocks + 60 / blockTime;
     }
 
     return lt;
@@ -1797,7 +1798,7 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::vector<unsigned char> & myPubKey,
                                                           const std::vector<unsigned char> & otherPubKey,
-                                                          const std::vector<unsigned char> & xdata,
+                                                          const std::vector<unsigned char> & secretHash,
                                                           const uint32_t lockTime,
                                                           std::vector<unsigned char> & resultSript)
 {
@@ -1807,14 +1808,11 @@ bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::ve
                 << OP_DUP << OP_HASH160 << getKeyId(myPubKey) << OP_EQUALVERIFY << OP_CHECKSIG
           << OP_ELSE
                 << OP_DUP << OP_HASH160 << getKeyId(otherPubKey) << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
-                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << xdata << OP_EQUAL
+                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << secretHash << OP_EQUAL
           << OP_ENDIF;
 
-//    xbridge::XBitcoinAddress baddr;
-//    baddr.Set(CScriptID(inner), m_wallet.scriptPrefix[0]);
-//    xtx->multisig    = baddr.ToString();
-
     resultSript = std::vector<unsigned char>(inner.begin(), inner.end());
+
     return true;
 }
 

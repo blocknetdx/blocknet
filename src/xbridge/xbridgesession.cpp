@@ -1284,12 +1284,14 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
             // send initialize transaction command to clients
 
             // field length must be 8 bytes
-            std::string firstCurrency = tr->a_currency();
-            std::vector<unsigned char> fc(8, 0);
-            std::copy(firstCurrency.begin(), firstCurrency.end(), fc.begin());
-            std::string secondCurrency = tr->b_currency();
-            std::vector<unsigned char> sc(8, 0);
-            std::copy(secondCurrency.begin(), secondCurrency.end(), sc.begin());
+            std::vector<unsigned char> a_currency(8, 0);
+            std::vector<unsigned char> b_currency(8, 0);
+            {
+                std::string tmp = tr->a_currency();
+                std::copy(tmp.begin(), tmp.end(), a_currency.begin());
+                tmp = tr->b_currency();
+                std::copy(tmp.begin(), tmp.end(), b_currency.begin());
+            }
 
             // first
             // TODO remove this log
@@ -1301,10 +1303,10 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
             reply1->append(m_myid);
             reply1->append(id.begin(), XBridgePacket::hashSize);
             reply1->append(tr->a_address());
-            reply1->append(fc);
+            reply1->append(a_currency);
             reply1->append(tr->a_amount());
             reply1->append(tr->a_destination());
-            reply1->append(sc);
+            reply1->append(b_currency);
             reply1->append(tr->b_amount());
 
             reply1->sign(e.pubKey(), e.privKey());
@@ -1321,10 +1323,10 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
             reply2->append(m_myid);
             reply2->append(id.begin(), XBridgePacket::hashSize);
             reply2->append(tr->b_address());
-            reply2->append(sc);
+            reply2->append(b_currency);
             reply2->append(tr->b_amount());
             reply2->append(tr->b_destination());
-            reply2->append(fc);
+            reply2->append(a_currency);
             reply2->append(tr->a_amount());
 
             reply2->sign(e.pubKey(), e.privKey());
@@ -1464,6 +1466,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     uint256 feetxtd;
     if (xtx->role == 'B')
     {
+        // tx with acceptor fee
         WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
         if (!conn)
         {
@@ -1751,8 +1754,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     }
 
     // lock time
-    xtx->lockTimeTx1 = connFrom->lockTime(xtx->role);
-    if (xtx->lockTimeTx1 == 0)
+    xtx->lockTime         = connFrom->lockTime(xtx->role);
+    xtx->opponentLockTime = connFrom->lockTime(xtx->role == 'B');
+    if (xtx->lockTime == 0 || xtx->opponentLockTime == 0)
     {
         LOG() << "lockTime error, transaction canceled " << __FUNCTION__;
         sendCancelTransaction(xtx, crRpcError);
@@ -1776,9 +1780,13 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
              "    x id     " << HexStr(hx);
 #endif
 
-    // create address for first tx
-    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, xtx->lockTimeTx1, xtx->innerScript);
-    xtx->depositP2SH = connFrom->scriptIdToString(connFrom->getScriptId(xtx->innerScript));
+    // create address for deposit
+    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, xtx->lockTime, xtx->lockScript);
+    xtx->lockP2SHAddress = connFrom->scriptIdToString(connFrom->getScriptId(xtx->lockScript));
+
+    // opponent deposit
+    connFrom->createDepositUnlockScript(mPubKey, xtx->mPubKey, hx, xtx->opponentLockTime, xtx->unlockScript);
+    xtx->unlockP2SHAddress = connFrom->scriptIdToString(connFrom->getScriptId(xtx->unlockScript));
 
     // depositTx
     {
@@ -1794,7 +1802,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         // outputs
 
         // amount
-        outputs.push_back(std::make_pair(xtx->depositP2SH, outAmount+fee2));
+        outputs.push_back(std::make_pair(xtx->lockP2SHAddress, outAmount+fee2));
 
         // rest
         if (inAmount > outAmount+fee1+fee2)
@@ -1849,7 +1857,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
         if (!connFrom->createRefundTransaction(inputs, outputs,
                                                xtx->mPubKey, xtx->mPrivKey,
-                                               xtx->innerScript, xtx->lockTimeTx1,
+                                               xtx->lockScript, xtx->lockTime,
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel transaction
@@ -1893,8 +1901,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     reply->append(txid.begin(), 32);
     reply->append(xtx->binTxId);
     reply->append(hx);
-    reply->append(static_cast<uint32_t>(xtx->innerScript.size()));
-    reply->append(xtx->innerScript);
+    reply->append(xtx->lockTime);
+    reply->append(xtx->opponentLockTime);
 
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
@@ -1909,11 +1917,11 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    // size must be > 92 bytes
-    if (packet->size() < 92)
+    // size must be > 100 bytes
+    if (packet->size() < 100)
     {
         ERR() << "invalid packet size for xbcTransactionCreatedA "
-              << "need more than 92 received " << packet->size() << " "
+              << "need more than 100 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1944,11 +1952,10 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
     std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+20);
     offset += 20;
 
-    uint32_t innerSize = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    uint32_t lockTimeA = *reinterpret_cast<uint32_t *>(packet->data()+offset);
     offset += sizeof(uint32_t);
-
-    std::vector<unsigned char> innerScript(packet->data()+offset, packet->data()+offset+innerSize);
-    // offset += innerScript.size();
+    uint32_t lockTimeB = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    // offset += sizeof(uint32_t);
 
     TransactionPtr tr = e.transaction(txid);
 
@@ -1964,6 +1971,14 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 
     tr->updateTimestamp();
 
+    // check lock time
+    if (lockTimeA == 0 || lockTimeB == 0 || lockTimeA <= lockTimeB)
+    {
+        ERR() << "incorrect lock time used on size A " << __FUNCTION__;
+        sendCancelTransaction(tr, crBadADepositTx);
+        return true;
+    }
+
     if (!isAddressInTransaction(from, tr))
     {
         ERR() << "invalid transaction address " << __FUNCTION__;
@@ -1971,7 +1986,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
         return true;
     }
 
-    if (e.updateTransactionWhenCreatedReceived(tr, from, binTxId, innerScript))
+    if (e.updateTransactionWhenCreatedReceived(tr, from, binTxId))
     {
         // wtf ?
         ERR() << "invalid createdA " << __FUNCTION__;
@@ -1990,6 +2005,8 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
     reply2->append(tr->a_pk1());
     reply2->append(binTxId);
     reply2->append(hx);
+    reply2->append(lockTimeA);
+    reply2->append(lockTimeB);
 
     reply2->sign(e.pubKey(), e.privKey());
 
@@ -2006,10 +2023,10 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    if (packet->size() < 125)
+    if (packet->size() < 133)
     {
         ERR() << "incorrect packet size for xbcTransactionCreateB "
-              << "need min 125 bytes, received " << packet->size() << " "
+              << "need min 133 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -2031,6 +2048,11 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+20);
     offset += 20;
+
+    uint32_t lockTimeA = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    offset += sizeof(uint32_t);
+    uint32_t lockTimeB = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    // offset += sizeof(uint32_t);
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2095,8 +2117,27 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
     double checkAmount = static_cast<double>(xtx->toAmount) / TransactionDescr::COIN;
 
-    // TODO check A iner script
+    // check lock times
+    {
+        if (lockTimeA == 0 || lockTimeB == 0 || lockTimeA <= lockTimeB)
+        {
+            LOG() << "incorrect lock times from A side " << txid.GetHex() << " " << __FUNCTION__;
+            sendCancelTransaction(xtx, crBadADepositTx);
+            return true;
+        }
 
+        // calculate and second check
+        uint32_t localLockTimeB = connFrom->lockTime(xtx->role);
+        uint32_t localLockTimeA = connFrom->lockTime('A');
+        if (localLockTimeB == lockTimeB && localLockTimeA == lockTimeA)
+        {
+            // ideally!!!
+        }
+        else
+        {
+            // TODO check threshold
+        }
+    }
 
     // check A deposit tx
     {
@@ -2151,8 +2192,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     }
 
     // lock time
-    xtx->lockTimeTx1 = connFrom->lockTime(xtx->role);
-    if (xtx->lockTimeTx1 == 0)
+    xtx->lockTime         = lockTimeB;
+    xtx->opponentLockTime = lockTimeA;
+    if (xtx->lockTime == 0 || xtx->opponentLockTime == 0)
     {
         LOG() << "lockTime error, transaction canceled " << __FUNCTION__;
         sendCancelTransaction(xtx, crRpcError);
@@ -2173,9 +2215,13 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
              "    x id     " << HexStr(hx);
 #endif
 
-    // create address for first tx
-    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, xtx->lockTimeTx1, xtx->innerScript);
-    xtx->depositP2SH = connFrom->scriptIdToString(connFrom->getScriptId(xtx->innerScript));
+    // create address for deposit
+    connFrom->createDepositUnlockScript(xtx->mPubKey, mPubKey, hx, xtx->lockTime, xtx->lockScript);
+    xtx->lockP2SHAddress = connFrom->scriptIdToString(connFrom->getScriptId(xtx->lockScript));
+
+    // opponent deposit
+    connFrom->createDepositUnlockScript(mPubKey, xtx->mPubKey, hx, xtx->opponentLockTime, xtx->unlockScript);
+    xtx->unlockP2SHAddress = connFrom->scriptIdToString(connFrom->getScriptId(xtx->unlockScript));
 
     // depositTx
     {
@@ -2191,7 +2237,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         // outputs
 
         // amount
-        outputs.push_back(std::make_pair(xtx->depositP2SH, outAmount+fee2));
+        outputs.push_back(std::make_pair(xtx->lockP2SHAddress, outAmount+fee2));
 
         // rest
         if (inAmount > outAmount+fee1+fee2)
@@ -2246,7 +2292,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
         if (!connFrom->createRefundTransaction(inputs, outputs,
                                                xtx->mPubKey, xtx->mPrivKey,
-                                               xtx->innerScript, xtx->lockTimeTx1,
+                                               xtx->lockScript, xtx->lockTime,
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel transaction
@@ -2289,8 +2335,6 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     reply->append(thisAddress);
     reply->append(txid.begin(), 32);
     reply->append(xtx->binTxId);
-    reply->append(static_cast<uint32_t>(xtx->innerScript.size()));
-    reply->append(xtx->innerScript);
 
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
@@ -2337,12 +2381,6 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
     std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
     offset += binTxId.size()+1;
 
-    uint32_t innerSize = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
-
-    std::vector<unsigned char> innerScript(packet->data()+offset, packet->data()+offset+innerSize);
-    // offset += innerScript.size();
-
     TransactionPtr tr = e.transaction(txid);
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
@@ -2364,7 +2402,7 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
         return true;
     }
 
-    if (e.updateTransactionWhenCreatedReceived(tr, from, binTxId, innerScript))
+    if (e.updateTransactionWhenCreatedReceived(tr, from, binTxId))
     {
         if (tr->state() == xbridge::Transaction::trCreated)
         {
@@ -2380,8 +2418,6 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
             reply->append(m_myid);
             reply->append(txid.begin(), 32);
             reply->append(tr->b_bintxid());
-            reply->append(static_cast<uint32_t>(tr->b_innerScript().size()));
-            reply->append(tr->b_innerScript());
 
             reply->sign(e.pubKey(), e.privKey());
 
@@ -2418,12 +2454,6 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 
     std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
     offset += binTxId.size()+1;
-
-    uint32_t innerSize = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
-
-    std::vector<unsigned char> innerScript(packet->data()+offset, packet->data()+offset+innerSize);
-    offset += innerScript.size();
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2502,7 +2532,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 
         if (!conn->createPaymentTransaction(inputs, outputs,
                                             xtx->mPubKey, xtx->mPrivKey,
-                                            xtx->xPubKey, innerScript,
+                                            xtx->xPubKey, xtx->unlockScript,
                                             xtx->payTxId, xtx->payTx))
         {
             // cancel transaction
@@ -2631,8 +2661,6 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
     reply2->append(txid.begin(), 32);
     reply2->append(xPubkey);
     reply2->append(tr->a_bintxid());
-    reply2->append(static_cast<uint32_t>(tr->a_innerScript().size()));
-    reply2->append(tr->a_innerScript());
 
     reply2->sign(e.pubKey(), e.privKey());
 
@@ -2670,12 +2698,6 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
 
     std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
     offset += binTxId.size()+1;
-
-    uint32_t innerSize = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
-
-    std::vector<unsigned char> innerScript(packet->data()+offset, packet->data()+offset+innerSize);
-    offset += innerScript.size();
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2744,7 +2766,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
 
         if (!conn->createPaymentTransaction(inputs, outputs,
                                             xtx->mPubKey, xtx->mPrivKey,
-                                            x, innerScript,
+                                            x, xtx->unlockScript,
                                             xtx->payTxId, xtx->payTx))
         {
             // cancel transaction
@@ -2978,7 +3000,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 
     bool infoRecieved = conn->getInfo(info);
 
-    if(infoRecieved && info.blocks < xtx->lockTimeTx1)
+    if(infoRecieved && info.blocks < xtx->lockTime)
     {
         LOG() << "waiting for loctime expiration before refund tx " << txid.GetHex() << " " << __FUNCTION__;
         xapp.processLater(txid, packet);
