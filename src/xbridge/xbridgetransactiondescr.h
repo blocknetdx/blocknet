@@ -65,8 +65,8 @@ struct TransactionDescr
     std::string                toCurrency;
     uint64_t                   toAmount;
 
-    uint32_t                   lockTimeTx1;
-    uint32_t                   lockTimeTx2;
+    uint32_t                   lockTime;
+    uint32_t                   opponentLockTime;
 
     State                      state;
     uint32_t                   reason;
@@ -85,8 +85,11 @@ struct TransactionDescr
     std::string                refTx;
 
     // multisig address and redeem script
-    std::string                depositP2SH;
-    std::vector<unsigned char> innerScript;
+    std::string                lockP2SHAddress;
+    std::vector<unsigned char> lockScript;
+
+    std::string                unlockP2SHAddress;
+    std::vector<unsigned char> unlockScript;
 
     // local created key (for exchange)
     std::vector<unsigned char>    mPubKey;
@@ -118,8 +121,8 @@ struct TransactionDescr
 
     TransactionDescr()
         : role(0)
-        , lockTimeTx1(0)
-        , lockTimeTx2(0)
+        , lockTime(0)
+        , opponentLockTime(0)
         , state(trNew)
         , reason(0)
         , created(boost::posix_time::microsec_clock::universal_time())
@@ -229,42 +232,44 @@ private:
     {
         {
         LOCK(_lock);
-        id           = d.id;
-        role         = d.role;
-        from         = d.from;
-        fromCurrency = d.fromCurrency;
-        fromAmount   = d.fromAmount;
-        to           = d.to;
-        toCurrency   = d.toCurrency;
-        toAmount     = d.toAmount;
-        lockTimeTx1  = d.lockTimeTx1;
-        lockTimeTx2  = d.lockTimeTx2;
-        state        = d.state;
-        reason       = d.reason;
-        payTx        = d.payTx;
-        refTx        = d.refTx;
+        id                = d.id;
+        role              = d.role;
+        from              = d.from;
+        fromCurrency      = d.fromCurrency;
+        fromAmount        = d.fromAmount;
+        to                = d.to;
+        toCurrency        = d.toCurrency;
+        toAmount          = d.toAmount;
+        lockTime          = d.lockTime;
+        opponentLockTime  = d.opponentLockTime;
+        state             = d.state;
+        reason            = d.reason;
+        payTx             = d.payTx;
+        refTx             = d.refTx;
 
-        binTxId      = d.binTxId;
-        binTx        = d.binTx;
-        payTxId      = d.payTxId;
-        payTx        = d.payTx;
-        refTxId      = d.refTxId;
-        refTx        = d.refTx;
+        binTxId           = d.binTxId;
+        binTx             = d.binTx;
+        payTxId           = d.payTxId;
+        payTx             = d.payTx;
+        refTxId           = d.refTxId;
+        refTx             = d.refTx;
 
         // multisig address and redeem script
-        depositP2SH     = d.depositP2SH;
-        innerScript       = d.innerScript;
+        lockP2SHAddress   = d.lockP2SHAddress;
+        lockScript        = d.lockScript;
+        unlockP2SHAddress = d.unlockP2SHAddress;
+        unlockScript      = d.unlockScript;
 
         // prevtxs for signrawtransaction
         // prevtxs      = d.prevtxs;
 
         // multisig key
-        mPubKey      = d.mPubKey;
-        mPrivKey      = d.mPrivKey;
+        mPubKey           = d.mPubKey;
+        mPrivKey          = d.mPrivKey;
 
         // X key
-        xPubKey      = d.xPubKey;
-        xPrivKey      = d.xPrivKey;
+        xPubKey           = d.xPubKey;
+        xPrivKey          = d.xPrivKey;
 
         hubAddress     = d.hubAddress;
         confirmAddress = d.confirmAddress;

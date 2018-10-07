@@ -157,9 +157,6 @@ public:
     std::string                a_refTx() const;
     std::string                a_bintxid() const;
 
-    // TODO remove script
-    std::vector<unsigned char> a_innerScript() const;
-
     std::vector<unsigned char> a_pk1() const;
 
     // uint256                    secondId() const;
@@ -171,9 +168,6 @@ public:
     std::string                b_refTx() const;
     std::string                b_bintxid() const;
 
-    // TODO remove script
-    std::vector<unsigned char> b_innerScript() const;
-
     std::vector<unsigned char> b_pk1() const;
 
     bool tryJoin(const TransactionPtr other);
@@ -181,8 +175,7 @@ public:
     bool                       setKeys(const std::vector<unsigned char> & addr,
                                        const std::vector<unsigned char> & pk);
     bool                       setBinTxId(const std::vector<unsigned char> &addr,
-                                          const std::string & id,
-                                          const std::vector<unsigned char> & innerScript);
+                                          const std::string & id);
 
     friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
 
@@ -212,9 +205,6 @@ private:
 
     std::string                m_bintxid1;
     std::string                m_bintxid2;
-
-    std::vector<unsigned char> m_innerScript1;
-    std::vector<unsigned char> m_innerScript2;
 
     XBridgeTransactionMember   m_a;
     XBridgeTransactionMember   m_b;

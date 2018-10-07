@@ -1752,8 +1752,14 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         }
     }
 
-    // TODO check amount in tx, temporary only first vout
+    // TODO check amount in tx, temporary only first vout checked
     json_spirit::Array  vout    = json_spirit::find_value(txo, "vout").get_array();
+    if (vout.size() == 0)
+    {
+        LOG() << "tx " << depositTxId << " no vout's " << __FUNCTION__;
+        return false;
+    }
+
     json_spirit::Object vout0   = vout[0].get_obj();
     json_spirit::Value  vamount = json_spirit::find_value(vout0, "value");
     double receivedAmount = vamount.get_real();
@@ -1761,6 +1767,69 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     {
         amount = receivedAmount;
         isGood = true;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+// return false if deposit tx not found (need wait tx)
+// true if tx found and checked
+// isGood == true id depost tx is OK
+// amount in - for check vout[0].value, out = vout[0].value
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getSecretFromPaymentTransaction(const std::string & paymentTxId,
+                                                                         std::vector<unsigned char> & secret)
+{
+    std::string rawtx;
+    if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, paymentTxId, true, rawtx))
+    {
+        LOG() << "no tx found " << paymentTxId << " " << __FUNCTION__;
+        return false;
+    }
+
+    // check confirmations
+    json_spirit::Value txv;
+    if (!json_spirit::read_string(rawtx, txv))
+    {
+        LOG() << "json read error for " << paymentTxId << " " << rawtx << " " << __FUNCTION__;
+        return false;
+    }
+
+    json_spirit::Object txo = txv.get_obj();
+
+    // extract secret from vin
+    // TODO temporary only first vin
+    json_spirit::Array  vin    = json_spirit::find_value(txo, "vin").get_array();
+    if (vin.size() == 0)
+    {
+        LOG() << "tx " << paymentTxId << " no vin's " << __FUNCTION__;
+        return false;
+    }
+    json_spirit::Object vin0   = vin[0].get_obj();
+    json_spirit::Value vscriptSig = json_spirit::find_value(vin0, "scriptSig");
+    if (vscriptSig.type() == json_spirit::null_type)
+    {
+        LOG() << "tx " << paymentTxId << " no scriptSig in vin[0] " << __FUNCTION__;
+        return false;
+    }
+
+    json_spirit::Value hex = json_spirit::find_value(vscriptSig.get_obj(), "hex");
+    if (hex.type() == json_spirit::null_type)
+    {
+        LOG() << "tx " << paymentTxId << " no hex in scriptSig in vin[0] " << __FUNCTION__;
+        return false;
+    }
+    CScript scriptSig(ParseHex(hex.get_str()));
+
+    // TODO 33 - great magic number :))
+    opcodetype op;
+    CScript::const_iterator pc = scriptSig.begin();
+    if (!scriptSig.GetOp(pc, op, secret) || secret.size() != 33)
+    {
+        LOG() << "tx " << paymentTxId << " secret not found or script error " << __FUNCTION__;
+        return false;
     }
 
     return true;
@@ -1797,7 +1866,7 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
         // lt = info.blocks + 259200 / m_wallet.blockTime;
 
         // 2h in seconds
-        lt = info.blocks + 120 / blockTime;
+        lt = info.blocks + 120*60 / blockTime;
     }
     else if (role == 'B')
     {
@@ -1805,7 +1874,7 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
         // lt = info.blocks + 259200 / 2 / m_wallet.blockTime;
 
         // 1h in seconds
-        lt = info.blocks + 36 / blockTime;
+        lt = info.blocks + 60*60 / blockTime;
     }
 
     return lt;
@@ -1816,7 +1885,7 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::vector<unsigned char> & myPubKey,
                                                           const std::vector<unsigned char> & otherPubKey,
-                                                          const std::vector<unsigned char> & xdata,
+                                                          const std::vector<unsigned char> & secretHash,
                                                           const uint32_t lockTime,
                                                           std::vector<unsigned char> & resultSript)
 {
@@ -1826,14 +1895,11 @@ bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::ve
                 << OP_DUP << OP_HASH160 << getKeyId(myPubKey) << OP_EQUALVERIFY << OP_CHECKSIG
           << OP_ELSE
                 << OP_DUP << OP_HASH160 << getKeyId(otherPubKey) << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
-                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << xdata << OP_EQUAL
+                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << secretHash << OP_EQUAL
           << OP_ENDIF;
 
-//    xbridge::XBitcoinAddress baddr;
-//    baddr.Set(CScriptID(inner), m_wallet.scriptPrefix[0]);
-//    xtx->multisig    = baddr.ToString();
-
     resultSript = std::vector<unsigned char>(inner.begin(), inner.end());
+
     return true;
 }
 

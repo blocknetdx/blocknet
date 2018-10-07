@@ -190,8 +190,7 @@ public:
      */
     bool updateTransactionWhenCreatedReceived(const TransactionPtr & tx,
                                               const std::vector<unsigned char> & from,
-                                              const std::string & binTxId,
-                                              const std::vector<unsigned char> & innerScript);
+                                              const std::string & binTxId);
     /**
      * @brief updateTransactionWhenConfirmedReceived
      * @param tx

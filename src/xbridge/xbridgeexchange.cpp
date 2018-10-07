@@ -575,10 +575,9 @@ bool Exchange::updateTransactionWhenInitializedReceived(const TransactionPtr &tx
 //*****************************************************************************
 bool Exchange::updateTransactionWhenCreatedReceived(const TransactionPtr & tx,
                                                            const std::vector<unsigned char> & from,
-                                                           const std::string & binTxId,
-                                                           const std::vector<unsigned char> & innerScript)
+                                                           const std::string & binTxId)
 {
-    if (!tx->setBinTxId(from, binTxId, innerScript))
+    if (!tx->setBinTxId(from, binTxId))
     {
         // wtf?
         LOG() << "unknown sender address for transaction, id <" << tx->id().GetHex() << ">";
