@@ -1779,7 +1779,7 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
         // lt = info.blocks + 259200 / m_wallet.blockTime;
 
         // 2h in seconds
-        lt = info.blocks + 120 / blockTime;
+        lt = info.blocks + 120*60 / blockTime;
     }
     else if (role == 'B')
     {
@@ -1787,7 +1787,7 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
         // lt = info.blocks + 259200 / 2 / m_wallet.blockTime;
 
         // 1h in seconds
-        lt = info.blocks + 60 / blockTime;
+        lt = info.blocks + 60*60 / blockTime;
     }
 
     return lt;

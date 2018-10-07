@@ -1755,7 +1755,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // lock time
     xtx->lockTime         = connFrom->lockTime(xtx->role);
-    xtx->opponentLockTime = connFrom->lockTime(xtx->role == 'B');
+    xtx->opponentLockTime = connTo->lockTime('B');
     if (xtx->lockTime == 0 || xtx->opponentLockTime == 0)
     {
         LOG() << "lockTime error, transaction canceled " << __FUNCTION__;
@@ -1972,7 +1972,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
     tr->updateTimestamp();
 
     // check lock time
-    if (lockTimeA == 0 || lockTimeB == 0 || lockTimeA <= lockTimeB)
+    if (lockTimeA == 0 || lockTimeB == 0/*|| lockTimeA <= lockTimeB*/ /* disabled because in blocks */)
     {
         ERR() << "incorrect lock time used on size A " << __FUNCTION__;
         sendCancelTransaction(tr, crBadADepositTx);
@@ -2119,7 +2119,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // check lock times
     {
-        if (lockTimeA == 0 || lockTimeB == 0 || lockTimeA <= lockTimeB)
+        if (lockTimeA == 0 || lockTimeB == 0/*|| lockTimeA <= lockTimeB*/ /* disabled because in blocks */)
         {
             LOG() << "incorrect lock times from A side " << txid.GetHex() << " " << __FUNCTION__;
             sendCancelTransaction(xtx, crBadADepositTx);
@@ -2128,7 +2128,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
         // calculate and second check
         uint32_t localLockTimeB = connFrom->lockTime(xtx->role);
-        uint32_t localLockTimeA = connFrom->lockTime('A');
+        uint32_t localLockTimeA = connTo->lockTime('A');
         if (localLockTimeB == lockTimeB && localLockTimeA == lockTimeA)
         {
             // ideally!!!
