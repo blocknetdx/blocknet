@@ -1138,6 +1138,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     // Add destination address
     updateConnector(connFrom, ptr->from, ptr->fromCurrency);
+    updateConnector(connTo, ptr->to, ptr->toCurrency);
 
     // notify ui about new order
     xuiConnector.NotifyXBridgeTransactionReceived(ptr);
@@ -1339,6 +1340,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
     // Add destination address
     updateConnector(connFrom, ptr->from, ptr->fromCurrency);
+    updateConnector(connTo, ptr->to, ptr->toCurrency);
 
     // try send immediatelly
     m_p->sendAcceptingTransaction(ptr);

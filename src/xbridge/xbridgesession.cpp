@@ -1617,7 +1617,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
 
             reply1->sign(e.pubKey(), e.privKey());
 
-            sendPacket(tr->a_destination(), reply1);
+            sendPacket(tr->a_address(), reply1);
         }
     }
 
@@ -1994,7 +1994,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 
     reply2->sign(e.pubKey(), e.privKey());
 
-    sendPacket(tr->b_destination(), reply2);
+    sendPacket(tr->b_address(), reply2);
 
     LOG() << __FUNCTION__ << tr;
 
