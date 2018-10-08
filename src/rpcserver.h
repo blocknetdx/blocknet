@@ -677,6 +677,7 @@ extern json_spirit::Value xrStatus(const json_spirit::Array& params, bool fHelp)
 extern json_spirit::Value xrRegisterDomain(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrQueryDomain(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrOpenConnections(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrPaymentChannels(const json_spirit::Array& params, bool fHelp);
 
 /** @} */
 

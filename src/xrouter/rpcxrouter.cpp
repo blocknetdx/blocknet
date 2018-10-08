@@ -567,3 +567,14 @@ Value xrQueryDomain(const Array & params, bool fHelp)
     //xrouter::App::instance().openConnections();
     return "";
 }
+
+Value xrPaymentChannels(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrPaymentChannels\nNot implemented yet");
+    }
+    
+    //Object result;
+    //xrouter::App::instance().openConnections();
+    return "";
+}
