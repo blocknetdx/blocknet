@@ -489,20 +489,15 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     int i = 0;
     int voutn = 0;
     for (Value vout : vouts) {
-        std::cout << json_spirit::write_string(vout, true) << std::endl << std::flush;
         Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
         std::string vouttype = find_value(script, "type").get_str();
-        std::cout << "Vout type = " << vouttype << " number = " << i << std::endl;
         if (vouttype == "scripthash") {
             voutn = i;
-            std:: cout << "FOUND " << voutn << std::endl;
             break;
         }
         
         i++;
     }
-    
-    std::cout << "Final vout = " << voutn << std::endl;
     
     channel.raw_tx = raw_tx;
     channel.txid = txid;
@@ -522,12 +517,10 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
     pwalletMain->GetKey(my_pubkey.GetID(), mykey);
     CKeyID mykeyID = my_pubkey.GetID();
 
-    std::cout << "channel outpoint " << channel.txid << " " << channel.vout << std::endl;
     CMutableTransaction unsigned_tx;
 
     COutPoint outp(ParseHashV(Value(channel.txid), "txin"), channel.vout);
     CTxIn in(outp);
-    std::cout << "outpoint " << outp.ToString() << std::endl << std::endl;
     unsigned_tx.vin.push_back(in);
     // TODO: get minimal fee from wallet
     unsigned_tx.vout.push_back(CTxOut(AmountFromValue(deposit - amount - 0.001), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
@@ -552,7 +545,6 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
 bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::string latest_tx, std::string & raw_tx)
 {
     CMutableTransaction tx = decodeTransaction(latest_tx);
-    std::cout << "Before " << EncodeHexTx(tx) << std::endl;
     std::vector<unsigned char> signature;
     uint256 sighash = SignatureHash(channel.redeemScript, tx, 0, SIGHASH_ALL);
     snodekey.Sign(sighash, signature);
@@ -562,11 +554,9 @@ bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::stri
     // TODO: fix this dirty hack
     finalScript << vector<unsigned char>(tx.vin[0].scriptSig.begin()+1, tx.vin[0].scriptSig.end());
     finalScript << signature << OP_TRUE << std::vector<unsigned char>(channel.redeemScript);
-    std::cout << "Inside: " << finalScript.ToString();
     tx.vin[0].scriptSig = finalScript;
     //tx.vin[0].scriptSig << signature << OP_TRUE << std::vector<unsigned char>(channel.redeemScript);
     raw_tx = EncodeHexTx(tx);
-    std::cout << "After " << raw_tx << std::endl;
     return true;
 }
 
@@ -624,7 +614,6 @@ int getChannelExpiryTime(std::string rawtx) {
     Object obj = result.get_obj();
     Array vouts = find_value(obj, "vout").get_array();
     for (Value vout : vouts) {            
-        std::cout << json_spirit::write_string(vout, true) << std::endl << std::flush;
         Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
         std::string vouttype = find_value(script, "type").get_str();
         if (vouttype != "nulldata")
@@ -636,8 +625,6 @@ int getChannelExpiryTime(std::string rawtx) {
         }
         
         std::string hexdate = "0x" + asmscript.substr(4);
-        std::cout << hexdate << std::endl << std::flush;
-        
         int res = stoi(hexdate, 0, 16);
         return res;    
     }

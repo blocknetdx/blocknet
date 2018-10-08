@@ -939,9 +939,6 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
                     return "Failed to create payment channel";
                 this->paymentChannels[pnode] = channel;
                 payment_tx = channel.raw_tx + ";" + channel.txid + ";" + HexStr(channel.redeemScript.begin(), channel.redeemScript.end()) + ";";
-                std::cout << "ToString() " << channel.redeemScript.ToString() << std::endl;
-                std::cout << "HexStr() " << HexStr(channel.redeemScript.begin(), channel.redeemScript.end()) << std::endl;
-                //std::cout << "Serialize() " << Serialize(channel.redeemScript) << std::endl;
             }
             
             // Submit payment via channel
@@ -959,7 +956,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         }
         
         LOG() << "Payment transaction: " << payment_tx;
-        std::cout << "Payment transaction: " << payment_tx << std::endl << std::flush;
+        //std::cout << "Payment transaction: " << payment_tx << std::endl << std::flush;
     }
     
     packet->append(txHash.begin(), 32);

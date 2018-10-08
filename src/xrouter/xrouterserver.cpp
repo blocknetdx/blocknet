@@ -289,7 +289,6 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     paymentChannels[node].txid = parts[1];
                     std::vector<unsigned char> script = ParseHex(parts[2]);
                     paymentChannels[node].redeemScript = CScript(script.begin(), script.end());
-                    std::cout << "Raw script " << parts[2] << "        " << paymentChannels[node].redeemScript.ToString() << std::endl;
                     feetx = parts[3];
                     
                     // TODO: verify the channel's correctness
@@ -299,10 +298,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     int deadline = date - std::time(0) - 5000;
                     
                     LOG() << "Created payment channel date = " << date << " expiry = " << deadline << " ms"; 
-                    std::cout << "Created payment channel date = " << date << " expiry = " << deadline << " ms" <<std::endl << std::flush; 
                     
-                    
-
                     std::thread([deadline, this, node]() {
                         std::this_thread::sleep_for(std::chrono::milliseconds(deadline));
                         std::string txid;
