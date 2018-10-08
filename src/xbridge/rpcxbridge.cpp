@@ -98,7 +98,8 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
     std::set<std::string> services;
     auto nodeServices = xbridge::App::instance().allServices();
     for (auto & serviceItem : nodeServices) {
-        services.insert(serviceItem.second.services().begin(), serviceItem.second.services().end());
+        auto s = serviceItem.second.services();
+        services.insert(s.begin(), s.end());
     }
 
     return Array{services.begin(), services.end()};
