@@ -1136,6 +1136,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
              "    priv   " << HexStr(ptr->xPrivKey);
 #endif
 
+    // Add destination address
+    updateConnector(connFrom, ptr->from, ptr->fromCurrency);
+
     // notify ui about new order
     xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
@@ -1333,6 +1336,9 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
              "    pub id " << HexStr(connTo->getKeyId(ptr->mPubKey)) << std::endl <<
              "    priv   " << HexStr(ptr->mPrivKey);
 #endif
+
+    // Add destination address
+    updateConnector(connFrom, ptr->from, ptr->fromCurrency);
 
     // try send immediatelly
     m_p->sendAcceptingTransaction(ptr);
