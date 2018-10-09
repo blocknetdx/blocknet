@@ -22,7 +22,7 @@ struct PaymentChannel
     std::string txid;
     CScript redeemScript;
     int vout;
-    double value;
+    CAmount value;
     std::string latest_tx;
 };
     

@@ -12,6 +12,7 @@
 #include "script/standard.h"
 #include "wallet.h"
 #include "bloom.h"
+#include "rpcserver.h"
 
 #include "xbridge/util/settings.h"
 #include "xbridge/bitcoinrpcconnector.h"
@@ -917,8 +918,8 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     std::string strtxid;
     std::string dest = getPaymentAddress(pnode);
-    float fee = snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee();
-    float deposit = xrouter_settings.get<double>("Main.deposit", 0.0);
+    CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee());
+    CAmount deposit = AmountFromValue(xrouter_settings.get<double>("Main.deposit", 0.0));
     int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
     std::string payment_tx = "nofee";
     bool res;
@@ -942,7 +943,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             }
             
             // Submit payment via channel
-            double paid = this->paymentChannels[pnode].value;
+            CAmount paid = this->paymentChannels[pnode].value;
             
             std::string paytx;
             bool res = createAndSignChannelTransaction(this->paymentChannels[pnode], dest, deposit, fee + paid, paytx);

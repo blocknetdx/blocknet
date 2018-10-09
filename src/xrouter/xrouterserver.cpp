@@ -7,6 +7,7 @@
 #include "xrouterapp.h"
 #include "servicenodeman.h"
 #include "activeservicenode.h"
+#include "rpcserver.h"
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
@@ -253,7 +254,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         std::string feetx((const char *)packet->data()+offset);
         offset += feetx.size() + 1;
         
-        double fee = psettings.getFee();
+        CAmount fee = AmountFromValue(psettings.getFee());
         if (fee > 0) {
             if (!paymentChannels.count(node)) {
                 // There is no payment channel with this node
@@ -262,7 +263,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     // Direct payment, no CLTV channel
                     std::string txid;
                     
-                    double paid = getTxValue(feetx, getMyPaymentAddress());
+                    CAmount paid = AmountFromValue(getTxValue(feetx, getMyPaymentAddress()));
                     if (paid < fee) {
                         sendReply(node, uuid, "Fee paid is not enough");
                         return;
@@ -284,7 +285,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     }
                     
                     paymentChannels[node] = PaymentChannel();
-                    paymentChannels[node].value = 0.0;
+                    paymentChannels[node].value = CAmount(0);
                     paymentChannels[node].raw_tx = parts[0];
                     paymentChannels[node].txid = parts[1];
                     std::vector<unsigned char> script = ParseHex(parts[2]);
@@ -311,7 +312,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             }
             
             if (paymentChannels.count(node)) {
-                double paid = getTxValue(feetx, getMyPaymentAddress());
+                CAmount paid = AmountFromValue(getTxValue(feetx, getMyPaymentAddress()));
                 LOG() << "Got payment via channel; value = " << paid - paymentChannels[node].value << " total value = " << paid << " tx = " << feetx; 
                 if (paid - paymentChannels[node].value < fee) {
                     sendReply(node, uuid, "Fee paid is not enough");
