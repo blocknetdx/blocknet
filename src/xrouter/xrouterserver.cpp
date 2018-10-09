@@ -720,7 +720,19 @@ CKey XRouterServer::getMyPaymentAddressKey()
 }
 
 Value XRouterServer::printPaymentChannels() {
+    Array server;
     
+    for (const auto& it : this->paymentChannels) {
+        Object val;
+        val.emplace_back("Node id", it.first->id);
+        val.emplace_back("Deposit transaction", it.second.raw_tx);
+        val.emplace_back("Deposit transaction id", it.second.txid);
+        val.emplace_back("Latest redeem transaction", it.second.latest_tx);
+        val.emplace_back("Received amount", it.second.value);
+        server.push_back(Value(val));
+    }
+    
+    return json_spirit::write_string(Value(server), true);
 }
 
 } // namespace xrouter

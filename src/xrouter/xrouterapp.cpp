@@ -1034,7 +1034,7 @@ std::string App::printPaymentChannels() {
     
     for (const auto& it : this->paymentChannels) {
         Object val;
-        val.emplace_back("Node id", it.first.id);
+        val.emplace_back("Node id", it.first->id);
         val.emplace_back("Deposit transaction", it.second.raw_tx);
         val.emplace_back("Deposit transaction id", it.second.txid);
         val.emplace_back("Redeem transaction", it.second.latest_tx);
