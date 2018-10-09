@@ -719,4 +719,8 @@ CKey XRouterServer::getMyPaymentAddressKey()
     return result;
 }
 
+Value XRouterServer::printPaymentChannels() {
+    
+}
+
 } // namespace xrouter

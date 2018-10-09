@@ -1029,6 +1029,26 @@ CPubKey App::getPaymentPubkey(CNode* node)
     return CPubKey();
 }
 
+std::string App::printPaymentChannels() {
+    Array client;
+    
+    for (const auto& it : this->paymentChannels) {
+        Object val;
+        val.emplace_back("Node id", it.first.id);
+        val.emplace_back("Deposit transaction", it.second.raw_tx);
+        val.emplace_back("Deposit transaction id", it.second.txid);
+        val.emplace_back("Redeem transaction", it.second.latest_tx);
+        val.emplace_back("Paid amount", it.second.value);
+        client.push_back(Value(val));
+    }
+    
+    Object result;
+    result.emplace_back("Client side", client);
+    result.emplace_back("Server side", this->server->printPaymentChannels());
+    
+    return json_spirit::write_string(Value(result), true);
+}
+
 std::string App::getXrouterConfig(CNode* node, std::string addr) {
     XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
 

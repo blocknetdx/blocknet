@@ -172,6 +172,7 @@ protected:
     
     std::string getMyPaymentAddress();
     CKey getMyPaymentAddressKey();
+    Value printPaymentChannels();
 };
 
 } // namespace
