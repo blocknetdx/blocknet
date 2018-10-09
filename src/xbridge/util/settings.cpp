@@ -33,6 +33,7 @@ Settings::Settings()
 //******************************************************************************
 bool Settings::parseCmdLine(int, char * argv[])
 {
+    LOCK(m_lock);
     m_appPath = std::string(argv[0]);
     std::replace(m_appPath.begin(), m_appPath.end(), '\\', '/');
     m_appPath = m_appPath.substr(0, m_appPath.rfind('/')+1);
@@ -52,6 +53,7 @@ bool Settings::parseCmdLine(int, char * argv[])
 //******************************************************************************
 bool Settings::read(const char * fileName)
 {
+    LOCK(m_lock);
     try
     {
         if (fileName)
@@ -79,6 +81,7 @@ bool Settings::read(const char * fileName)
 //******************************************************************************
 bool Settings::write(const char * fileName)
 {
+    LOCK(m_lock);
     try
     {
         std::string iniName = m_fileName;
@@ -117,6 +120,7 @@ std::string Settings::logPath() const
 //******************************************************************************
 std::vector<std::string> Settings::peers() const
 {
+    LOCK(m_lock);
     std::string list;
     TRY(list = m_pt.get<std::string>("Main.Peers"));
 
@@ -134,6 +138,7 @@ std::vector<std::string> Settings::peers() const
 //******************************************************************************
 std::vector<std::string> Settings::exchangeWallets() const
 {
+    LOCK(m_lock);
     std::string list;
     TRY(list = m_pt.get<std::string>("Main.ExchangeWallets"));
 

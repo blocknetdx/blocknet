@@ -93,10 +93,16 @@ bool Exchange::init()
         ERR() << "bad service node key pair " << __FUNCTION__;
     }
 
-    Settings & s = settings();
+    return true;
+}
 
-    std::vector<std::string> wallets = s.exchangeWallets();
-    for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::loadWallets(std::set<std::string> & wallets)
+{
+    LOCK(m_lock);
+    auto & s = settings();
+    for (std::set<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
     {
         std::string label      = s.get<std::string>(*i + ".Title");
         std::string address    = s.get<std::string>(*i + ".Address");
@@ -109,9 +115,9 @@ bool Exchange::init()
 
 
         if (/*address.empty() || */ip.empty() || port.empty() ||
-                user.empty() || passwd.empty())
+                                   user.empty() || passwd.empty())
         {
-            LOG() << "read wallet " << *i << " with empty parameters>";
+            LOG() << "failed to read wallet " << *i << ", has empty parameters>";
             continue;
         }
 
@@ -126,16 +132,6 @@ bool Exchange::init()
         wp.txVersion  = txVersion;
 
         LOG() << "read wallet " << *i << " \"" << label << "\" address <" << address << ">";
-    }
-
-    if (isEnabled())
-    {
-        LOG() << "exchange enabled";
-    }
-
-    if (isStarted())
-    {
-        LOG() << "exchange started";
     }
 
     return true;

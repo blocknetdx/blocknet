@@ -54,6 +54,22 @@ namespace bpt           = boost::posix_time;
 
 //******************************************************************************
 //******************************************************************************
+Value dxLoadXBridgeConf(const Array & params, bool fHelp)
+{
+    if (fHelp)
+        throw runtime_error("dxLoadXBridgeConf\nHot loads xbridge.conf (note this may disrupt trades in progress)");
+
+    if (params.size() > 0)
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameter");
+
+    auto success = xbridge::App::instance().loadSettings();
+    xbridge::App::instance().updateActiveWallets();
+    return success;
+}
+
+//******************************************************************************
+//******************************************************************************
 Value dxGetLocalTokens(const Array & params, bool fHelp)
 {
     if (fHelp) {

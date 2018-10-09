@@ -130,6 +130,18 @@ public:
             : id{id}, txtime{txtime}, use_count{use_count} {}
     };
 
+    // Settings
+    /**
+     * @brief Load xbridge.conf settings file.
+     */
+    bool loadSettings();
+
+    // Shutdown
+    /**
+     * @brief Disconnects all wallets loaded by this node and notifies the network of the empty service list.
+     */
+    bool disconnectWallets();
+
     // transactions
     /**
      * @brief transaction - find transaction by id
@@ -301,6 +313,12 @@ public:
     void addConnector(const WalletConnectorPtr & conn);
 
     /**
+     * @brief Removes the specified connector.
+     * @param conn connector to remove
+     */
+    void removeConnector(const std::string & currency);
+
+    /**
      * @brief updateConnector - update connector params
      * @param conn - pointer to connector
      * @param addr - new currency name address
@@ -309,6 +327,13 @@ public:
     void updateConnector(const WalletConnectorPtr & conn,
                          const std::vector<unsigned char> addr,
                          const std::string & currency);
+
+    /**
+     * Updates the active wallets list. Active wallets are those that are running and responding
+     * to rpc calls.
+     */
+    std::set<std::string> updateActiveWallets();
+
     /**
      * @brief connectorByCurrency
      * @param currency - currency name
@@ -422,6 +447,8 @@ protected:
 
 private:
     std::unique_ptr<Impl> m_p;
+    bool m_disconnecting;
+    CCriticalSection m_lock;
 
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.

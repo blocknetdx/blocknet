@@ -224,7 +224,7 @@ App::Impl::Impl()
 //*****************************************************************************
 //*****************************************************************************
 App::App()
-    : m_p(new Impl)
+    : m_p(new Impl), m_disconnecting(false)
 {
 }
 
@@ -272,7 +272,22 @@ bool App::isEnabled()
 //*****************************************************************************
 bool App::start()
 {
-    return m_p->start();
+    auto s = m_p->start();
+
+    // This will update the wallet connectors on both the app & exchange
+    updateActiveWallets();
+
+    if (xbridge::Exchange::instance().isEnabled())
+    {
+        LOG() << "exchange enabled";
+    }
+
+    if (xbridge::Exchange::instance().isStarted())
+    {
+        LOG() << "exchange started";
+    }
+
+    return s;
 }
 
 //*****************************************************************************
@@ -294,84 +309,6 @@ bool App::Impl::start()
         }
 
         m_timer.async_wait(boost::bind(&Impl::onTimer, this));
-
-        // sessions
-        xbridge::App & app = xbridge::App::instance();
-        {
-            Settings & s = settings();
-            std::vector<std::string> wallets = s.exchangeWallets();
-            for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
-            {
-                WalletParam wp;
-                wp.currency                    = *i;
-                wp.title                       = s.get<std::string>(*i + ".Title");
-                wp.address                     = s.get<std::string>(*i + ".Address");
-                wp.m_ip                        = s.get<std::string>(*i + ".Ip");
-                wp.m_port                      = s.get<std::string>(*i + ".Port");
-                wp.m_user                      = s.get<std::string>(*i + ".Username");
-                wp.m_passwd                    = s.get<std::string>(*i + ".Password");
-                wp.addrPrefix                  = s.get<std::string>(*i + ".AddressPrefix");
-                wp.scriptPrefix                = s.get<std::string>(*i + ".ScriptPrefix");
-                wp.secretPrefix                = s.get<std::string>(*i + ".SecretPrefix");
-                wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
-                wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
-                wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
-                wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
-                wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
-                wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
-                wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
-                wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
-
-                if (wp.m_ip.empty() || wp.m_port.empty() ||
-                    wp.m_user.empty() || wp.m_passwd.empty() ||
-                    wp.COIN == 0 || wp.blockTime == 0)
-                {
-                    LOG() << "read wallet " << *i << " with empty parameters>";
-                    continue;
-                }
-
-                LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
-                      << ":" << wp.m_port; // << " COIN=" << wp.COIN;
-
-                xbridge::WalletConnectorPtr conn;
-                if (wp.method == "ETHER")
-                {
-                    LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
-                    // session.reset(new XBridgeSessionEthereum(wp));
-                }
-                else if (wp.method == "BTC" || wp.method == "SYS")
-                {
-                    conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
-                    *conn = wp;
-                }
-                else if (wp.method == "BCH")
-                {
-                    conn.reset(new BchWalletConnector);
-                    *conn = wp;
-                }
-                else if (wp.method == "DGB")
-                {
-                    conn.reset(new DgbWalletConnector);
-                    *conn = wp;
-                }
-                else
-                {
-                    ERR() << "unknown session type " << __FUNCTION__;
-                }
-                if (!conn)
-                {
-                    continue;
-                }
-
-                if (!conn->init())
-                {
-                    ERR() << "connection not initialized " << *i << " " << __FUNCTION__;
-                    continue;
-                }
-
-                app.addConnector(conn);
-            }
-        }
     }
     catch (std::exception & e)
     {
@@ -388,13 +325,8 @@ bool App::init(int argc, char *argv[])
 {
     // init xbridge settings
     Settings & s = settings();
-    {
-        std::string path(GetDataDir(false).string());
-        path += "/xbridge.conf";
-        s.read(path.c_str());
-        s.parseCmdLine(argc, argv);
-        LOG() << "Finished loading config" << path;
-    }
+    s.parseCmdLine(argc, argv);
+    loadSettings();
 
     // init exchange
     Exchange & e = Exchange::instance();
@@ -420,14 +352,64 @@ bool App::init(int argc, char *argv[])
 //*****************************************************************************
 bool App::stop()
 {
-    return m_p->stop();
+    bool s = m_p->stop();
+    disconnectWallets();
+    return s;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::disconnectWallets()
+{
+    {
+        LOCK(m_lock);
+        if (m_disconnecting || activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
+            return false; // not a servicenode or not started
+        m_disconnecting = true;
+    }
+
+    // Notify the network all wallets are going offline
+    std::set<std::string> wallets;
+    {
+        LOCK(m_p->m_connectorsLock);
+        for (auto & conn : m_p->m_connectors)
+            wallets.insert(conn->currency);
+    }
+    // Remove all connectors
+    for (auto & wallet : wallets)
+        removeConnector(wallet);
+
+    std::set<std::string> noWallets;
+    xbridge::Exchange::instance().loadWallets(noWallets);
+    sendServicePing();
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool App::loadSettings()
+{
+    LOCK(m_lock);
+
+    Settings & s = settings();
+    try {
+        std::string path(GetDataDir(false).string());
+        path += "/xbridge.conf";
+        s.read(path.c_str());
+        LOG() << "Finished loading config" << path;
+    } catch (...) {
+        return false;
+    }
+
+    return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
 bool App::Impl::stop()
 {
-    LOG() << "stopping threads...";
+    LOG() << "stopping xbridge threads...";
 
     m_timer.cancel();
     m_timerIo.stop();
@@ -749,11 +731,53 @@ bool App::hasCurrency(const std::string & currency) const
 
 //*****************************************************************************
 //*****************************************************************************
+// The connector is not added if it already exists.
 void App::addConnector(const WalletConnectorPtr & conn)
 {
     LOCK(m_p->m_connectorsLock);
-    m_p->m_connectors.push_back(conn);
-    m_p->m_connectorCurrencyMap[conn->currency] = conn;
+
+    bool found = false;
+    for (int i = m_p->m_connectors.size() - 1; i >= 0; --i) {
+        if (m_p->m_connectors[i]->currency == conn->currency) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found)
+        m_p->m_connectors.push_back(conn);
+
+    // Add connection if it doesn't already exist
+    if (!m_p->m_connectorCurrencyMap.count(conn->currency))
+        m_p->m_connectorCurrencyMap[conn->currency] = conn;
+
+    // Update address connectors
+    for (auto iter = m_p->m_connectorAddressMap.rbegin(); iter != m_p->m_connectorAddressMap.rend(); ++iter) {
+        if (iter->second->currency == conn->currency)
+            m_p->m_connectorAddressMap[iter->first] = conn;
+    }
+}
+
+//*****************************************************************************
+//*****************************************************************************
+void App::removeConnector(const std::string & currency)
+{
+    LOCK(m_p->m_connectorsLock);
+
+    for (int i = m_p->m_connectors.size() - 1; i >= 0; --i) {
+        if (m_p->m_connectors[i]->currency == currency)
+            m_p->m_connectors.erase(m_p->m_connectors.begin() + i);
+    }
+
+    // Remove currency connector
+    m_p->m_connectorCurrencyMap.erase(currency);
+
+    // Remove addresses linked to this connector (delete in reverse iterator)
+    for (auto iter = m_p->m_connectorAddressMap.cbegin(); iter != m_p->m_connectorAddressMap.cend();) {
+        if (iter->second && iter->second->currency == currency)
+            m_p->m_connectorAddressMap.erase(iter++);
+        else ++iter;
+    }
 }
 
 //*****************************************************************************
@@ -766,6 +790,124 @@ void App::updateConnector(const WalletConnectorPtr & conn,
 
     m_p->m_connectorAddressMap[addr]      = conn;
     m_p->m_connectorCurrencyMap[currency] = conn;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::set<std::string> App::updateActiveWallets()
+{
+    Settings & s = settings();
+    std::vector<std::string> wallets = s.exchangeWallets();
+
+    // Disconnect any wallets not in the exchange list
+    std::set<std::string> toRemove;
+    {
+        LOCK(m_p->m_connectorsLock);
+        for (auto & item : m_p->m_connectorCurrencyMap) {
+            bool found = false;
+            for (auto & currency : wallets) {
+                if (item.first == currency) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found)
+                toRemove.insert(item.first);
+        }
+    } // do not deadlock removeConnector(), it must be outside lock scope
+    for (auto & currency : toRemove)
+        removeConnector(currency);
+
+    // return wallet list
+    std::set<std::string> rwallets;
+
+    for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
+    {
+        WalletParam wp;
+        wp.currency                    = *i;
+        wp.title                       = s.get<std::string>(*i + ".Title");
+        wp.address                     = s.get<std::string>(*i + ".Address");
+        wp.m_ip                        = s.get<std::string>(*i + ".Ip");
+        wp.m_port                      = s.get<std::string>(*i + ".Port");
+        wp.m_user                      = s.get<std::string>(*i + ".Username");
+        wp.m_passwd                    = s.get<std::string>(*i + ".Password");
+        wp.addrPrefix                  = s.get<std::string>(*i + ".AddressPrefix");
+        wp.scriptPrefix                = s.get<std::string>(*i + ".ScriptPrefix");
+        wp.secretPrefix                = s.get<std::string>(*i + ".SecretPrefix");
+        wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
+        wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
+        wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
+        wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
+        wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
+        wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
+        wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
+        wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
+
+        if (wp.m_ip.empty() || wp.m_port.empty() ||
+            wp.m_user.empty() || wp.m_passwd.empty() ||
+            wp.COIN == 0 || wp.blockTime == 0)
+        {
+            LOG() << "read wallet " << *i << " with empty parameters>";
+            continue;
+        }
+
+        LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
+              << ":" << wp.m_port; // << " COIN=" << wp.COIN;
+
+        xbridge::WalletConnectorPtr conn;
+        if (wp.method == "ETHER")
+        {
+            LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
+            // session.reset(new XBridgeSessionEthereum(wp));
+        }
+        else if (wp.method == "BTC" || wp.method == "SYS")
+        {
+            conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
+            *conn = wp;
+        }
+        else if (wp.method == "BCH")
+        {
+            conn.reset(new BchWalletConnector);
+            *conn = wp;
+        }
+        else if (wp.method == "DGB")
+        {
+            conn.reset(new DgbWalletConnector);
+            *conn = wp;
+        }
+        else
+        {
+            ERR() << "unknown session type " << __FUNCTION__;
+        }
+        if (!conn)
+        {
+            continue;
+        }
+
+        if (!conn->init())
+        {
+            removeConnector(conn->currency);
+            ERR() << "connection not initialized " << *i << " " << __FUNCTION__;
+            continue;
+        }
+
+        // Check that wallet is reachable
+        xbridge::rpc::WalletInfo info;
+        if (!conn->getInfo(info))
+        {
+            removeConnector(conn->currency);
+            ERR() << "wallet connection failed, is " << wp.title << " running? " << __FUNCTION__;
+            continue;
+        }
+
+        addConnector(conn);
+        rwallets.insert(conn->currency);
+    }
+
+    // Let the exchange know about the new wallet list
+    xbridge::Exchange::instance().loadWallets(rwallets);
+
+    return rwallets;
 }
 
 //*****************************************************************************
@@ -1599,9 +1741,10 @@ bool App::sendServicePing()
     }
 
     // Add xbridge connected wallets
-    for (const auto &wallet : e.connectedWallets())
+    const auto &wallets = e.connectedWallets();
+    for (const auto &wallet : wallets)
     {
-        nodup[wallet] = true;
+        nodup[wallet] = hasCurrency(wallet);
     }
 
     // All services
@@ -1609,7 +1752,8 @@ bool App::sendServicePing()
     services.reserve(nodup.size());
     for (const auto &item : nodup)
     {
-        services.push_back(item.first);
+        if (item.second) // only show enabled wallets
+            services.push_back(item.first);
     }
 
     std::string servicesStr = boost::algorithm::join(services, ",");
@@ -2029,6 +2173,10 @@ void App::Impl::onTimer()
 
         // get addressbook
         io->post(boost::bind(&xbridge::Session::getAddressBook, session));
+
+        // update active xwallets (in case a wallet goes offline)
+        auto app = &xbridge::App::instance();
+        io->post(boost::bind(&xbridge::App::updateActiveWallets, app));
 
         // unprocessed packets
         {
