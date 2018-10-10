@@ -1740,15 +1740,19 @@ bool App::sendServicePing()
         nodup[s] = true;
     }
 
+    std::vector<std::string> services;
+
     // Add xbridge connected wallets
-    const auto &wallets = e.connectedWallets();
-    for (const auto &wallet : wallets)
-    {
-        nodup[wallet] = hasCurrency(wallet);
+    if (e.isStarted()) {
+        const auto &wallets = e.connectedWallets();
+        for (const auto &wallet : wallets) {
+            nodup[wallet] = hasCurrency(wallet);
+        }
+    } else {
+        ERR() << "Services not sent to the network, exchange hasn't started. Is the servicenode in exchange mode? " << __FUNCTION__;
     }
 
     // All services
-    std::vector<std::string> services;
     services.reserve(nodup.size());
     for (const auto &item : nodup)
     {
