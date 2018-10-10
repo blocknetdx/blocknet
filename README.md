@@ -29,7 +29,7 @@ Block DX is a completely decentralized and trustless exchange built on the Block
 Initiator creates secret X, and hashes it to create H(X). Initiator also creates public private key pair (pubkey i1,i2 / privkey i2,i2). Responder creates public private key pair (pubkey r1,r2 / privkey r1,r2).
 
 Step 2.
-Initiator shares H(X) and pubkey i2 with responder. Responder shares pubkey r1 with intiator.
+Initiator shares H(X) and pubkey i2 with responder. Responder shares pubkey r1 with initiator.
 
 Step 3.
 Initiator creates TxAb. TxAb can be redeemed after time T2 with privkey i1. At any time TxAb can redeemed with signature from privkey r1 and reveal of secret X. Initiator broadcasts TxAb onto the network.
