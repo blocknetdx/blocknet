@@ -37,6 +37,7 @@
 #include "servicenodelist.h"
 #include "ui_interface.h"
 #include "util.h"
+#include "xbridge/xbridgeapp.h"
 #include "xbridge/xbridgeexchange.h"
 
 #include <iostream>
@@ -345,7 +346,7 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     xbridgeAction->setToolTip(tr("Show xbridge dialog"));
     // xbridgeAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     xbridgeAction->setCheckable(true);
-    if (GetBoolArg("-enableexchange", false))
+    if (xbridge::App::instance().connectors().size() > 0 || GetBoolArg("-enableexchange", false))
     {
         tabGroup->addAction(xbridgeAction);
     }
@@ -541,7 +542,7 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
 
-        if (GetBoolArg("-enableexchange", false))
+        if (xbridge::App::instance().connectors().size() > 0 || GetBoolArg("-enableexchange", false))
         {
             toolbar->addAction(xbridgeAction);
         }
