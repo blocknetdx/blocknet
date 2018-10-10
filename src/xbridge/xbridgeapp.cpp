@@ -1398,7 +1398,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     if (!connFrom || !connTo)
     {
         // no session
-        WARN() << "no session for <" << (connFrom ? ptr->toCurrency : ptr->fromCurrency) << "> " << __FUNCTION__;
+        WARN() << "no wallet session for <" << (connFrom ? ptr->fromCurrency : ptr->toCurrency) << "> " << __FUNCTION__;
         return xbridge::NO_SESSION;
     }
 
@@ -1495,7 +1495,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
 
     // lock used coins
-    connTo->lockCoins(ptr->usedCoins, true);
+    connFrom->lockCoins(ptr->usedCoins, true);
 
     LOG() << "order accepted" << ptr << __FUNCTION__;
 

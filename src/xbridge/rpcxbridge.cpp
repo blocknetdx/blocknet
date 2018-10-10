@@ -594,8 +594,6 @@ Value dxTakeOrder(const Array & params, bool fHelp)
                             "Accepts the order. dryrun will evaluate input without accepting the order.");
     }
 
-    auto statusCode = xbridge::SUCCESS;
-
     if ((params.size() != 3) && (params.size() != 4))
     {
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -636,7 +634,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     Object result;
     xbridge::TransactionDescrPtr txDescr;
-    statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
+    auto statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
 
     switch (statusCode)
     {
