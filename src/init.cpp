@@ -165,6 +165,7 @@ static std::unique_ptr<ECCVerifyHandle> globalVerifyHandle;
 void PrepareShutdown()
 {
     xbridge::App::instance().cancelMyXBridgeTransactions();
+    xbridge::App::instance().disconnectWallets();
 
     fRequestShutdown = true;  // Needed when we shutdown the wallet
     fRestartRequested = true; // Needed when we restart the wallet

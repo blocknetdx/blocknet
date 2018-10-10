@@ -7,6 +7,7 @@
 #include "uint256.h"
 #include "xbridgetransactionmember.h"
 #include "xbridgedef.h"
+#include "sync.h"
 
 #include <vector>
 #include <string>
@@ -186,7 +187,7 @@ public:
     friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
 
 public:
-    boost::mutex               m_lock;
+    CCriticalSection           m_lock;
 
 private:
     uint256                    m_id;

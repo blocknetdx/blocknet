@@ -8,6 +8,7 @@
 #include "xseries.h"
 #include "xbridge/xbridgetransactiondescr.h"
 #include "xbridge/xbridgeapp.h"
+#include "sync.h"
 
 extern CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey);
 
@@ -154,7 +155,7 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
     // need to be invalidated... this code invalidates on every query to
     // ensure results are up-to-date, cache can be enabled when invalidation
     // hook is in place
-    boost::mutex::scoped_lock l(m_xSeriesCacheUpdateLock);
+    LOCK(m_xSeriesCacheUpdateLock);
     std::vector<CurrencyPair> pairs = get_tradingdata(period);
     std::sort(pairs.begin(), pairs.end(), // ascending by updated time
               [](const CurrencyPair& a, const CurrencyPair& b) {

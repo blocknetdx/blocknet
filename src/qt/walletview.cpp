@@ -87,11 +87,7 @@ WalletView::WalletView(QWidget* parent) : QStackedWidget(parent),
     addWidget(receiveCoinsPage);
     addWidget(sendCoinsPage);
     addWidget(explorerWindow);
-
-    if (xbridge::App::instance().isEnabled())
-    {
-        addWidget(xbridgePage);
-    }
+    addWidget(xbridgePage);
 
     QSettings settings;
     if (settings.value("fShowServicenodesTab").toBool()) {

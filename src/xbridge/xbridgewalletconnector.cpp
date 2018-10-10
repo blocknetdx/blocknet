@@ -71,7 +71,7 @@ double WalletConnector::getWalletBalance(const std::string & addr) const
 bool WalletConnector::lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
                                 const bool lock)
 {
-    boost::lock_guard<boost::mutex> l(lockedCoinsLocker);
+    LOCK(lockedCoinsLocker);
 
     if (!lock)
     {
@@ -101,7 +101,7 @@ bool WalletConnector::lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
 //******************************************************************************
 void WalletConnector::removeLocked(std::vector<wallet::UtxoEntry> & inputs) const
 {
-    boost::lock_guard<boost::mutex> lock(lockedCoinsLocker);
+    LOCK(lockedCoinsLocker);
 
     for (auto it = inputs.begin(); it != inputs.end(); )
     {

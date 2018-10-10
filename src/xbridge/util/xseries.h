@@ -9,6 +9,7 @@
 #include "currencypair.h"
 #include "xutil.h"
 #include "xbridge/xbridgetransactiondescr.h"
+#include "sync.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
@@ -233,7 +234,7 @@ private:
                        const xQuery& q,
                        xQuery::Transform tf);
 private:
-    boost::mutex m_xSeriesCacheUpdateLock;
+    CCriticalSection m_xSeriesCacheUpdateLock;
     /**
      * The cache keeps data in intervals of the minimum of
      *    - the granularity of time in the blockchain (TargetSpacing), and
