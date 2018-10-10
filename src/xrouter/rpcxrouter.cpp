@@ -575,6 +575,13 @@ Value xrPaymentChannels(const Array & params, bool fHelp)
     }
     
     //Object result;
-    //xrouter::App::instance().openConnections();
-    return "";
+    return xrouter::App::instance().printPaymentChannels();
+}
+
+Value xrClosePaymentChannel(const Array& params, bool fHelp)
+{
+}
+
+Value xrCloseAllPaymentChannels(const Array& params, bool fHelp)
+{
 }
