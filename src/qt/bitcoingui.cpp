@@ -144,7 +144,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
 #endif
 
     xbridge::Exchange & e = xbridge::Exchange::instance();
-    if (e.isEnabled())
+    if (GetBoolArg("-enableexchange", false))
     {
         windowTitle += QString(" [%1] ").arg(tr("exchange mode"));
     }
@@ -345,7 +345,7 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
     xbridgeAction->setToolTip(tr("Show xbridge dialog"));
     // xbridgeAction->setShortcut(QKeySequence(Qt::ALT + Qt::Key_6));
     xbridgeAction->setCheckable(true);
-    if (xbridge::App::instance().isEnabled())
+    if (GetBoolArg("-enableexchange", false))
     {
         tabGroup->addAction(xbridgeAction);
     }
@@ -541,7 +541,7 @@ void BitcoinGUI::createToolBars()
         toolbar->addAction(receiveCoinsAction);
         toolbar->addAction(historyAction);
 
-        if (xbridge::App::instance().isEnabled())
+        if (GetBoolArg("-enableexchange", false))
         {
             toolbar->addAction(xbridgeAction);
         }
