@@ -171,7 +171,7 @@ void Session::Impl::init()
     // process invalid
     m_handlers[xbcInvalid]                   .bind(this, &Impl::processInvalid);
 
-    if (Exchange::instance().isEnabled())
+    if (GetBoolArg("-servicenode", false) && GetBoolArg("-enableexchange", false))
     {
         // server side
         m_handlers[xbcTransaction]           .bind(this, &Impl::processTransaction);
