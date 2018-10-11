@@ -18,7 +18,7 @@ ProposalFilterProxy::ProposalFilterProxy(QObject *parent) :
     endDate(INT_MIN),
     proposalName(),
     minAmount(0),
-    minPercentage(-100),
+    votesNeeded(0),
     minYesVotes(0),
     minNoVotes(0),
     minAbstainVotes(0)
@@ -36,7 +36,7 @@ bool ProposalFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex &sou
     int yesVotes = index.data(ProposalTableModel::YesVotesRole).toInt();
     int noVotes = index.data(ProposalTableModel::NoVotesRole).toInt();
     int abstainVotes = index.data(ProposalTableModel::AbstainVotesRole).toInt();
-    int percentage = index.data(ProposalTableModel::PercentageRole).toInt();
+    int votesNeeded = index.data(ProposalTableModel::VotesNeededRole).toInt();
 
     if(proposalStartDate < startDate)
        return false;
@@ -52,7 +52,7 @@ bool ProposalFilterProxy::filterAcceptsRow(int sourceRow, const QModelIndex &sou
         return false;
     if(abstainVotes < minAbstainVotes)
         return false;
-    if(percentage < minPercentage)
+    if(votesNeeded < 0)
         return false;
 
     return true;
@@ -82,9 +82,9 @@ void ProposalFilterProxy::setMinAmount(const CAmount& minimum)
     invalidateFilter();
 }
 
-void ProposalFilterProxy::setMinPercentage(const CAmount& minimum)
+void ProposalFilterProxy::setVotesNeeded(const CAmount& minimum)
 {
-    this->minPercentage = minimum;
+    this->votesNeeded = minimum;
     invalidateFilter();
 }
 

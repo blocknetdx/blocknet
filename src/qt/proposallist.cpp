@@ -118,13 +118,13 @@ ProposalList::ProposalList(   QWidget *parent) :
     abstainVotesWidget->setObjectName("abstainVotesWidget");
     hlayout->addWidget(abstainVotesWidget);
 
-    percentageWidget = new QLineEdit(this);
+    votesNeededWidget = new QLineEdit(this);
 #if QT_VERSION >= 0x040700
-    percentageWidget->setPlaceholderText(tr("Min percentage"));
+    votesNeededWidget->setPlaceholderText(tr("Min votes needed"));
 #endif
-    percentageWidget->setValidator(new QIntValidator(-100, 100, this));
-    percentageWidget->setObjectName("percentageWidget");
-    hlayout->addWidget(percentageWidget);
+    votesNeededWidget->setValidator(new QIntValidator(-100, 100, this));
+    votesNeededWidget->setObjectName("votesNeededWidget");
+    hlayout->addWidget(votesNeededWidget);
 
     QVBoxLayout *vlayout = new QVBoxLayout(this);
     vlayout->setSpacing(0);
@@ -226,7 +226,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     connect(noVotesWidget, SIGNAL(textChanged(QString)), this, SLOT(changedNoVotes(QString)));
     connect(abstainVotesWidget, SIGNAL(textChanged(QString)), this, SLOT(changedAbstainVotes(QString)));
     connect(amountWidget, SIGNAL(textChanged(QString)), this, SLOT(changedAmount(QString)));
-    connect(percentageWidget, SIGNAL(textChanged(QString)), this, SLOT(changedPercentage(QString)));
+    connect(votesNeededWidget, SIGNAL(textChanged(QString)), this, SLOT(changedVotesNeeded(QString)));
 
     connect(view, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(openProposalUrl()));
     connect(view, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
@@ -260,11 +260,11 @@ ProposalList::ProposalList(   QWidget *parent) :
     proposalList->setColumnWidth(ProposalTableModel::YesVotes, YES_VOTES_COLUMN_WIDTH);
     proposalList->setColumnWidth(ProposalTableModel::NoVotes, NO_VOTES_COLUMN_WIDTH);
     proposalList->setColumnWidth(ProposalTableModel::AbstainVotes, ABSTAIN_COLUMN_WIDTH);
-    proposalList->setColumnWidth(ProposalTableModel::Percentage, PERCENTAGE_COLUMN_WIDTH);
+    proposalList->setColumnWidth(ProposalTableModel::VotesNeeded, VOTES_NEEDED_COLUMN_WIDTH);
 
     connect(proposalList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(computeSum()));
 	
-    columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(proposalList, PROPOSAL_COLUMN_WIDTH, MINIMUM_COLUMN_WIDTH);
+    columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(proposalList, VOTES_NEEDED_COLUMN_WIDTH, MINIMUM_COLUMN_WIDTH);
         
 
 
@@ -305,14 +305,14 @@ void ProposalList::changedAmount(const QString &minAmount)
     proposalProxyModel->setMinAmount(minAmount.toInt());
 }
 
-void ProposalList::changedPercentage(const QString &minPercentage)
+void ProposalList::changedVotesNeeded(const QString &votesNeeded)
 {
     if(!proposalProxyModel)
         return;
 
-    int value = minPercentage == "" ? -100 : minPercentage.toInt();
+    int value = votesNeeded == "" ? 0 : votesNeeded.toInt();
 
-    proposalProxyModel->setMinPercentage(value);
+    proposalProxyModel->setVotesNeeded(value);
 }
 
 void ProposalList::changedProposal(const QString &proposal)

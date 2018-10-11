@@ -24,6 +24,7 @@
 #include "uint256.h"
 #include "util.h"
  
+#include <cmath>
 #include <QColor>
 #include <QDateTime>
 #include <QDebug>
@@ -46,8 +47,8 @@ ProposalTableModel::ProposalTableModel( QObject *parent):
         QAbstractTableModel(parent)
 
 {
-    columns << tr("Proposal") << tr("Amount") << tr("Start Date") << tr("End Date") << tr("Yes") << tr("No") << tr("Abstain") << tr("Percentage");
-    
+    columns << tr("Proposal") << tr("Amount") << tr("Start Block") << tr("End Block") << tr("Yes") << tr("No") << tr("Abstain") << tr("Votes Needed");
+
     networkManager = new QNetworkAccessManager(this);
 
     connect(networkManager, SIGNAL(finished(QNetworkReply*)), this, SLOT(onResult(QNetworkReply*)));
@@ -110,12 +111,15 @@ void ProposalTableModel::refreshProposals() {
 
 		UniValue bObj(UniValue::VOBJ);
 		budgetToST(pbudgetProposal, bObj);		
-		
-        int percentage = 0;
-		
-        if(mnCount > 0) percentage = round(pbudgetProposal->GetYeas() * 100 / mnCount);
 
-		
+        int votesNeeded = 0;
+        int voteGap = 0;
+
+        if(mnCount > 0) {
+            voteGap = ceil( (mnCount / 10) - (pbudgetProposal->GetYeas() - pbudgetProposal->GetNays()) );
+            votesNeeded = (voteGap < 0) ? 0 : voteGap;
+        };
+
         proposalRecords.append(new ProposalRecord(
                         QString::fromStdString(pbudgetProposal->GetHash().ToString()),
                         (long long)pbudgetProposal->GetBlockStart(),
@@ -126,7 +130,7 @@ void ProposalTableModel::refreshProposals() {
                         (long long)pbudgetProposal->GetNays(),
                         (long long)pbudgetProposal->GetAbstains(),
                         (long long)pbudgetProposal->GetAmount(),
-                        (long long)percentage));
+                        (long long)votesNeeded));
     }
     endResetModel();
 }
@@ -170,8 +174,8 @@ QVariant ProposalTableModel::data(const QModelIndex &index, int role) const
             return (long long)(rec->start_epoch);
         case EndDate:
             return (long long)(rec->end_epoch);
-        case Percentage:
-            return QString("%1\%").arg(rec->percentage);
+        case VotesNeeded:
+            return QString("%1").arg(rec->votesNeeded);
         case Amount:
             return BitcoinUnits::format(BitcoinUnits::PHR, rec->amount);
         }
@@ -193,15 +197,15 @@ QVariant ProposalTableModel::data(const QModelIndex &index, int role) const
             return (long long)(rec->abstainVotes);
         case Amount:
             return qint64(rec->amount);
-        case Percentage:
-            return (long long)(rec->percentage);
+        case VotesNeeded:
+            return (long long)(rec->votesNeeded);
         }
         break;
     case Qt::TextAlignmentRole:
         return column_alignments[index.column()];
     case Qt::ForegroundRole:
-        if(index.column() == Percentage) {
-            if(rec->percentage < 10) {
+        if(index.column() == VotesNeeded) {
+            if(rec->votesNeeded > 0) {
                 return COLOR_NEGATIVE;
             } else {
                 return QColor(23, 168, 26);
@@ -224,8 +228,8 @@ QVariant ProposalTableModel::data(const QModelIndex &index, int role) const
         return (long long)(rec->noVotes);
     case AbstainVotesRole:
         return (long long)(rec->abstainVotes);
-    case PercentageRole:
-        return (long long)(rec->percentage);
+    case VotesNeededRole:
+        return (long long)(rec->votesNeeded);
     case ProposalUrlRole:
         return rec->url;
     case ProposalHashRole:
@@ -251,21 +255,21 @@ QVariant ProposalTableModel::headerData(int section, Qt::Orientation orientation
             switch(section)
             {
             case Proposal:
-                return tr("Proposal Name");
+                return tr("Proposal name");
             case StartDate:
-                return tr("Date and time that the proposal starts.");
+                return tr("Date and time that the proposal starts");
             case EndDate:
-                return tr("Date and time that the proposal ends.");
+                return tr("Date and time that the proposal ends");
             case YesVotes:
-                return tr("Obtained yes votes.");
+                return tr("Obtained yes votes");
             case NoVotes:
-                return tr("Obtained no votes.");
+                return tr("Obtained no votes");
             case AbstainVotes:
-                return tr("Obtained abstain votes.");
+                return tr("Obtained abstain votes");
             case Amount:
-                return tr("Proposed amount.");
-            case Percentage:
-                return tr("Current vote percentage.");
+                return tr("Proposed amount");
+            case VotesNeeded:
+                return tr("Current votes needed to pass");
             }
         }
     }
