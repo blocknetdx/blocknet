@@ -44,7 +44,7 @@ public:
         YesVotes = 4,
         NoVotes = 5,
         AbstainVotes = 6,
-        Percentage = 7
+        VotesNeeded = 7
     };
 
     enum RoleIndex {
@@ -55,7 +55,7 @@ public:
         YesVotesRole,
         NoVotesRole,
         AbstainVotesRole,
-        PercentageRole,
+        VotesNeededRole,
         ProposalUrlRole,
         ProposalHashRole,
     };

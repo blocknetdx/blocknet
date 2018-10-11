@@ -27,7 +27,7 @@ public:
     void setProposal(const QString &proposal);
     
     void setMinAmount(const CAmount& minimum);
-    void setMinPercentage(const CAmount& minimum);
+    void setVotesNeeded(const CAmount& minimum);
     void setMinYesVotes(const CAmount& minimum);
     void setMinNoVotes(const CAmount& minimum);
     void setMinAbstainVotes(const CAmount& minimum);
@@ -42,7 +42,7 @@ private:
     CAmount endDate;
     QString proposalName;
     CAmount minAmount;
-    CAmount minPercentage;
+    CAmount votesNeeded;
     CAmount minYesVotes;
     CAmount minNoVotes;
     CAmount minAbstainVotes;
