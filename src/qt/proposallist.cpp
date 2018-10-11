@@ -43,9 +43,6 @@
 #include <QUrl>
 #include <QVBoxLayout>
 
-/** Date format for persistence */
-static const char* PERSISTENCE_DATE_FORMAT = "yyyy-MM-dd";
-
 ProposalList::ProposalList(   QWidget *parent) :
     QWidget(parent), proposalTableModel(0), proposalProxyModel(0),
     proposalList(0), columnResizingFixer(0)
@@ -53,13 +50,14 @@ ProposalList::ProposalList(   QWidget *parent) :
     proposalTableModel = new ProposalTableModel( this); 
     QSettings settings;
 
-    setContentsMargins(0,0,0,0);
+    setContentsMargins(20,0,20,0);
 
     hlayout = new ColumnAlignedLayout();
     hlayout->setContentsMargins(0,0,0,0);
     hlayout->setSpacing(0);
-
+    
     proposalWidget = new QLineEdit(this);
+    proposalWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     proposalWidget->setPlaceholderText(tr("Enter proposal name"));
 #endif
@@ -67,6 +65,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(proposalWidget);
 
     amountWidget = new QLineEdit(this);
+    amountWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     amountWidget->setPlaceholderText(tr("Min amount"));
 #endif
@@ -75,6 +74,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(amountWidget);
 
     startDateWidget = new QLineEdit(this);
+    startDateWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     startDateWidget->setPlaceholderText(tr("Start Block"));
 #endif
@@ -83,6 +83,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(startDateWidget);
 
     endDateWidget = new QLineEdit(this);
+    endDateWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     endDateWidget->setPlaceholderText(tr("End Block"));
 #endif
@@ -91,6 +92,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(endDateWidget);	
 	
     yesVotesWidget = new QLineEdit(this);
+    yesVotesWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     yesVotesWidget->setPlaceholderText(tr("Min yes votes"));
 #endif
@@ -99,6 +101,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(yesVotesWidget);
 
     noVotesWidget = new QLineEdit(this);
+    noVotesWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     noVotesWidget->setPlaceholderText(tr("Min no votes"));
 #endif
@@ -107,6 +110,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(noVotesWidget);
 
     abstainVotesWidget = new QLineEdit(this);
+    abstainVotesWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     abstainVotesWidget->setPlaceholderText(tr("Min abstain votes"));
 #endif
@@ -122,24 +126,45 @@ ProposalList::ProposalList(   QWidget *parent) :
     percentageWidget->setObjectName("percentageWidget");
     hlayout->addWidget(percentageWidget);
 
-
-
-
-
-
-
-
-
-
-	
-	
     QVBoxLayout *vlayout = new QVBoxLayout(this);
     vlayout->setSpacing(0);
 
+    QHBoxLayout* horizontalLayout_Header = new QHBoxLayout();
+    horizontalLayout_Header->setObjectName(QStringLiteral("horizontalLayout_Header"));
+
+    QLabel* labelOverviewHeaderLeft = new QLabel();
+    labelOverviewHeaderLeft->setObjectName(QStringLiteral("labelOverviewHeaderLeft"));
+    labelOverviewHeaderLeft->setMinimumSize(QSize(464, 60));
+    labelOverviewHeaderLeft->setMaximumSize(QSize(16777215, 60));
+    labelOverviewHeaderLeft->setText(tr("Proposals"));
+    labelOverviewHeaderLeft->setAlignment(Qt::AlignCenter);
+    QFont fontHeaderLeft;
+    fontHeaderLeft.setPointSize(20);
+    fontHeaderLeft.setBold(true);
+    fontHeaderLeft.setWeight(75);
+    labelOverviewHeaderLeft->setFont(fontHeaderLeft);
+
+    horizontalLayout_Header->addWidget(labelOverviewHeaderLeft);
+    // QSpacerItem* horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    // horizontalLayout_Header->addItem(horizontalSpacer_3);
+
+    
+
     QTableView *view = new QTableView(this);
+
+    //view->horizontalHeaderview->setDefaultAlignment(Qt::AlignLeft);
+
+    view->setShowGrid(false);
+    //view->setTextAlignment(Qt::AlignLeft);
+    
+
+    vlayout->addLayout(horizontalLayout_Header);
+
+    QSpacerItem* verticalSpacer_3 = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Preferred);
+    vlayout->addItem(verticalSpacer_3);
     vlayout->addLayout(hlayout);
-    //vlayout->addWidget(createStartDateRangeWidget());
-    //vlayout->addWidget(createEndDateRangeWidget());
+    QSpacerItem* verticalSpacer_5 = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Preferred);
+    vlayout->addItem(verticalSpacer_5);
     vlayout->addWidget(view);
     vlayout->setSpacing(0);
     int width = view->verticalScrollBar()->sizeHint().width();
@@ -149,7 +174,8 @@ ProposalList::ProposalList(   QWidget *parent) :
     connect(view->horizontalHeader(), SIGNAL(sectionResized(int,int,int)), SLOT(invalidateAlignedLayout()));
     connect(view->horizontalScrollBar(), SIGNAL(valueChanged(int)), SLOT(invalidateAlignedLayout()));
 
-    view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    // view->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    view->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     view->setTabKeyNavigation(false);
     view->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -157,7 +183,7 @@ ProposalList::ProposalList(   QWidget *parent) :
 
     QHBoxLayout *actionBar = new QHBoxLayout();
     actionBar->setSpacing(11);
-    actionBar->setContentsMargins(0,20,0,20);
+    actionBar->setContentsMargins(0,20,0,4);
 
     QPushButton *voteYesButton = new QPushButton(tr("Vote Yes"), this);
     voteYesButton->setToolTip(tr("Yote Yes on the selected proposal"));
@@ -181,7 +207,6 @@ ProposalList::ProposalList(   QWidget *parent) :
     QAction *voteAbstainAction = new QAction(tr("Vote abstain"), this);
     QAction *voteNoAction = new QAction(tr("Vote no"), this);
     QAction *openUrlAction = new QAction(tr("Visit proposal website"), this);
-    QAction *openStatisticsAction = new QAction(tr("Visit statistics website"), this);
 
     contextMenu = new QMenu(this);
     contextMenu->addAction(voteYesAction);
@@ -385,9 +410,6 @@ void ProposalList::vote_click_handler(const std::string voteString)
     uint256 hash;
     hash.SetHex(selection.at(0).data(ProposalTableModel::ProposalHashRole).toString().toStdString());
 
-    //uint256 nProposalHash = CBudgetVote::CBudgetVote();   // tmp remove
-    //uint256 nBudgetHashIn  = CFinalizedBudgetVote::CFinalizedBudgetVote();
-
     int success = 0;
     int failed = 0;
 	
@@ -452,107 +474,6 @@ void ProposalList::openProposalUrl()
     if(!selection.isEmpty())
          QDesktopServices::openUrl(selection.at(0).data(ProposalTableModel::ProposalUrlRole).toString());
 }
-/*
-QWidget *ProposalList::createStartDateRangeWidget()
-{
-
-    startDateRangeWidget = new QLineEdit(this);
-#if QT_VERSION >= 0x040700
-    startDateRangeWidget->setPlaceholderText(tr("Start Block"));
-#endif
-    startDateRangeWidget->setValidator(new QIntValidator(0, INT_MAX, this));
-    startDateRangeWidget->setObjectName("startDateRangeWidget");
-    hlayout->addWidget(proposalStartDate);
-
-    /*QSettings settings;
- 
-    startDateRangeWidget = new QFrame();
-    startDateRangeWidget->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    startDateRangeWidget->setContentsMargins(1,1,1,1);
-    QHBoxLayout *layout = new QHBoxLayout(startDateRangeWidget);
-    layout->setContentsMargins(0,0,0,0);
-    layout->addSpacing(23);
-    layout->addWidget(new QLabel(tr("Start Date:")));
-
-
-    proposalStartDate->setCalendarPopup(true);
-    proposalStartDate->setMinimumWidth(100);
-
-
-
-    layout->addWidget(proposalStartDate);
-    layout->addStretch();
-
-    startDateRangeWidget->setVisible(false); 
-
-
-
-    return startDateRangeWidget;
-}
-
-QWidget *ProposalList::createEndDateRangeWidget()
-{
-
-
-    endDateRangeWidget = new QLineEdit(this);
-#if QT_VERSION >= 0x040700
-    endDateRangeWidget->setPlaceholderText(tr("End Block"));
-#endif
-    endDateRangeWidget->setValidator(new QIntValidator(0, INT_MAX, this));
-    endDateRangeWidget->setObjectName("endDateRangeWidget");
-    hlayout->addWidget(proposalEndDate);
-	
-	
-    QSettings settings;
- 
-    endDateRangeWidget = new QFrame();
-    endDateRangeWidget->setFrameStyle(QFrame::Panel | QFrame::Raised);
-    endDateRangeWidget->setContentsMargins(1,1,1,1);
-    QHBoxLayout *layout = new QHBoxLayout(endDateRangeWidget);
-    layout->setContentsMargins(0,0,0,0);
-    layout->addSpacing(23);
-    layout->addWidget(new QLabel(tr("End Date:")));
-
-
-    proposalEndDate->setCalendarPopup(true);
-    proposalEndDate->setMinimumWidth(100);
-
-
-
-    layout->addWidget(proposalEndDate);
-    layout->addStretch();
-
-    endDateRangeWidget->setVisible(false); 
-
-
-
-    return endDateRangeWidget;
-}
-
-
-void ProposalList::startDateRangeChanged()
-{
-    if(!proposalProxyModel)
-        return;
-    	
-    //QSettings settings;
-    //settings.setValue("proposalStartDate", proposalStartDate->date().toString());
-    
-    proposalProxyModel->setProposalStart(startDate.toInt());
-}
-
-void ProposalList::endDateRangeChanged()
-{
-    if(!proposalProxyModel)
-        return;
-    
-    //QSettings settings;
-    //settings.setValue("proposalEndDate", proposalEndDate->date().toString());
-    
-    proposalProxyModel->setProposalEnd(endDate.toInt());
-}	*/
-// Make column use all the space available, useful during window resizing.
-
 
 void ProposalList::resizeEvent(QResizeEvent* event)
 {

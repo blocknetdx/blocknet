@@ -257,10 +257,10 @@ public:
         nMasternodeCountDrift = 4;
         nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
         nMaxMoneyOut = 43199500 * COIN;
-        nLastPOWBlock = 5000;
-        nZerocoinStartHeight = 10000;
+        nLastPOWBlock = 50000;
+        nZerocoinStartHeight = 200;
 
-        nZerocoinLastOldParams = 50000;
+        nZerocoinLastOldParams = 100000000;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
         genesis.nTime = 1505224800;
