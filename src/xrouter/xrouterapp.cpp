@@ -747,6 +747,71 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         return sendPacketAndWait(packet, id, currency, std::stoi(confirmations));
     else
         return sendPacketAndWait(packet, id, currency);
+    
+    
+    Object error;
+    boost::shared_ptr<boost::mutex> m(new boost::mutex());
+    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+    boost::mutex::scoped_lock lock(*m);
+    int timeout = this->xrouter_settings.get<int>("Main.wait", DEFAULT_TIMEOUT);
+    LOG() << "Sending query " << id;
+    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+    
+    std::vector<CNode*> selectedNodes = getAvailableNodes(packet, currency);
+    
+    if ((int)selectedNodes.size() < std::stoi(confirmations))
+        return "Not enough nodes";
+    
+    int sent = 0;
+    for (CNode* pnode : selectedNodes) {
+        pnode->PushMessage("xrouter", packet->body());
+        sent++;
+        
+        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
+        if (!lastPacketsSent.count(pnode)) {
+            lastPacketsSent[pnode] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+        }
+        lastPacketsSent[pnode][keystr] = time;
+        LOG() << "Sent message to node " << pnode->addrName;
+        if (sent == std::stoi(confirmations))
+            break;
+    }
+    
+    /*if (!sendPacketToServer(packet, confirmations, currency)) {
+        error.emplace_back(Pair("error", "Could not find available nodes for your request"));
+        return json_spirit::write_string(Value(error), true);
+    }*/
+
+    int confirmation_count = 0;
+    while ((confirmation_count < std::stoi(confirmations)) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
+        confirmation_count++;
+
+    if(confirmation_count <= std::stoi(confirmations) / 2) {
+        error.emplace_back(Pair("error", "Failed to get response in time. Try xrReply command later."));
+        error.emplace_back(Pair("uuid", id));
+        return json_spirit::write_string(Value(error), true);
+    }
+    else
+    {
+        for (unsigned int i = 0; i < queries[id].size(); i++)
+        {
+            std::string cand = queries[id][i];
+            int cnt = 0;
+            for (unsigned int j = 0; j < queries[id].size(); j++)
+            {
+                if (queries[id][j] == cand)
+                {
+                    cnt++;
+                    if (cnt > std::stoi(confirmations) / 2)
+                        return cand;
+                }
+            }
+        }
+
+        error.emplace_back(Pair("error", "No consensus between responses"));
+        return json_spirit::write_string(Value(error), true);
+    }
 }
 
 std::string App::getBlockCount(const std::string & currency, const std::string & confirmations)
