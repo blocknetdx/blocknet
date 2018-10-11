@@ -108,6 +108,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetformbtn.cpp \
   qt/moc_blocknetlabelbtn.cpp \
   qt/moc_blocknetactionbtn.cpp \
+  qt/moc_blocknettabbtn.cpp \
   qt/moc_blocknethdiv.cpp \
   qt/moc_blocknetdropdown.cpp \
   qt/moc_blockneticonbtn.cpp \
@@ -137,6 +138,9 @@ QT_MOC_CPP = \
   qt/moc_blocknetaddressedit.cpp \
   qt/moc_blocknetsettings.cpp \
   qt/moc_blocknettoolbar.cpp \
+  qt/moc_blocknettabbar.cpp \
+  qt/moc_blocknettools.cpp \
+  qt/moc_blocknetpeerslist.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetcoincontrol.cpp \
   qt/moc_blocknetsendfundsrequest.cpp
@@ -233,6 +237,7 @@ BITCOIN_QT_H = \
   qt/blocknetformbtn.h \
   qt/blocknetlabelbtn.h \
   qt/blocknetactionbtn.h \
+  qt/blocknettabbtn.h \
   qt/blocknethdiv.h \
   qt/blocknetdropdown.h \
   qt/blockneticonbtn.h \
@@ -262,6 +267,9 @@ BITCOIN_QT_H = \
   qt/blocknetaddressedit.h \
   qt/blocknetsettings.h \
   qt/blocknettoolbar.h \
+  qt/blocknettabbar.h \
+  qt/blocknettools.h \
+  qt/blocknetpeerslist.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \
   qt/blocknetcoincontrol.h \
@@ -371,6 +379,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetformbtn.cpp \
   qt/blocknetlabelbtn.cpp \
   qt/blocknetactionbtn.cpp \
+  qt/blocknettabbtn.cpp \
   qt/blocknethdiv.cpp \
   qt/blocknetdropdown.cpp \
   qt/blockneticonbtn.cpp \
@@ -432,6 +441,9 @@ BITCOIN_QT_CPP += \
   qt/blocknetcreateproposal2.cpp \
   qt/blocknetcreateproposal3.cpp \
   qt/blocknetsettings.cpp \
+  qt/blocknettabbar.cpp \
+  qt/blocknettools.cpp \
+  qt/blocknetpeerslist.cpp \
   qt/blocknetwallet.cpp
 
 endif
