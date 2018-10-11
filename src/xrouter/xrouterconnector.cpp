@@ -42,6 +42,7 @@ using namespace json_spirit;
 using namespace std;
 using namespace boost;
 using namespace boost::asio;
+#define DOMAIN_REGISTRATION_DEPOSIT 1.0
     
 WalletConnectorXRouter::WalletConnectorXRouter()
 {
@@ -632,4 +633,35 @@ int getChannelExpiryTime(std::string rawtx) {
     return -1;
 }
 
+std::string generateDomainRegistrationTx(std::string domain) {
+    CScript inner;
+    std::string raw_tx, txid;
+
+    CPubKey my_pubkey = pwalletMain->GenerateNewKey();
+    CKeyID mykeyID = my_pubkey.GetID();
+    
+    Array outputs;
+    Object out;
+    std::stringstream sstream;
+    sstream << "blocknet://" + domain;
+    std::string domainstr = sstream.str();
+    out.push_back(Pair("data", domainstr));
+    Object out2;
+    out2.push_back(Pair("address", mykeyID.ToString()));
+    out2.push_back(Pair("amount", DOMAIN_REGISTRATION_DEPOSIT));
+    outputs.push_back(out);
+    outputs.push_back(out2);
+    Array inputs;
+
+    Array params;
+    params.push_back(inputs);
+    params.push_back(outputs);    
+    bool res = createAndSignTransaction(params, raw_tx);
+    if (!res)
+        return false;
+    
+    sendTransactionBlockchain(raw_tx, txid);
+    return txid;
+    
+}
 } // namespace xrouter
