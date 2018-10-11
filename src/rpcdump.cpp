@@ -474,6 +474,7 @@ UniValue dumpwallet(const UniValue& params, bool fHelp)
         const CKeyID& keyid = it->second;
         std::string strTime = EncodeDumpTime(it->first);
         std::string strAddr = EncodeDestination(CTxDestination(keyid));
+
         CKey key;
         if (pwalletMain->GetKey(keyid, key)) {
             if (pwalletMain->mapAddressBook.count(keyid)) {
@@ -538,6 +539,7 @@ UniValue dumpallprivatekeys(const UniValue& params, bool fHelp)
         const CKeyID& keyid = it->second;
         std::string strTime = EncodeDumpTime(it->first);
         std::string strAddr = EncodeDestination(CTxDestination(keyid));
+
         CKey key;
         if (pwalletMain->GetKey(keyid, key)) {
             if (pwalletMain->mapAddressBook.count(keyid)) {

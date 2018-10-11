@@ -205,7 +205,9 @@ UniValue preparebudget(const UniValue& params, bool fHelp)
     if (nBlockEnd < pindexPrev->nHeight)
         throw runtime_error("Invalid ending block, starting block + (payment_cycle*payments) must be more than current height.");
 
+
     if (!IsValidDestinationString(params[4].get_str()))
+
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Phore address");
     
     CTxDestination address = DecodeDestination(params[4].get_str());

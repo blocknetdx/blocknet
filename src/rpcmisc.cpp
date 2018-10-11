@@ -572,7 +572,9 @@ UniValue verifymessage(const UniValue& params, bool fHelp)
     string strSign = params[1].get_str();
     string strMessage = params[2].get_str();
 
+
     if (!IsValidDestinationString(strAddress))
+
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
     
     CTxDestination addr = DecodeDestination(strAddress);
