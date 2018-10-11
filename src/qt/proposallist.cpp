@@ -136,7 +136,8 @@ ProposalList::ProposalList(   QWidget *parent) :
     labelOverviewHeaderLeft->setObjectName(QStringLiteral("labelOverviewHeaderLeft"));
     labelOverviewHeaderLeft->setMinimumSize(QSize(464, 60));
     labelOverviewHeaderLeft->setMaximumSize(QSize(16777215, 60));
-    labelOverviewHeaderLeft->setText(tr("PROPOSALS"));
+    labelOverviewHeaderLeft->setText(tr("Proposals"));
+    labelOverviewHeaderLeft->setAlignment(Qt::AlignCenter);
     QFont fontHeaderLeft;
     fontHeaderLeft.setPointSize(20);
     fontHeaderLeft.setBold(true);
@@ -144,13 +145,26 @@ ProposalList::ProposalList(   QWidget *parent) :
     labelOverviewHeaderLeft->setFont(fontHeaderLeft);
 
     horizontalLayout_Header->addWidget(labelOverviewHeaderLeft);
-    QSpacerItem* horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
-    horizontalLayout_Header->addItem(horizontalSpacer_3);
+    // QSpacerItem* horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
+    // horizontalLayout_Header->addItem(horizontalSpacer_3);
+
+    
 
     QTableView *view = new QTableView(this);
 
+    //view->horizontalHeaderview->setDefaultAlignment(Qt::AlignLeft);
+
+    view->setShowGrid(false);
+    //view->setTextAlignment(Qt::AlignLeft);
+    
+
     vlayout->addLayout(horizontalLayout_Header);
+
+    QSpacerItem* verticalSpacer_3 = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Preferred);
+    vlayout->addItem(verticalSpacer_3);
     vlayout->addLayout(hlayout);
+    QSpacerItem* verticalSpacer_5 = new QSpacerItem(20, 20, QSizePolicy::Minimum, QSizePolicy::Preferred);
+    vlayout->addItem(verticalSpacer_5);
     vlayout->addWidget(view);
     vlayout->setSpacing(0);
     int width = view->verticalScrollBar()->sizeHint().width();
