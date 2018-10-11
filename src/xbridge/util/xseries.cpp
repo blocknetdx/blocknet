@@ -8,6 +8,7 @@
 #include "xseries.h"
 #include "xbridge/xbridgetransactiondescr.h"
 #include "xbridge/xbridgeapp.h"
+#include "sync.h"
 
 extern CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey);
 
@@ -154,7 +155,7 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
     // need to be invalidated... this code invalidates on every query to
     // ensure results are up-to-date, cache can be enabled when invalidation
     // hook is in place
-    boost::mutex::scoped_lock l(m_xSeriesCacheUpdateLock);
+    LOCK(m_xSeriesCacheUpdateLock);
     std::vector<CurrencyPair> pairs = get_tradingdata(period);
     std::sort(pairs.begin(), pairs.end(), // ascending by updated time
               [](const CurrencyPair& a, const CurrencyPair& b) {
@@ -162,7 +163,7 @@ void xSeriesCache::updateSeriesCache(const time_period& period)
 
     mSparseSeries.clear();
     for (const auto& p : pairs) {
-        pairSymbol key = p.from.currency().to_string() +"/"+ p.to.currency().to_string();
+        pairSymbol key = p.to.currency().to_string() +"/"+ p.from.currency().to_string();
         auto& q = getXAggregateContainer(key);
         if (q.empty() || q.back().timeEnd <= p.timeStamp) {
             q.emplace_back(xAggregate{p.from.currency(), p.to.currency()});
@@ -223,7 +224,7 @@ void xSeriesCache::updateXSeries(std::vector<xAggregate>& series,
                                  const xQuery& q,
                                  xQuery::Transform tf)
 {
-    pairSymbol key = from.to_string() +"/"+ to.to_string();
+    pairSymbol key = to.to_string() +"/"+ from.to_string();
     auto& xac = getXAggregateContainer(key);
     const auto& range = getXAggregateRange(xac.begin(), xac.end(), q.period);
     updateXSeriesHelper(series, range, q, tf);

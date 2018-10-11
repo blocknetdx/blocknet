@@ -9,6 +9,7 @@
 #include "util/settings.h"
 #include "utilstrencodings.h"
 #include "main.h"
+#include "sync.h"
 
 #include <boost/date_time/posix_time/conversion.hpp>
 

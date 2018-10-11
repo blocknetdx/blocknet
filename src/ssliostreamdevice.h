@@ -126,7 +126,7 @@ public:
     }
 
     boost::system::error_code connect_error_code() const { return connect_ec; }
-    
+
  private:
     bool fNeedHandshake;
     bool fUseSSL;

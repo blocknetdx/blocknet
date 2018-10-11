@@ -54,6 +54,22 @@ namespace bpt           = boost::posix_time;
 
 //******************************************************************************
 //******************************************************************************
+Value dxLoadXBridgeConf(const Array & params, bool fHelp)
+{
+    if (fHelp)
+        throw runtime_error("dxLoadXBridgeConf\nHot loads xbridge.conf (note this may disrupt trades in progress)");
+
+    if (params.size() > 0)
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameter");
+
+    auto success = xbridge::App::instance().loadSettings();
+    xbridge::App::instance().updateActiveWallets();
+    return success;
+}
+
+//******************************************************************************
+//******************************************************************************
 Value dxGetLocalTokens(const Array & params, bool fHelp)
 {
     if (fHelp) {
@@ -98,7 +114,8 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
     std::set<std::string> services;
     auto nodeServices = xbridge::App::instance().allServices();
     for (auto & serviceItem : nodeServices) {
-        services.insert(serviceItem.second.begin(), serviceItem.second.end());
+        auto s = serviceItem.second.services();
+        services.insert(s.begin(), s.end());
     }
 
     return Array{services.begin(), services.end()};
@@ -577,8 +594,6 @@ Value dxTakeOrder(const Array & params, bool fHelp)
                             "Accepts the order. dryrun will evaluate input without accepting the order.");
     }
 
-    auto statusCode = xbridge::SUCCESS;
-
     if ((params.size() != 3) && (params.size() != 4))
     {
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -619,7 +634,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     Object result;
     xbridge::TransactionDescrPtr txDescr;
-    statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
+    auto statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
 
     switch (statusCode)
     {

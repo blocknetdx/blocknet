@@ -1,3 +1,5 @@
+#include <utility>
+
 //*****************************************************************************
 //*****************************************************************************
 
@@ -54,6 +56,7 @@ private:
     virtual ~App();
 
 public:
+
     /**
      * @brief instance - the classical implementation of singletone
      * @return
@@ -96,6 +99,24 @@ public:
 
 public:
     // classes
+
+    /**
+     * @brief Stores the supported services on servicenodes (xwallets).
+     */
+    class XWallets {
+    public:
+        XWallets() :  _version(0), _nodePubKey(::CPubKey()), _services(std::set<std::string>()) {}
+        XWallets(const uint32_t version, const ::CPubKey & nodePubKey, const std::set<std::string> services)
+            :  _version(version), _nodePubKey(nodePubKey), _services(std::move(services)) {}
+        uint32_t version() const { return _version; };
+        ::CPubKey nodePubKey() const { return _nodePubKey; };
+        std::set<std::string> services() const { return _services; };
+    private:
+        uint32_t _version;
+        ::CPubKey _nodePubKey;
+        std::set<std::string> _services;
+    };
+
     /**
      * @brief summary info about old orders flushed by flushCancelledOrders()
      */
@@ -108,6 +129,18 @@ public:
         FlushedOrder(uint256 id, boost::posix_time::ptime txtime, int use_count)
             : id{id}, txtime{txtime}, use_count{use_count} {}
     };
+
+    // Settings
+    /**
+     * @brief Load xbridge.conf settings file.
+     */
+    bool loadSettings();
+
+    // Shutdown
+    /**
+     * @brief Disconnects all wallets loaded by this node and notifies the network of the empty service list.
+     */
+    bool disconnectWallets();
 
     // transactions
     /**
@@ -280,6 +313,12 @@ public:
     void addConnector(const WalletConnectorPtr & conn);
 
     /**
+     * @brief Removes the specified connector.
+     * @param conn connector to remove
+     */
+    void removeConnector(const std::string & currency);
+
+    /**
      * @brief updateConnector - update connector params
      * @param conn - pointer to connector
      * @param addr - new currency name address
@@ -288,6 +327,13 @@ public:
     void updateConnector(const WalletConnectorPtr & conn,
                          const std::vector<unsigned char> addr,
                          const std::string & currency);
+
+    /**
+     * Updates the active wallets list. Active wallets are those that are running and responding
+     * to rpc calls.
+     */
+    std::set<std::string> updateActiveWallets();
+
     /**
      * @brief connectorByCurrency
      * @param currency - currency name
@@ -384,14 +430,15 @@ public:
      * @brief Returns the all services across all nodes.
      * @return
      */
-    std::map<CPubKey, std::set<string> > allServices();
+    std::map<CPubKey, XWallets> allServices();
     /**
      * @brief Returns the node services supported by the specified node.
      * @return
      */
     std::set<std::string> nodeServices(const ::CPubKey & nodePubKey);
     bool addNodeServices(const ::CPubKey & nodePubKey,
-                         const std::vector<std::string> & services);
+                         const std::vector<std::string> & services,
+                         const uint32_t version);
 
     bool findNodeWithService(const std::set<std::string> & services, CPubKey & node) const;
 
@@ -400,6 +447,8 @@ protected:
 
 private:
     std::unique_ptr<Impl> m_p;
+    bool m_disconnecting;
+    CCriticalSection m_lock;
 
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
