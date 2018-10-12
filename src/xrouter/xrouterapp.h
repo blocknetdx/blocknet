@@ -301,6 +301,8 @@ public:
      */
     CNode* getNodeForService(std::string name);
     
+    std::string generatePayment(CNode* pnode, CAmount fee);
+    
     /**
      * @brief sendPacket send packet btadcast to xrouter network
      * @param packet send message via xrouter

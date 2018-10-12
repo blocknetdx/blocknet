@@ -1056,6 +1056,53 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     return json_spirit::write_string(Value(result), true);
 }
 
+std::string App::generatePayment(CNode* pnode, CAmount fee)
+{
+    std::string strtxid;
+    std::string dest = getPaymentAddress(pnode);
+    CAmount deposit = AmountFromValue(xrouter_settings.get<double>("Main.deposit", 0.0));
+    int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
+    std::string payment_tx = "nofee";
+    bool res;
+    if (fee > 0) {
+        if (deposit == 0) {
+            res = createAndSignTransaction(dest, fee, payment_tx);
+            if(!res) {
+                return "Failed to create payment transaction";
+            }
+        } else {
+            // Create payment channel first
+            std::string raw_tx, txid;
+            payment_tx = "";
+            PaymentChannel channel;
+            if (!this->paymentChannels.count(pnode)) {
+                channel = createPaymentChannel(getPaymentPubkey(pnode), deposit, channeldate);
+                if (channel.txid == "")
+                    return "Failed to create payment channel";
+                this->paymentChannels[pnode] = channel;
+                payment_tx = channel.raw_tx + ";" + channel.txid + ";" + HexStr(channel.redeemScript.begin(), channel.redeemScript.end()) + ";";
+            }
+            
+            // Submit payment via channel
+            CAmount paid = this->paymentChannels[pnode].value;
+            
+            std::string paytx;
+            bool res = createAndSignChannelTransaction(this->paymentChannels[pnode], dest, deposit, fee + paid, paytx);
+            if (!res)
+                return "Failed to pay to payment channel";
+            this->paymentChannels[pnode].latest_tx = paytx;
+            this->paymentChannels[pnode].value = fee + paid;
+            
+            // Send channel tx, channel tx id, payment tx in one string
+            payment_tx += paytx;
+        }
+        
+        LOG() << "Payment transaction: " << payment_tx;
+        //std::cout << "Payment transaction: " << payment_tx << std::endl << std::flush;
+    }
+    
+    return payment_tx;
+}
 
 std::string App::getPaymentAddress(CNode* node)
 {
