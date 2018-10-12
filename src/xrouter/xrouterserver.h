@@ -170,6 +170,7 @@ protected:
      */
     std::string processCustomCall(std::string name, std::vector<std::string> params);
     
+    void processPayment(CNode* node, std::string feetx, CAmount fee);
     std::string getMyPaymentAddress();
     CKey getMyPaymentAddressKey();
     Value printPaymentChannels();
