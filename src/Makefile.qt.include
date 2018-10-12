@@ -310,7 +310,7 @@ RES_ICONS = \
   qt/res/icons/unit_tuphore.png \
   qt/res/icons/unit_tuphore.svg \
   qt/res/icons/unit_uphore.png \
-  qt/res/icons/unit_uphore.svg \
+  qt/res/icons/unit_uphore.svg 
 
 BITCOIN_QT_CPP = \
   qt/bantablemodel.cpp \
