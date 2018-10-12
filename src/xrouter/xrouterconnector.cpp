@@ -1,5 +1,6 @@
 #include "xrouterconnector.h"
 #include "xrouterlogger.h"
+#include "xrouterdef.h"
 
 #include <cstdio>
 #include <iostream>
@@ -42,8 +43,7 @@ using namespace json_spirit;
 using namespace std;
 using namespace boost;
 using namespace boost::asio;
-#define DOMAIN_REGISTRATION_DEPOSIT 1.0
-    
+
 WalletConnectorXRouter::WalletConnectorXRouter()
 {
 
@@ -648,7 +648,7 @@ std::string generateDomainRegistrationTx(std::string domain) {
     out.push_back(Pair("data", domainstr));
     Object out2;
     out2.push_back(Pair("address", mykeyID.ToString()));
-    out2.push_back(Pair("amount", DOMAIN_REGISTRATION_DEPOSIT));
+    out2.push_back(Pair("amount", XROUTER_DOMAIN_REGISTRATION_DEPOSIT));
     outputs.push_back(out);
     outputs.push_back(out2);
     Array inputs;

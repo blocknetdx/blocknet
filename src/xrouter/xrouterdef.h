@@ -10,6 +10,9 @@
 #include <memory>
 
 #define MIN_BLOCK 200
+#define XROUTER_DEFAULT_TIMEOUT 20000
+#define XROUTER_DOMAIN_REGISTRATION_DEPOSIT 1.0
+#define XROUTER_DEFAULT_CONFIRMATIONS 1
 
 //******************************************************************************
 //******************************************************************************

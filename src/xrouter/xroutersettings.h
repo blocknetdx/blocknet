@@ -6,13 +6,12 @@
 #include <vector>
 #include <string>
 #include "xrouterpacket.h"
+#include "xrouterdef.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/container/map.hpp>
 
 #define TRY(_STMNT_) try { (_STMNT_); } catch(std::exception & e) { LOG() << e.what(); }
-
-#define XROUTER_DEFAULT_TIMEOUT 2
 
 namespace xrouter
 {
