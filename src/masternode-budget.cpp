@@ -40,7 +40,7 @@ int GetBudgetPaymentCycleBlocks()
     if (Params().NetworkID() == CBaseChainParams::MAIN) return 43200;
     //for testing purposes
 
-    return 144; //ten times per day
+    return 864; //ten times per day
 }
 
 bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, std::string& strError, int64_t& nTime, int& nConf, bool fBudgetFinalization)
@@ -177,7 +177,7 @@ void CBudgetManager::SubmitFinalBudget()
         // NOTE: 9 blocks for testnet is way to short to have any masternode submit an automatic vote on the finalized(!) budget,
         //       because those votes are only submitted/relayed once every 56 blocks in CFinalizedBudget::AutoCheck()
 
-        finalizationWindow = 64; // 56 + 4 finalization confirmations + 4 minutes buffer for propagation
+        finalizationWindow = 214; // 180 + 4 finalization confirmations + 5 minutes (30 blocks) buffer for propagation
     }
 
     int nFinalizationStart = nBlockStart - finalizationWindow;
