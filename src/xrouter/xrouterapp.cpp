@@ -345,7 +345,7 @@ std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string 
     }
 }
 
-std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std::string wallet)
+std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::string wallet)
 {
     // Send only to the service nodes that have the required wallet
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
@@ -360,7 +360,7 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
         XRouterSettings settings = snodeConfigs[key];
         if (!settings.walletEnabled(wallet))
             continue;
-        if (!settings.isAvailableCommand(packet->command(), wallet))
+        if (!settings.isAvailableCommand(command, wallet))
             continue;
         
         CNode* res = NULL;
@@ -383,8 +383,8 @@ std::vector<CNode*> App::getAvailableNodes(const XRouterPacketPtr & packet, std:
             continue;
         
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-        std::string keystr = wallet + "::" + XRouterCommand_ToString(packet->command());
-        double timeout = settings.getCommandTimeout(packet->command(), wallet);
+        std::string keystr = wallet + "::" + XRouterCommand_ToString(command);
+        double timeout = settings.getCommandTimeout(command, wallet);
         if (lastPacketsSent.count(res)) {
             if (lastPacketsSent[res].count(keystr)) {
                 std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[res][keystr];
@@ -506,27 +506,6 @@ CNode* App::getNodeForService(std::string name)
 //*****************************************************************************
 bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
 {
-    std::vector<CNode*> selectedNodes = getAvailableNodes(packet, wallet);
-    
-    if ((int)selectedNodes.size() < confirmations)
-        return false;
-    
-    int sent = 0;
-    for (CNode* pnode : selectedNodes) {
-        pnode->PushMessage("xrouter", packet->body());
-        sent++;
-        
-        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-        std::string keystr = wallet + "::" + XRouterCommand_ToString(packet->command());
-        if (!lastPacketsSent.count(pnode)) {
-            lastPacketsSent[pnode] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-        }
-        lastPacketsSent[pnode][keystr] = time;
-        LOG() << "Sent message to node " << pnode->addrName;
-        if (sent == confirmations)
-            return true;
-    }
-    
     return false;
 }
 
@@ -720,8 +699,6 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         return "XRouter is turned off. Please check that xrouter.conf is set up correctly.";
     
     updateConfigs();
-    
-    XRouterPacketPtr packet(new XRouterPacket(command));
 
     uint256 txHash;
     uint32_t vout = 0;
@@ -732,22 +709,6 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     }
 
     std::string id = generateUUID();
-
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
-    packet->append(id);
-    packet->append(currency);
-    if (!param1.empty())
-        packet->append(param1);
-    if (!param2.empty())
-        packet->append(param2);
-    packet->sign(key);
-
-    if (!confirmations.empty())
-        return sendPacketAndWait(packet, id, currency, std::stoi(confirmations));
-    else
-        return sendPacketAndWait(packet, id, currency);
-    
     
     Object error;
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
@@ -757,13 +718,28 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     LOG() << "Sending query " << id;
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     
-    std::vector<CNode*> selectedNodes = getAvailableNodes(packet, currency);
+    std::vector<CNode*> selectedNodes = getAvailableNodes(command, currency);
     
     if ((int)selectedNodes.size() < std::stoi(confirmations))
         return "Not enough nodes";
     
     int sent = 0;
     for (CNode* pnode : selectedNodes) {
+        CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getCommandFee(command, currency));
+        std::string payment_tx = generatePayment(pnode, fee);
+        XRouterPacketPtr packet(new XRouterPacket(command));
+        packet->append(txHash.begin(), 32);
+        packet->append(vout);
+        packet->append(id);
+        packet->append(currency);
+        packet->append(payment_tx);
+        if (!param1.empty())
+            packet->append(param1);
+        if (!param2.empty())
+            packet->append(param2);
+        packet->sign(key);
+        
+        
         pnode->PushMessage("xrouter", packet->body());
         sent++;
         
@@ -911,7 +887,7 @@ std::string App::sendTransaction(const std::string & currency, const std::string
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
 
-    std::vector<CNode*> selectedNodes = getAvailableNodes(packet, currency);
+    std::vector<CNode*> selectedNodes = getAvailableNodes(xrSendTransaction, currency);
     
     if ((int)selectedNodes.size() == 0)
         return "No available nodes";

@@ -292,7 +292,7 @@ public:
      * @param wallet currency
      * @return
      */
-    std::vector<CNode*> getAvailableNodes(const XRouterPacketPtr & packet, std::string wallet);
+    std::vector<CNode*> getAvailableNodes(enum XRouterCommand command, std::string wallet);
     
     /**
      * @brief find the node that supports a given plugin 
