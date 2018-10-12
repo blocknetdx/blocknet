@@ -1,5 +1,5 @@
 ---
-name: "phore-rpi2-1.4.0"
+name: "phore-rpi2-1.4"
 enable_cache: true
 suites:
 - "trusty"

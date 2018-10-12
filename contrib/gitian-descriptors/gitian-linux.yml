@@ -1,5 +1,5 @@
 ---
-name: "phore-linux-1.4.0"
+name: "phore-linux-1.4"
 enable_cache: true
 suites:
 - "trusty"
