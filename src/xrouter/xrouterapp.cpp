@@ -678,7 +678,9 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     int sent = 0;
     for (CNode* pnode : selectedNodes) {
         CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getCommandFee(command, currency));
-        std::string payment_tx = generatePayment(pnode, fee);
+        std::string payment_tx = "nofee";
+        if (fee > 0)
+            payment_tx = generatePayment(pnode, fee);
         
         XRouterPacketPtr packet(new XRouterPacket(command));
         packet->append(txHash.begin(), 32);
@@ -808,8 +810,6 @@ std::string App::sendTransaction(const std::string & currency, const std::string
     
     updateConfigs();
     
-    XRouterPacketPtr packet(new XRouterPacket(xrSendTransaction));
-
     uint256 txHash;
     uint32_t vout = 0;
     CKey key;
@@ -818,21 +818,11 @@ std::string App::sendTransaction(const std::string & currency, const std::string
     }
 
     std::string id = generateUUID();
-
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
-    packet->append(id);
-    packet->append(currency);
-    packet->append(transaction);
-    packet->sign(key);
     
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-
-    std::vector<unsigned char> msg;
-    msg.insert(msg.end(), packet->body().begin(), packet->body().end());
 
     std::vector<CNode*> selectedNodes = getAvailableNodes(xrSendTransaction, currency);
     
@@ -840,7 +830,21 @@ std::string App::sendTransaction(const std::string & currency, const std::string
         return "No available nodes";
     
     for (CNode* pnode : selectedNodes) {
-        pnode->PushMessage("xrouter", msg);
+        CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getCommandFee(xrSendTransaction, currency));
+        std::string payment_tx = "nofee";
+        if (fee > 0)
+            payment_tx = generatePayment(pnode, fee);
+        
+        XRouterPacketPtr packet(new XRouterPacket(xrSendTransaction));
+        packet->append(txHash.begin(), 32);
+        packet->append(vout);
+        packet->append(id);
+        packet->append(currency);
+        packet->append(payment_tx);
+        packet->append(transaction);
+        packet->sign(key);
+
+        pnode->PushMessage("xrouter", packet->body());
         if (cond->timed_wait(lock, boost::posix_time::milliseconds(3000))) {
             std::string reply = queries[id][0];
             Value reply_val;
