@@ -262,9 +262,9 @@ RES_ICONS = \
   qt/res/icons/privacy.png \
   qt/res/icons/privacy.svg \
   qt/res/icons/privacy_off.svg \
-  qt/res/icons/proposal.png \   
-  qt/res/icons/proposal.svg \   
-  qt/res/icons/proposal_off.svg \   
+  qt/res/icons/proposal.png \
+  qt/res/icons/proposal.svg \
+  qt/res/icons/proposal_off.svg \
   qt/res/icons/qrcode.png \
   qt/res/icons/quit.png \
   qt/res/icons/receive.png \
