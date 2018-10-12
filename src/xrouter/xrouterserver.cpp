@@ -339,6 +339,13 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         
         reply = processCustomCall(currency, params);
     } else {
+        std::string feetx((const char *)packet->data()+offset);
+        offset += feetx.size() + 1;
+        
+        CAmount fee = AmountFromValue(app.xrouter_settings.getCommandFee(packet->command(), currency));
+        
+        this->processPayment(node, feetx, fee);
+        
         std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
         double timeout = app.xrouter_settings.getCommandTimeout(packet->command(), currency);
         if (lastPacketsReceived.count(node)) {
