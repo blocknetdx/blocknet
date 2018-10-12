@@ -708,6 +708,11 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     }
 
     std::string id = generateUUID();
+    int confirmations_count = std::stoi(confirmations);
+    if (confirmations_count < 1)
+        confirmations_count = xrouter_settings.get<int>("Main.confirmations", 0);
+    if (confirmations_count < 1)
+        confirmations_count = XROUTER_DEFAULT_CONFIRMATIONS;
     
     Object error;
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
@@ -719,13 +724,14 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     
     std::vector<CNode*> selectedNodes = getAvailableNodes(command, currency);
     
-    if ((int)selectedNodes.size() < std::stoi(confirmations))
+    if ((int)selectedNodes.size() < confirmations_count)
         return "Not enough nodes";
     
     int sent = 0;
     for (CNode* pnode : selectedNodes) {
         CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getCommandFee(command, currency));
         std::string payment_tx = generatePayment(pnode, fee);
+        
         XRouterPacketPtr packet(new XRouterPacket(command));
         packet->append(txHash.begin(), 32);
         packet->append(vout);
@@ -749,7 +755,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         }
         lastPacketsSent[pnode][keystr] = time;
         LOG() << "Sent message to node " << pnode->addrName;
-        if (sent == std::stoi(confirmations))
+        if (sent == confirmations_count)
             break;
     }
     
@@ -759,16 +765,15 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     }*/
 
     int confirmation_count = 0;
-    while ((confirmation_count < std::stoi(confirmations)) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
+    while ((confirmation_count < confirmations_count) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         confirmation_count++;
 
-    if(confirmation_count <= std::stoi(confirmations) / 2) {
+    if(confirmation_count <= confirmations_count / 2) {
         error.emplace_back(Pair("error", "Failed to get response in time. Try xrReply command later."));
         error.emplace_back(Pair("uuid", id));
         return json_spirit::write_string(Value(error), true);
     }
-    else
-    {
+    else {
         for (unsigned int i = 0; i < queries[id].size(); i++)
         {
             std::string cand = queries[id][i];
@@ -778,7 +783,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
                 if (queries[id][j] == cand)
                 {
                     cnt++;
-                    if (cnt > std::stoi(confirmations) / 2)
+                    if (cnt > confirmations_count / 2)
                         return cand;
                 }
             }
