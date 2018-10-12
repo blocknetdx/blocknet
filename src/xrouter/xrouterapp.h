@@ -304,24 +304,6 @@ public:
     std::string generatePayment(CNode* pnode, CAmount fee);
     
     /**
-     * @brief sendPacket send packet btadcast to xrouter network
-     * @param packet send message via xrouter
-     * @param configmation number of copies to send
-     * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
-     */
-    bool sendPacketToServer(const XRouterPacketPtr & packet, int confirmations, std::string wallet);
-    
-    /**
-     * @brief sends packet to service node(s) and waits for replies in the same thread, then returns the result (or error if no reply came)
-     * @param packet Xrouter packet received over the network
-     * @param id address
-     * @param currency chain id
-     * @param confirmations number of packets to send and wait for reply (result is decided by majority vote)
-     * @return
-     */
-    std::string sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations=3);
-
-    /**
      * @brief onMessageReceived  call when message from xrouter network received
      * @param node source CNode
      * @param message packet contents

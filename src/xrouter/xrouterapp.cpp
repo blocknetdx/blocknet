@@ -299,51 +299,6 @@ bool App::stop()
 //*****************************************************************************
 //*****************************************************************************
 
-std::string App::sendPacketAndWait(const XRouterPacketPtr & packet, std::string id, std::string currency, int confirmations)
-{
-    Object error;
-    boost::shared_ptr<boost::mutex> m(new boost::mutex());
-    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-    boost::mutex::scoped_lock lock(*m);
-    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_TIMEOUT);
-    LOG() << "Sending query " << id;
-    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-    if (!sendPacketToServer(packet, confirmations, currency)) {
-        error.emplace_back(Pair("error", "Could not find available nodes for your request"));
-        return json_spirit::write_string(Value(error), true);
-    }
-
-    int confirmation_count = 0;
-    while ((confirmation_count < confirmations) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
-        confirmation_count++;
-
-    if(confirmation_count <= confirmations / 2) {
-        error.emplace_back(Pair("error", "Failed to get response in time. Try xrReply command later."));
-        error.emplace_back(Pair("uuid", id));
-        return json_spirit::write_string(Value(error), true);
-    }
-    else
-    {
-        for (unsigned int i = 0; i < queries[id].size(); i++)
-        {
-            std::string cand = queries[id][i];
-            int cnt = 0;
-            for (unsigned int j = 0; j < queries[id].size(); j++)
-            {
-                if (queries[id][j] == cand)
-                {
-                    cnt++;
-                    if (cnt > confirmations / 2)
-                        return cand;
-                }
-            }
-        }
-
-        error.emplace_back(Pair("error", "No consensus between responses"));
-        return json_spirit::write_string(Value(error), true);
-    }
-}
-
 std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::string wallet)
 {
     // Send only to the service nodes that have the required wallet
@@ -499,13 +454,6 @@ CNode* App::getNodeForService(std::string name)
     }
     
     return NULL;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool App::sendPacketToServer(const XRouterPacketPtr& packet, int confirmations, std::string wallet)
-{
-    return false;
 }
 
 std::string App::processGetXrouterConfig(XRouterSettings cfg, std::string addr)
@@ -758,11 +706,6 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         if (sent == confirmations_count)
             break;
     }
-    
-    /*if (!sendPacketToServer(packet, confirmations, currency)) {
-        error.emplace_back(Pair("error", "Could not find available nodes for your request"));
-        return json_spirit::write_string(Value(error), true);
-    }*/
 
     int confirmation_count = 0;
     while ((confirmation_count < confirmations_count) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
