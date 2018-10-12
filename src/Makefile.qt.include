@@ -307,8 +307,8 @@ RES_ICONS = \
   qt/res/icons/unit_tphore.svg \
   qt/res/icons/unit_tmphore.png \
   qt/res/icons/unit_tmphore.svg \
-  qt/res/icons/unit_tuphore.png
-  qt/res/icons/unit_tuphore.svg
+  qt/res/icons/unit_tuphore.png \
+  qt/res/icons/unit_tuphore.svg \
   qt/res/icons/unit_uphore.png \
   qt/res/icons/unit_uphore.svg \
 
