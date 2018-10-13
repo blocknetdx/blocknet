@@ -38,20 +38,20 @@ QT_FORMS_UI = \
   qt/forms/addressbookpage.ui \
   qt/forms/askpassphrasedialog.ui \
   qt/forms/bip38tooldialog.ui \
-  qt/forms/blockexplorer.ui \
   qt/forms/coincontroldialog.ui \
+  qt/forms/blockexplorer.ui \
+  qt/forms/obfuscationconfig.ui \
   qt/forms/editaddressdialog.ui \
   qt/forms/helpmessagedialog.ui \
   qt/forms/intro.ui \
   qt/forms/masternodelist.ui \
   qt/forms/multisenddialog.ui \
   qt/forms/multisigdialog.ui\
-  qt/forms/obfuscationconfig.ui \
   qt/forms/openuridialog.ui \
   qt/forms/optionsdialog.ui \
   qt/forms/overviewpage.ui \
-  qt/forms/privacydialog.ui \
   qt/forms/receivecoinsdialog.ui \
+  qt/forms/privacydialog.ui \
   qt/forms/receiverequestdialog.ui \
   qt/forms/rpcconsole.ui \
   qt/forms/sendcoinsdialog.ui \
@@ -74,8 +74,8 @@ QT_MOC_CPP = \
   qt/moc_clientmodel.cpp \
   qt/moc_coincontroldialog.cpp \
   qt/moc_coincontroltreewidget.cpp \
-  qt/moc_columnalignedlayout.cpp \
   qt/moc_csvmodelwriter.cpp \
+  qt/moc_obfuscationconfig.cpp \
   qt/moc_editaddressdialog.cpp \
   qt/moc_guiutil.cpp \
   qt/moc_intro.cpp \
@@ -85,20 +85,20 @@ QT_MOC_CPP = \
   qt/moc_multisenddialog.cpp \
   qt/moc_multisigdialog.cpp\
   qt/moc_notificator.cpp \
-  qt/moc_obfuscationconfig.cpp \
   qt/moc_openuridialog.cpp \
   qt/moc_optionsdialog.cpp \
   qt/moc_optionsmodel.cpp \
   qt/moc_overviewpage.cpp \
-  qt/moc_paymentserver.cpp \
   qt/moc_peertablemodel.cpp \
-  qt/moc_privacydialog.cpp \
+  qt/moc_paymentserver.cpp \
+  qt/moc_columnalignedlayout.cpp \
   qt/moc_proposalfilterproxy.cpp \
-  qt/moc_proposallist.cpp \
   qt/moc_proposaltablemodel.cpp \
+  qt/moc_proposallist.cpp \
   qt/moc_qvalidatedlineedit.cpp \
   qt/moc_qvaluecombobox.cpp \
   qt/moc_receivecoinsdialog.cpp \
+  qt/moc_privacydialog.cpp \
   qt/moc_receiverequestdialog.cpp \
   qt/moc_recentrequeststablemodel.cpp \
   qt/moc_rpcconsole.cpp \
@@ -152,8 +152,8 @@ BITCOIN_QT_H = \
   qt/clientmodel.h \
   qt/coincontroldialog.h \
   qt/coincontroltreewidget.h \
-  qt/columnalignedlayout.h \
   qt/csvmodelwriter.h \
+  qt/obfuscationconfig.h \
   qt/editaddressdialog.h \
   qt/guiconstants.h \
   qt/guiutil.h \
@@ -165,23 +165,23 @@ BITCOIN_QT_H = \
   qt/multisigdialog.h\
   qt/networkstyle.h \
   qt/notificator.h \
-  qt/obfuscationconfig.h \
   qt/openuridialog.h \
   qt/optionsdialog.h \
   qt/optionsmodel.h \
   qt/overviewpage.h \
   qt/paymentrequestplus.h \
   qt/paymentserver.h \
-  qt/peertablemodel.h \
-  qt/platformstyle.h \
-  qt/privacydialog.h \
+  qt/columnalignedlayout.h \
   qt/proposalfilterproxy.h \
   qt/proposallist.h \
   qt/proposalrecord.h \
   qt/proposaltablemodel.h \
+  qt/peertablemodel.h \
+  qt/platformstyle.h \
   qt/qvalidatedlineedit.h \
   qt/qvaluecombobox.h \
   qt/receivecoinsdialog.h \
+  qt/privacydialog.h \
   qt/receiverequestdialog.h \
   qt/recentrequeststablemodel.h \
   qt/rpcconsole.h \
@@ -206,111 +206,74 @@ BITCOIN_QT_H = \
 
 RES_ICONS = \
   qt/res/icons/add.png \
-  qt/res/icons/address-book.png \
   qt/res/icons/address-book.svg \
-  qt/res/icons/bitcoin.icns \
   qt/res/icons/bitcoin.ico \
   qt/res/icons/bitcoin.png \
   qt/res/icons/bitcoin_testnet.ico \
   qt/res/icons/bitcoin_testnet.png \
   qt/res/icons/browse.png \
-  qt/res/icons/clock1.png \
   qt/res/icons/clock1.svg \
-  qt/res/icons/clock2.png \
   qt/res/icons/clock2.svg \
-  qt/res/icons/clock3.png \
   qt/res/icons/clock3.svg \
-  qt/res/icons/clock4.png \
   qt/res/icons/clock4.svg \
-  qt/res/icons/clock5.png \
   qt/res/icons/clock5.svg \
   qt/res/icons/configure.png \
-  qt/res/icons/connect0_16.png \
   qt/res/icons/connect0_16.svg \
-  qt/res/icons/connect1_16.png \
   qt/res/icons/connect1_16.svg \
-  qt/res/icons/connect2_16.png \
   qt/res/icons/connect2_16.svg \
-  qt/res/icons/connect3_16.png \
   qt/res/icons/connect3_16.svg \
-  qt/res/icons/connect4_16.png \
   qt/res/icons/connect4_16.svg \
   qt/res/icons/debugwindow.png \
+  qt/res/icons/proposal.svg \
+  qt/res/icons/proposal_off.svg \
   qt/res/icons/edit.png \
-  qt/res/icons/editcopy.png \
-  qt/res/icons/editpaste.png \
+  qt/res/icons/editcopy.svg \
+  qt/res/icons/editpaste.svg \
   qt/res/icons/explorer.png \
   qt/res/icons/export.png \
   qt/res/icons/eye.png \
   qt/res/icons/eye_minus.png \
   qt/res/icons/eye_plus.png \
   qt/res/icons/filesave.png \
-  qt/res/icons/history.png \
   qt/res/icons/history.svg \
   qt/res/icons/history_off.svg \
   qt/res/icons/key.png \
-  qt/res/icons/lock_closed.png \
   qt/res/icons/lock_closed.svg \
-  qt/res/icons/lock_open.png \
   qt/res/icons/lock_open.svg \
-  qt/res/icons/masternodes.png \
   qt/res/icons/masternodes.svg \
   qt/res/icons/masternodes_off.svg \
-  qt/res/icons/overview.png \
   qt/res/icons/overview.svg \
   qt/res/icons/overview_off.svg \
-  qt/res/icons/privacy.png \
-  qt/res/icons/privacy.svg \
-  qt/res/icons/privacy_off.svg \
-  qt/res/icons/proposal.png \
-  qt/res/icons/proposal.svg \
-  qt/res/icons/proposal_off.svg \
   qt/res/icons/qrcode.png \
   qt/res/icons/quit.png \
-  qt/res/icons/receive.png \
   qt/res/icons/receive.svg \
+  qt/res/icons/receive_off.svg \
   qt/res/icons/receive_dark.png \
-  qt/res/icons/receive_dark.svg \
-  qt/res/icons/remove.png \
+  qt/res/icons/privacy.svg \
+  qt/res/icons/privacy_off.svg \
   qt/res/icons/remove.svg \
-  qt/res/icons/send.png \
+  qt/res/icons/tx_masternode.svg \
+  qt/res/icons/tx_staked.svg \
   qt/res/icons/send.svg \
-  qt/res/icons/send_dark.png \
   qt/res/icons/send_off.svg \
-  qt/res/icons/staking_active.png \
+  qt/res/icons/send_dark.png \
   qt/res/icons/staking_active.svg \
-  qt/res/icons/staking_inactive.png \
   qt/res/icons/staking_inactive.svg \
-  qt/res/icons/synced.png \
   qt/res/icons/synced.svg \
   qt/res/icons/trade.png \
-  qt/res/icons/transaction0.png \
-  qt/res/icons/transaction0.psv \
-  qt/res/icons/transaction2.png \
+  qt/res/icons/transaction0.svg \
   qt/res/icons/transaction2.svg \
-  qt/res/icons/transaction_conflicted.png \
   qt/res/icons/transaction_conflicted.svg \
-  qt/res/icons/tx_inout.png \
   qt/res/icons/tx_inout.svg \
-  qt/res/icons/tx_input.png \
   qt/res/icons/tx_input.svg \
-  qt/res/icons/tx_masternode.svg \
-  qt/res/icons/tx_mined.png \
-  qt/res/icons/tx_output.png \
   qt/res/icons/tx_output.svg \
-  qt/res/icons/tx_staked.svg \
-  qt/res/icons/unit_mphore.png \
-  qt/res/icons/unit_mphore.svg \
-  qt/res/icons/unit_phore.png \
+  qt/res/icons/tx_masternode.svg \
   qt/res/icons/unit_phore.svg \
-  qt/res/icons/unit_tphore.png \
+  qt/res/icons/unit_mphore.svg \
+  qt/res/icons/unit_uphore.svg \
   qt/res/icons/unit_tphore.svg \
-  qt/res/icons/unit_tmphore.png \
   qt/res/icons/unit_tmphore.svg \
-  qt/res/icons/unit_tuphore.png \
-  qt/res/icons/unit_tuphore.svg \
-  qt/res/icons/unit_uphore.png \
-  qt/res/icons/unit_uphore.svg 
+  qt/res/icons/unit_tuphore.svg
 
 BITCOIN_QT_CPP = \
   qt/bantablemodel.cpp \
@@ -350,16 +313,16 @@ BITCOIN_QT_CPP += \
   qt/blockexplorer.cpp \
   qt/coincontroldialog.cpp \
   qt/coincontroltreewidget.cpp \
-  qt/columnalignedlayout.cpp \
+  qt/obfuscationconfig.cpp \
   qt/editaddressdialog.cpp \
   qt/masternodelist.cpp \
   qt/multisenddialog.cpp \
   qt/multisigdialog.cpp\
-  qt/obfuscationconfig.cpp \
   qt/openuridialog.cpp \
   qt/overviewpage.cpp \
   qt/paymentrequestplus.cpp \
   qt/paymentserver.cpp \
+  qt/columnalignedlayout.cpp \
   qt/proposalfilterproxy.cpp \
   qt/proposallist.cpp \
   qt/proposalrecord.cpp \
@@ -387,9 +350,11 @@ endif
 
 RES_IMAGES = \
   qt/res/images/about.png \
-  qt/res/images/splash.png \
+  qt/res/images/splash.svg \
   qt/res/images/splash_testnet.png \
   qt/res/images/phore_logo_horizontal.png \
+  qt/res/images/downArrow.svg \
+  qt/res/images/upArrow.svg \
   qt/res/images/downArrow_dark.png \
   qt/res/images/downArrow_small_dark.png \
   qt/res/images/downArrow_small.png \
@@ -405,7 +370,15 @@ RES_IMAGES = \
 RES_CSS = \
   qt/res/css/default.css
 
-RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
+RES_TEXT = \
+  qt/res/fonts/Hind-Bold.ttf \
+  qt/res/fonts/Hind-Light.ttf \
+  qt/res/fonts/Hind-Medium.ttf \
+  qt/res/fonts/Hind-Regular.ttf \
+  qt/res/fonts/Hind-SemiBold.ttf \
+  qt/res/fonts/Montserrat-Bold.ttf
+
+RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.svg)
 
 BITCOIN_RC = qt/res/phore-qt-res.rc
 
@@ -418,7 +391,7 @@ qt_libbitcoinqt_a_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 qt_libbitcoinqt_a_OBJCXXFLAGS = $(AM_OBJCXXFLAGS) $(QT_PIE_FLAGS)
 
 qt_libbitcoinqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
-  $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_CSS) $(RES_MOVIES)
+  $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_CSS) $(RES_TEXT) $(RES_MOVIES) 
 
 nodist_qt_libbitcoinqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
   $(PROTOBUF_H) $(QT_QRC_CPP) $(QT_QRC_LOCALE_CPP)
@@ -482,7 +455,7 @@ $(QT_QRC_LOCALE_CPP): $(QT_QRC_LOCALE) $(QT_QM)
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
 	@rm $(@D)/temp_$(<F)
 
-$(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_CSS) $(RES_MOVIES) $(PROTOBUF_H)
+$(QT_QRC_CPP): $(QT_QRC) $(QT_FORMS_H) $(RES_ICONS) $(RES_IMAGES) $(RES_CSS) $(RES_MOVIES) $(RES_TEXT) $(PROTOBUF_H)
 	@test -f $(RCC)
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(RCC) -name phore $< | \
 	  $(SED) -e '/^\*\*.*Created:/d' -e '/^\*\*.*by:/d' > $@
