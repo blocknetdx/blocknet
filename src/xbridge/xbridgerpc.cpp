@@ -1,4 +1,6 @@
 
+#include "ssliostreamdevice.h"
+
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_utils.h"
@@ -185,59 +187,6 @@ string real_strprintf(const std::string &format, int dummy, ...)
 }
 
 //******************************************************************************
-// IOStream device that speaks SSL but can also speak non-SSL
-//******************************************************************************
-template <typename Protocol>
-class SSLIOStreamDevice : public iostreams::device<iostreams::bidirectional> {
-public:
-    SSLIOStreamDevice(asio::ssl::stream<typename Protocol::socket> &streamIn, bool fUseSSLIn) : stream(streamIn)
-    {
-        fUseSSL = fUseSSLIn;
-        fNeedHandshake = fUseSSLIn;
-    }
-
-    void handshake(ssl::stream_base::handshake_type role)
-    {
-        if (!fNeedHandshake) return;
-        fNeedHandshake = false;
-        stream.handshake(role);
-    }
-    std::streamsize read(char* s, std::streamsize n)
-    {
-        handshake(ssl::stream_base::server); // HTTPS servers read first
-        if (fUseSSL) return stream.read_some(asio::buffer(s, static_cast<size_t>(n)));
-        return stream.next_layer().read_some(asio::buffer(s, static_cast<size_t>(n)));
-    }
-    std::streamsize write(const char* s, std::streamsize n)
-    {
-        handshake(ssl::stream_base::client); // HTTPS clients write first
-        if (fUseSSL) return asio::write(stream, asio::buffer(s, static_cast<size_t>(n)));
-        return asio::write(stream.next_layer(), asio::buffer(s, static_cast<size_t>(n)));
-    }
-    bool connect(const std::string& server, const std::string& port)
-    {
-        ip::tcp::resolver resolver(stream.get_io_service());
-        ip::tcp::resolver::query query(server.c_str(), port.c_str());
-        ip::tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
-        ip::tcp::resolver::iterator end;
-        boost::system::error_code error = asio::error::host_not_found;
-        while (error && endpoint_iterator != end)
-        {
-            stream.lowest_layer().close();
-            stream.lowest_layer().connect(*endpoint_iterator++, error);
-        }
-        if (error)
-            return false;
-        return true;
-    }
-
-private:
-    bool fNeedHandshake;
-    bool fUseSSL;
-    asio::ssl::stream<typename Protocol::socket>& stream;
-};
-
-//******************************************************************************
 //******************************************************************************
 string JSONRPCRequest(const string& strMethod, const Array& params, const Value& id)
 {
@@ -354,22 +303,14 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
 {
-//    if (mapArgs["-rpcuser"] == "" && mapArgs["-rpcpassword"] == "")
-//        throw runtime_error(strprintf(
-//            _("You must set rpcpassword=<password> in the configuration file:\n%s\n"
-//              "If the file does not exist, create it with owner-readable-only file permissions."),
-//                GetConfigFile().string().c_str()));
-
-    // Connect to localhost
-    bool fUseSSL = false;//GetBoolArg("-rpcssl");
-    asio::io_service io_service;
-    ssl::context context(io_service, ssl::context::sslv23);
-    context.set_options(ssl::context::no_sslv2);
-    asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
-    SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
-    iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
-    if (!d.connect(rpcip, rpcport))
-        throw runtime_error("couldn't connect to server");
+    boost::asio::ip::tcp::iostream stream;
+    stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxbridgetimeout", 15))));
+    stream.connect(rpcip, rpcport);
+    if (stream.error() != boost::system::errc::success) {
+        LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());
+        throw runtime_error(strprintf("no response from server %s:%s - %s", rpcip.c_str(), rpcport.c_str(),
+                stream.error().message().c_str()));
+    }
 
     // HTTP basic authentication
     string strUserPass64 = util::base64_encode(rpcuser + ":" + rpcpasswd);

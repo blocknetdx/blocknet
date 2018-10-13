@@ -1463,7 +1463,7 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
         ++i;
     }
 
-    if (!isLockCoinsSupported && !withLocked)
+    if (!withLocked)
     {
         removeLocked(inputs);
     }
@@ -1480,14 +1480,6 @@ bool BtcWalletConnector<CryptoProvider>::lockCoins(const std::vector<wallet::Utx
     if (!WalletConnector::lockCoins(inputs, lock))
     {
         return false;
-    }
-
-    if (isLockCoinsSupported)
-    {
-        if (!rpc::lockUnspent(m_user, m_passwd, m_ip, m_port, inputs, lock))
-        {
-            LOG() << "rpc::lockUnspent failed " << __FUNCTION__;
-        }
     }
 
     return true;

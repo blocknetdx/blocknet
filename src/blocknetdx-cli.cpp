@@ -107,18 +107,17 @@ Object CallRPC(const string& strMethod, const Array& params)
               "If the file does not exist, create it with owner-readable-only file permissions."),
             GetConfigFile().string().c_str()));
 
-    // Connect to localhost
-    bool fUseSSL = GetBoolArg("-rpcssl", false);
-    asio::io_service io_service;
-    ssl::context context(io_service, ssl::context::sslv23);
-    context.set_options(ssl::context::no_sslv2 | ssl::context::no_sslv3);
-    asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
-    SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
-    iostreams::stream<SSLIOStreamDevice<asio::ip::tcp> > stream(d);
+    std::string rpcip(GetArg("-rpcconnect", "127.0.0.1"));
+    std::string rpcport(GetArg("-rpcport", itostr(BaseParams().RPCPort())));
 
-    const bool fConnected = d.connect(GetArg("-rpcconnect", "127.0.0.1"), GetArg("-rpcport", itostr(BaseParams().RPCPort())));
-    if (!fConnected)
-        throw CConnectionFailed("couldn't connect to server");
+    boost::asio::ip::tcp::iostream stream;
+    stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcclienttimeout", 15)));
+    stream.connect(rpcip, rpcport);
+    if (stream.error() != boost::system::errc::success) {
+        LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());
+        throw runtime_error(strprintf("no response from server %s:%s - %s", rpcip.c_str(), rpcport.c_str(),
+                                      stream.error().message().c_str()));
+    }
 
     // HTTP basic authentication
     string strUserPass64 = EncodeBase64(mapArgs["-rpcuser"] + ":" + mapArgs["-rpcpassword"]);

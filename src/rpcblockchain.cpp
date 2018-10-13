@@ -427,6 +427,8 @@ Value gettxout(const Array& params, bool fHelp)
     if (params.size() > 2)
         fMempool = params[2].get_bool();
 
+    LOCK(cs_main);
+
     CCoins coins;
     if (fMempool) {
         LOCK(mempool.cs);
@@ -501,6 +503,7 @@ Value getblockchaininfo(const Array& params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getblockchaininfo", "") + HelpExampleRpc("getblockchaininfo", ""));
 
+    LOCK(cs_main);
     Object obj;
     obj.push_back(Pair("chain", Params().NetworkIDString()));
     obj.push_back(Pair("blocks", (int)chainActive.Height()));

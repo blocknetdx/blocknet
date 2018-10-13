@@ -1,3 +1,5 @@
+#include <utility>
+
 //*****************************************************************************
 //*****************************************************************************
 
@@ -16,6 +18,7 @@
 #include <thread>
 #include <atomic>
 #include <vector>
+#include <functional>
 #include <map>
 #include <tuple>
 #include <set>
@@ -24,6 +27,11 @@
 #ifdef WIN32
 // #include <Ws2tcpip.h>
 #endif
+
+class xQuery;
+class CurrencyPair;
+class xAggregate;
+class xSeriesCache;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -48,6 +56,7 @@ private:
     virtual ~App();
 
 public:
+
     /**
      * @brief instance - the classical implementation of singletone
      * @return
@@ -64,7 +73,7 @@ public:
      * @brief isEnabled
      * @return enabled by default
      */
-    static bool isEnabled();
+    bool isEnabled();
 
     /**
      * @brief init init xbridge settings, secp256, exchange,
@@ -90,6 +99,24 @@ public:
 
 public:
     // classes
+
+    /**
+     * @brief Stores the supported services on servicenodes (xwallets).
+     */
+    class XWallets {
+    public:
+        XWallets() :  _version(0), _nodePubKey(::CPubKey()), _services(std::set<std::string>()) {}
+        XWallets(const uint32_t version, const ::CPubKey & nodePubKey, const std::set<std::string> services)
+            :  _version(version), _nodePubKey(nodePubKey), _services(std::move(services)) {}
+        uint32_t version() const { return _version; };
+        ::CPubKey nodePubKey() const { return _nodePubKey; };
+        std::set<std::string> services() const { return _services; };
+    private:
+        uint32_t _version;
+        ::CPubKey _nodePubKey;
+        std::set<std::string> _services;
+    };
+
     /**
      * @brief summary info about old orders flushed by flushCancelledOrders()
      */
@@ -103,8 +130,19 @@ public:
             : id{id}, txtime{txtime}, use_count{use_count} {}
     };
 
-    // transactions
+    // Settings
+    /**
+     * @brief Load xbridge.conf settings file.
+     */
+    bool loadSettings();
 
+    // Shutdown
+    /**
+     * @brief Disconnects all wallets loaded by this node and notifies the network of the empty service list.
+     */
+    bool disconnectWallets();
+
+    // transactions
     /**
      * @brief transaction - find transaction by id
      * @param id - id of transaction
@@ -121,6 +159,25 @@ public:
      * @return map of historical transaction (local canceled and finished)
      */
     std::map<uint256, xbridge::TransactionDescrPtr> history() const;
+
+    /**
+     * @brief history_matches returns details of local transactions that match given filter,
+     * it is like the history() call but instead of copying the entire map container it
+     * includes only transactions matching TransactionFilter and xQuery
+     * @param - filter to apply and other query parameters
+     * @return - list of individual matching local transactions
+     */
+    using TransactionFilter = std::function<void(std::vector<CurrencyPair>& matches,
+                                                 const TransactionDescr& tr,
+                                                 const xQuery& query)>;
+    std::vector<CurrencyPair> history_matches(const TransactionFilter& filter, const xQuery& query);
+
+    /**
+     * @brief getXSeriesCache
+     * @return - reference to cache of open,high,low,close transaction aggregated series
+     */
+    xSeriesCache& getXSeriesCache();
+
     /**
      * @brief flushCancelledOrders with txtime older than minAge
      * @return list of all flushed orders
@@ -256,6 +313,12 @@ public:
     void addConnector(const WalletConnectorPtr & conn);
 
     /**
+     * @brief Removes the specified connector.
+     * @param conn connector to remove
+     */
+    void removeConnector(const std::string & currency);
+
+    /**
      * @brief updateConnector - update connector params
      * @param conn - pointer to connector
      * @param addr - new currency name address
@@ -264,6 +327,13 @@ public:
     void updateConnector(const WalletConnectorPtr & conn,
                          const std::vector<unsigned char> addr,
                          const std::string & currency);
+
+    /**
+     * Updates the active wallets list. Active wallets are those that are running and responding
+     * to rpc calls.
+     */
+    std::set<std::string> updateActiveWallets();
+
     /**
      * @brief connectorByCurrency
      * @param currency - currency name
@@ -285,11 +355,13 @@ public:
      * @return true, if message known and processing
      */
     bool isKnownMessage(const std::vector<unsigned char> & message);
+    bool isKnownMessage(const uint256 & hash);
     /**
      * @brief addToKnown - add message to queue of processed messages
      * @param message
      */
     void addToKnown(const std::vector<unsigned char> & message);
+    void addToKnown(const uint256 & hash);
 
     //
     /**
@@ -358,19 +430,25 @@ public:
      * @brief Returns the all services across all nodes.
      * @return
      */
-    std::map<CPubKey, std::set<string> > allServices();
+    std::map<CPubKey, XWallets> allServices();
     /**
      * @brief Returns the node services supported by the specified node.
      * @return
      */
     std::set<std::string> nodeServices(const ::CPubKey & nodePubKey);
     bool addNodeServices(const ::CPubKey & nodePubKey,
-                         const std::vector<std::string> & services);
+                         const std::vector<std::string> & services,
+                         const uint32_t version);
 
     bool findNodeWithService(const std::set<std::string> & services, CPubKey & node) const;
 
+protected:
+    void clearMempool();
+
 private:
     std::unique_ptr<Impl> m_p;
+    bool m_disconnecting;
+    CCriticalSection m_lock;
 
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
