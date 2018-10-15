@@ -40,12 +40,12 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     titleLbl->setObjectName("h4");
     titleLbl->setFixedHeight(26);
 
-    debugConsole = new BlocknetPeersList(DEBUG_CONSOLE);
-    networkMonitor = new BlocknetPeersList(NETWORK_MONITOR);
-    peersList = new BlocknetPeersList(PEERS_LIST);
-    bip38Tool = new BlocknetPeersList(BIP38_TOOL);
-    walletRepair = new BlocknetPeersList(WALLET_REPAIR);
-    multisend = new BlocknetPeersList(MULTISEND);
+    debugConsole = new BlocknetPeersList(this, DEBUG_CONSOLE);
+    networkMonitor = new BlocknetPeersList(this, NETWORK_MONITOR);
+    peersList = new BlocknetPeersList(this, PEERS_LIST);
+    bip38Tool = new BlocknetPeersList(this, BIP38_TOOL);
+    walletRepair = new BlocknetPeersList(this, WALLET_REPAIR);
+    multisend = new BlocknetPeersList(this, MULTISEND);
     pages = { debugConsole, networkMonitor, peersList, bip38Tool, walletRepair, multisend };
 
     tabBar = new BlocknetTabBar;

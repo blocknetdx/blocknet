@@ -192,10 +192,9 @@ BlocknetTransactionHistory #dateRange QLabel { color: white; }
 BlocknetTools QTableWidget { color: white; background-color: transparent; }
 BlocknetTools QTableWidget QHeaderView { color: #37475C; background-color: transparent; }
 BlocknetTools QTableWidget QHeaderView::section { background-color: transparent; }
-BlocknetTools QTableWidget #indicator[state="0"] { background-color: #4BF5C6; }
-BlocknetTools QTableWidget #indicator[state="1"] { background-color: #F8BF1C; }
-BlocknetTools QTableWidget #indicator[state="2"] { background-color: #FB7F70; }
 BlocknetTools QTableWidget::item { padding: 3px; }
+BlocknetPeerDetails { border: 1px solid #37475C; background-color: #051937; }
+BlocknetPeerDetails #detailLbl { color: #6F8097; font-size: 12px; }
 
 BlocknetCoinControl QTableWidget { color: white; }
 #coinControlDialog { background-color: #172F49; }

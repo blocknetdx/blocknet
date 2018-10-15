@@ -141,6 +141,7 @@ QT_MOC_CPP = \
   qt/moc_blocknettabbar.cpp \
   qt/moc_blocknettools.cpp \
   qt/moc_blocknetpeerslist.cpp \
+  qt/moc_blocknetpeerdetails.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetcoincontrol.cpp \
   qt/moc_blocknetsendfundsrequest.cpp
@@ -270,6 +271,7 @@ BITCOIN_QT_H = \
   qt/blocknettabbar.h \
   qt/blocknettools.h \
   qt/blocknetpeerslist.h \
+  qt/blocknetpeerdetails.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \
   qt/blocknetcoincontrol.h \
@@ -444,6 +446,7 @@ BITCOIN_QT_CPP += \
   qt/blocknettabbar.cpp \
   qt/blocknettools.cpp \
   qt/blocknetpeerslist.cpp \
+  qt/blocknetpeerdetails.cpp \
   qt/blocknetwallet.cpp
 
 endif

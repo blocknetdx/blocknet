@@ -6,6 +6,7 @@
 #define BLOCKNETPEERSLIST_H
 
 #include "blocknettools.h"
+#include "blocknetpeerdetails.h"
 
 #include <QFrame>
 #include <QVBoxLayout>
@@ -18,7 +19,7 @@ class BlocknetPeersList : public BlocknetToolsPage {
 protected:
 
 public:
-    explicit BlocknetPeersList(int id, QFrame *parent = nullptr);
+    explicit BlocknetPeersList(QWidget *popup, int id, QFrame *parent = nullptr);
     void setWalletModel(WalletModel *w);
 
     struct Peer {
@@ -29,7 +30,8 @@ public:
         QString latestBlock;
     };
 
-public slots:
+private slots:
+    void displayPeerDetails(const QItemSelection &, const QItemSelection &);
 
 private:
     QVBoxLayout *layout;
@@ -37,6 +39,8 @@ private:
     QTableWidget *table;
     QTableWidgetItem *contextItem = nullptr;
     QVector<Peer> dataModel;
+    BlocknetPeerDetails *peerDetails = nullptr;
+    QWidget *popupWidget;
 
     void initialize();
     void setData(QVector<Peer> data);

@@ -7,8 +7,7 @@
 #include <QMessageBox>
 #include <QHeaderView>
 
-BlocknetPeersList::BlocknetPeersList(int id, QFrame *parent) : BlocknetToolsPage(id, parent), layout(new QVBoxLayout) {
-//    this->setStyleSheet("border: 1px solid red");
+BlocknetPeersList::BlocknetPeersList(QWidget *popup, int id, QFrame *parent) : BlocknetToolsPage(id, parent), popupWidget(popup), layout(new QVBoxLayout) {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setLayout(layout);
     layout->setContentsMargins(0, 10, 0, 10);
@@ -24,8 +23,6 @@ BlocknetPeersList::BlocknetPeersList(int id, QFrame *parent) : BlocknetToolsPage
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setFocusPolicy(Qt::NoFocus);
     table->setAlternatingRowColors(true);
-    //table->setColumnWidth(COLUMN_COLOR, 3);
-    //table->setColumnWidth(COLUMN_VOTE, 150);
     table->setShowGrid(false);
     table->setFocusPolicy(Qt::NoFocus);
     table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -47,6 +44,13 @@ BlocknetPeersList::BlocknetPeersList(int id, QFrame *parent) : BlocknetToolsPage
     layout->addSpacing(5);
     layout->addWidget(table);
     layout->addSpacing(5);
+
+    peerDetails = new BlocknetPeerDetails;
+    peerDetails->setDisplayWidget(popupWidget);
+    peerDetails->hide();
+
+    connect(table->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)), this,
+            SLOT(displayPeerDetails(const QItemSelection &, const QItemSelection &)));
 }
 
 void BlocknetPeersList::setWalletModel(WalletModel *w) {
@@ -159,4 +163,30 @@ void BlocknetPeersList::unwatch() {
 void BlocknetPeersList::watch() {
     table->setEnabled(true);
     //connect(table, &QTableWidget::itemChanged, this, &BlocknetPeersList::onItemChanged);
+}
+
+void BlocknetPeersList::displayPeerDetails(const QItemSelection &, const QItemSelection &) {
+    if (!table->selectionModel()) {
+        return;
+    }
+
+    if (peerDetails->isHidden()) {
+        peerDetails->setFixedSize(table->width(), 250);
+        peerDetails->move(QPoint(table->pos().x() + 46, table->pos().y() + table->height() - peerDetails->height() / 2));
+        BlocknetPeerDetails::PeerDetails detailsData = {
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A"),
+            tr("N/A")
+        };
+        peerDetails->show(detailsData);
+    }
 }
