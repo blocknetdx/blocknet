@@ -33,13 +33,13 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params);
 
-bool createAndSignTransaction(std::string address, const double amount, std::string & raw_tx);
-bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund=true, bool check_complete=true);
+bool createAndSignTransaction(std::string address, CAmount amount, std::string & raw_tx);
+bool createAndSignTransaction(Array txparams, std::string & raw_tx);
 std::string signTransaction(std::string& raw_tx);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
-bool sendTransactionBlockchain(std::string address, const double amount, std::string & raw_tx);
-PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date);
-bool createAndSignChannelTransaction(PaymentChannel channel, std::string address, double deposit, double amount, std::string & raw_tx);
+bool sendTransactionBlockchain(std::string address, CAmount amount, std::string & raw_tx);
+PaymentChannel createPaymentChannel(CPubKey address, CAmount deposit, int date);
+bool createAndSignChannelTransaction(PaymentChannel channel, std::string address, CAmount deposit, CAmount amount, std::string & raw_tx);
 bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::string latest_tx, std::string & raw_tx);
 double getTxValue(std::string rawtx, std::string address, std::string type="address");
 int getChannelExpiryTime(std::string rawtx);

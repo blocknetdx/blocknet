@@ -219,7 +219,7 @@ std::string CallCMD(std::string cmd) {
 // TODO: make this common with xbridge or use xbridge function for storing
 static CCriticalSection cs_rpcBlockchainStore;
 
-bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund, bool check_complete)
+bool createAndSignTransaction(Array txparams, std::string & raw_tx)
 {
     LOCK(cs_rpcBlockchainStore);
 
@@ -247,7 +247,6 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund, b
             rawtx = result.get_str();
         }
 
-        if (fund)
         {
             Array params;
             params.push_back(rawtx);
@@ -290,11 +289,9 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund, b
                 throw std::runtime_error("Sign transaction error");
             }
 
-            if (check_complete) {
-                if (cpl.type() != bool_type || !cpl.get_bool())
-                {
-                    throw std::runtime_error("Sign transaction not complete");
-                }
+            if (cpl.type() != bool_type || !cpl.get_bool())
+            {
+                throw std::runtime_error("Sign transaction not complete");
             }
             
             rawtx = tx.get_str();
@@ -330,12 +327,12 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx, bool fund, b
     return true;
 }
 
-bool createAndSignTransaction(std::string address, const double amount, string & raw_tx)
+bool createAndSignTransaction(std::string address, CAmount amount, string & raw_tx)
 {
     Array outputs;
     Object out;
     out.push_back(Pair("address", address));
-    out.push_back(Pair("amount", amount));
+    out.push_back(Pair("amount", ValueFromAmount(amount)));
     outputs.push_back(out);
     Array inputs;
     Value result;
@@ -419,7 +416,7 @@ bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
     return true;
 }
 
-bool sendTransactionBlockchain(std::string address, const double amount, std::string & txid)
+bool sendTransactionBlockchain(std::string address, CAmount amount, std::string & txid)
 {
     std::string raw_tx;
     bool res = createAndSignTransaction(address, amount, raw_tx);
@@ -431,7 +428,7 @@ bool sendTransactionBlockchain(std::string address, const double amount, std::st
     return res;
 }
 
-PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
+PaymentChannel createPaymentChannel(CPubKey address, CAmount deposit, int date)
 {
     PaymentChannel channel;
     CScript inner;
@@ -465,7 +462,7 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     out.push_back(Pair("data", hexdate));
     Object out2;
     out2.push_back(Pair("script", resultScript));
-    out2.push_back(Pair("amount", deposit));
+    out2.push_back(Pair("amount", ValueFromAmount(deposit)));
     outputs.push_back(out);
     outputs.push_back(out2);
     Array inputs;
@@ -511,7 +508,7 @@ PaymentChannel createPaymentChannel(CPubKey address, double deposit, int date)
     return channel;
 }
 
-bool createAndSignChannelTransaction(PaymentChannel channel, std::string address, double deposit, double amount, std::string& raw_tx)
+bool createAndSignChannelTransaction(PaymentChannel channel, std::string address, CAmount deposit, CAmount amount, std::string& raw_tx)
 {
     CPubKey my_pubkey = pwalletMain->GenerateNewKey();
     CKey mykey;
@@ -524,8 +521,8 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
     CTxIn in(outp);
     unsigned_tx.vin.push_back(in);
     // TODO: get minimal fee from wallet
-    unsigned_tx.vout.push_back(CTxOut(AmountFromValue(deposit - amount - 0.001), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
-    unsigned_tx.vout.push_back(CTxOut(AmountFromValue(amount), GetScriptForDestination(CBitcoinAddress(address).Get())));
+    unsigned_tx.vout.push_back(CTxOut(deposit - amount - AmountFromValue(0.001), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
+    unsigned_tx.vout.push_back(CTxOut(amount, GetScriptForDestination(CBitcoinAddress(address).Get())));
 
     std::vector<unsigned char> signature;
     uint256 sighash = SignatureHash(channel.redeemScript, unsigned_tx, 0, SIGHASH_ALL);
