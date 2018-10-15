@@ -4,6 +4,7 @@
 // #include "uint256.h"
 #include "base58.h"
 #include "util/xutil.h"
+#include "sync.h"
 #include "xbridgedef.h"
 #include "xbridgepacket.h"
 #include "xbridgewalletconnector.h"
@@ -22,6 +23,8 @@ namespace xbridge
 //******************************************************************************
 struct TransactionDescr
 {
+    CCriticalSection _lock;
+
     enum
     {
         COIN = 1000000,
@@ -102,6 +105,17 @@ struct TransactionDescr
     // used coins in transaction
     std::vector<xbridge::wallet::UtxoEntry> usedCoins;
 
+    // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
+    std::set<CPubKey> _excludedSnodes;
+    void excludeNode(CPubKey &key) {
+        LOCK(_lock);
+        _excludedSnodes.insert(key);
+    }
+    std::set<CPubKey> excludedNodes() {
+        LOCK(_lock);
+        return _excludedSnodes;
+    }
+
     TransactionDescr()
         : role(0)
         , lockTimeTx1(0)
@@ -152,11 +166,13 @@ struct TransactionDescr
 
     void updateTimestamp()
     {
+        LOCK(_lock);
         txtime       = boost::posix_time::microsec_clock::universal_time();
     }
 
     void updateTimestamp(const TransactionDescr & d)
     {
+        LOCK(_lock);
         txtime       = boost::posix_time::microsec_clock::universal_time();
         if (created > d.created)
         {
@@ -168,6 +184,19 @@ struct TransactionDescr
     {
         // must have from and to addresses
         return from.size() != 0 && to.size() != 0;
+    }
+
+    /**
+     * Assigns the servicenode to the order.
+     * @param snode Servicenode pubkey
+     */
+    void assignServicenode(CPubKey & snode) {
+        LOCK(_lock);
+        CKeyID snodeID = snode.GetID();
+        std::copy(snodeID.begin(), snodeID.end(), hubAddress.begin());
+        if (!snode.IsCompressed())
+            snode.Compress();
+        sPubKey = std::vector<unsigned char>(snode.begin(), snode.end());
     }
 
     std::string strState() const
@@ -198,6 +227,8 @@ struct TransactionDescr
 private:
     void copyFrom(const TransactionDescr & d)
     {
+        {
+        LOCK(_lock);
         id           = d.id;
         role         = d.role;
         from         = d.from;
@@ -237,7 +268,7 @@ private:
 
         hubAddress     = d.hubAddress;
         confirmAddress = d.confirmAddress;
-
+        }
         updateTimestamp(d);
     }
 };
