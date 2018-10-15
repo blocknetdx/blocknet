@@ -149,11 +149,20 @@ Value dxGetOrders(const Array & params, bool fHelp)
 
     auto &xapp = xbridge::App::instance();
     TransactionMap trlist = xapp.transactions();
+    auto currentTime = boost::posix_time::second_clock::universal_time();
 
     Array result;
     for (const auto& trEntry : trlist) {
 
         const auto &tr = trEntry.second;
+
+        // Skip canceled, finished, and expired orders older than 1 minute
+        if ((currentTime - tr->txtime).total_seconds() > 60) {
+            if (tr->state == xbridge::TransactionDescr::trCancelled
+              || tr->state == xbridge::TransactionDescr::trFinished
+              || tr->state == xbridge::TransactionDescr::trExpired)
+            continue;
+        }
 
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
