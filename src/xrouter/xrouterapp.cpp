@@ -679,9 +679,9 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     for (CNode* pnode : selectedNodes) {
         CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getCommandFee(command, currency));
         std::string payment_tx = "nofee";
-        if (fee > 0)
+        if (fee > 0) {
             payment_tx = generatePayment(pnode, fee);
-        
+        }
         XRouterPacketPtr packet(new XRouterPacket(command));
         packet->append(txHash.begin(), 32);
         packet->append(vout);
@@ -987,7 +987,8 @@ std::string App::generatePayment(CNode* pnode, CAmount fee)
 {
     std::string strtxid;
     std::string dest = getPaymentAddress(pnode);
-    CAmount deposit = AmountFromValue(xrouter_settings.get<double>("Main.deposit", 0.0));
+    double deposit_double = xrouter_settings.get<double>("Main.deposit", 0.0);
+    CAmount deposit = deposit_double > 0 ? AmountFromValue(deposit_double) : 0;
     int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
     std::string payment_tx = "nofee";
     bool res;
