@@ -344,30 +344,32 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         
         CAmount fee = to_amount(app.xrouter_settings.getCommandFee(packet->command(), currency));
         
-        this->processPayment(node, feetx, fee);
+        LOG() << "Fee = " << fee;
+        LOG() << "Feetx = " << feetx;
+        try {
+            this->processPayment(node, feetx, fee);
         
-        std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
-        double timeout = app.xrouter_settings.getCommandTimeout(packet->command(), currency);
-        if (lastPacketsReceived.count(node)) {
-            if (lastPacketsReceived[node].count(keystr)) {
-                std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsReceived[node][keystr];
-                std::chrono::system_clock::duration diff = time - prev_time;
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
-                    std::string err_msg = "XRouter: too many requests of type " + keystr; 
-                    state.DoS(100, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+            std::string keystr = currency + "::" + XRouterCommand_ToString(packet->command());
+            double timeout = app.xrouter_settings.getCommandTimeout(packet->command(), currency);
+            if (lastPacketsReceived.count(node)) {
+                if (lastPacketsReceived[node].count(keystr)) {
+                    std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsReceived[node][keystr];
+                    std::chrono::system_clock::duration diff = time - prev_time;
+                    if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
+                        std::string err_msg = "XRouter: too many requests of type " + keystr; 
+                        state.DoS(100, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                    }
+                    if (!lastPacketsReceived.count(node))
+                        lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
+                    lastPacketsReceived[node][keystr] = time;
+                } else {
+                    lastPacketsReceived[node][keystr] = time;
                 }
-                if (!lastPacketsReceived.count(node))
-                    lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-                lastPacketsReceived[node][keystr] = time;
             } else {
+                lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
                 lastPacketsReceived[node][keystr] = time;
             }
-        } else {
-            lastPacketsReceived[node] = boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-            lastPacketsReceived[node][keystr] = time;
-        }
             
-        try {
             switch (packet->command()) {
             case xrGetBlockCount:
                 reply = processGetBlockCount(packet, offset, currency);
@@ -403,9 +405,12 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 LOG() << "Unknown packet";
                 return;
             }
-        } catch(...) {
-            reply = "Currency " + currency + " is not available";
         }
+        catch (std::runtime_error & e)
+        {
+            reply = e.what();
+        }
+        
     }
 
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));

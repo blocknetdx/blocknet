@@ -676,12 +676,13 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         confirmations_count = xrouter_settings.get<int>("Main.confirmations", 0);
     if (confirmations_count < 1)
         confirmations_count = XROUTER_DEFAULT_CONFIRMATIONS;
+    std::cout << confirmations_count << " confs " << std::endl;
     
     Object error;
     boost::shared_ptr<boost::mutex> m(new boost::mutex());
     boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
     boost::mutex::scoped_lock lock(*m);
-    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_TIMEOUT);
+    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_WAIT);
     LOG() << "Sending query " << id;
     queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
     
@@ -708,7 +709,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         if (!param2.empty())
             packet->append(param2);
         packet->sign(key);
-        
+        std::cout << "Query " << currency << " " << payment_tx << std::endl << std::flush;
         
         pnode->PushMessage("xrouter", packet->body());
         sent++;
@@ -728,6 +729,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     while ((confirmation_count < confirmations_count) && cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         confirmation_count++;
 
+    std::cout << confirmation_count << " confffffs" << std::endl << std::flush;
     if(confirmation_count <= confirmations_count / 2) {
         error.emplace_back(Pair("error", "Failed to get response in time. Try xrReply command later."));
         error.emplace_back(Pair("uuid", id));
@@ -737,6 +739,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         for (unsigned int i = 0; i < queries[id].size(); i++)
         {
             std::string cand = queries[id][i];
+            std::cout << "Repl " << cand << std::endl << std::flush;
             int cnt = 0;
             for (unsigned int j = 0; j < queries[id].size(); j++)
             {
@@ -987,7 +990,7 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     lastPacketsSent[pnode][name] = time;
     
     pnode->PushMessage("xrouter", msg);
-    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_TIMEOUT);
+    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_WAIT);
     if (cond->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
         std::string reply = queries[id][0];
         return reply;
@@ -1144,7 +1147,7 @@ std::string App::getXrouterConfigSync(CNode* node) {
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     node->PushMessage("xrouter", msg);
-    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_TIMEOUT);
+    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_WAIT);
     if (!cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         return "Could not get XRouter config";
 
