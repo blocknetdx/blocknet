@@ -135,6 +135,7 @@ string strMiscWarning;
 bool fLogTimestamps = false;
 bool fLogIPs = false;
 volatile bool fReopenDebugLog = false;
+int nConnectTimeout = DEFAULT_CONNECT_TIMEOUT;
 
 /** Init OpenSSL library multithreading support */
 static CCriticalSection** ppmutexOpenSSL;

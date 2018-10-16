@@ -8,6 +8,7 @@
 #include "xbridgetransaction.h"
 #include "xbridgewallet.h"
 #include "xbridgepacket.h"
+#include "sync.h"
 
 #include <string>
 #include <set>
@@ -49,6 +50,12 @@ public:
      * @return
      */
     bool init();
+
+    /**
+     * @brief Load the running wallets.
+     * @return
+     */
+    bool loadWallets(std::set<std::string> & wallets);
 
     /**
      * @brief isEnabled
@@ -251,6 +258,7 @@ public:
 
 private:
     std::unique_ptr<Impl> m_p;
+    mutable CCriticalSection m_lock;
 };
 
 } // namespace xbridge

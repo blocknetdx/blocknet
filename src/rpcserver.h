@@ -257,6 +257,24 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
  *  @{
  */
 
+/** @brief Hot loads xbridge.conf while the dx is running
+  * @param params The list of input params should be empty
+  * @param fHelp If is true then an exception with parameter description message will be thrown
+  * @return true if successful otherwise returns false
+  * * Example:<br>
+  * \verbatim
+    dxLoadXBridgeConf
+￼
+    true
+  * \endverbatim
+  */
+extern json_spirit::Value dxLoadXBridgeConf(const json_spirit::Array& params, bool fHelp);
+
+/** \defgroup xBridgeAPI xBridge API
+ * @brief XBridge functions exposed to RPC
+ *  @{
+ */
+
 /** @brief Returns the list of open and pending transactions
   * @param params The list of input params - should be empty
   * @param fHelp If is true then an exception with parameter description message will be thrown

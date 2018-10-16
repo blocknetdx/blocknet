@@ -5566,32 +5566,32 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         std::vector<unsigned char> raw;
         vRecv >> raw;
 
-        uint256 hash = Hash(raw.begin(), raw.end());
-        if (!pfrom->setKnown.count(hash))
+        // Top-level validation checks
+        if (raw.size() < (20 + sizeof(time_t)))
         {
-            pfrom->setKnown.insert(hash);
+            // bad packet, small penalty (don't relay)
+            Misbehaving(pfrom->GetId(), 10);
+        }
+        else
+        {
+            // packet's top-level hash
+            uint256 hash = Hash(raw.begin(), raw.end());
+            auto &app = xbridge::App::instance();
 
-            // Relay
+            // If we haven't seen this packet before, proceed
+            if (!app.isKnownMessage(hash))
             {
-                LOCK(cs_vNodes);
-                for  (CNode * pnode : vNodes)
+                app.addToKnown(hash);
+
+                // Relay packets we haven't seen before
                 {
-                    if (pnode->setKnown.insert(hash).second)
-                    {
+                    LOCK(cs_vNodes);
+                    for  (CNode * pnode : vNodes)
                         pnode->PushMessage("xbridge", raw);
-                    }
                 }
-            }
 
-            static bool isEnabled = xbridge::App::isEnabled();
-            if (isEnabled)
-            {
-                if (raw.size() < (20 + sizeof(time_t)))
-                {
-                    // bad packet, small penalty
-                    Misbehaving(pfrom->GetId(), 10);
-                }
-                else
+                // Only process the packet if we are an exchange capable node, a servicenode, or xrouter node
+                if (app.isEnabled() || GetBoolArg("-xrouter", false))
                 {
                     CValidationState state;
 
@@ -5601,8 +5601,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                     raw.erase(raw.begin(), raw.begin()+20);
                     // remove timestamp from raw
                     raw.erase(raw.begin(), raw.begin()+sizeof(uint64_t));
-
-                    xbridge::App & app = xbridge::App::instance();
 
                     if (addr != zero)
                     {
@@ -5629,7 +5627,6 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                         LogPrint("xbridge", "xbridge packet from peer=%d %s processed with error: %s\n",
                             pfrom->id, pfrom->cleanSubVer,
                             state.GetRejectReason());
-                        // Misbehaving(pfrom->GetId(), 10);
                     }
                 }
             }

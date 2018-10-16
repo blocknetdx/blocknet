@@ -4,6 +4,7 @@
 #define SETTINGS_H
 
 #include "logger.h"
+#include "sync.h"
 
 #include <vector>
 #include <string>
@@ -106,6 +107,7 @@ private:
     std::vector<std::string>    m_peers;
 
     bool                        m_isExchangeEnabled;
+    mutable CCriticalSection    m_lock;
 };
 
 Settings & settings();

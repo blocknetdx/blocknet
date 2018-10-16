@@ -26,6 +26,7 @@
 #include "servicenodeman.h"
 #include "random.h"
 #include "FastDelegate.h"
+#include "sync.h"
 
 #include "json/json_spirit.h"
 #include "json/json_spirit_reader_template.h"
@@ -170,7 +171,7 @@ void Session::Impl::init()
     // process invalid
     m_handlers[xbcInvalid]                   .bind(this, &Impl::processInvalid);
 
-    if (Exchange::instance().isEnabled())
+    if (GetBoolArg("-servicenode", false) && GetBoolArg("-enableexchange", false))
     {
         // server side
         m_handlers[xbcTransaction]           .bind(this, &Impl::processTransaction);
@@ -362,7 +363,7 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
         if (pmn == nullptr)
         {
             ERR() << "Bad Services packet, Servicenode not found with vin "
-                  << nodePubKey.GetHex() << " "
+                  << nodePubKey.GetHash().ToString() << " "
                   << __FUNCTION__;
             return false;
         }
@@ -385,7 +386,7 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     }
 
     // Store updated services list for this node
-    App::instance().addNodeServices(nodePubKey, services);
+    App::instance().addNodeServices(nodePubKey, services, packet->version());
 
     return true;
 }
@@ -701,7 +702,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                 return false;
             }
 
-            boost::mutex::scoped_lock l(tr->m_lock);
+            LOCK(tr->m_lock);
 
             std::string firstCurrency = tr->a_currency();
             std::vector<unsigned char> fc(8, 0);
@@ -1029,7 +1030,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             // if trJoined = send hold to client
             TransactionPtr tr = e.transaction(id);
 
-            boost::mutex::scoped_lock l(tr->m_lock);
+            LOCK(tr->m_lock);
 
             if (tr->state() != xbridge::Transaction::trJoined)
             {
@@ -1146,7 +1147,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         {
             TransactionPtr tr = e.transaction(id);
 
-            boost::mutex::scoped_lock l(tr->m_lock);
+            LOCK(tr->m_lock);
 
             LOG() << __FUNCTION__ << tr;
 
@@ -1249,7 +1250,7 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     TransactionPtr tr = e.transaction(id);
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
@@ -1583,7 +1584,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -1786,8 +1787,11 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs
+        wallet::UtxoEntry largestUtxo;
         for (const wallet::UtxoEntry & entry : usedInTx)
         {
+            if (entry.amount > largestUtxo.amount)
+                largestUtxo = entry;
             inputs.emplace_back(entry.txId, entry.vout, entry.amount);
         }
 
@@ -1799,17 +1803,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         // rest
         if (inAmount > outAmount+fee1+fee2)
         {
-            std::string addr;
-            if (!connFrom->getNewAddress(addr))
-            {
-                // cancel transaction
-                LOG() << "rpc error, transaction canceled " << __FUNCTION__;
-                sendCancelTransaction(xtx, crRpcError);
-                return true;
-            }
-
             double rest = inAmount-outAmount-fee1-fee2;
-            outputs.push_back(std::make_pair(addr, rest));
+            outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
         }
 
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTx))
@@ -1960,7 +1955,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2183,8 +2178,11 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs
+        wallet::UtxoEntry largestUtxo;
         for (const wallet::UtxoEntry & entry : usedInTx)
         {
+            if (entry.amount > largestUtxo.amount)
+                largestUtxo = entry;
             inputs.emplace_back(entry.txId, entry.vout, entry.amount);
         }
 
@@ -2196,17 +2194,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         // rest
         if (inAmount > outAmount+fee1+fee2)
         {
-            std::string addr;
-            if (!connFrom->getNewAddress(addr))
-            {
-                // cancel transaction
-                LOG() << "rpc error, transaction canceled " << __FUNCTION__;
-                sendCancelTransaction(xtx, crRpcError);
-                return true;
-            }
-
             double rest = inAmount-outAmount-fee1-fee2;
-            outputs.push_back(std::make_pair(addr, rest));
+            outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
         }
 
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTx))
@@ -2353,7 +2342,7 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2602,7 +2591,7 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2842,7 +2831,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
         return true;
     }
 
-    boost::mutex::scoped_lock l(tr->m_lock);
+    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -2908,7 +2897,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
             return true;
         }
 
-        boost::mutex::scoped_lock l(tr->m_lock);
+        LOCK(tr->m_lock);
 
         LOG() << __FUNCTION__ << tr;
 
@@ -3119,7 +3108,7 @@ void Session::sendListOfTransactions() const
     {
         TransactionPtr & ptr = *i;
 
-        boost::mutex::scoped_lock l(ptr->m_lock);
+        LOCK(ptr->m_lock);
 
         XBridgePacketPtr packet(new XBridgePacket(xbcPendingTransaction));
 
@@ -3175,7 +3164,7 @@ void Session::checkFinishedTransactions() const
     {
         TransactionPtr & ptr = *i;
 
-        boost::mutex::scoped_lock l(ptr->m_lock);
+        LOCK(ptr->m_lock);
 
         uint256 txid = ptr->id();
 
