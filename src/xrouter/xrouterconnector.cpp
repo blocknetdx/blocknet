@@ -250,6 +250,9 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
         {
             Array params;
             params.push_back(rawtx);
+            Object options;
+            options.push_back(Pair("lockUnspents", true));
+            params.push_back(options);
 
             // call fund
             result = tableRPC.execute(fundCommand, params);
