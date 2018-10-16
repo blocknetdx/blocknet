@@ -3079,22 +3079,6 @@ void Session::sendListOfTransactions() const
 {
     xbridge::App & xapp = xbridge::App::instance();
 
-    // send my trx
-    // TODO maybe move this to app?
-    std::map<uint256, xbridge::TransactionDescrPtr> transactions = xapp.transactions();
-    if (transactions.size())
-    {
-        // send pending transactions
-        for (const auto & i : transactions)
-        {
-            if (i.second->state == xbridge::TransactionDescr::trNew ||
-                i.second->state == xbridge::TransactionDescr::trPending)
-            {
-                xapp.sendPendingTransaction(i.second);
-            }
-        }
-    }
-
     // send exchange trx
     Exchange & e = Exchange::instance();
     if (!e.isStarted())

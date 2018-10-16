@@ -1395,17 +1395,24 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(t->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(t->toCurrency);
 
+        std::string makerAddress;
+        std::string takerAddress;
+        if (connFrom)
+            makerAddress = connFrom->fromXAddr(t->from);
+        if (connTo)
+            takerAddress = connTo->fromXAddr(t->to);
+
         Object o;
         o.emplace_back(Pair("id", t->id.GetHex()));
 
         // maker data
         o.emplace_back(Pair("maker", t->fromCurrency));
         o.emplace_back(Pair("maker_size", util::xBridgeStringValueFromAmount(t->fromAmount)));
-        o.emplace_back(Pair("maker_address", connFrom->fromXAddr(t->from)));
+        o.emplace_back(Pair("maker_address", makerAddress));
         // taker data
         o.emplace_back(Pair("taker", t->toCurrency));
         o.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(t->toAmount)));
-        o.emplace_back(Pair("taker_address", connTo->fromXAddr(t->to)));
+        o.emplace_back(Pair("taker_address", takerAddress));
         // dates
         o.emplace_back(Pair("updated_at", util::iso8601(t->txtime)));
         o.emplace_back(Pair("created_at", util::iso8601(t->created)));

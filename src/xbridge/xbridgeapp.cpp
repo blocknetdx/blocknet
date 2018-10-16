@@ -161,7 +161,14 @@ protected:
      */
     std::vector<CPubKey> findShuffledNodesWithService(
         const std::set<string>& requested_services,
-        const uint32_t version) const;
+        const uint32_t version,
+        const std::set<CPubKey> & notIn) const;
+
+    /**
+     * @brief Checks the orders that are in the New and Pending states. If orders are stuck, rebroadcast to a
+     *        different servicenode.
+     */
+    void checkAndRelayPendingOrders();
 
 protected:
     // workers
@@ -1121,25 +1128,36 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & blockHash)
 {
     // search for service node
+    std::set<std::string> currencies{fromCurrency, toCurrency};
+    CPubKey snode;
+    std::set<CPubKey> notIn;
+    if (!findNodeWithService(currencies, snode, notIn))
+    {
+        ERR() << "Failed to find servicenode for pair " << boost::algorithm::join(currencies, ",") << " "
+              << __FUNCTION__;
+        return xbridge::Error::NO_SERVICE_NODE;
+    }
+
+    CServicenode *pmn = mnodeman.Find(snode);
+    if (pmn == nullptr) {
+        if (snode.Decompress()) // try to uncompress pubkey and search
+            pmn = mnodeman.Find(snode);
+        if (pmn == nullptr) {
+            ERR() << "Failed to find servicenode for pair " << boost::algorithm::join(currencies, ",") << " "
+                  << " servicenode in xwallets is not in servicenode list " << __FUNCTION__;
+            return xbridge::NO_SERVICE_NODE;
+        }
+    }
+
     std::vector<unsigned char> snodeAddress(20);
     std::vector<unsigned char> sPubKey(33);
-    {
+    CKeyID snodeID = snode.GetID();
+    std::copy(snodeID.begin(), snodeID.end(), snodeAddress.begin());
 
-        std::set<std::string> currencies{fromCurrency, toCurrency};
-        CPubKey snode;
-        if (!findNodeWithService(currencies, snode))
-        {
-            return xbridge::Error::NO_SERVICE_NODE;
-        }
-
-        CKeyID id = snode.GetID();
-        std::copy(id.begin(), id.end(), snodeAddress.begin());
-
-        if (!snode.IsCompressed()) {
-            snode.Compress();
-        }
-        sPubKey = std::vector<unsigned char>(snode.begin(), snode.end());
+    if (!snode.IsCompressed()) {
+        snode.Compress();
     }
+    sPubKey = std::vector<unsigned char>(snode.begin(), snode.end());
 
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
     if(statusCode != xbridge::SUCCESS)
@@ -1258,6 +1276,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->usedCoins    = outputsForUse;
     ptr->blockHash    = blockHash;
     ptr->role         = 'A';
+
+    LOG() << "using servicenode with vin " << pmn->vin.prevout.hash.ToString() << " for order " << id.ToString();
 
     // m key
     connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
@@ -1847,10 +1867,10 @@ bool App::addNodeServices(const ::CPubKey & nodePubKey,
 //******************************************************************************
 //******************************************************************************
 bool App::findNodeWithService(const std::set<std::string> & services,
-                              CPubKey & node) const
+        CPubKey & node, const std::set<CPubKey> & notIn) const
 {
     const uint32_t version = static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
-    auto list = m_p->findShuffledNodesWithService(services,version);
+    auto list = m_p->findShuffledNodesWithService(services,version, notIn);
     if (list.empty())
         return false;
     node = list.front();
@@ -1861,15 +1881,27 @@ bool App::findNodeWithService(const std::set<std::string> & services,
 //******************************************************************************
 std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
     const std::set<std::string>& requested_services,
-    const uint32_t version) const
+    const uint32_t version,
+    const std::set<CPubKey> & notIn) const
 {
     LOCK(m_xwalletsLocker);
 
     std::vector<CPubKey> list;
     for (const auto& x : m_xwallets)
     {
-        if (x.second.version() != version)
+        if (x.second.version() != version || notIn.count(x.first))
             continue;
+
+        // Make sure this xwallet entry is in the servicenode list
+        CServicenode *pmn = mnodeman.Find(x.first);
+        if (pmn == nullptr) {
+            auto k = x.first;
+            if (k.Decompress()) // try to uncompress pubkey and search
+                pmn = mnodeman.Find(k);
+            if (pmn == nullptr)
+                continue;
+        }
+
         const auto& wallet_services = x.second.services();
         auto searchCounter = requested_services.size();
         for (const std::string & serv : requested_services)
@@ -2147,6 +2179,58 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
 
 //******************************************************************************
 //******************************************************************************
+void App::Impl::checkAndRelayPendingOrders() {
+    // Try and rebroadcast my orders older than N seconds (see below)
+    auto currentTime = boost::posix_time::second_clock::universal_time();
+    std::map<uint256, TransactionDescrPtr> txs;
+    {
+        LOCK(m_txLocker);
+        txs = m_transactions;
+    }
+    if (txs.empty())
+        return;
+
+    for (const auto & i : txs) {
+        TransactionDescrPtr order = i.second;
+        if (!order->isLocal()) // only process local orders
+            continue;
+
+        auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 300; // 5min
+        auto newOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 15; // 15sec
+
+        if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew)
+        {
+            // exclude the old snode
+            CPubKey oldsnode;
+            oldsnode.Set(order->sPubKey.begin(), order->sPubKey.end());
+            order->excludeNode(oldsnode);
+
+            // Pick new servicenode
+            std::set<std::string> currencies{order->fromCurrency, order->toCurrency};
+            CPubKey snode;
+            auto notIn = order->excludedNodes();
+            if (!xbridge::App::instance().findNodeWithService(currencies, snode, notIn)) {
+                LOG() << "order may be stuck, failed to find servicenode for order "
+                      << order->id.ToString() << " " << __FUNCTION__;
+                continue;
+            } else {
+                // assign new snode
+                order->assignServicenode(snode);
+            }
+
+            // Broadcast the order
+            order->updateTimestamp();
+            sendPendingTransaction(order);
+        }
+        else if (pendingOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trPending) {
+            order->updateTimestamp();
+            sendPendingTransaction(order);
+        }
+    }
+}
+
+//******************************************************************************
+//******************************************************************************
 void App::Impl::onTimer()
 {
     // DEBUG_TRACE();
@@ -2181,6 +2265,9 @@ void App::Impl::onTimer()
         // update active xwallets (in case a wallet goes offline)
         auto app = &xbridge::App::instance();
         io->post(boost::bind(&xbridge::App::updateActiveWallets, app));
+
+        // Check orders
+        io->post(boost::bind(&Impl::checkAndRelayPendingOrders, this));
 
         // unprocessed packets
         {
