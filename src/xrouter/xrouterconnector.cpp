@@ -521,7 +521,7 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
     CTxIn in(outp);
     unsigned_tx.vin.push_back(in);
     // TODO: get minimal fee from wallet
-    unsigned_tx.vout.push_back(CTxOut(deposit - amount - AmountFromValue(0.001), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
+    unsigned_tx.vout.push_back(CTxOut(deposit - amount - to_amount(0.001), GetScriptForDestination(CBitcoinAddress(mykeyID).Get())));
     unsigned_tx.vout.push_back(CTxOut(amount, GetScriptForDestination(CBitcoinAddress(address).Get())));
 
     std::vector<unsigned char> signature;
@@ -558,7 +558,8 @@ bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::stri
     return true;
 }
 
-double getTxValue(std::string rawtx, std::string address, std::string type) {
+double getTxValue(std::string rawtx, std::string address, std::string type)
+{
     const static std::string decodeCommand("decoderawtransaction");
     std::vector<std::string> params;
     params.push_back(rawtx);
@@ -598,7 +599,8 @@ double getTxValue(std::string rawtx, std::string address, std::string type) {
     return 0.0;
 }
 
-int getChannelExpiryTime(std::string rawtx) {
+int getChannelExpiryTime(std::string rawtx)
+{
     const static std::string decodeCommand("decoderawtransaction");
     std::vector<std::string> params;
     params.push_back(rawtx);
@@ -659,6 +661,18 @@ std::string generateDomainRegistrationTx(std::string domain) {
     
     sendTransactionBlockchain(raw_tx, txid);
     return txid;
-    
 }
+
+// We need this to allow zero CAmount in xrouter
+CAmount to_amount(double val)
+{
+    if (val < 0.0 || val > 21000000.0)
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+    double tmp = val * COIN;
+    CAmount nAmount = (int64_t)(tmp > 0 ? tmp + 0.5 : tmp - 0.5);
+    if (!MoneyRange(nAmount))
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
+    return nAmount;
+}
+
 } // namespace xrouter

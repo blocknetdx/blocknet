@@ -43,6 +43,7 @@ bool createAndSignChannelTransaction(PaymentChannel channel, std::string address
 bool finalizeChannelTransaction(PaymentChannel channel, CKey snodekey, std::string latest_tx, std::string & raw_tx);
 double getTxValue(std::string rawtx, std::string address, std::string type="address");
 int getChannelExpiryTime(std::string rawtx);
+CAmount to_amount(double val);
     
 class WalletConnectorXRouter : public xbridge::WalletParam
 {

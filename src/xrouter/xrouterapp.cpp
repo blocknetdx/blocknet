@@ -677,7 +677,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     
     int sent = 0;
     for (CNode* pnode : selectedNodes) {
-        CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getCommandFee(command, currency));
+        CAmount fee = to_amount(snodeConfigs[pnode->addr.ToString()].getCommandFee(command, currency));
         std::string payment_tx = "nofee";
         if (fee > 0) {
             payment_tx = generatePayment(pnode, fee);
@@ -830,7 +830,7 @@ std::string App::sendTransaction(const std::string & currency, const std::string
         return "No available nodes";
     
     for (CNode* pnode : selectedNodes) {
-        CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getCommandFee(xrSendTransaction, currency));
+        CAmount fee = to_amount(snodeConfigs[pnode->addr.ToString()].getCommandFee(xrSendTransaction, currency));
         std::string payment_tx = "nofee";
         if (fee > 0)
             payment_tx = generatePayment(pnode, fee);
@@ -910,8 +910,8 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
     
     std::string strtxid;
     std::string dest = getPaymentAddress(pnode);
-    CAmount fee = AmountFromValue(snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee());
-    CAmount deposit = AmountFromValue(xrouter_settings.get<double>("Main.deposit", 0.0));
+    CAmount fee = to_amount(snodeConfigs[pnode->addr.ToString()].getPluginSettings(name).getFee());
+    CAmount deposit = to_amount(xrouter_settings.get<double>("Main.deposit", 0.0));
     int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
     std::string payment_tx = "nofee";
     bool res;
@@ -987,8 +987,7 @@ std::string App::generatePayment(CNode* pnode, CAmount fee)
 {
     std::string strtxid;
     std::string dest = getPaymentAddress(pnode);
-    double deposit_double = xrouter_settings.get<double>("Main.deposit", 0.0);
-    CAmount deposit = deposit_double > 0 ? AmountFromValue(deposit_double) : 0;
+    CAmount deposit = to_amount(xrouter_settings.get<double>("Main.deposit", 0.0));
     int channeldate = xrouter_settings.get<int>("Main.channeldate", 100000);
     std::string payment_tx = "nofee";
     bool res;

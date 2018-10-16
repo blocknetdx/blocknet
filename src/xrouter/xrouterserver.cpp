@@ -203,7 +203,7 @@ void XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
                 // Direct payment, no CLTV channel
                 std::string txid;
                 
-                CAmount paid = AmountFromValue(getTxValue(feetx, getMyPaymentAddress()));
+                CAmount paid = to_amount(getTxValue(feetx, getMyPaymentAddress()));
                 if (paid < fee) {
                     throw std::runtime_error("Fee paid is not enough");
                 }
@@ -249,7 +249,7 @@ void XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
         }
         
         if (paymentChannels.count(node)) {
-            CAmount paid = AmountFromValue(getTxValue(feetx, getMyPaymentAddress()));
+            CAmount paid = to_amount(getTxValue(feetx, getMyPaymentAddress()));
             LOG() << "Got payment via channel; value = " << paid - paymentChannels[node].value << " total value = " << paid << " tx = " << feetx; 
             if (paid - paymentChannels[node].value < fee) {
                 throw std::runtime_error("Fee paid is not enough");
@@ -324,7 +324,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         std::string feetx((const char *)packet->data()+offset);
         offset += feetx.size() + 1;
         
-        CAmount fee = AmountFromValue(psettings.getFee());
+        CAmount fee = to_amount(psettings.getFee());
         
         this->processPayment(node, feetx, fee);
         
@@ -342,7 +342,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         std::string feetx((const char *)packet->data()+offset);
         offset += feetx.size() + 1;
         
-        CAmount fee = AmountFromValue(app.xrouter_settings.getCommandFee(packet->command(), currency));
+        CAmount fee = to_amount(app.xrouter_settings.getCommandFee(packet->command(), currency));
         
         this->processPayment(node, feetx, fee);
         
