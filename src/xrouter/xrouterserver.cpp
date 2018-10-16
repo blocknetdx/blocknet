@@ -367,40 +367,44 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             lastPacketsReceived[node][keystr] = time;
         }
             
-        switch (packet->command()) {
-        case xrGetBlockCount:
-            reply = processGetBlockCount(packet, offset, currency);
-            break;
-        case xrGetBlockHash:
-            reply = processGetBlockHash(packet, offset, currency);
-            break;
-        case xrGetBlock:
-            reply = processGetBlock(packet, offset, currency);
-            break;
-        case xrGetTransaction:
-            reply = processGetTransaction(packet, offset, currency);
-            break;
-        case xrGetAllBlocks:
-            reply = processGetAllBlocks(packet, offset, currency);
-            break;
-        case xrGetAllTransactions:
-            reply = processGetAllTransactions(packet, offset, currency);
-            break;
-        case xrGetBalance:
-            reply = processGetBalance(packet, offset, currency);
-            break;
-        case xrGetBalanceUpdate:
-            reply = processGetBalanceUpdate(packet, offset, currency);
-            break;
-        case xrGetTransactionsBloomFilter:
-            reply = processGetTransactionsBloomFilter(packet, offset, currency);
-            break;
-        case xrSendTransaction:
-            reply = processSendTransaction(packet, offset, currency);
-            break;
-        default:
-            LOG() << "Unknown packet";
-            return;
+        try {
+            switch (packet->command()) {
+            case xrGetBlockCount:
+                reply = processGetBlockCount(packet, offset, currency);
+                break;
+            case xrGetBlockHash:
+                reply = processGetBlockHash(packet, offset, currency);
+                break;
+            case xrGetBlock:
+                reply = processGetBlock(packet, offset, currency);
+                break;
+            case xrGetTransaction:
+                reply = processGetTransaction(packet, offset, currency);
+                break;
+            case xrGetAllBlocks:
+                reply = processGetAllBlocks(packet, offset, currency);
+                break;
+            case xrGetAllTransactions:
+                reply = processGetAllTransactions(packet, offset, currency);
+                break;
+            case xrGetBalance:
+                reply = processGetBalance(packet, offset, currency);
+                break;
+            case xrGetBalanceUpdate:
+                reply = processGetBalanceUpdate(packet, offset, currency);
+                break;
+            case xrGetTransactionsBloomFilter:
+                reply = processGetTransactionsBloomFilter(packet, offset, currency);
+                break;
+            case xrSendTransaction:
+                reply = processSendTransaction(packet, offset, currency);
+                break;
+            default:
+                LOG() << "Unknown packet";
+                return;
+            }
+        } catch(...) {
+            reply = "Currency " + currency + " is not available";
         }
     }
 
