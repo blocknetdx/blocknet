@@ -205,11 +205,13 @@ void XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
                 
                 CAmount paid = to_amount(getTxValue(feetx, getMyPaymentAddress()));
                 if (paid < fee) {
+                    LOG() << "Fee paid is not enough: paid" << paid << "; fee = " << fee;
                     throw std::runtime_error("Fee paid is not enough");
                 }
 
                 bool res = sendTransactionBlockchain(feetx, txid);
                 if (!res) {
+                    LOG() << "Could not send transaction to blockchain";
                     throw std::runtime_error("Could not send transaction " + feetx + " to blockchain");
                 }
                 

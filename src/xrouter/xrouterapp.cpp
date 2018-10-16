@@ -1054,10 +1054,8 @@ std::string App::getPaymentAddress(CNode* node)
     // Payment address = pubkey Collateral address of snode
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-        for (CNode* pnode : vNodes) {
-            if (s.second.addr.ToString() == pnode->addr.ToString()) {
-                return CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString();
-            }
+        if (s.second.addr.ToString() == node->addr.ToString()) {
+            return CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString();
         }
     }
     
@@ -1072,10 +1070,8 @@ CPubKey App::getPaymentPubkey(CNode* node)
     // Payment address = pubkey Collateral address of snode
     std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-        for (CNode* pnode : vNodes) {
-            if (s.second.addr.ToString() == pnode->addr.ToString()) {
-                return s.second.pubKeyCollateralAddress;
-            }
+        if (s.second.addr.ToString() == node->addr.ToString()) {
+            return s.second.pubKeyCollateralAddress;
         }
     }
     
@@ -1162,6 +1158,14 @@ void App::reloadConfigs() {
     LOG() << "Reloading xrouter config from file " << xrouterpath;
     this->xrouter_settings.read(xrouterpath.c_str());
     this->xrouter_settings.loadPlugins();
+    
+    std::vector<CNode*> selectedNodes = getAvailableNodes(xrGetBlockCount, "XC");
+    
+    for (CNode* pnode : selectedNodes) {
+        CAmount fee = to_amount(snodeConfigs[pnode->addr.ToString()].getCommandFee(xrGetBlockCount, "XC"));
+        std::string dest = getPaymentAddress(pnode);
+        std::cout << "PAYMENT " << pnode->addr.ToString() << " " << dest << " " << fee << std::endl << std::flush;
+    }
 }
 
 std::string App::getStatus() {
