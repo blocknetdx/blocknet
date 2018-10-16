@@ -69,6 +69,8 @@ public:
                                  const std::string & /*destination*/,
                                  double & amount,
                                  bool & isGood);
+    bool getSecretFromPaymentTransaction(const std::string & paymentTxId,
+                                         std::vector<unsigned char> & secret);
 
     uint32_t lockTime(const char role) const;
 

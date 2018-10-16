@@ -2696,8 +2696,8 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
     std::vector<unsigned char> x(packet->data()+offset, packet->data()+offset+33);
     offset += 33;
 
-    std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binTxId.size()+1;
+    std::string payTxId(reinterpret_cast<const char *>(packet->data()+offset));
+    offset += payTxId.size()+1;
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2743,21 +2743,25 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
         double checkAmount = outAmount;
 
-        bool isGood = false;
-        if (!conn->checkDepositTransaction(binTxId, std::string(), checkAmount, isGood) || !isGood)
+        std::vector<unsigned char> xcopy;
+        if (!conn->getSecretFromPaymentTransaction(payTxId, xcopy))
         {
             // oops....shit happens, alert needed
             // this tx already checked before deposit created
-            WARN() << "deposit not found " << binTxId << " " << __FUNCTION__;
-            sendCancelTransaction(xtx, crBadADepositTx);
-            return true;
+            WARN() << "secret not found in " << payTxId << " " << __FUNCTION__;
+        }
+
+        if (x != xcopy)
+        {
+            // TODO ban score for this client
+            WARN() << "secret from protocol not same with secret from payment tx " << payTxId << " " << __FUNCTION__;
         }
 
         std::vector<xbridge::XTxIn>                  inputs;
         std::vector<std::pair<std::string, double> > outputs;
 
         // inputs from binTx
-        inputs.emplace_back(binTxId, 0, checkAmount);
+        inputs.emplace_back(payTxId, 0, checkAmount);
 
         // outputs
         {
