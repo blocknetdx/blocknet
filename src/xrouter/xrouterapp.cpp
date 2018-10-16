@@ -656,7 +656,15 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     }
 
     std::string id = generateUUID();
-    int confirmations_count = std::stoi(confirmations);
+    int confirmations_count;
+    if (confirmations != "") {
+        try {
+            confirmations_count = std::stoi(confirmations);
+        } catch(...) {
+            LOG() << "Incorrect confirmations number: " + confirmations;
+            confirmations_count = 0;
+        }
+    }
     if (confirmations_count < 1)
         confirmations_count = xrouter_settings.get<int>("Main.confirmations", 0);
     if (confirmations_count < 1)
