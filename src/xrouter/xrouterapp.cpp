@@ -336,6 +336,13 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
         if (!res)
             continue;
         
+        // If connector is not working, the wallet will be removed from serviceping
+        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {        
+            if (s.second.addr.ToString() == res->addr.ToString())
+                if (!s.second.HasService(wallet))
+                    continue;
+        }
+        
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::string keystr = wallet + "::" + XRouterCommand_ToString(command);
         double timeout = settings.getCommandTimeout(command, wallet);
@@ -656,7 +663,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
     }
 
     std::string id = generateUUID();
-    int confirmations_count;
+    int confirmations_count = 0;
     if (confirmations != "") {
         try {
             confirmations_count = std::stoi(confirmations);
