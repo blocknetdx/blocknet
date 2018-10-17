@@ -239,8 +239,8 @@ void XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
                 
                 LOG() << "Created payment channel date = " << date << " expiry = " << deadline << " ms"; 
                 
-                std::thread([deadline, this, node]() {
-                    std::this_thread::sleep_for(std::chrono::milliseconds(deadline));
+                boost::thread([deadline, this, node]() {
+                    boost::this_thread::sleep_for(boost::chrono::milliseconds(deadline));
                     std::string txid;
                     LOG() << "Closing payment channel: " << this->paymentChannels[node].txid << " Value = " << this->paymentChannels[node].value;
                     
