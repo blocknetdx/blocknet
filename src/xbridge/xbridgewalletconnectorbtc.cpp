@@ -354,7 +354,13 @@ bool validateaddress(const std::string & rpcuser, const std::string & rpcpasswd,
         }
 
         Object o = result.get_obj();
-        isValid     = find_value(o, "isvalid").get_bool();
+        if (fallback) {
+            isValid     = find_value(o, "isvalid").get_bool();
+        }
+        else {
+            isValid = true;
+        }  
+
         isMine      = find_value(o, "ismine").get_bool();
         isWatchOnly = find_value(o, "iswatchonly").get_bool();
         isScript    = find_value(o, "isscript").get_bool();
