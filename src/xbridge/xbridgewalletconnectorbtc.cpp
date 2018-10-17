@@ -303,28 +303,54 @@ bool validateaddress(const std::string & rpcuser, const std::string & rpcpasswd,
 
         Array params;
         params.push_back(address);
+        
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
-                               "validateaddress", params);
+                               "getaddressinfo", params);
 
         // Parse reply
-        const Value & result = find_value(reply, "result");
-        const Value & error  = find_value(reply, "error");
+        Value result = find_value(reply, "result");
+        Value error  = find_value(reply, "error");
 
+        bool fallback = false;
         if (error.type() != null_type)
         {
             // Error
-            LOG() << "error: " << write_string(error, false);
-            // int code = find_value(error.get_obj(), "code").get_int();
-            return false;
+            LOG() << "getaddressinfo failed: " << write_string(error, false);
+            fallback = true;
         }
         else if (result.type() != obj_type)
         {
             // Result
-            LOG() << "result not an array " <<
+            LOG() << "getaddressinfo failed: result not an array " <<
                      (result.type() == null_type ? "" :
-                      result.type() == str_type  ? result.get_str() :
-                                                   write_string(result, true));
-            return false;
+                      result.type() == str_type  ? result.get_str() : write_string(result, true));
+            fallback = true;
+        }
+        
+        if (fallback) {
+            LOG() << "Falling back to old validateaddress comnand";
+            
+            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "validateaddress", params);
+
+            // Parse reply
+            result = find_value(reply, "result");
+            error  = find_value(reply, "error");
+
+            if (error.type() != null_type)
+            {
+                // Error
+                LOG() << "validateaddress failed: " << write_string(error, false);
+                return false;
+            }
+            else if (result.type() != obj_type)
+            {
+                // Result
+                LOG() << "validateaddress failed: result not an array " <<
+                        (result.type() == null_type ? "" :
+                        result.type() == str_type  ? result.get_str() : write_string(result, true));
+                return false;
+            }
         }
 
         Object o = result.get_obj();
