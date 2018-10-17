@@ -692,6 +692,8 @@ int main(int argc, char* argv[])
 
         // stop xbridge
         xapp.stop();
+        // stop xrouter
+        xrapp.stop();
 
         app.requestShutdown();
 
@@ -703,6 +705,8 @@ int main(int argc, char* argv[])
 
         // stop xbridge
         xapp.stop();
+        // stop xrouter
+        xrapp.stop();
 
         // stop appication
         app.requestShutdown();
