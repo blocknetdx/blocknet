@@ -294,83 +294,33 @@ bool getaddressesbyaccount(const std::string & rpcuser, const std::string & rpcp
 //*****************************************************************************
 bool validateaddress(const std::string & rpcuser, const std::string & rpcpasswd,
                      const std::string & rpcip, const std::string & rpcport,
-                     const std::string & address,
-                     bool & isValid, bool & isMine, bool & isWatchOnly, bool & isScript)
+                     const std::string & address)
 {
     try
     {
-        // LOG() << "rpc call <validateaddress>";
-
         Array params;
         params.push_back(address);
-        
+        params.push_back(address); 
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
-                               "getaddressinfo", params);
+                               "signmessage", params);
 
         // Parse reply
         Value result = find_value(reply, "result");
         Value error  = find_value(reply, "error");
 
-        bool fallback = false;
         if (error.type() != null_type)
         {
             // Error
-            LOG() << "getaddressinfo failed: " << write_string(error, false);
-            fallback = true;
-        }
-        else if (result.type() != obj_type)
-        {
-            // Result
-            LOG() << "getaddressinfo failed: result not an array " <<
-                     (result.type() == null_type ? "" :
-                      result.type() == str_type  ? result.get_str() : write_string(result, true));
-            fallback = true;
-        }
-        
-        if (fallback) {
-            LOG() << "Falling back to old validateaddress comnand";
-            
-            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
-                               "validateaddress", params);
-
-            // Parse reply
-            result = find_value(reply, "result");
-            error  = find_value(reply, "error");
-
-            if (error.type() != null_type)
-            {
-                // Error
-                LOG() << "validateaddress failed: " << write_string(error, false);
-                return false;
-            }
-            else if (result.type() != obj_type)
-            {
-                // Result
-                LOG() << "validateaddress failed: result not an array " <<
-                        (result.type() == null_type ? "" :
-                        result.type() == str_type  ? result.get_str() : write_string(result, true));
-                return false;
-            }
+            LOG() << "signmessage failed" << write_string(error, false);
+            return false;
         }
 
-        Object o = result.get_obj();
-        if (fallback) {
-            isValid     = find_value(o, "isvalid").get_bool();
-        }
-        else {
-            isValid = true;
-        }  
-
-        isMine      = find_value(o, "ismine").get_bool();
-        isWatchOnly = find_value(o, "iswatchonly").get_bool();
-        isScript    = find_value(o, "isscript").get_bool();
     }
     catch (std::exception & e)
     {
-        LOG() << "validateaddress exception " << e.what();
+        LOG() << "signmessage exception " << e.what();
         return false;
     }
-
     return true;
 }
 
@@ -1408,22 +1358,14 @@ bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::
         std::vector<std::string> copy;
         for (const std::string & a : addrs)
         {
-            bool isValid     = false;
-            bool isMine      = false;
-            bool isWatchOnly = false;
-            bool isScript    = false;
-            if (!rpc::validateaddress(m_user, m_passwd, m_ip, m_port, a,
-                                      isValid, isMine, isWatchOnly, isScript))
-            {
-                continue;
-            }
 
-            if (!isValid || !isMine || isWatchOnly || isScript)
+            if (!rpc::validateaddress(m_user, m_passwd, m_ip, m_port, a))
             {
-                continue;
-            }
+		continue;
+	    }
 
             copy.emplace_back(a);
+
         }
 
         if (copy.empty())
@@ -1432,7 +1374,6 @@ bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::
         }
 
         entries.emplace_back(account.empty() ? "_none" : account, copy);
-        // LOG() << acc << " - " << boost::algorithm::join(addrs, ",");
 
     }
 
