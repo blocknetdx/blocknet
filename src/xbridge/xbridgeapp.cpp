@@ -164,13 +164,33 @@ protected:
         const uint32_t version,
         const std::set<CPubKey> & notIn) const;
 
+    void clearMempool();
+
     /**
      * @brief Checks the orders that are in the New and Pending states. If orders are stuck, rebroadcast to a
      *        different servicenode.
      */
     void checkAndRelayPendingOrders();
 
+    /**
+     * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
+     * @param addr - currency name
+     * @param outputs - available outputs to search
+     * @param connFrom - connector
+     * @param requiredAmount - amount of required coins
+     * @param outputsForUse - selected outputs for use
+     * @param utxoAmount - total utxoAmount of selected outputs
+     * @param fee1 - min tx fee for outputs
+     * @param fee2
+     */
+    bool selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs, const WalletConnectorPtr &connFrom,
+                     const uint64_t &requiredAmount, std::vector<wallet::UtxoEntry> &outputsForUse,
+                     uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
+
 protected:
+    CCriticalSection m_lock;
+    bool m_disconnecting;
+
     // workers
     std::deque<IoServicePtr>                           m_services;
     std::deque<WorkPtr>                                m_works;
@@ -183,45 +203,46 @@ protected:
     boost::asio::deadline_timer                        m_timer;
 
     // sessions
-    mutable CCriticalSection                               m_sessionsLock;
+    mutable CCriticalSection                           m_sessionsLock;
     SessionQueue                                       m_sessions;
     SessionsAddrMap                                    m_sessionAddressMap;
 
     // connectors
-    mutable CCriticalSection                               m_connectorsLock;
+    mutable CCriticalSection                           m_connectorsLock;
     Connectors                                         m_connectors;
     ConnectorsAddrMap                                  m_connectorAddressMap;
     ConnectorsCurrencyMap                              m_connectorCurrencyMap;
 
     // pending messages (packet processing loop)
-    CCriticalSection                                       m_messagesLock;
+    CCriticalSection                                   m_messagesLock;
     typedef std::set<uint256> ProcessedMessages;
     ProcessedMessages                                  m_processedMessages;
 
     // address book
-    CCriticalSection                                       m_addressBookLock;
+    CCriticalSection                                   m_addressBookLock;
     AddressBook                                        m_addressBook;
     std::set<std::string>                              m_addresses;
 
     // transactions
-    CCriticalSection                                       m_txLocker;
+    CCriticalSection                                   m_txLocker;
     std::map<uint256, TransactionDescrPtr>             m_transactions;
     std::map<uint256, TransactionDescrPtr>             m_historicTransactions;
     xSeriesCache                                       m_xSeriesCache;
 
     // network packets queue
-    CCriticalSection                                       m_ppLocker;
+    CCriticalSection                                   m_ppLocker;
     std::map<uint256, XBridgePacketPtr>                m_pendingPackets;
 
     // services and xwallets
-    mutable CCriticalSection                               m_xwalletsLocker;
+    mutable CCriticalSection                           m_xwalletsLocker;
     std::map<::CPubKey, XWallets>                      m_xwallets;
 };
 
 //*****************************************************************************
 //*****************************************************************************
 App::Impl::Impl()
-    : m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
+    : m_disconnecting(false)
+    , m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
     , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
     , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
 {
@@ -231,7 +252,7 @@ App::Impl::Impl()
 //*****************************************************************************
 //*****************************************************************************
 App::App()
-    : m_p(new Impl), m_disconnecting(false)
+    : m_p(new Impl)
 {
 }
 
@@ -369,10 +390,13 @@ bool App::stop()
 bool App::disconnectWallets()
 {
     {
-        LOCK(m_lock);
-        if (m_disconnecting || activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
-            return false; // not a servicenode or not started
-        m_disconnecting = true;
+        LOCK(m_p->m_lock);
+        if (m_p->m_disconnecting || activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
+        {
+            // not a servicenode or not started
+            return false;
+        }
+        m_p->m_disconnecting = true;
     }
 
     // Notify the network all wallets are going offline
@@ -380,11 +404,15 @@ bool App::disconnectWallets()
     {
         LOCK(m_p->m_connectorsLock);
         for (auto & conn : m_p->m_connectors)
+        {
             wallets.insert(conn->currency);
+        }
     }
     // Remove all connectors
     for (auto & wallet : wallets)
+    {
         removeConnector(wallet);
+    }
 
     std::set<std::string> noWallets;
     xbridge::Exchange::instance().loadWallets(noWallets);
@@ -397,15 +425,18 @@ bool App::disconnectWallets()
 //*****************************************************************************
 bool App::loadSettings()
 {
-    LOCK(m_lock);
+    LOCK(m_p->m_lock);
 
     Settings & s = settings();
-    try {
+    try
+    {
         std::string path(GetDataDir(false).string());
         path += "/xbridge.conf";
         s.read(path.c_str());
         LOG() << "Finished loading config" << path;
-    } catch (...) {
+    }
+    catch (...)
+    {
         return false;
     }
 
@@ -948,7 +979,7 @@ void App::addToKnown(const std::vector<unsigned char> & message)
     // add to known
     LOCK(m_p->m_messagesLock);
     // clear memory if it's larger than mempool threshold
-    clearMempool();
+    m_p->clearMempool();
     m_p->m_processedMessages.insert(Hash(message.begin(), message.end()));
 }
 
@@ -959,7 +990,7 @@ void App::addToKnown(const uint256 & hash)
     // add to known
     LOCK(m_p->m_messagesLock);
     // clear memory if it's larger than mempool threshold
-    clearMempool();
+    m_p->clearMempool();
     m_p->m_processedMessages.insert(hash);
 }
 
@@ -1199,7 +1230,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
-    if (!selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2))
+    if (!m_p->selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2))
     {
         WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1446,7 +1477,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
     // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
-    if (!selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
+    if (!m_p->selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
     {
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1972,10 +2003,14 @@ T random_element(T begin, T end)
 
 //******************************************************************************
 //******************************************************************************
-bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
-                      const WalletConnectorPtr &connFrom, const uint64_t &requiredAmount,
-                      std::vector<wallet::UtxoEntry> &outputsForUse, uint64_t &utxoAmount,
-                      uint64_t &fee1, uint64_t &fee2) const
+bool App::Impl::selectUtxos(const std::string &addr,
+                            const std::vector<wallet::UtxoEntry> &outputs,
+                            const WalletConnectorPtr &connFrom,
+                            const uint64_t &requiredAmount,
+                            std::vector<wallet::UtxoEntry> &outputsForUse,
+                            uint64_t &utxoAmount,
+                            uint64_t &fee1,
+                            uint64_t &fee2) const
 {
 
     auto getUtxos = [&connFrom, &requiredAmount, &outputsForUse, &utxoAmount, &fee1, &fee2](const std::vector<wallet::UtxoEntry> & o) -> bool
@@ -2179,7 +2214,8 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
 
 //******************************************************************************
 //******************************************************************************
-void App::Impl::checkAndRelayPendingOrders() {
+void App::Impl::checkAndRelayPendingOrders()
+{
     // Try and rebroadcast my orders older than N seconds (see below)
     auto currentTime = boost::posix_time::second_clock::universal_time();
     std::map<uint256, TransactionDescrPtr> txs;
@@ -2188,15 +2224,23 @@ void App::Impl::checkAndRelayPendingOrders() {
         txs = m_transactions;
     }
     if (txs.empty())
+    {
         return;
+    }
 
-    for (const auto & i : txs) {
+    for (const auto & i : txs)
+    {
         TransactionDescrPtr order = i.second;
-        if (!order->isLocal()) // only process local orders
+        if (!order->isLocal())
+        {
+            // only process local orders
             continue;
+        }
 
-        auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 300; // 5min
-        auto newOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 15; // 15sec
+        // 15sec for new, 5min for pending
+        uint32_t age = (currentTime - order->txtime).total_seconds();
+        bool newOrderShouldRebroadcast     = age >= 15;
+        bool pendingOrderShouldRebroadcast = age >= 300;
 
         if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew)
         {
@@ -2209,11 +2253,14 @@ void App::Impl::checkAndRelayPendingOrders() {
             std::set<std::string> currencies{order->fromCurrency, order->toCurrency};
             CPubKey snode;
             auto notIn = order->excludedNodes();
-            if (!xbridge::App::instance().findNodeWithService(currencies, snode, notIn)) {
+            if (!xbridge::App::instance().findNodeWithService(currencies, snode, notIn))
+            {
                 LOG() << "order may be stuck, failed to find servicenode for order "
                       << order->id.ToString() << " " << __FUNCTION__;
                 continue;
-            } else {
+            }
+            else
+            {
                 // assign new snode
                 order->assignServicenode(snode);
             }
@@ -2222,7 +2269,8 @@ void App::Impl::checkAndRelayPendingOrders() {
             order->updateTimestamp();
             sendPendingTransaction(order);
         }
-        else if (pendingOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trPending) {
+        else if (pendingOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trPending)
+        {
             order->updateTimestamp();
             sendPendingTransaction(order);
         }
@@ -2300,11 +2348,15 @@ void App::Impl::onTimer()
 /**
  * Clears the xbridge message mempool. This is not threadsafe, locks required outside this func.
  */
-void App::clearMempool() {
-    auto count = m_p->m_processedMessages.size();
+void App::Impl::clearMempool()
+{
+    auto count = m_processedMessages.size();
     auto maxMBytes = static_cast<unsigned int>(GetArg("-maxmempoolxbridge", 128)) * 1000000;
-    if (count * 64 > maxMBytes) // estimated 64 bytes per hash
-        m_p->m_processedMessages.clear();
+    if (count * 64 > maxMBytes)
+    {
+        // estimated 64 bytes per hash
+        m_processedMessages.clear();
+    }
 }
 
 } // namespace xbridge
