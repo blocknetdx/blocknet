@@ -52,6 +52,8 @@
 #include <QThread>
 #include <QTimer>
 #include <QTranslator>
+#include <QtSvg/QGraphicsSvgItem>
+#include <QtSvg/QSvgRenderer>
 
 #if defined(QT_STATICPLUGIN)
 #include <QtPlugin>
