@@ -23,7 +23,7 @@
 #include "util.h"
 #include "obfuscation.h"
 //#include "governance.h"
- 
+
 #include "ui_interface.h"
 
 #include <QComboBox>
@@ -47,7 +47,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     QWidget(parent), proposalTableModel(0), proposalProxyModel(0),
     proposalList(0), columnResizingFixer(0)
 {
-    proposalTableModel = new ProposalTableModel( this); 
+    proposalTableModel = new ProposalTableModel( this);
     QSettings settings;
 
     setContentsMargins(20,0,20,0);
@@ -55,7 +55,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout = new ColumnAlignedLayout();
     hlayout->setContentsMargins(0,0,0,0);
     hlayout->setSpacing(0);
-    
+
     proposalWidget = new QLineEdit(this);
     proposalWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
@@ -89,8 +89,8 @@ ProposalList::ProposalList(   QWidget *parent) :
 #endif
     endDateWidget->setValidator(new QIntValidator(0, INT_MAX, this));
     endDateWidget->setObjectName("endDateWidget");
-    hlayout->addWidget(endDateWidget);	
-	
+    hlayout->addWidget(endDateWidget);
+
     yesVotesWidget = new QLineEdit(this);
     yesVotesWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
@@ -148,7 +148,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     // QSpacerItem* horizontalSpacer_3 = new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum);
     // horizontalLayout_Header->addItem(horizontalSpacer_3);
 
-    
+
 
     QTableView *view = new QTableView(this);
 
@@ -156,7 +156,7 @@ ProposalList::ProposalList(   QWidget *parent) :
 
     view->setShowGrid(false);
     //view->setTextAlignment(Qt::AlignLeft);
-    
+
 
     vlayout->addLayout(horizontalLayout_Header);
 
@@ -186,15 +186,15 @@ ProposalList::ProposalList(   QWidget *parent) :
     actionBar->setContentsMargins(0,20,0,4);
 
     QPushButton *voteYesButton = new QPushButton(tr("Vote Yes"), this);
-    voteYesButton->setToolTip(tr("Yote Yes on the selected proposal"));
+    voteYesButton->setToolTip(tr("Vote Yes on the selected proposal"));
     actionBar->addWidget(voteYesButton);
 
     QPushButton *voteAbstainButton = new QPushButton(tr("Vote Abstain"), this);
-    voteAbstainButton->setToolTip(tr("Yote Abstain on the selected proposal"));
+    voteAbstainButton->setToolTip(tr("Vote Abstain on the selected proposal"));
     actionBar->addWidget(voteAbstainButton);
 
     QPushButton *voteNoButton = new QPushButton(tr("Vote No"), this);
-    voteNoButton->setToolTip(tr("Yote No on the selected proposal"));
+    voteNoButton->setToolTip(tr("Vote No on the selected proposal"));
     actionBar->addWidget(voteNoButton);
 
     secondsLabel = new QLabel();
@@ -254,7 +254,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     proposalList->verticalHeader()->hide();
 
     proposalList->setColumnWidth(ProposalTableModel::Proposal, PROPOSAL_COLUMN_WIDTH);
-    proposalList->setColumnWidth(ProposalTableModel::Amount, AMOUNT_COLUMN_WIDTH);	
+    proposalList->setColumnWidth(ProposalTableModel::Amount, AMOUNT_COLUMN_WIDTH);
     proposalList->setColumnWidth(ProposalTableModel::StartDate, START_DATE_COLUMN_WIDTH);
     proposalList->setColumnWidth(ProposalTableModel::EndDate, END_DATE_COLUMN_WIDTH);
     proposalList->setColumnWidth(ProposalTableModel::YesVotes, YES_VOTES_COLUMN_WIDTH);
@@ -263,9 +263,9 @@ ProposalList::ProposalList(   QWidget *parent) :
     proposalList->setColumnWidth(ProposalTableModel::VotesNeeded, VOTES_NEEDED_COLUMN_WIDTH);
 
     connect(proposalList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(computeSum()));
-	
+
     columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(proposalList, VOTES_NEEDED_COLUMN_WIDTH, MINIMUM_COLUMN_WIDTH);
-        
+
 
 
     nLastUpdate = GetTime();
@@ -412,13 +412,13 @@ void ProposalList::vote_click_handler(const std::string voteString)
 
     int success = 0;
     int failed = 0;
-	
-	std::string strVote = voteString;		
+
+	std::string strVote = voteString;
 	int nVote = VOTE_ABSTAIN;
 	if (strVote == "yes") nVote = VOTE_YES;
 	if (strVote == "no") nVote = VOTE_NO;
-			
-			
+
+
     for (const auto& mne : masternodeConfig.getEntries()) {
             std::string errorMessage;
             std::vector<unsigned char> vchMasterNodeSignature;
