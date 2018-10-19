@@ -206,74 +206,74 @@ BITCOIN_QT_H = \
 
 RES_ICONS = \
   qt/res/icons/add.png \
-  qt/res/icons/address-book.svg \
+  qt/res/icons/address-book.png \
   qt/res/icons/bitcoin.ico \
   qt/res/icons/bitcoin.png \
   qt/res/icons/bitcoin_testnet.ico \
   qt/res/icons/bitcoin_testnet.png \
   qt/res/icons/browse.png \
-  qt/res/icons/clock1.svg \
-  qt/res/icons/clock2.svg \
-  qt/res/icons/clock3.svg \
-  qt/res/icons/clock4.svg \
-  qt/res/icons/clock5.svg \
+  qt/res/icons/clock1.png \
+  qt/res/icons/clock2.png \
+  qt/res/icons/clock3.png \
+  qt/res/icons/clock4.png \
+  qt/res/icons/clock5.png \
   qt/res/icons/configure.png \
-  qt/res/icons/connect0_16.svg \
-  qt/res/icons/connect1_16.svg \
-  qt/res/icons/connect2_16.svg \
-  qt/res/icons/connect3_16.svg \
-  qt/res/icons/connect4_16.svg \
+  qt/res/icons/connect0_16.png \
+  qt/res/icons/connect1_16.png \
+  qt/res/icons/connect2_16.png \
+  qt/res/icons/connect3_16.png \
+  qt/res/icons/connect4_16.png \
   qt/res/icons/debugwindow.png \
-  qt/res/icons/proposal.svg \
-  qt/res/icons/proposal_off.svg \
+  qt/res/icons/proposal.png \
+  qt/res/icons/proposal_off.png \
   qt/res/icons/edit.png \
-  qt/res/icons/editcopy.svg \
-  qt/res/icons/editpaste.svg \
+  qt/res/icons/editcopy.png \
+  qt/res/icons/editpaste.png \
   qt/res/icons/explorer.png \
   qt/res/icons/export.png \
   qt/res/icons/eye.png \
   qt/res/icons/eye_minus.png \
   qt/res/icons/eye_plus.png \
   qt/res/icons/filesave.png \
-  qt/res/icons/history.svg \
-  qt/res/icons/history_off.svg \
+  qt/res/icons/history.png \
+  qt/res/icons/history_off.png \
   qt/res/icons/key.png \
-  qt/res/icons/lock_closed.svg \
-  qt/res/icons/lock_open.svg \
-  qt/res/icons/masternodes.svg \
-  qt/res/icons/masternodes_off.svg \
-  qt/res/icons/overview.svg \
-  qt/res/icons/overview_off.svg \
+  qt/res/icons/lock_closed.png \
+  qt/res/icons/lock_open.png \
+  qt/res/icons/masternodes.png \
+  qt/res/icons/masternodes_off.png \
+  qt/res/icons/overview.png \
+  qt/res/icons/overview_off.png \
   qt/res/icons/qrcode.png \
   qt/res/icons/quit.png \
-  qt/res/icons/receive.svg \
-  qt/res/icons/receive_off.svg \
+  qt/res/icons/receive.png \
+  qt/res/icons/receive_off.png \
   qt/res/icons/receive_dark.png \
-  qt/res/icons/privacy.svg \
-  qt/res/icons/privacy_off.svg \
-  qt/res/icons/remove.svg \
-  qt/res/icons/tx_masternode.svg \
-  qt/res/icons/tx_staked.svg \
-  qt/res/icons/send.svg \
-  qt/res/icons/send_off.svg \
+  qt/res/icons/privacy.png \
+  qt/res/icons/privacy_off.png \
+  qt/res/icons/remove.png \
+  qt/res/icons/tx_masternode.png \
+  qt/res/icons/tx_staked.png \
+  qt/res/icons/send.png \
+  qt/res/icons/send_off.png \
   qt/res/icons/send_dark.png \
-  qt/res/icons/staking_active.svg \
-  qt/res/icons/staking_inactive.svg \
-  qt/res/icons/synced.svg \
+  qt/res/icons/staking_active.png \
+  qt/res/icons/staking_inactive.png \
+  qt/res/icons/synced.png \
   qt/res/icons/trade.png \
-  qt/res/icons/transaction0.svg \
-  qt/res/icons/transaction2.svg \
-  qt/res/icons/transaction_conflicted.svg \
-  qt/res/icons/tx_inout.svg \
-  qt/res/icons/tx_input.svg \
-  qt/res/icons/tx_output.svg \
-  qt/res/icons/tx_masternode.svg \
-  qt/res/icons/unit_phore.svg \
-  qt/res/icons/unit_mphore.svg \
-  qt/res/icons/unit_uphore.svg \
-  qt/res/icons/unit_tphore.svg \
-  qt/res/icons/unit_tmphore.svg \
-  qt/res/icons/unit_tuphore.svg
+  qt/res/icons/transaction0.png \
+  qt/res/icons/transaction2.png \
+  qt/res/icons/transaction_conflicted.png \
+  qt/res/icons/tx_inout.png \
+  qt/res/icons/tx_input.png \
+  qt/res/icons/tx_output.png \
+  qt/res/icons/tx_masternode.png \
+  qt/res/icons/unit_phore.png \
+  qt/res/icons/unit_mphore.png \
+  qt/res/icons/unit_uphore.png \
+  qt/res/icons/unit_tphore.png \
+  qt/res/icons/unit_tmphore.png \
+  qt/res/icons/unit_tuphore.png
 
 BITCOIN_QT_CPP = \
   qt/bantablemodel.cpp \
@@ -350,11 +350,11 @@ endif
 
 RES_IMAGES = \
   qt/res/images/about.png \
-  qt/res/images/splash.svg \
+  qt/res/images/splash.png \
   qt/res/images/splash_testnet.png \
   qt/res/images/phore_logo_horizontal.png \
-  qt/res/images/downArrow.svg \
-  qt/res/images/upArrow.svg \
+  qt/res/images/downArrow.png \
+  qt/res/images/upArrow.png \
   qt/res/images/downArrow_dark.png \
   qt/res/images/downArrow_small_dark.png \
   qt/res/images/downArrow_small.png \
@@ -378,7 +378,7 @@ RES_TEXT = \
   qt/res/fonts/Hind-SemiBold.ttf \
   qt/res/fonts/Montserrat-Bold.ttf
 
-RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.svg)
+RES_MOVIES = $(wildcard $(srcdir)/qt/res/movies/spinner-*.png)
 
 BITCOIN_RC = qt/res/phore-qt-res.rc
 
