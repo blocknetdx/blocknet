@@ -102,6 +102,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetcircle.cpp \
   qt/moc_blocknetavatar.cpp \
   qt/moc_blocknetclosebtn.cpp \
+  qt/moc_blocknetaddressbtn.cpp \
   qt/moc_blocknetdashboard.cpp \
   qt/moc_blocknettransactionhistory.cpp \
   qt/moc_blocknetfontmgr.cpp \
@@ -142,6 +143,8 @@ QT_MOC_CPP = \
   qt/moc_blocknettools.cpp \
   qt/moc_blocknetpeerslist.cpp \
   qt/moc_blocknetpeerdetails.cpp \
+  qt/moc_blocknetbip38tool.cpp \
+  qt/moc_blocknetkeydialog.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetcoincontrol.cpp \
   qt/moc_blocknetsendfundsrequest.cpp
@@ -232,6 +235,7 @@ BITCOIN_QT_H = \
   qt/blocknetcircle.h \
   qt/blocknetavatar.h \
   qt/blocknetclosebtn.h \
+  qt/blocknetaddressbtn.h \
   qt/blocknetdashboard.h \
   qt/blocknettransactionhistory.h \
   qt/blocknetfontmgr.h \
@@ -272,6 +276,8 @@ BITCOIN_QT_H = \
   qt/blocknettools.h \
   qt/blocknetpeerslist.h \
   qt/blocknetpeerdetails.h \
+  qt/blocknetbip38tool.h \
+  qt/blocknetkeydialog.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \
   qt/blocknetcoincontrol.h \
@@ -373,6 +379,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetcircle.cpp \
   qt/blocknetavatar.cpp \
   qt/blocknetclosebtn.cpp \
+  qt/blocknetaddressbtn.cpp \
   qt/blocknetdashboard.cpp \
   qt/blocknettransactionhistory.cpp \
   qt/blocknetproposals.cpp \
@@ -447,6 +454,8 @@ BITCOIN_QT_CPP += \
   qt/blocknettools.cpp \
   qt/blocknetpeerslist.cpp \
   qt/blocknetpeerdetails.cpp \
+  qt/blocknetbip38tool.cpp \
+  qt/blocknetkeydialog.cpp \
   qt/blocknetwallet.cpp
 
 endif

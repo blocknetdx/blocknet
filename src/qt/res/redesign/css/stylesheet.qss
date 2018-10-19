@@ -117,6 +117,10 @@ BlocknetTabBtn { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
 BlocknetTabBtn:checked { color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); background-color: transparent; }
 BlocknetTabBtn:pressed { background-color: transparent; }
 BlocknetTabBtn #subLine { background-color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); }
+BlocknetKeyDialog { background-color: #172F49; }
+BlocknetKeyDialog #h2 { background-color: #172F49; border: 0; }
+BlocknetKeyDialog #highlight { font-size: 13px; font-family: "Roboto"; color: white; }
+BlocknetKeyDialog #note { font-size: 13px; font-family: "Roboto"; color: #6F8097; }
 
 BlocknetProposals #h4 { padding-left: 1px; }
 BlocknetProposals #title { font-size: 12px; color: white; font-family: "Roboto"; }
@@ -200,6 +204,11 @@ BlocknetCoinControl QTableWidget { color: white; }
 #coinControlDialog { background-color: #172F49; }
 #coinControlDialog #feePanel { background-color: #172F49; }
 #coinControlDialog #feePanel QLabel { font-size: 13px; color: white; font-family: "Roboto"; }
+
+BlocknetBIP38Tool QScrollArea { background-color:transparent; }
+BlocknetBIP38Tool #contentFrame { background-color:transparent; }
+
+BlocknetAddressBtn { background-color: #016AFF; }
 
 BlocknetSettings QScrollArea { background-color:transparent; }
 BlocknetSettings BlocknetLabelBtn { padding-left: 5px; }

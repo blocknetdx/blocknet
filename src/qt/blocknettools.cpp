@@ -4,6 +4,7 @@
 
 #include "blocknettools.h"
 #include "blocknetpeerslist.h"
+#include "blocknetbip38tool.h"
 
 #include <QTimer>
 #include <QEvent>
@@ -22,16 +23,7 @@ enum BToolsTabs {
 
 BlocknetToolsPage::BlocknetToolsPage(int id, QFrame *parent) : QFrame(parent), pageID(id) { }
 
-void BlocknetToolsPage::onNext() {
-    emit next(pageID);
-}
-
-void BlocknetToolsPage::onBack() {
-    emit back(pageID);
-}
-
 BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxLayout) {
-//    this->setStyleSheet("border: 1px solid red");
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     layout->setContentsMargins(46, 10, 50, 0);
     this->setLayout(layout);
@@ -43,7 +35,7 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     debugConsole = new BlocknetPeersList(this, DEBUG_CONSOLE);
     networkMonitor = new BlocknetPeersList(this, NETWORK_MONITOR);
     peersList = new BlocknetPeersList(this, PEERS_LIST);
-    bip38Tool = new BlocknetPeersList(this, BIP38_TOOL);
+    bip38Tool = new BlocknetBIP38Tool(this, BIP38_TOOL);
     walletRepair = new BlocknetPeersList(this, WALLET_REPAIR);
     multisend = new BlocknetPeersList(this, MULTISEND);
     pages = { debugConsole, networkMonitor, peersList, bip38Tool, walletRepair, multisend };
@@ -58,13 +50,7 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     tabBar->addTab(tr("Multisend"), MULTISEND);
     tabBar->show();
 
-    connect(tabBar, SIGNAL(crumbChanged(int)), this, SLOT(crumbChanged(int)));
-    connect(debugConsole, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(networkMonitor, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(peersList, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(networkMonitor, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
-    connect(peersList, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
-    connect(bip38Tool, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
+    connect(tabBar, SIGNAL(tabChanged(int)), this, SLOT(tabChanged(int)));
 
     layout->addWidget(titleLbl);
     layout->addWidget(tabBar);
@@ -85,8 +71,6 @@ void BlocknetTools::setWalletModel(WalletModel *w) {
 }
 
 void BlocknetTools::tabChanged(int tab) {
-    if (screen && tab > tabBar->getTab() && tabBar->showTab(tabBar->getTab()))
-        return;
     tabBar->showTab(tab);
 
     if (screen) {
@@ -119,37 +103,7 @@ void BlocknetTools::tabChanged(int tab) {
 
     layout->addWidget(screen);
 
-    //positionTab();
     screen->show();
     screen->setFocus();
-}
-
-void BlocknetTools::nextTab(int tab) {
-    if (screen && tab > tabBar->getTab() && tabBar->showTab(tabBar->getTab()))
-        return;
-    if (tab >= MULTISEND) // do nothing if at the end
-        return;
-    tabBar->goToTab(++tab);
-}
-
-void BlocknetTools::prevTab(int tab) {
-    if (!screen)
-        return;
-    if (tab <= DEBUG_CONSOLE) // do nothing if at the beginning
-        return;
-    tabBar->goToTab(--tab);
-}
-
-void BlocknetTools::positionTab(QPoint pt) {
-    if (pt != QPoint() || pt.x() > 250 || pt.y() > 0) {
-        tabBar->move(pt);
-        tabBar->raise();
-        return;
-    }
-    auto *pageHeading = screen->findChild<QWidget*>("h4", Qt::FindDirectChildrenOnly);
-    QPoint npt = pageHeading->mapToGlobal(QPoint(pageHeading->width(), 0));
-    npt = this->mapFromGlobal(npt);
-    tabBar->move(npt.x() + 20, npt.y() + pageHeading->height() - tabBar->height() - 2);
-    tabBar->raise();
 }
 

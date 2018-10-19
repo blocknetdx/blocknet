@@ -57,6 +57,8 @@ void BlocknetPeersList::setWalletModel(WalletModel *w) {
     if (!walletModel)
         return;
 
+    walletModel = w;
+
     initialize();
 }
 
