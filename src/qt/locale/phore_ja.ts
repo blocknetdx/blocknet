@@ -154,6 +154,10 @@
         <translation>この操作にはウォレットのパスワードを入力しウォレットの暗号化を解除する必要があります。</translation>
     </message>
     <message>
+        <source>For anonymization, automint, and staking only</source>
+        <translation>匿名化、自動変換、ステーキングのみを有効にする</translation>
+    </message>
+    <message>
         <source>Unlock wallet</source>
         <translation>ウォレットの暗号化を解除</translation>
     </message>
@@ -1530,6 +1534,14 @@ MultiSend は 有効化 ボタンを押さない限り有効になりません�
         <translation>アドレス:</translation>
     </message>
     <message>
+        <source>Label:</source>
+        <translation>ラベル:</translation>
+    </message>
+    <message>
+        <source>Enter a label for this address to add it to your address book</source>
+        <translation>アドレス帳に追加するためのラベルを入力して下さい</translation>
+    </message>
+    <message>
         <source>Delete Address From MultiSend Vector</source>
         <translation>MultiSend の設定からアドレスを削除</translation>
     </message>
@@ -1715,6 +1727,10 @@ Please check the address and try again.</source>
     <message>
         <source>(0 = auto, &lt;0 = leave that many cores free)</source>
         <translation>(0 = auto, &lt;0 = 必要なだけ利用)</translation>
+    </message>
+    <message>
+        <source>Enable zPHR Automint</source>
+        <translation>zPHRへの自動変換の有効化</translation>
     </message>
     <message>
         <source>W&amp;allet</source>
@@ -2197,6 +2213,17 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     </message>
 </context>
 <context>
+    <name>BanTableModel</name>
+    <message>
+        <source>IP/Netmask</source>
+        <translation>IP/ネットマスク</translation>
+    </message>
+    <message>
+        <source>Banned Until</source>
+        <translation>BAN期限</translation>
+    </message>
+</context>
+<context>
     <name>QObject</name>
     <message>
         <source>Amount</source>
@@ -2411,6 +2438,10 @@ Immature: confirmed, but less than 3 mints of the same denomination after it was
     <message>
         <source>Direction</source>
         <translation>送受信方向</translation>
+    </message>
+    <message>
+        <source>Banned peers</source>
+        <translation>BANされたピア</translation>
     </message>
     <message>
         <source>Protocol</source>
@@ -5448,7 +5479,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Automatically create Tor hidden service (default: %d)</source>
-        <translation></translation>
+        <translation>Tor 秘匿サービスの自動生成(デフォルト: %d)</translation>
     </message>
     <message>
         <source>Calculating missing accumulators...</source>
@@ -5540,7 +5571,7 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Set the Maximum reorg depth (default: %u)</source>
-        <translation></translation>
+        <translation>Re-orgの最長ブロック長を設定(デフォルト: %u)</translation>
     </message>
     <message>
         <source>SwiftX options:</source>
@@ -5548,11 +5579,11 @@ for example: alertnotify=echo %%s | mail -s &quot;Phore Alert&quot; admin@foo.co
     </message>
     <message>
         <source>Tor control port password (default: empty)</source>
-        <translation></translation>
+        <translation>Torのコントロールポートのパスワード(デフォルト: 空欄)</translation>
     </message>
     <message>
         <source>Tor control port to use if onion listening enabled (default: %s)</source>
-        <translation></translation>
+        <translation>OnionのListeningが有効な際のTorのコントロールポート(デフォルト: %s)</translation>
     </message>
     <message>
         <source>Use a custom max chain reorganization depth (default: %u)</source>
@@ -5719,6 +5750,10 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
         <translation>以前利用したアドレスを選択</translation>
     </message>
     <message>
+        <source>Enter a Phore address (e.g. PCYiHgGJJ6xGHqivmdZrYjRnhaYf6AJ2Mp)</source>
+        <translation>Phoreアドレスを入力(例: PCYiHgGJJ6xGHqivmdZrYjRnhaYf6AJ2Mp)</translation>
+    </message>
+    <message>
         <source>Paste address from clipboard</source>
         <translation>クリップボードからアドレスをペースト</translation>
     </message>
@@ -5729,6 +5764,10 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
     <message>
         <source>Enter a label for this address to add it to the list of used addresses</source>
         <translation>使用したことのあるアドレスリストへ追加するため、ラベルを入力してください</translation>
+    </message>
+    <message>
+        <source>Enter a label for this address to add it to your address book</source>
+        <translation>アドレス帳に登録する際のラベルを入力して下さい</translation>
     </message>
     <message>
         <source>A&amp;mount:</source>
@@ -6213,8 +6252,8 @@ Please be patient after clicking import.</source>
         <translation>最小保留投票数</translation>
     </message>
     <message>
-        <source>Min percentage</source>
-        <translation>最小賛成比率</translation>
+        <source>Min votes needed</source>
+        <translation>最小投票必要数</translation>
     </message>
     <message>
         <source>Proposals</source>
@@ -6304,11 +6343,11 @@ Please be patient after clicking import.</source>
         <translation>枚数</translation>
     </message>
     <message>
-        <source>Start Date</source>
+        <source>Start Block</source>
         <translation>開始ブロック</translation>
     </message>
     <message>
-        <source>End Date</source>
+        <source>End Block</source>
         <translation>終了ブロック</translation>
     </message>
     <message>
@@ -6324,40 +6363,40 @@ Please be patient after clicking import.</source>
         <translation>保留</translation>
     </message>
     <message>
-        <source>Percentage</source>
-        <translation>賛成比率</translation>
+        <source>Votes Needed</source>
+        <translation>必要投票数</translation>
     </message>
     <message>
-        <source>Proposal Name</source>
+        <source>Proposal name</source>
         <translation>予算案名</translation>
     </message>
     <message>
-        <source>Date and time that the proposal starts.</source>
+        <source>Date and time that the proposal starts</source>
         <translation>予算案の執行開始ブロック</translation>
     </message>
     <message>
-        <source>Date and time that the proposal ends.</source>
+        <source>Date and time that the proposal ends</source>
         <translation>予算案の執行終了ブロック</translation>
     </message>
     <message>
-        <source>Obtained yes votes.</source>
+        <source>Obtained yes votes</source>
         <translation>賛成投票数を取得</translation>
     </message>
     <message>
-        <source>Obtained no votes.</source>
+        <source>Obtained no votes</source>
         <translation>反対投票数を取得</translation>
     </message>
     <message>
-        <source>Obtained abstain votes.</source>
+        <source>Obtained abstain votes</source>
         <translation>保留投票数を取得</translation>
     </message>
     <message>
-        <source>Proposed amount.</source>
+        <source>Proposed amount</source>
         <translation>予算案の要求枚数</translation>
     </message>
     <message>
-        <source>Current vote percentage.</source>
-        <translation>現在の投票率</translation>
+        <source>Current vote needed to pass</source>
+        <translation>承認に必要な投票数</translation>
     </message>
 </context>
 </TS>
