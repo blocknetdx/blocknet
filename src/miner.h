@@ -16,7 +16,7 @@ class CReserveKey;
 class CScript;
 class CWallet;
 
-class CBlockTemplate;
+struct CBlockTemplate;
 
 /** Run the miner threads */
 void GenerateBitcoins(bool fGenerate, CWallet* pwallet, int nThreads);
