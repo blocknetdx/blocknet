@@ -69,17 +69,17 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
     ui->labelzDenom8Text->setText(tr("Denom. with value <b>5000</b>:"));
 
     // AutoMint status
-    ui->label_AutoMintStatus->setText(tr("AutoMint Status:"));
+    // ui->label_AutoMintStatus->setText(tr("AutoMint Status:"));
 
     // Global Supply labels
-    ui->labelZsupplyText1->setText(tr("Denom. <b>1</b>:"));
-    ui->labelZsupplyText5->setText(tr("Denom. <b>5</b>:"));
-    ui->labelZsupplyText10->setText(tr("Denom. <b>10</b>:"));
-    ui->labelZsupplyText50->setText(tr("Denom. <b>50</b>:"));
-    ui->labelZsupplyText100->setText(tr("Denom. <b>100</b>:"));
-    ui->labelZsupplyText500->setText(tr("Denom. <b>500</b>:"));
-    ui->labelZsupplyText1000->setText(tr("Denom. <b>1000</b>:"));
-    ui->labelZsupplyText5000->setText(tr("Denom. <b>5000</b>:"));
+    // ui->labelZsupplyText1->setText(tr("Denom. <b>1</b>:"));
+    // ui->labelZsupplyText5->setText(tr("Denom. <b>5</b>:"));
+    // ui->labelZsupplyText10->setText(tr("Denom. <b>10</b>:"));
+    // ui->labelZsupplyText50->setText(tr("Denom. <b>50</b>:"));
+    // ui->labelZsupplyText100->setText(tr("Denom. <b>100</b>:"));
+    // ui->labelZsupplyText500->setText(tr("Denom. <b>500</b>:"));
+    // ui->labelZsupplyText1000->setText(tr("Denom. <b>1000</b>:"));
+    // ui->labelZsupplyText5000->setText(tr("Denom. <b>5000</b>:"));
 
     // Phore settings
     QSettings settings;

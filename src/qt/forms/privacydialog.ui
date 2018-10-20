@@ -1591,7 +1591,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                         </item>
                        </layout>
                       </item>
-                      <item>
+                      <!-- <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_25">
                         <item>
                          <widget class="QLabel" name="label_AutoMintStatus">
@@ -1626,7 +1626,7 @@ To change the percentage (no restart required):
                          </spacer>
                         </item>
                        </layout>
-                      </item>
+                      </item> -->
                       <item>
                        <spacer name="verticalSpacer_4">
                         <property name="orientation">
@@ -1640,7 +1640,7 @@ To change the percentage (no restart required):
                         </property>
                        </spacer>
                       </item>
-                      <item>
+                      <!-- <item>
                        <layout class="QHBoxLayout" name="horizontalLayout_23">
                         <item>
                          <widget class="QLabel" name="labelZsupplyText">
@@ -2023,7 +2023,7 @@ To change the percentage (no restart required):
                          </size>
                         </property>
                        </spacer>
-                      </item>
+                      </item> -->
                      </layout>
                     </item>
                    </layout>
