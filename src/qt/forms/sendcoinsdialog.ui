@@ -1635,7 +1635,7 @@
                </property>
               </widget>
              </item>
-             <item>
+             <!-- <item>
               <widget class="QCheckBox" name="checkSwiftTX">
                <property name="enabled">
                 <bool>true</bool>
@@ -1650,7 +1650,7 @@
                 <string>SwiftX</string>
                </property>
               </widget>
-             </item>
+             </item> -->
              <item>
               <widget class="QLabel" name="labelForBalance">
                <property name="text">
