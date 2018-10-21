@@ -6518,7 +6518,7 @@ Houd er rekening mee dat de portemonnee de blockchain opnieuw doorzoekt om trans
     </message>
     <message>
         <source>&amp;Import Redeem</source>
-        <translation>&amp;Import Herstellen/translation>
+        <translation>&amp;Import Herstellen</translation>
     </message>
     <message>
         <source>&amp;Create MultiSignature Tx</source>
