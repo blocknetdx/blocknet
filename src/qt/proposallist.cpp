@@ -262,8 +262,6 @@ ProposalList::ProposalList(   QWidget *parent) :
     proposalList->setColumnWidth(ProposalTableModel::AbstainVotes, ABSTAIN_COLUMN_WIDTH);
     proposalList->setColumnWidth(ProposalTableModel::VotesNeeded, VOTES_NEEDED_COLUMN_WIDTH);
 
-    connect(proposalList->selectionModel(), SIGNAL(selectionChanged(QItemSelection, QItemSelection)), this, SLOT(computeSum()));
-
     columnResizingFixer = new GUIUtil::TableViewLastColumnResizingFixer(proposalList, VOTES_NEEDED_COLUMN_WIDTH, MINIMUM_COLUMN_WIDTH);
 
 
