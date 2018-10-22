@@ -27,13 +27,11 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
 
 
     xuiConnector.NotifyXBridgeTransactionReceived.connect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
-
+            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedEvent, this, _1));
     xuiConnector.NotifyXBridgeTransactionChanged.connect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1));
-
-    connect(&m_timer, SIGNAL(timeout()), this, SLOT(onTimer()));
-    m_timer.start(3000);
+            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedEvent, this, _1));
+    xuiConnector.NotifyXBridgeTransactionChanged.connect
+            (boost::bind(&XBridgeTransactionsModel::onTransactionRemovedEvent, this, _1));
 }
 
 //******************************************************************************
@@ -41,10 +39,11 @@ XBridgeTransactionsModel::XBridgeTransactionsModel()
 XBridgeTransactionsModel::~XBridgeTransactionsModel()
 {
     xuiConnector.NotifyXBridgeTransactionReceived.disconnect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedExtSignal, this, _1));
-
+            (boost::bind(&XBridgeTransactionsModel::onTransactionReceivedEvent, this, _1));
     xuiConnector.NotifyXBridgeTransactionChanged.disconnect
-            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedExtSignal, this, _1));
+            (boost::bind(&XBridgeTransactionsModel::onTransactionStateChangedEvent, this, _1));
+    xuiConnector.NotifyXBridgeTransactionChanged.disconnect
+            (boost::bind(&XBridgeTransactionsModel::onTransactionRemovedEvent, this, _1));
 }
 
 //******************************************************************************
@@ -146,24 +145,6 @@ QVariant XBridgeTransactionsModel::headerData(int section, Qt::Orientation orien
         }
     }
     return QVariant();
-}
-
-void XBridgeTransactionsModel::customEvent(QEvent *event)
-{
-    // When we get here, we've crossed the thread boundary and are now
-    // executing in the Qt object's thread
-
-    if (event->type() == TRANSACTION_RECEIVED_EVENT) {
-
-        auto e = static_cast<TransactionReceivedEvent *>(event);
-        onTransactionReceived(e->tx);
-
-    } else if (event->type() == TRANSACTION_STATE_CHANGED_EVENT) {
-
-        auto e = static_cast<TransactionStateChangedEvent *>(event);
-        onTransactionStateChanged(e->id);
-
-    }
 }
 
 //******************************************************************************
@@ -294,56 +275,11 @@ xbridge::Error XBridgeTransactionsModel::rollbackTransaction(const uint256 & id)
 
 //******************************************************************************
 //******************************************************************************
-void XBridgeTransactionsModel::onTimer()
+void XBridgeTransactionsModel::onTransactionReceivedEvent(const xbridge::TransactionDescrPtr & tx)
 {
-    // check pending transactions
-    for (unsigned int i = 0; i < m_transactions.size(); ++i)
-    {
-        boost::posix_time::time_duration td =
-                boost::posix_time::microsec_clock::universal_time() -
-                m_transactions[i]->txtime;
+    QMetaObject::invokeMethod(this, "onTransactionReceived", Qt::QueuedConnection,
+                              Q_ARG(xbridge::TransactionDescrPtr, tx));
 
-        boost::posix_time::time_duration tc =
-                boost::posix_time::microsec_clock::universal_time() -
-                m_transactions[i]->created;
-
-        if (m_transactions[i]->state == xbridge::TransactionDescr::trNew &&
-                td.total_seconds() > xbridge::Transaction::pendingTTL)
-        {
-            m_transactions[i]->state = xbridge::TransactionDescr::trOffline;
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
-        }
-        else if (m_transactions[i]->state == xbridge::TransactionDescr::trPending &&
-                 td.total_seconds() > xbridge::Transaction::pendingTTL)
-        {
-            m_transactions[i]->state = xbridge::TransactionDescr::trExpired;
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
-        }
-        else if ((m_transactions[i]->state == xbridge::TransactionDescr::trExpired ||
-                  m_transactions[i]->state == xbridge::TransactionDescr::trOffline) &&
-                 td.total_seconds() < xbridge::Transaction::pendingTTL)
-        {
-            m_transactions[i]->state = xbridge::TransactionDescr::trPending;
-            emit dataChanged(index(i, FirstColumn), index(i, LastColumn));
-        }
-        else if ((m_transactions[i]->state == xbridge::TransactionDescr::trExpired ||
-                  m_transactions[i]->state == xbridge::TransactionDescr::trOffline) &&
-                 td.total_seconds() > xbridge::Transaction::TTL)
-        {
-            emit beginRemoveRows(QModelIndex(), i, i);
-            m_transactions.erase(m_transactions.begin()+i);
-            emit endRemoveRows();
-            --i;
-        }
-        else if (m_transactions[i]->state == xbridge::TransactionDescr::trPending &&
-                 tc.total_seconds() > xbridge::Transaction::deadlineTTL)
-        {
-            emit beginRemoveRows(QModelIndex(), i, i);
-            m_transactions.erase(m_transactions.begin()+i);
-            emit endRemoveRows();
-            --i;
-        }
-    }
 }
 
 //******************************************************************************
@@ -404,6 +340,14 @@ void XBridgeTransactionsModel::onTransactionReceived(const xbridge::TransactionD
 
 //******************************************************************************
 //******************************************************************************
+void XBridgeTransactionsModel::onTransactionStateChangedEvent(const uint256 & id)
+{
+    QMetaObject::invokeMethod(this, "onTransactionStateChanged", Qt::QueuedConnection,
+                              Q_ARG(uint256, id));
+}
+
+//******************************************************************************
+//******************************************************************************
 void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
 {
     for (unsigned int i = 0; i < m_transactions.size(); ++i)
@@ -427,14 +371,29 @@ void XBridgeTransactionsModel::onTransactionStateChanged(const uint256 & id)
     }
 }
 
-void XBridgeTransactionsModel::onTransactionReceivedExtSignal(const xbridge::TransactionDescrPtr &tx)
+//******************************************************************************
+//******************************************************************************
+void XBridgeTransactionsModel::onTransactionRemovedEvent(const uint256 & id)
 {
-    QApplication::postEvent(this, new TransactionReceivedEvent(tx));
+    QMetaObject::invokeMethod(this, "onTransactionRemoved", Qt::QueuedConnection,
+                              Q_ARG(uint256, id));
 }
 
-void XBridgeTransactionsModel::onTransactionStateChangedExtSignal(const uint256 &id)
+//******************************************************************************
+//******************************************************************************
+void XBridgeTransactionsModel::onTransactionRemoved(const uint256 & id)
 {
-    QApplication::postEvent(this, new TransactionStateChangedEvent(id));
+    for (unsigned int i = 0; i < m_transactions.size(); ++i)
+    {
+        if (m_transactions[i]->id == id)
+        {
+            // found
+            emit beginRemoveRows(QModelIndex(), i, i);
+            m_transactions.erase(m_transactions.begin() + i);
+            emit endRemoveRows();
+            break;
+        }
+    }
 }
 
 //******************************************************************************

@@ -107,11 +107,13 @@ struct TransactionDescr
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
-    void excludeNode(CPubKey &key) {
+    void excludeNode(CPubKey &key)
+    {
         LOCK(_lock);
         _excludedSnodes.insert(key);
     }
-    std::set<CPubKey> excludedNodes() {
+    std::set<CPubKey> excludedNodes()
+    {
         LOCK(_lock);
         return _excludedSnodes;
     }
@@ -173,6 +175,7 @@ struct TransactionDescr
     void updateTimestamp(const TransactionDescr & d)
     {
         LOCK(_lock);
+
         txtime       = boost::posix_time::microsec_clock::universal_time();
         if (created > d.created)
         {
@@ -190,8 +193,10 @@ struct TransactionDescr
      * Assigns the servicenode to the order.
      * @param snode Servicenode pubkey
      */
-    void assignServicenode(CPubKey & snode) {
+    void assignServicenode(CPubKey & snode)
+    {
         LOCK(_lock);
+
         CKeyID snodeID = snode.GetID();
         std::copy(snodeID.begin(), snodeID.end(), hubAddress.begin());
         if (!snode.IsCompressed())
@@ -228,46 +233,47 @@ private:
     void copyFrom(const TransactionDescr & d)
     {
         {
-        LOCK(_lock);
-        id           = d.id;
-        role         = d.role;
-        from         = d.from;
-        fromCurrency = d.fromCurrency;
-        fromAmount   = d.fromAmount;
-        to           = d.to;
-        toCurrency   = d.toCurrency;
-        toAmount     = d.toAmount;
-        lockTimeTx1  = d.lockTimeTx1;
-        lockTimeTx2  = d.lockTimeTx2;
-        state        = d.state;
-        reason       = d.reason;
-        payTx        = d.payTx;
-        refTx        = d.refTx;
+            LOCK(_lock);
 
-        binTxId      = d.binTxId;
-        binTx        = d.binTx;
-        payTxId      = d.payTxId;
-        payTx        = d.payTx;
-        refTxId      = d.refTxId;
-        refTx        = d.refTx;
+            id           = d.id;
+            role         = d.role;
+            from         = d.from;
+            fromCurrency = d.fromCurrency;
+            fromAmount   = d.fromAmount;
+            to           = d.to;
+            toCurrency   = d.toCurrency;
+            toAmount     = d.toAmount;
+            lockTimeTx1  = d.lockTimeTx1;
+            lockTimeTx2  = d.lockTimeTx2;
+            state        = d.state;
+            reason       = d.reason;
+            payTx        = d.payTx;
+            refTx        = d.refTx;
 
-        // multisig address and redeem script
-        depositP2SH     = d.depositP2SH;
-        innerScript       = d.innerScript;
+            binTxId      = d.binTxId;
+            binTx        = d.binTx;
+            payTxId      = d.payTxId;
+            payTx        = d.payTx;
+            refTxId      = d.refTxId;
+            refTx        = d.refTx;
 
-        // prevtxs for signrawtransaction
-        // prevtxs      = d.prevtxs;
+            // multisig address and redeem script
+            depositP2SH     = d.depositP2SH;
+            innerScript       = d.innerScript;
 
-        // multisig key
-        mPubKey      = d.mPubKey;
-        mPrivKey      = d.mPrivKey;
+            // prevtxs for signrawtransaction
+            // prevtxs      = d.prevtxs;
 
-        // X key
-        xPubKey      = d.xPubKey;
-        xPrivKey      = d.xPrivKey;
+            // multisig key
+            mPubKey      = d.mPubKey;
+            mPrivKey      = d.mPrivKey;
 
-        hubAddress     = d.hubAddress;
-        confirmAddress = d.confirmAddress;
+            // X key
+            xPubKey      = d.xPubKey;
+            xPrivKey      = d.xPrivKey;
+
+            hubAddress     = d.hubAddress;
+            confirmAddress = d.confirmAddress;
         }
         updateTimestamp(d);
     }

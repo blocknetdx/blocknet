@@ -25,6 +25,7 @@
 #include "xbridgecryptoproviderbtc.h"
 #include "xbridgewalletconnectorbch.h"
 #include "xbridgewalletconnectordgb.h"
+#include "xuiconnector.h"
 #include "sync.h"
 
 #include <algorithm>
@@ -172,6 +173,8 @@ protected:
      */
     void checkAndRelayPendingOrders();
 
+    void checkAndEraseExpiredTransactions() const;
+
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
      * @param addr - currency name
@@ -224,7 +227,7 @@ protected:
     std::set<std::string>                              m_addresses;
 
     // transactions
-    CCriticalSection                                   m_txLocker;
+    mutable CCriticalSection                           m_txLocker;
     std::map<uint256, TransactionDescrPtr>             m_transactions;
     std::map<uint256, TransactionDescrPtr>             m_historicTransactions;
     xSeriesCache                                       m_xSeriesCache;
@@ -2277,6 +2280,98 @@ void App::Impl::checkAndRelayPendingOrders()
     }
 }
 
+//*****************************************************************************
+//*****************************************************************************
+void App::Impl::checkAndEraseExpiredTransactions() const
+{
+    // check exchange transactions ..
+    Exchange & e = Exchange::instance();
+    e.eraseExpiredTransactions();
+
+    // ... and check client transactions
+
+    auto currentTime = boost::posix_time::microsec_clock::universal_time();
+    std::map<uint256, TransactionDescrPtr> txs;
+    std::set<uint256> forErase;
+    {
+        LOCK(m_txLocker);
+        txs = m_transactions;
+    }
+    if (txs.empty())
+    {
+        return;
+    }
+
+    // check...
+    for (const std::pair<uint256, TransactionDescrPtr> & i : txs)
+    {
+        TransactionDescrPtr tx = i.second;
+        bool stateChanged = false;
+
+        {
+            TRY_LOCK(tx->_lock, txlock);
+            if (!txlock)
+            {
+                continue;
+            }
+
+            boost::posix_time::time_duration td = currentTime - tx->txtime;
+            boost::posix_time::time_duration tc = currentTime - tx->created;
+
+            if (tx->state == xbridge::TransactionDescr::trNew &&
+                    td.total_seconds() > xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trOffline;
+                stateChanged = true;
+            }
+            else if (tx->state == xbridge::TransactionDescr::trPending &&
+                     td.total_seconds() > xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trExpired;
+                stateChanged = true;
+            }
+            else if ((tx->state == xbridge::TransactionDescr::trExpired ||
+                      tx->state == xbridge::TransactionDescr::trOffline) &&
+                      td.total_seconds() < xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trPending;
+                stateChanged = true;
+            }
+            else if ((tx->state == xbridge::TransactionDescr::trExpired ||
+                      tx->state == xbridge::TransactionDescr::trOffline) &&
+                      td.total_seconds() > xbridge::Transaction::TTL)
+            {
+                forErase.insert(i.first);
+            }
+            else if (tx->state == xbridge::TransactionDescr::trPending &&
+                     tc.total_seconds() > xbridge::Transaction::deadlineTTL)
+            {
+                forErase.insert(i.first);
+            }
+        }
+
+        if (stateChanged)
+        {
+            xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
+        }
+    }
+
+    // ...erase expired...
+    {
+        LOCK(m_txLocker);
+        for (const uint256 & id : forErase)
+        {
+            m_transactions.erase(id);
+        }
+    }
+
+    // ...and notify
+    for (const uint256 & id : forErase)
+    {
+        xuiConnector.NotifyXBridgeTransactionRemoved(id);
+    }
+}
+
 //******************************************************************************
 //******************************************************************************
 void App::Impl::onTimer()
@@ -2304,9 +2399,6 @@ void App::Impl::onTimer()
             }
         }
 
-        // erase expired tx
-        io->post(boost::bind(&xbridge::Session::eraseExpiredPendingTransactions, session));
-
         // get addressbook
         io->post(boost::bind(&xbridge::Session::getAddressBook, session));
 
@@ -2316,6 +2408,9 @@ void App::Impl::onTimer()
 
         // Check orders
         io->post(boost::bind(&Impl::checkAndRelayPendingOrders, this));
+
+        // check and erase expired transactions
+        io->post(boost::bind(&Impl::checkAndEraseExpiredTransactions, this));
 
         // unprocessed packets
         {

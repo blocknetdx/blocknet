@@ -772,6 +772,8 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     xbridge::App & xapp = App::instance();
     TransactionDescrPtr ptr = xapp.transaction(txid);
 
+    // TODO ptr->lock();
+
     // Servicenode pubkey assigned to order
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
@@ -1096,6 +1098,9 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         LOG() << "unknown order " << id.GetHex() << " " << __FUNCTION__;
         return true;
     }
+
+    // TODO xtx->lock();
+
     // Reject if snode key doesn't match original (prevent order manipulation)
     if (!packet->verify(xtx->sPubKey))
     {
@@ -1374,6 +1379,9 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         LOG() << "unknown transaction " << txid.ToString() << " " << __FUNCTION__;
         return true;
     }
+
+    // TODO xtx->lock();
+
     if (!xtx->isLocal())
     {
         ERR() << "not local transaction " << txid.ToString() << " " << __FUNCTION__;
@@ -1675,6 +1683,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         LOG() << "unknown transaction " << txid.GetHex() << " " << __FUNCTION__;
         return true;
     }
+
+    // TODO xtx->lock();
+
     if (!xtx->isLocal())
     {
         ERR() << "not local transaction " << txid.GetHex() << " " << __FUNCTION__;
@@ -2035,6 +2046,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         LOG() << "unknown transaction " << txid.GetHex() << " " << __FUNCTION__;
         return true;
     }
+
+    // TODO xtx->lock();
+
     if (!xtx->isLocal())
     {
         ERR() << "not local transaction " << txid.GetHex() << " " << __FUNCTION__;
@@ -2422,6 +2436,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
     }
+
+    // TODO xtx->lock();
+
     if (!xtx->isLocal())
     {
         ERR() << "not local transaction " << HexStr(txid) << " " << __FUNCTION__;
@@ -2674,6 +2691,9 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         LOG() << "unknown transaction " << txid.GetHex() << " " << __FUNCTION__;
         return true;
     }
+
+    // TODO xtx->lock();
+
     if (!xtx->isLocal())
     {
         ERR() << "not local transaction " << txid.GetHex() << " " << __FUNCTION__;
@@ -2920,6 +2940,8 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         return true;
     }
 
+    // TODO xtx->lock();
+
     if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey))
     {
         LOG() << "no packet signature for cancel on order " << xtx->id.GetHex() << " " << __FUNCTION__;
@@ -3055,6 +3077,8 @@ bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
 bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
                                           const TxCancelReason & reason) const
 {
+    // TODO tx->lock();
+
     LOG() << "cancel transaction <" << tx->id.GetHex() << ">";
 
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
@@ -3119,17 +3143,6 @@ void Session::sendListOfTransactions() const
 
         m_p->sendPacketBroadcast(packet);
     }
-}
-
-//*****************************************************************************
-//*****************************************************************************
-void Session::eraseExpiredPendingTransactions() const
-{
-    // check xbridge transactions
-    Exchange & e = Exchange::instance();
-    e.eraseExpiredTransactions();
-
-    // check client transactions
 }
 
 //*****************************************************************************
@@ -3241,6 +3254,9 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
         LOG() << "unknown transaction " << HexStr(txid) << " " << __FUNCTION__;
         return true;
     }
+
+    // TODO xtx->lock();
+
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
