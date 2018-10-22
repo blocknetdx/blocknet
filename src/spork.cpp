@@ -33,8 +33,10 @@ void LoadSporksFromDB()
     for (int i = SPORK_START; i <= SPORK_END; ++i) {
         // Since not all spork IDs are in use, we have to exclude undefined IDs
         std::string strSpork = sporkManager.GetSporkNameByID(i);
-        if (strSpork == "Unknown") continue;
-
+        if (strSpork == "Unknown") {
+            LogPrintf("%s : unknown spork ID %d\n", __func__, i);
+            continue;
+        }
         // attempt to read spork from sporkDB
         CSporkMessage spork;
         if (!pSporkDB->ReadSpork(i, spork)) {
@@ -130,6 +132,7 @@ int64_t GetSporkValue(int nSporkID)
         //if (nSporkID == SPORK_15_NEW_PROTOCOL_ENFORCEMENT_2) r = SPORK_15_NEW_PROTOCOL_ENFORCEMENT_2_DEFAULT;
         if (nSporkID == SPORK_16_ZEROCOIN_MAINTENANCE_MODE) r = SPORK_16_ZEROCOIN_MAINTENANCE_MODE_DEFAULT;
         if (nSporkID == SPORK_17_SEGWIT_ACTIVATION) r = SPORK_17_SEGWIT_ACTIVATION_DEFAULT;
+        if (nSporkID == SPORK_18_NEW_PROTOCOL_ENFORCEMENT_3) r = SPORK_15_NEW_PROTOCOL_ENFORCEMENT_3_DEFAULT;
 
         if (r == -1) LogPrintf("GetSpork::Unknown Spork %d\n", nSporkID);
     }
