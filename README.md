@@ -6,7 +6,7 @@ Join the community on [Discord](https://discord.gg/2e6s7H8).
 Started in 2014, Blocknet is a decentralized, community-governed, self-funded, open-source project that serves as a connector between different blockchains, markets, and communities. 
 
 #### The Blocknet Protocol
-The Blocknet protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of P2P atomic swaps using BIP65 and a DHT overlay network(Service Nodes). 
+The Blocknet protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of P2P atomic swaps using BIP65 and a DHT overlay network (Service Nodes). 
 
 #### Block DX
 Block DX is a completely decentralized and trustless exchange built on the Blocknet protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/blockdx-ui]
@@ -15,10 +15,10 @@ Block DX is a completely decentralized and trustless exchange built on the Block
 
 #### Blocknet Specifications:
 - Block Time: 1 Minute
-- Algo: Quark
+- Mining algorithm: Quark
 - Difficulty: Adjusted Per Block
 - Block Reward: 1.0 BLOCK (30% to stakers, 70% to Service Nodes)
-- Service Node Requirement: 5000 BLOCK
+- Service Node Requirement: 5,000 BLOCK
 - Staking Requirement: No Minimum
 - Governance: Decentralized Voting/Funding With Superblocks
 
