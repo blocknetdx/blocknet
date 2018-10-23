@@ -260,7 +260,7 @@ public:
         nLastPOWBlock = 2400;
         nZerocoinStartHeight = 200;
 
-        nZerocoinLastOldParams = 100000000;
+        nZerocoinLastOldParams = 50000;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
         genesis.nTime = 1505224800;
