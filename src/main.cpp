@@ -4228,11 +4228,13 @@ bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationState& sta
 static int GetWitnessCommitmentIndex(const CBlock& block)
 {
     int commitpos = -1;
-    for (size_t o = 0; o < block.vtx[1].vout.size(); o++) {
-        if (block.vtx[1].vout[o].scriptPubKey.size() >= 38 && block.vtx[1].vout[o].scriptPubKey[0] == OP_RETURN && block.vtx[1].vout[o].scriptPubKey[1] == 0x24 && block.vtx[1].vout[o].scriptPubKey[2] == 0xaa && block.vtx[1].vout[o].scriptPubKey[3] == 0x21 && block.vtx[1].vout[o].scriptPubKey[4] == 0xa9 && block.vtx[1].vout[o].scriptPubKey[5] == 0xed) {
-            commitpos = o;
-        }
-    }
+    if(block.vtx.size() > 1) {
+		for (size_t o = 0; o < block.vtx[1].vout.size(); o++) {
+			if (block.vtx[1].vout[o].scriptPubKey.size() >= 38 && block.vtx[1].vout[o].scriptPubKey[0] == OP_RETURN && block.vtx[1].vout[o].scriptPubKey[1] == 0x24 && block.vtx[1].vout[o].scriptPubKey[2] == 0xaa && block.vtx[1].vout[o].scriptPubKey[3] == 0x21 && block.vtx[1].vout[o].scriptPubKey[4] == 0xa9 && block.vtx[1].vout[o].scriptPubKey[5] == 0xed) {
+				commitpos = o;
+			}
+		}
+	}
     return commitpos;
 }
 
