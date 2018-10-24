@@ -23,6 +23,7 @@ protected:
     int pageID{0};
 };
 
+class BlocknetDebugConsole;
 class BlocknetPeersList;
 class BlocknetBIP38Tool;
 
@@ -43,7 +44,7 @@ private:
 
     QVBoxLayout *layout;
     QLabel *titleLbl;
-    BlocknetPeersList *debugConsole;
+    BlocknetDebugConsole *debugConsole;
     BlocknetPeersList *networkMonitor;
     BlocknetPeersList *peersList;
     BlocknetBIP38Tool *bip38Tool;

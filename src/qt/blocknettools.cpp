@@ -5,6 +5,7 @@
 #include "blocknettools.h"
 #include "blocknetpeerslist.h"
 #include "blocknetbip38tool.h"
+#include "blocknetdebugconsole.h"
 
 #include <QTimer>
 #include <QEvent>
@@ -32,7 +33,7 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     titleLbl->setObjectName("h4");
     titleLbl->setFixedHeight(26);
 
-    debugConsole = new BlocknetPeersList(this, DEBUG_CONSOLE);
+    debugConsole = new BlocknetDebugConsole(this, DEBUG_CONSOLE);
     networkMonitor = new BlocknetPeersList(this, NETWORK_MONITOR);
     peersList = new BlocknetPeersList(this, PEERS_LIST);
     bip38Tool = new BlocknetBIP38Tool(this, BIP38_TOOL);
