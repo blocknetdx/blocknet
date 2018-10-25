@@ -72,6 +72,46 @@ public:
      * @param mpub -
      */
     void setMPubkey(const std::vector<unsigned char> & mpub){ m_mpubkey = mpub; }
+    /**
+     * @brief setLockTime - set lock time
+     * @param lockTime
+     */
+    void setLockTime(const uint32_t lockTime)               { m_lockTime = lockTime; }
+    /**
+     * @brief Return the lock time.
+     * @return lock time
+     */
+    uint32_t lockTime() const                               { return m_lockTime; }
+    /**
+     * @brief Assigns the payment transaction id.
+     * @param payTxId
+     */
+    void setPayTxId(const std::string & payTxId)            { m_payTxId = payTxId; }
+    /**
+     * @brief Pay transaction id.
+     * @return
+     */
+    std::string payTxId() const                             { return m_payTxId; }
+    /**
+     * @brief Assigns the refund transaction id.
+     * @param refTxId
+     */
+    void setRefTxId(const std::string & refTxId)            { m_refTxId = refTxId; }
+    /**
+     * @brief Refund transaction id.
+     * @return
+     */
+    std::string refTxId() const                             { return m_refTxId; }
+    /**
+     * @brief Assigns the refund transaction raw output.
+     * @param refTx
+     */
+    void setRefTx(const std::string & refTx)                { m_refTx = refTx; }
+    /**
+     * @brief Refund transaction raw output.
+     * @return
+     */
+    std::string refTx() const                               { return m_refTx; }
 
 private:
     uint256                    m_id;
@@ -79,6 +119,10 @@ private:
     std::vector<unsigned char> m_destAddr;
     uint256                    m_transactionHash;
     std::vector<unsigned char> m_mpubkey;
+    uint32_t                   m_lockTime{0};
+    std::string                m_payTxId;
+    std::string                m_refTxId;
+    std::string                m_refTx;
 };
 
 } // namespace xbridge

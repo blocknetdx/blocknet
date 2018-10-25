@@ -6,6 +6,7 @@
 
 #include "xbridgewallet.h"
 #include "uint256.h"
+#include "script/script.h"
 
 #include <vector>
 #include <string>
@@ -81,6 +82,10 @@ public:
 
     virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const = 0;
 
+    virtual bool getBlock(const std::string & blockHash, std::string & rawBlock) = 0;
+
+    virtual bool getBlockHash(const uint32_t & block, std::string & blockHash) = 0;
+
     // if lock returns false if already locked
     // if unlock always return true
     virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
@@ -98,6 +103,8 @@ public:
 
     virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
     virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;
+
+    virtual bool getRawMempool(std::vector<std::string> & txids) = 0;
 
 public:
     // helper functions
@@ -118,11 +125,20 @@ public:
     virtual bool checkDepositTransaction(const std::string & depositTxId,
                                          const std::string & /*destination*/,
                                          double & amount,
+                                         uint32_t & depositTxVout,
+                                         const std::string & expectedScript,
                                          bool & isGood) = 0;
+
     virtual bool getSecretFromPaymentTransaction(const std::string & paymentTxId,
-                                         std::vector<unsigned char> & secret) = 0;
+                                                 const std::string & depositTxId,
+                                                 const uint32_t & depositTxVOut,
+                                                 const std::vector<unsigned char> & hx,
+                                                 std::vector<unsigned char> & secret,
+                                                 bool & isGood) = 0;
 
     virtual uint32_t lockTime(const char role) const = 0;
+
+    virtual bool acceptableLockTimeDrift(const char role, const uint32_t lckTime) const = 0;
 
     virtual bool createDepositUnlockScript(const std::vector<unsigned char> & myPubKey,
                                            const std::vector<unsigned char> & otherPubKey,
@@ -133,6 +149,7 @@ public:
     virtual bool createDepositTransaction(const std::vector<XTxIn> & inputs,
                                           const std::vector<std::pair<std::string, double> > & outputs,
                                           std::string & txId,
+                                          uint32_t & txVout,
                                           std::string & rawTx) = 0;
 
     virtual bool createRefundTransaction(const std::vector<XTxIn> & inputs,
@@ -152,6 +169,11 @@ public:
                                           const std::vector<unsigned char> & innerScript,
                                           std::string & txId,
                                           std::string & rawTx) = 0;
+
+    virtual bool isUTXOSpentInTx(const std::string & txid, const std::string & utxoPrevTxId,
+                                 const uint32_t & utxoVoutN, bool & isSpent) = 0;
+
+    virtual bool getTransactionsInBlock(const std::string & blockHash, std::vector<std::string> & txids) = 0;
 };
 
 } // namespace xbridge

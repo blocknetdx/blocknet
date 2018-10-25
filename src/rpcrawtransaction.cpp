@@ -311,8 +311,6 @@ Value listunspent(const Array& params, bool fHelp)
         }
     }
 
-    LOCK(cs_main);
-
     Array results;
     vector<COutput> vecOutputs;
     assert(pwalletMain != NULL);

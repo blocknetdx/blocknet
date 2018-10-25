@@ -1395,14 +1395,20 @@ Value listaccounts(const Array& params, bool fHelp)
             includeWatchonly = includeWatchonly | ISMINE_WATCH_ONLY;
 
     map<string, CAmount> mapAccountBalances;
+    std::map<CTxDestination, CAddressBookData> mapAddressBook;
+    std::map<uint256, CWalletTx> mapWallet;
+    std::string walletFile;
     {
-    LOCK2(cs_main, pwalletMain->cs_wallet);
-    BOOST_FOREACH (const PAIRTYPE(CTxDestination, CAddressBookData) & entry, pwalletMain->mapAddressBook) {
-        if (IsMine(*pwalletMain, entry.first) & includeWatchonly) // This address belongs to me
-            mapAccountBalances[entry.second.name] = 0;
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        mapAddressBook = pwalletMain->mapAddressBook;
+        mapWallet = pwalletMain->mapWallet;
+        walletFile = pwalletMain->strWalletFile;
+        BOOST_FOREACH (const PAIRTYPE(CTxDestination, CAddressBookData) & entry, mapAddressBook) {
+            if (IsMine(*pwalletMain, entry.first) & includeWatchonly) // This address belongs to me
+                mapAccountBalances[entry.second.name] = 0;
     }
 
-    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it) {
+    for (map<uint256, CWalletTx>::iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
         const CWalletTx& wtx = (*it).second;
         CAmount nFee;
         string strSentAccount;
@@ -1417,15 +1423,18 @@ Value listaccounts(const Array& params, bool fHelp)
             mapAccountBalances[strSentAccount] -= s.amount;
         if (nDepth >= nMinDepth) {
             BOOST_FOREACH (const COutputEntry& r, listReceived)
-                if (pwalletMain->mapAddressBook.count(r.destination))
-                    mapAccountBalances[pwalletMain->mapAddressBook[r.destination].name] += r.amount;
+                if (mapAddressBook.count(r.destination))
+                    mapAccountBalances[mapAddressBook[r.destination].name] += r.amount;
                 else
                     mapAccountBalances[""] += r.amount;
         }
     }
 
     list<CAccountingEntry> acentries;
-    CWalletDB(pwalletMain->strWalletFile).ListAccountCreditDebit("*", acentries);
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        CWalletDB(walletFile).ListAccountCreditDebit("*", acentries);
+    }
     BOOST_FOREACH (const CAccountingEntry& entry, acentries)
         mapAccountBalances[entry.strAccount] += entry.nCreditDebit;
     }
