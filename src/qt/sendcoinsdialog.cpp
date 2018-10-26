@@ -580,7 +580,7 @@ void SendCoinsDialog::updateDisplayUnit()
 void SendCoinsDialog::updateSwiftTX()
 {
     QSettings settings;
-    // settings.setValue("bUseSwiftTX", ui->checkSwiftTX->isChecked());
+    settings.setValue("bUseSwiftTX", 0);
     // CoinControlDialog::coinControl->useSwiftTX = ui->checkSwiftTX->isChecked();
     coinControlUpdateLabels();
 }
