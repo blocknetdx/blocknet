@@ -354,29 +354,40 @@ QHeaderView {
 	/* Table Header */
 	background-color: transparent;
     outline: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+	qproperty-defaultAlignment: AlignVCenter;
 }
 QHeaderView::section {
 	/* Table Header Sections */
-	qproperty-alignment: 'AlignVCenter';
+	/* qproperty-alignment: AlignVCenter;
+	qproperty-defaultAlignment: AlignLeft AlignVCenter;
+	qproperty-defaultAlignment: AlignVCenter; */
+	qproperty-defaultAlignment: AlignLeft AlignVCenter;
+	qproperty-alignment: left;
 	background-color: transparent;
 	color: #fff;
-	/* min-height:32px; */
+	min-height:30px;
 	font-weight: bold;
 	font-size: 14px;
 	border: 0;
 	padding-left: 5px;
 	padding-right: 5px;
-	padding-top: 2px;
-	padding-bottom: 2px;
 }
 QHeaderView {
-	qproperty-defaultAlignment: AlignLeft AlignVCenter;
+	/* qproperty-defaultAlignment: AlignLeft AlignVCenter; */
 }
 QHeaderView::section:last {
 	qproperty-alignment: right;
 	qproperty-defaultAlignment: AlignRight;
+	/* qproperty-alignment: right;
+	qproperty-defaultAlignment: AlignRight; */
+	/* qproperty-alignment: right;
+	qproperty-defaultAlignment: AlignRight; */
 	border-right: 0;
+}
+
+QHeaderView::section:hover {
+	border-right:1px solid #333b46;
 }
 .QScrollArea {
 	background: transparent;

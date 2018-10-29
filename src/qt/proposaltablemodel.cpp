@@ -248,7 +248,7 @@ QVariant ProposalTableModel::headerData(int section, Qt::Orientation orientation
         }
         else if (role == Qt::TextAlignmentRole)
         {
-            return Qt::AlignLeft;
+            return Qt::AlignVCenter;
         } 
         else if (role == Qt::ToolTipRole)
         {
