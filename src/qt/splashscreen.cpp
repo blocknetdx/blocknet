@@ -46,8 +46,7 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
     // load the bitmap for writing some text over it
     
     pixmap = networkStyle->getSplashImage();
-    pixmap = pixmap.scaled(QSize(400,400), Qt::KeepAspectRatio,Qt::SmoothTransformation);
-    
+   // pixmap = pixmap.scaled(QSize(400,400), Qt::KeepAspectRatio,Qt::SmoothTransformation); 
 
     QPainter pixPaint(&pixmap);
     pixPaint.setRenderHint(QPainter::Antialiasing);
@@ -94,7 +93,8 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
     setWindowTitle(titleText + " " + titleAddText);
 
     // Resize window and move to center of desktop, disallow resizing
-    QRect r(QPoint(), pixmap.size());
+    //QRect r(QPoint(), pixmap.size());
+    QRect r(QPoint(), QSize(pixmap.size().width()/2, pixmap.size().height()/2)); //retina
     resize(r.size());
     setFixedSize(r.size());
     move(QApplication::desktop()->screenGeometry().center() - r.center());
