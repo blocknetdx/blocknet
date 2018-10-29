@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>991</width>
-    <height>737</height>
+    <width>962</width>
+    <height>695</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -47,9 +47,15 @@
          <number>0</number>
         </property>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="1">
+         <layout class="QHBoxLayout" name="horizontalLayout_Header" stretch="0">
           <item>
            <widget class="QLabel" name="labelOverviewHeaderLeft">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="minimumSize">
              <size>
               <width>464</width>
@@ -64,7 +70,8 @@
             </property>
             <property name="font">
              <font>
-              <pointsize>20</pointsize>
+              <family>Hind</family>
+              <pointsize>48</pointsize>
               <weight>75</weight>
               <bold>true</bold>
              </font>
@@ -472,7 +479,7 @@
                         <property name="sizeHint" stdset="0">
                          <size>
                           <width>40</width>
-                          <height>20</height>
+                          <height>11</height>
                          </size>
                         </property>
                        </spacer>

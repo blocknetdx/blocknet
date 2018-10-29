@@ -59,7 +59,7 @@ QToolBar > QToolButton {
 	padding: 6px 0 6px;
 	box-sizing: border-box;
 	border-right: 3px solid transparent;
-	margin-bottom: 24px;
+	margin-bottom: 18px;
 	/* border-image: url(':/images/downArrow') 0 0 0 0 stretch stretch; */
 }
 QIcon {
@@ -173,9 +173,16 @@ QLabel {
 	font-family: "Hind";
 	font-weight: normal;
 }
+/* QLineEdit, QTableView,
+#transactionView,
+#tableWidgetMyMasternodes{
+	font-family: "Hind";
+	font-weight: normal;
+} */
 QLabel#labelOverviewHeaderLeft {
-	font-size: 48px;
+	font-size: 46px;
 	font-weight: 600;
+	qproperty-minimumSize:464px 10px; 
 }
 .QRadioButton {
 	/* Radio Button Labels */
@@ -195,7 +202,7 @@ QLabel#labelOverviewHeaderLeft {
 	/* Text Entry Fields */
 	border: 0;
 	font-size: 11px;
-	min-height: 20px;
+	min-height: 16px;
 	outline: 0;
 	padding: 3px;
 	background-color: rgba(255, 255, 255, 0.08);
@@ -248,7 +255,7 @@ QComboBox {
 	color: #818181;
 	border: 0;
 	font-size: 11px;
-	min-height: 20px;
+	min-height: 16px;
 	outline: 0;
 	padding: 3px;
 	background-color: rgba(255, 255, 255, 0.08);
@@ -308,7 +315,7 @@ QComboBox::indicator {
 }
 QAbstractSpinBox {
 	background: transparent;
-	min-height: 20px;
+	min-height: 16px;
 	background-color: rgba(255, 255, 255, 0.08);
 	color: #FFFFFF;
 	padding: 0.75em 0.85em 0.65em;
@@ -396,14 +403,16 @@ QTableView::item,
 	/* border-top: 1px solid rgba(255, 255, 255, 0.05); */
 	padding-right: 12px;
 	qproperty-alignment: 'AlignLeft';
-	text-align: left;
+    text-align: left;
+    
 }
 QTableView::item:selected {
 	/* Table Item Selected */
 	/* background-color:#00CD8D; */
 	/* background-color:rgba(0,209,136,0.25); */
 	background: #313d4b;
-	color: #fff;
+    color: #fff;
+   
 }
 QTableWidget {
 	/* Table Background */
@@ -432,7 +441,8 @@ QScrollBar:vertical {
 	border: 0;
 	background: transparent;
 	width: 12px;
-	margin: 0;
+    margin: 0;
+    
 }
 QScrollBar:horizontal {
 	/* Horizontal Scroll Bar Attributes */
@@ -448,13 +458,16 @@ QScrollBar::handle:vertical {
 	background: #333b46;
     border-radius: 6px;
     min-height:50px;
+    width:3px;
+    /* border:2px solid transparent; */
+    
 	
 }
 
 QScrollBar::handle:horizontal {
 	/* Scroll Bar Slider - horizontal */
 	background: #333b46;
-    min-width: 10px;
+    min-width: 50px;
     border-radius: 6px;
 }
 QScrollBar::add-page,
@@ -1939,3 +1952,11 @@ QGroupBox::title {
 #labelBalance, #labelUnconfirmed, #labelImmature, #labelLockedBalance, #labelTotal, #labelzBalanceMature, #labelzBalance, #labelBalancez {
     font-weight:100;
 }
+
+/* 
+#labelOverviewHeaderLeft {
+    background:rgba(0, 0, 0, 0.2);
+    border-radius:6px;
+    padding-bottom:0;
+    margin-bottom:0;
+} */
