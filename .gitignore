@@ -130,3 +130,4 @@ CMakeLists.txt
 cmake-build-debug/
 
 config.pri
+doc/Doxyfile
