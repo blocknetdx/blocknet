@@ -108,6 +108,11 @@ QProgressBar::chunk {
     border-radius:5px;
 } */
 
+#progressBarLabel {
+	color:#49545e;
+	padding-left:4px;
+}
+
 QTabWidget {
     /* background-color: #f2f2f2; */
     background-color:transparent;
