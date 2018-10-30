@@ -1965,9 +1965,18 @@ QGroupBox::title {
 }
 
 /* 
+Potentially match Web Wallet styling in future
 #labelOverviewHeaderLeft {
     background:rgba(0, 0, 0, 0.2);
     border-radius:6px;
     padding-bottom:0;
     margin-bottom:0;
 } */
+
+#BlockExplorer, #BlockExplorer QScrollArea *, #BlockExplorer #content {
+	background-color: #132232;
+}
+
+QAbstractScrollArea::corner {
+    background: transparent;
+}
