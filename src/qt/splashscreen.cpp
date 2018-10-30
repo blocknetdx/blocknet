@@ -78,14 +78,14 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
     pixPaint.drawText(paddingLeft, paddingTop + titleCopyrightVSpace + 36, copyrightTextPhore);
 
     // draw additional text if special network
-    if (!titleAddText.isEmpty()) {
-        QFont boldFont = QFont(font, 10 * fontFactor);
-        boldFont.setWeight(QFont::Bold);
-        pixPaint.setFont(boldFont);
-        fm = pixPaint.fontMetrics();
-        int titleAddTextWidth = fm.width(titleAddText);
-        pixPaint.drawText(pixmap.width() - titleAddTextWidth - 10, pixmap.height() - 25, titleAddText);
-    }
+    // if (!titleAddText.isEmpty()) {
+    //     QFont boldFont = QFont(font, 10 * fontFactor);
+    //     boldFont.setWeight(QFont::Bold);
+    //     pixPaint.setFont(boldFont);
+    //     fm = pixPaint.fontMetrics();
+    //     int titleAddTextWidth = fm.width(titleAddText);
+    //     pixPaint.drawText(pixmap.width() - titleAddTextWidth - 10, pixmap.height() - 25, titleAddText);
+    // }
 
     pixPaint.end();
 
