@@ -26,6 +26,10 @@ AskPassphraseDialog::AskPassphraseDialog(Mode mode, QWidget* parent, WalletModel
     ui->setupUi(this);
     this->setStyleSheet(GUIUtil::loadStyleSheet());
 
+    ui->passEdit1->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->passEdit2->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->passEdit3->setAttribute(Qt::WA_MacShowFocusRect, 0);
+
     ui->passEdit1->setMinimumSize(ui->passEdit1->sizeHint());
     ui->passEdit2->setMinimumSize(ui->passEdit2->sizeHint());
     ui->passEdit3->setMinimumSize(ui->passEdit3->sizeHint());
