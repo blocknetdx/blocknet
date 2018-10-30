@@ -699,11 +699,11 @@ QDialog#SignVerifyMessageDialog QPushButton#copySignatureButton_SM {
 	padding-left: 10px;
 	padding-right: 10px;
 }
-QDialog#SignVerifyMessageDialog QPushButton#clearButton_SM {
+QDialog#SignVerifyMessageDialog QPushButton#clearButton_SM, QDialog#SignVerifyMessageDialog QPushButton#clearButton_VM{
 	/* Clear Button */
 	background-color: none;
-	border: 2px solid #d2d2d2;
-	color: #616161;
+	border: 2px solid #707780;
+	color: #707780;
 	/* padding-left:10px;
 padding-right:10px; */
 }
@@ -723,15 +723,15 @@ QDialog#SignVerifyMessageDialog QPushButton#addressBookButton_VM {
 }
 QDialog#SignVerifyMessageDialog QPushButton#clearButton_VM {
 	/* Verify Message - Clear Button */
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #f6f6f6, stop: .1 rgba(250, 250, 250, 128), stop: .95 rgba(250, 250, 250, 255), stop: 1 #ebebeb);
+	/* background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #f6f6f6, stop: .1 rgba(250, 250, 250, 128), stop: .95 rgba(250, 250, 250, 255), stop: 1 #ebebeb);
 	border: 1px solid #d2d2d2;
 	color: #616161;
 	padding-left: 10px;
-	padding-right: 10px;
+	padding-right: 10px; */
 }
 QDialog#SignVerifyMessageDialog QPushButton#clearButton_VM:hover {
-	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #f6f6f6, stop: .1 rgba(240, 240, 240, 255), stop: .95 rgba(240, 240, 240, 255), stop: 1 #ebebeb);
-	color: #333;
+	/* background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: .01 #f6f6f6, stop: .1 rgba(240, 240, 240, 255), stop: .95 rgba(240, 240, 240, 255), stop: 1 #ebebeb);
+	color: #333; */
 }
 QDialog#SignVerifyMessageDialog QPushButton#clearButton_VM:pressed {
 	border: 1px solid #9e9e9e;
@@ -1624,33 +1624,43 @@ QDialog#CoinControlDialog QHeaderView::section:first {
 QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget {
 	/* Coin Control Widget Container */
 	outline: 0;
-	background-color: #ffffff;
-	border: 1px solid #333;
+	background-color: transparent;
+	border: 0;
+	alternate-background-color: transparent;
 }
-QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::item {} QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::item:selected {
+QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::item {
+	background-color:transparent;
+	color:white;
+	padding-left:0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+} 
+
+QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::item:selected {
 	/* Coin Control Item (selected) */
 	background-color: #313d4b;
 	color: #fff;
 }
 QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::item:checked {
 	/* Coin Control Item (checked) */
-	background-color: #f7f7f7;
+	background-color: transparent;
 	color: #fff;
 }
 QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::branch:selected {
 	/* Coin Control Branch Icon */
-	background-image: url(':/images/qtreeview_selected');
+	/* background-image: url(':/images/qtreeview_selected');
 	background-repeat: no-repeat;
 	background-position: center;
-	background-color: #f7f7f7;
+	background-color: transparent; */
+	background:none;
 	color: #333;
 }
 QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::branch:checked {
 	/* Coin Control Branch Icon */
-	background-image: url(':/images/qtreeview_selected');
+	/* background-image: url(':/images/qtreeview_selected');
 	background-repeat: no-repeat;
 	background-position: center;
-	background-color: #f7f7f7;
+	background-color: #f7f7f7; */
+	background:none;
 	color: #333;
 }
 QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::seperator {} QDialog#CoinControlDialog .CoinControlTreeWidget#treeWidget::indicator {
@@ -1999,4 +2009,33 @@ Potentially match Web Wallet styling in future
 
 QAbstractScrollArea::corner {
     background: transparent;
+}
+
+#MultiSendDialog #message, #MultisigDialog QScrollArea, #MultisigDialog #signButtonStatus, #MultisigDialog #createButtonStatus, #MultisigDialog #addMultisigStatus, #MultisigDialog #addAddressScrollArea {
+	border:0;
+	background-color: #132232;
+}
+
+#txInputsScrollArea {
+	border:0;
+	outline:none;
+}
+
+#MultisigDialog .QTabWidget QTabBar::tab {
+    min-width: 200px;
+}
+
+#selectFileButton {
+	background:none;
+	color:white;
+}
+
+#SignVerifyMessageDialog #messageIn_VM, #SignVerifyMessageDialog #messageIn_SM{
+	border:0;
+	color:white;
+	border:1px solid rgba(255,255,255,0.1);
+}
+
+#addressBookButton_SM {
+	background:none;
 }

@@ -30,7 +30,37 @@
     <number>6</number>
    </property>
    <item>
-    <layout class="QVBoxLayout" name="verticalLayout_Main" stretch="1,1,1,0,1,1,1">
+    <layout class="QVBoxLayout" name="verticalLayout_Main" stretch="0,1,1,1,0,1,1,1">
+     <property name="leftMargin">
+      <number>20</number>
+     </property>
+     <property name="topMargin">
+      <number>20</number>
+     </property>
+     <property name="rightMargin">
+      <number>20</number>
+     </property>
+     <property name="bottomMargin">
+      <number>20</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="multiSendHeader">
+       <property name="font">
+        <font>
+         <family>Hind</family>
+         <pointsize>30</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>MultiSend</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
      <item>
       <widget class="QLabel" name="label_2">
        <property name="lineWidth">

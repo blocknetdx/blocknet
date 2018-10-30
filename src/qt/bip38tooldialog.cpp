@@ -27,15 +27,6 @@ Bip38ToolDialog::Bip38ToolDialog(QWidget* parent) : QDialog(parent),
 {
     ui->setupUi(this);
 
-
-    ui->addressIn_ENC->setAttribute(Qt::WA_MacShowFocusRect, 0);
-    ui->passphraseIn_ENC->setAttribute(Qt::WA_MacShowFocusRect, 0);
-    ui->encryptedKeyOut_ENC->setAttribute(Qt::WA_MacShowFocusRect, 0);
-    ui->encryptedKeyIn_DEC->setAttribute(Qt::WA_MacShowFocusRect, 0);
-    ui->passphraseIn_DEC->setAttribute(Qt::WA_MacShowFocusRect, 0);
-    ui->decryptedKeyOut_DEC->setAttribute(Qt::WA_MacShowFocusRect, 0);
-}
-
 #if QT_VERSION >= 0x040700
     ui->decryptedKeyOut_DEC->setPlaceholderText(tr("Click \"Decrypt Key\" to compute key"));
 #endif
@@ -47,8 +38,14 @@ Bip38ToolDialog::Bip38ToolDialog(QWidget* parent) : QDialog(parent),
     ui->encryptedKeyIn_DEC->installEventFilter(this);
     ui->passphraseIn_DEC->installEventFilter(this);
     ui->decryptedKeyOut_DEC->installEventFilter(this);
-}
 
+    ui->addressIn_ENC->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->passphraseIn_ENC->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->encryptedKeyOut_ENC->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->encryptedKeyIn_DEC->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->passphraseIn_DEC->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->decryptedKeyOut_DEC->setAttribute(Qt::WA_MacShowFocusRect, 0);
+}
 
 Bip38ToolDialog::~Bip38ToolDialog()
 {

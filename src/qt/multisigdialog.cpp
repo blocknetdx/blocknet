@@ -50,6 +50,12 @@ MultisigDialog::MultisigDialog(QWidget* parent) : QDialog(parent),
     ui->keyScrollArea->hide();
     ui->txInputsScrollArea->hide();
 
+    ui->enterMSpinbox->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->multisigAddressLabel->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->transactionHex->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->importRedeem->setAttribute(Qt::WA_MacShowFocusRect, 0);
+
+
     connect(ui->commitButton, SIGNAL(clicked()), this, SLOT(commitMultisigTx()));
 
     //populate lists with initial objects
@@ -198,6 +204,7 @@ void MultisigDialog::on_addMultisigButton_clicked()
 
     for (int i = 0; i < ui->addressList->count(); i++) {
         QWidget* address = qobject_cast<QWidget*>(ui->addressList->itemAt(i)->widget());
+        address->setAttribute(Qt::WA_MacShowFocusRect, 0);
         QValidatedLineEdit* vle = address->findChild<QValidatedLineEdit*>("address");
 
         if(!vle->text().isEmpty()){

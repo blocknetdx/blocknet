@@ -41,8 +41,17 @@ SignVerifyMessageDialog::SignVerifyMessageDialog(QWidget* parent) : QDialog(pare
     ui->messageIn_VM->installEventFilter(this);
     ui->signatureIn_VM->installEventFilter(this);
 
+    ui->addressIn_SM->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->messageIn_SM->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->signatureOut_SM->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->addressIn_VM->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->messageIn_VM->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->signatureIn_VM->setAttribute(Qt::WA_MacShowFocusRect, 0);
+
     ui->signatureOut_SM->setFont(GUIUtil::bitcoinAddressFont());
     ui->signatureIn_VM->setFont(GUIUtil::bitcoinAddressFont());
+
+    
 }
 
 SignVerifyMessageDialog::~SignVerifyMessageDialog()
