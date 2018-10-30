@@ -31,6 +31,12 @@ PrivacyDialog::PrivacyDialog(QWidget* parent) : QDialog(parent),
 {
     nDisplayUnit = 0; // just make sure it's not unitialized
     ui->setupUi(this);
+    ui->labelMintAmountValue->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->securityLevel->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->payTo->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->addAsLabel->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->zPHRpayAmount->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    
 
     // "Spending 999999 zPHR ought to be enough for anybody." - Bill Gates, 2017
     ui->zPHRpayAmount->setValidator( new QDoubleValidator(0.0, 21000000.0, 20, this) );

@@ -65,6 +65,28 @@ OptionsDialog::OptionsDialog(QWidget* parent, bool enableWallet) : QDialog(paren
 #ifdef Q_OS_MAC
     /* remove Window tab on Mac */
     ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->tabWindow));
+
+
+    ui->bitcoinAtStartup->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->databaseCache->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->threadsScriptVerif->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->zeromintPercentage->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->preferredDenom->setAttribute(Qt::WA_MacShowFocusRect, 0);
+
+    ui->spinBoxStakeSplitThreshold->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->coinControlFeatures->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->showMasternodesTab->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->spendZeroConfChange->setAttribute(Qt::WA_MacShowFocusRect, 0);
+
+    ui->mapPortUpnp->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->allowIncoming->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->connectSocks->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->proxyIp->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->proxyPort->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    
+    ui->thirdPartyTxUrls->setAttribute(Qt::WA_MacShowFocusRect, 0);
+
+    
 #endif
 
     /* remove Wallet tab in case of -disablewallet */

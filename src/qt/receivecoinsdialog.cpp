@@ -33,6 +33,11 @@ ReceiveCoinsDialog::ReceiveCoinsDialog(QWidget* parent) : QDialog(parent),
     ui->receiveButton->setIcon(QIcon());
     ui->showRequestButton->setIcon(QIcon());
     ui->removeRequestButton->setIcon(QIcon());
+    ui->reqLabel->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    //ui->reqAmount->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    //needs to be handled within bitcoinamountfield.cpp
+    ui->reqMessage->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    
 #endif
 
     // configure bech32 checkbox, disable if launched with legacy as default:

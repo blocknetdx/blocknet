@@ -41,6 +41,8 @@ SendCoinsDialog::SendCoinsDialog(QWidget* parent) : QDialog(parent),
     ui->addButton->setIcon(QIcon());
     ui->clearButton->setIcon(QIcon());
     ui->sendButton->setIcon(QIcon());
+    ui->lineEditCoinControlChange->setAttribute(Qt::WA_MacShowFocusRect, 0);
+    ui->splitBlockLineEdit->setAttribute(Qt::WA_MacShowFocusRect, 0);    
 #endif
 
     GUIUtil::setupAddressWidget(ui->lineEditCoinControlChange, this);

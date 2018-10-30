@@ -196,6 +196,7 @@ BitcoinAmountField::BitcoinAmountField(QWidget* parent) : QWidget(parent),
     amount->setLocale(QLocale::c());
     amount->installEventFilter(this);
     amount->setMaximumWidth(170);
+    amount->setAttribute(Qt::WA_MacShowFocusRect, 0);
 
     QHBoxLayout* layout = new QHBoxLayout(this);
     layout->addWidget(amount);

@@ -203,25 +203,30 @@ QLabel#labelOverviewHeaderLeft {
 }
 .QValidatedLineEdit,
 .QLineEdit,
-#BitcoinAmountField#payAmount {
+BitcoinAmountField#payAmount {
 	/* Text Entry Fields */
 	border: 0;
 	font-size: 11px;
-	min-height: 16px;
+	min-height: 20px;
 	outline: 0;
 	padding: 3px;
 	background-color: rgba(255, 255, 255, 0.08);
 	color: #FFFFFF;
-	padding: 0.75em 0.85em 0.65em;
+	padding: 0.8em 0.85em 0.8em;
 	border-radius: 8px;
+	
 }
 .QLineEdit:!focus {
-	font-size: 12px;
+	/* font-size: 12px; */
 }
-QLineEdit:focus {
+QLineEdit:focus, BitcoinAmountField:focus {
 	outline: 0;
-	background-color: rgba(255, 255, 255, 0.09);
+	background-color: rgba(255, 255, 255, 0.1);
+	/* border-left:2px solid rgba(78, 105, 224,1); */
+	border:1px solid rgba(78, 105, 224,1);
 }
+
+
 .QValidatedLineEdit:disabled,
 .QLineEdit:disabled {
 	background-color: rgba(255, 255, 255, 0.05);
@@ -260,7 +265,7 @@ QComboBox {
 	color: #818181;
 	border: 0;
 	font-size: 11px;
-	min-height: 16px;
+	min-height: 20px;
 	outline: 0;
 	padding: 3px;
 	background-color: rgba(255, 255, 255, 0.08);
@@ -276,7 +281,8 @@ QComboBox QAbstractItemView {
 } */
 
 QComboBox:checked {
-	background: #293441;
+	background-color: rgba(255, 255, 255, 0.1);
+	border:1px solid rgba(78, 105, 224,0.8);
 }
 QComboBox:editable {
 	background: #00A56C;
@@ -320,11 +326,16 @@ QComboBox::indicator {
 }
 QAbstractSpinBox {
 	background: transparent;
-	min-height: 16px;
+	min-height: 20px;
 	background-color: rgba(255, 255, 255, 0.08);
 	color: #FFFFFF;
 	padding: 0.75em 0.85em 0.65em;
 	border-radius: 8px;
+}
+
+QAbstractSpinBox:focus {
+	background-color: rgba(255, 255, 255, 0.1);
+	border:1px solid rgba(78, 105, 224,0.8);
 }
 QAbstractSpinBox::up-button {
 	subcontrol-origin: border;

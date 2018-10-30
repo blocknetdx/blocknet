@@ -119,6 +119,7 @@ ProposalList::ProposalList(   QWidget *parent) :
     hlayout->addWidget(abstainVotesWidget);
 
     votesNeededWidget = new QLineEdit(this);
+    votesNeededWidget->setAttribute(Qt::WA_MacShowFocusRect, 0);
 #if QT_VERSION >= 0x040700
     votesNeededWidget->setPlaceholderText(tr("Min votes needed"));
 #endif
