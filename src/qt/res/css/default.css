@@ -1721,8 +1721,12 @@ QWidget#ReceiveCoinsDialog .QFrame#frame .QLabel#label_6 {
 
 QDialog#ReceiveRequestDialog QTextEdit {
 	/* Contents of Receive Coin Dialog */
-	border: 1px solid #d7d7d7;
+	border: 0;
+	background-color: #132232;
+	color:#FFFFFF;
 }
+
+
 /**************************** TRANSACTIONS PAGE *****************************************/
 
 TransactionView QLineEdit {
