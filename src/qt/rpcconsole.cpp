@@ -275,6 +275,7 @@ RPCConsole::RPCConsole(QWidget* parent) : QDialog(parent),
 
     // Install event filter for up and down arrow
     ui->lineEdit->installEventFilter(this);
+    ui->lineEdit->setAttribute(Qt::WA_MacShowFocusRect, 0);
     ui->messagesWidget->installEventFilter(this);
 
     connect(ui->clearButton, SIGNAL(clicked()), this, SLOT(clear()));
