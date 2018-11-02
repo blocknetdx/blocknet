@@ -1575,6 +1575,20 @@ bool BtcWalletConnector<CryptoProvider>::hasValidAddressPrefix(const std::string
 
 //******************************************************************************
 //******************************************************************************
+
+/**
+ * \brief Checks if specified address is valid.
+ * \param addr Address to check
+ * \return returns true if address is valid, otherwise false.
+ */
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::isValidAddress(const std::string & addr) const
+{
+    return hasValidAddressPrefix(addr) && rpc::validateaddress(m_user, m_passwd, m_ip, m_port, addr);
+}
+
+//******************************************************************************
+//******************************************************************************
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::isDustAmount(const double & amount) const
 {

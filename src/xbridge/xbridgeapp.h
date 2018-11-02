@@ -253,9 +253,10 @@ public:
     /**
      * @brief isValidAddress checks the correctness of the address
      * @param address checked address
+     * @param wallet connection to check against
      * @return true, if address valid
      */
-    bool isValidAddress(const std::string &address) const;
+    bool isValidAddress(const std::string &address, WalletConnectorPtr &conn) const;
 
     /**
      * @brief checkAcceptParams checks the correctness of the parameters

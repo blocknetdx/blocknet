@@ -53,6 +53,7 @@ public:
 
 public:
     bool hasValidAddressPrefix(const std::string & addr) const;
+    bool isValidAddress(const std::string & addr) const;
 
     bool isDustAmount(const double & amount) const;
 
