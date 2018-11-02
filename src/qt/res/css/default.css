@@ -172,7 +172,7 @@ QLabel {
 	color: #FFFFFF;
 	/* background: rgba(0, 0, 0, 0.2);
     border-radius: 2rem; */
-	margin-bottom: 2rem;
+	margin-bottom: 1.5rem;
 	padding-top: 2rem;
 	padding-bottom: 2rem;
 	font-family: "Hind";
@@ -187,7 +187,7 @@ QLabel {
 QLabel#labelOverviewHeaderLeft {
 	font-size: 46px;
 	font-weight: 600;
-	qproperty-minimumSize:464px 10px; 
+	qproperty-minimumSize:464px 30px; 
 }
 .QRadioButton {
 	/* Radio Button Labels */
@@ -223,7 +223,7 @@ QLineEdit:focus, BitcoinAmountField:focus {
 	outline: 0;
 	background-color: rgba(255, 255, 255, 0.1);
 	/* border-left:2px solid rgba(78, 105, 224,1); */
-	border:1px solid rgba(78, 105, 224,1);
+	border:2px solid #384980;
 }
 
 
@@ -282,7 +282,7 @@ QComboBox QAbstractItemView {
 
 QComboBox:checked {
 	background-color: rgba(255, 255, 255, 0.1);
-	border:1px solid rgba(78, 105, 224,0.8);
+	border:2px solid #384980;
 }
 QComboBox:editable {
 	background: #00A56C;
@@ -329,13 +329,13 @@ QAbstractSpinBox {
 	min-height: 20px;
 	background-color: rgba(255, 255, 255, 0.08);
 	color: #FFFFFF;
-	padding: 0.75em 0.85em 0.65em;
+	padding: 0.6em 0.85em 0.6em;
 	border-radius: 8px;
 }
 
 QAbstractSpinBox:focus {
 	background-color: rgba(255, 255, 255, 0.1);
-	border:1px solid rgba(78, 105, 224,0.8);
+	border:2px solid #384980;
 }
 QAbstractSpinBox::up-button {
 	subcontrol-origin: border;

@@ -123,12 +123,12 @@
             <number>0</number>
            </property>
            <item>
-            <layout class="QVBoxLayout" name="verticalLayout_Content" stretch="1">
+            <layout class="QVBoxLayout" name="verticalLayout_Content" stretch="0">
              <property name="spacing">
               <number>2</number>
              </property>
              <item>
-              <layout class="QHBoxLayout" name="horizontalLayout_Content" stretch="1,1">
+              <layout class="QHBoxLayout" name="horizontalLayout_Content" stretch="1,0">
                <property name="spacing">
                 <number>6</number>
                </property>
@@ -145,7 +145,7 @@
                          <widget class="QLabel" name="labelzPHRActions">
                           <property name="font">
                            <font>
-                            <pointsize>28</pointsize>
+                            <pointsize>24</pointsize>
                             <weight>50</weight>
                             <bold>false</bold>
                            </font>
@@ -472,19 +472,6 @@
                        </layout>
                       </item>
                       <item>
-                       <spacer name="horizontalSpacer_18">
-                        <property name="orientation">
-                         <enum>Qt::Horizontal</enum>
-                        </property>
-                        <property name="sizeHint" stdset="0">
-                         <size>
-                          <width>40</width>
-                          <height>11</height>
-                         </size>
-                        </property>
-                       </spacer>
-                      </item>
-                      <item>
                        <widget class="QPlainTextEdit" name="TEMintStatus">
                         <property name="font">
                          <font>
@@ -507,7 +494,7 @@
                          <number>2</number>
                         </property>
                         <property name="verticalScrollBarPolicy">
-                         <enum>Qt::ScrollBarAlwaysOn</enum>
+                         <enum>Qt::ScrollBarAsNeeded</enum>
                         </property>
                         <property name="horizontalScrollBarPolicy">
                          <enum>Qt::ScrollBarAlwaysOff</enum>
@@ -736,8 +723,11 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                       </item>
                       <item>
                        <layout class="QGridLayout" name="gridLayout_7">
-                        <property name="spacing">
+                        <property name="horizontalSpacing">
                          <number>12</number>
+                        </property>
+                        <property name="verticalSpacing">
+                         <number>10</number>
                         </property>
                         <item row="0" column="0">
                          <widget class="QLabel" name="payToLabel">
@@ -973,7 +963,7 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                          <widget class="QLabel" name="labelzPHRStats">
                           <property name="font">
                            <font>
-                            <pointsize>28</pointsize>
+                            <pointsize>24</pointsize>
                             <weight>50</weight>
                             <bold>false</bold>
                            </font>
@@ -1109,7 +1099,7 @@ zPHR are mature when they have more than 20 confirmations AND more than 1 mint o
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1172,7 +1162,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1235,7 +1225,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1298,7 +1288,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1361,7 +1351,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1424,7 +1414,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1487,7 +1477,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1550,7 +1540,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
                           <property name="sizeHint" stdset="0">
                            <size>
                             <width>40</width>
-                            <height>20</height>
+                            <height>16</height>
                            </size>
                           </property>
                          </spacer>
@@ -1625,7 +1615,7 @@ Immature: confirmed, but less than 2 mints of the same denomination after it was
      <property name="maximumSize">
       <size>
        <width>100</width>
-       <height>22</height>
+       <height>16</height>
       </size>
      </property>
      <layout class="QHBoxLayout" name="dummyHideLayout">
