@@ -1663,10 +1663,9 @@ bool App::Impl::sendCancelTransaction(const uint256 & txid,
 
 //******************************************************************************
 //******************************************************************************
-bool App::isValidAddress(const string & address) const
+bool App::isValidAddress(const string & address, WalletConnectorPtr & conn) const
 {
-    // TODO need refactoring
-    return ((address.size() >= 32) && (address.size() <= 36));
+    return (address.size() >= 32 && conn->isValidAddress(address));
 }
 
 //******************************************************************************
