@@ -237,6 +237,65 @@ bool listaccounts(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
+bool listaddressgroupings(const std::string & rpcuser, const std::string & rpcpasswd,
+                           const std::string & rpcip, const std::string & rpcport,
+                           std::vector<std::string> & addresses)
+{
+    try
+    {
+        LOG() << "rpc call <listaddressgroupings>";
+
+        Array params;
+        //params.push_back(addresses);
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "listaddressgroupings", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != array_type)
+        {
+            // Result
+            LOG() << "result not an array " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+
+        Array arr = result.get_array();
+        for (const Value & v : arr)
+        {
+	    Array varray = v.get_array();
+	    for (const Value & varr : varray)
+	    {
+		Array vaddress = varr.get_array();
+		if (!vaddress.empty() && vaddress[0].type() == str_type)
+		{
+		addresses.push_back(vaddress[0].get_str());
+		}
+	    }
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "listaddressgroupings exception" << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getaddressesbyaccount(const std::string & rpcuser, const std::string & rpcpasswd,
                            const std::string & rpcip, const std::string & rpcport,
                            const std::string & account,
@@ -307,7 +366,6 @@ bool validateaddress(const std::string & rpcuser, const std::string & rpcpasswd,
         // Parse reply
         Value result = find_value(reply, "result");
         Value error  = find_value(reply, "error");
-
         if (error.type() != null_type)
         {
             // Error
@@ -1341,42 +1399,24 @@ std::vector<unsigned char> BtcWalletConnector<CryptoProvider>::toXAddr(const std
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::AddressBookEntry> & entries)
 {
-    std::vector<std::string> accounts;
-    if (!rpc::listaccounts(m_user, m_passwd, m_ip, m_port, accounts))
+    std::vector<std::string> addresses;
+    if (!rpc::listaddressgroupings(m_user, m_passwd, m_ip, m_port, addresses))
     {
         return false;
     }
-    // LOG() << "received " << accounts.size() << " accounts";
-    for (std::string & account : accounts)
+
+    std::vector<std::string> copy;
+
+    for (std::string & address : addresses)
     {
-        std::vector<std::string> addrs;
-        if (!rpc::getaddressesbyaccount(m_user, m_passwd, m_ip, m_port, account, addrs))
-        {
-            continue;
-        }
-
-        std::vector<std::string> copy;
-        for (const std::string & a : addrs)
-        {
-
-            if (!rpc::validateaddress(m_user, m_passwd, m_ip, m_port, a))
-            {
+    	if (!rpc::validateaddress(m_user, m_passwd, m_ip, m_port, address))
+    	{
 		continue;
-	    }
-
-            copy.emplace_back(a);
-
-        }
-
-        if (copy.empty())
-        {
-            continue;
-        }
-
-        entries.emplace_back(account.empty() ? "_none" : account, copy);
+    	}
+    	copy.emplace_back(address);
 
     }
-
+    entries.emplace_back("none", copy);
     return true;
 }
 
