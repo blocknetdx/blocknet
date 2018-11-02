@@ -5,7 +5,7 @@ build_linux:
   stage: build
   script:
   - mkdir -p $CI_PROJECT_DIR/dist/linux
-  - docker build -f Dockerfile-trusty --build-arg cores=16 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux .
+  - docker build -f Dockerfile-trusty --build-arg cores=10 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux .
   - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux; fi
   - docker create --name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux
   - docker cp $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux:/opt/blocknetdx/dist/bin $CI_PROJECT_DIR/dist/linux
@@ -29,7 +29,7 @@ build_win:
   stage: build
   script:
   - mkdir -p $CI_PROJECT_DIR/dist/win
-  - docker build -f Dockerfile-win --build-arg cores=16 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win .
+  - docker build -f Dockerfile-win --build-arg cores=10 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win .
   - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win; fi
   - docker create --name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win
   - docker cp $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win:/opt/blocknetdx/dist/bin $CI_PROJECT_DIR/dist/win
@@ -48,3 +48,27 @@ test_win:
   - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknetdx-tx.exe\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/test_blocknetdx.exe\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/test_blocknetdx-qt.exe\" ];"
+
+build_mac:
+  stage: build
+  script:
+  - mkdir -p $CI_PROJECT_DIR/dist/mac
+  - docker build -f Dockerfile-mac --build-arg cores=10 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac .
+  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac; fi
+  - docker create --name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac
+  - docker cp $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac:/opt/blocknetdx/dist/bin $CI_PROJECT_DIR/dist/mac
+  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac; fi
+  artifacts:
+    name: "BLOCKDX-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac"
+    paths:
+    - dist/mac/bin
+
+test_mac:
+  stage: test
+  script:
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdx-cli\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdxd\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdx-qt\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdx-tx\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknetdx\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknetdx-qt\" ];"
