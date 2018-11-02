@@ -278,9 +278,9 @@ bool listaddressgroupings(const std::string & rpcuser, const std::string & rpcpa
 	    for (const Value & varr : varray)
 	    {
 		Array vaddress = varr.get_array();
-		if (vaddress[0].type() == str_type)
+		if (!vaddress.empty() && vaddress[0].type() == str_type)
 		{
-		addresses.push_back(vaddress[0].get_str()); 
+		addresses.push_back(vaddress[0].get_str());
 		}
 	    }
         }
