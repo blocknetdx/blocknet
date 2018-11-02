@@ -59,16 +59,16 @@ after_script:
 jobs:
   include:
   # arm
-  - stage: test
-    name: arm
-    env: >-
-      HOST=arm-linux-gnueabihf
-      PACKAGES="python3 g++-arm-linux-gnueabihf"
-      CHECK_DOC=0
-      GOAL="install"
-      # -Wno-psabi is to disable ABI warnings: "note: parameter passing for argument of type ... changed in GCC 7.1"
-      # This could be removed once the ABI change warning does not show up by default
-      BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports CXXFLAGS=-Wno-psabi"
+#  - stage: test
+#    name: arm
+#    env: >-
+#      HOST=arm-linux-gnueabihf
+#      PACKAGES="python3 g++-arm-linux-gnueabihf"
+#      CHECK_DOC=0
+#      GOAL="install"
+#      # -Wno-psabi is to disable ABI warnings: "note: parameter passing for argument of type ... changed in GCC 7.1"
+#      # This could be removed once the ABI change warning does not show up by default
+#      BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports CXXFLAGS=-Wno-psabi"
   # win32
   - stage: test
     name: win32
@@ -111,14 +111,14 @@ jobs:
       PYZMQ=true
       BITCOIN_CONFIG="--enable-zmq --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --enable-debug CXXFLAGS=\"-g0 -O2\" CPPFLAGS=-DDEBUG_LOCKORDER"
   # mac64
-  - stage: test
-    name: mac64
-    env: >-
-      HOST=x86_64-apple-darwin11
-      PACKAGES="cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev python3-setuptools-git"
-      OSX_SDK=10.11
-      GOAL="deploy"
-      BITCOIN_CONFIG="--enable-gui --enable-reduce-exports --enable-werror"
-    before_script: >-
-      pyenv global system 3.6
+#  - stage: test
+#    name: mac64
+#    env: >-
+#      HOST=x86_64-apple-darwin11
+#      PACKAGES="cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev python3-setuptools-git"
+#      OSX_SDK=10.11
+#      GOAL="deploy"
+#      BITCOIN_CONFIG="--enable-gui --enable-reduce-exports --enable-werror"
+#    before_script: >-
+#      pyenv global system 3.6
 
