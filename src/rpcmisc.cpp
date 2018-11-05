@@ -90,7 +90,10 @@ Value getinfo(const Array& params, bool fHelp)
 
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
+        {
+        LOCK(pwalletMain->cs_wallet);
         obj.push_back(Pair("walletversion", pwalletMain->GetVersion()));
+        }
         obj.push_back(Pair("balance", ValueFromAmount(pwalletMain->GetBalance())));
         if (!fLiteMode)
             obj.push_back(Pair("obfuscation_balance", ValueFromAmount(pwalletMain->GetAnonymizedBalance())));
@@ -104,11 +107,14 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("testnet", Params().TestnetToBeDeprecatedFieldRPC()));
 #ifdef ENABLE_WALLET
     if (pwalletMain) {
-        obj.push_back(Pair("keypoololdest", pwalletMain->GetOldestKeyPoolTime()));
-        obj.push_back(Pair("keypoolsize", (int)pwalletMain->GetKeyPoolSize()));
+        {
+            LOCK(pwalletMain->cs_wallet);
+            obj.push_back(Pair("keypoololdest", pwalletMain->GetOldestKeyPoolTime()));
+            obj.push_back(Pair("keypoolsize", (int)pwalletMain->GetKeyPoolSize()));
+            if (pwalletMain->IsCrypted())
+                obj.push_back(Pair("unlocked_until", nWalletUnlockTime));
+        }
     }
-    if (pwalletMain && pwalletMain->IsCrypted())
-        obj.push_back(Pair("unlocked_until", nWalletUnlockTime));
     obj.push_back(Pair("paytxfee", ValueFromAmount(payTxFee.GetFeePerK())));
 #endif
     obj.push_back(Pair("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK())));
