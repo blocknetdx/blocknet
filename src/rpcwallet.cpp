@@ -444,20 +444,30 @@ Value listaddressgroupings(const Array& /*params*/, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("listaddressgroupings", "") + HelpExampleRpc("listaddressgroupings", ""));
 
-    LOCK(cs_main);
     Array jsonGroupings;
-    map<CTxDestination, CAmount> balances = pwalletMain->GetAddressBalances();
-    BOOST_FOREACH (set<CTxDestination> grouping, pwalletMain->GetAddressGroupings()) {
+    map<CTxDestination, CAmount> balances;
+    {
+        LOCK(cs_main);
+        balances = pwalletMain->GetAddressBalances();
+    }
+    set<set<CTxDestination> > addressGroupings;
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        addressGroupings = pwalletMain->GetAddressGroupings();
+    }
+    map<CTxDestination, CAddressBookData> addressBook;
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        addressBook = pwalletMain->mapAddressBook;
+    }
+    BOOST_FOREACH (set<CTxDestination> grouping, addressGroupings) {
         Array jsonGrouping;
         BOOST_FOREACH (CTxDestination address, grouping) {
             Array addressInfo;
             addressInfo.push_back(CBitcoinAddress(address).ToString());
             addressInfo.push_back(ValueFromAmount(balances[address]));
-            {
-                LOCK(pwalletMain->cs_wallet);
-                if (pwalletMain->mapAddressBook.find(CBitcoinAddress(address).Get()) != pwalletMain->mapAddressBook.end())
-                    addressInfo.push_back(pwalletMain->mapAddressBook.find(CBitcoinAddress(address).Get())->second.name);
-            }
+            if (addressBook.find(CBitcoinAddress(address).Get()) != addressBook.end())
+                addressInfo.push_back(addressBook.find(CBitcoinAddress(address).Get())->second.name);
             jsonGrouping.push_back(addressInfo);
         }
         jsonGroupings.push_back(jsonGrouping);
