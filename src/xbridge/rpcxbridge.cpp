@@ -641,16 +641,17 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         if (txDescr->isLocal()) // no self trades
             return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "unable to accept your own order");
 
-        // Validate address prefix
-        xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
-        xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
-        if (!connFrom) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->fromCurrency);
-        if (!connTo) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->toCurrency);
-        // taker [to] will match order [from] currency
+        // taker [to] will match order [from] currency (due to pair swap happening later)
+        xbridge::WalletConnectorPtr connTo = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
+        // taker [from] will match order [to] currency (due to pair swap happening later)
+        xbridge::WalletConnectorPtr connFrom   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
+        if (!connFrom) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->toCurrency);
+        if (!connTo) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->fromCurrency);
+        // Check for valid toAddress
         if (!app.isValidAddress(toAddress, connTo))
             return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
                                    ": " + txDescr->fromCurrency + " address is bad, are you using the correct address?");
-        // taker [from] will match order [to] currency
+        // Check for valid fromAddress
         if (!app.isValidAddress(fromAddress, connFrom))
             return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
                                    ": " + txDescr->toCurrency + " address is bad, are you using the correct address?");
