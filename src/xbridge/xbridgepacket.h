@@ -178,23 +178,25 @@ enum XBridgeCommand
     //    bytes    B public key (33 bytes)
     xbcTransactionCreateA = 10,
     //
-    // xbcTransactionCreatedA (92 bytes min)
+    // xbcTransactionCreatedA (100 bytes min)
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
     //    string  A deposit tx id
     //    bytes   hashed secret (20 bytes)
-    //    uint32  A inner script size // TODO remove!!!
-    //    bytes   A inner script      // TODO remove!!!
+    //    uint32  A lock time
+    //    uint32  B lock time
     xbcTransactionCreatedA = 11,
     //
-    // xbcTransactionCreateB (125 bytes min)
+    // xbcTransactionCreateB (133 bytes min)
     //    uint160  client address
     //    uint160  hub address
     //    uint256  hub transaction id
     //    bytes    A public key (33 bytes)
     //    string   A deposit tx id
     //    bytes    hashed secret (20 bytes)
+    //    uint32   A lock time
+    //    uint32   B lock time
     xbcTransactionCreateB = 12,
     //
     // xbcTransactionCreatedB (72 bytes min)
@@ -202,8 +204,6 @@ enum XBridgeCommand
     //    uint160 client address
     //    uint256 hub transaction id
     //    string  B deposit tx id
-    //    uint32  B inner script size // TODO remove!!!
-    //    bytes   B inner script      // TODO remove!!!
     xbcTransactionCreatedB = 13,
 
     //
@@ -212,8 +212,6 @@ enum XBridgeCommand
     //    uint160 hub address
     //    uint256 hub transaction id
     //    string  B deposit tx id
-    //    uint32  B inner script size // TODO remove!!!
-    //    bytes   B inner script      // TODO remove!!!
     xbcTransactionConfirmA = 18,
     //
     // xbcTransactionConfirmedA (72 bytes min)
@@ -229,8 +227,6 @@ enum XBridgeCommand
     //    uint256  hub transaction id
     //    x public key, 33 bytes
     //    string   A deposit tx id
-    //    uint32   A inner script size // TODO remove!!!
-    //    string   A inner script      // TODO remove!!!
     xbcTransactionConfirmB = 20,
     //
     // xbcTransactionConfirmedB (72 bytes min)

@@ -517,7 +517,7 @@ bool getInfo(const std::string & rpcuser,
         else if (result.type() != obj_type)
         {
             // Result
-            LOG() << "result not an object " <<
+            LOG() << "getinfo result not an object " <<
                      (result.type() == null_type ? "" :
                       result.type() == str_type  ? result.get_str() :
                                                    write_string(result, true));
@@ -530,7 +530,7 @@ bool getInfo(const std::string & rpcuser,
     }
     catch (std::exception & e)
     {
-        LOG() << "listunspent exception " << e.what();
+        LOG() << "getinfo exception " << e.what();
         return false;
     }
 

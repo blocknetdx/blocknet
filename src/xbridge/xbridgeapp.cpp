@@ -170,6 +170,17 @@ protected:
      */
     void checkAndRelayPendingOrders();
 
+    /**
+     * @brief Check for deposits that were spent by the counterparty.
+     */
+    void checkWatchesOnDepositSpends();
+
+    /**
+     * @brief Servicenodes watch for trader deposit locktimes to expire and when they do automatically
+     *        submits the refund transaction for those orders that haven't reported completing.
+     */
+    void watchTraderDeposits();
+
 protected:
     // workers
     std::deque<IoServicePtr>                           m_services;
@@ -216,6 +227,16 @@ protected:
     // services and xwallets
     mutable CCriticalSection                               m_xwalletsLocker;
     std::map<::CPubKey, XWallets>                      m_xwallets;
+
+    // store deposit watches
+    CCriticalSection                                   m_watchDepositsLocker;
+    std::map<uint256, TransactionDescrPtr>             m_watchDeposits;
+    bool                                               m_watching{false};
+
+    // store trader watches
+    CCriticalSection                                   m_watchTradersLocker;
+    std::map<uint256, TransactionPtr>                  m_watchTraders;
+    bool                                               m_watchingTraders{false};
 };
 
 //*****************************************************************************
@@ -801,8 +822,15 @@ void App::updateConnector(const WalletConnectorPtr & conn,
 
 //*****************************************************************************
 //*****************************************************************************
-std::set<std::string> App::updateActiveWallets()
+void App::updateActiveWallets()
 {
+    {
+        LOCK(m_updatingWalletsLock);
+        if (m_updatingWallets)
+            return;
+        m_updatingWallets = true;
+    }
+
     Settings & s = settings();
     std::vector<std::string> wallets = s.exchangeWallets();
 
@@ -914,7 +942,10 @@ std::set<std::string> App::updateActiveWallets()
     // Let the exchange know about the new wallet list
     xbridge::Exchange::instance().loadWallets(rwallets);
 
-    return rwallets;
+    {
+        LOCK(m_updatingWalletsLock);
+        m_updatingWallets = false;
+    }
 }
 
 //*****************************************************************************
@@ -1725,6 +1756,62 @@ Error App::checkAmount(const string   & currency,
 }
 
 //******************************************************************************
+//******************************************************************************
+/**
+ * Store list of orders to watch for counterparty spent deposit.
+ * @param tr
+ * @return true if watching, false if not watching
+ */
+bool App::watchForSpentDeposit(TransactionDescrPtr tr) {
+    if (tr == nullptr)
+        return false;
+    LOCK(m_p->m_watchDepositsLocker);
+    m_p->m_watchDeposits[tr->id] = tr;
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+/**
+ * Stop watching for a spent deposit.
+ * @param tr
+ */
+void App::unwatchSpentDeposit(TransactionDescrPtr tr) {
+    if (tr == nullptr)
+        return;
+    LOCK(m_p->m_watchDepositsLocker);
+    m_p->m_watchDeposits.erase(tr->id);
+}
+
+//******************************************************************************
+//******************************************************************************
+/**
+ * Store list of orders to watch for redeeming refund on behalf of trader.
+ * @param tr
+ * @return true if watching, false if not watching
+ */
+bool App::watchTraderDeposit(TransactionPtr tr) {
+    if (tr == nullptr)
+        return false;
+    LOCK(m_p->m_watchTradersLocker);
+    m_p->m_watchTraders[tr->id()] = tr;
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+/**
+ * Stop watching for a trader redeeming.
+ * @param tr
+ */
+void App::unwatchTraderDeposit(TransactionPtr tr) {
+    if (tr == nullptr)
+        return;
+    LOCK(m_p->m_watchTradersLocker);
+    m_p->m_watchTraders.erase(tr->id());
+}
+
+//******************************************************************************
 /**
  * @brief Sends the service ping to the network on behalf of the current Servicenode.
  * @return
@@ -2230,6 +2317,208 @@ void App::Impl::checkAndRelayPendingOrders() {
 
 //******************************************************************************
 //******************************************************************************
+/**
+ * @brief Checks the blockchain for the spent pay tx issued by the Taker. When
+ *        the Only when the Maker spends the pay tx can the Taker proceed with
+ *        the swap. Not that the Taker must watch the "from" chain, since this
+ *        is the chain the Maker is submitting the pay tx on.
+ */
+void App::Impl::checkWatchesOnDepositSpends()
+{
+    std::map<uint256, TransactionDescrPtr> watches;
+    {
+        LOCK(m_watchDepositsLocker);
+        if (m_watching) // ignore if we're still processing from previous request
+            return;
+        m_watching = true;
+        watches = m_watchDeposits;
+    }
+
+    // Check blockchain for spends
+    xbridge::App & app = xbridge::App::instance();
+    for (auto & item : watches) {
+        auto & xtx = item.second;
+        if (xtx->isWatching())
+            continue;
+
+        WalletConnectorPtr connFrom = app.connectorByCurrency(xtx->fromCurrency);
+        if (!connFrom)
+            continue; // skip (maybe wallet went offline)
+
+        xtx->setWatching(true);
+
+        rpc::WalletInfo info;
+        if (!connFrom->getInfo(info)) {
+            xtx->setWatching(false);
+            continue;
+        }
+
+        // If we don't have the secret yet, look for the pay tx
+        if (!xtx->hasSecret()) {
+            // Obtain the transactions to search (current mempool or current block)
+            std::vector<std::string> txids;
+            if (xtx->getWatchStartBlock() == info.blocks) {
+                if (!connFrom->getRawMempool(txids)) {
+                    xtx->setWatching(false);
+                    continue;
+                }
+            } else { // check in next block to search
+                uint32_t blocks = xtx->getWatchCurrentBlock();
+                bool failure = false;
+
+                // Search all tx in blocks up to current block
+                while (blocks <= info.blocks) {
+                    std::string blockHash;
+                    std::vector<std::string> txs;
+                    if (!connFrom->getBlockHash(blocks, blockHash)) {
+                        failure = true;
+                        break;
+                    }
+                    if (!connFrom->getTransactionsInBlock(blockHash, txs)) {
+                        failure = true;
+                        break;
+                    }
+                    txids.insert(txids.end(), txs.begin(), txs.end());
+                    xtx->setWatchBlock(++blocks); // mark that we've processed current block
+                }
+
+                // If any failure, skip
+                if (failure) {
+                    xtx->setWatching(false);
+                    continue;
+                }
+            }
+
+            // Look for the spent pay tx
+            for (auto & txid : txids) {
+                bool isSpent = false;
+                if (connFrom->isUTXOSpentInTx(txid, xtx->binTxId, xtx->binTxVout, isSpent) && isSpent) {
+                    // Found valid spent pay tx, now assign
+                    xtx->setOtherPayTxId(txid);
+                    xtx->doneWatching(); // report that we're done looking
+                    break;
+                }
+            }
+        }
+
+        // If a redeem of origin deposit or pay tx is successful
+        bool done = false;
+
+        // If lockTime has expired on original deposit, attempt to redeem it
+        if (xtx->lockTime >= info.blocks) {
+            xbridge::SessionPtr session = getSession();
+            int32_t errCode = 0;
+            if (session->redeemOrderDeposit(xtx, errCode))
+                done = true;
+        }
+
+        // If we've found the spent paytx and haven't redeemed it yet, do that now
+        if (xtx->isDoneWatching() && !xtx->hasRedeemedCounterpartyDeposit()) {
+            xbridge::SessionPtr session = getSession();
+            int32_t errCode = 0;
+            if (session->redeemOrderCounterpartyDeposit(xtx, errCode))
+                done = true;
+        }
+
+        if (done) {
+            xtx->doneWatching();
+            xbridge::App & xapp = xbridge::App::instance();
+            xapp.unwatchSpentDeposit(xtx);
+        }
+
+        xtx->setWatching(false);
+    }
+
+    {
+        LOCK(m_watchDepositsLocker);
+        m_watching = false;
+    }
+}
+
+//******************************************************************************
+//******************************************************************************
+/**
+ * @brief Checks the blockchain for the current block and if the block matches
+ *        the trader's locktime (indicating that it has expired), the
+ *        servicenode will attempt to redeem the traders deposit on their
+ *        behalf. Normally traders will redeem their own funds, however, this is
+ *        a backup in case the trader node goes offline or is disconnected.
+ */
+void App::Impl::watchTraderDeposits()
+{
+    std::map<uint256, TransactionPtr> watches;
+    {
+        LOCK(m_watchTradersLocker);
+        if (m_watchingTraders) // ignore if we're still processing from previous request
+            return;
+        m_watchingTraders = true;
+        watches = m_watchTraders;
+    }
+
+    // Checks the trader's chain for locktime and submits refund transaction if necessary
+    auto check = [](xbridge::SessionPtr session, const std::string & orderId, const WalletConnectorPtr & conn,
+                    const uint32_t & lockTime, const std::string & refTx) -> bool
+    {
+        rpc::WalletInfo info;
+        if (!conn->getInfo(info))
+            return false;
+
+        // If a redeem of trader deposit is successful
+        bool done = false;
+
+        // If lockTime has expired on trader deposit, attempt to redeem it
+        if (lockTime >= info.blocks) {
+            int32_t errCode = 0;
+            if (session->refundTraderDeposit(orderId, conn->currency, lockTime, refTx, errCode))
+                done = true;
+            else if (errCode == RPCErrorCode::RPC_VERIFY_ALREADY_IN_CHAIN
+                  || errCode == RPCErrorCode::RPC_INVALID_ADDRESS_OR_KEY
+                  || errCode == RPCErrorCode::RPC_VERIFY_REJECTED)
+                done = true;
+
+            if (!done && (info.blocks - lockTime) * conn->blockTime > 3600) // if locktime has expired for more than 1 hr, we're done
+                done = true;
+        }
+
+        return done;
+    };
+
+    // Check blockchain for spends
+    xbridge::App & app = xbridge::App::instance();
+    for (auto & item : watches) {
+        auto & tr = item.second;
+
+        xbridge::App & xapp = xbridge::App::instance();
+        xbridge::SessionPtr session = getSession();
+
+        // Trader A check (if not refunded, has valid refund tx, and order not marked finished)
+        if (!tr->a_refunded() && !tr->a_refTx().empty() && tr->state() != xbridge::Transaction::trFinished) {
+            WalletConnectorPtr connA = xapp.connectorByCurrency(tr->a_currency());
+            if (connA && check(session, tr->id().ToString(), connA, tr->a_lockTime(), tr->a_refTx())) {
+                tr->a_setRefunded(true);
+            }
+        }
+
+        // Trader B check (if not refunded, has valid refund tx, and order not marked finished)
+        if (!tr->b_refunded() && !tr->b_refTx().empty() && tr->state() != xbridge::Transaction::trFinished) {
+            WalletConnectorPtr connB = app.connectorByCurrency(tr->b_currency());
+            if (connB && check(session, tr->id().ToString(), connB, tr->b_lockTime(), tr->b_refTx())) {
+                tr->b_setRefunded(true);
+            }
+        }
+
+        if ((tr->a_refunded() && tr->b_refunded()) || tr->state() == xbridge::Transaction::trFinished)
+            xapp.unwatchTraderDeposit(tr);
+    }
+
+    {
+        LOCK(m_watchTradersLocker);
+        m_watchingTraders = false;
+    }
+}
+
+//******************************************************************************
+//******************************************************************************
 void App::Impl::onTimer()
 {
     // DEBUG_TRACE();
@@ -2267,6 +2556,22 @@ void App::Impl::onTimer()
 
         // Check orders
         io->post(boost::bind(&Impl::checkAndRelayPendingOrders, this));
+
+        Exchange & e = Exchange::instance();
+        auto isServicenode = e.isStarted();
+
+        // Check for deposit spends
+        if (!isServicenode) // if not servicenode, watch deposits
+            io->post(boost::bind(&Impl::checkWatchesOnDepositSpends, this));
+
+        // If servicenode, watch trader deposits
+        if (isServicenode) {
+            static uint32_t watchCounter = 0;
+            if (++watchCounter == 40) { // ~10 min
+                watchCounter = 0;
+                io->post(boost::bind(&Impl::watchTraderDeposits, this));
+            }
+        }
 
         // unprocessed packets
         {

@@ -20,6 +20,7 @@ public:
     bool createDepositTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
                                   std::string & txId,
+                                  uint32_t & txVout,
                                   std::string & rawTx);
 };
 

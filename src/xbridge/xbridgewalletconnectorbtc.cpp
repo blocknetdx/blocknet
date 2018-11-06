@@ -185,6 +185,91 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
 
 //*****************************************************************************
 //*****************************************************************************
+bool getblock(const std::string & rpcuser, const std::string & rpcpasswd,
+                  const std::string & rpcip, const std::string & rpcport,
+                  const std::string & blockHash, std::string & rawBlock)
+{
+    try
+    {
+        Array params;
+        params.push_back(blockHash);
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "getblock", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "getblock error: " << write_string(error, false);
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "getblock result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        rawBlock = write_string(result, true);
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getblock exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool getblockhash(const std::string & rpcuser, const std::string & rpcpasswd,
+                  const std::string & rpcip, const std::string & rpcport,
+                  const uint32_t & block, std::string & blockHash)
+{
+    try
+    {
+        Array params;
+        params.push_back(static_cast<int>(block));
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport,
+                               "getblockhash", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "getblockhash error: " << write_string(error, false);
+            return false;
+        }
+        else if (result.type() != str_type)
+        {
+            // Result
+            LOG() << "getblockhash result is not a string";
+            return false;
+        }
+
+        blockHash = result.get_str();
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getblockhash exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool listaccounts(const std::string & rpcuser, const std::string & rpcpasswd,
                   const std::string & rpcip, const std::string & rpcport,
                   std::vector<std::string> & accounts)
@@ -1253,6 +1338,51 @@ bool verifyMessage(const std::string & rpcuser, const std::string & rpcpasswd,
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool getRawMempool(const std::string & rpcuser, const std::string & rpcpasswd,
+                   const std::string & rpcip,   const std::string & rpcport,
+                   std::vector<std::string> & txids)
+{
+    try
+    {
+        LOG() << "rpc call <getrawmempool>";
+
+        Array params;
+        const Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getrawmempool", params);
+
+        // reply
+        const Value & error = find_value(reply, "error");
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "getrawmempool error: " << write_string(error, false);
+            return false;
+        }
+
+        const Value & result = find_value(reply, "result");
+        if (result.type() != array_type)
+        {
+            // Result
+            LOG() << "getrawmempool result is not an array " << write_string(result, true);
+            return false;
+        }
+
+        txids.clear();
+        auto & res = result.get_array();
+        for (auto & tid : txids)
+            txids.push_back(tid);
+        return true;
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getrawmempool exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace rpc
 
 namespace
@@ -1590,6 +1720,122 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
 
 //******************************************************************************
 //******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getRawMempool(std::vector<std::string> & txids)
+{
+    if (!rpc::getRawMempool(m_user, m_passwd, m_ip, m_port, txids)) {
+        LOG() << "rpc::getRawMempool failed " << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::isUTXOSpentInTx(const std::string & txid,
+        const std::string & utxoPrevTxId, const uint32_t & utxoVoutN, bool & isSpent)
+{
+    std::string json;
+    if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, txid, true, json)) {
+        LOG() << "rpc::getRawTransaction failed " << __FUNCTION__;
+        return false;
+    }
+
+    json_spirit::Value txv;
+    if (!json_spirit::read_string(json, txv))
+    {
+        LOG() << "json read error for " << txid << " " << __FUNCTION__;
+        return false;
+    }
+
+    auto & txo = txv.get_obj();
+    auto & vins = json_spirit::find_value(txo, "vin").get_array();
+    for (auto & vin : vins) {
+        if (vin.type() != json_spirit::obj_type)
+            continue;
+        auto & vino = vin.get_obj();
+        // Check txid
+        auto & vin_txid = json_spirit::find_value(vino, "txid");
+        if (vin_txid.type() != json_spirit::str_type)
+            continue;
+        // Check vout
+        auto & vin_vout = json_spirit::find_value(vino, "vout");
+        if (vin_vout.type() != json_spirit::int_type)
+            continue;
+        // If match is found, return
+        if (vin_txid.get_str() == utxoPrevTxId && vin_vout.get_int() == utxoVoutN) {
+            isSpent = true;
+            return true;
+        }
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getBlock(const std::string & blockHash, std::string & rawBlock)
+{
+    if (!rpc::getblock(m_user, m_passwd, m_ip, m_port, blockHash, rawBlock)) {
+        LOG() << "rpc::getblock failed " << __FUNCTION__;
+        return false;
+    }
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getBlockHash(const uint32_t & block, std::string & blockHash)
+{
+    if (!rpc::getblockhash(m_user, m_passwd, m_ip, m_port, block, blockHash)) {
+        LOG() << "rpc::getblockhash failed " << __FUNCTION__;
+        return false;
+    }
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getTransactionsInBlock(const std::string & blockHash,
+                                                                std::vector<std::string> & txids)
+{
+    std::string json;
+    if (!rpc::getblock(m_user, m_passwd, m_ip, m_port, blockHash, json)) {
+        LOG() << "rpc::getblock failed " << __FUNCTION__;
+        return false;
+    }
+
+    json_spirit::Value jblock;
+    if (!json_spirit::read_string(json, jblock))
+    {
+        LOG() << "json read error for " << blockHash << " " << __FUNCTION__;
+        return false;
+    }
+    if (jblock.type() != json_spirit::obj_type)
+    {
+        LOG() << "json read error for " << blockHash << " " << __FUNCTION__;
+        return false;
+    }
+
+    txids.clear();
+
+    auto & jblocko = jblock.get_obj();
+    auto & txs = json_spirit::find_value(jblocko, "tx").get_array();
+    for (auto & tx : txs) {
+        auto & txid = tx.get_str();
+        txids.push_back(txid);
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
 
 /**
  * \brief Checks if specified address has a valid prefix.
@@ -1713,6 +1959,8 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::string & depositTxId,
                                                                  const std::string & /*destination*/,
                                                                  double & amount,
+                                                                 uint32_t & depositTxVout,
+                                                                 const std::string & expectedScript,
                                                                  bool & isGood)
 {
     isGood  = false;
@@ -1752,16 +2000,128 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         }
     }
 
-    // TODO check amount in tx, temporary only first vout
-    json_spirit::Array  vout    = json_spirit::find_value(txo, "vout").get_array();
-    json_spirit::Object vout0   = vout[0].get_obj();
-    json_spirit::Value  vamount = json_spirit::find_value(vout0, "value");
-    double receivedAmount = vamount.get_real();
-    if (receivedAmount > amount)
+    // obtain the p2sh hash
+    json_spirit::Array  vouts = json_spirit::find_value(txo, "vout").get_array();
+    if (vouts.empty())
     {
-        amount = receivedAmount;
-        isGood = true;
+        LOG() << "tx " << depositTxId << " no vouts " << __FUNCTION__;
+        return true; // done
     }
+
+    // Check all vouts for valid deposit
+    for (auto & vout : vouts) {
+        const json_spirit::Value & scriptPubKey = json_spirit::find_value(vout.get_obj(), "scriptPubKey");
+        if (scriptPubKey.type() == json_spirit::null_type)
+            continue;
+
+        const json_spirit::Value & addresses = json_spirit::find_value(scriptPubKey.get_obj(), "addresses");
+        if (addresses.type() == json_spirit::null_type)
+            continue;
+
+        // Check that expected script and amounts match
+        for (auto & address : addresses.get_array()) {
+            if (expectedScript == address.get_str()) {
+                const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
+                const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
+                if (amount <= vamount.get_real()) {
+                    amount = vamount.get_real();
+                    depositTxVout = n.get_int();
+                    isGood = true;
+                    return true; // done
+                }
+                break; // done searching
+            }
+        }
+    }
+
+    LOG() << "tx " << depositTxId << " no valid p2sh in deposit transaction " << __FUNCTION__;
+
+    return true; // done
+}
+
+//******************************************************************************
+/**
+ * Search for the secret in the spent/redeemed transaction.
+ * Returns true if the search is complete. Returns false if the search needs
+ * more time (due to not finding txid).
+ * @tparam CryptoProvider
+ * @param paymentTxId Id of the transaction on the blockchain where secret exists.
+ * @param depositTxId Prevout txid of the p2sh
+ * @param depositTxVOut Prevout n of the p2sh
+ * @param hx Hashed secret known by both counterparties
+ * @param secret Found secret
+ * @param isGood If secret was found and all checks passed.
+ * @return
+ */
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getSecretFromPaymentTransaction(const std::string & paymentTxId,
+                                                                         const std::string & depositTxId,
+                                                                         const uint32_t & depositTxVOut,
+                                                                         const std::vector<unsigned char> & hx,
+                                                                         std::vector<unsigned char> & secret,
+                                                                         bool & isGood)
+{
+    isGood = false;
+
+    std::string rawtx;
+    if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, paymentTxId, true, rawtx))
+    {
+        LOG() << "no tx found " << paymentTxId << " " << __FUNCTION__;
+        return false;
+    }
+
+    json_spirit::Value txv;
+    if (!json_spirit::read_string(rawtx, txv))
+    {
+        LOG() << "json read error for " << paymentTxId << " " << rawtx << " " << __FUNCTION__;
+        return false;
+    }
+
+    json_spirit::Object txo = txv.get_obj();
+
+    // extract secret from vins
+    json_spirit::Array vins = json_spirit::find_value(txo, "vin").get_array();
+
+    // Check all vins for secret
+    for (auto & vin : vins) {
+        const json_spirit::Value & depositId = json_spirit::find_value(vin.get_obj(), "txid");
+        if (depositId.type() == json_spirit::null_type)
+            continue;
+
+        const json_spirit::Value & voutN = json_spirit::find_value(vin.get_obj(), "vout");
+        if (voutN.type() == json_spirit::null_type)
+            continue;
+
+        if (depositId.get_str() != depositTxId || voutN.get_int() != depositTxVOut)
+            continue;
+
+        const json_spirit::Value & scriptPubKey = json_spirit::find_value(vin.get_obj(), "scriptSig");
+        if (scriptPubKey.type() == json_spirit::null_type)
+            continue;
+
+        const json_spirit::Value & hex = json_spirit::find_value(scriptPubKey.get_obj(), "hex");
+        if (hex.type() == json_spirit::null_type)
+            continue;
+
+        auto ssig = ParseHex(hex.get_str());
+        CScript scriptSig(ssig.begin(), ssig.end());
+        std::vector<unsigned char> chk;
+        opcodetype op;
+        CScript::const_iterator pc = scriptSig.begin();
+        while (pc < scriptSig.end()) { // check if hashed secret matches hashed sig data
+            if (scriptSig.GetOp(pc, op, chk) && memcmp(&this->getKeyId(chk)[0], &hx[0], hx.size()) == 0) {
+                secret = chk;
+                isGood = true;
+                return true;
+            }
+        }
+
+        // Done searching if we found an exact vin match
+        break;
+    }
+
+    LOG() << "tx " << paymentTxId << " secret not found " << __FUNCTION__;
 
     return true;
 }
@@ -1793,19 +2153,15 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
     uint32_t lt = 0;
     if (role == 'A')
     {
-        // 72h in seconds
-        // lt = info.blocks + 259200 / m_wallet.blockTime;
-
         // 2h in seconds
-        lt = info.blocks + 120 / blockTime;
+        uint32_t twoHours = 2*60*60;
+        lt = info.blocks + twoHours / blockTime;
     }
     else if (role == 'B')
     {
-        // 36h in seconds
-        // lt = info.blocks + 259200 / 2 / m_wallet.blockTime;
-
-        // 1h in seconds
-        lt = info.blocks + 36 / blockTime;
+        // 1hr in seconds
+        uint32_t oneHour = 60*60;
+        lt = info.blocks + oneHour / blockTime;
     }
 
     return lt;
@@ -1814,9 +2170,19 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::acceptableLockTimeDrift(const char role, const uint32_t lckTime) const
+{
+    // if locktime drift is greater than 10 minutes then return false
+    auto lt = lockTime(role);
+    return (lt - lckTime) * blockTime <= 600;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::vector<unsigned char> & myPubKey,
                                                           const std::vector<unsigned char> & otherPubKey,
-                                                          const std::vector<unsigned char> & xdata,
+                                                          const std::vector<unsigned char> & secretHash,
                                                           const uint32_t lockTime,
                                                           std::vector<unsigned char> & resultSript)
 {
@@ -1826,14 +2192,11 @@ bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::ve
                 << OP_DUP << OP_HASH160 << getKeyId(myPubKey) << OP_EQUALVERIFY << OP_CHECKSIG
           << OP_ELSE
                 << OP_DUP << OP_HASH160 << getKeyId(otherPubKey) << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
-                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << xdata << OP_EQUAL
+                << OP_SIZE << 33 << OP_EQUALVERIFY << OP_HASH160 << secretHash << OP_EQUAL
           << OP_ENDIF;
 
-//    xbridge::XBitcoinAddress baddr;
-//    baddr.Set(CScriptID(inner), m_wallet.scriptPrefix[0]);
-//    xtx->multisig    = baddr.ToString();
-
     resultSript = std::vector<unsigned char>(inner.begin(), inner.end());
+
     return true;
 }
 
@@ -1843,6 +2206,7 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vector<XTxIn> & inputs,
                                                                   const std::vector<std::pair<std::string, double> > & outputs,
                                                                   std::string & txId,
+                                                                  uint32_t & txVout,
                                                                   std::string & rawTx)
 {
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
@@ -1877,6 +2241,7 @@ bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vec
     }
 
     txId = txid;
+    txVout = 0;
 
     return true;
 }

@@ -134,6 +134,7 @@ DgbWalletConnector::DgbWalletConnector()
 bool DgbWalletConnector::createDepositTransaction(const std::vector<XTxIn> & inputs,
                                                   const std::vector<std::pair<std::string, double> > & outputs,
                                                   std::string & txId,
+                                                  uint32_t & txVout,
                                                   std::string & rawTx)
 {
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
@@ -168,6 +169,7 @@ bool DgbWalletConnector::createDepositTransaction(const std::vector<XTxIn> & inp
     }
 
     txId = txid;
+    txVout = 0;
 
     return true;
 }

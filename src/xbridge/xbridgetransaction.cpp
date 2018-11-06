@@ -322,9 +322,9 @@ std::string Transaction::a_bintxid() const
 
 //*****************************************************************************
 //*****************************************************************************
-std::vector<unsigned char> Transaction::a_innerScript() const
+uint32_t Transaction::a_lockTime() const
 {
-    return m_innerScript1;
+    return m_a.lockTime();
 }
 
 //*****************************************************************************
@@ -332,6 +332,13 @@ std::vector<unsigned char> Transaction::a_innerScript() const
 std::vector<unsigned char> Transaction::a_pk1() const
 {
     return m_a.mpubkey();
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::string Transaction::a_payTxId() const
+{
+    return m_a.payTxId();
 }
 
 //*****************************************************************************
@@ -378,9 +385,9 @@ std::string Transaction::b_bintxid() const
 
 //*****************************************************************************
 //*****************************************************************************
-std::vector<unsigned char> Transaction::b_innerScript() const
+uint32_t Transaction::b_lockTime() const
 {
-    return m_innerScript2;
+    return m_b.lockTime();
 }
 
 //*****************************************************************************
@@ -395,6 +402,13 @@ std::vector<unsigned char> Transaction::b_innerScript() const
 std::vector<unsigned char> Transaction::b_pk1() const
 {
     return m_b.mpubkey();
+}
+
+//*****************************************************************************
+//*****************************************************************************
+std::string Transaction::b_payTxId() const
+{
+    return m_b.payTxId();
 }
 
 //*****************************************************************************
@@ -453,24 +467,23 @@ bool Transaction::setKeys(const std::vector<unsigned char> & addr,
 //*****************************************************************************
 //*****************************************************************************
 bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
-                                    const std::string & id,
-                                    const std::vector<unsigned char> & innerScript)
+                             const std::string & id)
 {
     if (m_b.source() == addr)
     {
         m_bintxid2     = id;
-        m_innerScript2 = innerScript;
         return true;
     }
     else if (m_a.source() == addr)
     {
         m_bintxid1     = id;
-        m_innerScript1 = innerScript;
         return true;
     }
     return false;
 }
 
+//*****************************************************************************
+//*****************************************************************************
 std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
 {
     if(!settings().isFullLog())
