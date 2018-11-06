@@ -30,7 +30,9 @@ RUN mkdir -p $PROJECTDIR \
   && [ "$(printf 'e7d43625869cc503deec88be4566fa0c9cc7ae2f2e3ee1573a1cad683f436a60 depends-mac-3.10.6.tar.gz' | sha256sum -c)" = "depends-mac-3.10.6.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
 
 # Copy source files
-#RUN git clone --depth 1 --branch 3.10.6 https://github.com/BlocknetDX/BlockDX.git
+#RUN cd /opt/blocknetdx \
+#  && git clone --depth 1 --branch 3.10.6 https://github.com/BlocknetDX/BlockDX.git tmp \
+#  && mv tmp/* BlockDX/
 COPY . $PROJECTDIR/
 
 # Build source
