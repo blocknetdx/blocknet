@@ -12,6 +12,7 @@ build_linux:
   - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux; fi
   artifacts:
     name: "BLOCKDX-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
+    expire_in: 3 weeks
     paths:
     - dist/linux/bin
 
@@ -36,6 +37,7 @@ build_win:
   - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win; fi
   artifacts:
     name: "BLOCKDX-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win"
+    expire_in: 3 weeks
     paths:
     - dist/win/bin
 
@@ -60,6 +62,7 @@ build_mac:
   - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac; fi
   artifacts:
     name: "BLOCKDX-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac"
+    expire_in: 3 weeks
     paths:
     - dist/mac/bin
 
