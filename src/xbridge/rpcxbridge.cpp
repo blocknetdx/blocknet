@@ -477,22 +477,13 @@ Value dxMakeOrder(const Array &params, bool fHelp)
                                "Minimum supported size is " + util::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN));
     }
 
-    // Validate address prefix
+    // Validate addresses
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
     if (!connFrom) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + fromCurrency);
     if (!connTo) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + toCurrency);
-    if (!connFrom->hasValidAddressPrefix(fromAddress))
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                               ": " + fromCurrency + " address is bad, are you using the correct address?");
-    if (!connTo->hasValidAddressPrefix(toAddress))
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                               ": " + toCurrency + " address is bad, are you using the correct address?");
-
-    auto statusCode = xbridge::SUCCESS;
 
     xbridge::App &app = xbridge::App::instance();
-
 
     if (!app.isValidAddress(fromAddress, connFrom)) {
 
@@ -528,7 +519,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
 
     Object result;
-    statusCode = app.checkCreateParams(fromCurrency, toCurrency,
+    auto statusCode = app.checkCreateParams(fromCurrency, toCurrency,
                                        util::xBridgeAmountFromReal(fromAmount), fromAddress);
     switch (statusCode) {
     case xbridge::SUCCESS:{
