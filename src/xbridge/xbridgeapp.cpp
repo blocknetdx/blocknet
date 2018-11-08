@@ -853,8 +853,8 @@ void App::updateActiveWallets()
     for (auto & currency : toRemove)
         removeConnector(currency);
 
-    // return wallet list
-    std::set<std::string> rwallets;
+    // Store connectors from config
+    std::vector<WalletConnectorPtr> conns;
 
     for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
     {
@@ -926,21 +926,94 @@ void App::updateActiveWallets()
             continue;
         }
 
-        // Check that wallet is reachable
-        xbridge::rpc::WalletInfo info;
-        if (!conn->getInfo(info))
-        {
-            removeConnector(conn->currency);
-            ERR() << "wallet connection failed, is " << wp.title << " running? " << __FUNCTION__;
-            continue;
+        conns.push_back(conn);
+    }
+
+    // Valid connections
+    std::vector<WalletConnectorPtr> validConnections;
+    // Invalid connections
+    std::vector<WalletConnectorPtr> badConnections;
+    // All valid wallets
+    std::set<std::string> validWallets;
+
+    // Process connections
+    if (!conns.empty()) {
+        // TLDR: Multithreaded connection checks
+        // The code below utilizes boost async to spawn threads up to the reported hardware concurrency
+        // capabilities of the host. All of the wallets loaded into xbridge.conf will be checked here,
+        // specifically for valid connections. This implementation also supports being interrupted via
+        // a boost interruption point. A mutex is used to synchronize checks across async threads.
+        boost::mutex muJobs;
+        const uint32_t maxPendingJobs = boost::thread::hardware_concurrency();
+        uint32_t pendingJobs = 0;
+        uint32_t allJobs = conns.size();
+
+        // copy connections
+        auto walletCheck = boost::async(boost::launch::async, [&conns, &muJobs, &allJobs, &pendingJobs,
+                                                               maxPendingJobs, &validConnections, &badConnections]() {
+            while (true) {
+                boost::this_thread::interruption_point();
+                const int32_t size = conns.size();
+                for (int32_t i = size - 1; i >= 0; --i) {
+                    {
+                        boost::mutex::scoped_lock l(muJobs);
+                        if (pendingJobs >= maxPendingJobs)
+                            break;
+                        ++pendingJobs;
+                    }
+                    WalletConnectorPtr conn = conns.back();
+                    conns.pop_back();
+                    // Asynchronously check connection
+                    boost::async(boost::launch::async, [conn, &muJobs, &allJobs, &pendingJobs,
+                                                        &validConnections, &badConnections]() {
+                        // Check that wallet is reachable
+                        xbridge::rpc::WalletInfo info;
+                        if (!conn->getInfo(info)) {
+                            {
+                                boost::mutex::scoped_lock l(muJobs);
+                                --pendingJobs;
+                                --allJobs;
+                                badConnections.push_back(conn);
+                            }
+                            return;
+                        }
+                        {
+                            boost::mutex::scoped_lock l(muJobs);
+                            --pendingJobs;
+                            --allJobs;
+                            validConnections.push_back(conn);
+                        }
+                    });
+                }
+
+                {
+                    boost::mutex::scoped_lock l(muJobs);
+                    if (allJobs == 0)
+                        break;
+                }
+
+                boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+            }
+        });
+
+        // Synchronize all connection checks
+        walletCheck.get();
+
+        // Add valid connections
+        for (auto & conn : validConnections) {
+            addConnector(conn);
+            validWallets.insert(conn->currency);
         }
 
-        addConnector(conn);
-        rwallets.insert(conn->currency);
+        // Remove bad connections
+        for (auto & conn : badConnections) {
+            removeConnector(conn->currency);
+            ERR() << "wallet connection failed, is " << conn->title << " running?";
+        }
     }
 
     // Let the exchange know about the new wallet list
-    xbridge::Exchange::instance().loadWallets(rwallets);
+    xbridge::Exchange::instance().loadWallets(validWallets);
 
     {
         LOCK(m_updatingWalletsLock);
