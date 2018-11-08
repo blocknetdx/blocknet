@@ -2405,7 +2405,7 @@ void App::Impl::checkWatchesOnDepositSpends()
         bool done = false;
 
         // If lockTime has expired on original deposit, attempt to redeem it
-        if (xtx->lockTime >= info.blocks) {
+        if (xtx->lockTime <= info.blocks) {
             xbridge::SessionPtr session = getSession();
             int32_t errCode = 0;
             if (session->redeemOrderDeposit(xtx, errCode))
@@ -2467,7 +2467,7 @@ void App::Impl::watchTraderDeposits()
         bool done = false;
 
         // If lockTime has expired on trader deposit, attempt to redeem it
-        if (lockTime >= info.blocks) {
+        if (lockTime <= info.blocks) {
             int32_t errCode = 0;
             if (session->refundTraderDeposit(orderId, conn->currency, lockTime, refTx, errCode))
                 done = true;
