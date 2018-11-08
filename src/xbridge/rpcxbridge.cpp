@@ -678,8 +678,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     case xbridge::INSIFFICIENT_FUNDS:
     {
-        return util::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__,
-                               std::string(txDescr->to.begin(),txDescr->to.end()));
+        return util::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__, fromAddress);
     }
 
     default:
