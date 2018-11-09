@@ -1624,6 +1624,22 @@
               </widget>
              </item>
              <item>
+              <widget class="QCheckBox" name="checkSwiftTX">
+               <property name="enabled">
+                <bool>true</bool>
+               </property>
+               <property name="minimumSize">
+                <size>
+                 <width>85</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>SwiftX</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <widget class="QLabel" name="labelForBalance">
                <property name="text">
                 <string>Balance:</string>
