@@ -3099,7 +3099,6 @@ void Session::checkFinishedTransactions() const
 
             // send rollback
             m_p->sendCancelTransaction(ptr, TxCancelReason::crTimeout);
-            ptr->finish();
         }
     }
 }
