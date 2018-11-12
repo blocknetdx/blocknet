@@ -215,3 +215,7 @@ BlocknetSettings BlocknetLabelBtn { padding-left: 5px; }
 BlocknetSettings #title { font-size: 13px; color: white; font-family: "Roboto"; }
 BlocknetSettings #contentFrame { background-color:transparent; }
 BlocknetSettings #description { font-size: 12px; color: #6F8097 }
+
+BlocknetDebugConsole QTextEdit { background-color: #172F49; padding: 10px 15px; }
+BlocknetDebugConsole #consoleBox QLabel { color: white }
+BlocknetDebugConsole #consoleBox QLineEdit { height: 40px; font-size: 13px; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }

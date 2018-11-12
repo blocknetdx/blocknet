@@ -296,6 +296,8 @@ RES_ICONS = \
   qt/res/icons/bitcoin_testnet.png \
   qt/res/icons/ms-icon-310x310.png \
   qt/res/icons/browse.png \
+  qt/res/icons/console-arrow-in.png \
+  qt/res/icons/console-arrow-out.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
   qt/res/icons/clock3.png \
