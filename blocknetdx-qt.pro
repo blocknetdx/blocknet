@@ -213,6 +213,38 @@ SOURCES += \
     src/qt/blockexplorer.cpp \
     src/qt/blocknetdx.cpp \
     src/qt/blocknetdxstrings.cpp \
+    src/qt/blocknetfontmgr.cpp \
+    src/qt/blocknetformbtn.cpp \
+    src/qt/blocknetlabelbtn.cpp \
+    src/qt/blocknetactionbtn.cpp \
+    src/qt/blocknethdiv.cpp \
+    src/qt/blocknetdropdown.cpp \
+    src/qt/blockneticonbtn.cpp \
+    src/qt/blockneticonaltbtn.cpp \
+    src/qt/blockneticonlabel.cpp \
+    src/qt/blocknetleftmenu.cpp \
+    src/qt/blocknetlineedit.cpp \
+    src/qt/blocknetlockmenu.cpp \
+    src/qt/blocknetfundsmenu.cpp \
+    src/qt/blocknetquicksend.cpp \
+    src/qt/blocknetsendfunds.cpp \
+    src/qt/blocknetsendfunds1.cpp \
+    src/qt/blocknetsendfunds2.cpp \
+    src/qt/blocknetsendfunds3.cpp \
+    src/qt/blocknetsendfunds4.cpp \
+    src/qt/blocknetsendfundsdone.cpp \
+    src/qt/blocknetcreateproposal.cpp \
+    src/qt/blocknetcreateproposal1.cpp \
+    src/qt/blocknetcreateproposal2.cpp \
+    src/qt/blocknetcreateproposal3.cpp \
+    src/qt/blocknetlineeditwithtitle.cpp \
+    src/qt/blocknettoolbar.cpp \
+    src/qt/blocknetcircle.cpp \
+    src/qt/blocknetavatar.cpp \
+    src/qt/blocknetclosebtn.cpp \
+    src/qt/blocknetwallet.cpp \
+    src/qt/blocknetcoincontrol.cpp \
+    src/qt/blocknetsendfundsrequest.cpp \
     src/qt/intro.cpp \
     src/qt/multisenddialog.cpp \
     src/qt/networkstyle.cpp \
@@ -299,40 +331,7 @@ SOURCES += \
     src/xbridge/xbridgewalletconnectorbch.cpp \
     src/xbridge/xbridgecryptoproviderbtc.cpp \
     src/xbridge/xbridgepacket.cpp \
-    src/xbridge/util/xseries.cpp \
-    src/qt/blocknetdxstrings.cpp \
-    src/qt/blocknetfontmgr.cpp \
-    src/qt/blocknetformbtn.cpp \
-    src/qt/blocknetlabelbtn.cpp \
-    src/qt/blocknetactionbtn.cpp \
-    src/qt/blocknethdiv.cpp \
-    src/qt/blocknetdropdown.cpp \
-    src/qt/blockneticonbtn.cpp \
-    src/qt/blockneticonaltbtn.cpp \
-    src/qt/blockneticonlabel.cpp \
-    src/qt/blocknetleftmenu.cpp \
-    src/qt/blocknetlineedit.cpp \
-    src/qt/blocknetlockmenu.cpp \
-    src/qt/blocknetfundsmenu.cpp \
-    src/qt/blocknetquicksend.cpp \
-    src/qt/blocknetsendfunds.cpp \
-    src/qt/blocknetsendfunds1.cpp \
-    src/qt/blocknetsendfunds2.cpp \
-    src/qt/blocknetsendfunds3.cpp \
-    src/qt/blocknetsendfunds4.cpp \
-    src/qt/blocknetsendfundsdone.cpp \
-    src/qt/blocknetcreateproposal.cpp \
-    src/qt/blocknetcreateproposal1.cpp \
-    src/qt/blocknetcreateproposal2.cpp \
-    src/qt/blocknetcreateproposal3.cpp \
-    src/qt/blocknetlineeditwithtitle.cpp \
-    src/qt/blocknettoolbar.cpp \
-    src/qt/blocknetcircle.cpp \
-    src/qt/blocknetavatar.cpp \
-    src/qt/blocknetclosebtn.cpp \
-    src/qt/blocknetwallet.cpp \
-    src/qt/blocknetcoincontrol.cpp \
-    src/qt/blocknetsendfundsrequest.cpp
+    src/xbridge/util/xseries.cpp
 
 #protobuf generated
 SOURCES += \
@@ -551,6 +550,41 @@ HEADERS += \
     src/qt/walletmodeltransaction.h \
     src/qt/walletview.h \
     src/qt/winshutdownmonitor.h \
+    src/qt/blocknetdxstrings.h \
+    src/qt/blocknetfontmgr.h \
+    src/qt/blocknetformbtn.h \
+    src/qt/blocknetlabelbtn.h \
+    src/qt/blocknetactionbtn.h \
+    src/qt/blocknethdiv.h \
+    src/qt/blocknetdropdown.h \
+    src/qt/blockneticonbtn.h \
+    src/qt/blockneticonaltbtn.h \
+    src/qt/blockneticonlabel.h \
+    src/qt/blocknetleftmenu.h \
+    src/qt/blocknetlineedit.h \
+    src/qt/blocknetlockmenu.h \
+    src/qt/blocknetfundsmenu.h \
+    src/qt/blocknetquicksend.h \
+    src/qt/blocknetsendfunds.h \
+    src/qt/blocknetsendfunds1.h \
+    src/qt/blocknetsendfunds2.h \
+    src/qt/blocknetsendfunds3.h \
+    src/qt/blocknetsendfunds4.h \
+    src/qt/blocknetsendfundsdone.h \
+    src/qt/blocknetcreateproposal.h \
+    src/qt/blocknetcreateproposal1.h \
+    src/qt/blocknetcreateproposal2.h \
+    src/qt/blocknetcreateproposal3.h \
+    src/qt/blocknetcreateproposalutil.h \
+    src/qt/blocknetsendfundsutil.h \
+    src/qt/blocknetlineeditwithtitle.h \
+    src/qt/blocknettoolbar.h \
+    src/qt/blocknetcircle.h \
+    src/qt/blocknetavatar.h \
+    src/qt/blocknetclosebtn.h \
+    src/qt/blocknetwallet.h \
+    src/qt/blocknetcoincontrol.h \
+    src/qt/blocknetsendfundsrequest.h \
     src/compat/sanity.h \
     src/crypto/common.h \
     src/crypto/hmac_sha256.h \
