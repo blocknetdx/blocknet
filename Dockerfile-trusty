@@ -23,23 +23,27 @@ ENV BASEPREFIX=$PROJECTDIR/depends
 ENV DISTDIR=/opt/blocknetdx/dist
 ENV HOST=x86_64-pc-linux-gnu
 
+# Download depends
+RUN mkdir -p $PROJECTDIR \
+  && cd $PROJECTDIR \
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-3.10.6-dev-trusty.tar.gz \
+  && [ "$(printf 'c48b488097bd5f9b70a83f95c3226bb3d10fef0aec3b462ba69bfbf1cdb0cf0b depends-3.10.6-dev-trusty.tar.gz' | sha256sum -c)" = "depends-3.10.6-dev-trusty.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+
 # Copy source files
-#RUN mkdir -p /opt/blocknetdx \
-#  && cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch v3.9.22 https://github.com/BlocknetDX/BlockDX.git
-COPY . /opt/blocknetdx/BlockDX/
-RUN cd $PROJECTDIR \
-  && wget -nv https://s3.amazonaws.com/blockdxbuilds/devbuilds/depends-3.9.32-dev-trusty.tar.gz \
-  && [ "$(printf '509741f256bac5431e5d73bb85826af45e4e5d40490735c11fce1668387b62dc depends-3.9.32-dev-trusty.tar.gz' | sha256sum -c)" = "depends-3.9.32-dev-trusty.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1) \
-  && rm -r $BASEPREFIX \
-  && tar xzvf depends-3.9.32-dev-trusty.tar.gz
+#RUN cd /opt/blocknetdx \
+#  && git clone --depth 1 --branch 3.10.6 https://github.com/BlocknetDX/BlockDX.git tmp \
+#  && mv tmp/* BlockDX/
+COPY . $PROJECTDIR/
 
 # Build source
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
+  && rm -r $BASEPREFIX \
+  && tar xzvf depends-3.10.6-dev-trusty.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure --with-gui=qt5 --enable-debug --prefix=/ \
+  && make clean \
   && echo "Building with cores: $ecores" \
   && make -j$ecores \
   && make install DESTDIR=$DISTDIR \

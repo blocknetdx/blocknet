@@ -27,7 +27,7 @@ struct UtxoEntry
 {
     std::string txId;
     uint32_t    vout;
-    double      amount;
+    double      amount{0};
     std::string address;
     std::string scriptPubKey;
 

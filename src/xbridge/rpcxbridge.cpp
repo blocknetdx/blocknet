@@ -149,11 +149,20 @@ Value dxGetOrders(const Array & params, bool fHelp)
 
     auto &xapp = xbridge::App::instance();
     TransactionMap trlist = xapp.transactions();
+    auto currentTime = boost::posix_time::second_clock::universal_time();
 
     Array result;
     for (const auto& trEntry : trlist) {
 
         const auto &tr = trEntry.second;
+
+        // Skip canceled, finished, and expired orders older than 1 minute
+        if ((currentTime - tr->txtime).total_seconds() > 60) {
+            if (tr->state == xbridge::TransactionDescr::trCancelled
+              || tr->state == xbridge::TransactionDescr::trFinished
+              || tr->state == xbridge::TransactionDescr::trExpired)
+            continue;
+        }
 
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
@@ -468,29 +477,20 @@ Value dxMakeOrder(const Array &params, bool fHelp)
                                "Minimum supported size is " + util::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN));
     }
 
-    // Validate address prefix
+    // Validate addresses
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
     if (!connFrom) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + fromCurrency);
     if (!connTo) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + toCurrency);
-    if (!connFrom->hasValidAddressPrefix(fromAddress))
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                               ": " + fromCurrency + " address is bad, are you using the correct address?");
-    if (!connTo->hasValidAddressPrefix(toAddress))
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                               ": " + toCurrency + " address is bad, are you using the correct address?");
-
-    auto statusCode = xbridge::SUCCESS;
 
     xbridge::App &app = xbridge::App::instance();
 
-
-    if (!app.isValidAddress(fromAddress)) {
+    if (!app.isValidAddress(fromAddress, connFrom)) {
 
         return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress);
 
     }
-    if (!app.isValidAddress(toAddress)) {
+    if (!app.isValidAddress(toAddress, connTo)) {
 
         return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress);
 
@@ -519,7 +519,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
 
 
     Object result;
-    statusCode = app.checkCreateParams(fromCurrency, toCurrency,
+    auto statusCode = app.checkCreateParams(fromCurrency, toCurrency,
                                        util::xBridgeAmountFromReal(fromAmount), fromAddress);
     switch (statusCode) {
     case xbridge::SUCCESS:{
@@ -606,16 +606,6 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     xbridge::App &app = xbridge::App::instance();
 
-    if (!app.isValidAddress(fromAddress))
-    {
-        return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress);
-    }
-
-    if (!app.isValidAddress(toAddress))
-    {
-        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, toAddress);
-    }
-
     // Check that addresses are not the same
     if (fromAddress == toAddress) {
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -642,17 +632,18 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         if (txDescr->isLocal()) // no self trades
             return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "unable to accept your own order");
 
-        // Validate address prefix
-        xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
-        xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
-        if (!connFrom) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->fromCurrency);
-        if (!connTo) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->toCurrency);
-        // taker [to] will match order [from] currency
-        if (!connFrom->hasValidAddressPrefix(toAddress))
+        // taker [to] will match order [from] currency (due to pair swap happening later)
+        xbridge::WalletConnectorPtr connTo = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
+        // taker [from] will match order [to] currency (due to pair swap happening later)
+        xbridge::WalletConnectorPtr connFrom   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
+        if (!connFrom) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->toCurrency);
+        if (!connTo) return util::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->fromCurrency);
+        // Check for valid toAddress
+        if (!app.isValidAddress(toAddress, connTo))
             return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
                                    ": " + txDescr->fromCurrency + " address is bad, are you using the correct address?");
-        // taker [from] will match order [to] currency
-        if (!connTo->hasValidAddressPrefix(fromAddress))
+        // Check for valid fromAddress
+        if (!app.isValidAddress(fromAddress, connFrom))
             return util::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
                                    ": " + txDescr->toCurrency + " address is bad, are you using the correct address?");
 
@@ -687,8 +678,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     case xbridge::INSIFFICIENT_FUNDS:
     {
-        return util::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__,
-                               std::string(txDescr->to.begin(),txDescr->to.end()));
+        return util::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__, fromAddress);
     }
 
     default:
@@ -1386,17 +1376,24 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(t->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(t->toCurrency);
 
+        std::string makerAddress;
+        std::string takerAddress;
+        if (connFrom)
+            makerAddress = connFrom->fromXAddr(t->from);
+        if (connTo)
+            takerAddress = connTo->fromXAddr(t->to);
+
         Object o;
         o.emplace_back(Pair("id", t->id.GetHex()));
 
         // maker data
         o.emplace_back(Pair("maker", t->fromCurrency));
         o.emplace_back(Pair("maker_size", util::xBridgeStringValueFromAmount(t->fromAmount)));
-        o.emplace_back(Pair("maker_address", connFrom->fromXAddr(t->from)));
+        o.emplace_back(Pair("maker_address", makerAddress));
         // taker data
         o.emplace_back(Pair("taker", t->toCurrency));
         o.emplace_back(Pair("taker_size", util::xBridgeStringValueFromAmount(t->toAmount)));
-        o.emplace_back(Pair("taker_address", connTo->fromXAddr(t->to)));
+        o.emplace_back(Pair("taker_address", takerAddress));
         // dates
         o.emplace_back(Pair("updated_at", util::iso8601(t->txtime)));
         o.emplace_back(Pair("created_at", util::iso8601(t->created)));

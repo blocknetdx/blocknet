@@ -1,17 +1,14 @@
 sudo: required
 dist: trusty
-
-#workaround for https://github.com/travis-ci/travis-ci/issues/5227
-addons:
-  hostname: pivx-tester
-
 os: linux
-language: generic
+language: minimal
 cache:
   directories:
   - depends/built
   - depends/sdk-sources
   - $HOME/.ccache
+stages:
+  - test
 env:
   global:
     - MAKEJOBS=-j3
@@ -25,23 +22,6 @@ env:
     - SDK_URL=https://bitcoincore.org/depends-sources/sdks
     - PYTHON_DEBUG=1
     - WINEDEBUG=fixme-all
-  matrix:
-# ARM
-    - HOST=arm-linux-gnueabihf PACKAGES="g++-arm-linux-gnueabihf" CHECK_DOC=0 GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports"
-# Win32
-    - HOST=i686-w64-mingw32 DPKG_ADD_ARCH="i386" DEP_OPTS="NO_QT=1" PACKAGES="python3 nsis g++-mingw-w64-i686 wine1.6 bc" GOAL="install" BITCOIN_CONFIG="--enable-reduce-exports"
-# 32-bit
-    - HOST=i686-pc-linux-gnu PACKAGES="g++-multilib bc python3-zmq" DEP_OPTS="NO_QT=1" GOAL="install" BITCOIN_CONFIG="--enable-zmq --enable-glibc-back-compat --enable-reduce-exports LDFLAGS=-static-libstdc++" USE_SHELL="/bin/dash" PYZMQ=true
-# Win64
-    - HOST=x86_64-w64-mingw32 DPKG_ADD_ARCH="i386" DEP_OPTS="NO_QT=1" PACKAGES="python3 nsis g++-mingw-w64-x86-64 wine1.6 bc" GOAL="install" BITCOIN_CONFIG="--enable-reduce-exports"
-# blocknetdxd
-    - HOST=x86_64-unknown-linux-gnu PACKAGES="bc python3-zmq" DEP_OPTS="NO_QT=1 NO_UPNP=1 DEBUG=1" GOAL="install" BITCOIN_CONFIG="--enable-zmq --enable-glibc-back-compat --enable-reduce-exports CPPFLAGS=-DDEBUG_LOCKORDER" PYZMQ=true
-
-# No wallet
-#    - HOST=x86_64-unknown-linux-gnu PACKAGES="python3" DEP_OPTS="NO_WALLET=1" RUN_TESTS=true GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports"
-# Cross-Mac
-    - HOST=x86_64-apple-darwin11 PACKAGES="cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev" BITCOIN_CONFIG="--enable-reduce-exports" OSX_SDK=10.11 GOAL="deploy"
-
 before_install:
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
 install:
@@ -75,6 +55,68 @@ script:
 after_script:
     - echo $TRAVIS_COMMIT_RANGE
     - echo $TRAVIS_COMMIT_LOG
-notifications:
-  slack:
-    secure: w22XjHoG/3xplxWzddS9Ma7i99Q/hq4FA3Q56xS+RtO2vlFgDT+eDzCppstdx96mn2/4e+/V1aiQ4E6GVEvJMeldqSUhPv9OBnKR0KJVAOwu4haNXt+0ZeQFt8lIndKB5cMVyOJkoq6peGoHNXslClM0lGuBn7g7VC2QPQYNWrJNrrGL7IiVb6fNOIKHWcC4URkzSvXAhO/WIqSSlmKxAAx0B2oEsM8LhdAbcjbp7Sm7zH87TIVGBZ7iTVuMc6B9+SfClbE8bBuRtvjTX57Q4UUZzn0zDtKdPdCte0oXdaQF4RdVim9mDodBGIpDo+avW4WL7EE+AK33fs94pwH5bu0LEandR/aeEvVpbSpQ2XsEKSe+6woizgl5i4GXFVZduJF62y/o1f+S/zC3qW9lIEEpiZc4PpX7pDy30X3p6S5nMrW7T/zNh+SjLhS1VP6XKdQtpD3WRCY4GKZYammZhk5RbOy3jTXAahIXuttWdhl/Q3Rb5VqfFJWlrG/qQXt73qOk2/DgJnABxXE6gnWO4MpHAq+kdomNR+nod4HeXI3DOk1wRuQRVoW1rSjiqQd6Db+TP56RKYgt4M4csOD0DG9G+W0AOtZkuKHTeoEtmQfkKFPZLYAQumv41cDN2UE9gKIECmvJSevj4sMCDTWtozKWqay/W4n2+cmhbzmGflY=
+jobs:
+  include:
+  # arm
+  - stage: test
+    name: arm
+    env: >-
+      HOST=arm-linux-gnueabihf
+      PACKAGES="python3 g++-arm-linux-gnueabihf"
+      DEP_OPTS="NO_QT=1"
+      CHECK_DOC=0
+      GOAL="install"
+      # -Wno-psabi is to disable ABI warnings: "note: parameter passing for argument of type ... changed in GCC 7.1"
+      # This could be removed once the ABI change warning does not show up by default
+      BITCOIN_CONFIG="--without-gui --enable-glibc-back-compat --enable-reduce-exports CXXFLAGS=-Wno-psabi"
+  # win32
+  - stage: test
+    name: win32
+    env: >-
+      HOST=i686-w64-mingw32
+      DPKG_ADD_ARCH="i386"
+      DEP_OPTS="NO_QT=1"
+      PACKAGES="python3 nsis g++-mingw-w64-i686 wine1.6 bc"
+      GOAL="install"
+      BITCOIN_CONFIG="--without-gui --enable-reduce-exports --disable-gui-tests"
+  # win64
+  - stage: test
+    name: win64
+    env: >-
+      HOST=x86_64-w64-mingw32
+      DPKG_ADD_ARCH="i386"
+      DEP_OPTS="NO_QT=1"
+      PACKAGES="python3 nsis g++-mingw-w64-x86-64 wine1.6 bc"
+      GOAL="install"
+      BITCOIN_CONFIG="--without-gui --enable-reduce-exports --disable-gui-tests"
+  # linux32
+  - stage: test
+    name: linux32
+    env: >-
+      HOST=i686-pc-linux-gnu
+      PACKAGES="g++-multilib bc python3-zmq"
+      DEP_OPTS="NO_QT=1"
+      GOAL="install"
+      USE_SHELL="/bin/dash"
+      PYZMQ=true
+      BITCOIN_CONFIG="--without-gui --enable-zmq --enable-glibc-back-compat --enable-reduce-exports LDFLAGS=-static-libstdc++"
+  # linux64
+  - stage: test
+    name: linux64
+    env: >-
+      HOST=x86_64-unknown-linux-gnu
+      PACKAGES="bc python3-zmq"
+      DEP_OPTS="NO_QT=1 NO_UPNP=1 DEBUG=1"
+      GOAL="install"
+      PYZMQ=true
+      BITCOIN_CONFIG="--without-gui --enable-zmq --enable-glibc-back-compat --enable-reduce-exports CPPFLAGS=-DDEBUG_LOCKORDER"
+  # mac64
+  - stage: test
+    name: mac64
+    env: >-
+      HOST=x86_64-apple-darwin11
+      PACKAGES="cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev python3-setuptools-git"
+      DEP_OPTS="NO_QT=1"
+      OSX_SDK=10.11
+      GOAL="install"
+      BITCOIN_CONFIG="--without-gui --enable-reduce-exports --enable-werror"

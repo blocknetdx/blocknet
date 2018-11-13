@@ -30,6 +30,7 @@ struct TestingSetup {
     boost::thread_group threadGroup;
 
     TestingSetup() {
+        RandomInit();
         SetupEnvironment();
         fPrintToDebugLog = false; // don't want to write to debug.log file
         fCheckBlockIndex = true;

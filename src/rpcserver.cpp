@@ -244,7 +244,7 @@ static const CRPCCommand vRPCCommands[] =
         {"control", "stop", &stop, true, true, false},
 
         /* P2P networking */
-        {"network", "getnetworkinfo", &getnetworkinfo, true, false, false},
+        {"network", "getnetworkinfo", &getnetworkinfo, true, true, false},
         {"network", "addnode", &addnode, true, true, false},
         {"network", "getaddednodeinfo", &getaddednodeinfo, true, true, false},
         {"network", "getconnectioncount", &getconnectioncount, true, false, false},
@@ -256,14 +256,14 @@ static const CRPCCommand vRPCCommands[] =
         /* Block chain and UTXO */
         {"blockchain", "getblockchaininfo", &getblockchaininfo, true, true, false},
         {"blockchain", "getbestblockhash", &getbestblockhash, true, false, false},
-        {"blockchain", "getblockcount", &getblockcount, true, false, false},
-        {"blockchain", "getblock", &getblock, true, false, false},
-        {"blockchain", "getblockhash", &getblockhash, true, false, false},
+        {"blockchain", "getblockcount", &getblockcount, true, true, false},
+        {"blockchain", "getblock", &getblock, true, true, false},
+        {"blockchain", "getblockhash", &getblockhash, true, true, false},
         {"blockchain", "getblockheader", &getblockheader, false, false, false},
         {"blockchain", "getchaintips", &getchaintips, true, false, false},
         {"blockchain", "getdifficulty", &getdifficulty, true, false, false},
         {"blockchain", "getmempoolinfo", &getmempoolinfo, true, true, false},
-        {"blockchain", "getrawmempool", &getrawmempool, true, false, false},
+        {"blockchain", "getrawmempool", &getrawmempool, true, true, false},
         {"blockchain", "gettxout", &gettxout, true, true, false},
         {"blockchain", "gettxoutsetinfo", &gettxoutsetinfo, true, false, false},
         {"blockchain", "verifychain", &verifychain, true, false, false},
@@ -462,13 +462,12 @@ public:
     AcceptedConnectionImpl(
         asio::io_service& io_service,
         ssl::context& context,
-        bool fUseSSL) : sslStream(io_service, context),
-                        _d(sslStream, fUseSSL),
-                        _stream(_d)
+        bool fUseSSL)
     {
+        _stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpctimeout", 30)));
     }
 
-    virtual std::iostream& stream()
+    virtual asio::ip::tcp::iostream & stream()
     {
         return _stream;
     }
@@ -484,11 +483,9 @@ public:
     }
 
     typename Protocol::endpoint peer;
-    asio::ssl::stream<typename Protocol::socket> sslStream;
 
 private:
-    SSLIOStreamDevice<Protocol> _d;
-    iostreams::stream<SSLIOStreamDevice<Protocol> > _stream;
+    asio::ip::tcp::iostream _stream;
 };
 
 void ServiceConnection(AcceptedConnection* conn);
@@ -513,7 +510,7 @@ static void RPCListen(boost::shared_ptr<basic_socket_acceptor<Protocol, SocketAc
     boost::shared_ptr<AcceptedConnectionImpl<Protocol> > conn(new AcceptedConnectionImpl<Protocol>(acceptor->get_io_service(), context, fUseSSL));
 
     acceptor->async_accept(
-        conn->sslStream.lowest_layer(),
+        *conn->stream().rdbuf(),
         conn->peer,
         boost::bind(&RPCAcceptHandler<Protocol, SocketAcceptorService>,
             acceptor,

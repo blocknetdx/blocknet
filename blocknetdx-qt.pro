@@ -299,6 +299,7 @@ SOURCES += \
     src/xbridge/xbridgewalletconnectorbch.cpp \
     src/xbridge/xbridgecryptoproviderbtc.cpp \
     src/xbridge/xbridgepacket.cpp \
+    src/xbridge/util/xseries.cpp \
     src/qt/blocknetdxstrings.cpp \
     src/qt/blocknetfontmgr.cpp \
     src/qt/blocknetformbtn.cpp \
@@ -623,41 +624,8 @@ HEADERS += \
     src/xbridge/xbridgewalletconnectorbch.h \
     src/xbridge/xbridgedef.h \
     src/xbridge/xbridgecryptoproviderbtc.h \
-    src/qt/blocknetfontmgr.h \
-    src/qt/blocknetformbtn.h \
-    src/qt/blocknetlabelbtn.h \
-    src/qt/blocknetactionbtn.h \
-    src/qt/blocknethdiv.h \
-    src/qt/blocknetdropdown.h \
-    src/qt/blockneticonbtn.h \
-    src/qt/blockneticonaltbtn.h \
-    src/qt/blockneticonlabel.h \
-    src/qt/blocknetleftmenu.h \
-    src/qt/blocknetlineedit.h \
-    src/qt/blocknetlockmenu.h \
-    src/qt/blocknetfundsmenu.h \
-    src/qt/blocknetquicksend.h \
-    src/qt/blocknetsendfunds.h \
-    src/qt/blocknetsendfunds1.h \
-    src/qt/blocknetsendfunds2.h \
-    src/qt/blocknetsendfunds3.h \
-    src/qt/blocknetsendfunds4.h \
-    src/qt/blocknetsendfundsdone.h \
-    src/qt/blocknetsendfundsutil.h \
-    src/qt/blocknetcreateproposal.h \
-    src/qt/blocknetcreateproposal1.h \
-    src/qt/blocknetcreateproposal2.h \
-    src/qt/blocknetcreateproposal3.h \
-    src/qt/blocknetcreateproposalutil.h \
-    src/qt/blocknetlineeditwithtitle.h \
-    src/qt/blocknettoolbar.h \
-    src/qt/blocknetcircle.h \
-    src/qt/blocknetavatar.h \
-    src/qt/blocknetclosebtn.h \
-    src/qt/blocknetvars.h \
-    src/qt/blocknetwallet.h \
-    src/qt/blocknetcoincontrol.h \
-    src/qt/blocknetsendfundsrequest.h
+    src/xbridge/util/xseries.h \
+    src/xbridge/util/xassert.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \
