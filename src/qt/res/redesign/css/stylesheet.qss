@@ -192,6 +192,6 @@ BlocknetCoinControl QTableWidget { color: white; }
 
 BlocknetSettings QScrollArea { background-color:transparent; }
 BlocknetSettings BlocknetLabelBtn { padding-left: 5px; }
-BlocknetSettings #title { font-size: 12px; color: white; font-family: "Roboto"; }
+BlocknetSettings #title { font-size: 13px; color: white; font-family: "Roboto"; }
 BlocknetSettings #contentFrame { background-color:transparent; }
 BlocknetSettings #description { font-size: 12px; color: #6F8097 }

@@ -16,7 +16,9 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QSpinBox>
 #include <QCheckBox>
+#include <QDataWidgetMapper>
 
 class BlocknetSettings : public QFrame 
 {
@@ -25,32 +27,33 @@ class BlocknetSettings : public QFrame
 public:
     explicit BlocknetSettings(QWidget *parent = nullptr);
     void setWalletModel(WalletModel *w);
+    void backupWallet();
 
 private slots:
     void onResetSettingsToDefault();
 
 private:
+    QVBoxLayout *layout;
+    QDataWidgetMapper *mapper;
     QScrollArea *scrollArea;
     QFrame *content;
     WalletModel *walletModel;
     QVBoxLayout *contentLayout;
-    QVBoxLayout *layout;
     QLabel *titleLbl;
     BlocknetLabelBtn *aboutCoreLblBtn;
     BlocknetLabelBtn *aboutQtLblBtn;
     QLabel *generalLbl;
     QCheckBox *startWalletOnLoginCb;
     QLabel *sizeDbCacheLbl;
-    BlocknetDropdown *dbCacheDropdown;
+    QSpinBox *dbCacheSb;
     QLabel *verificationThreadsLbl;
-    BlocknetDropdown *threadsDropdown;
+    QSpinBox *threadsSb;
     QLabel *walletLbl;
-    QCheckBox *enableCoinCb;
     QCheckBox *spendChangeCb;
     BlocknetFormBtn *backupBtn;
     BlocknetFormBtn *showBackupsBtn;
     QLabel *networkLbl;
-    QCheckBox *mapPortCb;
+    QCheckBox *upnpCb;
     QCheckBox *allowIncomingCb;
     QCheckBox *connectSocks5Cb;
     BlocknetLineEditWithTitle *proxyTi;
@@ -65,6 +68,7 @@ private:
     QLabel *decimalLbl;
     BlocknetDropdown *decimalDropdown;
     BlocknetLineEditWithTitle *thirdPartyUrlTi;
+    BlocknetFormBtn *saveBtn;
     BlocknetFormBtn *resetBtn;
 };
 

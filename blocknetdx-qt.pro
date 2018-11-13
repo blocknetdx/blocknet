@@ -245,6 +245,7 @@ SOURCES += \
     src/qt/blocknetwallet.cpp \
     src/qt/blocknetcoincontrol.cpp \
     src/qt/blocknetsendfundsrequest.cpp \
+    src/qt/blocknetsettings.cpp \
     src/qt/intro.cpp \
     src/qt/multisenddialog.cpp \
     src/qt/networkstyle.cpp \
@@ -585,6 +586,7 @@ HEADERS += \
     src/qt/blocknetwallet.h \
     src/qt/blocknetcoincontrol.h \
     src/qt/blocknetsendfundsrequest.h \
+    src/qt/blocknetsettings.h \
     src/compat/sanity.h \
     src/crypto/common.h \
     src/crypto/hmac_sha256.h \
