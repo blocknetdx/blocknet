@@ -146,6 +146,7 @@ QT_MOC_CPP = \
   qt/moc_blocknetbip38tool.cpp \
   qt/moc_blocknetkeydialog.cpp \
   qt/moc_blocknetdebugconsole.cpp \
+  qt/moc_blocknetwalletrepair.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetcoincontrol.cpp \
   qt/moc_blocknetsendfundsrequest.cpp
@@ -280,6 +281,7 @@ BITCOIN_QT_H = \
   qt/blocknetbip38tool.h \
   qt/blocknetkeydialog.h \
   qt/blocknetdebugconsole.h \
+  qt/blocknetwalletrepair.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \
   qt/blocknetcoincontrol.h \
@@ -461,6 +463,7 @@ BITCOIN_QT_CPP += \
   qt/blocknetbip38tool.cpp \
   qt/blocknetkeydialog.cpp \
   qt/blocknetdebugconsole.cpp \
+  qt/blocknetwalletrepair.cpp \
   qt/blocknetwallet.cpp
 
 endif

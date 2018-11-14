@@ -17,7 +17,6 @@
 
 class BlocknetBIP38Tool : public BlocknetToolsPage {
     Q_OBJECT
-protected:
 
 public:
     explicit BlocknetBIP38Tool(QWidget *popup, int id, QFrame *parent = nullptr);

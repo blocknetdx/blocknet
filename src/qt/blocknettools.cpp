@@ -6,6 +6,7 @@
 #include "blocknetpeerslist.h"
 #include "blocknetbip38tool.h"
 #include "blocknetdebugconsole.h"
+#include "blocknetwalletrepair.h"
 
 #include <QTimer>
 #include <QEvent>
@@ -37,7 +38,7 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     networkMonitor = new BlocknetPeersList(this, NETWORK_MONITOR);
     peersList = new BlocknetPeersList(this, PEERS_LIST);
     bip38Tool = new BlocknetBIP38Tool(this, BIP38_TOOL);
-    walletRepair = new BlocknetPeersList(this, WALLET_REPAIR);
+    walletRepair = new BlocknetWalletRepair(this, WALLET_REPAIR);
     multisend = new BlocknetPeersList(this, MULTISEND);
     pages = { debugConsole, networkMonitor, peersList, bip38Tool, walletRepair, multisend };
 

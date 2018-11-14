@@ -26,6 +26,7 @@ protected:
 class BlocknetDebugConsole;
 class BlocknetPeersList;
 class BlocknetBIP38Tool;
+class BlocknetWalletRepair;
 
 class BlocknetTools : public QFrame {
     Q_OBJECT
@@ -48,7 +49,7 @@ private:
     BlocknetPeersList *networkMonitor;
     BlocknetPeersList *peersList;
     BlocknetBIP38Tool *bip38Tool;
-    BlocknetPeersList *walletRepair;
+    BlocknetWalletRepair *walletRepair;
     BlocknetPeersList *multisend;
     BlocknetTabBar *tabBar;
     BlocknetToolsPage *screen = nullptr;
