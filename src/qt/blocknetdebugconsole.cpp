@@ -14,6 +14,7 @@
 #include <QThread>
 #include <QScrollBar>
 #include <QKeyEvent>
+#include <QApplication>
 
 const QSize ICON_SIZE(6, 6);
 const int CONSOLE_HISTORY = 50;
@@ -238,7 +239,7 @@ BlocknetDebugConsole::BlocknetDebugConsole(QWidget *popup, int id, QFrame *paren
     layout->addSpacing(40);
 
     // Install event filter for up and down arrow
-    //lineEdit->installEventFilter(this);
+    lineEdit->installEventFilter(this);
     messagesWidget->installEventFilter(this);
 
     connect(clearButton, SIGNAL(clicked()), this, SLOT(clear()));
@@ -387,7 +388,7 @@ bool BlocknetDebugConsole::eventFilter(QObject* obj, QEvent* event)
         case Qt::Key_PageUp: /* pass paging keys to messages widget */
         case Qt::Key_PageDown:
             if (obj == lineEdit) {
-                //QApplication::postEvent(messagesWidget, new QKeyEvent(*keyevt));
+                QApplication::postEvent(messagesWidget, new QKeyEvent(*keyevt));
                 return true;
             }
             break;
@@ -398,7 +399,7 @@ bool BlocknetDebugConsole::eventFilter(QObject* obj, QEvent* event)
                                                  ((mod & Qt::ControlModifier) && key == Qt::Key_V) ||
                                                  ((mod & Qt::ShiftModifier) && key == Qt::Key_Insert))) {
                 lineEdit->setFocus();
-                //QApplication::postEvent(lineEdit, new QKeyEvent(*keyevt));
+                QApplication::postEvent(lineEdit, new QKeyEvent(*keyevt));
                 return true;
             }
         }
