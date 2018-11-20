@@ -31,9 +31,10 @@ class AcceptedConnection
 public:
     virtual ~AcceptedConnection() {}
 
-    virtual boost::asio::ip::tcp::iostream & stream() = 0;
+    virtual std::iostream & stream() = 0;
     virtual std::string peer_address_to_string() const = 0;
     virtual void close() = 0;
+    virtual RPCConnectionStream & bridge() = 0;
 };
 
 /** Start RPC threads */

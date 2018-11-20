@@ -459,15 +459,11 @@ template <typename Protocol>
 class AcceptedConnectionImpl : public AcceptedConnection
 {
 public:
-    AcceptedConnectionImpl(
-        asio::io_service& io_service,
-        ssl::context& context,
-        bool fUseSSL)
-    {
-        _stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpctimeout", 30)));
-    }
+    explicit AcceptedConnectionImpl(boost::asio::io_service & io_service, boost::asio::ssl::context & context, bool fUseSSL)
+                   : _socket(io_service), _bridge(_socket),
+                     _stream(_bridge) { }
 
-    virtual asio::ip::tcp::iostream & stream()
+    virtual std::iostream & stream()
     {
         return _stream;
     }
@@ -479,13 +475,24 @@ public:
 
     virtual void close()
     {
+        if (_closed)
+            return;
+        _closed = true;
+        _bridge.stop();
         _stream.close();
+    }
+
+    virtual RPCConnectionStream & bridge() {
+        return _bridge;
     }
 
     typename Protocol::endpoint peer;
 
 private:
-    asio::ip::tcp::iostream _stream;
+    boost::asio::ip::tcp::socket _socket;
+    RPCConnectionStream _bridge;
+    boost::iostreams::stream<RPCConnectionStream> _stream;
+    bool _closed{false};
 };
 
 void ServiceConnection(AcceptedConnection* conn);
@@ -507,10 +514,10 @@ static void RPCListen(boost::shared_ptr<basic_socket_acceptor<Protocol, SocketAc
     const bool fUseSSL)
 {
     // Accept connection
-    boost::shared_ptr<AcceptedConnectionImpl<Protocol> > conn(new AcceptedConnectionImpl<Protocol>(acceptor->get_io_service(), context, fUseSSL));
+    auto conn = boost::make_shared<AcceptedConnectionImpl<Protocol> >(acceptor->get_io_service(), context, fUseSSL);
 
     acceptor->async_accept(
-        *conn->stream().rdbuf(),
+        conn->bridge().socket(),
         conn->peer,
         boost::bind(&RPCAcceptHandler<Protocol, SocketAcceptorService>,
             acceptor,
@@ -536,10 +543,14 @@ static void RPCAcceptHandler(boost::shared_ptr<basic_socket_acceptor<Protocol, S
         RPCListen(acceptor, context, fUseSSL);
 
     AcceptedConnectionImpl<ip::tcp>* tcp_conn = dynamic_cast<AcceptedConnectionImpl<ip::tcp>*>(conn.get());
+    if (!tcp_conn) {
+        LogPrintf("Failed to accept RPC connection: %s\n", __func__);
+        return;
+    }
 
     if (error) {
         // TODO: Actually handle errors
-        LogPrintf("%s: Error: %s\n", __func__, error.message());
+        LogPrintf("Failed to accept RPC connection: %s: %s\n", error.message(), __func__);
     }
     // Restrict callers by IP.  It is important to
     // do this before starting client thread, to filter out
@@ -695,7 +706,7 @@ void StartRPCThreads()
 
             rpc_acceptors.push_back(acceptor);
             fListening = true;
-            rpc_acceptors.push_back(acceptor);
+
             // If dual IPv6/IPv4 bind successful, skip binding to IPv4 separately
             if (bBindAny && bindAddress == asio::ip::address_v6::any() && !v6_only_error)
                 break;
