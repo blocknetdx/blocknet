@@ -13,9 +13,11 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/bind.hpp>
+#include <boost/chrono/chrono.hpp>
 #include <boost/current_function.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/thread.hpp>
 
 #include <chrono>
 #include <string>
@@ -132,6 +134,109 @@ public:
     bool fUseSSL;
     boost::system::error_code connect_ec;
     boost::asio::ssl::stream<typename Protocol::socket>& stream;
+};
+
+/**
+ * Delegates the stream read/write to tcp::socket async read/write. Timeout the steam after -rpctimeout seconds.
+ */
+class RPCConnectionStream : public boost::iostreams::device<boost::iostreams::bidirectional>
+{
+public:
+    RPCConnectionStream(boost::asio::ip::tcp::socket & socket) : _socket(socket) {
+        _timeout = GetArg("-rpctimeout", 30);
+    }
+
+    boost::asio::ip::tcp::socket & socket() {
+        return _socket;
+    }
+
+    void stop() {
+        _closed = true;
+        _time = 0;
+        _socket.close();
+    }
+
+    std::streamsize read(char * s, std::streamsize n) {
+        std::streamsize r = 0;
+        if (_closed)
+            return r;
+
+        if (_time == 0)
+            start();
+
+        std::atomic<bool> done{false};
+        _socket.async_read_some(boost::asio::buffer(s, n),
+            [&](const boost::system::error_code &, std::size_t bytes_transferred) {
+                r = bytes_transferred;
+                done = true;
+            }
+        );
+
+        while (!_closed) {
+            if (isExpired()) {
+                stop();
+                break;
+            }
+
+            if (done)
+                break;
+
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(5));
+        }
+
+        return r;
+    }
+
+    std::streamsize write(const char * s, std::streamsize n) {
+        std::streamsize r = 0;
+        if (_closed)
+            return r;
+
+        if (_time == 0)
+            start();
+
+        std::atomic<bool> done{false};
+        _socket.async_write_some(boost::asio::buffer(s, n),
+            [&](const boost::system::error_code &, std::size_t bytes_transferred) {
+                r = bytes_transferred;
+                done = true;
+            }
+        );
+
+        while (!_closed) {
+            if (isExpired()) {
+                stop();
+                break;
+            }
+
+            if (done)
+                break;
+
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(5));
+        }
+
+        return r;
+    }
+
+private:
+    void start() {
+        _closed = false;
+        _time = boost::chrono::duration_cast<boost::chrono::seconds>
+                (boost::chrono::system_clock::now().time_since_epoch()).count();
+    }
+
+    bool isExpired() {
+        auto t = boost::chrono::duration_cast<boost::chrono::seconds>
+                (boost::chrono::system_clock::now().time_since_epoch()).count();
+        auto diff = t - _time;
+        return diff >= _timeout || diff < 0;
+    }
+
+private:
+    boost::asio::ip::tcp::socket & _socket;
+    int32_t _timeout{30};
+    int64_t _time{0};
+    bool _closed{false};
 };
 
 #endif // SSLIOSTREAMDEVICE_H
