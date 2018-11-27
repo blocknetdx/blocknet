@@ -143,7 +143,10 @@ class RPCConnectionStream : public boost::iostreams::device<boost::iostreams::bi
 {
 public:
     RPCConnectionStream(boost::asio::ip::tcp::socket & socket) : _socket(socket) {
-        _timeout = GetArg("-rpctimeout", 30);
+        auto rpcto = static_cast<int32_t>(GetArg("-rpctimeout", 30));
+        if (rpcto <= 0)
+            rpcto = 30;
+        _timeout = rpcto;
     }
 
     boost::asio::ip::tcp::socket & socket() {

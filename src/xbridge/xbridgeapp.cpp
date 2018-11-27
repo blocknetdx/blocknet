@@ -944,9 +944,12 @@ void App::updateActiveWallets()
         // specifically for valid connections. This implementation also supports being interrupted via
         // a boost interruption point. A mutex is used to synchronize checks across async threads.
         boost::mutex muJobs;
-        const uint32_t maxPendingJobs = boost::thread::hardware_concurrency();
+        auto rpcThreads = static_cast<int32_t>(GetArg("-rpcthreads", 4));
+        if (rpcThreads <= 0)
+            rpcThreads = 4;
+        const uint32_t maxPendingJobs = static_cast<uint32_t>(rpcThreads);
         uint32_t pendingJobs = 0;
-        uint32_t allJobs = conns.size();
+        uint32_t allJobs = static_cast<uint32_t>(conns.size());
 
         // copy connections
         auto walletCheck = boost::async(boost::launch::async, [&conns, &muJobs, &allJobs, &pendingJobs,
