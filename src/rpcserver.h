@@ -33,8 +33,9 @@ public:
 
     virtual std::iostream & stream() = 0;
     virtual std::string peer_address_to_string() const = 0;
+    virtual void start() = 0;
     virtual void close() = 0;
-    virtual RPCConnectionStream & bridge() = 0;
+    virtual bool is_closed() = 0;
 };
 
 /** Start RPC threads */

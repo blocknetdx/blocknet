@@ -460,40 +460,38 @@ template <typename Protocol>
 class AcceptedConnectionImpl : public AcceptedConnection
 {
 public:
-    explicit AcceptedConnectionImpl(boost::asio::io_service & io_service, boost::asio::ssl::context & context, bool fUseSSL)
-                   : _socket(io_service), _bridge(_socket),
-                     _stream(_bridge) { }
+    AcceptedConnectionImpl(asio::io_service& io_service, ssl::context& context, bool fUseSSL) {
+        _stream.expires_from_now(boost::posix_time::seconds(std::numeric_limits<int>::max()));
+    }
 
-    virtual std::iostream & stream()
-    {
+    virtual asio::ip::tcp::iostream & stream() {
         return _stream;
     }
 
-    virtual std::string peer_address_to_string() const
-    {
+    virtual std::string peer_address_to_string() const {
         return peer.address().to_string();
     }
 
-    virtual void close()
-    {
+    virtual void start() {
+        _stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpctimeout", 30)));
+    }
+
+    virtual void close() {
         if (_closed)
             return;
         _closed = true;
-        _bridge.stop();
         _stream.close();
     }
 
-    virtual RPCConnectionStream & bridge() {
-        return _bridge;
+    virtual bool is_closed() {
+        return _closed;
     }
 
     typename Protocol::endpoint peer;
 
 private:
-    boost::asio::ip::tcp::socket _socket;
-    RPCConnectionStream _bridge;
-    boost::iostreams::stream<RPCConnectionStream> _stream;
-    bool _closed{false};
+    asio::ip::tcp::iostream _stream;
+    std::atomic<bool> _closed{false};
 };
 
 void ServiceConnection(AcceptedConnection* conn);
@@ -518,7 +516,7 @@ static void RPCListen(boost::shared_ptr<basic_socket_acceptor<Protocol, SocketAc
     auto conn = boost::make_shared<AcceptedConnectionImpl<Protocol> >(acceptor->get_io_service(), context, fUseSSL);
 
     acceptor->async_accept(
-        conn->bridge().socket(),
+        *conn->stream().rdbuf(),
         conn->peer,
         boost::bind(&RPCAcceptHandler<Protocol, SocketAcceptorService>,
             acceptor,
@@ -548,6 +546,9 @@ static void RPCAcceptHandler(boost::shared_ptr<basic_socket_acceptor<Protocol, S
         LogPrintf("Failed to accept RPC connection: %s\n", __func__);
         return;
     }
+
+    // Start processing the connection
+    conn->start();
 
     if (error) {
         // TODO: Actually handle errors
