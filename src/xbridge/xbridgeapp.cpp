@@ -830,6 +830,8 @@ void App::updateActiveWallets()
             return;
         m_updatingWallets = true;
     }
+    if (ShutdownRequested())
+        return;
 
     Settings & s = settings();
     std::vector<std::string> wallets = s.exchangeWallets();
@@ -882,12 +884,10 @@ void App::updateActiveWallets()
             wp.m_user.empty() || wp.m_passwd.empty() ||
             wp.COIN == 0 || wp.blockTime == 0)
         {
-            LOG() << "read wallet " << *i << " with empty parameters>";
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+            removeConnector(wp.currency);
             continue;
         }
-
-        LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
-              << ":" << wp.m_port; // << " COIN=" << wp.COIN;
 
         xbridge::WalletConnectorPtr conn;
         if (wp.method == "ETHER")
@@ -914,15 +914,12 @@ void App::updateActiveWallets()
         {
             ERR() << "unknown session type " << __FUNCTION__;
         }
+
+        // If the wallet is invalid, remove it from the list
         if (!conn)
         {
-            continue;
-        }
-
-        if (!conn->init())
-        {
-            removeConnector(conn->currency);
-            ERR() << "connection not initialized " << *i << " " << __FUNCTION__;
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+            removeConnector(wp.currency);
             continue;
         }
 
@@ -956,6 +953,9 @@ void App::updateActiveWallets()
                                                                maxPendingJobs, &validConnections, &badConnections]() {
             while (true) {
                 boost::this_thread::interruption_point();
+                if (ShutdownRequested())
+                    break;
+
                 const int32_t size = conns.size();
                 for (int32_t i = size - 1; i >= 0; --i) {
                     {
@@ -969,9 +969,10 @@ void App::updateActiveWallets()
                     // Asynchronously check connection
                     boost::async(boost::launch::async, [conn, &muJobs, &allJobs, &pendingJobs,
                                                         &validConnections, &badConnections]() {
+                        if (ShutdownRequested())
+                            return;
                         // Check that wallet is reachable
-                        xbridge::rpc::WalletInfo info;
-                        if (!conn->getInfo(info)) {
+                        if (!conn->init()) {
                             {
                                 boost::mutex::scoped_lock l(muJobs);
                                 --pendingJobs;
@@ -1002,21 +1003,26 @@ void App::updateActiveWallets()
         // Synchronize all connection checks
         walletCheck.get();
 
-        // Add valid connections
-        for (auto & conn : validConnections) {
-            addConnector(conn);
-            validWallets.insert(conn->currency);
-        }
+        // Check for shutdown
+        if (!ShutdownRequested()) {
+            // Add valid connections
+            for (auto & conn : validConnections) {
+                addConnector(conn);
+                validWallets.insert(conn->currency);
+                LOG() << conn->currency << " \"" << conn->title << "\"" << " connected " << conn->m_ip << ":" << conn->m_port;
+            }
 
-        // Remove bad connections
-        for (auto & conn : badConnections) {
-            removeConnector(conn->currency);
-            ERR() << "wallet connection failed, is " << conn->title << " running?";
+            // Remove bad connections
+            for (auto & conn : badConnections) {
+                removeConnector(conn->currency);
+                WARN() << conn->currency << " \"" << conn->title << "\"" << " Failed to connect, check the config";
+            }
         }
     }
 
     // Let the exchange know about the new wallet list
-    xbridge::Exchange::instance().loadWallets(validWallets);
+    if (!ShutdownRequested())
+        xbridge::Exchange::instance().loadWallets(validWallets);
 
     {
         LOCK(m_updatingWalletsLock);
@@ -2622,9 +2628,6 @@ void App::Impl::onTimer()
 
         // erase expired tx
         io->post(boost::bind(&xbridge::Session::eraseExpiredPendingTransactions, session));
-
-        // get addressbook
-        io->post(boost::bind(&xbridge::Session::getAddressBook, session));
 
         // update active xwallets (in case a wallet goes offline)
         auto app = &xbridge::App::instance();
