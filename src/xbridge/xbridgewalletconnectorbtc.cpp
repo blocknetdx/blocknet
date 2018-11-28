@@ -1484,15 +1484,8 @@ bool BtcWalletConnector<CryptoProvider>::init()
 
     // wallet info
     rpc::WalletInfo info;
-    if (!rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
-    {
-        LOG() << "getnetworkinfo failed, trying call getinfo " << __FUNCTION__;
-
-        if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
-        {
-            WARN() << "init error: both calls of getnetworkinfo and getinfo failed " << __FUNCTION__;
-        }
-    }
+    if (!this->getInfo(info))
+        return false;
 
     minTxFee   = std::max(static_cast<uint64_t>(info.relayFee * COIN), minTxFee);
     feePerByte = std::max(static_cast<uint64_t>(minTxFee / 1024),      feePerByte);
@@ -1558,11 +1551,10 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
     if (!rpc::getblockchaininfo(m_user, m_passwd, m_ip, m_port, info) ||
         !rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
     {
-        LOG() << "getblockchaininfo & getnetworkinfo failed, trying call getinfo " << __FUNCTION__;
-
         if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
         {
-            WARN() << "all calls of getblockchaininfo & getnetworkinfo and getinfo failed " << __FUNCTION__;
+            WARN() << currency << " failed to respond to getblockchaininfo, getnetworkinfo, and getinfo. Is the wallet running? "
+                   << __FUNCTION__;
             return false;
         }
     }
