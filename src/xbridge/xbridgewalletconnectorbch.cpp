@@ -778,9 +778,15 @@ bool BchWalletConnector::init()
     if (!this->getInfo(info))
         return false;
 
-    minTxFee   = std::max(static_cast<uint64_t>(info.relayFee * COIN), minTxFee);
-    feePerByte = std::max(static_cast<uint64_t>(minTxFee / 1024),      feePerByte);
-    dustAmount = minTxFee;
+    auto fallbackMinTxFee = static_cast<uint64_t>(info.relayFee * 2 * COIN);
+    if (minTxFee == 0 && feePerByte == 0 && fallbackMinTxFee == 0) { // non-relay fee coin
+        minTxFee = 3000000; // units (e.g. satoshis for btc)
+        dustAmount = 5460;
+        WARN() << currency << " \"" << title << "\"" << " Using minimum fee of 300k sats";
+    } else {
+        minTxFee = std::max(fallbackMinTxFee, minTxFee);
+        dustAmount = fallbackMinTxFee > 0 ? fallbackMinTxFee : minTxFee;
+    }
 
     return true;
 }
