@@ -112,7 +112,7 @@ BlocknetLabelBtn { color: #016AFF; font-size: 13px; font-family: "Roboto"; text-
 BlocknetLabelBtn:!hover { color: #016AFF; }
 BlocknetLabelBtn:hover { color: white; }
 BlocknetDialog { background-color: #172F49; }
-BlocknetDialog #h2 { background-color: #172F49; border: 0; }
+BlocknetDialog #h3 { background-color: #172F49; border: 0; }
 
 BlocknetProposals #h4 { padding-left: 1px; }
 BlocknetProposals #title { font-size: 12px; color: white; font-family: "Roboto"; }

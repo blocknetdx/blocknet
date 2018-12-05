@@ -13,7 +13,7 @@ BlocknetDialog::BlocknetDialog(QString message, QString actionMsg, QString actio
     layout->setContentsMargins(50, 30, 50, 30);
 
     messageLbl = new QTextEdit(message);
-    messageLbl->setObjectName("h2");
+    messageLbl->setObjectName("h3");
     messageLbl->setReadOnly(true);
     messageLbl->setTextInteractionFlags(Qt::NoTextInteraction);
     messageLbl->setAlignment(Qt::AlignCenter);

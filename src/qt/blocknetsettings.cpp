@@ -218,7 +218,7 @@ BlocknetSettings::BlocknetSettings(QWidget *parent) : QFrame(parent), layout(new
     unitsDropdown = new BlocknetDropdown;
     unitsDropdown->setModel(new BitcoinUnits(this));
 
-    decimalLbl = new QLabel(tr("Decimal Digits:"));
+    decimalLbl = new QLabel(tr("Decimal digits:"));
     decimalLbl->setObjectName("title");
 
     decimalDropdown = new BlocknetDropdown;
@@ -274,10 +274,10 @@ BlocknetSettings::BlocknetSettings(QWidget *parent) : QFrame(parent), layout(new
     contentLayout->addWidget(networkDiv);
     contentLayout->addSpacing(20);
     contentLayout->addWidget(displayLbl);
-    contentLayout->addSpacing(20);
-    contentLayout->addWidget(languageBox);
-    contentLayout->addSpacing(15);
-    contentLayout->addWidget(translationBox);
+//    contentLayout->addSpacing(20);
+//    contentLayout->addWidget(languageBox);
+//    contentLayout->addSpacing(15);
+//    contentLayout->addWidget(translationBox);
     contentLayout->addSpacing(20);
     contentLayout->addWidget(unitsBox);
     contentLayout->addSpacing(20);
@@ -346,7 +346,7 @@ BlocknetSettings::BlocknetSettings(QWidget *parent) : QFrame(parent), layout(new
         mapper->submit();
         pwalletMain->MarkDirty();
         QMessageBox::information(this, tr("Restart Required"),
-                tr("Please restart the wallet for changes to take affect."));
+                tr("Please restart the wallet for changes to take effect."));
     });
     connect(connectSocks5Cb, SIGNAL(toggled(bool)), proxyTi, SLOT(setEnabled(bool)));
     connect(connectSocks5Cb, SIGNAL(toggled(bool)), portTi, SLOT(setEnabled(bool)));
@@ -387,7 +387,6 @@ void BlocknetSettings::setWalletModel(WalletModel *w) {
 
 void BlocknetSettings::onResetSettingsToDefault() {
     BlocknetDialog dlg(tr("Are you sure you want to reset all your settings to default?\nThis will close the wallet."), tr("Reset to Default"), tr(""), this);
-    dlg.setFixedSize(500, 380);
     connect(&dlg, &QDialog::accepted, this, [this]() {
         walletModel->getOptionsModel()->Reset();
         QApplication::quit();
