@@ -47,6 +47,7 @@ signals:
     void request();
     void settings();
     void tools();
+    void handleRestart(QStringList args);
 
 public slots:
     void setPage(BlocknetPage page);

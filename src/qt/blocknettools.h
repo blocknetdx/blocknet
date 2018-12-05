@@ -35,6 +35,10 @@ public:
     explicit BlocknetTools(QFrame *parent = nullptr);
     void setWalletModel(WalletModel *w);
 
+signals:
+    /** Get restart command-line parameters and handle restart */
+    void handleRestart(QStringList args);
+
 protected:
     void focusInEvent(QFocusEvent *evt);
 

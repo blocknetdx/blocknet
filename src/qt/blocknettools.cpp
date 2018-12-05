@@ -53,6 +53,9 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     tabBar->show();
 
     connect(tabBar, SIGNAL(tabChanged(int)), this, SLOT(tabChanged(int)));
+    connect(walletRepair, &BlocknetWalletRepair::handleRestart, this, [this](QStringList args) {
+        emit handleRestart(args);
+    });
 
     layout->addWidget(titleLbl);
     layout->addWidget(tabBar);
