@@ -12,6 +12,7 @@
 #include <QFrame>
 #include <QVBoxLayout>
 #include <QSet>
+#include <QFocusEvent>
 
 class BlocknetToolsPage : public QFrame {
     Q_OBJECT
@@ -35,6 +36,7 @@ public:
     void setWalletModel(WalletModel *w);
 
 protected:
+    void focusInEvent(QFocusEvent *evt);
 
 private slots:
     void tabChanged(int tab);

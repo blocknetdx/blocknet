@@ -3202,7 +3202,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="-35"/>
-        <source>Welcome to the BlocknetDX RPC console.</source>
+        <source>Welcome to the Blocknet RPC console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

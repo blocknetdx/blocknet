@@ -46,8 +46,9 @@ static QString categoryClass(int category)
     }
 }
 
-/* Object for executing console RPC commands in a separate thread.
-*/
+namespace BlocknetDebugConsoleRPC {
+
+// Object for executing console RPC commands in a separate thread.
 class RPCExecutor : public QObject
 {
     Q_OBJECT
@@ -159,10 +160,12 @@ bool parseCommandLine(std::vector<std::string>& args, const std::string& strComm
     }
 }
 
-void RPCExecutor::request(const QString& command)
+}
+
+void BlocknetDebugConsoleRPC::RPCExecutor::request(const QString& command)
 {
     std::vector<std::string> args;
-    if (!parseCommandLine(args, command.toStdString())) {
+    if (!BlocknetDebugConsoleRPC::parseCommandLine(args, command.toStdString())) {
         emit reply(BlocknetDebugConsole::CMD_ERROR, QString("Parse error: unbalanced ' or \""));
         return;
     }
@@ -210,6 +213,7 @@ BlocknetDebugConsole::BlocknetDebugConsole(QWidget *popup, int id, QFrame *paren
     titleLbl->setObjectName("h2");
 
     messagesWidget = new QTextEdit;
+    messagesWidget->setObjectName("consoleOutput");
     messagesWidget->setMinimumSize(0, 100);
     messagesWidget->setReadOnly(true);
     //messagesWidget->setTabKeyNavigation(false);
@@ -223,7 +227,9 @@ BlocknetDebugConsole::BlocknetDebugConsole(QWidget *popup, int id, QFrame *paren
     consoleBox->setLayout(consoleLayout);
 
     inputLbl = new QLabel(tr(">"));
+    inputLbl->setObjectName("console");
     lineEdit = new QLineEdit;
+    lineEdit->setObjectName("console");
     clearButton = new BlocknetLabelBtn;
     clearButton->setText(tr("Clear message window"));
 
@@ -245,19 +251,31 @@ BlocknetDebugConsole::BlocknetDebugConsole(QWidget *popup, int id, QFrame *paren
     connect(clearButton, SIGNAL(clicked()), this, SLOT(clear()));
     connect(lineEdit, SIGNAL(returnPressed()), this, SLOT(on_lineEdit_returnPressed()));
 
+    clear();
     startExecutor();
+}
+
+BlocknetDebugConsole::~BlocknetDebugConsole() {
+    emit stopExecutor();
 }
 
 void BlocknetDebugConsole::setWalletModel(WalletModel *w) {
     if (!walletModel)
         return;
-
     walletModel = w;
-    clear();
+}
+
+void BlocknetDebugConsole::focusInEvent(QFocusEvent *event) {
+    QWidget::focusInEvent(event);
+    lineEdit->setFocus();
 }
 
 void BlocknetDebugConsole::clear() {
     messagesWidget->clear();
+    history.clear();
+    historyPtr = 0;
+    lineEdit->clear();
+    lineEdit->setFocus();
 
     // Add smoothly scaled icon images.
     // (when using width/height on an img, Qt uses nearest instead of linear interpolation)
@@ -271,17 +289,16 @@ void BlocknetDebugConsole::clear() {
     // Set default style sheet
     messagesWidget->document()->setDefaultStyleSheet(
         "table { }"
-        "td.time { color: #6F8097; font-family: Roboto; font-size: 12px; padding-top: 3px; } "
+        "td.time { color: #6F8097; font-size: 12px; padding-top: 3px; } "
         "td.icon { padding-top: 8px; } "
-        "td.message { font-family: Roboto; font-size: 12px; color: white; } " // Todo: Remove fixed font-size
+        "td.message { font-size: 12px; color: white; } "
         "td.cmd-request { color: #4BF5C6; } "
-        "td.cmd-error { color: red; } "
+        "td.cmd-error { color: #FF7F71; } "
         "b { color: #4BF5C6; } ");
 
-    message(CMD_REPLY, (tr("Welcome to the BlocknetDX RPC console.") + "<br>" +
+    message(CMD_REPLY, (tr("Welcome to the Blocknet RPC console.") + "<br>" +
                            tr("Use up and down arrows to navigate history, and <b>Ctrl-L</b> to clear screen.") + "<br>" +
-                           tr("Type <b>help</b> for an overview of available commands.")),
-        true);
+                           tr("Type <b>help</b> for an overview of available commands.")), true);
 }
 
 void BlocknetDebugConsole::message(int category, const QString& message, bool html)
@@ -330,8 +347,8 @@ void BlocknetDebugConsole::scrollToEnd()
 
 void BlocknetDebugConsole::startExecutor()
 {
-    QThread* thread = new QThread;
-    RPCExecutor* executor = new RPCExecutor();
+    auto *thread = new QThread;
+    auto *executor = new BlocknetDebugConsoleRPC::RPCExecutor();
     executor->moveToThread(thread);
 
     // Replies from executor object must go to this object
@@ -369,10 +386,14 @@ bool BlocknetDebugConsole::eventFilter(QObject* obj, QEvent* event)
 {
     if (event->type() == QEvent::KeyPress) // Special key handling
     {
-        QKeyEvent* keyevt = static_cast<QKeyEvent*>(event);
+        auto *keyevt = dynamic_cast<QKeyEvent*>(event);
         int key = keyevt->key();
         Qt::KeyboardModifiers mod = keyevt->modifiers();
         switch (key) {
+        case Qt::Key_L:
+            if (mod & Qt::ControlModifier)
+                clear();
+            break;
         case Qt::Key_Up:
             if (obj == lineEdit) {
                 browseHistory(-1);

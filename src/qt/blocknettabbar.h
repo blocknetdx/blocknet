@@ -17,7 +17,7 @@ class BlocknetTabBar : public QFrame {
 public:
     explicit BlocknetTabBar(QFrame *parent = nullptr);
     ~BlocknetTabBar() override;
-    QSize sizeHint() const override;
+
     void addTab(QString title, int tab);
     int getTab() {
         return currentTab;

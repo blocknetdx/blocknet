@@ -14,6 +14,7 @@
 #include <QLabel>
 #include <QTextEdit>
 #include <QLineEdit>
+#include <QFocusEvent>
 
 class BlocknetDebugConsole : public BlocknetToolsPage {
     Q_OBJECT
@@ -23,6 +24,7 @@ protected:
 
 public:
     explicit BlocknetDebugConsole(QWidget *popup, int id, QFrame *parent = nullptr);
+    ~BlocknetDebugConsole();
     void setWalletModel(WalletModel *w);
 
     enum MessageClass {
@@ -40,6 +42,9 @@ public slots:
     void scrollToEnd();
     /** Go forward or back in history */
     void browseHistory(int offset);
+
+protected:
+    void focusInEvent(QFocusEvent *event);
 
 private slots:
     void on_lineEdit_returnPressed();

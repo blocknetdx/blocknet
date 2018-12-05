@@ -12,7 +12,7 @@
 #include <QEvent>
 #include <QMessageBox>
 #include <QList>
-#include <QDebug>
+#include <QSettings>
 
 enum BToolsTabs {
     DEBUG_CONSOLE = 1,
@@ -45,19 +45,20 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     tabBar = new BlocknetTabBar;
     tabBar->setParent(this);
     tabBar->addTab(tr("Debug Console"), DEBUG_CONSOLE);
-    tabBar->addTab(tr("Network Monitor"), NETWORK_MONITOR);
+//    tabBar->addTab(tr("Network Monitor"), NETWORK_MONITOR); // TODO Network monitor
     tabBar->addTab(tr("Peers List"), PEERS_LIST);
     tabBar->addTab(tr("BIP38 Tool"), BIP38_TOOL);
     tabBar->addTab(tr("Wallet Repair"), WALLET_REPAIR);
-    tabBar->addTab(tr("Multisend"), MULTISEND);
+//    tabBar->addTab(tr("Multisend"), MULTISEND); // TODO Multisend
     tabBar->show();
 
     connect(tabBar, SIGNAL(tabChanged(int)), this, SLOT(tabChanged(int)));
 
     layout->addWidget(titleLbl);
     layout->addWidget(tabBar);
-    layout->addWidget(debugConsole);
-    screen = debugConsole;
+
+    QSettings settings;
+    tabChanged(settings.value("nToolsTab", DEBUG_CONSOLE).toInt());
 }
 
 void BlocknetTools::setWalletModel(WalletModel *w) {
@@ -72,8 +73,16 @@ void BlocknetTools::setWalletModel(WalletModel *w) {
     multisend->setWalletModel(walletModel);
 }
 
+void BlocknetTools::focusInEvent(QFocusEvent *evt) {
+    QWidget::focusInEvent(evt);
+    if (screen)
+        screen->setFocus();
+}
+
 void BlocknetTools::tabChanged(int tab) {
     tabBar->showTab(tab);
+    QSettings settings;
+    settings.setValue("nToolsTab", tab);
 
     if (screen) {
         layout->removeWidget(screen);

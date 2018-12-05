@@ -20,10 +20,9 @@ BlocknetTabBtn::BlocknetTabBtn(QPushButton *parent) : QPushButton(parent), layou
 
     subLine->setObjectName("subLine");
     subLine->setFixedHeight(3);
-    subLine->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
     subLine->hide();
 
-    layout->addWidget(subLine, 0, Qt::AlignBottom);
+    layout->addWidget(subLine, 1, Qt::AlignBottom);
 }
 
 bool BlocknetTabBtn::event(QEvent *event) {

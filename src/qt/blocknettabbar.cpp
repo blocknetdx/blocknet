@@ -13,16 +13,16 @@
 #include <QDebug>
 
 BlocknetTabBar::BlocknetTabBar(QFrame *parent) : QFrame(parent), mainLayout(new QVBoxLayout), layout(new QHBoxLayout) {
-    this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
+    this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     this->setFixedHeight(60);
     mainLayout->setContentsMargins(QMargins());
     mainLayout->setSpacing(0);
     this->setLayout(mainLayout);
 
     auto *tabFrame = new QFrame;
+    tabFrame->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     layout->setContentsMargins(QMargins());
-    layout->setAlignment(Qt::AlignBottom | Qt::AlignLeft);
-    layout->setSpacing(15);
+    layout->setAlignment(Qt::AlignBottom);
     tabFrame->setLayout(layout);
 
     group = new QButtonGroup;
@@ -30,7 +30,7 @@ BlocknetTabBar::BlocknetTabBar(QFrame *parent) : QFrame(parent), mainLayout(new 
 
     auto *hdiv = new BlocknetHDiv;
 
-    mainLayout->addWidget(tabFrame, 0, Qt::AlignBottom);
+    mainLayout->addWidget(tabFrame);
     mainLayout->addWidget(hdiv, 0, Qt::AlignTop);
 
     connect(group, SIGNAL(buttonClicked(int)), this, SLOT(goToTab(int)));
@@ -57,11 +57,9 @@ void BlocknetTabBar::addTab(QString title, int tab) {
         BlocknetTab &c = tabs[i];
         auto *tabBtn = new BlocknetTabBtn;
         tabBtn->setText(c.title);
-        layout->addWidget(tabBtn, 0, Qt::AlignBottom);
+        layout->addWidget(tabBtn);
         group->addButton(tabBtn, c.tab);
     }
-
-    this->adjustSize();
 }
 
 void BlocknetTabBar::goToTab(int tab){
@@ -74,20 +72,6 @@ bool BlocknetTabBar::showTab(int tab) {
     if (btn)
         btn->setChecked(true);
     return true;
-}
-
-QSize BlocknetTabBar::sizeHint() const {
-    QSize r;
-    for (int i = 0; i < layout->count(); ++i) {
-        QWidget *w = layout->itemAt(i)->widget();
-        int maxX = w->pos().x() + w->width();
-        int maxY = w->pos().y() + w->height() + 3;
-        if (r.width() < maxX && maxX > 0)
-            r.setWidth(maxX);
-        if (r.height() < maxY && maxY > 0)
-            r.setHeight(maxY);
-    }
-    return r;
 }
 
 BlocknetTabBar::~BlocknetTabBar() = default;
