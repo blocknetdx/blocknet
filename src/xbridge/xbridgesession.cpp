@@ -3039,17 +3039,6 @@ void Session::sendListOfTransactions() const
 
 //*****************************************************************************
 //*****************************************************************************
-void Session::eraseExpiredPendingTransactions() const
-{
-    // check xbridge transactions
-    Exchange & e = Exchange::instance();
-    e.eraseExpiredTransactions();
-
-    // check client transactions
-}
-
-//*****************************************************************************
-//*****************************************************************************
 void Session::checkFinishedTransactions() const
 {
     Exchange & e = Exchange::instance();

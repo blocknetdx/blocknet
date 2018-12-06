@@ -57,10 +57,11 @@ public:
     WalletParam()
         : txVersion(1)
         , COIN(0)
-        , minTxFee(10000)
-        , feePerByte(200)
+        , minTxFee(0)
+        , feePerByte(0)
         , dustAmount(0)
         , blockTime(0)
+        , blockSize(1024)
         , requiredConfirmations(0)
         , serviceNodeFee(.015)
         , txWithTimeField(false)
@@ -93,6 +94,7 @@ public:
         dustAmount                  = other.dustAmount;
         method                      = other.method;
         blockTime                   = other.blockTime;
+        blockSize                   = other.blockSize;
         requiredConfirmations       = other.requiredConfirmations;
         txWithTimeField             = other.txWithTimeField;
         isLockCoinsSupported        = other.isLockCoinsSupported;
@@ -124,6 +126,9 @@ public:
 
     // block time in seconds
     uint32_t                     blockTime;
+
+    // block size in megabytes
+    uint32_t                     blockSize;
 
     // required confirmations for tx
     uint32_t                     requiredConfirmations;

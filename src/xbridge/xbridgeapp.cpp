@@ -171,6 +171,11 @@ protected:
     void checkAndRelayPendingOrders();
 
     /**
+     * @brief Check orders on timer and erase if expired.
+     */
+    void checkAndEraseExpiredTransactions();
+
+    /**
      * @brief Check for deposits that were spent by the counterparty.
      */
     void checkWatchesOnDepositSpends();
@@ -830,6 +835,8 @@ void App::updateActiveWallets()
             return;
         m_updatingWallets = true;
     }
+    if (ShutdownRequested())
+        return;
 
     Settings & s = settings();
     std::vector<std::string> wallets = s.exchangeWallets();
@@ -872,8 +879,10 @@ void App::updateActiveWallets()
         wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
         wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
         wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
+        wp.feePerByte                  = s.get<uint64_t>   (*i + ".FeePerByte", 0);
         wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
         wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
+//        wp.blockSize                   = s.get<int>        (*i + ".BlockSize", 0);
         wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
         wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
         wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
@@ -882,12 +891,15 @@ void App::updateActiveWallets()
             wp.m_user.empty() || wp.m_passwd.empty() ||
             wp.COIN == 0 || wp.blockTime == 0)
         {
-            LOG() << "read wallet " << *i << " with empty parameters>";
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+            removeConnector(wp.currency);
             continue;
         }
 
-        LOG() << "read wallet " << *i << " [" << wp.title << "] " << wp.m_ip
-              << ":" << wp.m_port; // << " COIN=" << wp.COIN;
+        if (wp.blockSize < 1024) {
+            wp.blockSize = 1024;
+            WARN() << wp.currency << " \"" << wp.title << "\"" << " Minimum block size required is 1024 kb";
+        }
 
         xbridge::WalletConnectorPtr conn;
         if (wp.method == "ETHER")
@@ -914,15 +926,12 @@ void App::updateActiveWallets()
         {
             ERR() << "unknown session type " << __FUNCTION__;
         }
+
+        // If the wallet is invalid, remove it from the list
         if (!conn)
         {
-            continue;
-        }
-
-        if (!conn->init())
-        {
-            removeConnector(conn->currency);
-            ERR() << "connection not initialized " << *i << " " << __FUNCTION__;
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+            removeConnector(wp.currency);
             continue;
         }
 
@@ -956,6 +965,9 @@ void App::updateActiveWallets()
                                                                maxPendingJobs, &validConnections, &badConnections]() {
             while (true) {
                 boost::this_thread::interruption_point();
+                if (ShutdownRequested())
+                    break;
+
                 const int32_t size = conns.size();
                 for (int32_t i = size - 1; i >= 0; --i) {
                     {
@@ -969,9 +981,10 @@ void App::updateActiveWallets()
                     // Asynchronously check connection
                     boost::async(boost::launch::async, [conn, &muJobs, &allJobs, &pendingJobs,
                                                         &validConnections, &badConnections]() {
+                        if (ShutdownRequested())
+                            return;
                         // Check that wallet is reachable
-                        xbridge::rpc::WalletInfo info;
-                        if (!conn->getInfo(info)) {
+                        if (!conn->init()) {
                             {
                                 boost::mutex::scoped_lock l(muJobs);
                                 --pendingJobs;
@@ -1002,21 +1015,26 @@ void App::updateActiveWallets()
         // Synchronize all connection checks
         walletCheck.get();
 
-        // Add valid connections
-        for (auto & conn : validConnections) {
-            addConnector(conn);
-            validWallets.insert(conn->currency);
-        }
+        // Check for shutdown
+        if (!ShutdownRequested()) {
+            // Add valid connections
+            for (auto & conn : validConnections) {
+                addConnector(conn);
+                validWallets.insert(conn->currency);
+                LOG() << conn->currency << " \"" << conn->title << "\"" << " connected " << conn->m_ip << ":" << conn->m_port;
+            }
 
-        // Remove bad connections
-        for (auto & conn : badConnections) {
-            removeConnector(conn->currency);
-            ERR() << "wallet connection failed, is " << conn->title << " running?";
+            // Remove bad connections
+            for (auto & conn : badConnections) {
+                removeConnector(conn->currency);
+                WARN() << conn->currency << " \"" << conn->title << "\"" << " Failed to connect, check the config";
+            }
         }
     }
 
     // Let the exchange know about the new wallet list
-    xbridge::Exchange::instance().loadWallets(validWallets);
+    if (!ShutdownRequested())
+        xbridge::Exchange::instance().loadWallets(validWallets);
 
     {
         LOCK(m_updatingWalletsLock);
@@ -2593,6 +2611,90 @@ void App::Impl::watchTraderDeposits()
     }
 }
 
+//*****************************************************************************
+//*****************************************************************************
+void App::Impl::checkAndEraseExpiredTransactions()
+{
+    // check xbridge transactions
+    Exchange & e = Exchange::instance();
+    e.eraseExpiredTransactions();
+
+    // check client transactions
+    auto currentTime = boost::posix_time::microsec_clock::universal_time();
+    std::map<uint256, TransactionDescrPtr> txs;
+    std::set<uint256> forErase;
+    {
+        LOCK(m_txLocker);
+        txs = m_transactions;
+    }
+    if (txs.empty())
+    {
+        return;
+    }
+    // check...
+    for (const std::pair<uint256, TransactionDescrPtr> & i : txs)
+    {
+        TransactionDescrPtr tx = i.second;
+        bool stateChanged = false;
+        {
+            TRY_LOCK(tx->_lock, txlock);
+            if (!txlock)
+            {
+                continue;
+            }
+            boost::posix_time::time_duration td = currentTime - tx->txtime;
+            boost::posix_time::time_duration tc = currentTime - tx->created;
+            if (tx->state == xbridge::TransactionDescr::trNew &&
+                td.total_seconds() > xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trOffline;
+                stateChanged = true;
+            }
+            else if (tx->state == xbridge::TransactionDescr::trPending &&
+                     td.total_seconds() > xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trExpired;
+                stateChanged = true;
+            }
+            else if ((tx->state == xbridge::TransactionDescr::trExpired ||
+                      tx->state == xbridge::TransactionDescr::trOffline) &&
+                     td.total_seconds() < xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trPending;
+                stateChanged = true;
+            }
+            else if ((tx->state == xbridge::TransactionDescr::trExpired ||
+                      tx->state == xbridge::TransactionDescr::trOffline) &&
+                     td.total_seconds() > xbridge::Transaction::TTL)
+            {
+                forErase.insert(i.first);
+            }
+            else if (tx->state == xbridge::TransactionDescr::trPending &&
+                     tc.total_seconds() > xbridge::Transaction::deadlineTTL)
+            {
+                forErase.insert(i.first);
+            }
+        }
+        if (stateChanged)
+        {
+            xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
+        }
+    }
+    // ...erase expired...
+    {
+        LOCK(m_txLocker);
+        for (const uint256 & id : forErase)
+        {
+            m_transactions.erase(id);
+        }
+    }
+    // ...and notify
+//    for (const uint256 & id : forErase)
+//    {
+//        xuiConnector.NotifyXBridgeTransactionRemoved(id);
+//    }
+}
+
 //******************************************************************************
 //******************************************************************************
 void App::Impl::onTimer()
@@ -2620,18 +2722,15 @@ void App::Impl::onTimer()
             }
         }
 
-        // erase expired tx
-        io->post(boost::bind(&xbridge::Session::eraseExpiredPendingTransactions, session));
-
-        // get addressbook
-        io->post(boost::bind(&xbridge::Session::getAddressBook, session));
-
         // update active xwallets (in case a wallet goes offline)
         auto app = &xbridge::App::instance();
         io->post(boost::bind(&xbridge::App::updateActiveWallets, app));
 
         // Check orders
         io->post(boost::bind(&Impl::checkAndRelayPendingOrders, this));
+
+        // erase expired tx
+        io->post(boost::bind(&Impl::checkAndEraseExpiredTransactions, this));
 
         Exchange & e = Exchange::instance();
         auto isServicenode = e.isStarted();
