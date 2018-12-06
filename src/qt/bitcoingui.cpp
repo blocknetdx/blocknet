@@ -153,6 +153,7 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
         connect(walletFrame, SIGNAL(addressbook()), this, SLOT(usedSendingAddresses()));
         connect(walletFrame, SIGNAL(settings()), this, SLOT(optionsClicked()));
         connect(walletFrame, SIGNAL(tools()), rpcConsole, SLOT(showInfo()));
+        connect(walletFrame, SIGNAL(handleRestart(QStringList)), this, SLOT(handleRestart(QStringList)));
         explorerWindow = new BlockExplorer(this);
     } else
 #endif // ENABLE_WALLET

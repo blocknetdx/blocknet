@@ -55,6 +55,8 @@
         <file alias="staking_inactive">res/icons/staking_inactive.png</file>
         <file alias="address-book-white">res/icons/address-book-white.png</file>
         <file alias="accordion-arrow">res/icons/accordion-arrow.png</file>
+        <file alias="console-arrow-in">res/icons/console-arrow-in.png</file>
+        <file alias="console-arrow-out">res/icons/console-arrow-out.png</file>
         <file alias="editpaste-white">res/icons/editpaste-white.png</file>
     </qresource>
     <qresource prefix="/css">

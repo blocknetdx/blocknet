@@ -113,6 +113,14 @@ BlocknetLabelBtn:!hover { color: #016AFF; }
 BlocknetLabelBtn:hover { color: white; }
 BlocknetDialog { background-color: #172F49; }
 BlocknetDialog #h3 { background-color: #172F49; border: 0; }
+BlocknetTabBtn { font-size: 13px; color: #6F8097; font-family: "Roboto"; }
+BlocknetTabBtn:checked { color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); background-color: transparent; }
+BlocknetTabBtn:pressed { background-color: transparent; }
+BlocknetTabBtn #subLine { background-color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); }
+BlocknetKeyDialog { background-color: #172F49; }
+BlocknetKeyDialog #h2 { background-color: #172F49; border: 0; }
+BlocknetKeyDialog #highlight { font-size: 13px; font-family: "Roboto"; color: white; }
+BlocknetKeyDialog #note { font-size: 13px; font-family: "Roboto"; color: #6F8097; }
 
 BlocknetProposals #h4 { padding-left: 1px; }
 BlocknetProposals #title { font-size: 12px; color: white; font-family: "Roboto"; }
@@ -185,13 +193,36 @@ BlocknetTransactionHistory QHeaderView { border: 0; background-color: #000D20; o
 BlocknetTransactionHistory QHeaderView::section { border: 0; qproperty-alignment:left; background-color: #000D20; font-size: 12px; font-family: "Roboto"; color:#6F8097; min-height:30px; }
 BlocknetTransactionHistory #dateRange QLabel { color: white; }
 
+BlocknetPeersList QTableView { color: white; background-color: transparent; }
+BlocknetPeersList QTableView QHeaderView { color: #37475C; background-color: transparent; }
+BlocknetPeersList QTableView QHeaderView::section { background-color: transparent; }
+BlocknetPeersList QTableView::item { padding: 3px; }
+BlocknetPeerDetails { border: 1px solid #37475C; background-color: #051937; }
+BlocknetPeerDetails #detailLbl { color: #6F8097; font-size: 12px; }
+
 BlocknetCoinControl QTableWidget { color: white; }
 #coinControlDialog { background-color: #172F49; }
 #coinControlDialog #feePanel { background-color: #172F49; }
 #coinControlDialog #feePanel QLabel { font-size: 13px; color: white; font-family: "Roboto"; }
+
+BlocknetBIP38Tool QScrollArea { background-color:transparent; }
+BlocknetBIP38Tool #contentFrame { background-color:transparent; }
+
+BlocknetAddressBtn { background-color: #016AFF; }
 
 BlocknetSettings QScrollArea { background-color:transparent; }
 BlocknetSettings BlocknetLabelBtn { padding-left: 5px; }
 BlocknetSettings #title { font-size: 13px; color: white; font-family: "Roboto"; }
 BlocknetSettings #contentFrame { background-color:transparent; }
 BlocknetSettings #description { font-size: 12px; color: #6F8097 }
+
+BlocknetDebugConsole #console { font-family: "Roboto Mono"; }
+BlocknetDebugConsole #consoleOutput { background-color: #172F49; padding: 10px 15px; font-family: "Roboto Mono"; border: 0; }
+BlocknetDebugConsole #consoleBox QLabel { color: white; font-family: "RobotoMono"; }
+BlocknetDebugConsole #consoleBox QLineEdit { height: 40px; font-size: 13px; color: white; font-family: "Roboto Mono"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
+
+BlocknetWalletRepair QScrollArea { background-color:transparent; }
+BlocknetWalletRepair QTextEdit { background-color:transparent; font-size: 12px; color: white; font-family: "Roboto"; }
+BlocknetWalletRepair #contentFrame { background-color:transparent; }
+BlocknetWalletRepair #title { font-size: 18px; color: white; font-family: "Roboto"; }
+BlocknetWalletRepair #description { font-size: 13px; color: #6F8097; font-family: "Roboto"; }

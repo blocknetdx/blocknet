@@ -102,12 +102,14 @@ QT_MOC_CPP = \
   qt/moc_blocknetcircle.cpp \
   qt/moc_blocknetavatar.cpp \
   qt/moc_blocknetclosebtn.cpp \
+  qt/moc_blocknetaddressbtn.cpp \
   qt/moc_blocknetdashboard.cpp \
   qt/moc_blocknettransactionhistory.cpp \
   qt/moc_blocknetfontmgr.cpp \
   qt/moc_blocknetformbtn.cpp \
   qt/moc_blocknetlabelbtn.cpp \
   qt/moc_blocknetactionbtn.cpp \
+  qt/moc_blocknettabbtn.cpp \
   qt/moc_blocknethdiv.cpp \
   qt/moc_blocknetdropdown.cpp \
   qt/moc_blockneticonbtn.cpp \
@@ -137,6 +139,14 @@ QT_MOC_CPP = \
   qt/moc_blocknetaddressedit.cpp \
   qt/moc_blocknetsettings.cpp \
   qt/moc_blocknettoolbar.cpp \
+  qt/moc_blocknettabbar.cpp \
+  qt/moc_blocknettools.cpp \
+  qt/moc_blocknetpeerslist.cpp \
+  qt/moc_blocknetpeerdetails.cpp \
+  qt/moc_blocknetbip38tool.cpp \
+  qt/moc_blocknetkeydialog.cpp \
+  qt/moc_blocknetdebugconsole.cpp \
+  qt/moc_blocknetwalletrepair.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetcoincontrol.cpp \
   qt/moc_blocknetsendfundsrequest.cpp
@@ -227,12 +237,14 @@ BITCOIN_QT_H = \
   qt/blocknetcircle.h \
   qt/blocknetavatar.h \
   qt/blocknetclosebtn.h \
+  qt/blocknetaddressbtn.h \
   qt/blocknetdashboard.h \
   qt/blocknettransactionhistory.h \
   qt/blocknetfontmgr.h \
   qt/blocknetformbtn.h \
   qt/blocknetlabelbtn.h \
   qt/blocknetactionbtn.h \
+  qt/blocknettabbtn.h \
   qt/blocknethdiv.h \
   qt/blocknetdropdown.h \
   qt/blockneticonbtn.h \
@@ -262,6 +274,14 @@ BITCOIN_QT_H = \
   qt/blocknetaddressedit.h \
   qt/blocknetsettings.h \
   qt/blocknettoolbar.h \
+  qt/blocknettabbar.h \
+  qt/blocknettools.h \
+  qt/blocknetpeerslist.h \
+  qt/blocknetpeerdetails.h \
+  qt/blocknetbip38tool.h \
+  qt/blocknetkeydialog.h \
+  qt/blocknetdebugconsole.h \
+  qt/blocknetwalletrepair.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \
   qt/blocknetcoincontrol.h \
@@ -278,6 +298,8 @@ RES_ICONS = \
   qt/res/icons/bitcoin_testnet.png \
   qt/res/icons/ms-icon-310x310.png \
   qt/res/icons/browse.png \
+  qt/res/icons/console-arrow-in.png \
+  qt/res/icons/console-arrow-out.png \
   qt/res/icons/clock1.png \
   qt/res/icons/clock2.png \
   qt/res/icons/clock3.png \
@@ -363,6 +385,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetcircle.cpp \
   qt/blocknetavatar.cpp \
   qt/blocknetclosebtn.cpp \
+  qt/blocknetaddressbtn.cpp \
   qt/blocknetdashboard.cpp \
   qt/blocknettransactionhistory.cpp \
   qt/blocknetproposals.cpp \
@@ -371,6 +394,7 @@ BITCOIN_QT_CPP = \
   qt/blocknetformbtn.cpp \
   qt/blocknetlabelbtn.cpp \
   qt/blocknetactionbtn.cpp \
+  qt/blocknettabbtn.cpp \
   qt/blocknethdiv.cpp \
   qt/blocknetdropdown.cpp \
   qt/blockneticonbtn.cpp \
@@ -432,6 +456,14 @@ BITCOIN_QT_CPP += \
   qt/blocknetcreateproposal2.cpp \
   qt/blocknetcreateproposal3.cpp \
   qt/blocknetsettings.cpp \
+  qt/blocknettabbar.cpp \
+  qt/blocknettools.cpp \
+  qt/blocknetpeerslist.cpp \
+  qt/blocknetpeerdetails.cpp \
+  qt/blocknetbip38tool.cpp \
+  qt/blocknetkeydialog.cpp \
+  qt/blocknetdebugconsole.cpp \
+  qt/blocknetwalletrepair.cpp \
   qt/blocknetwallet.cpp
 
 endif
