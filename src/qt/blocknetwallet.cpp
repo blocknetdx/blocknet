@@ -7,7 +7,6 @@
 #include "blocknetquicksend.h"
 #include "blocknetaddressbook.h"
 #include "blocknetsettings.h"
-#include "blocknettools.h"
 
 #include "optionsmodel.h"
 #include "transactiontablemodel.h"
@@ -114,7 +113,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
     if (screen) {
         screen->hide();
         contentBox->layout()->removeWidget(screen);
-        if (screen != sendFunds && screen != dashboard && screen != createProposal)
+        if (screen != sendFunds && screen != dashboard && screen != createProposal && screen != btools)
             screen->deleteLater();
     }
 
@@ -190,10 +189,13 @@ void BlocknetWallet::setPage(BlocknetPage page) {
         }
 //        case BlocknetPage::ANNOUNCEMENTS:
         case BlocknetPage::TOOLS: {
-            auto *tools = new BlocknetTools;
-            tools->setModels(walletModel, clientModel);
-            connect(tools, &BlocknetTools::handleRestart, this, [this](QStringList args) { emit handleRestart(args); });
-            screen = tools;
+            if (btools == nullptr) {
+                btools = new BlocknetTools;
+                connect(btools, &BlocknetTools::handleRestart, this, [this](QStringList args) { emit handleRestart(args); });
+            }
+            btools->setModels(walletModel, clientModel);
+            btools->show();
+            screen = btools;
             break;
         }
         default:

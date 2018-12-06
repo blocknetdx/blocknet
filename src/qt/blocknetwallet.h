@@ -13,6 +13,7 @@
 #include "blocknetproposals.h"
 #include "blocknettransactionhistory.h"
 #include "blocknettoolbar.h"
+#include "blocknettools.h"
 
 #include "clientmodel.h"
 #include "walletmodel.h"
@@ -84,6 +85,7 @@ private:
     BlocknetSendFunds *sendFunds = nullptr;
     BlocknetDashboard *dashboard = nullptr;
     BlocknetCreateProposal *createProposal = nullptr;
+    BlocknetTools *btools = nullptr;
     QWidget *screen = nullptr;
 };
 
