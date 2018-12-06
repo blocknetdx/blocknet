@@ -7,28 +7,27 @@
 
 #include "blocknettools.h"
 #include "blocknetpeerdetails.h"
+#include "clientmodel.h"
 
 #include <QFrame>
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QTableWidget>
 #include <QTableWidgetItem>
+#include <QShowEvent>
+#include <QHideEvent>
 
 class BlocknetPeersList : public BlocknetToolsPage {
     Q_OBJECT
 protected:
 
 public:
-    explicit BlocknetPeersList(QWidget *popup, int id, QFrame *parent = nullptr);
-    void setWalletModel(WalletModel *w);
+    explicit BlocknetPeersList(QWidget *, int id, QFrame *parent = nullptr);
+    void setClientModel(ClientModel *c);
 
-    struct Peer {
-        QString address;
-        QString version;
-        QString pingTime;
-        QString banScore;
-        QString latestBlock;
-    };
+protected:
+    void showEvent(QShowEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
 
 private slots:
     void displayPeerDetails(const QItemSelection &, const QItemSelection &);
@@ -36,16 +35,9 @@ private slots:
 private:
     QVBoxLayout *layout;
     QLabel *titleLbl;
-    QTableWidget *table;
-    QTableWidgetItem *contextItem = nullptr;
-    QVector<Peer> dataModel;
+    QTableView *table;
+    ClientModel *clientModel = nullptr;
     BlocknetPeerDetails *peerDetails = nullptr;
-    QWidget *popupWidget;
-
-    void initialize();
-    void setData(QVector<Peer> data);
-    void unwatch();
-    void watch();
 
     enum {
         COLUMN_ADDRESS,

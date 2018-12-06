@@ -35,19 +35,19 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     titleLbl->setFixedHeight(26);
 
     debugConsole = new BlocknetDebugConsole(this, DEBUG_CONSOLE);
-    networkMonitor = new BlocknetPeersList(this, NETWORK_MONITOR);
+//    networkMonitor = new BlocknetPeersList(this, NETWORK_MONITOR);
     peersList = new BlocknetPeersList(this, PEERS_LIST);
-    bip38Tool = new BlocknetBIP38Tool(this, BIP38_TOOL);
+//    bip38Tool = new BlocknetBIP38Tool(this, BIP38_TOOL);
     walletRepair = new BlocknetWalletRepair(this, WALLET_REPAIR);
-    multisend = new BlocknetPeersList(this, MULTISEND);
-    pages = { debugConsole, networkMonitor, peersList, bip38Tool, walletRepair, multisend };
+//    multisend = new BlocknetPeersList(this, MULTISEND);
+    pages = { debugConsole, /*networkMonitor,*/ peersList, /*bip38Tool,*/ walletRepair/*, multisend*/ };
 
     tabBar = new BlocknetTabBar;
     tabBar->setParent(this);
     tabBar->addTab(tr("Debug Console"), DEBUG_CONSOLE);
 //    tabBar->addTab(tr("Network Monitor"), NETWORK_MONITOR); // TODO Network monitor
     tabBar->addTab(tr("Peers List"), PEERS_LIST);
-    tabBar->addTab(tr("BIP38 Tool"), BIP38_TOOL);
+//    tabBar->addTab(tr("BIP38 Tool"), BIP38_TOOL);
     tabBar->addTab(tr("Wallet Repair"), WALLET_REPAIR);
 //    tabBar->addTab(tr("Multisend"), MULTISEND); // TODO Multisend
     tabBar->show();
@@ -64,16 +64,18 @@ BlocknetTools::BlocknetTools(QFrame *parent) : QFrame(parent), layout(new QVBoxL
     tabChanged(settings.value("nToolsTab", DEBUG_CONSOLE).toInt());
 }
 
-void BlocknetTools::setWalletModel(WalletModel *w) {
-    if (walletModel == w)
+void BlocknetTools::setModels(WalletModel *w, ClientModel *c) {
+    if (walletModel == w && clientModel == c)
         return;
     walletModel = w;
+    clientModel = c;
+
     debugConsole->setWalletModel(walletModel);
-    networkMonitor->setWalletModel(walletModel);
-    peersList->setWalletModel(walletModel);
-    bip38Tool->setWalletModel(walletModel);
+//    networkMonitor->setWalletModel(walletModel);
+    peersList->setClientModel(clientModel);
+//    bip38Tool->setWalletModel(walletModel);
     walletRepair->setWalletModel(walletModel);
-    multisend->setWalletModel(walletModel);
+//    multisend->setWalletModel(walletModel);
 }
 
 void BlocknetTools::focusInEvent(QFocusEvent *evt) {
@@ -96,21 +98,21 @@ void BlocknetTools::tabChanged(int tab) {
         case DEBUG_CONSOLE:
             screen = debugConsole;
             break;
-        case NETWORK_MONITOR:
-            screen = networkMonitor;
-            break;
+//        case NETWORK_MONITOR:
+//            screen = networkMonitor;
+//            break;
         case PEERS_LIST:
             screen = peersList;
             break;
-        case BIP38_TOOL:
-            screen = bip38Tool;
-            break;
+//        case BIP38_TOOL:
+//            screen = bip38Tool;
+//            break;
         case WALLET_REPAIR:
             screen = walletRepair;
             break;
-        case MULTISEND:
-            screen = multisend;
-            break;
+//        case MULTISEND:
+//            screen = multisend;
+//            break;
         default:
             return;
     }

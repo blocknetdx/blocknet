@@ -8,6 +8,7 @@
 #include "blocknettabbar.h"
 
 #include "walletmodel.h"
+#include "clientmodel.h"
 
 #include <QFrame>
 #include <QVBoxLayout>
@@ -33,7 +34,7 @@ class BlocknetTools : public QFrame {
     Q_OBJECT
 public:
     explicit BlocknetTools(QFrame *parent = nullptr);
-    void setWalletModel(WalletModel *w);
+    void setModels(WalletModel *w, ClientModel *c);
 
 signals:
     /** Get restart command-line parameters and handle restart */
@@ -47,6 +48,7 @@ private slots:
 
 private:
     WalletModel *walletModel;
+    ClientModel *clientModel;
     QVector<BlocknetToolsPage*> pages;
 
     QVBoxLayout *layout;

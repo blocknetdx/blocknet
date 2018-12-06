@@ -191,7 +191,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
 //        case BlocknetPage::ANNOUNCEMENTS:
         case BlocknetPage::TOOLS: {
             auto *tools = new BlocknetTools;
-            tools->setWalletModel(walletModel);
+            tools->setModels(walletModel, clientModel);
             connect(tools, &BlocknetTools::handleRestart, this, [this](QStringList args) { emit handleRestart(args); });
             screen = tools;
             break;

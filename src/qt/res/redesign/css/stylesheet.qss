@@ -193,10 +193,10 @@ BlocknetTransactionHistory QHeaderView { border: 0; background-color: #000D20; o
 BlocknetTransactionHistory QHeaderView::section { border: 0; qproperty-alignment:left; background-color: #000D20; font-size: 12px; font-family: "Roboto"; color:#6F8097; min-height:30px; }
 BlocknetTransactionHistory #dateRange QLabel { color: white; }
 
-BlocknetTools QTableWidget { color: white; background-color: transparent; }
-BlocknetTools QTableWidget QHeaderView { color: #37475C; background-color: transparent; }
-BlocknetTools QTableWidget QHeaderView::section { background-color: transparent; }
-BlocknetTools QTableWidget::item { padding: 3px; }
+BlocknetPeersList QTableView { color: white; background-color: transparent; }
+BlocknetPeersList QTableView QHeaderView { color: #37475C; background-color: transparent; }
+BlocknetPeersList QTableView QHeaderView::section { background-color: transparent; }
+BlocknetPeersList QTableView::item { padding: 3px; }
 BlocknetPeerDetails { border: 1px solid #37475C; background-color: #051937; }
 BlocknetPeerDetails #detailLbl { color: #6F8097; font-size: 12px; }
 
