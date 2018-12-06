@@ -171,6 +171,11 @@ protected:
     void checkAndRelayPendingOrders();
 
     /**
+     * @brief Check orders on timer and erase if expired.
+     */
+    void checkAndEraseExpiredTransactions();
+
+    /**
      * @brief Check for deposits that were spent by the counterparty.
      */
     void checkWatchesOnDepositSpends();
@@ -2606,6 +2611,90 @@ void App::Impl::watchTraderDeposits()
     }
 }
 
+//*****************************************************************************
+//*****************************************************************************
+void App::Impl::checkAndEraseExpiredTransactions()
+{
+    // check xbridge transactions
+    Exchange & e = Exchange::instance();
+    e.eraseExpiredTransactions();
+
+    // check client transactions
+    auto currentTime = boost::posix_time::microsec_clock::universal_time();
+    std::map<uint256, TransactionDescrPtr> txs;
+    std::set<uint256> forErase;
+    {
+        LOCK(m_txLocker);
+        txs = m_transactions;
+    }
+    if (txs.empty())
+    {
+        return;
+    }
+    // check...
+    for (const std::pair<uint256, TransactionDescrPtr> & i : txs)
+    {
+        TransactionDescrPtr tx = i.second;
+        bool stateChanged = false;
+        {
+            TRY_LOCK(tx->_lock, txlock);
+            if (!txlock)
+            {
+                continue;
+            }
+            boost::posix_time::time_duration td = currentTime - tx->txtime;
+            boost::posix_time::time_duration tc = currentTime - tx->created;
+            if (tx->state == xbridge::TransactionDescr::trNew &&
+                td.total_seconds() > xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trOffline;
+                stateChanged = true;
+            }
+            else if (tx->state == xbridge::TransactionDescr::trPending &&
+                     td.total_seconds() > xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trExpired;
+                stateChanged = true;
+            }
+            else if ((tx->state == xbridge::TransactionDescr::trExpired ||
+                      tx->state == xbridge::TransactionDescr::trOffline) &&
+                     td.total_seconds() < xbridge::Transaction::pendingTTL)
+            {
+                tx->state = xbridge::TransactionDescr::trPending;
+                stateChanged = true;
+            }
+            else if ((tx->state == xbridge::TransactionDescr::trExpired ||
+                      tx->state == xbridge::TransactionDescr::trOffline) &&
+                     td.total_seconds() > xbridge::Transaction::TTL)
+            {
+                forErase.insert(i.first);
+            }
+            else if (tx->state == xbridge::TransactionDescr::trPending &&
+                     tc.total_seconds() > xbridge::Transaction::deadlineTTL)
+            {
+                forErase.insert(i.first);
+            }
+        }
+        if (stateChanged)
+        {
+            xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
+        }
+    }
+    // ...erase expired...
+    {
+        LOCK(m_txLocker);
+        for (const uint256 & id : forErase)
+        {
+            m_transactions.erase(id);
+        }
+    }
+    // ...and notify
+//    for (const uint256 & id : forErase)
+//    {
+//        xuiConnector.NotifyXBridgeTransactionRemoved(id);
+//    }
+}
+
 //******************************************************************************
 //******************************************************************************
 void App::Impl::onTimer()
@@ -2633,15 +2722,15 @@ void App::Impl::onTimer()
             }
         }
 
-        // erase expired tx
-        io->post(boost::bind(&xbridge::Session::eraseExpiredPendingTransactions, session));
-
         // update active xwallets (in case a wallet goes offline)
         auto app = &xbridge::App::instance();
         io->post(boost::bind(&xbridge::App::updateActiveWallets, app));
 
         // Check orders
         io->post(boost::bind(&Impl::checkAndRelayPendingOrders, this));
+
+        // erase expired tx
+        io->post(boost::bind(&Impl::checkAndEraseExpiredTransactions, this));
 
         Exchange & e = Exchange::instance();
         auto isServicenode = e.isStarted();
