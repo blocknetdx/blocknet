@@ -77,7 +77,9 @@ bool getinfo(const std::string & rpcuser, const std::string & rpcpasswd,
 
         Object o = result.get_obj();
 
-        info.relayFee = find_value(o, "relayfee").get_real();
+        const Value & relayFee = find_value(o, "relayfee");
+        if (relayFee.type() != null_type)
+            info.relayFee = relayFee.get_real();
         info.blocks   = find_value(o, "blocks").get_int();
     }
     catch (std::exception & e)
@@ -125,8 +127,9 @@ bool getnetworkinfo(const std::string & rpcuser, const std::string & rpcpasswd,
         }
 
         Object o = result.get_obj();
-
-        info.relayFee = find_value(o, "relayfee").get_real();
+        const Value & relayFee = find_value(o, "relayfee");
+        if (relayFee.type() != null_type)
+            info.relayFee = relayFee.get_real();
     }
     catch (std::exception & e)
     {
@@ -1484,19 +1487,18 @@ bool BtcWalletConnector<CryptoProvider>::init()
 
     // wallet info
     rpc::WalletInfo info;
-    if (!rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
-    {
-        LOG() << "getnetworkinfo failed, trying call getinfo " << __FUNCTION__;
+    if (!this->getInfo(info))
+        return false;
 
-        if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
-        {
-            WARN() << "init error: both calls of getnetworkinfo and getinfo failed " << __FUNCTION__;
-        }
+    auto fallbackMinTxFee = static_cast<uint64_t>(info.relayFee * 2 * COIN);
+    if (minTxFee == 0 && feePerByte == 0 && fallbackMinTxFee == 0) { // non-relay fee coin
+        minTxFee = 3000000; // units (e.g. satoshis for btc)
+        dustAmount = 5460;
+        WARN() << currency << " \"" << title << "\"" << " Using minimum fee of 300k sats";
+    } else {
+        minTxFee = std::max(fallbackMinTxFee, minTxFee);
+        dustAmount = fallbackMinTxFee > 0 ? fallbackMinTxFee : minTxFee;
     }
-
-    minTxFee   = std::max(static_cast<uint64_t>(info.relayFee * COIN), minTxFee);
-    feePerByte = std::max(static_cast<uint64_t>(minTxFee / 1024),      feePerByte);
-    dustAmount = minTxFee;
 
     return true;
 }
@@ -1558,11 +1560,10 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
     if (!rpc::getblockchaininfo(m_user, m_passwd, m_ip, m_port, info) ||
         !rpc::getnetworkinfo(m_user, m_passwd, m_ip, m_port, info))
     {
-        LOG() << "getblockchaininfo & getnetworkinfo failed, trying call getinfo " << __FUNCTION__;
-
         if (!rpc::getinfo(m_user, m_passwd, m_ip, m_port, info))
         {
-            WARN() << "all calls of getblockchaininfo & getnetworkinfo and getinfo failed " << __FUNCTION__;
+            WARN() << currency << " failed to respond to getblockchaininfo, getnetworkinfo, and getinfo. Is the wallet running? "
+                   << __FUNCTION__;
             return false;
         }
     }

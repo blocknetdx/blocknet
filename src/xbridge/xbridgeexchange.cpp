@@ -117,7 +117,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         if (/*address.empty() || */ip.empty() || port.empty() ||
                                    user.empty() || passwd.empty())
         {
-            LOG() << "failed to read wallet " << *i << ", has empty parameters>";
+            WARN() << *i << " \"" << label << "\"" << " Failed to load the config";
             continue;
         }
 
@@ -130,8 +130,6 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         wp.m_passwd   = passwd;
         wp.dustAmount = minAmount;
         wp.txVersion  = txVersion;
-
-        LOG() << "read wallet " << *i << " \"" << label << "\" address <" << address << ">";
     }
 
     return true;

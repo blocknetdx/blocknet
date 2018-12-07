@@ -77,7 +77,6 @@ public:
     // service functions
     void sendListOfTransactions() const;
     void checkFinishedTransactions() const;
-    void eraseExpiredPendingTransactions() const;
     void getAddressBook() const;
 
     /**
