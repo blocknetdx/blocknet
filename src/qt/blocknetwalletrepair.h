@@ -41,7 +41,7 @@ private:
     QVBoxLayout *layout;
     QLabel *titleLbl;
     QWidget *popupWidget;
-    QTextEdit *descriptionTxt;
+    QLabel *descriptionTxt;
     QFrame *walletFrame;
     QHBoxLayout *walletLayout;
     QFrame *salvageFrame;

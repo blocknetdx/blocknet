@@ -40,9 +40,10 @@ BlocknetWalletRepair::BlocknetWalletRepair(QWidget *popup, int id, QFrame *paren
     titleLbl = new QLabel(tr("Wallet Repair"));
     titleLbl->setObjectName("h2");
 
-    descriptionTxt = new QTextEdit(tr("The options below will restart the wallet with command-line options to repair the wallet and fix issues with corrupt blockchain files or missing/obsolete transactions."));
-    descriptionTxt->setFixedHeight(45);
-    descriptionTxt->setReadOnly(true);
+    descriptionTxt = new QLabel(tr("The options below will restart the wallet with command-line options to repair the wallet and fix issues with corrupt blockchain files or missing/obsolete transactions."));
+    descriptionTxt->setObjectName("notes");
+    descriptionTxt->setMaximumHeight(100);
+    descriptionTxt->setWordWrap(true);
 
     auto *div1 = new BlocknetHDiv;
 
@@ -63,7 +64,7 @@ BlocknetWalletRepair::BlocknetWalletRepair(QWidget *popup, int id, QFrame *paren
     salvageTitleLbl = new QLabel(tr("Salvage Wallet"));
     salvageTitleLbl->setObjectName("title");
 
-    salvageDescLbl = new QLabel(tr("Attempt to recover private keys from a corrupt walle.dat."));
+    salvageDescLbl = new QLabel(tr("Attempt to recover private keys from a corrupt wallet.dat"));
     salvageDescLbl->setObjectName("description");
 
     salvageLayout->addWidget(salvageTitleLbl);
