@@ -143,7 +143,8 @@ void BlocknetSendFunds1::onAddressesChanged() {
         model->addRecipient(r);
     }
     // Remove any unspecified addresses
-    for (const BlocknetTransaction &b : model->recipients)  {
+    QSet<BlocknetTransaction> recipients = model->recipients;
+    for (const BlocknetTransaction &b : recipients)  {
         if (!hash.contains(b.address))
             model->removeRecipient(b);
     }

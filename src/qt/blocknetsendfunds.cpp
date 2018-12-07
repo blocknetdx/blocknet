@@ -121,9 +121,9 @@ void BlocknetSendFunds::crumbChanged(int crumb) {
         default:
             return;
     }
-    screen->setData(model);
     layout->addWidget(screen);
 
+    screen->setData(model);
     positionCrumb();
     screen->show();
     screen->setFocus();
