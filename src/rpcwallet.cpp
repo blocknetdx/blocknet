@@ -444,20 +444,30 @@ Value listaddressgroupings(const Array& /*params*/, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("listaddressgroupings", "") + HelpExampleRpc("listaddressgroupings", ""));
 
-    LOCK(cs_main);
     Array jsonGroupings;
-    map<CTxDestination, CAmount> balances = pwalletMain->GetAddressBalances();
-    BOOST_FOREACH (set<CTxDestination> grouping, pwalletMain->GetAddressGroupings()) {
+    map<CTxDestination, CAmount> balances;
+    {
+        LOCK(cs_main);
+        balances = pwalletMain->GetAddressBalances();
+    }
+    set<set<CTxDestination> > addressGroupings;
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        addressGroupings = pwalletMain->GetAddressGroupings();
+    }
+    map<CTxDestination, CAddressBookData> addressBook;
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        addressBook = pwalletMain->mapAddressBook;
+    }
+    BOOST_FOREACH (set<CTxDestination> grouping, addressGroupings) {
         Array jsonGrouping;
         BOOST_FOREACH (CTxDestination address, grouping) {
             Array addressInfo;
             addressInfo.push_back(CBitcoinAddress(address).ToString());
             addressInfo.push_back(ValueFromAmount(balances[address]));
-            {
-                LOCK(pwalletMain->cs_wallet);
-                if (pwalletMain->mapAddressBook.find(CBitcoinAddress(address).Get()) != pwalletMain->mapAddressBook.end())
-                    addressInfo.push_back(pwalletMain->mapAddressBook.find(CBitcoinAddress(address).Get())->second.name);
-            }
+            if (addressBook.find(CBitcoinAddress(address).Get()) != addressBook.end())
+                addressInfo.push_back(addressBook.find(CBitcoinAddress(address).Get())->second.name);
             jsonGrouping.push_back(addressInfo);
         }
         jsonGroupings.push_back(jsonGrouping);
@@ -1385,14 +1395,20 @@ Value listaccounts(const Array& params, bool fHelp)
             includeWatchonly = includeWatchonly | ISMINE_WATCH_ONLY;
 
     map<string, CAmount> mapAccountBalances;
+    std::map<CTxDestination, CAddressBookData> mapAddressBook;
+    std::map<uint256, CWalletTx> mapWallet;
+    std::string walletFile;
     {
-    LOCK2(cs_main, pwalletMain->cs_wallet);
-    BOOST_FOREACH (const PAIRTYPE(CTxDestination, CAddressBookData) & entry, pwalletMain->mapAddressBook) {
-        if (IsMine(*pwalletMain, entry.first) & includeWatchonly) // This address belongs to me
-            mapAccountBalances[entry.second.name] = 0;
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        mapAddressBook = pwalletMain->mapAddressBook;
+        mapWallet = pwalletMain->mapWallet;
+        walletFile = pwalletMain->strWalletFile;
+        BOOST_FOREACH (const PAIRTYPE(CTxDestination, CAddressBookData) & entry, mapAddressBook) {
+            if (IsMine(*pwalletMain, entry.first) & includeWatchonly) // This address belongs to me
+                mapAccountBalances[entry.second.name] = 0;
     }
 
-    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it) {
+    for (map<uint256, CWalletTx>::iterator it = mapWallet.begin(); it != mapWallet.end(); ++it) {
         const CWalletTx& wtx = (*it).second;
         CAmount nFee;
         string strSentAccount;
@@ -1407,15 +1423,18 @@ Value listaccounts(const Array& params, bool fHelp)
             mapAccountBalances[strSentAccount] -= s.amount;
         if (nDepth >= nMinDepth) {
             BOOST_FOREACH (const COutputEntry& r, listReceived)
-                if (pwalletMain->mapAddressBook.count(r.destination))
-                    mapAccountBalances[pwalletMain->mapAddressBook[r.destination].name] += r.amount;
+                if (mapAddressBook.count(r.destination))
+                    mapAccountBalances[mapAddressBook[r.destination].name] += r.amount;
                 else
                     mapAccountBalances[""] += r.amount;
         }
     }
 
     list<CAccountingEntry> acentries;
-    CWalletDB(pwalletMain->strWalletFile).ListAccountCreditDebit("*", acentries);
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        CWalletDB(walletFile).ListAccountCreditDebit("*", acentries);
+    }
     BOOST_FOREACH (const CAccountingEntry& entry, acentries)
         mapAccountBalances[entry.strAccount] += entry.nCreditDebit;
     }

@@ -77,8 +77,33 @@ public:
     // service functions
     void sendListOfTransactions() const;
     void checkFinishedTransactions() const;
-    void eraseExpiredPendingTransactions() const;
     void getAddressBook() const;
+
+    /**
+     * Redeems the specified order's deposit.
+     * @param xtx
+     * @param errCode
+     */
+    bool redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const;
+
+    /**
+     * Redeems the counterparty's deposit.
+     * @param xtx
+     * @param errCode
+     */
+    bool redeemOrderCounterpartyDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const;
+
+    /**
+     * Submits a trader's refund transaction on their behalf.
+     * @param orderId
+     * @param currency
+     * @param lockTime
+     * @param refTx
+     * @param errCode
+     * @return
+     */
+    bool refundTraderDeposit(const std::string & orderId, const std::string & currency, const uint32_t & lockTime,
+                             const std::string & refTx, int32_t & errCode) const;
 
 private:
     void setWorking() { m_isWorking = true; }

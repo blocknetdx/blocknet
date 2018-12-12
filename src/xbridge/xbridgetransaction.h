@@ -154,11 +154,11 @@ public:
     std::string                a_currency() const;
     uint64_t                   a_amount() const;
     std::string                a_payTx() const;
-    std::string                a_refTx() const;
+    std::string                a_refTx() const { return m_a.refTx(); }
     std::string                a_bintxid() const;
-
-    // TODO remove script
-    std::vector<unsigned char> a_innerScript() const;
+    uint32_t                   a_lockTime() const;
+    std::string                a_payTxId() const;
+    bool                       a_refunded() const { return m_a_refunded; }
 
     std::vector<unsigned char> a_pk1() const;
 
@@ -168,11 +168,11 @@ public:
     std::string                b_currency() const;
     uint64_t                   b_amount() const;
     std::string                b_payTx() const;
-    std::string                b_refTx() const;
+    std::string                b_refTx() const { return m_b.refTx(); }
     std::string                b_bintxid() const;
-
-    // TODO remove script
-    std::vector<unsigned char> b_innerScript() const;
+    uint32_t                   b_lockTime() const;
+    std::string                b_payTxId() const;
+    bool                       b_refunded() const { return m_b_refunded; }
 
     std::vector<unsigned char> b_pk1() const;
 
@@ -181,8 +181,23 @@ public:
     bool                       setKeys(const std::vector<unsigned char> & addr,
                                        const std::vector<unsigned char> & pk);
     bool                       setBinTxId(const std::vector<unsigned char> &addr,
-                                          const std::string & id,
-                                          const std::vector<unsigned char> & innerScript);
+                                          const std::string & id);
+
+    void a_setRefunded(const bool refunded) { m_a_refunded = refunded; }
+    void b_setRefunded(const bool refunded) { m_b_refunded = refunded; }
+
+    void a_setLockTime(const uint32_t lockTime) { m_a.setLockTime(lockTime); }
+    void b_setLockTime(const uint32_t lockTime) { m_b.setLockTime(lockTime); }
+
+    void a_setPayTxId(const std::string & payTxId) { m_a.setPayTxId(payTxId); }
+    void b_setPayTxId(const std::string & payTxId) { m_b.setPayTxId(payTxId); }
+
+    void a_setRefundTx(const std::string & refTxId, const std::string & refTx) {
+        m_a.setRefTxId(refTxId); m_a.setRefTx(refTx);
+    }
+    void b_setRefundTx(const std::string & refTxId, const std::string & refTx) {
+        m_b.setRefTxId(refTxId); m_b.setRefTx(refTx);
+    }
 
     friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
 
@@ -201,6 +216,8 @@ private:
 
     bool                       m_a_stateChanged;
     bool                       m_b_stateChanged;
+    bool                       m_a_refunded{false};
+    bool                       m_b_refunded{false};
 
     unsigned int               m_confirmationCounter;
 
@@ -212,9 +229,6 @@ private:
 
     std::string                m_bintxid1;
     std::string                m_bintxid2;
-
-    std::vector<unsigned char> m_innerScript1;
-    std::vector<unsigned char> m_innerScript2;
 
     XBridgeTransactionMember   m_a;
     XBridgeTransactionMember   m_b;

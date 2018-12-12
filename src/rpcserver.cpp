@@ -27,6 +27,7 @@
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 
 using namespace boost;
@@ -244,7 +245,7 @@ static const CRPCCommand vRPCCommands[] =
         {"control", "stop", &stop, true, true, false},
 
         /* P2P networking */
-        {"network", "getnetworkinfo", &getnetworkinfo, true, false, false},
+        {"network", "getnetworkinfo", &getnetworkinfo, true, true, false},
         {"network", "addnode", &addnode, true, true, false},
         {"network", "getaddednodeinfo", &getaddednodeinfo, true, true, false},
         {"network", "getconnectioncount", &getconnectioncount, true, false, false},
@@ -256,14 +257,14 @@ static const CRPCCommand vRPCCommands[] =
         /* Block chain and UTXO */
         {"blockchain", "getblockchaininfo", &getblockchaininfo, true, true, false},
         {"blockchain", "getbestblockhash", &getbestblockhash, true, false, false},
-        {"blockchain", "getblockcount", &getblockcount, true, false, false},
-        {"blockchain", "getblock", &getblock, true, false, false},
-        {"blockchain", "getblockhash", &getblockhash, true, false, false},
+        {"blockchain", "getblockcount", &getblockcount, true, true, false},
+        {"blockchain", "getblock", &getblock, true, true, false},
+        {"blockchain", "getblockhash", &getblockhash, true, true, false},
         {"blockchain", "getblockheader", &getblockheader, false, false, false},
         {"blockchain", "getchaintips", &getchaintips, true, false, false},
         {"blockchain", "getdifficulty", &getdifficulty, true, false, false},
         {"blockchain", "getmempoolinfo", &getmempoolinfo, true, true, false},
-        {"blockchain", "getrawmempool", &getrawmempool, true, false, false},
+        {"blockchain", "getrawmempool", &getrawmempool, true, true, false},
         {"blockchain", "gettxout", &gettxout, true, true, false},
         {"blockchain", "gettxoutsetinfo", &gettxoutsetinfo, true, false, false},
         {"blockchain", "verifychain", &verifychain, true, false, false},
@@ -459,36 +460,38 @@ template <typename Protocol>
 class AcceptedConnectionImpl : public AcceptedConnection
 {
 public:
-    AcceptedConnectionImpl(
-        asio::io_service& io_service,
-        ssl::context& context,
-        bool fUseSSL) : sslStream(io_service, context),
-                        _d(sslStream, fUseSSL),
-                        _stream(_d)
-    {
+    AcceptedConnectionImpl(asio::io_service& io_service, ssl::context& context, bool fUseSSL) {
+        _stream.expires_from_now(boost::posix_time::seconds(std::numeric_limits<int>::max()));
     }
 
-    virtual std::iostream& stream()
-    {
+    virtual asio::ip::tcp::iostream & stream() {
         return _stream;
     }
 
-    virtual std::string peer_address_to_string() const
-    {
+    virtual std::string peer_address_to_string() const {
         return peer.address().to_string();
     }
 
-    virtual void close()
-    {
+    virtual void start() {
+        _stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpctimeout", 30)));
+    }
+
+    virtual void close() {
+        if (_closed)
+            return;
+        _closed = true;
         _stream.close();
     }
 
+    virtual bool is_closed() {
+        return _closed;
+    }
+
     typename Protocol::endpoint peer;
-    asio::ssl::stream<typename Protocol::socket> sslStream;
 
 private:
-    SSLIOStreamDevice<Protocol> _d;
-    iostreams::stream<SSLIOStreamDevice<Protocol> > _stream;
+    asio::ip::tcp::iostream _stream;
+    std::atomic<bool> _closed{false};
 };
 
 void ServiceConnection(AcceptedConnection* conn);
@@ -510,10 +513,10 @@ static void RPCListen(boost::shared_ptr<basic_socket_acceptor<Protocol, SocketAc
     const bool fUseSSL)
 {
     // Accept connection
-    boost::shared_ptr<AcceptedConnectionImpl<Protocol> > conn(new AcceptedConnectionImpl<Protocol>(acceptor->get_io_service(), context, fUseSSL));
+    auto conn = boost::make_shared<AcceptedConnectionImpl<Protocol> >(acceptor->get_io_service(), context, fUseSSL);
 
     acceptor->async_accept(
-        conn->sslStream.lowest_layer(),
+        *conn->stream().rdbuf(),
         conn->peer,
         boost::bind(&RPCAcceptHandler<Protocol, SocketAcceptorService>,
             acceptor,
@@ -539,10 +542,17 @@ static void RPCAcceptHandler(boost::shared_ptr<basic_socket_acceptor<Protocol, S
         RPCListen(acceptor, context, fUseSSL);
 
     AcceptedConnectionImpl<ip::tcp>* tcp_conn = dynamic_cast<AcceptedConnectionImpl<ip::tcp>*>(conn.get());
+    if (!tcp_conn) {
+        LogPrintf("Failed to accept RPC connection: %s\n", __func__);
+        return;
+    }
+
+    // Start processing the connection
+    conn->start();
 
     if (error) {
         // TODO: Actually handle errors
-        LogPrintf("%s: Error: %s\n", __func__, error.message());
+        LogPrintf("Failed to accept RPC connection: %s: %s\n", error.message(), __func__);
     }
     // Restrict callers by IP.  It is important to
     // do this before starting client thread, to filter out
@@ -698,7 +708,7 @@ void StartRPCThreads()
 
             rpc_acceptors.push_back(acceptor);
             fListening = true;
-            rpc_acceptors.push_back(acceptor);
+
             // If dual IPv6/IPv4 bind successful, skip binding to IPv4 separately
             if (bBindAny && bindAddress == asio::ip::address_v6::any() && !v6_only_error)
                 break;

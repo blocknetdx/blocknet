@@ -29,23 +29,27 @@ ENV BASEPREFIX=$PROJECTDIR/depends
 ENV DISTDIR=/opt/blocknetdx/dist
 ENV HOST=x86_64-w64-mingw32
 
+# Download depends
+RUN mkdir -p $PROJECTDIR \
+  && cd $PROJECTDIR \
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-3.10.6-dev-win.tar.gz \
+  && [ "$(printf 'aa2ef991c76c4c138f99905e9e81be49770573dff7a8dc33fcd2593ae3d996d8 depends-3.10.6-dev-win.tar.gz' | sha256sum -c)" = "depends-3.10.6-dev-win.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+
 # Copy source files
-#RUN mkdir -p /opt/blocknetdx \
-#  && cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch v3.9.22 https://github.com/BlocknetDX/BlockDX.git
-COPY . /opt/blocknetdx/BlockDX/
-RUN cd $PROJECTDIR \
-  && wget -nv https://s3.amazonaws.com/blockdxbuilds/devbuilds/depends-3.9.32-dev-win.tar.gz \
-  && [ "$(printf '05c1dacb7b59cebd1448ace67562539a34b2ac98a8c42f5de4f77d5ba8f20587 depends-3.9.32-dev-win.tar.gz' | sha256sum -c)" = "depends-3.9.32-dev-win.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1) \
-  && rm -r $BASEPREFIX \
-  && tar xzvf depends-3.9.32-dev-win.tar.gz
+#RUN cd /opt/blocknetdx \
+#  && git clone --depth 1 --branch 3.10.6 https://github.com/BlocknetDX/BlockDX.git tmp \
+#  && mv tmp/* BlockDX/
+COPY . $PROJECTDIR/
 
 # Build source
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
+  && rm -r $BASEPREFIX \
+  && tar xzvf depends-3.10.6-dev-win.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CXXFLAGS='-Wno-deprecated' --enable-reduce-exports --disable-bench --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --with-gui=qt5 --prefix=/ \
+  && make clean \
   && echo "Building with cores: $ecores" \
   && make -j$ecores \
   && make install DESTDIR=$DISTDIR \

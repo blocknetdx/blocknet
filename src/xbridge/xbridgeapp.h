@@ -253,9 +253,10 @@ public:
     /**
      * @brief isValidAddress checks the correctness of the address
      * @param address checked address
+     * @param wallet connection to check against
      * @return true, if address valid
      */
-    bool isValidAddress(const std::string &address) const;
+    bool isValidAddress(const std::string &address, WalletConnectorPtr &conn) const;
 
     /**
      * @brief checkAcceptParams checks the correctness of the parameters
@@ -285,6 +286,33 @@ public:
      * on account has sufficient funds for operations
      */
     xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount, const std::string &address = "");
+
+    /**
+     * Store list of orders to watch for counterparty spent deposit.
+     * @param tr
+     * @return true if watching, false if not watching
+     */
+    bool watchForSpentDeposit(TransactionDescrPtr tr);
+
+    /**
+     * Stop watching for a spent deposit.
+     * @param tr
+     */
+    void unwatchSpentDeposit(TransactionDescrPtr tr);
+
+    /**
+     * Store list of orders to watch for redeeming refund on behalf of trader.
+     * @param tr
+     * @return true if watching, false if not watching
+     */
+    bool watchTraderDeposit(TransactionPtr tr);
+
+    /**
+     * Stop watching for a trader redeeming.
+     * @param tr
+     */
+    void unwatchTraderDeposit(TransactionPtr tr);
+
 public:
     // connectors
 
@@ -332,7 +360,7 @@ public:
      * Updates the active wallets list. Active wallets are those that are running and responding
      * to rpc calls.
      */
-    std::set<std::string> updateActiveWallets();
+    void updateActiveWallets();
 
     /**
      * @brief connectorByCurrency
@@ -440,7 +468,14 @@ public:
                          const std::vector<std::string> & services,
                          const uint32_t version);
 
-    bool findNodeWithService(const std::set<std::string> & services, CPubKey & node) const;
+    /**
+     * @brief Finds a servicenode with the specified services that is also not in an "excluded" set.
+     * @param services
+     * @param node
+     * @param notIn This set contains servicenode CPubKey's that we are ignoring
+     * @return
+     */
+    bool findNodeWithService(const std::set<std::string> & services, CPubKey & node, const std::set<CPubKey> & notIn) const;
 
 protected:
     void clearMempool();
@@ -449,6 +484,8 @@ private:
     std::unique_ptr<Impl> m_p;
     bool m_disconnecting;
     CCriticalSection m_lock;
+    bool m_updatingWallets{false};
+    CCriticalSection m_updatingWalletsLock;
 
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.

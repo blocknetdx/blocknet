@@ -13,9 +13,11 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/bind.hpp>
+#include <boost/chrono/chrono.hpp>
 #include <boost/current_function.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/thread.hpp>
 
 #include <chrono>
 #include <string>
