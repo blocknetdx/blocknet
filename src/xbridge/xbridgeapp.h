@@ -477,6 +477,23 @@ public:
      */
     bool findNodeWithService(const std::set<std::string> & services, CPubKey & node, const std::set<CPubKey> & notIn) const;
 
+    /**
+     * @brief Clears the bad wallet designations.
+     */
+    void clearBadWallets() {
+        LOCK(m_updatingWalletsLock);
+        m_badWallets.clear();
+    }
+
+    /**
+     * @brief Returns true if wallet update checks are already in progress, otherwise returns false.
+     * @return
+     */
+    bool isUpdatingWallets() {
+        LOCK(m_updatingWalletsLock);
+        return m_updatingWallets;
+    }
+
 protected:
     void clearMempool();
 
@@ -484,6 +501,7 @@ private:
     std::unique_ptr<Impl> m_p;
     bool m_disconnecting;
     CCriticalSection m_lock;
+    std::map<std::string, boost::posix_time::ptime> m_badWallets;
     bool m_updatingWallets{false};
     CCriticalSection m_updatingWalletsLock;
 
