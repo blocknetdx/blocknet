@@ -2850,7 +2850,6 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         }
 
         sendCancelTransaction(tr, reason);
-        e.deletePendingTransaction(txid);
         return true;
     }
 
@@ -2955,6 +2954,9 @@ bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
     }
 
     LOG() << "canceling order " << tx->id().GetHex();
+
+    tx->cancel();
+    e.deletePendingTransaction(tx->id());
 
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
     reply->append(tx->id().begin(), 32);
