@@ -262,7 +262,7 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
             txid = result.get_str();
         }
 
-        TXLOG() << "xdata sendrawtransaction " << rawtx;
+        TXLOG() << "feetx sendrawtransaction " << rawtx;
     }
     catch (json_spirit::Object & obj)
     {
@@ -284,7 +284,7 @@ bool storeDataIntoBlockchain(const std::vector<unsigned char> & dstScript,
 
     if (errCode != 0)
     {
-        TXERR() << "xdata sendrawtransaction " << rawtx;
+        TXERR() << "feetx sendrawtransaction " << rawtx;
         LOG() << "error send xdata transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
         return false;
     }
