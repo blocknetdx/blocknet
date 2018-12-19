@@ -430,7 +430,7 @@ bool App::loadSettings()
         std::string path(GetDataDir(false).string());
         path += "/xbridge.conf";
         s.read(path.c_str());
-        LOG() << "Finished loading config" << path;
+        LOG() << "Finished loading config " << path;
     } catch (...) {
         return false;
     }
