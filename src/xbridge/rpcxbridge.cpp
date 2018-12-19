@@ -63,8 +63,16 @@ Value dxLoadXBridgeConf(const Array & params, bool fHelp)
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "This function does not accept any parameter");
 
-    auto success = xbridge::App::instance().loadSettings();
-    xbridge::App::instance().updateActiveWallets();
+    if (ShutdownRequested())
+        throw runtime_error("dxLoadXBridgeConf\nFailed to reload the config because a shutdown request is in progress.");
+
+    auto & app = xbridge::App::instance();
+    if (app.isUpdatingWallets()) // let the user know if wallets are being actively updated
+        throw runtime_error("dxLoadXBridgeConf\nAn existing wallet update is currently in progress, please wait until it has completed.");
+
+    auto success = app.loadSettings();
+    app.clearBadWallets(); // clear any bad wallet designations b/c user is explicitly requesting a wallet update
+    app.updateActiveWallets();
     return success;
 }
 

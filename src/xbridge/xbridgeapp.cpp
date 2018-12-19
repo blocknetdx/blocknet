@@ -863,8 +863,27 @@ void App::updateActiveWallets()
     // Store connectors from config
     std::vector<WalletConnectorPtr> conns;
 
+    // Copy bad wallets
+    std::map<std::string, boost::posix_time::ptime> badWallets;
+    {
+        LOCK(m_updatingWalletsLock);
+        badWallets = m_badWallets;
+    }
+
     for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
     {
+        // Ignore bad wallets until expiry
+        if (badWallets.count(*i)) {
+            const auto last_time = badWallets[*i];
+            const auto current_time = boost::posix_time::second_clock::universal_time();
+            // Wait ~5 minutes before doing wallet check on bad wallet
+            if (static_cast<boost::posix_time::time_duration>(current_time - last_time).total_seconds() >= 300) {
+                LOCK(m_updatingWalletsLock);
+                m_badWallets.erase(*i);
+            } else // not ready to do wallet check
+                continue;
+        }
+
         WalletParam wp;
         wp.currency                    = *i;
         wp.title                       = s.get<std::string>(*i + ".Title");
@@ -1027,6 +1046,11 @@ void App::updateActiveWallets()
             // Remove bad connections
             for (auto & conn : badConnections) {
                 removeConnector(conn->currency);
+                {
+                    LOCK(m_updatingWalletsLock);
+                    boost::posix_time::ptime time{boost::posix_time::second_clock::universal_time()};
+                    m_badWallets[conn->currency] = time;
+                }
                 WARN() << conn->currency << " \"" << conn->title << "\"" << " Failed to connect, check the config";
             }
         }
@@ -2724,7 +2748,11 @@ void App::Impl::onTimer()
 
         // update active xwallets (in case a wallet goes offline)
         auto app = &xbridge::App::instance();
-        io->post(boost::bind(&xbridge::App::updateActiveWallets, app));
+        static uint32_t updateActiveWallets_c = 0;
+        if (++updateActiveWallets_c == 2) { // every ~30 seconds
+            updateActiveWallets_c = 0;
+            io->post(boost::bind(&xbridge::App::updateActiveWallets, app));
+        }
 
         // Check orders
         io->post(boost::bind(&Impl::checkAndRelayPendingOrders, this));
