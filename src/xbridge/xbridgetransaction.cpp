@@ -229,7 +229,7 @@ bool Transaction::isExpired() const
     if (m_state == trNew && tdCreated.total_seconds() > deadlineTTL)
         return true;
 
-    if (m_state == trNew && tdLast.total_seconds() > pendingTTL)
+    if (m_state == trNew && tdLast.total_seconds() > (pendingTTL*2))
         return true;
 
     if (m_state > trNew && tdLast.total_seconds() > TTL)
