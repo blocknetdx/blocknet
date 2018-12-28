@@ -809,8 +809,12 @@ bool Exchange::updateTimestampOrRemoveExpired(const TransactionPtr & tx)
     // found, check if expired
     if (!m_p->m_pendingTransactions[txid]->isExpired())
     {
+        // return false if update is too soon
+        if (m_p->m_pendingTransactions[txid]->updateTooSoon()) {
+            m_p->m_pendingTransactions[txid]->m_lock.unlock();
+            return false;
+        }
         m_p->m_pendingTransactions[txid]->updateTimestamp();
-
         m_p->m_pendingTransactions[txid]->m_lock.unlock();
         return true;
     }

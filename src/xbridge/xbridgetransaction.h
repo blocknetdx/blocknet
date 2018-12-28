@@ -112,6 +112,13 @@ public:
      * @brief updateTimestamp - update transaction time
      */
     void updateTimestamp();
+
+    /**
+     * @brief updateTooSoon - Returns true if the order update ping is too soon.
+     * @return true if update is too soon
+     */
+    bool updateTooSoon();
+
     /**
      * @brief createdTime
      * @return time of creation transaction

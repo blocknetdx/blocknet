@@ -198,6 +198,14 @@ void Transaction::updateTimestamp()
 
 //*****************************************************************************
 //*****************************************************************************
+bool Transaction::updateTooSoon()
+{
+    auto current = boost::posix_time::microsec_clock::universal_time();
+    return (current - m_last).total_seconds() < pendingTTL/2;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 boost::posix_time::ptime Transaction::createdTime() const
 {
     return m_created;
@@ -229,7 +237,7 @@ bool Transaction::isExpired() const
     if (m_state == trNew && tdCreated.total_seconds() > deadlineTTL)
         return true;
 
-    if (m_state == trNew && tdLast.total_seconds() > (pendingTTL*2))
+    if (m_state == trNew && tdLast.total_seconds() > pendingTTL)
         return true;
 
     if (m_state > trNew && tdLast.total_seconds() > TTL)

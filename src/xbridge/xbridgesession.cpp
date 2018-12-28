@@ -131,6 +131,7 @@ protected:
     bool redeemOrderCounterpartyDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const;
     bool refundTraderDeposit(const std::string & orderId, const std::string & currency, const uint32_t & lockTime,
                              const std::string & refTx, int32_t & errCode) const;
+    void sendTransaction(uint256 & id) const;
 
 protected:
     std::vector<unsigned char> m_myid;
@@ -505,10 +506,12 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     if (t->id() == id) {
         // Update the transaction timestamp
         if (e.updateTimestampOrRemoveExpired(t)) {
-            LOG() << "order already received " << id.ToString()
+            LOG() << "order already received, updating timestamp " << id.ToString()
                   << " " << __FUNCTION__;
-            return true;
+            // relay order to network
+            sendTransaction(id);
         }
+        return true;
     }
 
     // source
@@ -698,43 +701,14 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
                 LOG() << __FUNCTION__ << d;
 
+                TransactionPtr tr = e.pendingTransaction(id);
+                LOG() << __FUNCTION__ << tr;
+
                 xuiConnector.NotifyXBridgeTransactionReceived(d);
             }
-
-            TransactionPtr tr = e.pendingTransaction(id);
-            if (tr->id() == uint256())
-            {
-                LOG() << "failed to find newly created order " << id.ToString()
-                      << " " << __FUNCTION__;
-                return false;
-            }
-
-            LOCK(tr->m_lock);
-
-            std::string firstCurrency = tr->a_currency();
-            std::vector<unsigned char> fc(8, 0);
-            std::copy(firstCurrency.begin(), firstCurrency.end(), fc.begin());
-            std::string secondCurrency = tr->b_currency();
-            std::vector<unsigned char> sc(8, 0);
-            std::copy(secondCurrency.begin(), secondCurrency.end(), sc.begin());
-
-            // broadcast send pending transaction packet
-            XBridgePacketPtr reply(new XBridgePacket(xbcPendingTransaction));
-            reply->append(tr->id().begin(), XBridgePacket::hashSize);
-            reply->append(fc);
-            reply->append(tr->a_amount());
-            reply->append(sc);
-            reply->append(tr->b_amount());
-            reply->append(m_myid);
-            reply->append(util::timeToInt(tr->createdTime()));
-            reply->append(tr->blockHash().begin(), 32);
-
-            reply->sign(e.pubKey(), e.privKey());
-
-            sendPacketBroadcast(reply);
-
-            LOG() << __FUNCTION__ << tr;
         }
+
+        sendTransaction(id);
     }
 
     return true;
@@ -2842,13 +2816,10 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 
         if(!tr->isValid())
         {
-            LOG() << "can't find order " << __FUNCTION__;
             return true;
         }
 
         LOCK(tr->m_lock);
-
-        LOG() << __FUNCTION__ << tr;
 
         if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
         {
@@ -2864,17 +2835,16 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown order " << HexStr(txid) << " " << __FUNCTION__;
         return true;
     }
 
-    if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey))
+    // Only Maker, Taker, or Servicenode can cancel order
+    if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey) && !packet->verify(xtx->mPubKey))
     {
         LOG() << "bad packet signature for cancelation request on order " << xtx->id.GetHex() << " , not canceling " << __FUNCTION__;
         return true;
     }
 
-    // rollback, commit revert transaction
     WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->fromCurrency);
     if (!conn)
     {
@@ -2883,7 +2853,8 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     }
 
     // unlock coins
-    conn->lockCoins(xtx->usedCoins, false);
+    if (xtx->state != TransactionDescr::trCancelled)
+        conn->lockCoins(xtx->usedCoins, false);
 
     if (xtx->state < TransactionDescr::trCreated)
     {
@@ -2988,11 +2959,12 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
 
     reply->sign(tx->mPubKey, tx->mPrivKey);
 
+    processTransactionCancel(reply); // process local cancel immediately
     sendPacketBroadcast(reply);
 
-    // update transaction state for gui
     tx->state  = TransactionDescr::trCancelled;
     tx->reason = reason;
+    // update transaction state for gui
     xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
 
     return true;
@@ -3044,6 +3016,46 @@ void Session::sendListOfTransactions() const
 
         m_p->sendPacketBroadcast(packet);
     }
+}
+
+void Session::Impl::sendTransaction(uint256 & id) const
+{
+    Exchange & e = Exchange::instance();
+    if (!e.isStarted())
+    {
+        return;
+    }
+
+    TransactionPtr tr = e.pendingTransaction(id);
+    if (tr->id() != id)
+        return;
+
+    LOCK(tr->m_lock);
+
+    XBridgePacketPtr packet(new XBridgePacket(xbcPendingTransaction));
+
+    // field length must be 8 bytes
+    std::vector<unsigned char> fc(8, 0);
+    std::string tmp = tr->a_currency();
+    std::copy(tmp.begin(), tmp.end(), fc.begin());
+
+    // field length must be 8 bytes
+    std::vector<unsigned char> tc(8, 0);
+    tmp = tr->b_currency();
+    std::copy(tmp.begin(), tmp.end(), tc.begin());
+
+    packet->append(tr->id().begin(), 32);
+    packet->append(fc);
+    packet->append(tr->a_amount());
+    packet->append(tc);
+    packet->append(tr->b_amount());
+    packet->append(m_myid);
+    packet->append(util::timeToInt(tr->createdTime()));
+    packet->append(tr->blockHash().begin(), 32);
+
+    packet->sign(e.pubKey(), e.privKey());
+
+    sendPacketBroadcast(packet);
 }
 
 //*****************************************************************************
