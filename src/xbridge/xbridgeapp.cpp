@@ -2399,7 +2399,7 @@ void App::Impl::checkAndRelayPendingOrders() {
         if (!order->isLocal()) // only process local orders
             continue;
 
-        auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 300; // 5min
+        auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 240; // 4min
         auto newOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 15; // 15sec
 
         if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew)
@@ -2734,17 +2734,6 @@ void App::Impl::onTimer()
 
         // call check expired transactions
         io->post(boost::bind(&xbridge::Session::checkFinishedTransactions, session));
-
-        // send transactions list
-        {
-            static uint32_t counter = 0;
-            if (++counter == 20)
-            {
-                // 15 sec * 20 = 5 min
-                counter = 0;
-                io->post(boost::bind(&xbridge::Session::sendListOfTransactions, session));
-            }
-        }
 
         // update active xwallets (in case a wallet goes offline)
         auto app = &xbridge::App::instance();
