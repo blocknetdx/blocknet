@@ -494,6 +494,18 @@ public:
         return m_updatingWallets;
     }
 
+    /**
+     * @brief Lock the specified fee utxos. This prevents fee utxos from being used in orders.
+     * @param feeUtxos
+     */
+    void lockFeeUtxos(std::set<xbridge::wallet::UtxoEntry> & feeUtxos);
+
+    /**
+     * @brief Unlocks the fee utxos, allowing them to be used in orders.
+     * @param feeUtxos
+     */
+    void unlockFeeUtxos(std::set<xbridge::wallet::UtxoEntry> & feeUtxos);
+
 protected:
     void clearMempool();
 
@@ -504,6 +516,9 @@ private:
     std::map<std::string, boost::posix_time::ptime> m_badWallets;
     bool m_updatingWallets{false};
     CCriticalSection m_updatingWalletsLock;
+
+    std::set<xbridge::wallet::UtxoEntry> m_feeUtxos;
+    CCriticalSection m_feeUtxosLock;
 
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.

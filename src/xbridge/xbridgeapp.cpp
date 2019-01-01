@@ -1588,29 +1588,111 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         return xbridge::Error::INSIFFICIENT_FUNDS_DX;
     }
 
+    // service node pub key
+    ::CPubKey pksnode;
+    {
+        uint32_t len = ptr->sPubKey.size();
+        if (len != 33) {
+            LOG() << "bad service node public key, len " << len << " " << __FUNCTION__;
+            return xbridge::Error::NO_SERVICE_NODE;
+        }
+        pksnode.Set(ptr->sPubKey.begin(), ptr->sPubKey.end());
+    }
+    // Get servicenode collateral address
+    std::vector<unsigned char> snodePubKey;
+    {
+        CServicenode * snode = mnodeman.Find(pksnode);
+        if (!snode)
+        {
+            // try to uncompress pubkey and search
+            if (pksnode.Decompress())
+            {
+                snode = mnodeman.Find(pksnode);
+            }
+            if (!snode)
+            {
+                // bad service node, no more
+                LOG() << "unknown service node pubkey " << pksnode.GetID().ToString() << " " << __FUNCTION__;
+                return xbridge::Error::NO_SERVICE_NODE;
+            }
+        }
+
+        snodePubKey = snode->pubKeyCollateralAddress.Raw();
+
+        LOG() << "use service node " << snode->vin.prevout.hash.ToString() << " " << __FUNCTION__;
+    }
+
+    // transaction info
+    CScript destScript;
+    destScript << CScript::EncodeOP_N(1);
+    destScript << snodePubKey;
+    {
+        json_spirit::Array info;
+        info.push_back(ptr->id.GetHex());
+        info.push_back(ptr->fromCurrency);
+        info.push_back(ptr->fromAmount);
+        info.push_back(ptr->toCurrency);
+        info.push_back(ptr->toAmount);
+        std::string strInfo = write_string(json_spirit::Value(info));
+
+        uint32_t keyCounter = 0;
+        for (auto si = strInfo.begin(); si < strInfo.end(); si += XBridgePacket::uncompressedPubkeySizeRaw)
+        {
+            std::vector<unsigned char> pk(XBridgePacket::uncompressedPubkeySize, ' ');
+            pk[0] = 0x04;
+            std::copy(si, si + std::min(strInfo.size() - XBridgePacket::uncompressedPubkeySizeRaw * keyCounter,
+                                        static_cast<size_t>(XBridgePacket::uncompressedPubkeySizeRaw)), pk.begin()+1);
+
+            destScript << pk;
+            ++keyCounter;
+        }
+
+        destScript << CScript::EncodeOP_N(keyCounter+1) << OP_CHECKMULTISIG;
+    }
+
+    if (!rpc::createFeeTransaction(destScript, connFrom->serviceNodeFee, std::vector<unsigned char>(),
+            ptr->feeUtxos, ptr->rawFeeTx))
+    {
+        ERR() << "Failed to take order, couldn't prepare the service node fee " << __FUNCTION__;
+        return xbridge::Error::INSIFFICIENT_FUNDS;
+    }
+
+    // Lock the fee utxos
+    lockFeeUtxos(ptr->feeUtxos);
+
     uint64_t utxoAmount = 0;
     uint64_t fee1       = 0;
     uint64_t fee2       = 0;
 
     std::vector<wallet::UtxoEntry> outputs;
     connFrom->getUnspent(outputs);
+    // Exclude utxos matching fee inputs
+    outputs.erase(
+        std::remove_if(outputs.begin(), outputs.end(), [&ptr](const xbridge::wallet::UtxoEntry & u) {
+                return ptr->feeUtxos.count(u);
+            }
+        ),
+        outputs.end()
+    );
 
     // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
     if (!selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
     {
         WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
+        unlockFeeUtxos(ptr->feeUtxos);
         return xbridge::Error::INSIFFICIENT_FUNDS;
     }
 
     // sign used coins
     for (wallet::UtxoEntry & entry : outputsForUse)
     {
+        xbridge::Error err = xbridge::Error::SUCCESS;
         std::string signature;
         if (!connFrom->signMessage(entry.address, entry.toString(), signature))
         {
             WARN() << "funds not signed <" << ptr->fromCurrency << "> " << __FUNCTION__;
-            return xbridge::Error::FUNDS_NOT_SIGNED;
+            err = xbridge::Error::FUNDS_NOT_SIGNED;
         }
 
         bool isInvalid = false;
@@ -1618,20 +1700,26 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         if (isInvalid)
         {
             WARN() << "invalid signature <" << ptr->fromCurrency << "> " << __FUNCTION__;
-            return xbridge::Error::FUNDS_NOT_SIGNED;
+            err = xbridge::Error::FUNDS_NOT_SIGNED;
         }
 
         entry.rawAddress = connFrom->toXAddr(entry.address);
         if(entry.signature.size() != 65)
         {
             ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
-            return xbridge::Error::INVALID_SIGNATURE;
+            err = xbridge::Error::INVALID_SIGNATURE;
         }
 
         if(entry.rawAddress.size() != 20)
         {
             ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
-            return  xbridge::Error::INVALID_ADDRESS;
+            err = xbridge::Error::INVALID_ADDRESS;
+        }
+
+        if (err) {
+            // unlock fee utxos on error
+            unlockFeeUtxos(ptr->feeUtxos);
+            return err;
         }
     }
 
@@ -1756,6 +1844,7 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
         xtx->reason = reason;
 
         connFrom->lockCoins(ptr->usedCoins, false);
+        unlockFeeUtxos(ptr->feeUtxos);
 
         xuiConnector.NotifyXBridgeTransactionChanged(id);
 
@@ -2081,6 +2170,21 @@ bool App::findNodeWithService(const std::set<std::string> & services,
         return false;
     node = list.front();
     return true;
+}
+
+
+//******************************************************************************
+//******************************************************************************
+void App::lockFeeUtxos(std::set<xbridge::wallet::UtxoEntry> & feeUtxos) {
+    LOCK(m_feeUtxosLock);
+    m_feeUtxos.insert(feeUtxos.begin(), feeUtxos.end());
+}
+
+//******************************************************************************
+//******************************************************************************
+void App::unlockFeeUtxos(std::set<xbridge::wallet::UtxoEntry> & feeUtxos) {
+    LOCK(m_feeUtxosLock);
+    m_feeUtxos.erase(feeUtxos.begin(), feeUtxos.end());
 }
 
 //******************************************************************************
