@@ -5585,8 +5585,10 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 // Relay packets we haven't seen before
                 {
                     LOCK(cs_vNodes);
-                    for  (CNode * pnode : vNodes)
-                        pnode->PushMessage("xbridge", raw);
+                    for  (CNode * pnode : vNodes) {
+                        if (pnode->fSuccessfullyConnected && !pnode->fDisconnect)
+                            pnode->PushMessage("xbridge", raw);
+                    }
                 }
 
                 // Only process the packet if we are an exchange capable node, a servicenode, or xrouter node

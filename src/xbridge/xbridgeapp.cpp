@@ -498,8 +498,10 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
     App::instance().addToKnown(hash);
     {
         LOCK(cs_vNodes);
-        for (CNode * pnode : vNodes)
-            pnode->PushMessage("xbridge", msg);
+        for (CNode * pnode : vNodes) {
+            if (pnode->fSuccessfullyConnected && !pnode->fDisconnect)
+                pnode->PushMessage("xbridge", msg);
+        }
     }
 }
 
