@@ -1119,9 +1119,9 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
                 return true;
             }
         }
-    }
 
-    LOG() << "use service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
+        LOG() << "use service node " << snode->vin.prevout.hash.ToString() << " " << __FUNCTION__;
+    }
 
     {
         // for xchange node remove tx
@@ -1400,43 +1400,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         return true;
     }
 
-    // service node pub key
-    ::CPubKey pksnode;
-    {
-        uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
-        if (len != 33)
-        {
-            LOG() << "bad public key, len " << len
-                  << " starts with " << *(char *)(packet->data()+offset) << " " << __FUNCTION__;
-            return false;
-        }
-
-        pksnode.Set(packet->pubkey(), packet->pubkey()+len);
-    }
-    // Get servicenode collateral address
-    std::vector<unsigned char> snodePubKey;
-    {
-        CServicenode * snode = mnodeman.Find(pksnode);
-        if (!snode)
-        {
-            // try to uncompress pubkey and search
-            if (pksnode.Decompress())
-            {
-                snode = mnodeman.Find(pksnode);
-            }
-            if (!snode)
-            {
-                // bad service node, no more
-                LOG() << "unknown service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
-                return true;
-            }
-        }
-
-        snodePubKey = snode->pubKeyCollateralAddress.Raw();
-
-        LOG() << "use service node " << HexStr(snodePubKey) << " " << __FUNCTION__;
-    }
-
     // acceptor fee
     uint256 feetxtd;
     if (xtx->role == 'B')
@@ -1447,6 +1410,43 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         {
             WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
             return true;
+        }
+
+        // service node pub key
+        ::CPubKey pksnode;
+        {
+            uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
+            if (len != 33)
+            {
+                LOG() << "bad public key, len " << len
+                      << " starts with " << *(char *)(packet->data()+offset) << " " << __FUNCTION__;
+                return false;
+            }
+
+            pksnode.Set(packet->pubkey(), packet->pubkey()+len);
+        }
+        // Get servicenode collateral address
+        std::vector<unsigned char> snodePubKey;
+        {
+            CServicenode * snode = mnodeman.Find(pksnode);
+            if (!snode)
+            {
+                // try to uncompress pubkey and search
+                if (pksnode.Decompress())
+                {
+                    snode = mnodeman.Find(pksnode);
+                }
+                if (!snode)
+                {
+                    // bad service node, no more
+                    LOG() << "unknown service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
+                    return true;
+                }
+            }
+
+            snodePubKey = snode->pubKeyCollateralAddress.Raw();
+
+            LOG() << "use service node " << snode->vin.prevout.hash.ToString() << " " << __FUNCTION__;
         }
 
         // transaction info
@@ -1478,8 +1478,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         }
 
         std::string strtxid;
-        if (!rpc::storeDataIntoBlockchain(destScript, conn->serviceNodeFee,
-                                          std::vector<unsigned char>(), strtxid))
+        if (!rpc::storeDataIntoBlockchain(xtx->rawFeeTx, strtxid))
         {
             ERR() << "storeDataIntoBlockchain failed, error send blocknet tx " << __FUNCTION__;
             sendCancelTransaction(xtx, crBlocknetError);
@@ -3212,6 +3211,7 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
 
     // unlock coins
     connFrom->lockCoins(xtx->usedCoins, false);
+    xapp.unlockFeeUtxos(xtx->feeUtxos);
 
     if (xtx->state < TransactionDescr::trCreated)
     {

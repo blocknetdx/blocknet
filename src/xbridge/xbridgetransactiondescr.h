@@ -115,6 +115,8 @@ struct TransactionDescr
 
     // used coins in transaction
     std::vector<xbridge::wallet::UtxoEntry> usedCoins;
+    std::set<xbridge::wallet::UtxoEntry> feeUtxos;
+    std::string rawFeeTx;
 
     // pay tx verification watches
     uint32_t watchStartBlock{0};
