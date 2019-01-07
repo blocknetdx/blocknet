@@ -226,8 +226,8 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-	
-	
+
+
         vSeeds.push_back(CDNSSeedData("178.62.90.213", "178.62.90.213")); // seed node
         vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
         vSeeds.push_back(CDNSSeedData("34.235.49.248", "34.235.49.248")); // seed node
