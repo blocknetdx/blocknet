@@ -91,6 +91,7 @@ struct TransactionDescr
     std::vector<unsigned char> oHashedSecret;
     std::string                oPayTxId;
     uint32_t                   oPayTxTries{0};
+    double                     oOverpayment{0};
 
     // multisig address and redeem script
     std::string                lockP2SHAddress;

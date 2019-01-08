@@ -2094,7 +2094,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     // check A deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
         bool isGood = false;
-        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, counterPartyVoutN, counterPartyP2SH, isGood))
+        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -2493,7 +2493,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     // check B deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
         bool isGood = false;
-        if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, counterPartyVoutN, counterPartyP2SH, isGood))
+        if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -3317,7 +3317,7 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
 
     // outputs
     {
-        outputs.emplace_back(toAddr, outAmount);
+        outputs.emplace_back(toAddr, outAmount + xtx->oOverpayment);
     }
 
     if (!connTo->createPaymentTransaction(inputs, outputs,

@@ -2184,7 +2184,8 @@ void App::lockFeeUtxos(std::set<xbridge::wallet::UtxoEntry> & feeUtxos) {
 //******************************************************************************
 void App::unlockFeeUtxos(std::set<xbridge::wallet::UtxoEntry> & feeUtxos) {
     LOCK(m_feeUtxosLock);
-    m_feeUtxos.erase(feeUtxos.begin(), feeUtxos.end());
+    for (const auto & utxo : feeUtxos)
+        m_feeUtxos.erase(utxo);
 }
 
 //******************************************************************************

@@ -1927,7 +1927,7 @@ std::string BtcWalletConnector<CryptoProvider>::scriptIdToString(const std::vect
 template <class CryptoProvider>
 double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const
 {
-    uint64_t fee = (148*inputCount + 34*outputCount + 10) * feePerByte;
+    uint64_t fee = (192*inputCount + 34*outputCount) * feePerByte;
     if (fee < minTxFee)
     {
         fee = minTxFee;
@@ -1942,7 +1942,7 @@ double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, 
 template <class CryptoProvider>
 double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const
 {
-    uint64_t fee = (180*inputCount + 34*outputCount + 10) * feePerByte;
+    uint64_t fee = (192*inputCount + 34*outputCount) * feePerByte;
     if (fee < minTxFee)
     {
         fee = minTxFee;
@@ -1962,14 +1962,16 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
                                                                  double & amount,
                                                                  uint32_t & depositTxVout,
                                                                  const std::string & expectedScript,
+                                                                 double & excessAmount,
                                                                  bool & isGood)
 {
     isGood  = false;
+    excessAmount = 0;
 
     std::string rawtx;
     if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, depositTxId, true, rawtx))
     {
-        LOG() << "no tx found " << depositTxId << " " << __FUNCTION__;
+        LOG() << "no tx found " << depositTxId << " ...waiting " << __FUNCTION__;
         return false;
     }
 
@@ -1977,7 +1979,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     json_spirit::Value txv;
     if (!json_spirit::read_string(rawtx, txv))
     {
-        LOG() << "json read error for " << depositTxId << " " << rawtx << " " << __FUNCTION__;
+        LOG() << "json read error for " << depositTxId << " " << rawtx << " ...waiting " << __FUNCTION__;
         return false;
     }
 
@@ -1989,34 +1991,112 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         if (txvConfCount.type() != json_spirit::int_type)
         {
             // not found confirmations field, wait
-            LOG() << "confirmations not found in " << rawtx << " " << __FUNCTION__;
+            LOG() << "confirmations not found in " << rawtx << " ...waiting " << __FUNCTION__;
             return false;
         }
 
         if (requiredConfirmations > static_cast<uint32_t>(txvConfCount.get_int()))
         {
             // wait more
-            LOG() << "tx " << depositTxId << " unconfirmed, need " << requiredConfirmations << " " << __FUNCTION__;
+            LOG() << "tx " << depositTxId << " unconfirmed, need " << requiredConfirmations << " ...waiting " << __FUNCTION__;
             return false;
         }
     }
 
-    // obtain the p2sh hash
-    json_spirit::Array  vouts = json_spirit::find_value(txo, "vout").get_array();
-    if (vouts.empty())
-    {
+    // Ensure p2sh accounts for fees
+
+    // Check vins
+    json_spirit::Value vinso = json_spirit::find_value(txo, "vin");
+    if (vinso.type() != json_spirit::array_type || vinso.get_array().empty()) {
+        LOG() << "tx " << depositTxId << " no vins " << __FUNCTION__;
+        return true; // done
+    }
+    json_spirit::Array vins = vinso.get_array();
+
+    // Check vouts
+    json_spirit::Value voutso = json_spirit::find_value(txo, "vout");
+    if (voutso.type() != json_spirit::array_type || voutso.get_array().empty()) {
         LOG() << "tx " << depositTxId << " no vouts " << __FUNCTION__;
         return true; // done
     }
+    json_spirit::Array vouts = voutso.get_array();
 
-    // Check all vouts for valid deposit
+    // Add up all vin amounts (prevouts)
+    double totalVinAmount{0};
+    for (auto & vin : vins) {
+        const json_spirit::Value & txidObj = json_spirit::find_value(vin.get_obj(), "txid");
+        if (txidObj.type() != json_spirit::str_type) {
+            LOG() << "tx " << depositTxId << " bad vin txid " << __FUNCTION__;
+            return true; // done
+        }
+        const json_spirit::Value & txVoutObj = json_spirit::find_value(vin.get_obj(), "vout");
+        if (txVoutObj.type() != json_spirit::int_type) {
+            LOG() << "tx " << depositTxId << " bad input vout " << __FUNCTION__;
+            return true; // done
+        }
+        // Check prevout amount
+        const auto & vinTxId = txidObj.get_str();
+        const auto & vinTxVout = txVoutObj.get_int();
+        std::string vinTx;
+        if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, vinTxId, true, vinTx)) {
+            LOG() << "vin tx not found for deposit " << depositTxId << " vin txid: " << vinTxId << " ...waiting " << __FUNCTION__;
+            return false;
+        }
+        json_spirit::Value vinTxv;
+        if (!json_spirit::read_string(vinTx, vinTxv)) {
+            LOG() << "vin json read error for deposit " << depositTxId << " vin raw tx: " << vinTx << " ...waiting " << __FUNCTION__;
+            return false;
+        }
+        json_spirit::Object vinTxo = vinTxv.get_obj();
+        json_spirit::Array vinOuts = json_spirit::find_value(vinTxo, "vout").get_array();
+        if (vinOuts.empty() || vinTxVout >= static_cast<int>(vinOuts.size())) {
+            LOG() << "tx " << depositTxId << " bad vin, missing outputs " << __FUNCTION__;
+            return true; // done
+        }
+        bool foundVout{false};
+        double vinAmount{0};
+        for (const auto & vout : vinOuts) {
+            const json_spirit::Value & valObj = json_spirit::find_value(vout.get_obj(), "value");
+            const json_spirit::Value & nObj = json_spirit::find_value(vout.get_obj(), "n");
+            if (valObj.type() != json_spirit::real_type || nObj.type() != json_spirit::int_type)
+                continue;
+            if (nObj.get_int() == vinTxVout) {
+                vinAmount = valObj.get_real();
+                foundVout = true;
+                break;
+            }
+        }
+        if (!foundVout) {
+            LOG() << "tx " << depositTxId << " bad prevout " << vinTxId << " " << __FUNCTION__;
+            return true; // done
+        }
+        totalVinAmount += vinAmount;
+    }
+
+    // Add up all vout amounts
+    double totalVoutAmount{0};
+    double p2shAmount{0};
     for (auto & vout : vouts) {
-        const json_spirit::Value & scriptPubKey = json_spirit::find_value(vout.get_obj(), "scriptPubKey");
-        if (scriptPubKey.type() == json_spirit::null_type)
-            continue;
+        const json_spirit::Value & amountObj = json_spirit::find_value(vout.get_obj(), "value");
+        if (amountObj.type() != json_spirit::real_type) {
+            LOG() << "tx " << depositTxId << " bad vout amount " << __FUNCTION__;
+            return true; // done
+        }
+        const json_spirit::Value & nObj = json_spirit::find_value(vout.get_obj(), "n");
+        if (nObj.type() != json_spirit::int_type) {
+            LOG() << "tx " << depositTxId << " bad vout n " << __FUNCTION__;
+            return true; // done
+        }
+        if (amountObj.get_real() < 0) {
+            LOG() << "tx " << depositTxId << " bad vout, has negative amount " << __FUNCTION__;
+            return true; // done
+        }
+        totalVoutAmount += amountObj.get_real();
 
+        // Check all vouts for valid deposit
+        const json_spirit::Value & scriptPubKey = json_spirit::find_value(vout.get_obj(), "scriptPubKey");
         const json_spirit::Value & addresses = json_spirit::find_value(scriptPubKey.get_obj(), "addresses");
-        if (addresses.type() == json_spirit::null_type)
+        if (scriptPubKey.type() == json_spirit::null_type || addresses.type() == json_spirit::null_type)
             continue;
 
         // Check that expected script and amounts match
@@ -2025,18 +2105,39 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
                 const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
                 const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
                 if (amount <= vamount.get_real()) {
-                    amount = vamount.get_real();
-                    depositTxVout = n.get_int();
-                    isGood = true;
-                    return true; // done
+                    p2shAmount = vamount.get_real();
+                    depositTxVout = static_cast<uint32_t>(n.get_int());
                 }
                 break; // done searching
             }
         }
     }
 
-    LOG() << "tx " << depositTxId << " no valid p2sh in deposit transaction " << __FUNCTION__;
+    if (p2shAmount == 0) {
+        LOG() << "tx " << depositTxId << " no valid p2sh in deposit transaction " << __FUNCTION__;
+        return true; // done
+    }
 
+    // Check if there's enough to cover fees
+    const double counterpartyFees = totalVinAmount - totalVoutAmount;
+    const double fee1 = minTxFee1(static_cast<uint32_t>(vins.size()), static_cast<uint32_t>(vouts.size())); // p2sh deposit fee
+    const double fee2 = minTxFee2(1, 1); // p2sh redeem fee
+    const double ourMinimumFees = fee1 * 0.95; // Allow 5% margin of error in fee amount
+    // Check that counterparty provided enough to cover deposit network fee
+    if (counterpartyFees < 0 || counterpartyFees < ourMinimumFees) {
+        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh deposit fees: " << (fee1 + fee2) << " " << __FUNCTION__;
+        return true; // done
+    }
+    // Make sure counterparty provided enough for the redeem fee
+    if (p2shAmount < amount + fee2 * 0.95) { // Allow 5% margin of error in fee amount
+        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh redeem fees: " << (fee1 + fee2) << " " << __FUNCTION__;
+        return true; // done
+    }
+    // we should pay ourselves any excess
+    if (p2shAmount > amount + fee2)
+        excessAmount = p2shAmount - amount - fee2;
+
+    isGood = true;
     return true; // done
 }
 

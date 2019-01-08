@@ -127,6 +127,7 @@ public:
                                          double & amount,
                                          uint32_t & depositTxVout,
                                          const std::string & expectedScript,
+                                         double & excessAmount,
                                          bool & isGood) = 0;
 
     virtual bool getSecretFromPaymentTransaction(const std::string & paymentTxId,
