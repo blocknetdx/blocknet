@@ -141,7 +141,7 @@ bool Exchange::isEnabled()
 {
     if (m_p) {
         LOCK(m_p->m_walletsLock);
-        return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false));
+        return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false) && GetBoolArg("-enableexchange", false));
     }
     return false;
 }
