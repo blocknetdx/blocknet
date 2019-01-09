@@ -1968,11 +1968,19 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     isGood  = false;
     excessAmount = 0;
 
-    std::string rawtx;
-    if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, depositTxId, true, rawtx))
+    std::string tx;
+    if (!rpc::getRawTransaction(m_user, m_passwd, m_ip, m_port, depositTxId, false, tx))
     {
         LOG() << "no tx found " << depositTxId << " ...waiting " << __FUNCTION__;
         return false;
+    }
+
+    std::string rawtx;
+    std::string reftxid;
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, tx, reftxid, rawtx))
+    {
+        LOG() << "bad counterparty deposit, decode transaction failed " << depositTxId << " " << tx << " " << __FUNCTION__;
+        return true; // done
     }
 
     // check confirmations
