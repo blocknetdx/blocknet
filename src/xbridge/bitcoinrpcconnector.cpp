@@ -147,7 +147,9 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 //*****************************************************************************
 //*****************************************************************************
 bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const double amount,
+        const double feePerByte,
         const std::vector<unsigned char> & data,
+        std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
         std::set<xbridge::wallet::UtxoEntry> & feeUtxos,
         std::string & rawTx)
 {
@@ -162,6 +164,113 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
 
     try
     {
+        auto estFee = [feePerByte](const uint32_t inputs, const uint32_t outputs) -> double {
+            return (192 * inputs + 34 * outputs) * feePerByte;
+        };
+        auto feeAmount = [&estFee](const double amount, const uint32_t inputs, const uint32_t outputs) -> double {
+            return amount + estFee(inputs, outputs);
+        };
+
+        // Fee utxo selector
+        auto selectFeeUtxos = [&estFee, &feeAmount, feePerByte](std::vector<xbridge::wallet::UtxoEntry> & a,
+                                 std::vector<xbridge::wallet::UtxoEntry> & o,
+                                 const double amt) -> void
+        {
+            bool done{false};
+            std::vector<xbridge::wallet::UtxoEntry> gt;
+            std::vector<xbridge::wallet::UtxoEntry> lt;
+
+            // Check ideal, find input that is larger than min amount and within range
+            double minAmount{feeAmount(amt, 1, 2)};
+            for (const auto & utxo : a) {
+                if (utxo.amount >= minAmount && utxo.amount < minAmount + estFee(1, 2) * 100) {
+                    o.push_back(utxo);
+                    done = true;
+                    break;
+                }
+                else if (utxo.amount >= minAmount)
+                    gt.push_back(utxo);
+                else if (utxo.amount < minAmount)
+                    lt.push_back(utxo);
+            }
+
+            if (done)
+                return;
+
+            // Find the smallest input > min amount
+            // - or -
+            // Find the biggest inputs smaller than min amount that when added is >= min amount
+            // - otherwise fail -
+
+            if (gt.size() == 1)
+                o.push_back(gt[0]);
+            else if (gt.size() > 1) {
+                // sort utxos greater than amount (ascending) and pick first
+                sort(gt.begin(), gt.end(),
+                     [](const xbridge::wallet::UtxoEntry & a, const xbridge::wallet::UtxoEntry & b) {
+                         return a.amount < b.amount;
+                     });
+                o.push_back(gt[0]);
+            } else if (lt.size() < 2)
+                return; // fail (not enough inputs)
+            else {
+                // sort inputs less than amount (descending)
+                sort(lt.begin(), lt.end(),
+                     [](const xbridge::wallet::UtxoEntry & a, const xbridge::wallet::UtxoEntry & b) {
+                         return a.amount > b.amount;
+                     });
+
+                std::vector<xbridge::wallet::UtxoEntry> sel;
+                for (const auto & utxo : lt) {
+                    sel.push_back(utxo);
+
+                    // Add amount and incorporate fee calc
+                    double runningAmount{0};
+                    for (auto & u : sel)
+                        runningAmount += u.amount;
+                    runningAmount += estFee(sel.size(), 2);
+
+                    if (runningAmount >= minAmount) {
+                        o.insert(o.end(), sel.begin(), sel.end());
+                        break;
+                    }
+                }
+            }
+        };
+
+        // Find inputs
+        std::vector<xbridge::wallet::UtxoEntry> utxos(availUtxos.begin(), availUtxos.end());
+        std::vector<xbridge::wallet::UtxoEntry> selUtxos;
+
+        // Sort available utxos by amount (descending)
+        sort(utxos.begin(), utxos.end(),
+             [](const xbridge::wallet::UtxoEntry & a, const xbridge::wallet::UtxoEntry & b) {
+                 return a.amount > b.amount;
+             });
+
+        selectFeeUtxos(utxos, selUtxos, amount);
+        if (selUtxos.empty())
+            throw std::runtime_error("Create transaction command finished with error, not enough utxos to cover fee");
+
+        // Fee amount
+        double inputAmt{0};
+        double feeAmt{estFee(selUtxos.size(), 2)};
+        std::string changeAddr{selUtxos[0].address};
+
+        Array inputs;
+        for (const auto & utxo : selUtxos)
+        {
+            Object u;
+            u.emplace_back("txid", utxo.txId);
+            u.emplace_back("vout", static_cast<int>(utxo.vout));
+            inputs.push_back(u);
+            feeUtxos.insert(utxo);
+            inputAmt += utxo.amount;
+        }
+
+        // Total change
+        double changeAmt = inputAmt - amount - feeAmt;
+
         Array outputs;
 
         if (data.size() > 0)
@@ -177,17 +286,13 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
             out.push_back(Pair("script", HexStr(dstScript)));
             out.push_back(Pair("amount", amount));
             outputs.push_back(out);
-        }
 
-        std::vector<COutput> used;
-
-        Array inputs;
-        for (const COutput & out : used)
-        {
-            Object tmp;
-            tmp.push_back(Pair("txid", out.tx->GetHash().ToString()));
-            tmp.push_back(Pair("vout", out.i));
-            inputs.push_back(tmp);
+            if (changeAmt >= 0.0000546) { // BLOCK dust
+                Object change;
+                change.push_back(Pair("address", changeAddr));
+                change.push_back(Pair("amount", changeAmt));
+                outputs.push_back(change);
+            }
         }
 
         Value result;
@@ -205,39 +310,6 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
             }
 
             rawTx = result.get_str();
-        }
-
-        {
-            Array params;
-            params.push_back(rawTx);
-
-            // call fund
-            result = tableRPC.execute(fundCommand, params);
-            if (result.type() != obj_type)
-            {
-                throw std::runtime_error("Fund transaction command finished with error");
-            }
-
-            Object obj = result.get_obj();
-            const Value  & tx = find_value(obj, "hex");
-            if (tx.type() != str_type)
-            {
-                throw std::runtime_error("Fund transaction error or not completed");
-            }
-
-            rawTx = tx.get_str();
-
-            // Record fee inputs
-            CMutableTransaction fundedTx;
-            if (DecodeHexTx(fundedTx, rawTx)) {
-                for (const auto & txin : fundedTx.vin) {
-                    xbridge::wallet::UtxoEntry u;
-                    u.txId = txin.prevout.hash.ToString();
-                    u.vout = txin.prevout.n;
-                    u.scriptPubKey = txin.prevPubKey.ToString();
-                    feeUtxos.insert(u);
-                }
-            }
         }
 
         {

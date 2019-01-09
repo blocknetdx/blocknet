@@ -140,14 +140,6 @@ protected:
      * @return
      */
     bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
-    /**
-     * @brief sendCancelTransaction  - sent packet with cancelled command
-     * to network, update transaction state, notify ui about trabsaction state changed
-     * @param txid - id of transaction
-     * @param reason - cancel reason
-     * @return
-     */
-    bool sendCancelTransaction(const uint256 & txid, const TxCancelReason & reason);
 
     bool addNodeServices(const ::CPubKey & node, const std::vector<std::string> & services, const uint32_t version);
     bool hasNodeService(const ::CPubKey & node, const std::string & service);
@@ -1650,8 +1642,21 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         destScript << CScript::EncodeOP_N(keyCounter+1) << OP_CHECKMULTISIG;
     }
 
-    if (!rpc::createFeeTransaction(destScript, connFrom->serviceNodeFee, std::vector<unsigned char>(),
-            ptr->feeUtxos, ptr->rawFeeTx))
+    std::vector<wallet::UtxoEntry> outputs;
+    connFrom->getUnspent(outputs);
+
+    // Exclude utxos matching fee inputs
+    auto excludeUtxos = getFeeUtxos();
+    outputs.erase(
+        std::remove_if(outputs.begin(), outputs.end(), [&excludeUtxos](const xbridge::wallet::UtxoEntry & u) {
+            return excludeUtxos.count(u);
+        }),
+        outputs.end()
+    );
+
+    if (!rpc::createFeeTransaction(destScript, connFrom->serviceNodeFee,
+            static_cast<double>(connFrom->feePerByte)/static_cast<double>(COIN), // COIN in BLOCK (100M)
+            std::vector<unsigned char>(), outputs, ptr->feeUtxos, ptr->rawFeeTx))
     {
         ERR() << "Failed to take order, couldn't prepare the service node fee " << __FUNCTION__;
         return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1659,21 +1664,19 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
     // Lock the fee utxos
     lockFeeUtxos(ptr->feeUtxos);
+    // Excluded fee uxtos
+    excludeUtxos = getFeeUtxos();
+    // Exclude utxos matching fee inputs
+    outputs.erase(
+        std::remove_if(outputs.begin(), outputs.end(), [&excludeUtxos](const xbridge::wallet::UtxoEntry & u) {
+            return excludeUtxos.count(u);
+        }),
+        outputs.end()
+    );
 
     uint64_t utxoAmount = 0;
     uint64_t fee1       = 0;
     uint64_t fee2       = 0;
-
-    std::vector<wallet::UtxoEntry> outputs;
-    connFrom->getUnspent(outputs);
-    // Exclude utxos matching fee inputs
-    outputs.erase(
-        std::remove_if(outputs.begin(), outputs.end(), [&ptr](const xbridge::wallet::UtxoEntry & u) {
-                return ptr->feeUtxos.count(u);
-            }
-        ),
-        outputs.end()
-    );
 
     // Select utxos
     std::vector<wallet::UtxoEntry> outputsForUse;
@@ -1836,22 +1839,8 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
         return xbridge::NO_SESSION;
     }
 
-    if (m_p->sendCancelTransaction(id, reason))
-    {
-        TransactionDescrPtr xtx = transaction(id);
-
-        xtx->state  = TransactionDescr::trCancelled;
-        xtx->reason = reason;
-
-        connFrom->lockCoins(ptr->usedCoins, false);
-        unlockFeeUtxos(ptr->feeUtxos);
-
-        xuiConnector.NotifyXBridgeTransactionChanged(id);
-
-        moveTransactionToHistory(id);
-    }
-
-    LOG() << "order cancelled" << ptr << __FUNCTION__;
+    xbridge::SessionPtr session = m_p->getSession();
+    session->sendCancelTransaction(ptr, reason);
 
     return xbridge::SUCCESS;
 }
@@ -1868,37 +1857,6 @@ void App::cancelMyXBridgeTransactions()
         if(transaction.second->isLocal())
             cancelXBridgeTransaction(transaction.second->id, crUserRequest);
     }
-}
-
-//******************************************************************************
-//******************************************************************************
-bool App::Impl::sendCancelTransaction(const uint256 & txid,
-                                      const TxCancelReason & reason)
-{
-    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
-    reply->append(txid.begin(), 32);
-    reply->append(static_cast<uint32_t>(reason));
-
-    TransactionDescrPtr ptr;
-    {
-        LOCK(m_txLocker);
-        if (m_transactions.count(txid))
-        {
-            ptr = m_transactions[txid];
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    reply->sign(ptr->mPubKey, ptr->mPrivKey);
-
-    static std::vector<unsigned char> addr(20, 0);
-    onSend(addr, reply->body());
-
-    // cancelled
-    return true;
 }
 
 //******************************************************************************
@@ -2172,6 +2130,12 @@ bool App::findNodeWithService(const std::set<std::string> & services,
     return true;
 }
 
+//******************************************************************************
+//******************************************************************************
+std::set<xbridge::wallet::UtxoEntry> App::getFeeUtxos() {
+    LOCK(m_feeUtxosLock);
+    return m_feeUtxos;
+}
 
 //******************************************************************************
 //******************************************************************************

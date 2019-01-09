@@ -1412,71 +1412,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             return true;
         }
 
-        // service node pub key
-        ::CPubKey pksnode;
-        {
-            uint32_t len = ::CPubKey::GetLen(*(char *)(packet->pubkey()));
-            if (len != 33)
-            {
-                LOG() << "bad public key, len " << len
-                      << " starts with " << *(char *)(packet->data()+offset) << " " << __FUNCTION__;
-                return false;
-            }
-
-            pksnode.Set(packet->pubkey(), packet->pubkey()+len);
-        }
-        // Get servicenode collateral address
-        std::vector<unsigned char> snodePubKey;
-        {
-            CServicenode * snode = mnodeman.Find(pksnode);
-            if (!snode)
-            {
-                // try to uncompress pubkey and search
-                if (pksnode.Decompress())
-                {
-                    snode = mnodeman.Find(pksnode);
-                }
-                if (!snode)
-                {
-                    // bad service node, no more
-                    LOG() << "unknown service node " << pksnode.GetID().ToString() << " " << __FUNCTION__;
-                    return true;
-                }
-            }
-
-            snodePubKey = snode->pubKeyCollateralAddress.Raw();
-
-            LOG() << "use service node " << snode->vin.prevout.hash.ToString() << " " << __FUNCTION__;
-        }
-
-        // transaction info
-        CScript destScript;
-        destScript << CScript::EncodeOP_N(1);
-        destScript << snodePubKey;
-        {
-            Array info;
-            info.push_back(txid.GetHex());
-            info.push_back(xtx->fromCurrency);
-            info.push_back(xtx->fromAmount);
-            info.push_back(xtx->toCurrency);
-            info.push_back(xtx->toAmount);
-            std::string strInfo = write_string(Value(info));
-
-            uint32_t keyCounter = 0;
-            for (auto si = strInfo.begin(); si < strInfo.end(); si += XBridgePacket::uncompressedPubkeySizeRaw)
-            {
-                std::vector<unsigned char> pk(XBridgePacket::uncompressedPubkeySize, ' ');
-                pk[0] = 0x04;
-                std::copy(si, si + std::min(strInfo.size() - XBridgePacket::uncompressedPubkeySizeRaw * keyCounter,
-                                            static_cast<size_t>(XBridgePacket::uncompressedPubkeySizeRaw)), pk.begin()+1);
-
-                destScript << pk;
-                ++keyCounter;
-            }
-
-            destScript << CScript::EncodeOP_N(keyCounter+1) << OP_CHECKMULTISIG;
-        }
-
         std::string strtxid;
         if (!rpc::storeDataIntoBlockchain(xtx->rawFeeTx, strtxid))
         {
@@ -1493,6 +1428,9 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
             xapp.processLater(txid, packet);
             return true;
         }
+
+        // Unlock fee utxos after fee has been sent to the network
+        xapp.unlockFeeUtxos(xtx->feeUtxos);
     }
 
     xtx->state = TransactionDescr::trInitialized;
@@ -2851,24 +2789,24 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         return false;
     }
 
-    // unlock coins
-    if (xtx->state != TransactionDescr::trCancelled)
-        conn->lockCoins(xtx->usedCoins, false);
-
     if (xtx->state < TransactionDescr::trCreated)
     {
         xapp.moveTransactionToHistory(txid);
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
 
+        // unlock coins
+        conn->lockCoins(xtx->usedCoins, false);
+        if (xtx->state < TransactionDescr::trInitialized)
+            xapp.unlockFeeUtxos(xtx->feeUtxos);
+
         LOG() << __FUNCTION__ << xtx;
 
         xuiConnector.NotifyXBridgeTransactionChanged(txid);
         return true;
+    } else if (xtx->state == TransactionDescr::trCancelled) {
+        return true; // already canceled
     }
-
-    // remove from pending packets (if added)
-    xapp.removePackets(txid);
 
     // If refund transaction id not defined, do not attempt to rollback
     if (xtx->refTx.empty()) {
@@ -2876,10 +2814,20 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         return true;
     }
 
+    // remove from pending packets (if added)
+    xapp.removePackets(txid);
+
+    // Set rollback state
+    xtx->state = TransactionDescr::trRollback;
+    xtx->reason = reason;
+
+    // Attempt to rollback transaction and redeem deposit (this can take time since locktime needs to expire)
     int32_t errCode = 0;
-    // rollback, commit revert transaction
     if (!redeemOrderDeposit(xtx, errCode)) {
         xapp.processLater(txid, packet);
+    } else {
+        // unlock coins (not fees)
+        conn->lockCoins(xtx->usedCoins, false);
     }
 
     LOG() << __FUNCTION__ << xtx;
@@ -2943,6 +2891,13 @@ bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
 
     sendPacketBroadcast(reply);
     return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Session::sendCancelTransaction(const TransactionDescrPtr & tx,
+                                    const TxCancelReason & reason) const {
+    return m_p->sendCancelTransaction(tx, reason);
 }
 
 //*****************************************************************************
@@ -3208,16 +3163,7 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
     }
 
     auto & txid = xtx->id;
-
-    // unlock coins
-    connFrom->lockCoins(xtx->usedCoins, false);
-    xapp.unlockFeeUtxos(xtx->feeUtxos);
-
-    if (xtx->state < TransactionDescr::trCreated)
-    {
-        xapp.moveTransactionToHistory(txid);
-        xtx->state  = TransactionDescr::trCancelled;
-        xuiConnector.NotifyXBridgeTransactionChanged(txid);
+    if (xtx->state < TransactionDescr::trCreated) {
         return true; // done
     }
 

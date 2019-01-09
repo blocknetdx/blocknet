@@ -495,6 +495,12 @@ public:
     }
 
     /**
+     * @brief Returns a copy of the locked fee utxos.
+     * @return
+     */
+    std::set<xbridge::wallet::UtxoEntry> getFeeUtxos();
+
+    /**
      * @brief Lock the specified fee utxos. This prevents fee utxos from being used in orders.
      * @param feeUtxos
      */
