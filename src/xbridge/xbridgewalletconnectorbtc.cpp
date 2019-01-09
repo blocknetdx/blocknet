@@ -2133,12 +2133,12 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     const double ourMinimumFees = fee1 * 0.95; // Allow 5% margin of error in fee amount
     // Check that counterparty provided enough to cover deposit network fee
     if (counterpartyFees < 0 || counterpartyFees < ourMinimumFees) {
-        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh deposit fees: " << (fee1 + fee2) << " " << __FUNCTION__;
+        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh deposit fees: " << ourMinimumFees << " " << __FUNCTION__;
         return true; // done
     }
     // Make sure counterparty provided enough for the redeem fee
     if (p2shAmount < amount + fee2 * 0.95) { // Allow 5% margin of error in fee amount
-        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh redeem fees: " << (fee1 + fee2) << " " << __FUNCTION__;
+        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh redeem fees: " << fee2 * 0.95 << " " << __FUNCTION__;
         return true; // done
     }
     // we should pay ourselves any excess
