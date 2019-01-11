@@ -1783,13 +1783,16 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
         // outputs
         {
-            std::string addr;
-            if (!connFrom->getNewAddress(addr))
-            {
-                // cancel transaction
-                LOG() << "rpc error, canceling order " << __FUNCTION__;
-                sendCancelTransaction(xtx, crRpcError);
-                return true;
+            std::string addr = xtx->refundAddress();
+            if (addr.empty()) {
+                if (!connFrom->getNewAddress(addr))
+                {
+                    // cancel order
+                    LOG() << "failed to getnewaddress for refund tx, canceling order " << xtx->id.ToString() << " "
+                          << __FUNCTION__;
+                    sendCancelTransaction(xtx, crRpcError);
+                    return true;
+                }
             }
 
             outputs.push_back(std::make_pair(addr, outAmount));
@@ -2210,13 +2213,15 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
         // outputs
         {
-            std::string addr;
-            if (!connFrom->getNewAddress(addr))
-            {
-                // cancel transaction
-                LOG() << "rpc error, canceling order " << __FUNCTION__;
-                sendCancelTransaction(xtx, crRpcError);
-                return true;
+            std::string addr = xtx->refundAddress();
+            if (addr.empty()) {
+                if (!connFrom->getNewAddress(addr)) {
+                    // cancel order
+                    LOG() << "failed to getnewaddress for refund tx, canceling order " << xtx->id.ToString() << " "
+                          << __FUNCTION__;
+                    sendCancelTransaction(xtx, crRpcError);
+                    return true;
+                }
             }
 
             outputs.push_back(std::make_pair(addr, outAmount));

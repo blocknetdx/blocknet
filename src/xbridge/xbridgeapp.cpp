@@ -1420,9 +1420,11 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->created      = timestamp;
     ptr->txtime       = timestamp;
     ptr->id           = id;
+    ptr->fromAddr     = from;
     ptr->from         = connFrom->toXAddr(from);
     ptr->fromCurrency = fromCurrency;
     ptr->fromAmount   = fromAmount;
+    ptr->toAddr       = to;
     ptr->to           = connTo->toXAddr(to);
     ptr->toCurrency   = toCurrency;
     ptr->toAmount     = toAmount;
@@ -1762,7 +1764,9 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         }
     }
 
+    ptr->fromAddr  = from;
     ptr->from      = connFrom->toXAddr(from);
+    ptr->toAddr    = to;
     ptr->to        = connTo->toXAddr(to);
     ptr->role      = 'B';
 
