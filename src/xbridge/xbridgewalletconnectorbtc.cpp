@@ -482,7 +482,7 @@ bool listUnspent(const std::string & rpcuser,
     const static std::string vout("vout");
     const static std::string amount("amount");
     const static std::string scriptPubKey("scriptPubKey");
-
+    const static std::string confirmations("confirmations");
 
     try
     {
@@ -518,8 +518,12 @@ bool listUnspent(const std::string & rpcuser,
         {
             if (v.type() == obj_type)
             {
+                const Value & spendable = find_value(v.get_obj(), "spendable");
+                if (spendable.type() == bool_type && !spendable.get_bool())
+                    continue;
 
                 wallet::UtxoEntry u;
+                int confs = -1;
 
                 Object o = v.get_obj();
                 for (const auto & v : o)
@@ -540,9 +544,13 @@ bool listUnspent(const std::string & rpcuser,
                     {
                         u.scriptPubKey = v.value_.get_str();
                     }
+                    else if (v.name_ == confirmations)
+                    {
+                        confs = v.value_.get_int();
+                    }
                 }
 
-                if (!u.txId.empty() && u.amount > 0)
+                if (!u.txId.empty() && u.amount > 0 && (confs == -1 || confs > 0))
                 {
                     entries.push_back(u);
                 }
@@ -2340,7 +2348,7 @@ bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vec
 
     if(!complete)
     {
-        LOG() << "transaction not fully signed" << __FUNCTION__;
+        LOG() << "transaction not fully signed " << __FUNCTION__;
         return false;
     }
 

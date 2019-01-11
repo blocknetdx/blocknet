@@ -133,7 +133,7 @@ public:
     // required confirmations for tx
     uint32_t                     requiredConfirmations;
 
-    //service node fee, see rpc::storeDataIntoBlockchain
+    //service node fee, see rpc::createFeeTransaction
     const double                 serviceNodeFee;
 
     // serialized transaction contains time field (default not)

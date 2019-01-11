@@ -47,6 +47,14 @@ namespace rpc
      */
     bool storeDataIntoBlockchain(const std::string & rawTx, std::string & txid);
 
+    /**
+     * @brief Get the unspent p2pkh utxos from the wallet.
+     * @param utxos p2pkh, this list is mutated
+     * @return false if returned utxo list is empty
+     */
+    bool unspentP2PKH(std::vector<xbridge::wallet::UtxoEntry> & utxos);
+    bool unspentP2PKH_rpc(std::vector<xbridge::wallet::UtxoEntry> & utxos);
+
 } // namespace rpc
 
 } // namespace xbridge

@@ -525,6 +525,7 @@ private:
 
     std::set<xbridge::wallet::UtxoEntry> m_feeUtxos;
     CCriticalSection m_feeUtxosLock;
+    CCriticalSection m_feeExclusionLock;
 
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
