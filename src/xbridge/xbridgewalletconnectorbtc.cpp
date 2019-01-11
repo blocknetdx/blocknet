@@ -1583,7 +1583,7 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
 //******************************************************************************
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntry> & inputs,
-                                                    const bool withLocked) const
+                                                    const std::set<wallet::UtxoEntry> & excluded) const
 {
     if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, inputs))
     {
@@ -1591,48 +1591,28 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
         return false;
     }
 
-    for (size_t i = 0; i < inputs.size(); )
-    {
-        wallet::UtxoEntry & entry = inputs[i];
+    // Remove all the excluded utxos
+    inputs.erase(
+        std::remove_if(inputs.begin(), inputs.end(), [&excluded, this](xbridge::wallet::UtxoEntry & u) {
+            if (excluded.count(u))
+                return true; // remove if in excluded list
 
-        std::vector<unsigned char> script = ParseHex(entry.scriptPubKey);
-        // check p2pkh (like 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
-        if (script.size() == 25 &&
-            script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
-            script[23] == 0x88 && script[24] == 0xac)
-        {
-            script.erase(script.begin(), script.begin()+3);
-            script.erase(script.end()-2, script.end());
-            entry.address = fromXAddr(script);
-        }
-        else
-        {
-            // skip all other addresses, like p2sh, p2pk, etc
-            inputs.erase(inputs.begin() + i);
-            continue;
-        }
+            // Only accept p2pkh (like 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
+            std::vector<unsigned char> script = ParseHex(u.scriptPubKey);
+            if (script.size() == 25 &&
+                script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
+                script[23] == 0x88 && script[24] == 0xac)
+            {
+                script.erase(script.begin(), script.begin()+3);
+                script.erase(script.end()-2, script.end());
+                u.address = fromXAddr(script);
+                return false; // keep
+            }
 
-        ++i;
-    }
-
-    if (!withLocked)
-    {
-        removeLocked(inputs);
-    }
-
-    return true;
-}
-
-//******************************************************************************
-//******************************************************************************
-template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
-                                                   const bool lock)
-{
-    if (!WalletConnector::lockCoins(inputs, lock))
-    {
-        return false;
-    }
+            return true; // remove if script invalid
+        }),
+        inputs.end()
+    );
 
     return true;
 }

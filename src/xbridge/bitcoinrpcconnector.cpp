@@ -154,6 +154,9 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
         std::set<xbridge::wallet::UtxoEntry> & feeUtxos,
         std::string & rawTx)
 {
+    if (availUtxos.empty())
+        throw std::runtime_error("Create transaction command finished with error, not enough utxos to cover fee");
+
     LOCK(cs_rpcBlockchainStore);
 
     const static std::string createCommand("createrawtransaction");

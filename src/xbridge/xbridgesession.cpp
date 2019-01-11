@@ -2804,7 +2804,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         xtx->reason = reason;
 
         // unlock coins
-        conn->lockCoins(xtx->usedCoins, false);
+        xapp.unlockCoins(conn->currency, xtx->usedCoins);
         if (xtx->state < TransactionDescr::trInitialized)
             xapp.unlockFeeUtxos(xtx->feeUtxos);
 
@@ -2835,7 +2835,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         xapp.processLater(txid, packet);
     } else {
         // unlock coins (not fees)
-        conn->lockCoins(xtx->usedCoins, false);
+        xapp.unlockCoins(conn->currency, xtx->usedCoins);
     }
 
     LOG() << __FUNCTION__ << xtx;

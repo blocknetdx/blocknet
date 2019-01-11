@@ -35,9 +35,7 @@ public:
 
     bool getInfo(rpc::WalletInfo & info) const;
 
-    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const;
-
-    bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs, const bool lock = true);
+    bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const;
 
     bool getNewAddress(std::string & addr);
 
