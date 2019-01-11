@@ -1717,7 +1717,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             ERR() << "failed to create deposit transaction, canceling order " << __FUNCTION__;
             TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                     << xtx->fromCurrency << "(" << util::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
-                    << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
+                    << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ") "
+                    << "using locktime " << xtx->lockTime << std::endl
                     << xtx->binTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
@@ -1725,7 +1726,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
         TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                 << xtx->fromCurrency << "(" << util::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
-                << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
+                << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ") "
+                << "using locktime " << xtx->lockTime << std::endl
                 << xtx->binTx;
 
     } // depositTx
@@ -2009,7 +2011,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     {
         if (lockTimeA == 0 || !connTo->acceptableLockTimeDrift('A', lockTimeA))
         {
-            LOG() << "incorrect lockTime from counterparty on order " << txid.GetHex() << " " << __FUNCTION__;
+            LOG() << "incorrect locktime " << lockTimeA << " from counterparty on order " << txid.GetHex() << " "
+                  << "expected " << connTo->lockTime('A') << " "
+                  << __FUNCTION__;
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
@@ -2140,7 +2144,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             ERR() << "failed to create deposit transaction, canceling order " << __FUNCTION__;
             TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                     << xtx->fromCurrency << "(" << util::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
-                    << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
+                    << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ") "
+                    << "using locktime " << xtx->lockTime << std::endl
                     << xtx->binTx;
             sendCancelTransaction(xtx, crRpcError);
             return true;
@@ -2148,7 +2153,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
         TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                 << xtx->fromCurrency << "(" << util::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
-                << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
+                << xtx->toCurrency   << "(" << util::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ") "
+                << "using locktime " << xtx->lockTime << std::endl
                 << xtx->binTx;
 
     } // depositTx
@@ -2408,7 +2414,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     {
         if (lockTimeB == 0 || !connTo->acceptableLockTimeDrift('B', lockTimeB))
         {
-            LOG() << "incorrect lockTime from counterparty on order " << txid.GetHex() << " " << __FUNCTION__;
+            LOG() << "incorrect locktime " << lockTimeB << " from counterparty on order " << txid.GetHex() << " "
+                  << "expected " << connTo->lockTime('B') << " "
+                  << __FUNCTION__;
             sendCancelTransaction(xtx, crBadBDepositTx);
             return true;
         }
