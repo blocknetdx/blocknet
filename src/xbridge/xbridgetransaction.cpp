@@ -45,6 +45,7 @@ Transaction::Transaction(const uint256                    & id,
     : m_id(id)
     , m_created(util::intToTime(created))
     , m_last(boost::posix_time::microsec_clock::universal_time())
+    , m_lastUtxoCheck(boost::posix_time::microsec_clock::universal_time())
     , m_blockHash(blockHash)
     , m_state(trNew)
     , m_a_stateChanged(false)

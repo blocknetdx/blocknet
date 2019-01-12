@@ -1638,13 +1638,14 @@ bool BtcWalletConnector<CryptoProvider>::getTxOut(wallet::UtxoEntry & entry)
 {
     if (!rpc::gettxout(m_user, m_passwd, m_ip, m_port, entry))
     {
-        LOG() << "gettxout failed, trying call gettransaction " << __FUNCTION__;
-
-        if(!rpc::gettransaction(m_user, m_passwd, m_ip, m_port, entry))
-        {
-            WARN() << "both calls of gettxout and gettransaction failed " << __FUNCTION__;
-            return false;
-        }
+        return false;
+//        LOG() << "gettxout failed, trying call gettransaction " << __FUNCTION__;
+//
+//        if(!rpc::gettransaction(m_user, m_passwd, m_ip, m_port, entry))
+//        {
+//            WARN() << "both calls of gettxout and gettransaction failed " << __FUNCTION__;
+//            return false;
+//        }
     }
 
     return true;

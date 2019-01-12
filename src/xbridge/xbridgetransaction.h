@@ -126,6 +126,22 @@ public:
     boost::posix_time::ptime createdTime() const;
 
     /**
+     * @brief lastUtxoCheckTime
+     * @return time of the last check on maker utxos.
+     */
+    boost::posix_time::ptime utxoCheckTime() const {
+        return m_lastUtxoCheck;
+    }
+
+    /**
+     * @brief lastUtxoCheckTime
+     * @return Set the time of the last check on maker utxos.
+     */
+    void updateUtxoCheckTime(const boost::posix_time::ptime & t) {
+        m_lastUtxoCheck = t;
+    }
+
+    /**
      * @brief isFinished
      * @return true if transaction finished, canclelled or dropped
      */
@@ -166,6 +182,7 @@ public:
     uint32_t                   a_lockTime() const;
     std::string                a_payTxId() const;
     bool                       a_refunded() const { return m_a_refunded; }
+    const std::vector<wallet::UtxoEntry> a_utxos() const { return m_a.utxos(); }
 
     std::vector<unsigned char> a_pk1() const;
 
@@ -180,6 +197,7 @@ public:
     uint32_t                   b_lockTime() const;
     std::string                b_payTxId() const;
     bool                       b_refunded() const { return m_b_refunded; }
+    const std::vector<wallet::UtxoEntry> b_utxos() const { return m_b.utxos(); }
 
     std::vector<unsigned char> b_pk1() const;
 
@@ -192,6 +210,9 @@ public:
 
     void a_setRefunded(const bool refunded) { m_a_refunded = refunded; }
     void b_setRefunded(const bool refunded) { m_b_refunded = refunded; }
+
+    void a_setUtxos(const std::vector<wallet::UtxoEntry> & utxos) { m_a.setUtxos(utxos); }
+    void b_setUtxos(const std::vector<wallet::UtxoEntry> & utxos) { m_b.setUtxos(utxos); }
 
     void a_setLockTime(const uint32_t lockTime) { m_a.setLockTime(lockTime); }
     void b_setLockTime(const uint32_t lockTime) { m_b.setLockTime(lockTime); }
@@ -216,6 +237,7 @@ private:
 
     boost::posix_time::ptime   m_created;
     boost::posix_time::ptime   m_last;
+    boost::posix_time::ptime   m_lastUtxoCheck;
 
     uint256                    m_blockHash; //hash of block when transaction created
 

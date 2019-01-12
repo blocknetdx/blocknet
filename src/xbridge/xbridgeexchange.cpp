@@ -828,4 +828,33 @@ bool Exchange::updateTimestampOrRemoveExpired(const TransactionPtr & tx)
     }
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::makerUtxosAreStillValid(const TransactionPtr & tx)
+{
+    auto current = boost::posix_time::microsec_clock::universal_time();
+    if ((current - tx->utxoCheckTime()).total_seconds() < GetArg("-orderinputscheck", 900))
+        return true; // Only update at most every N seconds (default 15 minutes)
+    tx->updateUtxoCheckTime(current);
+
+    LOG() << "running automated maker utxo check on order " << tx->id().ToString() << " " << __FUNCTION__;
+
+    auto & xapp = xbridge::App::instance();
+    WalletConnectorPtr makerConn = xapp.connectorByCurrency(tx->a_currency());
+    if (!makerConn) // non-fatal just skip
+        return true;
+
+    auto & makerUtxos = tx->a_utxos();
+    for (auto entry : makerUtxos) {
+        if (!makerConn->getTxOut(entry)) {
+            // Invalid utxos cancel order
+            ERR() << "bad maker utxo in order " << tx->id().ToString() << " , utxo txid " << entry.txId << " vout " << entry.vout
+                  << " " << __FUNCTION__;
+            return false;
+        }
+    }
+
+    return true; // done
+}
+
 } // namespace xbridge

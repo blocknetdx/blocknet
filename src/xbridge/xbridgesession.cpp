@@ -506,6 +506,10 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     if (t->id() == id) {
         // Update the transaction timestamp
         if (e.updateTimestampOrRemoveExpired(t)) {
+            if (!e.makerUtxosAreStillValid(t)) { // if the maker utxos are no longer valid, cancel the order
+                sendCancelTransaction(t, crBadUtxo);
+                return false;
+            }
             LOG() << "order already received, updating timestamp " << id.ToString()
                   << " " << __FUNCTION__;
             // relay order to network
@@ -702,6 +706,10 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                 LOG() << __FUNCTION__ << d;
 
                 TransactionPtr tr = e.pendingTransaction(id);
+
+                // Set role 'A' utxos used in the order
+                tr->a_setUtxos(utxoItems);
+
                 LOG() << __FUNCTION__ << tr;
 
                 xuiConnector.NotifyXBridgeTransactionReceived(d);
@@ -919,6 +927,37 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         return true;
     }
 
+    //
+    // Check if maker utxos are still valid
+    //
+
+    TransactionPtr trPending = e.pendingTransaction(id);
+    if (!trPending) {
+        WARN() << "no order found with id " << id.ToString() << " " << __FUNCTION__;
+        return true;
+    }
+
+    WalletConnectorPtr makerConn = xapp.connectorByCurrency(trPending->a_currency());
+    if (!makerConn) {
+        WARN() << "no maker connector for <" << trPending->a_currency() << "> " << __FUNCTION__;
+        return true;
+    }
+
+    auto & makerUtxos = trPending->a_utxos();
+    for (auto entry : makerUtxos) {
+        if (!makerConn->getTxOut(entry)) {
+            // Invalid utxos cancel order
+            ERR() << "bad maker utxo in order " << id.ToString() << " , utxo txid " << entry.txId << " vout " << entry.vout
+                  << " " << __FUNCTION__;
+            sendCancelTransaction(trPending, crBadUtxo);
+            return false;
+        }
+    }
+
+    //
+    // END Check if maker utxos are still valid
+    //
+
     double commonAmount = 0;
 
     // utxo items
@@ -1028,6 +1067,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                        << " in " << __FUNCTION__;
                 return true;
             }
+            // Set role 'B' utxos used in the order
+            tr->b_setUtxos(utxoItems);
 
             LOG() << __FUNCTION__ << tr;
 
