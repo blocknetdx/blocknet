@@ -2918,6 +2918,13 @@ bool Session::Impl::finishTransaction(TransactionPtr tr) const
 
 //*****************************************************************************
 //*****************************************************************************
+bool Session::sendCancelTransaction(const TransactionPtr & tx,
+                                    const TxCancelReason & reason) const {
+    return m_p->sendCancelTransaction(tx, reason);
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
                                           const TxCancelReason & reason) const
 {

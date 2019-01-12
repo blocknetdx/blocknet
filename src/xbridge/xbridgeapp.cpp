@@ -1880,6 +1880,19 @@ xbridge::Error App::cancelXBridgeTransaction(const uint256 &id,
 //******************************************************************************
 void App::cancelMyXBridgeTransactions()
 {
+    // If service node cancel all open orders
+    Exchange & e = Exchange::instance();
+    if (e.isStarted()) {
+        xbridge::SessionPtr session = m_p->getSession();
+        if (!session)
+            return;
+        auto txs = e.pendingTransactions();
+        for (auto & tx : txs)
+            session->sendCancelTransaction(tx, crTimeout);
+        return;
+    }
+
+    // Local orders (traders)
     for(const auto &transaction : transactions())
     {
         if(transaction.second == nullptr)
