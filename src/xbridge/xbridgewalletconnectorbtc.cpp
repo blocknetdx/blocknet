@@ -2271,11 +2271,10 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::acceptableLockTimeDrift(const char role, const uint32_t lckTime) const
 {
-    // if locktime drift is greater than 10 minutes then return false
     auto lt = lockTime(role);
     if (lt == 0 || lt >= LOCKTIME_THRESHOLD || lckTime >= LOCKTIME_THRESHOLD)
         return false;
-    return (lt - lckTime) * blockTime <= 600;
+    return (lt - lckTime) * blockTime <= 900; // if locktime drift is greater than 15 minutes then return false
 }
 
 //******************************************************************************
