@@ -74,9 +74,12 @@ isminetype IsMine(const CKeyStore& keystore, const CScript& scriptPubKey)
         // partially owned (somebody else has a key that can spend
         // them) enable spend-out-from-under-you attacks, especially
         // in shared-wallet situations.
+        unsigned int countOfKeysNeeded = CScriptNum(vSolutions.front(), true).getint();
         vector<valtype> keys(vSolutions.begin() + 1, vSolutions.begin() + vSolutions.size() - 1);
-        if (HaveKeys(keys, keystore) == keys.size())
+        if (HaveKeys(keys, keystore) >= countOfKeysNeeded)
+        {
             return ISMINE_SPENDABLE;
+        }
         break;
     }
     }
