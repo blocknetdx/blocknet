@@ -255,6 +255,16 @@ public:
      */
     bool updateTimestampOrRemoveExpired(const TransactionPtr & tx);
 
+    /**
+     * @brief Check if the maker's utxos are still valid and unspent. Return false if they are invalid, otherwise
+     *        return true for all other cases. This check should only check every N seconds. See implementation for
+     *        specific time.
+     * @param tx
+     * @return
+     * @return
+     */
+    bool makerUtxosAreStillValid(const TransactionPtr & tx);
+
 private:
     std::unique_ptr<Impl> m_p;
     mutable CCriticalSection m_lock;

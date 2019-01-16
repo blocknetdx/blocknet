@@ -495,6 +495,12 @@ public:
     }
 
     /**
+     * @brief Returns a copy of the locked fee utxos.
+     * @return
+     */
+    const std::set<xbridge::wallet::UtxoEntry> getFeeUtxos();
+
+    /**
      * @brief Lock the specified fee utxos. This prevents fee utxos from being used in orders.
      * @param feeUtxos
      */
@@ -505,6 +511,31 @@ public:
      * @param feeUtxos
      */
     void unlockFeeUtxos(std::set<xbridge::wallet::UtxoEntry> & feeUtxos);
+
+    /**
+     * @brief Returns a copy of the locked non-fee utxos.
+     * @return
+     */
+    const std::set<xbridge::wallet::UtxoEntry> getLockedUtxos(const std::string & token);
+
+    /**
+     * @brief Returns a copy of both the locked fee and non-fee utxos.
+     * @return
+     */
+    const std::set<xbridge::wallet::UtxoEntry> getAllLockedUtxos(const std::string & token);
+
+    /**
+     * @brief Lock the specified utxos. Returns false if specified utxos are already locked.
+     * @param utxos
+     * @return
+     */
+    bool lockCoins(const std::string & token, const std::vector<wallet::UtxoEntry> & utxos);
+
+    /**
+     * @brief Unlock the specified utxos.
+     * @param utxos
+     */
+    void unlockCoins(const std::string & token, const std::vector<wallet::UtxoEntry> & utxos);
 
 protected:
     void clearMempool();
@@ -518,7 +549,9 @@ private:
     CCriticalSection m_updatingWalletsLock;
 
     std::set<xbridge::wallet::UtxoEntry> m_feeUtxos;
-    CCriticalSection m_feeUtxosLock;
+    std::map<std::string, std::set<xbridge::wallet::UtxoEntry> > m_utxosDict;
+    CCriticalSection m_utxosLock;
+    CCriticalSection m_utxosOrderLock;
 
     /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.

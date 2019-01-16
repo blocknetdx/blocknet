@@ -156,7 +156,7 @@ bool DgbWalletConnector::createDepositTransaction(const std::vector<XTxIn> & inp
 
     if(!complete)
     {
-        LOG() << "transaction not fully signed" << __FUNCTION__;
+        LOG() << "transaction not fully signed " << __FUNCTION__;
         return false;
     }
 

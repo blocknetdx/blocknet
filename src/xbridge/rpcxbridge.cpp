@@ -1446,7 +1446,8 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
     const auto &connectors = xbridge::App::instance().connectors();
     for(const auto &connector : connectors)
     {
-        const auto balance = connector->getWalletBalance();
+        const auto & excluded = xbridge::App::instance().getAllLockedUtxos(connector->currency);
+        const auto balance = connector->getWalletBalance(excluded);
 
         //ignore not connected wallets
         if(balance >= 0)
