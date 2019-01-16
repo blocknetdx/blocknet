@@ -331,7 +331,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             ? query.granularity
             : boost::posix_time::seconds{0};
         for (const auto& x : result) {
-            double volume = x.toVolume.amount<double>();
+            double volume = x.fromVolume.amount<double>();
             Array ohlc{
                 ArrayIL{util::iso8601(x.timeEnd - offset), x.low, x.high, x.open, x.close, volume}
             };
