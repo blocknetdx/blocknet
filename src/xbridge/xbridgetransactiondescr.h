@@ -61,9 +61,11 @@ struct TransactionDescr
     std::vector<unsigned char> from;
     std::string                fromCurrency;
     uint64_t                   fromAmount;
+    std::string                fromAddr;
     std::vector<unsigned char> to;
     std::string                toCurrency;
     uint64_t                   toAmount;
+    std::string                toAddr;
 
     uint32_t                   lockTime;
     uint32_t                   opponentLockTime;
@@ -221,6 +223,22 @@ struct TransactionDescr
     void counterpartyDepositRedeemed() {
         LOCK(_lock);
         redeemedCounterpartyDeposit = true;
+    }
+
+    const std::string refundAddress() {
+        // Find the largest utxo to use as redeem if from address is empty
+        if (fromAddr.empty()) {
+            if (usedCoins.empty())
+                return ""; // empty if nothing found
+            std::vector<wallet::UtxoEntry> utxos = usedCoins;
+            // sort descending and pick first
+            sort(utxos.begin(), utxos.end(),
+                 [](const wallet::UtxoEntry & a, const wallet::UtxoEntry & b) {
+                     return a.amount > b.amount;
+                 });
+            return utxos[0].address;
+        }
+        return fromAddr;
     }
 
     TransactionDescr()
