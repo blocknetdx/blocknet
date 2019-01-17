@@ -234,26 +234,30 @@ void xSeriesCache::updateXSeries(std::vector<xAggregate>& series,
 //******************************************************************************
 std::vector<xAggregate> xSeriesCache::getXAggregateSeries(const xQuery& query)
 {
-    auto& app = xbridge::App::instance();
-    auto local_matches = app.history_matches(transaction_filter, query);
-
-    std::sort(local_matches.begin(), local_matches.end(), // ascending by updated time
-              [](const CurrencyPair& a, const CurrencyPair& b) {
-                  return a.timeStamp < b.timeStamp; });
+    // Do not pull from historical transactions at this time, instead we'll
+    // rely on the on-chain transactions. Also this has a bug where
+    // historical transactions data is producing incorrect data.
+    // TODO Fix if we decide to turn this back on
+//    auto& app = xbridge::App::instance();
+//    auto local_matches = app.history_matches(transaction_filter, query);
+//
+//    std::sort(local_matches.begin(), local_matches.end(), // ascending by updated time
+//              [](const CurrencyPair& a, const CurrencyPair& b) {
+//                  return a.timeStamp < b.timeStamp; });
 
     //--Retrieve matching aggregate transactions from blockchain (cached)
     std::vector<xAggregate> series = getChainXAggregateSeries(query);
 
     //--Update aggregate from blockchain with transactions from local history
-    auto it = series.begin();
-    auto end = series.end();
-    if (it != end) {
-        for (const auto& x : local_matches) {
-            it = std::lower_bound(it, end, x.timeStamp,
-                                  [](const xAggregate& a, const ptime& b) {
-                                      return a.timeEnd <= b; });
-            it->update(x,query.with_txids);
-        }
-    }
+//    auto it = series.begin();
+//    auto end = series.end();
+//    if (it != end) {
+//        for (const auto& x : local_matches) {
+//            it = std::lower_bound(it, end, x.timeStamp,
+//                                  [](const xAggregate& a, const ptime& b) {
+//                                      return a.timeEnd <= b; });
+//            it->update(x,query.with_txids);
+//        }
+//    }
     return series;
 }
