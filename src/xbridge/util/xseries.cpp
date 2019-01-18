@@ -205,8 +205,8 @@ void xAggregate::update(const xAggregate& x, xQuery::WithTxids with_txids) {
     if (open == 0) {
         open = high = low = x.open;
     }
-    high = std::max(high,x.high);
-    low  = std::min(low,x.low);
+    high = std::max({high,x.high,x.open,x.close});
+    low  = std::min({low,x.low,x.open,x.close});
     close = x.close;
     fromVolume += x.fromVolume;
     toVolume += x.toVolume;
