@@ -763,20 +763,18 @@ void App::addConnector(const WalletConnectorPtr & conn)
 {
     LOCK(m_p->m_connectorsLock);
 
+    // Remove existing connector
     bool found = false;
     for (int i = m_p->m_connectors.size() - 1; i >= 0; --i) {
         if (m_p->m_connectors[i]->currency == conn->currency) {
             found = true;
-            break;
+            m_p->m_connectors.erase(m_p->m_connectors.begin() + i);
         }
     }
 
-    if (!found)
-        m_p->m_connectors.push_back(conn);
-
-    // Add connection if it doesn't already exist
-    if (!m_p->m_connectorCurrencyMap.count(conn->currency))
-        m_p->m_connectorCurrencyMap[conn->currency] = conn;
+    // Add new connector
+    m_p->m_connectors.push_back(conn);
+    m_p->m_connectorCurrencyMap[conn->currency] = conn;
 
     // Update address connectors
     for (auto iter = m_p->m_connectorAddressMap.rbegin(); iter != m_p->m_connectorAddressMap.rend(); ++iter) {
