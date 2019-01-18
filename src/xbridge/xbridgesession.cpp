@@ -1537,6 +1537,15 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
         return true;
     }
 
+    if (tr->state() != xbridge::Transaction::trHold)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << tr->id().ToString()
+               << " state " << tr->state()
+               << " in " << __FUNCTION__;
+        return true;
+    }
+
     LOCK(tr->m_lock);
 
     tr->updateTimestamp();
@@ -1916,6 +1925,15 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
         return true;
     }
 
+    if (tr->state() != xbridge::Transaction::trInitialized)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << tr->id().ToString()
+               << " state " << tr->state()
+               << " in " << __FUNCTION__;
+        return true;
+    }
+
     LOCK(tr->m_lock);
 
     tr->a_setLockTime(lockTimeA);
@@ -1925,19 +1943,9 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
     xbridge::App & xapp = xbridge::App::instance();
     xapp.watchTraderDeposit(tr);
 
-    // check lock time
-    if (lockTimeA == 0)
-    {
-        ERR() << "incorrect lock time used on A side " << __FUNCTION__;
-        sendCancelTransaction(tr, crBadADepositTx);
-        return true;
-    }
-
     if (e.updateTransactionWhenCreatedReceived(tr, tr->a_address(), binTxId))
     {
-        // wtf ?
-        ERR() << "invalid createdA " << __FUNCTION__;
-        sendCancelTransaction(tr, crInvalidAddress);
+        ERR() << "bad state detected on order " << tr->id().ToString() << " " << __FUNCTION__;
         return true;
     }
 
@@ -2012,6 +2020,14 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
                << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
         return true;
     }
+    if (xtx->state >= TransactionDescr::trCreated)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << xtx->id.ToString()
+               << " state " << xtx->state
+               << " in " << __FUNCTION__;
+        return true;
+    }
     if (binATxId.size() == 0)
     {
         LOG() << "bad counterparty deposit tx id received for order " << txid.GetHex() << " " << __FUNCTION__;
@@ -2026,15 +2042,6 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     if(xtx->xPubKey.size() != 0)
     {
         ERR() << "bad role" << __FUNCTION__;
-        return true;
-    }
-
-    if (xtx->state >= TransactionDescr::trCreated)
-    {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
         return true;
     }
 
@@ -2351,6 +2358,15 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
         return true;
     }
 
+    if (tr->state() != xbridge::Transaction::trInitialized)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << tr->id().ToString()
+               << " state " << tr->state()
+               << " in " << __FUNCTION__;
+        return true;
+    }
+
     LOCK(tr->m_lock);
 
     tr->b_setLockTime(lockTimeB);
@@ -2586,6 +2602,15 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
         return true;
     }
 
+    if (tr->state() != xbridge::Transaction::trCreated)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << tr->id().ToString()
+               << " state " << tr->state()
+               << " in " << __FUNCTION__;
+        return true;
+    }
+
     LOCK(tr->m_lock);
 
     tr->updateTimestamp();
@@ -2746,6 +2771,15 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
     {
         WARN() << "bad counterparty packet signature, received " << HexStr(pk1)
                << " expected " << HexStr(tr->b_pk1()) << " " << __FUNCTION__;
+        return true;
+    }
+
+    if (tr->state() != xbridge::Transaction::trCreated)
+    {
+        xassert(!"wrong state");
+        WARN() << "wrong tx state " << tr->id().ToString()
+               << " state " << tr->state()
+               << " in " << __FUNCTION__;
         return true;
     }
 
