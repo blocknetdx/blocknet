@@ -2977,8 +2977,6 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
     processTransactionCancel(reply); // process local cancel immediately
     sendPacketBroadcast(reply);
 
-    tx->state  = TransactionDescr::trCancelled;
-    tx->reason = reason;
     // update transaction state for gui
     xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
 
