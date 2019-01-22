@@ -729,7 +729,11 @@ Value getbalance(const Array& params, bool fHelp)
 
     string strAccount = AccountFromValue(params[0]);
 
-    CAmount nBalance = GetAccountBalance(strAccount, nMinDepth, filter);
+    CAmount nBalance{0};
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        nBalance = GetAccountBalance(strAccount, nMinDepth, filter);
+    }
 
     return ValueFromAmount(nBalance);
 }
