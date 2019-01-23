@@ -230,6 +230,13 @@ bool Transaction::isValid() const
 
 //*****************************************************************************
 //*****************************************************************************
+bool Transaction::matches(uint256 & id) const
+{
+    return m_id == id;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool Transaction::isExpired() const
 {
     boost::posix_time::time_duration tdLast = boost::posix_time::microsec_clock::universal_time() - m_last;

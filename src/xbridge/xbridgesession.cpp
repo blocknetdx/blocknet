@@ -503,7 +503,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
     // Check if order already exists, if it does ignore processing
     TransactionPtr t = e.pendingTransaction(id);
-    if (t->id() == id) {
+    if (t->matches(id)) {
         // Update the transaction timestamp
         if (e.updateTimestampOrRemoveExpired(t)) {
             if (!e.makerUtxosAreStillValid(t)) { // if the maker utxos are no longer valid, cancel the order
@@ -690,6 +690,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
             LOG() << "failed to create order "  << id.ToString() << " " << __FUNCTION__;
             return true;
         }
+        
+        TransactionPtr tr = e.pendingTransaction(id);
 
         if (isCreated)
         {
@@ -705,8 +707,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
                 LOG() << __FUNCTION__ << d;
 
-                TransactionPtr tr = e.pendingTransaction(id);
-
                 // Set role 'A' utxos used in the order
                 tr->a_setUtxos(utxoItems);
 
@@ -714,6 +714,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
                 xuiConnector.NotifyXBridgeTransactionReceived(d);
             }
+        }
+
+        if (!tr->matches(id)) { // couldn't find order
+            LOG() << "failed to find order after it was created "  << id.ToString() << " " << __FUNCTION__;
+            return true;
         }
 
         sendTransaction(id);
@@ -908,7 +913,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
     // If order already accepted, ignore further attempts
     TransactionPtr trExists = e.transaction(id);
-    if (trExists && trExists->id() == id) {
+    if (trExists->matches(id)) {
         WARN() << "order already accepted " << id.GetHex() << __FUNCTION__;
         return true;
     }
@@ -932,7 +937,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     //
 
     TransactionPtr trPending = e.pendingTransaction(id);
-    if (!trPending) {
+    if (!trPending->matches(id)) {
         WARN() << "no order found with id " << id.ToString() << " " << __FUNCTION__;
         return true;
     }
@@ -1056,6 +1061,10 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             // check transaction state, if trNew - do nothing,
             // if trJoined = send hold to client
             TransactionPtr tr = e.transaction(id);
+            if (!tr->matches(id)) { // ignore no matching orders
+                WARN() << "accept: no order found with id " << id.ToString() << " " << __FUNCTION__;
+                return true;
+            }
 
             LOCK(tr->m_lock);
 
@@ -1171,6 +1180,8 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         if (e.isStarted())
         {
             TransactionPtr tr = e.transaction(id);
+            if (!tr->matches(id)) // ignore no matching orders
+                return true;
 
             LOCK(tr->m_lock);
 
@@ -1274,6 +1285,8 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
     std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     TransactionPtr tr = e.transaction(id);
+    if (!tr->matches(id)) // ignore no matching orders
+        return true;
 
     LOCK(tr->m_lock);
 
@@ -1529,6 +1542,9 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
     // TODO check fee transaction
 
     TransactionPtr tr = e.transaction(id);
+    if (!tr->matches(id)) // ignore no matching orders
+        return true;
+    
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
         WARN() << "bad trader packet signature, received " << HexStr(pk1)
@@ -1907,6 +1923,8 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
     std::string refTx(reinterpret_cast<const char *>(packet->data()+offset));
 
     TransactionPtr tr = e.transaction(txid);
+    if (!tr->matches(txid)) // ignore no matching orders
+        return true;
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->a_pk1()))
@@ -2342,6 +2360,8 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
     std::string refTx(reinterpret_cast<const char *>(packet->data()+offset));
 
     TransactionPtr tr = e.transaction(txid);
+    if (!tr->matches(txid)) // ignore no matching orders
+        return true;
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->b_pk1()))
@@ -2577,6 +2597,8 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
     std::string a_payTxId(reinterpret_cast<const char *>(packet->data()+offset));
 
     TransactionPtr tr = e.transaction(txid);
+    if (!tr->matches(txid)) // ignore no matching orders
+        return true;
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->a_pk1()))
@@ -2740,6 +2762,8 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
     std::string b_payTxId(reinterpret_cast<const char *>(packet->data()+offset));
 
     TransactionPtr tr = e.transaction(txid);
+    if (!tr->matches(txid)) // ignore no matching orders
+        return true;
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->b_pk1()))
@@ -3040,7 +3064,7 @@ void Session::Impl::sendTransaction(uint256 & id) const
     }
 
     TransactionPtr tr = e.pendingTransaction(id);
-    if (tr->id() != id)
+    if (!tr->matches(id))
         return;
 
     LOCK(tr->m_lock);
