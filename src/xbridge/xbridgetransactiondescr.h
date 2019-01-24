@@ -127,6 +127,7 @@ struct TransactionDescr
     bool     watching{false};
     bool     watchingDone{false};
     bool     redeemedCounterpartyDeposit{false};
+    bool     depositSent{false};
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
@@ -213,6 +214,21 @@ struct TransactionDescr
     bool isWatching() {
         LOCK(_lock);
         return watching;
+    }
+    
+    void sentDeposit() {
+        LOCK(_lock);
+        depositSent = true;
+    }
+    
+    void failDeposit() {
+        LOCK(_lock);
+        depositSent = false;
+    }
+    
+    bool didSendDeposit() {
+        LOCK(_lock);
+        return depositSent;
     }
 
     bool hasRedeemedCounterpartyDeposit() {
