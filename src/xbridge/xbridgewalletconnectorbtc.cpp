@@ -2227,6 +2227,7 @@ bool BtcWalletConnector<CryptoProvider>::getSecretFromPaymentTransaction(const s
 
 //******************************************************************************
 //******************************************************************************
+static const int XMIN_LOCK_TIME_DIFF = 2; 
 template <class CryptoProvider>
 uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
 {
@@ -2252,15 +2253,17 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
     uint32_t lt = 0;
     if (role == 'A')
     {
-        // 2h in seconds
-        uint32_t twoHours = 2*60*60;
-        lt = info.blocks + twoHours / blockTime;
+        uint32_t makerTime = 2*3600; // 2h in seconds
+        uint32_t blocks = makerTime / blockTime;
+        if (blocks < XMIN_LOCK_TIME_DIFF) blocks = XMIN_LOCK_TIME_DIFF;
+        lt = info.blocks + blocks;
     }
     else if (role == 'B')
     {
-        // 1hr in seconds
-        uint32_t oneHour = 60*60;
-        lt = info.blocks + oneHour / blockTime;
+        uint32_t takerTime = 30*60; // 30min in seconds
+        uint32_t blocks = takerTime / blockTime;
+        if (blocks < XMIN_LOCK_TIME_DIFF) blocks = XMIN_LOCK_TIME_DIFF;
+        lt = info.blocks + blocks;
     }
 
     return lt;
@@ -2274,7 +2277,7 @@ bool BtcWalletConnector<CryptoProvider>::acceptableLockTimeDrift(const char role
     auto lt = lockTime(role);
     if (lt == 0 || lt >= LOCKTIME_THRESHOLD || lckTime >= LOCKTIME_THRESHOLD)
         return false;
-    return (lt - lckTime) * blockTime <= 600; // if locktime drift is greater than 10 minutes then return false
+    return (lt - lckTime) * blockTime <= 600; // if locktime drift is greater than 10 minutes 
 }
 
 //******************************************************************************
