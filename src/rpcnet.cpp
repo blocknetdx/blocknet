@@ -427,3 +427,27 @@ Value getnetworkinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("localaddresses", localAddresses));
     return obj;
 }
+
+Value disconnectpeer(const Array& params, bool fHelp) {
+    if (fHelp || params.size() < 1)
+        throw runtime_error(
+            "disconnectpeer\n"
+            "\nDisconnects from the peer associated with the specified id. getpeerinfo lists peer ids.\n"
+            "\nReturns true if the peer exists, otherwise returns false.\n"
+            "\nResult:\n"
+            "true"
+            "\nExamples:\n" +
+            HelpExampleCli("disconnectpeer", "1") + HelpExampleRpc("disconnectpeer", "1"));
+    
+    auto nodeID = static_cast<NodeId>(params[0].get_int());
+    
+    LOCK(cs_vNodes);
+    for (auto *pnode : vNodes) {
+        if (pnode->id == nodeID) {
+            pnode->fDisconnect = true;
+            return true;
+        }
+    }
+    
+    return false;
+}
