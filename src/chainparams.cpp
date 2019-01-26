@@ -110,6 +110,7 @@ public:
         nMaturity = 100;
         nServicenodeCountDrift = 20;
         nModifierUpdateBlock = 615800;
+        nStakeMinAge = 3600;
 
         /**
          * Build the genesis block. Note that the output of the genesis coinbase cannot
@@ -192,7 +193,7 @@ public:
 static CMainParams mainParams;
 
 /**
- * Testnet (v3)
+ * Testnet (v5)
  */
 class CTestNetParams : public CMainParams
 {
@@ -211,26 +212,30 @@ public:
         nRejectBlockOutdatedMajority = 75;
         nToCheckBlockUpgradeMajority = 100;
         nMinerThreads = 0;
-        nTargetTimespan = 1 * 60; // BlocknetDX: 1 day
+        nTargetTimespan = 1 * 60; // BlocknetDX: 1 minute
         nTargetSpacing = 1 * 60;  // BlocknetDX: 1 minute
-        nLastPOWBlock = 2000;
+        nLastPOWBlock = 31;
         nMaturity = 15;
-        nModifierUpdateBlock = 51197; //approx Mon, 17 Apr 2017 04:00:00 GMT
+        nModifierUpdateBlock = 1;
+        nStakeMinAge = 60;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.
-        genesis.nTime = 1503571000;
-        genesis.nNonce = 2158962;
+        bnProofOfWorkLimit = ~uint256() >> 2;
+        genesis.nBits = bnProofOfWorkLimit.GetCompact();
+        genesis.nTime = 1548018283;
+        genesis.nNonce = 2;
 
         hashGenesisBlock = genesis.GetHash();
-        assert(hashGenesisBlock == uint256("0x00000f90ac260859e4515356719d94c9fb8cadb1a3dda186a64ac41ce4c3c7a7"));
+        assert(hashGenesisBlock == uint256S("0fd62ae4f74c7ee0c11ef60fc5a2e69a5c02eaee2e77b21c3db70934b5a5c8b9"));
 
         vFixedSeeds.clear();
         vSeeds.clear();
 
-
-        vSeeds.push_back(CDNSSeedData("178.62.90.213", "178.62.90.213")); // seed node
-        vSeeds.push_back(CDNSSeedData("138.197.73.214", "138.197.73.214")); // seed node
-        vSeeds.push_back(CDNSSeedData("34.235.49.248", "34.235.49.248")); // seed node
+        // Seed nodes
+        vSeeds.push_back(CDNSSeedData("3.16.3.126",     "3.16.3.126"));
+        vSeeds.push_back(CDNSSeedData("18.224.130.185", "18.224.130.185"));
+        vSeeds.push_back(CDNSSeedData("18.213.44.27",   "18.213.44.27"));
+        vSeeds.push_back(CDNSSeedData("34.196.102.239", "34.196.102.239"));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 139); // Testnet blocknetdx addresses start with 'x' or 'y'
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 19);  // Testnet blocknetdx script addresses start with '8' or '9'
@@ -245,12 +250,14 @@ public:
         convertSeed6(vFixedSeeds, pnSeed6_test, ARRAYLEN(pnSeed6_test));
 
         fRequireRPCPassword = true;
-        fMiningRequiresPeers = true;
-        fAllowMinDifficultyBlocks = true;
+        fMiningRequiresPeers = false;
+        fAllowMinDifficultyBlocks = false;
         fDefaultConsistencyChecks = false;
-        fRequireStandard = false;
+        fRequireStandard = true;
         fMineBlocksOnDemand = false;
+        fSkipProofOfWorkCheck = false;
         fTestnetToBeDeprecatedFieldRPC = true;
+        fHeadersFirstSyncingActive = false;
 
         nPoolMaxTransactions = 2;
         strSporkKey = "04565f429b8c68dabdcdf09608be05b4a10fc704f7de1866aaeed28a729ec5b8c418d90f9510ba115c0f35f353b1aea983fe99397d1c20685d6ab3ed0d0b7ba3ea";
@@ -290,6 +297,7 @@ public:
         genesis.nTime = 1454124731;
         genesis.nBits = 0x207fffff;
         genesis.nNonce = 12345;
+        nStakeMinAge = 60;
 
         hashGenesisBlock = genesis.GetHash();
         nDefaultPort = 51476;
