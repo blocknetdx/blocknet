@@ -2420,10 +2420,12 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
                 sel.push_back(utxo);
 
                 // Add amount and incorporate fee calc
-                double runningAmount{connFrom->minTxFee2(1, 1)};
+                double fee1 = connFrom->minTxFee1(sel.size(), 3);
+                double fee2 = connFrom->minTxFee2(1, 1);
+                double runningAmount{(fee1 + fee2) * -1}; // subtract the fees
+
                 for (auto & u : sel)
                     runningAmount += u.amount;
-                runningAmount += connFrom->minTxFee1(sel.size(), 3);
 
                 if (runningAmount >= minAmount) {
                     o.insert(o.end(), sel.begin(), sel.end()); // only add utxos if we pass threshold
