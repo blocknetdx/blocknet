@@ -151,6 +151,14 @@ public:
      * @return true, if transaction not invalid
      */
     bool isValid() const;
+    
+    /**
+     * @brief matches
+     * @param id
+     * @return true if the specified id matches
+     */
+    bool matches(uint256 & id) const;
+    
     /**
      * @brief isExpired check time of last transaction update
      * @return true, if la
