@@ -1830,8 +1830,10 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     } // refundTx
 
     xtx->state = TransactionDescr::trCreated;
-
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
+    
+    // Sending deposit
+    xtx->sentDeposit();
 
     // send transactions
     {
@@ -1845,6 +1847,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         else
         {
             LOG() << "error sending deposit, canceling order " << __FUNCTION__;
+            xtx->failDeposit();
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -2256,9 +2259,6 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     } // refundTx
 
-    xtx->state = TransactionDescr::trCreated;
-
-    xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     // send transactions
     {
@@ -2270,7 +2270,13 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
+        
+        xtx->state = TransactionDescr::trCreated;
+        xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
+        // Mark deposit as sent
+        xtx->sentDeposit();
+        
         std::string sentid;
         int32_t errCode = 0;
         std::string errorMessage;
@@ -2283,6 +2289,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         else
         {
             LOG() << "error sending deposit tx, canceling order " << __FUNCTION__;
+            xtx->failDeposit();
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -2876,29 +2883,36 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         WARN() << "no connector for <" << xtx->fromCurrency << "> " << __FUNCTION__;
         return false;
     }
-
-    if (xtx->state < TransactionDescr::trCreated)
-    {
-        xapp.moveTransactionToHistory(txid);
-        xtx->state  = TransactionDescr::trCancelled;
-        xtx->reason = reason;
-
-        // unlock coins
+    
+    // Set order cancel state
+    auto cancel = [&xapp, &conn, &xtx, &reason, &txid]() {
+        xapp.removePackets(txid);
         xapp.unlockCoins(conn->currency, xtx->usedCoins);
         if (xtx->state < TransactionDescr::trInitialized)
             xapp.unlockFeeUtxos(xtx->feeUtxos);
-
+        xtx->state  = TransactionDescr::trCancelled;
+        xtx->reason = reason;
         LOG() << __FUNCTION__ << xtx;
+    };
 
+    if (xtx->state < TransactionDescr::trCreated) { // if no deposits yet
+        xapp.moveTransactionToHistory(txid);
+        cancel();
         xuiConnector.NotifyXBridgeTransactionChanged(txid);
         return true;
-    } else if (xtx->state == TransactionDescr::trCancelled) {
-        return true; // already canceled
+    } else if (xtx->state == TransactionDescr::trCancelled) { // already canceled 
+        return true;
+    } else if (!xtx->didSendDeposit()) { // cancel if deposit not sent
+        cancel();
+        return true;
+    } else if (xtx->hasRedeemedCounterpartyDeposit()) { // Ignore if counterparty deposit already redeemed
+        return true;
     }
 
     // If refund transaction id not defined, do not attempt to rollback
     if (xtx->refTx.empty()) {
         LOG() << "could not find a refund transaction for order " << xtx->id.GetHex() << " " << __FUNCTION__;
+        cancel();
         return true;
     }
 

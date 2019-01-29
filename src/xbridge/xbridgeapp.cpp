@@ -2514,10 +2514,11 @@ void App::Impl::checkAndRelayPendingOrders() {
 //******************************************************************************
 //******************************************************************************
 /**
- * @brief Checks the blockchain for the spent pay tx issued by the Taker. When
- *        the Only when the Maker spends the pay tx can the Taker proceed with
- *        the swap. Not that the Taker must watch the "from" chain, since this
- *        is the chain the Maker is submitting the pay tx on.
+ * @brief Checks the blockchain for the spent deposit. Only when 
+ *        the Maker spends the deposit can the Taker proceed with 
+ *        the swap. Note that the Taker must watch the "from" 
+ *        chain, since this is the chain the Maker is submitting 
+ *        the pay tx on.
  */
 void App::Impl::checkWatchesOnDepositSpends()
 {
