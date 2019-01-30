@@ -207,38 +207,6 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool for
         // Send the services ping
         xbridge::App::instance().sendServicePing();
 
-        /*
-         * IT'S SAFE TO REMOVE THIS IN FURTHER VERSIONS
-         * AFTER MIGRATION TO V12 IS DONE
-         */
-
-        if (IsSporkActive(SPORK_10_SERVICENODE_PAY_UPDATED_NODES)) return true;
-        // for migration purposes ping our node on old servicenodes network too
-        std::string retErrorMessage;
-        std::vector<unsigned char> vchServiceNodeSignature;
-        int64_t serviceNodeSignatureTime = GetAdjustedTime();
-
-        std::string strMessage = service.ToString() + boost::lexical_cast<std::string>(serviceNodeSignatureTime) + boost::lexical_cast<std::string>(false);
-
-        if (!obfuScationSigner.SignMessage(strMessage, retErrorMessage, vchServiceNodeSignature, keyServicenode)) {
-            errorMessage = "dseep sign message failed: " + retErrorMessage;
-            return false;
-        }
-
-        if (!obfuScationSigner.VerifyMessage(pubKeyServicenode, vchServiceNodeSignature, strMessage, retErrorMessage)) {
-            errorMessage = "dseep verify message failed: " + retErrorMessage;
-            return false;
-        }
-
-        LogPrint("servicenode", "dseep - relaying from active mn, %s \n", vin.ToString().c_str());
-        LOCK(cs_vNodes);
-        BOOST_FOREACH (CNode* pnode, vNodes)
-            pnode->PushMessage("dseep", vin, vchServiceNodeSignature, serviceNodeSignatureTime, false);
-
-        /*
-         * END OF "REMOVE"
-         */
-
         return true;
     } else {
         // Seems like we are trying to send a ping while the Servicenode is not registered in the network
@@ -339,44 +307,6 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
 
     // Send the services ping
     xbridge::App::instance().sendServicePing();
-
-    /*
-     * IT'S SAFE TO REMOVE THIS IN FURTHER VERSIONS
-     * AFTER MIGRATION TO V12 IS DONE
-     */
-
-    if (IsSporkActive(SPORK_10_SERVICENODE_PAY_UPDATED_NODES)) return true;
-    // for migration purposes inject our node in old servicenodes' list too
-    std::string retErrorMessage;
-    std::vector<unsigned char> vchServiceNodeSignature;
-    int64_t serviceNodeSignatureTime = GetAdjustedTime();
-    std::string donationAddress = "";
-    int donationPercantage = 0;
-
-    std::string vchPubKey(pubKeyCollateralAddress.begin(), pubKeyCollateralAddress.end());
-    std::string vchPubKey2(pubKeyServicenode.begin(), pubKeyServicenode.end());
-
-    std::string strMessage = service.ToString() + boost::lexical_cast<std::string>(serviceNodeSignatureTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(PROTOCOL_VERSION) + donationAddress + boost::lexical_cast<std::string>(donationPercantage);
-
-    if (!obfuScationSigner.SignMessage(strMessage, retErrorMessage, vchServiceNodeSignature, keyCollateralAddress)) {
-        errorMessage = "dsee sign message failed: " + retErrorMessage;
-        LogPrintf("CActiveServicenode::Register() - Error: %s\n", errorMessage.c_str());
-        return false;
-    }
-
-    if (!obfuScationSigner.VerifyMessage(pubKeyCollateralAddress, vchServiceNodeSignature, strMessage, retErrorMessage)) {
-        errorMessage = "dsee verify message failed: " + retErrorMessage;
-        LogPrintf("CActiveServicenode::Register() - Error: %s\n", errorMessage.c_str());
-        return false;
-    }
-
-    LOCK(cs_vNodes);
-    BOOST_FOREACH (CNode* pnode, vNodes)
-        pnode->PushMessage("dsee", vin, service, vchServiceNodeSignature, serviceNodeSignatureTime, pubKeyCollateralAddress, pubKeyServicenode, -1, -1, serviceNodeSignatureTime, PROTOCOL_VERSION, donationAddress, donationPercantage);
-
-    /*
-     * END OF "REMOVE"
-     */
 
     return true;
 }
