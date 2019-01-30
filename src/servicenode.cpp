@@ -623,10 +623,12 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
 
     // search existing Servicenode list
     CServicenode* pmn = mnodeman.Find(vin);
+    bool thisSnode = pubKeyServicenode == activeServicenode.pubKeyServicenode && protocolVersion == PROTOCOL_VERSION;
 
     if (pmn != NULL) {
         // nothing to do here if we already know about this servicenode and it's enabled
-        if (pmn->IsEnabled()) return true;
+        if (pmn->IsEnabled() && !thisSnode) // allow remote activations through
+            return true;
         // if it's not enabled, remove old MN first and continue
         else
             mnodeman.Remove(pmn->vin);
@@ -685,7 +687,7 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
     mnodeman.Add(mn);
 
     // if it matches our Servicenode privkey, then we've been remotely activated
-    if (pubKeyServicenode == activeServicenode.pubKeyServicenode && protocolVersion == PROTOCOL_VERSION) {
+    if (thisSnode) {
         activeServicenode.EnableHotColdServiceNode(vin, addr);
     }
 
