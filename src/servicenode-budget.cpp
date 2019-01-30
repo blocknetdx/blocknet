@@ -59,7 +59,7 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
     uint256 nBlockHash;
     if (!GetTransaction(nTxCollateralHash, txCollateral, nBlockHash, true)) {
         strError = strprintf("Can't find collateral tx %s", txCollateral.ToString());
-        LogPrintf("CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
+        LogPrint("mnbudget", "CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
         return false;
     }
 
@@ -73,14 +73,14 @@ bool IsBudgetCollateralValid(uint256 nTxCollateralHash, uint256 nExpectedHash, s
     BOOST_FOREACH (const CTxOut o, txCollateral.vout) {
         if (!o.scriptPubKey.IsNormalPaymentScript() && !o.scriptPubKey.IsUnspendable()) {
             strError = strprintf("Invalid Script %s", txCollateral.ToString());
-            LogPrintf("CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
+            LogPrint("mnbudget", "CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
             return false;
         }
         if (o.scriptPubKey == findScript && o.nValue >= GetProposalFee()) foundOpReturn = true;
     }
     if (!foundOpReturn) {
         strError = strprintf("Couldn't find opReturn %s in %s", nExpectedHash.ToString(), txCollateral.ToString());
-        LogPrintf("CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
+        LogPrint("mnbudget", "CBudgetProposalBroadcast::IsBudgetCollateralValid - %s\n", strError);
         return false;
     }
 
@@ -456,7 +456,7 @@ void CBudgetManager::CheckAndRemove()
         CFinalizedBudget* pfinalizedBudget = &((*it).second);
 
         pfinalizedBudget->fValid = pfinalizedBudget->IsValid(strError);
-        LogPrintf("CBudgetManager::CheckAndRemove - pfinalizedBudget->IsValid - strError: %s\n", strError);
+        LogPrint("mnbudget", "CBudgetManager::CheckAndRemove - pfinalizedBudget->IsValid - strError: %s\n", strError);
         if (pfinalizedBudget->fValid) {
             pfinalizedBudget->AutoCheck();
         }
@@ -993,7 +993,7 @@ void CBudgetManager::NewBlock()
 
         it5 = vecImmatureFinalizedBudgets.erase(it5);
     }
-    LogPrintf("CBudgetManager::NewBlock - PASSED\n");
+    LogPrint("mnbudget", "CBudgetManager::NewBlock - PASSED\n");
 }
 
 void CBudgetManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv)
@@ -2122,7 +2122,7 @@ bool CFinalizedBudgetVote::SignatureValid(bool fSignatureCheck)
     CServicenode* pmn = mnodeman.Find(vin);
 
     if (pmn == NULL) {
-        LogPrintf("CFinalizedBudgetVote::SignatureValid() - Unknown Servicenode\n");
+        LogPrint("mnbudget", "CFinalizedBudgetVote::SignatureValid() - Unknown Servicenode\n");
         return false;
     }
 
