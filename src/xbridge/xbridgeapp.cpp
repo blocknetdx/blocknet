@@ -26,6 +26,7 @@
 #include "xbridgewalletconnectorbch.h"
 #include "xbridgewalletconnectordgb.h"
 #include "sync.h"
+#include "spork.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -1597,7 +1598,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         pksnode.Set(ptr->sPubKey.begin(), ptr->sPubKey.end());
     }
     // Get servicenode collateral address
-    std::vector<unsigned char> snodePubKey;
+    CKeyID snodePubKey;
     {
         CServicenode * snode = mnodeman.Find(pksnode);
         if (!snode)
@@ -1615,38 +1616,38 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             }
         }
 
-        snodePubKey = snode->pubKeyCollateralAddress.Raw();
+        snodePubKey = snode->pubKeyCollateralAddress.GetID();
 
         LOG() << "use service node " << snode->vin.prevout.hash.ToString() << " " << __FUNCTION__;
     }
 
     // transaction info
-    CScript destScript;
-    destScript << CScript::EncodeOP_N(1);
-    destScript << snodePubKey;
-    {
-        json_spirit::Array info;
-        info.push_back(ptr->id.GetHex());
-        info.push_back(ptr->fromCurrency);
-        info.push_back(ptr->fromAmount);
-        info.push_back(ptr->toCurrency);
-        info.push_back(ptr->toAmount);
-        std::string strInfo = write_string(json_spirit::Value(info));
+    size_t maxBytes = nMaxDatacarrierBytes-3;
+    if (!IsSporkActive(SPORK_20_ONCHAIN_HISTORY))
+        maxBytes = MAX_OP_RETURN_RELAY_OLD-3;
 
-        uint32_t keyCounter = 0;
-        for (auto si = strInfo.begin(); si < strInfo.end(); si += XBridgePacket::uncompressedPubkeySizeRaw)
-        {
-            std::vector<unsigned char> pk(XBridgePacket::uncompressedPubkeySize, ' ');
-            pk[0] = 0x04;
-            std::copy(si, si + std::min(strInfo.size() - XBridgePacket::uncompressedPubkeySizeRaw * keyCounter,
-                                        static_cast<size_t>(XBridgePacket::uncompressedPubkeySizeRaw)), pk.begin()+1);
+    json_spirit::Array info;
+    info.push_back("");
+    info.push_back(ptr->fromCurrency);
+    info.push_back(ptr->fromAmount);
+    info.push_back(ptr->toCurrency);
+    info.push_back(ptr->toAmount);
+    std::string strInfo = write_string(json_spirit::Value(info));
+    info.erase(info.begin());
 
-            destScript << pk;
-            ++keyCounter;
-        }
-
-        destScript << CScript::EncodeOP_N(keyCounter+1) << OP_CHECKMULTISIG;
+    // Truncate the order id in situations where we don't have enough space in the tx
+    std::string orderId{ptr->id.GetHex()};
+    if (strInfo.size() + orderId.size() > maxBytes) {
+        auto leftOver = maxBytes - strInfo.size();
+        orderId.erase(leftOver, std::string::npos);
     }
+    info.insert(info.begin(), orderId); // add order id to the front
+    strInfo = write_string(json_spirit::Value(info));
+    if (strInfo.size() > maxBytes) // make sure we're not too large
+        return xbridge::Error::INVALID_ONCHAIN_HISTORY;
+
+    auto destScript = CScript() << OP_DUP << OP_HASH160 << ToByteVector(snodePubKey) << OP_EQUALVERIFY << OP_CHECKSIG;
+    auto data = ToByteVector(strInfo);
 
     // Utxo selection
     {
@@ -1672,7 +1673,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
         double blockFeePerByte = 40 / static_cast<double>(COIN);
         if (!rpc::createFeeTransaction(destScript, connFrom->serviceNodeFee, blockFeePerByte,
-                std::vector<unsigned char>(), feeOutputs, ptr->feeUtxos, ptr->rawFeeTx))
+                data, feeOutputs, ptr->feeUtxos, ptr->rawFeeTx))
         {
             ERR() << "Failed to take order, couldn't prepare the service node fee " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;

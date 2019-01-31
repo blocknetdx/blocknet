@@ -10,7 +10,7 @@
 #include "xbridge/xbridgeapp.h"
 #include "sync.h"
 
-extern CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey);
+extern CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& snode_pubkey);
 
 //******************************************************************************
 //******************************************************************************
@@ -74,14 +74,11 @@ namespace {
                 continue; // throw?
             for (const CTransaction & tx : block.vtx)
             {
-                for (const CTxOut & out : tx.vout)
-                {
-                    std::string snode_pubkey{};
-                    CurrencyPair p = TxOutToCurrencyPair(out, snode_pubkey);
-                    if (p.tag == CurrencyPair::Tag::Valid) {
-                        p.timeStamp = ts;
-                        records.emplace_back(p);
-                    }
+                std::string snode_pubkey{};
+                CurrencyPair p = TxOutToCurrencyPair(tx.vout, snode_pubkey);
+                if (p.tag == CurrencyPair::Tag::Valid) {
+                    p.timeStamp = ts;
+                    records.emplace_back(p);
                 }
             }
         }

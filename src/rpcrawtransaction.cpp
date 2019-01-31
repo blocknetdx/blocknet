@@ -37,41 +37,73 @@ using namespace std;
 
 /**
  * @brief TxOutToCurrencyPair inspects a CTxOut and returns currency pair transaction info
- * @param tx - transaction with possible multisig
+ * @param tx.vout - transaction outpoints with possible multisig/op_return
  * @param snode_pubkey - (output) the service node public key
  * @return - currency pair transaction details
  */
-CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey)
+CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& snode_pubkey)
 {
     snode_pubkey.clear();
 
-    if (txout.scriptPubKey.empty())
+    if (vout.empty())
         return {};
 
-    std::vector<std::vector<unsigned char> > solutions;
-    txnouttype type = TX_NONSTANDARD;
-    if (not Solver(txout.scriptPubKey, type, solutions))
-        return {"not solved"}; // wrong pubkey, need to check it
-    if (type != TX_MULTISIG)
-        return {}; // only interested in multisig
-    if (solutions.size() < 4)
-        return {"bad multisig, count of items"};
-
-    // Second item is real pubkey of service node
-    snode_pubkey = CBitcoinAddress{CPubKey(solutions[1]).GetID()}.ToString();
+    bool foundOpData{false};
     std::string json;
-    for (size_t i = 2; i < solutions.size()-1; ++i) {
-        const auto& sol = solutions[i];
-        if (sol.size() != 65)
-            return {"unknown multisig, size != 65"};
-        std::copy(sol.begin()+1, sol.end(), std::back_inserter(json));
+
+    for (const CTxOut & out : vout) {
+        if (out.scriptPubKey.empty())
+            continue;
+
+        std::vector<std::vector<unsigned char> > solutions;
+        txnouttype type = TX_NONSTANDARD;
+        if (not Solver(out.scriptPubKey, type, solutions))
+            continue;
+
+        if (type == TX_MULTISIG) {
+            if (solutions.size() < 4)
+                continue;
+
+            snode_pubkey = CBitcoinAddress{CPubKey(solutions[1]).GetID()}.ToString();
+            for (size_t i = 2; i < solutions.size()-1; ++i) {
+                const auto& sol = solutions[i];
+                if (sol.size() != 65)
+                    break;
+                std::copy(sol.begin()+1, sol.end(), std::back_inserter(json));
+            }
+        } else if (type == TX_NULL_DATA) {
+            if (out.nValue != 0 || !out.scriptPubKey.IsUnspendable())
+                continue;
+            vector<unsigned char> data;
+            CScript::const_iterator pc = out.scriptPubKey.begin();
+            while (pc < out.scriptPubKey.end()) { // look for order data
+                opcodetype opcode;
+                if (!out.scriptPubKey.GetOp(pc, opcode, data))
+                    break;
+                if (data.size() != 0) {
+                    std::copy(data.begin(), data.end(), std::back_inserter(json));
+                    foundOpData = true;
+                    break;
+                }
+            }
+        }
     }
+
+    if (json.empty())
+        return {}; // no data found
+
+    if (foundOpData && vout.size() >= 2) {
+        CTxDestination snodeAddr;
+        if (ExtractDestination(vout[1].scriptPubKey, snodeAddr))
+            snode_pubkey = CBitcoinAddress{snodeAddr}.ToString();
+    }
+
     Value val;
     if (not read_string(json, val) || val.type() != array_type)
-        return {"unknown multisig, json error"};
+        return {"unknown chain data, json error"};
     Array xtx = val.get_array();
     if (xtx.size() != 5)
-        return {"unknown multisig, bad records count"};
+        return {"unknown chain data, bad records count"};
     // validate chain inputs
     try { xtx[0].get_str(); } catch(...) {
         return {"bad id" }; }
