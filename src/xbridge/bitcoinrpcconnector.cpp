@@ -231,7 +231,7 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
                     double runningAmount{0};
                     for (auto & u : sel)
                         runningAmount += u.amount;
-                    runningAmount += estFee(sel.size(), 2);
+                    runningAmount -= estFee(sel.size(), 2); // subtract estimated fees
 
                     if (runningAmount >= minAmount) {
                         o.insert(o.end(), sel.begin(), sel.end()); // only add utxos if we pass threshold
