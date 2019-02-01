@@ -32,12 +32,12 @@ ENV HOST=x86_64-w64-mingw32
 # Download depends
 RUN mkdir -p $PROJECTDIR \
   && cd $PROJECTDIR \
-  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-3.10.6-dev-win.tar.gz \
-  && [ "$(printf 'aa2ef991c76c4c138f99905e9e81be49770573dff7a8dc33fcd2593ae3d996d8 depends-3.10.6-dev-win.tar.gz' | sha256sum -c)" = "depends-3.10.6-dev-win.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-3.11.1-dev-win.tar.gz \
+  && [ "$(printf '427e0cfcdf157b797e3ebf8f4c0e29aaee06146ea3b10737efd550a0e9c533ff depends-3.11.1-dev-win.tar.gz' | sha256sum -c)" = "depends-3.11.1-dev-win.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
 
 # Copy source files
 #RUN cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch 3.10.6 https://github.com/BlocknetDX/BlockDX.git tmp \
+#  && git clone --depth 1 --branch 3.11.1 https://github.com/BlocknetDX/BlockDX.git tmp \
 #  && mv tmp/* BlockDX/
 COPY . $PROJECTDIR/
 
@@ -45,7 +45,7 @@ COPY . $PROJECTDIR/
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
   && rm -r $BASEPREFIX \
-  && tar xzvf depends-3.10.6-dev-win.tar.gz \
+  && tar xzvf depends-3.11.1-dev-win.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CXXFLAGS='-Wno-deprecated' --enable-reduce-exports --disable-bench --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --with-gui=qt5 --prefix=/ \

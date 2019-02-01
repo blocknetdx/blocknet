@@ -1,4 +1,4 @@
-FROM ubuntu:trusty
+FROM ubuntu:bionic
 
 ARG cores=8
 ENV ecores=$cores
@@ -18,6 +18,12 @@ RUN add-apt-repository ppa:bitcoin/bitcoin \
      libdb4.8-dev libdb4.8++-dev \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# gcc8
+RUN apt update \
+  && apt install -y --no-install-recommends \
+     g++-8-multilib gcc-8-multilib binutils-gold \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 ENV PROJECTDIR=/opt/blocknetdx/BlockDX
 ENV BASEPREFIX=$PROJECTDIR/depends
 ENV DISTDIR=/opt/blocknetdx/dist
@@ -26,12 +32,12 @@ ENV HOST=x86_64-pc-linux-gnu
 # Download depends
 RUN mkdir -p $PROJECTDIR \
   && cd $PROJECTDIR \
-  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-3.10.6-dev-trusty.tar.gz \
-  && [ "$(printf 'c48b488097bd5f9b70a83f95c3226bb3d10fef0aec3b462ba69bfbf1cdb0cf0b depends-3.10.6-dev-trusty.tar.gz' | sha256sum -c)" = "depends-3.10.6-dev-trusty.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-3.11.1-dev-bionic.tar.gz \
+  && [ "$(printf '9d9c444fcef2a1776bb276639a5bc634829d498ef0ee31f5035a7c735d0c8b03 depends-3.11.1-dev-bionic.tar.gz' | sha256sum -c)" = "depends-3.11.1-dev-bionic.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
 
 # Copy source files
 #RUN cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch 3.10.6 https://github.com/BlocknetDX/BlockDX.git tmp \
+#  && git clone --depth 1 --branch 3.11.1 https://github.com/BlocknetDX/BlockDX.git tmp \
 #  && mv tmp/* BlockDX/
 COPY . $PROJECTDIR/
 
@@ -39,13 +45,13 @@ COPY . $PROJECTDIR/
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
   && rm -r $BASEPREFIX \
-  && tar xzvf depends-3.10.6-dev-trusty.tar.gz \
+  && tar xzvf depends-3.11.1-dev-bionic.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
-  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure --with-gui=qt5 --enable-debug --prefix=/ \
+  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CC=gcc-8 CXX=g++-8 --with-gui=qt5 --enable-debug --prefix=/ \
   && make clean \
   && echo "Building with cores: $ecores" \
-  && make -j$ecores \
+  && make CC=gcc-8 CXX=g++-8 -j$ecores \
   && make install DESTDIR=$DISTDIR \
   && make clean
 
