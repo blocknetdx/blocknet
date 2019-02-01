@@ -24,6 +24,7 @@ LIBBITCOIN_UNIVALUE=univalue/libbitcoin_univalue.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBXBRIDGE_XBRIDGE=libxbridge_xbridge.a
+LIBXROUTER_XROUTER=libxrouter_xrouter.a
 
 $(LIBSECP256K1): $(wildcard secp256k1/src/*) $(wildcard secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
@@ -36,6 +37,7 @@ EXTRA_LIBRARIES = \
   libbitcoin_common.a \
   univalue/libbitcoin_univalue.a \
   libxbridge_xbridge.a \
+  libxrouter_xrouter.a \
   libbitcoin_server.a \
   libbitcoin_cli.a
 
@@ -393,6 +395,38 @@ libxbridge_xbridge_a_SOURCES = \
   xbridge/posixtimeconversion.h \
   $(BITCOIN_CORE_H)
 
+libxrouter_xrouter_a_CPPFLAGS =  $(BITCOIN_INCLUDES)
+libxrouter_xrouter_a_SOURCES = \
+  xrouter/xrouterapp.cpp \
+  xrouter/xrouterapp.h \
+  xrouter/xrouterserver.cpp \
+  xrouter/xrouterserver.h \
+  xrouter/version.h \
+  xrouter/xrouterdef.h \
+  xrouter/rpcxrouter.cpp \
+  xrouter/xrouterpacket.cpp \
+  xrouter/xrouterpacket.h \
+  xrouter/xrouterconnector.h \
+  xrouter/xrouterconnector.cpp \
+  xrouter/xrouterconnectorbtc.h \
+  xrouter/xrouterconnectorbtc.cpp \
+  xrouter/xrouterconnectoreth.h \
+  xrouter/xrouterconnectoreth.cpp \
+  xrouter/xroutererror.h \
+  xrouter/xrouterpeer.h \
+  xrouter/xrouterlogger.h \
+  xrouter/xrouterlogger.cpp \
+  xrouter/xroutersettings.h \
+  xrouter/xroutersettings.cpp \
+  xrouter/xrouterutils.h \
+  xrouter/utils-domains.cpp \
+  xrouter/utils-misc.cpp \
+  xrouter/utils-network.cpp \
+  xrouter/utils-payments.cpp \
+  xrouter/utils-paymentchannels.cpp \
+  xrouter/utils-verify.cpp \
+  $(BITCOIN_CORE_H)
+
 
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
@@ -443,6 +477,7 @@ blocknetdxd_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1) \
   $(LIBXBRIDGE_XBRIDGE) \
+  $(LIBXROUTER_XROUTER) \
   $(LIBBITCOIN_CLI)
 
 if ENABLE_ZMQ

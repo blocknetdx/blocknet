@@ -18,6 +18,7 @@
 #include "version.h"
 #include "activeservicenode.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 
 #include <boost/foreach.hpp>
 
@@ -76,7 +77,8 @@ Value sendserviceping(const Array& params, bool fHelp)
             throw runtime_error("Service ping not sent: This is not a Servicenode or it hasn't started yet");
     }
 
-    xbridge::App::instance().sendServicePing();
+    std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
+    xbridge::App::instance().sendServicePing(nonWalletServices);
 
     return Value::null;
 }

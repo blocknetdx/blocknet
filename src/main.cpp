@@ -31,6 +31,7 @@
 #include "util.h"
 #include "utilmoneystr.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 #include "coinvalidator.h"
 
 #include <sstream>
@@ -5553,6 +5554,37 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                             pfrom->id, pfrom->cleanSubVer,
                             state.GetRejectReason());
                     }
+                }
+            }
+        } // if (isEnabled)
+    } else if (strCommand == "xrouter") {
+        std::vector<unsigned char> raw;
+        vRecv >> raw;
+
+
+        static bool isEnabled = xrouter::App::isEnabled();
+        if (isEnabled) {
+            if (raw.size() < (20 + sizeof(time_t))) {
+                // bad packet, small penalty
+                Misbehaving(pfrom->GetId(), 10);
+            } else {
+                CValidationState state;
+                xrouter::App& app = xrouter::App::instance();
+                app.onMessageReceived(pfrom, raw, state);
+
+                int dos = 0;
+                if (state.IsInvalid(dos)) {
+                    LogPrint("xrouter", "invalid xrouter packet from peer=%d %s : %s\n",
+                        pfrom->id, pfrom->cleanSubVer,
+                        state.GetRejectReason());
+                    if (dos > 0) {
+                        Misbehaving(pfrom->GetId(), dos);
+                    }
+                } else if (state.IsError()) {
+                    LogPrint("xrouter", "xrouter packet from peer=%d %s processed with error: %s\n",
+                        pfrom->id, pfrom->cleanSubVer,
+                        state.GetRejectReason());
+                    // Misbehaving(pfrom->GetId(), 10);
                 }
             }
         }

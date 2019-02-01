@@ -441,7 +441,7 @@ public:
      * @brief Sends the services ping to the network (including supported xwallets).
      * @return
      */
-    bool sendServicePing();
+    bool sendServicePing(std::vector<std::string> &nonWalletServices);
 
     /**
      * @brief Returns true if the current node supports the specified service.

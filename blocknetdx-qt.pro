@@ -300,6 +300,14 @@ SOURCES += \
     src/xbridge/xbridgecryptoproviderbtc.cpp \
     src/xbridge/xbridgepacket.cpp \
     src/xbridge/util/xseries.cpp
+    src/xrouter/rpcxrouter.cpp \
+    src/xrouter/xrouterapp.cpp \
+    src/xrouter/xrouterconnector.cpp \
+    src/xrouter/xrouterconnectorbtc.cpp \
+    src/xrouter/xrouterconnectoreth.cpp \
+    src/xrouter/xrouterlogger.cpp \
+    src/xrouter/xroutersettings.cpp \
+    src/xrouter/xrouterpacket.cpp
 
 #protobuf generated
 SOURCES += \
@@ -592,7 +600,17 @@ HEADERS += \
     src/xbridge/xbridgedef.h \
     src/xbridge/xbridgecryptoproviderbtc.h \
     src/xbridge/util/xseries.h \
-    src/xbridge/util/xassert.h
+    src/xbridge/util/xassert.h \
+    src/xrouter/version.h \
+    src/xrouter/xrouterapp.h \
+    src/xrouter/xrouterconnector.h \
+    src/xrouter/xrouterconnectorbtc.h \
+    src/xrouter/xrouterconnectoreth.h \
+    src/xrouter/xrouterpacket.h \
+    src/xrouter/xrouterdef.h \
+    src/xrouter/xrouterlogger.h \
+    src/xrouter/xroutersettings.h \
+    src/xrouter/xroutererror.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

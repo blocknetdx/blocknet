@@ -384,6 +384,35 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxGetLockedUtxos",                     &dxGetLockedUtxos,           false, true, true},
         {"xbridge", "dxFlushCancelledOrders",               &dxFlushCancelledOrders,     false, true, true},
         {"xbridge", "gettradingdata",                       &gettradingdata,             false, true, true},
+        
+        {"xrouter", "xrGetBlockCount",                      &xrGetBlockCount,            true, true, true},
+        {"xrouter", "xrGetBlockHash",                       &xrGetBlockHash,             true, true, true},
+        {"xrouter", "xrGetBlock",                           &xrGetBlock,                 true, true, true},
+        {"xrouter", "xrGetTransaction",                     &xrGetTransaction,           true, true, true},
+        
+        {"xrouter", "xrGetBlocks",                          &xrGetBlocks,                true, true, true},
+        {"xrouter", "xrGetTransactions",                    &xrGetTransactions,          true, true, true},
+        {"xrouter", "xrGetBalanceUpdate",                   &xrGetBalanceUpdate,         true, true, true},
+        {"xrouter", "xrGetTransactionsBloomFilter",        &xrGetTransactionsBloomFilter,true, true, true},
+        {"xrouter", "xrGenerateBloomFilter",                &xrGenerateBloomFilter,      true, true, true},
+        {"xrouter", "xrTimeToBlockNumber",                  &xrTimeToBlockNumber,        true, true, true},
+        
+        {"xrouter", "xrGetReply",                           &xrGetReply,                 true, true, true},
+        {"xrouter", "xrUpdateConfigs",                      &xrUpdateConfigs,            true, true, true},
+        {"xrouter", "xrShowConfigs",                        &xrShowConfigs,              true, true, true},
+        {"xrouter", "xrStatus",                             &xrStatus,                   true, true, true},
+        {"xrouter", "xrOpenConnections",                    &xrOpenConnections,          true, true, true},
+        {"xrouter", "xrReloadConfigs",                      &xrReloadConfigs,            true, true, true},
+        {"xrouter", "xrSendTransaction",                    &xrSendTransaction,          true, true, true},
+        {"xrouter", "xrRegisterDomain",                     &xrRegisterDomain,           true, true, true},
+        {"xrouter", "xrQueryDomain",                        &xrQueryDomain,              true, true, true},
+        {"xrouter", "xrCreateDepositAddress",               &xrCreateDepositAddress,     true, true, true},
+        {"xrouter", "xrPaymentChannels",                    &xrPaymentChannels,          true, true, true},
+        {"xrouter", "xrClosePaymentChannel",                &xrClosePaymentChannel,      true, true, true},
+        {"xrouter", "xrCloseAllPaymentChannels",            &xrCloseAllPaymentChannels,  true, true, true},
+        {"xrouter", "xrCustomCall",                         &xrCustomCall,               true, true, true},
+        {"xrouter", "xrTest",                               &xrTest,                     true, true, true},
+
     #endif // ENABLE_WALLET
 };
 
