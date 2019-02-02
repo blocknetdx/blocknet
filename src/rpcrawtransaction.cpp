@@ -20,6 +20,7 @@
 #include "uint256.h"
 #include "coincontrol.h"
 #include "currencypair.h"
+#include "xbridge/xbridgetransactiondescr.h"
 #ifdef ENABLE_WALLET
 #include "wallet.h"
 #endif
@@ -86,10 +87,10 @@ CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey
 
     return CurrencyPair{
         xtx[0].get_str(),    // xid
-        {ccy::Currency{xtx[1].get_str(),COIN}, // fromCurrency
-                xtx[2].get_uint64()},          // fromAmount
-        {ccy::Currency{xtx[3].get_str(),COIN}, // toCurrency
-                xtx[4].get_uint64()}           // toAmount
+        {ccy::Currency{xtx[1].get_str(),xbridge::TransactionDescr::COIN}, // fromCurrency
+                xtx[2].get_uint64()},                                     // fromAmount
+        {ccy::Currency{xtx[3].get_str(),xbridge::TransactionDescr::COIN}, // toCurrency
+                xtx[4].get_uint64()}                                      // toAmount
     };
 }
 
