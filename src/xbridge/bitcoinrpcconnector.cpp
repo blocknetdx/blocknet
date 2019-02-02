@@ -184,9 +184,9 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
             std::vector<xbridge::wallet::UtxoEntry> lt;
 
             // Check ideal, find input that is larger than min amount and within range
-            double minAmount{feeAmount(amt, 1, 2)};
+            double minAmount{feeAmount(amt, 1, 3)};
             for (const auto & utxo : a) {
-                if (utxo.amount >= minAmount && utxo.amount < minAmount + estFee(1, 2) * 100) {
+                if (utxo.amount >= minAmount && utxo.amount < minAmount + estFee(1, 3) * 100) {
                     o.push_back(utxo);
                     done = true;
                     break;
@@ -231,7 +231,7 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
                     double runningAmount{0};
                     for (auto & u : sel)
                         runningAmount += u.amount;
-                    runningAmount -= estFee(sel.size(), 2); // subtract estimated fees
+                    runningAmount -= estFee(sel.size(), 3); // subtract estimated fees
 
                     if (runningAmount >= minAmount) {
                         o.insert(o.end(), sel.begin(), sel.end()); // only add utxos if we pass threshold
@@ -257,7 +257,7 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
 
         // Fee amount
         double inputAmt{0};
-        double feeAmt{estFee(selUtxos.size(), 2)};
+        double feeAmt{estFee(selUtxos.size(), 3)};
         std::string changeAddr{selUtxos[0].address};
 
         Array inputs;

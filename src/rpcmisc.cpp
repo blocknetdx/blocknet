@@ -34,7 +34,7 @@ using namespace boost::assign;
 using namespace json_spirit;
 using namespace std;
 
-extern CurrencyPair TxOutToCurrencyPair(const CTxOut & txout, std::string& snode_pubkey);
+extern CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& snode_pubkey);
 
 /**
  * @note Do not add or change anything in the information returned by this
@@ -527,10 +527,11 @@ Value gettradingdata(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
         throw runtime_error(
-            "gettradingdata blocks\n"
+            "gettradingdata blocks errors\n"
             "Returns an object containing xbridge trading records.\n"
             "\nArguments:\n"
             "1. blocks  (integer, optional) count of blocks for search\n"
+            "2. errors  (bool, optional, default: false) show errors\n"
             "\nResult:\n"
             "{\n"
             "  \"timestamp\":  \"timestamp\",       (uint64) block date in unixtime format\n"
@@ -546,10 +547,15 @@ Value gettradingdata(const Array& params, bool fHelp)
             HelpExampleCli("gettradingdata", "") + HelpExampleRpc("gettradingdata", ""));
 
     uint32_t countOfBlocks = std::numeric_limits<uint32_t>::max();
-    if (params.size() == 1)
+    if (params.size() >= 1)
     {
         RPCTypeCheck(params, boost::assign::list_of(int_type));
         countOfBlocks = params[0].get_int();
+    }
+    bool showErrors = false;
+    if (params.size() == 2) {
+        RPCTypeCheck(params, boost::assign::list_of(bool_type));
+        showErrors = params[1].get_bool();
     }
 
     LOCK(cs_main);
@@ -571,34 +577,34 @@ Value gettradingdata(const Array& params, bool fHelp)
         for (const CTransaction & tx : block.vtx)
         {
             const auto txid = tx.GetHash().GetHex();
-            for (const CTxOut & out : tx.vout)
-            {
-                std::string snode_pubkey{};
-                const CurrencyPair p = TxOutToCurrencyPair(out, snode_pubkey);
-                switch(p.tag) {
-                case CurrencyPair::Tag::Error:
+            std::string snode_pubkey{};
+
+            const CurrencyPair p = TxOutToCurrencyPair(tx.vout, snode_pubkey);
+            switch(p.tag) {
+            case CurrencyPair::Tag::Error:
+                // Show errors
+                if (showErrors)
                     records.emplace_back(Object{
-                                Pair{"timestamp",  timestamp},
-                                Pair{"txid",       txid},
-                                Pair{"xid",        p.error()}
+                        Pair{"timestamp",  timestamp},
+                        Pair{"txid",       txid},
+                        Pair{"xid",        p.error()}
+                    });
+                break;
+            case CurrencyPair::Tag::Valid:
+                records.emplace_back(Object{
+                            Pair{"timestamp",  timestamp},
+                            Pair{"txid",       txid},
+                            Pair{"to",         snode_pubkey},
+                            Pair{"xid",        p.xid()},
+                            Pair{"from",       p.from.currency().to_string()},
+                            Pair{"fromAmount", p.from.amount<double>()},
+                            Pair{"to",         p.to.currency().to_string()},
+                            Pair{"toAmount",   p.to.amount<double>()},
                             });
-                    break;
-                case CurrencyPair::Tag::Valid:
-                    records.emplace_back(Object{
-                                Pair{"timestamp",  timestamp},
-                                Pair{"txid",       txid},
-                                Pair{"to",         snode_pubkey},
-                                Pair{"xid",        p.xid()},
-                                Pair{"from",       p.from.currency().to_string()},
-                                Pair{"fromAmount", p.from.amount<double>()},
-                                Pair{"to",         p.to.currency().to_string()},
-                                Pair{"toAmount",   p.to.amount<double>()},
-                                });
-                    break;
-                case CurrencyPair::Tag::Empty:
-                default:
-                    break;
-                }
+                break;
+            case CurrencyPair::Tag::Empty:
+            default:
+                break;
             }
         }
     }
