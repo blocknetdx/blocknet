@@ -39,7 +39,7 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle* networkStyle) 
     QString copyrightTextBtc = QChar(0xA9) + QString(" 2009-2017 ") + QString(tr("The Bitcoin Core developers"));
     QString copyrightTextDash = QChar(0xA9) + QString(" 2014-2017 ") + QString(tr("The Dash Core developers"));
     QString copyrightTextPivx = QChar(0xA9) + QString(" 2015-2017 ") + QString(tr("The PIVX Core developers"));
-    QString copyrightTextBlocknetDX = QChar(0xA9) + QString(" 2015-2018 ") + QString(tr("The Blocknet Core developers"));
+    QString copyrightTextBlocknetDX = QChar(0xA9) + QString(" 2015-2019 ") + QString(tr("The Blocknet Core developers"));
     const QString &titleAddText = networkStyle->getTitleAddText();
 
     QString font = QApplication::font().toString();
