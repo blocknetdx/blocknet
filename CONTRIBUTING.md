@@ -158,7 +158,7 @@ where possible keep them short, un-complex and easy to verify.
 -------------------------
 
 The following applies to code changes to the Blocknet project, and is not to be
-confused with overall BlocknetDX Network Protocol consensus changes.
+confused with overall Blocknet Network Protocol consensus changes.
 
 Whether a pull request is merged into Blocknet rests with the project merge
 maintainers and ultimately the project lead.
@@ -174,7 +174,7 @@ In general, all pull requests must:
   - be well peer reviewed;
   - follow code style guidelines;
 
-Patches that change BlocknetDX consensus rules are considerably more involved than
+Patches that change Blocknet consensus rules are considerably more involved than
 normal because they affect the entire ecosystem and so must be preceded by
 extensive discussions and clear detailing. While each case will be different,
 one should be prepared to expend more time and effort than for other kinds of

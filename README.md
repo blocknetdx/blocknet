@@ -7,10 +7,10 @@ Welcome to the Blocknet repository. This repo is for the Blocknet Protocol, a 2n
 Started in 2014, Blocknet is a decentralized, community-governed, self-funded, open-source project that serves as a connector between different blockchains, markets, and communities. 
 
 #### The Blocknet Protocol
-The Blocknet Protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of P2P atomic swaps using BIP65 and a DHT overlay network (Service Nodes). 
+The Blocknet Protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network (Service Nodes) to host the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
 
 #### Block DX
-Block DX is a completely decentralized and trustless exchange built on the Blocknet protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. [View Repository](https://github.com/BlocknetDX/blockdx-ui)
+Block DX is a completely decentralized and trustless exchange built on the Blocknet Protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/blockdx-ui]
 
 [Contributors are welcome!](https://github.com/BlocknetDX/BlockDX/blob/master/CONTRIBUTING.md)
 

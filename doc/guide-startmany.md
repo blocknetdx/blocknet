@@ -4,7 +4,7 @@
 There are many ways to setup a wallet to support start-many. This guide will walk through two of them.
 
 1. [Importing an existing wallet (recommended if you are consolidating wallets).](#option1)
-2. [Sending 10,000 BlocknetDX to new wallet addresses.](#option2)
+2. [Sending 5,000 BLOCK to new wallet addresses.](#option2)
 
 ## <a name="option1"></a>Option 1. Importing an existing wallet
 
@@ -56,9 +56,9 @@ Create a new wallet address for each ServiceNode.
 
 Close your QT Wallet.
 
-### Send 10,000 BlocknetDX to New Addresses
+### Send 5,000 BLOCK to New Addresses
 
-Just like setting up a standard MN. Send exactly 10,000 BlocknetDX to each new address created above.
+Just like setting up a standard MN. Send exactly 5,000 BLOCK to each new address created above.
 
 ### Create New Servicenode Private Keys
 
@@ -137,7 +137,7 @@ I usually confirm that remote is on the correct block by issuing:
 
 ```blocknetdxd getinfo```
 
-And compare with the official explorer at http://blocknetdxexplorer.coin-server.com <or> dnet.presstab.pw
+And compare with the official explorer at https://chainz.cryptoid.info/block/
 
 ### Local
 
