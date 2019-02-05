@@ -4,9 +4,9 @@ Expectations for DNS Seed operators
 Blocknet attempts to minimize the level of trust in DNS seeds,
 but DNS seeds still pose a small amount of risk for the network.
 As such, DNS seeds must be run by entities which have some minimum
-level of trust within the BlocknetDX community.
+level of trust within the Blocknet community.
 
-Other implementations of BlocknetDX software may also use the same
+Other implementations of Blocknet software may also use the same
 seeds and may be more exposed. In light of this exposure this
 document establishes some basic expectations for the expectations
 for the operation of dnsseeds.
@@ -46,7 +46,7 @@ related to the DNS seed operation.
 If these expectations cannot be satisfied the operator should
 discontinue providing services and contact the active BlocknetDX
 Core development team as well as posting on the
-[BlocknetDX Rocket.Chat](https://rocket.blocknet.co:8443/).
+[Blocknet Discord](https://discord.gg/2e6s7H8).
 
 Behavior outside of these expectations may be reasonable in some
 situations but should be discussed in public in advance.

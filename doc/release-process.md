@@ -3,7 +3,7 @@ Release Process
 
 Before every release candidate:
 
-* Update translations (ping hanniabu on Rocket.Chat) see [translation_process.md](https://github.com/BlocknetDX/BlockDX/blob/master/doc/translation_process.md#synchronising-translations).
+* Update translations (ping @hanniabu on [Discord](https://discord.gg/2e6s7H8)) see [translation_process.md](https://github.com/BlocknetDX/BlockDX/blob/master/doc/translation_process.md#synchronising-translations).
 
 Before every minor and major release:
 

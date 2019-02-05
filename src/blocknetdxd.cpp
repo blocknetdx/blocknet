@@ -26,9 +26,10 @@
  *
  * \section intro_sec Introduction
  *
- * This is the developer documentation of the reference client for an experimental new digital currency called BlocknetDX (https://www.blocknet.co),
- * which enables instant payments to anyone, anywhere in the world. BlocknetDX uses peer-to-peer technology to operate
- * with no central authority: managing transactions and issuing money are carried out collectively by the network.
+ * This is the developer documentation of the reference client for a 2nd blockchain interoperability protocol called BlocknetDX (https://www.blocknet.co),
+ * which enables communication, interaction, and exchange between different blockchains in a permissionless and trustless manner. This implemented through 
+ * the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network (Service Nodes) to host 
+ * the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
  *
  * The software is a community-driven open source project, released under the MIT license.
  *
@@ -79,13 +80,13 @@ bool AppInit(int argc, char* argv[])
 
     // Process help and version before taking care about datadir
     if (mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
-        std::string strUsage = _("Blocknetdx Core Daemon") + " " + _("version") + " " + FormatFullVersion() + "\n";
+        std::string strUsage = _("Blocknet Core Daemon") + " " + _("version") + " " + FormatFullVersion() + "\n";
 
         if (mapArgs.count("-version")) {
             strUsage += LicenseInfo();
         } else {
             strUsage += "\n" + _("Usage:") + "\n" +
-                        "  blocknetdxd [options]                     " + _("Start Blocknetdx Core Daemon") + "\n";
+                        "  blocknetdxd [options]                     " + _("Start Blocknet Core Daemon") + "\n";
 
             strUsage += "\n" + HelpMessage(HMM_BITCOIND);
         }
