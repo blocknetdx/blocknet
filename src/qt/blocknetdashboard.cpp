@@ -425,7 +425,7 @@ void BlocknetDashboardCellItem::paint(QPainter *painter, const QStyleOptionViewI
             }
             // Draw the status indicator, leave some room on top and bottom
             int pad = 2;
-            QRect r(option.rect.x(), option.rect.y()+pad/2, option.rect.width(), option.rect.height()-pad);
+            QRect r(option.rect.x(), option.rect.y()+pad/2, 3, option.rect.height()-pad);
             painter->fillRect(r, color);
             break;
         }
