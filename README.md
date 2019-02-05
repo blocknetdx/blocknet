@@ -53,7 +53,7 @@ Initiator creates TxBp which spends TxBb using privkey i2 and secret X. With the
 
 The MIT License (MIT)
 
-Copyright (c) 2014-2018 The Blocknet Developers, see LICENSE for additional detail.
+Copyright (c) 2014-2019 The Blocknet Developers, see LICENSE for additional detail.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
