@@ -449,6 +449,18 @@ void CNode::CloseSocketDisconnect()
         vRecvMsg.clear();
 }
 
+bool CNode::DisconnectOldProtocol(int nVersionRequired, string strLastCommand)
+{
+    fDisconnect = false;
+    if (nVersion < nVersionRequired) {
+        LogPrintf("%s : peer=%d using obsolete version %i; disconnecting\n", __func__, id, nVersion);
+        PushMessage("reject", strLastCommand, REJECT_OBSOLETE, strprintf("Version must be %d or greater", ActiveProtocol()));
+        fDisconnect = true;
+    }
+
+    return fDisconnect;
+}
+
 void CNode::PushVersion()
 {
     int nBestHeight = g_signals.GetHeight().get_value_or(0);
@@ -2000,8 +2012,10 @@ void CNode::EndMessage() UNLOCK_FUNCTION(cs_vSend)
     if (mapArgs.count("-fuzzmessagestest"))
         Fuzz(GetArg("-fuzzmessagestest", 10));
 
-    if (ssSend.size() == 0)
+    if (ssSend.size() == 0) {
+	    LEAVE_CRITICAL_SECTION(cs_vSend);
         return;
+    }
 
     // Set the size
     unsigned int nSize = ssSend.size() - CMessageHeader::HEADER_SIZE;

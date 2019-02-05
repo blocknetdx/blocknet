@@ -745,7 +745,11 @@ Value getbalance(const Array& params, bool fHelp)
 
     string strAccount = AccountFromValue(params[0]);
 
-    CAmount nBalance = GetAccountBalance(strAccount, nMinDepth, filter);
+    CAmount nBalance{0};
+    {
+        LOCK2(cs_main, pwalletMain->cs_wallet);
+        nBalance = GetAccountBalance(strAccount, nMinDepth, filter);
+    }
 
     return ValueFromAmount(nBalance);
 }
@@ -2040,19 +2044,24 @@ Value getwalletinfo(const Array& params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getwalletinfo", "") + HelpExampleRpc("getwalletinfo", ""));
 
-    LOCK(cs_main);
 
     Object obj;
     obj.push_back(Pair("walletversion", pwalletMain->GetVersion()));
     obj.push_back(Pair("balance", ValueFromAmount(pwalletMain->GetBalance())));
+
     {
-    LOCK(pwalletMain->cs_wallet);
+    LOCK2(cs_main, pwalletMain->cs_wallet);
     obj.push_back(Pair("txcount", (int)pwalletMain->mapWallet.size()));
     }
+
     obj.push_back(Pair("keypoololdest", pwalletMain->GetOldestKeyPoolTime()));
+    {
+    LOCK2(cs_main, pwalletMain->cs_wallet);
     obj.push_back(Pair("keypoolsize", (int)pwalletMain->GetKeyPoolSize()));
     if (pwalletMain->IsCrypted())
         obj.push_back(Pair("unlocked_until", nWalletUnlockTime));
+    }
+
     return obj;
 }
 

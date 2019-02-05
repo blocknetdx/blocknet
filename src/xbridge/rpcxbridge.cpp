@@ -63,8 +63,16 @@ Value dxLoadXBridgeConf(const Array & params, bool fHelp)
         return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "This function does not accept any parameter");
 
-    auto success = xbridge::App::instance().loadSettings();
-    xbridge::App::instance().updateActiveWallets();
+    if (ShutdownRequested())
+        throw runtime_error("dxLoadXBridgeConf\nFailed to reload the config because a shutdown request is in progress.");
+
+    auto & app = xbridge::App::instance();
+    if (app.isUpdatingWallets()) // let the user know if wallets are being actively updated
+        throw runtime_error("dxLoadXBridgeConf\nAn existing wallet update is currently in progress, please wait until it has completed.");
+
+    auto success = app.loadSettings();
+    app.clearBadWallets(); // clear any bad wallet designations b/c user is explicitly requesting a wallet update
+    app.updateActiveWallets();
     return success;
 }
 
@@ -323,7 +331,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             ? query.granularity
             : boost::posix_time::seconds{0};
         for (const auto& x : result) {
-            double volume = x.toVolume.amount<double>();
+            double volume = x.fromVolume.amount<double>();
             Array ohlc{
                 ArrayIL{util::iso8601(x.timeEnd - offset), x.low, x.high, x.open, x.close, volume}
             };
@@ -1438,7 +1446,8 @@ json_spirit::Value  dxGetTokenBalances(const json_spirit::Array& params, bool fH
     const auto &connectors = xbridge::App::instance().connectors();
     for(const auto &connector : connectors)
     {
-        const auto balance = connector->getWalletBalance();
+        const auto & excluded = xbridge::App::instance().getAllLockedUtxos(connector->currency);
+        const auto balance = connector->getWalletBalance(excluded);
 
         //ignore not connected wallets
         if(balance >= 0)

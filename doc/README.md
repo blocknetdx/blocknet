@@ -3,7 +3,7 @@ Blocknet
 
 Setup
 ---------------------
-[Blocknet](https://github.com/BlocknetDX/BlockDX/releases/tag/v3.9.22) is the original BlocknetDX client and it builds the backbone of the network. However, it downloads and stores the entire history of BlocknetDX transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
+[Blocknet](https://github.com/BlocknetDX/BlockDX/releases/tag/v3.9.22) is the original Blocknet client and it builds the backbone of the network. However, it downloads and stores the entire history of Blocknet transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
 
 Running
 ---------------------
@@ -26,7 +26,7 @@ Drag BlocknetDX-Qt to your applications folder, and then run BlocknetDX-Qt.
 
 ### Need Help?
 
-* Join our Rocket.Chat [Blocknet Rocket.Chat](https://rocket.blocknet.co:8443) and ask for help in the #wallet channel.
+* Join the [Blocknet Discord](https://discord.gg/2e6s7H8) and ask for help in the #wallet channel.
 
 Building
 ---------------------
@@ -38,7 +38,7 @@ The following are developer notes on how to build BlocknetDX on your native plat
 
 Development
 ---------------------
-The Blocknetdx repo's [root README](https://github.com/BlocknetDX/BlockDX/blob/master/README.md) contains relevant information on the development process and automated testing.
+The BlocknetDX/BlockDX repo's [root README](https://github.com/BlocknetDX/BlockDX/blob/master/README.md) contains relevant information on the development process and automated testing.
 
 - [Developer Notes](developer-notes.md)
 - [Multiwallet Qt Development](multiwallet-qt.md)
@@ -52,8 +52,10 @@ The Blocknetdx repo's [root README](https://github.com/BlocknetDX/BlockDX/blob/m
 
 ### Resources
 
-* Visit our website [https://blocknet.co](https://blocknet.co)
-* Join our Rocket.Chat [https://rocket.blocknet.co:8443](https://rocket.blocknet.co:8443)
+* Website: [https://blocknet.co](https://blocknet.co)
+* Discord: [https://discord.gg/2e6s7H8](https://discord.gg/2e6s7H8)
+* API Docs: [https://api.blocknet.co](https://api.blocknet.co)
+* Documentation Portal: [https://docs.blocknet.co](https://docs.blocknet.co)
 
 ### Miscellaneous
 - [Assets Attribution](assets-attribution.md)

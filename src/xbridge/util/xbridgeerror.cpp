@@ -62,6 +62,8 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "Blocknet wallet amount is too small to cover the fee payment";
         case NO_SERVICE_NODE:
             return "Could not find a service node with required services: " + argument;
+        case INVALID_ONCHAIN_HISTORY:
+            return "The order information could not be written to the blockchain";
     }
     return "invalid error value";
 }

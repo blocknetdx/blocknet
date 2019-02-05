@@ -34,6 +34,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"setgenerate", 1},
         {"getnetworkhashps", 0},
         {"getnetworkhashps", 1},
+        {"disconnectpeer", 0},
         {"sendtoaddress", 1},
         {"sendtoaddress", 4},
         {"sendtoaddressix", 1},
@@ -121,6 +122,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"dxFlushCancelledOrders",0},
         {"dxFlushCancelledOrders",1},
         {"gettradingdata",0},
+        {"gettradingdata",1},
     };
 
 class CRPCConvertTable

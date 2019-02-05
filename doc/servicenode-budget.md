@@ -148,9 +148,9 @@ The following new RPC commands are supported:
 - mnbudget "command"... ( "passphrase" )
  * prepare            - Prepare proposal for network by signing and creating tx
  * submit             - Submit proposal for network
- * vote-many          - Vote on a Blocknetdx initiative
- * vote-alias         - Vote on a Blocknetdx initiative
- * vote               - Vote on a Blocknetdx initiative/budget
+ * vote-many          - Vote on a Blocknet initiative
+ * vote-alias         - Vote on a Blocknet initiative
+ * vote               - Vote on a Blocknet initiative/budget
  * getvotes           - Show current servicenode budgets
  * getinfo            - Show current servicenode budgets
  * show               - Show all budgets

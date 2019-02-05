@@ -5,6 +5,7 @@
 #define XBRIDGETRANSACTIONMEMBER_H
 
 #include "uint256.h"
+#include "xbridgewallet.h"
 
 #include <string>
 #include <vector>
@@ -112,6 +113,16 @@ public:
      * @return
      */
     std::string refTx() const                               { return m_refTx; }
+    /**
+     * @brief Assign the utxos.
+     * @return
+     */
+    void setUtxos(const std::vector<wallet::UtxoEntry> & utxos) { m_utxos = utxos; }
+    /**
+     * @brief Return the utxos.
+     * @return
+     */
+    const std::vector<wallet::UtxoEntry> utxos() const      { return m_utxos; }
 
 private:
     uint256                    m_id;
@@ -123,6 +134,7 @@ private:
     std::string                m_payTxId;
     std::string                m_refTxId;
     std::string                m_refTx;
+    std::vector<wallet::UtxoEntry> m_utxos;
 };
 
 } // namespace xbridge

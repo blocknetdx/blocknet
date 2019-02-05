@@ -80,6 +80,22 @@ public:
     void getAddressBook() const;
 
     /**
+     * @brief Cancels the specified order.
+     * @param tx
+     * @param reason
+     * @return
+     */
+    bool sendCancelTransaction(const TransactionPtr & tx, const TxCancelReason & reason) const;
+
+    /**
+     * @brief Cancels the specified order.
+     * @param tx
+     * @param reason
+     * @return
+     */
+    bool sendCancelTransaction(const TransactionDescrPtr & tx, const TxCancelReason & reason) const;
+
+    /**
      * Redeems the specified order's deposit.
      * @param xtx
      * @param errCode
