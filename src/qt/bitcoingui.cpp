@@ -965,7 +965,9 @@ void BitcoinGUI::setNumBlocks(int count)
             nAttempt = servicenodeSync.RequestedServicenodeAttempt < SERVICENODE_SYNC_THRESHOLD ?
                            servicenodeSync.RequestedServicenodeAttempt + 1 : SERVICENODE_SYNC_THRESHOLD;
             progress = nAttempt + (servicenodeSync.RequestedServicenodeAssets - 1) * SERVICENODE_SYNC_THRESHOLD;
-            walletFrame->setProgress(progress, QString("%1 %p%").arg(strSyncStatus), 4 * SERVICENODE_SYNC_THRESHOLD + 2);
+            int steps = 4 * SERVICENODE_SYNC_THRESHOLD + 2;
+            int per = static_cast<double>(progress)/static_cast<double>(steps)*100;
+            walletFrame->setProgress(progress, QString("%1 %2%").arg(strSyncStatus, QString::number(per)), steps);
         }
 
         tooltip = strSyncStatus + QString("<br>") + tooltip;
