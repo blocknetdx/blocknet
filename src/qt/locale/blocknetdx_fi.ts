@@ -136,7 +136,7 @@
         <translation>Poistaa käytöstä rahojen lähetyksen kun käyttöjärjestelmän käyttäjätili on vaarantunut. Ei tarjoa oikeaa turvallisuutta.</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>Vain anonymisointia varten</translation>
     </message>
     <message>
@@ -423,7 +423,7 @@
         <translation>Näytä automaattisesti tehdyt lompakon varmistukset</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Lähettävät Osoitteet...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Näytä lähettämiseen käytettyjen osoitteiden ja nimien lista</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Va&amp;staanottavat Osoitteet...</translation>
     </message>
     <message>

@@ -26,7 +26,8 @@ public:
         UnlockAnonymize, /**< Ask passphrase and unlock only for anonymization */
         Unlock,          /**< Ask passphrase and unlock */
         ChangePass,      /**< Ask old passphrase + new passphrase twice */
-        Decrypt          /**< Ask passphrase and decrypt wallet */
+        Decrypt,         /**< Ask passphrase and decrypt wallet */
+        DirectUnlock,    /**< Ask passphrase and deselect staking option */
     };
 
     explicit AskPassphraseDialog(Mode mode, QWidget* parent, WalletModel* model);

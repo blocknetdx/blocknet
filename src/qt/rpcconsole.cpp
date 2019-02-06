@@ -225,7 +225,7 @@ RPCConsole::RPCConsole(QWidget* parent) : QDialog(parent),
                                           cachedNodeid(-1)
 {
     ui->setupUi(this);
-    GUIUtil::restoreWindowGeometry("nRPCConsoleWindow", this->size(), this);
+    GUIUtil::restoreWindowGeometry("nRPCConsoleWindow", QSize(800, 640), this);
 
 #ifndef Q_OS_MAC
     ui->openDebugLogfileButton->setIcon(QIcon(":/icons/export"));

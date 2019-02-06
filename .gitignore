@@ -129,5 +129,8 @@ test/config.ini
 CMakeLists.txt
 cmake-build-debug/
 
+#vscode
+.vscode/
+
 config.pri
 doc/Doxyfile

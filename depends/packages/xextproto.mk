@@ -3,10 +3,9 @@ $(package)_version=7.3.0
 $(package)_download_path=http://xorg.freedesktop.org/releases/individual/proto
 $(package)_file_name=$(package)-$($(package)_version).tar.bz2
 $(package)_sha256_hash=f3f4b23ac8db9c3a9e0d8edb591713f3d70ef9c3b175970dd8823dfc92aa5bb0
-$(package)_patches=fix_aarch64_build.patch
 
 define $(package)_preprocess_cmds
-  patch -p1 < $($(package)_patch_dir)/fix_aarch64_build.patch
+  cp -f $(BASEDIR)/config.guess $(BASEDIR)/config.sub .
 endef
 
 define $(package)_set_vars

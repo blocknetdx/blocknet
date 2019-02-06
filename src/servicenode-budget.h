@@ -239,6 +239,8 @@ public:
     bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight);
     std::string GetRequiredPaymentsString(int nBlockHeight);
     bool FillBlockPayees(CMutableTransaction &txNew, int superblock);
+    int NextBudgetBlock();
+    int GetChainHeight();
 
     void CheckOrphanVotes();
     void Clear()
@@ -494,6 +496,7 @@ public:
     CAmount GetAmount() { return nAmount; }
     void SetAllotted(CAmount nAllotedIn) { nAlloted = nAllotedIn; }
     CAmount GetAllotted() { return nAlloted; }
+    bool IsPassing();
 
     // Get tally of votes Yes - No
     int Votes() {

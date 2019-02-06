@@ -136,7 +136,7 @@
         <translation>Slúži na vypnutie triviálneho posielania peňazí v prípade napadnutého účtu operačného systému. Neposkytuje skutočnú bezpečnosť. </translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>Iba pre anonimizáciu</translation>
     </message>
     <message>
@@ -423,7 +423,7 @@
         <translation>Zobraziť automaticky vytvorené zálohy peňaženky</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>Posielajúca adresa ...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Zobraziť zoznam použitých adries odosielateľa a ich popisy</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Prijímajúca adresa...</translation>
     </message>
     <message>

@@ -171,8 +171,8 @@
     </message>
     <message>
         <location line="+3"/>
-        <source>For anonymization and staking only</source>
-        <translation>For anonymization and staking only</translation>
+        <source>Unlock for staking only</source>
+        <translation>Unlock for staking only</translation>
     </message>
     <message>
         <location filename="../askpassphrasedialog.cpp" line="+44"/>
@@ -707,8 +707,8 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>&amp;Sending addresses...</source>
-        <translation>&amp;Sending addresses...</translation>
+        <source>&amp;Contacts</source>
+        <translation>&amp;Contacts</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -717,8 +717,8 @@
     </message>
     <message>
         <location line="+1"/>
-        <source>&amp;Receiving addresses...</source>
-        <translation>&amp;Receiving addresses...</translation>
+        <source>&amp;My Addresses</source>
+        <translation>&amp;My Addresses</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -3202,7 +3202,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="-35"/>
-        <source>Welcome to the BlocknetDX RPC console.</source>
+        <source>Welcome to the Blocknet RPC console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

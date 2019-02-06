@@ -136,7 +136,7 @@
         <translation>當OS帳戶被盜時就停止發送幣。不能提供真正的保護</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>只限匿名</translation>
     </message>
     <message>
@@ -423,7 +423,7 @@
         <translation>顯示自動創建的錢包備份檔</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>付款位址(&amp;S)...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>顯示已使用過的付款位址和標記的清單</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>收款位址(&amp;R)...</translation>
     </message>
     <message>

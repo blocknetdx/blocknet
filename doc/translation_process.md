@@ -106,6 +106,6 @@ To create a new language template, you will need to edit the languages manifest 
 **Note:** that the language translation file **must end in `.qm`** (the compiled extension), and not `.ts`.
 
 ### Questions and general assistance
-The Blocknet translation maintainers include *hanniabu*. You can find them, and others, in the [BlocknetDX Rocket.Chat](https://rocket.blocknet.co:8443).
+The Blocknet translation maintainers include *hanniabu*. You can find them, and others, in the [Blocknet Discord](https://discord.gg/2e6s7H8).
 
 Announcements will be posted during application pre-releases to notify translators to check for updates.

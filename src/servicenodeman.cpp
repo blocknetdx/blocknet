@@ -443,8 +443,12 @@ CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHei
         //it's in the list (up to 8 entries ahead of current block to allow propagation) -- so let's skip it
         if (servicenodePayments.IsScheduled(mn, nBlockHeight)) continue;
 
-        //it's too new, wait for a cycle
-        if (fFilterSigTime && mn.sigTime + (nMnCount * 2.6 * 60) > GetAdjustedTime()) continue;
+        if (IsSporkActive(SPORK_19_SNODE_LIST)) { // new snode delay
+            if (fFilterSigTime && mn.sigTime + SERVICENODE_DELAY_SECONDS > GetAdjustedTime()) continue;
+        } else {
+            //it's too new, wait for a cycle
+            if (fFilterSigTime && mn.sigTime + (nMnCount * 2.6 * 60) > GetAdjustedTime()) continue;
+        }
 
         //make sure it has as many confirmations as there are servicenodes
         if (mn.GetServicenodeInputAge() < nMnCount) continue;
@@ -548,9 +552,23 @@ int CServicenodeMan::GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, 
 
     // scan for winner
     BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        if (mn.protocolVersion < minProtocol) continue;
+        if (mn.protocolVersion < minProtocol) {
+            if (fDebug)
+                LogPrintf("Skipping Servicenode %s with obsolete version: %d)\n", mn.vin.prevout.hash.ToString(), mn.protocolVersion);
+            continue;
+        }
         if (fOnlyActive) {
             mn.Check();
+            if (IsSporkActive(SPORK_19_SNODE_LIST)) {
+                if (mn.GetServicenodeInputAge() < vServicenodes.size())
+                    continue;
+                auto snodeAge = GetAdjustedTime() - mn.sigTime;
+                if (snodeAge < SERVICENODE_DELAY_SECONDS) {
+                    if (fDebug)
+                        LogPrintf("Skipping recently activated Servicenode %s with age: %ld\n", mn.vin.prevout.hash.ToString(), snodeAge);
+                    continue;
+                }
+            }
             if (!mn.IsEnabled()) continue;
         }
         uint256 n = mn.CalculateScore(1, nBlockHeight);
@@ -783,286 +801,6 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
             LogPrint("servicenode", "dseg - Sent %d Servicenode entries to peer %i\n", nInvCount, pfrom->GetId());
         }
     }
-    /*
-     * IT'S SAFE TO REMOVE THIS IN FURTHER VERSIONS
-     * AFTER MIGRATION TO V12 IS DONE
-     */
-
-    // Light version for OLD MASSTERNODES - fake pings, no self-activation
-    else if (strCommand == "dsee") { //ObfuScation Election Entry
-
-        if (IsSporkActive(SPORK_10_SERVICENODE_PAY_UPDATED_NODES)) return;
-
-        CTxIn vin;
-        CService addr;
-        CPubKey pubkey;
-        CPubKey pubkey2;
-        vector<unsigned char> vchSig;
-        int64_t sigTime;
-        int count;
-        int current;
-        int64_t lastUpdated;
-        int protocolVersion;
-        CScript donationAddress;
-        int donationPercentage;
-        std::string strMessage;
-
-        vRecv >> vin >> addr >> vchSig >> sigTime >> pubkey >> pubkey2 >> count >> current >> lastUpdated >> protocolVersion >> donationAddress >> donationPercentage;
-
-        // make sure signature isn't in the future (past is OK)
-        if (sigTime > GetAdjustedTime() + 60 * 60) {
-            LogPrintf("dsee - Signature rejected, too far into the future %s\n", vin.prevout.hash.ToString());
-            Misbehaving(pfrom->GetId(), 1);
-            return;
-        }
-
-        std::string vchPubKey(pubkey.begin(), pubkey.end());
-        std::string vchPubKey2(pubkey2.begin(), pubkey2.end());
-
-        strMessage = addr.ToString() + boost::lexical_cast<std::string>(sigTime) + vchPubKey + vchPubKey2 + boost::lexical_cast<std::string>(protocolVersion) + donationAddress.ToString() + boost::lexical_cast<std::string>(donationPercentage);
-
-        if (protocolVersion < servicenodePayments.GetMinServicenodePaymentsProto()) {
-            LogPrintf("dsee - ignoring outdated Servicenode %s protocol version %d < %d\n", vin.prevout.hash.ToString(), protocolVersion, servicenodePayments.GetMinServicenodePaymentsProto());
-            Misbehaving(pfrom->GetId(), 1);
-            return;
-        }
-
-        CScript pubkeyScript;
-        pubkeyScript = GetScriptForDestination(pubkey.GetID());
-
-        if (pubkeyScript.size() != 25) {
-            LogPrintf("dsee - pubkey the wrong size\n");
-            Misbehaving(pfrom->GetId(), 100);
-            return;
-        }
-
-        CScript pubkeyScript2;
-        pubkeyScript2 = GetScriptForDestination(pubkey2.GetID());
-
-        if (pubkeyScript2.size() != 25) {
-            LogPrintf("dsee - pubkey2 the wrong size\n");
-            Misbehaving(pfrom->GetId(), 100);
-            return;
-        }
-
-        if (!vin.scriptSig.empty()) {
-            LogPrintf("dsee - Ignore Not Empty ScriptSig %s\n", vin.prevout.hash.ToString());
-            Misbehaving(pfrom->GetId(), 100);
-            return;
-        }
-
-        std::string errorMessage = "";
-        if (!obfuScationSigner.VerifyMessage(pubkey, vchSig, strMessage, errorMessage)) {
-            LogPrintf("dsee - Got bad Servicenode address signature\n");
-            Misbehaving(pfrom->GetId(), 100);
-            return;
-        }
-
-        if (Params().NetworkID() == CBaseChainParams::MAIN) {
-            if (addr.GetPort() != 41412) return;
-        } else if (addr.GetPort() == 41412)
-            return;
-
-        //search existing Servicenode list, this is where we update existing Servicenodes with new dsee broadcasts
-        CServicenode* pmn = this->Find(vin);
-        if (pmn != NULL) {
-            // count == -1 when it's a new entry
-            //   e.g. We don't want the entry relayed/time updated when we're syncing the list
-            // mn.pubkey = pubkey, IsVinAssociatedWithPubkey is validated once below,
-            //   after that they just need to match
-            if (count == -1 && pmn->pubKeyCollateralAddress == pubkey && (GetAdjustedTime() - pmn->nLastDsee > SERVICENODE_MIN_MNB_SECONDS)) {
-                if (pmn->protocolVersion > GETHEADERS_VERSION && sigTime - pmn->lastPing.sigTime < SERVICENODE_MIN_MNB_SECONDS) return;
-                if (pmn->nLastDsee < sigTime) { //take the newest entry
-                    LogPrint("servicenode", "dsee - Got updated entry for %s\n", vin.prevout.hash.ToString());
-                    if (pmn->protocolVersion < GETHEADERS_VERSION) {
-                        pmn->pubKeyServicenode = pubkey2;
-                        pmn->sigTime = sigTime;
-                        pmn->sig = vchSig;
-                        pmn->protocolVersion = protocolVersion;
-                        pmn->addr = addr;
-                        //fake ping
-                        pmn->lastPing = CServicenodePing(vin);
-                    }
-                    pmn->nLastDsee = sigTime;
-                    pmn->Check();
-                    if (pmn->IsEnabled()) {
-                        TRY_LOCK(cs_vNodes, lockNodes);
-                        if (!lockNodes) return;
-                        BOOST_FOREACH (CNode* pnode, vNodes)
-                            if (pnode->nVersion >= servicenodePayments.GetMinServicenodePaymentsProto())
-                                pnode->PushMessage("dsee", vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated, protocolVersion, donationAddress, donationPercentage);
-                    }
-                }
-            }
-
-            return;
-        }
-
-        static std::map<COutPoint, CPubKey> mapSeenDsee;
-        if (mapSeenDsee.count(vin.prevout) && mapSeenDsee[vin.prevout] == pubkey) {
-            LogPrint("servicenode", "dsee - already seen this vin %s\n", vin.prevout.ToString());
-            return;
-        }
-        mapSeenDsee.insert(make_pair(vin.prevout, pubkey));
-        // make sure the vout that was signed is related to the transaction that spawned the Servicenode
-        //  - this is expensive, so it's only done once per Servicenode
-        if (!obfuScationSigner.IsVinAssociatedWithPubkey(vin, pubkey)) {
-            LogPrintf("dsee - Got mismatched pubkey and vin\n");
-            Misbehaving(pfrom->GetId(), 100);
-            return;
-        }
-
-
-        LogPrint("servicenode", "dsee - Got NEW OLD Servicenode entry %s\n", vin.prevout.hash.ToString());
-
-        // make sure it's still unspent
-        //  - this is checked later by .check() in many places and by ThreadCheckObfuScationPool()
-
-        CValidationState state;
-        CMutableTransaction tx = CMutableTransaction();
-        CTxOut vout = CTxOut(SERVICENODE_ACCEPTABLE_INPUTS_CHECK_AMOUNT * COIN, obfuScationPool.collateralPubKey);
-        tx.vin.push_back(vin);
-        tx.vout.push_back(vout);
-
-        bool fAcceptable = false;
-        {
-            TRY_LOCK(cs_main, lockMain);
-            if (!lockMain) return;
-            fAcceptable = AcceptableInputs(mempool, state, CTransaction(tx), false, NULL);
-        }
-
-        if (fAcceptable) {
-            if (GetInputAge(vin) < SERVICENODE_MIN_CONFIRMATIONS) {
-                LogPrintf("dsee - Input must have least %d confirmations\n", SERVICENODE_MIN_CONFIRMATIONS);
-                Misbehaving(pfrom->GetId(), 20);
-                return;
-            }
-
-            // verify that sig time is legit in past
-            // should be at least not earlier than block when 1000 BlocknetDX tx got SERVICENODE_MIN_CONFIRMATIONS
-            uint256 hashBlock = 0;
-            CTransaction tx2;
-            GetTransaction(vin.prevout.hash, tx2, hashBlock, true);
-            BlockMap::iterator mi = mapBlockIndex.find(hashBlock);
-            if (mi != mapBlockIndex.end() && (*mi).second) {
-                CBlockIndex* pMNIndex = (*mi).second;                                                        // block for 5000 BLOCK tx -> 1 confirmation
-                CBlockIndex* pConfIndex = chainActive[pMNIndex->nHeight + SERVICENODE_MIN_CONFIRMATIONS - 1]; // block where tx got SERVICENODE_MIN_CONFIRMATIONS
-                if (pConfIndex->GetBlockTime() > sigTime) {
-                    LogPrintf("mnb - Bad sigTime %d for Servicenode %s (%i conf block is at %d)\n",
-                        sigTime, vin.prevout.hash.ToString(), SERVICENODE_MIN_CONFIRMATIONS, pConfIndex->GetBlockTime());
-                    return;
-                }
-            }
-
-            // use this as a peer
-            addrman.Add(CAddress(addr), pfrom->addr, 2 * 60 * 60);
-
-            // add Servicenode
-            CServicenode mn = CServicenode();
-            mn.addr = addr;
-            mn.vin = vin;
-            mn.pubKeyCollateralAddress = pubkey;
-            mn.sig = vchSig;
-            mn.sigTime = sigTime;
-            mn.pubKeyServicenode = pubkey2;
-            mn.protocolVersion = protocolVersion;
-            // fake ping
-            mn.lastPing = CServicenodePing(vin);
-            mn.Check(true);
-            // add v11 servicenodes, v12 should be added by mnb only
-            if (protocolVersion < GETHEADERS_VERSION) {
-                LogPrint("servicenode", "dsee - Accepted OLD Servicenode entry %i %i\n", count, current);
-                Add(mn);
-            }
-            if (mn.IsEnabled()) {
-                TRY_LOCK(cs_vNodes, lockNodes);
-                if (!lockNodes) return;
-                BOOST_FOREACH (CNode* pnode, vNodes)
-                    if (pnode->nVersion >= servicenodePayments.GetMinServicenodePaymentsProto())
-                        pnode->PushMessage("dsee", vin, addr, vchSig, sigTime, pubkey, pubkey2, count, current, lastUpdated, protocolVersion, donationAddress, donationPercentage);
-            }
-        } else {
-            LogPrintf("dsee - Rejected Servicenode entry %s\n", vin.prevout.hash.ToString());
-
-            int nDoS = 0;
-            if (state.IsInvalid(nDoS)) {
-                LogPrintf("dsee - %s from %i %s was not accepted into the memory pool\n", tx.GetHash().ToString().c_str(),
-                    pfrom->GetId(), pfrom->cleanSubVer.c_str());
-                if (nDoS > 0)
-                    Misbehaving(pfrom->GetId(), nDoS);
-            }
-        }
-    }
-
-    else if (strCommand == "dseep") { //ObfuScation Election Entry Ping
-
-        if (IsSporkActive(SPORK_10_SERVICENODE_PAY_UPDATED_NODES)) return;
-
-        CTxIn vin;
-        vector<unsigned char> vchSig;
-        int64_t sigTime;
-        bool stop;
-        vRecv >> vin >> vchSig >> sigTime >> stop;
-
-        //LogPrintf("dseep - Received: vin: %s sigTime: %lld stop: %s\n", vin.ToString().c_str(), sigTime, stop ? "true" : "false");
-
-        if (sigTime > GetAdjustedTime() + 60 * 60) {
-            LogPrintf("dseep - Signature rejected, too far into the future %s\n", vin.prevout.hash.ToString());
-            Misbehaving(pfrom->GetId(), 1);
-            return;
-        }
-
-        if (sigTime <= GetAdjustedTime() - 60 * 60) {
-            LogPrintf("dseep - Signature rejected, too far into the past %s - %d %d \n", vin.prevout.hash.ToString(), sigTime, GetAdjustedTime());
-            Misbehaving(pfrom->GetId(), 1);
-            return;
-        }
-
-        std::map<COutPoint, int64_t>::iterator i = mWeAskedForServicenodeListEntry.find(vin.prevout);
-        if (i != mWeAskedForServicenodeListEntry.end()) {
-            int64_t t = (*i).second;
-            if (GetTime() < t) return; // we've asked recently
-        }
-
-        // see if we have this Servicenode
-        CServicenode* pmn = this->Find(vin);
-        if (pmn != NULL && pmn->protocolVersion >= servicenodePayments.GetMinServicenodePaymentsProto()) {
-            // LogPrintf("dseep - Found corresponding mn for vin: %s\n", vin.ToString().c_str());
-            // take this only if it's newer
-            if (sigTime - pmn->nLastDseep > SERVICENODE_MIN_MNP_SECONDS) {
-                std::string strMessage = pmn->addr.ToString() + boost::lexical_cast<std::string>(sigTime) + boost::lexical_cast<std::string>(stop);
-
-                std::string errorMessage = "";
-                if (!obfuScationSigner.VerifyMessage(pmn->pubKeyServicenode, vchSig, strMessage, errorMessage)) {
-                    LogPrintf("dseep - Got bad Servicenode address signature %s \n", vin.prevout.hash.ToString());
-                    //Misbehaving(pfrom->GetId(), 100);
-                    return;
-                }
-
-                // fake ping for v11 servicenodes, ignore for v12
-                if (pmn->protocolVersion < GETHEADERS_VERSION) pmn->lastPing = CServicenodePing(vin);
-                pmn->nLastDseep = sigTime;
-                pmn->Check();
-                if (pmn->IsEnabled()) {
-                    TRY_LOCK(cs_vNodes, lockNodes);
-                    if (!lockNodes) return;
-                    LogPrint("servicenode", "dseep - relaying %s \n", vin.prevout.hash.ToString());
-                    BOOST_FOREACH (CNode* pnode, vNodes)
-                        if (pnode->nVersion >= servicenodePayments.GetMinServicenodePaymentsProto())
-                            pnode->PushMessage("dseep", vin, vchSig, sigTime, stop);
-                }
-            }
-            return;
-        }
-
-        LogPrint("servicenode", "dseep - Couldn't find Servicenode entry %s peer=%i\n", vin.prevout.hash.ToString(), pfrom->GetId());
-
-        AskForMN(pfrom, vin);
-    }
-
-    /*
-     * END OF "REMOVE"
-     */
 }
 
 void CServicenodeMan::Remove(CTxIn vin)

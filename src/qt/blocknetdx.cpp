@@ -469,8 +469,8 @@ void BitcoinApplication::initializeResult(int retval)
         if (pwalletMain) {
             walletModel = new WalletModel(pwalletMain, optionsModel);
 
-            window->addWallet(BitcoinGUI::DEFAULT_WALLET, walletModel);
-            window->setCurrentWallet(BitcoinGUI::DEFAULT_WALLET);
+            window->addWallet(BitcoinGUI::DEFAULT_WALLET(), walletModel);
+            window->setCurrentWallet(BitcoinGUI::DEFAULT_WALLET());
 
             connect(walletModel, SIGNAL(coinsSent(CWallet*, SendCoinsRecipient, QByteArray)),
                 paymentServer, SLOT(fetchPaymentACK(CWallet*, const SendCoinsRecipient&, QByteArray)));
@@ -543,7 +543,9 @@ int main(int argc, char* argv[])
     Q_INIT_RESOURCE(blocknetdx);
 
     // stg An attempt to resolve the scaling issues for small high DPI screens
-    //QApplication::setAttribute(Qt::AA_EnableHighDpiScaling); // Needs QT5.6 or higher
+#if QT_VERSION >= 0x050600
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling); // Needs QT5.6 or higher
+#endif
     //QApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     BitcoinApplication app(argc, argv);

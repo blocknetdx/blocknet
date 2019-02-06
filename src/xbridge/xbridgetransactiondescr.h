@@ -61,9 +61,11 @@ struct TransactionDescr
     std::vector<unsigned char> from;
     std::string                fromCurrency;
     uint64_t                   fromAmount;
+    std::string                fromAddr;
     std::vector<unsigned char> to;
     std::string                toCurrency;
     uint64_t                   toAmount;
+    std::string                toAddr;
 
     uint32_t                   lockTime;
     uint32_t                   opponentLockTime;
@@ -91,6 +93,7 @@ struct TransactionDescr
     std::vector<unsigned char> oHashedSecret;
     std::string                oPayTxId;
     uint32_t                   oPayTxTries{0};
+    double                     oOverpayment{0};
 
     // multisig address and redeem script
     std::string                lockP2SHAddress;
@@ -115,6 +118,8 @@ struct TransactionDescr
 
     // used coins in transaction
     std::vector<xbridge::wallet::UtxoEntry> usedCoins;
+    std::set<xbridge::wallet::UtxoEntry> feeUtxos;
+    std::string rawFeeTx;
 
     // pay tx verification watches
     uint32_t watchStartBlock{0};
@@ -122,6 +127,7 @@ struct TransactionDescr
     bool     watching{false};
     bool     watchingDone{false};
     bool     redeemedCounterpartyDeposit{false};
+    bool     depositSent{false};
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
@@ -209,6 +215,21 @@ struct TransactionDescr
         LOCK(_lock);
         return watching;
     }
+    
+    void sentDeposit() {
+        LOCK(_lock);
+        depositSent = true;
+    }
+    
+    void failDeposit() {
+        LOCK(_lock);
+        depositSent = false;
+    }
+    
+    bool didSendDeposit() {
+        LOCK(_lock);
+        return depositSent;
+    }
 
     bool hasRedeemedCounterpartyDeposit() {
         LOCK(_lock);
@@ -218,6 +239,22 @@ struct TransactionDescr
     void counterpartyDepositRedeemed() {
         LOCK(_lock);
         redeemedCounterpartyDeposit = true;
+    }
+
+    const std::string refundAddress() {
+        // Find the largest utxo to use as redeem if from address is empty
+        if (fromAddr.empty()) {
+            if (usedCoins.empty())
+                return ""; // empty if nothing found
+            std::vector<wallet::UtxoEntry> utxos = usedCoins;
+            // sort descending and pick first
+            sort(utxos.begin(), utxos.end(),
+                 [](const wallet::UtxoEntry & a, const wallet::UtxoEntry & b) {
+                     return a.amount > b.amount;
+                 });
+            return utxos[0].address;
+        }
+        return fromAddr;
     }
 
     TransactionDescr()

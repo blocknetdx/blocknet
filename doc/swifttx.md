@@ -11,10 +11,6 @@ When a "Transaction Lock" occurs the hash of the related transaction is broadcas
 * `zmqpubrawtxlock`: publishes the raw transaction when locked via SwiftTX
 * `zmqpubhashtxlock`: publishes the transaction hash when locked via SwiftTX
 
-This mechanism has been integrated into Bitcore-Node-BlocknetDX which allows for notification to be broadcast through Insight API in one of two ways:
-* WebSocket: [https://github.com/PIVX-Project/insight-api-blocknetdx#web-socket-api](https://github.com/PIVX-Project/insight-api-blocknetdx#web-socket-api) 
-* API: [https://github.com/PIVX-Project/insight-api-blocknetdx#swifttx-transactions](https://github.com/PIVX-Project/insight-api-blocknetdx#swifttx-transactions) 
-
 ####Command line option
 
 When a wallet SwiftTX transaction is successfully locked a shell command provided in this option is executed (`%s` in `<cmd>` is replaced by TxID):

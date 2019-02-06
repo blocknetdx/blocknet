@@ -136,7 +136,7 @@
         <translation>Phục vụ để tắt tính năng chuyển tiền vô giá trị khi tài khoản của hệ điều hành bị xâm nhập. Không cung cấp đủ an ninh thực sự.</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>Chỉ dùng cho mục đích vô danh</translation>
     </message>
     <message>
@@ -423,7 +423,7 @@
         <translation>Hiển thị những ví được sao lưu tự động</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;Gửi địa chỉ...</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Hiển thị danh sách các địa chỉ đã sử dụng và các nhãn</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Địa chỉ nhận...</translation>
     </message>
     <message>

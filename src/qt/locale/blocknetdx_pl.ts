@@ -136,7 +136,7 @@
         <translation>Służy do zablokowania funkcji wysyłania monet gdy konto użytkownika systemu operacyjnego zostało przejęte przez kogoś innego. Nie gwarantuje prawdziwego bezpieczeństwa.</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>Tylko dla anonimizacji</translation>
     </message>
     <message>
@@ -423,7 +423,7 @@
         <translation>Pokaż automatycznie stworzone kopie zapasowe porfela.</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>Adres wysyłania</translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>Pokaż listę użytych adresów wysyłających i etykiety</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>Adres odbiorczy</translation>
     </message>
     <message>

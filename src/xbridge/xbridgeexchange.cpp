@@ -141,7 +141,7 @@ bool Exchange::isEnabled()
 {
     if (m_p) {
         LOCK(m_p->m_walletsLock);
-        return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false));
+        return ((m_p->m_wallets.size() > 0) && GetBoolArg("-servicenode", false) && GetBoolArg("-enableexchange", false));
     }
     return false;
 }
@@ -722,15 +722,18 @@ size_t Exchange::eraseExpiredTransactions()
         TransactionPtr ptr = it->second;
 
         LOCK(ptr->m_lock);
-
-        if (ptr->isExpired() || ptr->isExpiredByBlockNumber())
+        if (ptr->isExpiredByBlockNumber())
         {
-            LOG() << __FUNCTION__ << std::endl << "order expired" << ptr;
-
+             LOG() << __FUNCTION__ << std::endl << "order block expired" << ptr;
+             m_p->m_pendingTransactions.erase(it++);
+             unlockUtxos(ptr->id());
+             ++result;
+         }
+        else if(ptr->isExpired())
+        {
+            LOG() << __FUNCTION__ << std::endl << "order expired by ttl" << ptr;
             m_p->m_pendingTransactions.erase(it++);
-
             unlockUtxos(ptr->id());
-
             ++result;
         } else {
             ++it;
@@ -806,8 +809,12 @@ bool Exchange::updateTimestampOrRemoveExpired(const TransactionPtr & tx)
     // found, check if expired
     if (!m_p->m_pendingTransactions[txid]->isExpired())
     {
+        // return false if update is too soon
+        if (m_p->m_pendingTransactions[txid]->updateTooSoon()) {
+            m_p->m_pendingTransactions[txid]->m_lock.unlock();
+            return false;
+        }
         m_p->m_pendingTransactions[txid]->updateTimestamp();
-
         m_p->m_pendingTransactions[txid]->m_lock.unlock();
         return true;
     }
@@ -819,6 +826,35 @@ bool Exchange::updateTimestampOrRemoveExpired(const TransactionPtr & tx)
         m_p->m_pendingTransactions.erase(txid);
         return false;
     }
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Exchange::makerUtxosAreStillValid(const TransactionPtr & tx)
+{
+    auto current = boost::posix_time::microsec_clock::universal_time();
+    if ((current - tx->utxoCheckTime()).total_seconds() < GetArg("-orderinputscheck", 900))
+        return true; // Only update at most every N seconds (default 15 minutes)
+    tx->updateUtxoCheckTime(current);
+
+    LOG() << "running automated maker utxo check on order " << tx->id().ToString() << " " << __FUNCTION__;
+
+    auto & xapp = xbridge::App::instance();
+    WalletConnectorPtr makerConn = xapp.connectorByCurrency(tx->a_currency());
+    if (!makerConn) // non-fatal just skip
+        return true;
+
+    auto & makerUtxos = tx->a_utxos();
+    for (auto entry : makerUtxos) {
+        if (!makerConn->getTxOut(entry)) {
+            // Invalid utxos cancel order
+            ERR() << "bad maker utxo in order " << tx->id().ToString() << " , utxo txid " << entry.txId << " vout " << entry.vout
+                  << " " << __FUNCTION__;
+            return false;
+        }
+    }
+
+    return true; // done
 }
 
 } // namespace xbridge

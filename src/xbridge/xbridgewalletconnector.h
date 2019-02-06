@@ -76,23 +76,15 @@ public:
 
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
-    double getWalletBalance(const std::string &addr = "") const;
+    double getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
-    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const bool withLocked = false) const = 0;
+    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const = 0;
 
     virtual bool getBlock(const std::string & blockHash, std::string & rawBlock) = 0;
 
     virtual bool getBlockHash(const uint32_t & block, std::string & blockHash) = 0;
-
-    // if lock returns false if already locked
-    // if unlock always return true
-    virtual bool lockCoins(const std::vector<wallet::UtxoEntry> & inputs,
-                           const bool lock = true);
-
-    // remove locked coins (lockedCoins) from array
-    void removeLocked(std::vector<wallet::UtxoEntry> & inputs) const;
 
     virtual bool getTxOut(wallet::UtxoEntry & entry) = 0;
 
@@ -127,6 +119,7 @@ public:
                                          double & amount,
                                          uint32_t & depositTxVout,
                                          const std::string & expectedScript,
+                                         double & excessAmount,
                                          bool & isGood) = 0;
 
     virtual bool getSecretFromPaymentTransaction(const std::string & paymentTxId,

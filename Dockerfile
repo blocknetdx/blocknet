@@ -2,7 +2,7 @@
 # docker build --build-arg cores=4 -t blocknetdx/devbuilds:3.9.22 .
 FROM ubuntu:trusty
 
-ARG cores=32
+ARG cores=8
 ENV ecores=$cores
 
 RUN apt update \

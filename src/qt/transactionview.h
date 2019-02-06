@@ -77,6 +77,8 @@ private:
     QWidget* createDateRangeWidget();
 
     GUIUtil::TableViewLastColumnResizingFixer* columnResizingFixer;
+    QString styles;
+    QString stylesOld;
 
     virtual void resizeEvent(QResizeEvent* event);
 

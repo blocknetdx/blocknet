@@ -34,7 +34,9 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"setgenerate", 1},
         {"getnetworkhashps", 0},
         {"getnetworkhashps", 1},
+        {"disconnectpeer", 0},
         {"sendtoaddress", 1},
+        {"sendtoaddress", 4},
         {"sendtoaddressix", 1},
         {"settxfee", 0},
         {"getreceivedbyaddress", 1},
@@ -64,6 +66,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"listsinceblock", 2},
         {"sendmany", 1},
         {"sendmany", 2},
+        {"sendmany", 4},
         {"addmultisigaddress", 0},
         {"addmultisigaddress", 1},
         {"createmultisig", 0},
@@ -119,6 +122,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"dxFlushCancelledOrders",0},
         {"dxFlushCancelledOrders",1},
         {"gettradingdata",0},
+        {"gettradingdata",1},
     };
 
 class CRPCConvertTable

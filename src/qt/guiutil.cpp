@@ -806,8 +806,7 @@ bool isExternal(QString theme)
     return (theme.operator!=("default"));
 }
 
-// Open CSS when configured
-QString loadStyleSheet()
+QString loadStyleSheetv1()
 {
     QString styleSheet;
     QSettings settings;
@@ -833,6 +832,46 @@ QString loadStyleSheet()
             cssName = QString(":/css/") + theme;
         } else {
             cssName = QString(":/css/default");
+            settings.setValue("theme", "default");
+        }
+    }
+
+    QFile qFile(cssName);
+    if (qFile.open(QFile::ReadOnly)) {
+        styleSheet = QLatin1String(qFile.readAll());
+        qFile.close();
+    }
+
+    return styleSheet;
+}
+
+// Open CSS when configured
+QString loadStyleSheet()
+{
+    QString styleSheet;
+    QSettings settings;
+    QString cssName;
+    QString theme = settings.value("theme", "").toString();
+    boost::filesystem::path themeName = theme.toStdString();
+
+    if (isExternal(theme)) {
+        // External CSS
+        settings.setValue("fCSSexternal", true);
+        boost::filesystem::path pathAddr = GetDataDir() / "themes";
+        boost::filesystem::path themePath = pathAddr / themeName;
+        cssName = themePath.string().c_str();
+        // Handle themes stored in custom paths
+        if (theme == "custom") {
+            cssName = settings.value("themeCustom", "default").toString();
+        }
+
+    } else {
+        // Build-in CSS
+        settings.setValue("fCSSexternal", false);
+        if (!theme.isEmpty()) {
+            cssName = QString(":/redesign/css/") + theme;
+        } else {
+            cssName = QString(":/redesign/default");
             settings.setValue("theme", "default");
         }
     }

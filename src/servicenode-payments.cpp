@@ -635,14 +635,14 @@ bool CServicenodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
 
     if (!pmn) {
         strError = strprintf("Unknown Servicenode %s", vinServicenode.prevout.hash.ToString());
-        LogPrintf("CServicenodePaymentWinner::IsValid - %s\n", strError);
+        LogPrint("mnpayments", "CServicenodePaymentWinner::IsValid - %s\n", strError);
         mnodeman.AskForMN(pnode, vinServicenode);
         return false;
     }
 
     if (pmn->protocolVersion < ActiveProtocol()) {
         strError = strprintf("Servicenode protocol too old %d - req %d", pmn->protocolVersion, ActiveProtocol());
-        LogPrintf("CServicenodePaymentWinner::IsValid - %s\n", strError);
+        LogPrint("mnpayments", "CServicenodePaymentWinner::IsValid - %s\n", strError);
         return false;
     }
 
@@ -687,14 +687,14 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
     if (budget.IsBudgetPaymentBlock(nBlockHeight)) {
         //is budget payment block -- handled by the budgeting software
     } else {
-        LogPrintf("CServicenodePayments::ProcessBlock() Start nHeight %d - vin %s. \n", nBlockHeight, activeServicenode.vin.prevout.hash.ToString());
+        LogPrint("mnpayments", "CServicenodePayments::ProcessBlock() Start nHeight %d - vin %s. \n", nBlockHeight, activeServicenode.vin.prevout.hash.ToString());
 
         // pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
         int nCount = 0;
         CServicenode* pmn = mnodeman.GetNextServicenodeInQueueForPayment(nBlockHeight, true, nCount);
 
         if (pmn != NULL) {
-            LogPrintf("CServicenodePayments::ProcessBlock() Found by FindOldestNotInVec \n");
+            LogPrint("mnpayments", "CServicenodePayments::ProcessBlock() Found by FindOldestNotInVec \n");
 
             newWinner.nBlockHeight = nBlockHeight;
 
@@ -705,9 +705,9 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
             ExtractDestination(payee, address1);
             CBitcoinAddress address2(address1);
 
-            LogPrintf("CServicenodePayments::ProcessBlock() Winner payee %s nHeight %d. \n", address2.ToString().c_str(), newWinner.nBlockHeight);
+            LogPrint("mnpayments", "CServicenodePayments::ProcessBlock() Winner payee %s nHeight %d. \n", address2.ToString().c_str(), newWinner.nBlockHeight);
         } else {
-            LogPrintf("CServicenodePayments::ProcessBlock() Failed to find servicenode to pay\n");
+            LogPrint("mnpayments", "CServicenodePayments::ProcessBlock() Failed to find servicenode to pay\n");
         }
     }
 
@@ -720,9 +720,9 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
         return false;
     }
 
-    LogPrintf("CServicenodePayments::ProcessBlock() - Signing Winner\n");
+    LogPrint("mnpayments", "CServicenodePayments::ProcessBlock() - Signing Winner\n");
     if (newWinner.Sign(keyServicenode, pubKeyServicenode)) {
-        LogPrintf("CServicenodePayments::ProcessBlock() - AddWinningServicenode\n");
+        LogPrint("mnpayments", "CServicenodePayments::ProcessBlock() - AddWinningServicenode\n");
 
         if (AddWinningServicenode(newWinner)) {
             newWinner.Relay();

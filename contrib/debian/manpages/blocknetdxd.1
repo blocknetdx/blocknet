@@ -1,14 +1,12 @@
 .TH PIVD "1" "February 2017" "blocknetdxd 2.1.4.1"
 .SH NAME
-Blocknetdx \- peer-to-peer network based digital currency
+Blocknet \- peer-to-peer blockchain interoperability protocol
 .SH SYNOPSIS
 blocknetdxd [options] <command> [params]
 .TP
 blocknetdxd [options] help <command> \- Get help for a command
 .SH DESCRIPTION
-This  manual page documents the blocknetdxd program. Blocknetdx is a peer-to-peer digital currency. Peer-to-peer (P2P) means that there is no central authority to issue new money or keep track of transactions. Instead, these tasks are managed collectively by the nodes of the network. Advantages:
-
-Blocknetdx can be sent easily through the Internet, without having to trust middlemen. Transactions are designed to be irreversible. Be safe from instability caused by fractional reserve banking and central banks. The limited inflation of the Blocknetdx system’s money supply is distributed evenly (by CPU power) throughout the network, not monopolized by banks.
+This manual page documents the blocknetdxd program. Blocknet is a 2nd layer blockchain interoperability protocol that enables communication, interaction, and exchange between different blockchains in a permissionless and trustless manner. This implemented through the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network (Service Nodes) to host the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
 
 .SH OPTIONS
 .TP
@@ -84,14 +82,14 @@ This help message
 \fBbackupwallet 'destination'\fR
 Safely copies *wallet.dat* to 'destination', which can be a directory or a path with filename.
 .TP
-\fBgetaccount 'blocknetdxaddress'\fR
+\fBgetaccount 'blocknetaddress'\fR
 Returns the account associated with the given address.
 .TP
-\fBsetaccount 'blocknetdxaddress' ['account']\fR
+\fBsetaccount 'blocknetaddress' ['account']\fR
 Sets the ['account'] associated with the given address. ['account'] may be omitted to remove an address from ['account'].
 .TP
 \fBgetaccountaddress 'account'\fR
-Returns a new blocknetdx address for 'account'.
+Returns a new Blocknet address for 'account'.
 .TP
 \fBgetaddressesbyaccount 'account'\fR
 Returns the list of addresses associated with the given 'account'.
@@ -109,7 +107,7 @@ Returns the block number of the latest block in the longest block chain.
 Returns the number of connections to other nodes.
 .TP
 \fBgetdifficulty\fR
-Returns the proof-of-work difficulty as a multiple of the minimum difficulty.
+Returns the proof-of-stake difficulty as a multiple of the minimum difficulty.
 .TP
 \fBgetgenerate\fR
 Returns boolean true if server is trying to generate PIV, false otherwise.
@@ -124,13 +122,13 @@ Returns a recent hashes per second performance measurement while generating.
 Returns an object containing server information.
 .TP
 \fBgetnewaddress 'account'\fR
-Returns a new blocknetdx address for receiving payments. If 'account' is specified (recommended), it is added to the address book so payments received with the address will be credited to 'account'.
+Returns a new Blocknet address for receiving payments. If 'account' is specified (recommended), it is added to the address book so payments received with the address will be credited to 'account'.
 .TP
 \fBgetreceivedbyaccount 'account' ['minconf=1']\fR
 Returns the total amount received by addresses associated with 'account' in transactions with at least ['minconf'] confirmations.
 .TP
-\fBgetreceivedbyaddress 'blocknetdxaddress' ['minconf=1']\fR
-Returns the total amount received by 'blocknetdxaddress' in transactions with at least ['minconf'] confirmations.
+\fBgetreceivedbyaddress 'blocknetaddress' ['minconf=1']\fR
+Returns the total amount received by 'blocknetaddress' in transactions with at least ['minconf'] confirmations.
 .TP
 \fBgettransaction 'txid'\fR
 Returns information about a specific transaction, given hexadecimal transaction ID.
@@ -182,21 +180,21 @@ Returns a list of the last ['count'] transactions for 'account' \- for all accou
 \fBmove <'fromaccount'> <'toaccount'> <'amount'> ['minconf=1'] ['comment']\fR
 Moves funds between accounts.
 .TP
-\fBsendfrom* <'account'> <'blocknetdxaddress'> <'amount'> ['minconf=1'] ['comment'] ['comment-to']\fR
-Sends amount from account's balance to 'blocknetdxaddress'. This method will fail if there is less than amount PIV with ['minconf'] confirmations in the account's balance (unless account is the empty-string-named default account; it behaves like the *sendtoaddress* method). Returns transaction ID on success.
+\fBsendfrom* <'account'> <'blocknetaddress'> <'amount'> ['minconf=1'] ['comment'] ['comment-to']\fR
+Sends amount from account's balance to 'blocknetaddress'. This method will fail if there is less than amount PIV with ['minconf'] confirmations in the account's balance (unless account is the empty-string-named default account; it behaves like the *sendtoaddress* method). Returns transaction ID on success.
 .TP
-\fBsendtoaddress 'blocknetdxaddress' 'amount' ['comment'] ['comment-to']\fR
-Sends amount from the server's available balance to 'blocknetdxaddress'. amount is a real and is rounded to the nearest 0.01. Returns transaction id on success.
+\fBsendtoaddress 'blocknetaddress' 'amount' ['comment'] ['comment-to']\fR
+Sends amount from the server's available balance to 'blocknetaddress'. amount is a real and is rounded to the nearest 0.01. Returns transaction id on success.
 .TP
 \fBstop\fR
-Stops the blocknetdx server.
+Stops the Blocknet server.
 .TP
-\fBvalidateaddress 'blocknetdxaddress'\fR
-Checks that 'blocknetdxaddress' looks like a proper Blocknetdx address. Returns an object containing:
+\fBvalidateaddress 'blocknetaddress'\fR
+Checks that 'blocknetaddress' looks like a proper Blocknet address. Returns an object containing:
 
     "isvalid" : true or false.
     "ismine"  : true if the address is in the server's wallet.
-    "address" : blocknetdxaddress.
+    "address" : blocknetaddress.
 
     *note: ismine and address are only returned if the address is valid.
 

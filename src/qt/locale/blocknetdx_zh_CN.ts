@@ -136,7 +136,7 @@
         <translation>当OS帐号被盗就禁止发送币。这并不提供真正的安全性。</translation>
     </message>
     <message>
-        <source>For anonymization and staking only</source>
+        <source>Unlock for staking only</source>
         <translation>仅限匿名</translation>
     </message>
     <message>
@@ -423,7 +423,7 @@
         <translation>显示自动创建的钱包备份</translation>
     </message>
     <message>
-        <source>&amp;Sending addresses...</source>
+        <source>&amp;Contacts</source>
         <translation>&amp;付款地址 </translation>
     </message>
     <message>
@@ -431,7 +431,7 @@
         <translation>显示用过的发送地址和标签的列表</translation>
     </message>
     <message>
-        <source>&amp;Receiving addresses...</source>
+        <source>&amp;My Addresses</source>
         <translation>&amp;收款地址</translation>
     </message>
     <message>

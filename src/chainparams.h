@@ -68,6 +68,8 @@ public:
     bool AllowMinDifficultyBlocks() const { return fAllowMinDifficultyBlocks; }
     /** Skip proof-of-work check: allow mining of any difficulty block */
     bool SkipProofOfWorkCheck() const { return fSkipProofOfWorkCheck; }
+    /** Stake min age */
+    unsigned int StakeMinAge() const { return nStakeMinAge; }
     /** Make standard checks */
     bool RequireStandard() const { return fRequireStandard; }
     int64_t TargetTimespan() const { return nTargetTimespan; }
@@ -134,6 +136,7 @@ protected:
     std::string strSporkKey;
     std::string strObfuscationPoolDummyAddress;
     int64_t nStartServicenodePayments;
+    unsigned int nStakeMinAge{3600};
 };
 
 /** 

@@ -45,6 +45,7 @@ Transaction::Transaction(const uint256                    & id,
     : m_id(id)
     , m_created(util::intToTime(created))
     , m_last(boost::posix_time::microsec_clock::universal_time())
+    , m_lastUtxoCheck(boost::posix_time::microsec_clock::universal_time())
     , m_blockHash(blockHash)
     , m_state(trNew)
     , m_a_stateChanged(false)
@@ -198,6 +199,14 @@ void Transaction::updateTimestamp()
 
 //*****************************************************************************
 //*****************************************************************************
+bool Transaction::updateTooSoon()
+{
+    auto current = boost::posix_time::microsec_clock::universal_time();
+    return (current - m_last).total_seconds() < pendingTTL/2;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 boost::posix_time::ptime Transaction::createdTime() const
 {
     return m_created;
@@ -217,6 +226,13 @@ bool Transaction::isFinished() const
 bool Transaction::isValid() const
 {
     return m_state != trInvalid;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Transaction::matches(uint256 & id) const
+{
+    return m_id == id;
 }
 
 //*****************************************************************************

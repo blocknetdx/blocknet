@@ -7,11 +7,27 @@
 
 #include <QAbstractTableModel>
 #include <QStringList>
+#include <QHash>
 
 class AddressTablePriv;
 class WalletModel;
 
 class CWallet;
+
+struct AddressTableEntry {
+    enum Type {
+        Sending,
+        Receiving,
+        Hidden /* QSortFilterProxyModel will filter these out */
+    };
+
+    Type type;
+    QString label;
+    QString address;
+
+    AddressTableEntry() {}
+    AddressTableEntry(Type type, const QString& label, const QString& address) : type(type), label(label), address(address) {}
+};
 
 /**
    Qt model of the address book in the core. This allows views to access and modify the address book.
@@ -65,12 +81,22 @@ public:
 
     /* Look up label for address in address book, if not found return empty string.
      */
-    QString labelForAddress(const QString& address) const;
+    QString labelForAddress(const QString& address);
 
     /* Look up row index of an address in the model.
        Return -1 if not found.
      */
     int lookupAddress(const QString& address) const;
+
+    /**
+     * @brief Removes the label cache for the specified address. Useful if the label was recently changed
+     *        for the address.
+     * @param label
+     */
+    void invalidateLabel(const QString& address) {
+        if (labelHash.contains(address))
+            labelHash.remove(address);
+    }
 
     EditStatus getEditStatus() const { return editStatus; }
 
@@ -80,6 +106,7 @@ private:
     AddressTablePriv* priv;
     QStringList columns;
     EditStatus editStatus;
+    QHash<QString, QString> labelHash;
 
     /** Notify listeners that data changed. */
     void emitDataChanged(int index);

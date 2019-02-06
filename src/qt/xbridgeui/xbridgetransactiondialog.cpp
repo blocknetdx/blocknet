@@ -409,10 +409,9 @@ void XBridgeTransactionDialog::onAddressBookTo()
 //******************************************************************************
 double XBridgeTransactionDialog::accountBalance(const std::string & currency)
 {
-    xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(currency);
     if (conn)
-    {
-        return conn->getWalletBalance();
-    }
+        return conn->getWalletBalance(xapp.getAllLockedUtxos(currency));
     return 0;
 }
