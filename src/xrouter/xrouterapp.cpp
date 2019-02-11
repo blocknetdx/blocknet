@@ -1233,7 +1233,7 @@ std::string App::printPaymentChannels() {
         val.emplace_back("Deposit transaction id", it.second.txid);
         val.emplace_back("Redeem transaction", it.second.latest_tx);
         val.emplace_back("Paid amount", it.second.value);
-        val.emplace_back("Expires in (ms):", it.second.deadline - std::time(0));
+        val.emplace_back("Expires in (ms):", it.second.deadline - static_cast<int64_t>(std::time(0)));
         client.push_back(Value(val));
     }
     
