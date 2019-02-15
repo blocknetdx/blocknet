@@ -162,7 +162,7 @@ void XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
                 throw XRouterError("Could not send transaction " + parts[2] + " to blockchain", xrouter::INTERNAL_SERVER_ERROR);
             }
             
-            LOG() << "Got direct payment; value = " << paid << " tx = " << parts[2]; 
+            LOG() << "Received direct payment; value = " << paid << " tx = " << parts[2];
         } else if (parts[1] == "channel") {
             if (!paymentChannels.count(node)) {
                 // There is no payment channel with this node
@@ -211,7 +211,7 @@ void XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
             if (paymentChannels.count(node)) {
                 //verifyChannelTransaction(feetx);
                 CAmount paid = to_amount(getTxValue(feetx, getMyPaymentAddress()));
-                LOG() << "Got payment via channel; value = " << paid - paymentChannels[node].value << " total value = " << paid << " tx = " << feetx; 
+                LOG() << "Received payment via channel; value = " << paid - paymentChannels[node].value << " total value = " << paid << " tx = " << feetx;
                 if (paid - paymentChannels[node].value < fee_part1) {
                     throw XRouterError("Fee paid is not enough", xrouter::INSUFFICIENT_FEE);
                 }

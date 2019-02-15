@@ -134,6 +134,10 @@ public:
         return vServicenodes;
     }
 
+    std::vector<CServicenode> GetCurrentList() {
+        return vServicenodes;
+    }
+
     std::vector<pair<int, CServicenode> > GetServicenodeRanks(int64_t nBlockHeight, int minProtocol = 0);
     int GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, int minProtocol = 0, bool fOnlyActive = true);
     CServicenode* GetServicenodeByRank(int nRank, int64_t nBlockHeight, int minProtocol = 0, bool fOnlyActive = true);

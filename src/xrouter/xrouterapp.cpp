@@ -116,16 +116,9 @@ std::vector<std::string> App::getServicesList()
     return result;
 }
 
-static std::vector<pair<int, CServicenode> > getServiceNodes()
+static std::vector<CServicenode> getServiceNodes()
 {
-    int nHeight;
-    {
-        LOCK(cs_main);
-        CBlockIndex* pindex = chainActive.Tip();
-        if(!pindex) return std::vector<pair<int, CServicenode> >();
-        nHeight = pindex->nHeight;
-    }
-    return mnodeman.GetServicenodeRanks(nHeight);
+    return mnodeman.GetCurrentList();
 }
 
 //*****************************************************************************
@@ -137,46 +130,54 @@ bool App::start()
     
     updateConfigs();
     bool res = server->start();
-    //openConnections();
     return res;
 }
 
 void App::openConnections(std::string wallet, std::string plugin)
 {
-    // Open connections to all service nodes that are not already our peers, but have XRouter functionality accroding to serviceping
-    LOG() << "Current peers count = " << vNodes.size();
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
-    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-        if (!s.second.HasService("XRouter"))
+    std::vector<CNode*> nodes;
+    {
+        LOCK(cs_vNodes);
+        nodes = vNodes;
+    }
+    LOG() << "Current peers count = " << nodes.size();
+
+    // Build node cache
+    std::map<std::string, CNode*> nodec;
+    for (auto & pnode : nodes)
+        nodec[pnode->addr.ToString()] = pnode;
+
+    // Open connections to all service nodes that are not already our peers
+    std::vector<CServicenode> snodes = getServiceNodes();
+    for (auto & s : snodes) {
+        if (!s.HasService("XRouter"))
             continue;
         
         if (wallet != "")
-            if (!s.second.HasService(wallet))
+            if (!s.HasService(wallet))
                 continue;
         
         if (plugin != "")
-            if (!s.second.HasService("XRouter::" + plugin))
+            if (!s.HasService("XRouter::" + plugin))
                 continue;
-        
-        bool connected = false;
-        for (CNode* pnode : vNodes) {
-            if (s.second.addr.ToString() == pnode->addr.ToString()) {
-                connected = true;
-            }
-        }
-        
-        if (!connected) {
-            CAddress addr;
-            CNode* res = ConnectNode(addr, s.second.addr.ToString().c_str());
-            LOG() << "Trying to connect to " << CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString() << "; result=" << ((res == NULL) ? "fail" : "success");
+
+        // Do not connect if already a peer
+        if (nodec.count(s.addr.ToString()))
+            continue;
+
+        // Connect to snode
+        CAddress addr;
+        LOG() << "Trying to connect to servicenode " << CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString();
+        if (OpenNetworkConnection(addr, nullptr, s.addr.ToString().c_str())) { // OpenNetworkConnection filters out bad nodes (banned, etc)
+            CNode *res = FindNode((CNetAddr)addr);
             if (res) {
                 this->getXrouterConfig(res);
                 XRouterPeer peer;
                 peer.node = res;
-                peer.serviceNode = s.second;
+                peer.serviceNode = s;
                 this->peers[res->addr.ToString()] = peer;
             }
-        }
+        } else LOG() << "Failed to connect to servicenode " << CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString();
     }
 
     LOG() << "Current peers count = " << vNodes.size();
@@ -187,18 +188,25 @@ std::string App::updateConfigs()
     if (!isEnabled())
         return "XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf to run XRouter.";
     
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
-    std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-    
-    LOCK(cs_vNodes);
-    for (CNode* pnode : vNodes) {
-        if (snodeConfigs.count(pnode->addr.ToString())) {
-            continue;
-        }
+    std::vector<CServicenode> vServicenodeRanks = getServiceNodes();
+    std::map<std::string, CServicenode> snodes;
+    for (CServicenode & s : vServicenodeRanks)
+        snodes[s.addr.ToString()] = s;
 
-        if (lastConfigUpdates.count(pnode)) {
+    std::vector<CNode*> nodes;
+    {
+        LOCK(cs_vNodes);
+        nodes = vNodes;
+    }
+    for (CNode* pnode : nodes) {
+        const auto & nodeAddr = pnode->addr.ToString();
+        if (pnode->fDisconnect) // skip disconnecting nodes
+            continue;
+
+        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+        if (lastConfigUpdates.count(nodeAddr)) {
             // There was a request to this node already, a new one will be sent only after 5 minutes
-            std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigUpdates[pnode];
+            std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigUpdates[nodeAddr];
             std::chrono::system_clock::duration diff = time - prev_time;
             if (std::chrono::duration_cast<std::chrono::seconds>(diff) < std::chrono::seconds(300)) 
                 continue;
@@ -206,46 +214,17 @@ std::string App::updateConfigs()
          
         if (debug_on_client()) {
             std::string uuid = this->getXrouterConfig(pnode);
-            LOG() << "Getting config from node " << pnode->addr.ToString()  << " request id = " << uuid;
-            lastConfigUpdates[pnode] = time;
+            LOG() << "Getting config from node " << nodeAddr  << " request id = " << uuid;
+            lastConfigUpdates[nodeAddr] = time;
             continue;
         }
-        
-        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-            if (s.second.addr.ToString() == pnode->addr.ToString()) {
-                // This node is a service node
-                std::string uuid = this->getXrouterConfig(pnode);
-                LOG() << "Getting config from node " << CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString() << " request id = " << uuid;
-                lastConfigUpdates[pnode] = time;
-            }
-        }
-    }
-    
-    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-        bool found = false;
-        for (CNode* pnode : vNodes) {
-            if (s.second.addr.ToString() == pnode->addr.ToString()) {
-                found = true;
-                break;
-            }
-        }
-        
-        // TODO: this code needs revision
-        break;
-        
-        if (!found) {
-            LOG() << "Broadcasting request for config of snode " << s.second.addr.ToString();
-            for (CNode* pnode : vNodes) {
-                if (lastConfigUpdates.count(pnode)) {
-                    // There was a request to this node already, a new one will be sent only after 5 minutes
-                    std::chrono::time_point<std::chrono::system_clock> prev_time = lastConfigUpdates[pnode];
-                    std::chrono::system_clock::duration diff = time - prev_time;
-                    if (std::chrono::duration_cast<std::chrono::seconds>(diff) < std::chrono::seconds(300)) 
-                        continue;
-                }
-                this->getXrouterConfig(pnode, s.second.addr.ToString());
-                break;
-            }
+
+        // Only query snodes
+        if (snodes.count(nodeAddr)) {
+            lastConfigUpdates[nodeAddr] = time;
+            auto & s = snodes[nodeAddr];
+            std::string uuid = this->getXrouterConfig(pnode);
+            LOG() << "Getting config from node " << CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString() << " request id = " << uuid;
         }
     }
     
@@ -279,14 +258,27 @@ bool App::stop()
 std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::string wallet, int confirmations)
 {
     // Send only to the service nodes that have the required wallet
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
+    std::vector<CServicenode> vServicenodeRanks = getServiceNodes();
 
     openConnections();
     updateConfigs();
     
     std::vector<CNode*> selectedNodes;
-    
-    LOCK(cs_vNodes);
+    std::vector<CNode*> nodes;
+    {
+        LOCK(cs_vNodes);
+        nodes = vNodes;
+    }
+    // Build node cache
+    std::map<std::string, CNode*> nodec;
+    for (auto & pnode : nodes)
+        nodec[pnode->addr.ToString()] = pnode;
+
+    // Build snode cache
+    std::map<std::string, CServicenode> snodes;
+    for (CServicenode & s : vServicenodeRanks)
+        snodes[s.addr.ToString()] = s;
+
     double maxfee_d = xrouter_settings.getMaxFee(command, wallet);
     CAmount maxfee;
     if (maxfee_d >= 0)
@@ -297,40 +289,38 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
     int supported = 0;
     int ready = 0;
     int below_maxfee = 0;
-    BOOST_FOREACH(const std::string key, snodeConfigs | boost::adaptors::map_keys)
+    for (const auto & item : snodeConfigs)
     {
+        const auto & key = item.first;
         XRouterSettings settings = snodeConfigs[key];
         if (!settings.walletEnabled(wallet))
             continue;
         if (!settings.isAvailableCommand(command, wallet))
             continue;
-        
+        if (snodes.count(key) && !snodes[key].HasService(wallet)) // Ignore snodes that don't have the wallet
+            continue;
+
         supported++;
-        CNode* res = NULL;
-        for (CNode* pnode : vNodes) {
-            if (key == pnode->addr.ToString()) {
-                // This is the node whose config we are looking at now
-                res = pnode;
-                break;
-            }
-        }
-        
+
+        // This is the node whose config we are looking at now
+        CNode* res = nullptr;
+        if (nodec.count(key))
+            res = nodec[key];
+
         // If the service node is not among peers, we try to connect to it right now
         if (!res) {
             CAddress addr;
             res = ConnectNode(addr, key.c_str());
         }
-        
+
         // Could not connect to service node
         if (!res)
             continue;
-        
+
         std::string id = key;
-        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {        
-            if (s.second.addr.ToString() == res->addr.ToString())
-                id = CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString();
-        }
-        
+        if (snodes.count(key))
+            id = CBitcoinAddress(snodes[key].pubKeyCollateralAddress.GetID()).ToString();
+
         if (maxfee >= 0) {
             CAmount fee = to_amount(settings.getCommandFee(command, wallet));
             if (fee > maxfee) {
@@ -338,16 +328,9 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
                 continue;
             }
         }
-        
+
         below_maxfee++;
-        
-        // If connector is not working, the wallet will be removed from serviceping
-        BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {        
-            if (s.second.addr.ToString() == res->addr.ToString())
-                if (!s.second.HasService(wallet))
-                    continue;
-        }
-        
+
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::string keystr = wallet + "::" + XRouterCommand_ToString(command);
         double timeout = settings.getCommandTimeout(command, wallet);
@@ -355,7 +338,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
             if (lastPacketsSent[res].count(keystr)) {
                 std::chrono::time_point<std::chrono::system_clock> prev_time = lastPacketsSent[res][keystr];
                 std::chrono::system_clock::duration diff = time - prev_time;
-                if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds((int)(timeout * 1000))) {
+                if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds(static_cast<int>((timeout * 1000)))) {
                     LOG() << "Skipping node " << id << " because not enough time passed since the last call";
                     continue;
                 }
@@ -387,7 +370,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
 
 CNode* App::getNodeForService(std::string name)
 {
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
+    std::vector<CServicenode> vServicenodeRanks = getServiceNodes();
     
     // TODO: this is a temporary solution. We need it to open connections to snodes before XRouter calls in case they are not among peers
     openConnections();
@@ -472,8 +455,9 @@ CNode* App::getNodeForService(std::string name)
     }
     
     LOCK(cs_vNodes);
-    BOOST_FOREACH(const std::string key, snodeConfigs | boost::adaptors::map_keys)
+    for (const auto & item : snodeConfigs)
     {
+        const auto & key = item.first;
         XRouterSettings settings = snodeConfigs[key];
         if (!settings.hasPlugin(name))
             continue;
@@ -547,7 +531,7 @@ bool App::processReply(XRouterPacketPtr packet, CNode* node)
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
 
-    LOG() << "Got reply to query " << uuid;
+    LOG() << "Received reply to query " << uuid;
     
     // check uuid is in queriesLock keys
     if (!queriesLocks.count(uuid))
@@ -560,15 +544,15 @@ bool App::processReply(XRouterPacketPtr packet, CNode* node)
     if (reply_val.type() == obj_type) {
         Object reply_obj = reply_val.get_obj();
         const Value & code  = find_value(reply_obj, "code");
-        if (code.get_int() == xrouter::EXPIRED_PAYMENT_CHANNEL) {
+        if (code.type() == json_spirit::int_type && code.get_int() == xrouter::EXPIRED_PAYMENT_CHANNEL) {
             std::string addr = getPaymentAddress(node);
             if (paymentChannels.count(addr))
                 paymentChannels.erase(this->paymentChannels.find(addr));
         }
     }
     
-    
     LOG() << reply;
+
     boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
     if (!queries.count(uuid))
         queries[uuid] = boost::container::map<CNode*, std::string>();
@@ -586,8 +570,8 @@ bool App::processConfigReply(XRouterPacketPtr packet)
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
 
-    LOG() << "Got reply to query " << uuid;
-    LOG() << "Got xrouter config from node " << configQueries[uuid]->addrName;
+    LOG() << "Received reply to query " << uuid;
+    LOG() << "Received xrouter config from node " << configQueries[uuid]->addrName;
     LOG() << reply;
     Value reply_val;
     read_string(reply, reply_val);
@@ -1192,10 +1176,10 @@ std::string App::generatePayment(CNode* pnode, CAmount fee)
 std::string App::getPaymentAddress(CNode* node)
 {
     // Payment address = pubkey Collateral address of snode
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
-    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-        if (s.second.addr.ToString() == node->addr.ToString()) {
-            return CBitcoinAddress(s.second.pubKeyCollateralAddress.GetID()).ToString();
+    std::vector<CServicenode> vServicenodeRanks = getServiceNodes();
+    for (CServicenode & s : vServicenodeRanks) {
+        if (s.addr.ToString() == node->addr.ToString()) {
+            return CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString();
         }
     }
     
@@ -1208,10 +1192,10 @@ std::string App::getPaymentAddress(CNode* node)
 CPubKey App::getPaymentPubkey(CNode* node)
 {
     // Payment address = pubkey Collateral address of snode
-    std::vector<pair<int, CServicenode> > vServicenodeRanks = getServiceNodes();
-    BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {
-        if (s.second.addr.ToString() == node->addr.ToString()) {
-            return s.second.pubKeyCollateralAddress;
+    std::vector<CServicenode> vServicenodeRanks = getServiceNodes();
+    for (CServicenode & s : vServicenodeRanks) {
+        if (s.addr.ToString() == node->addr.ToString()) {
+            return s.pubKeyCollateralAddress;
         }
     }
     
