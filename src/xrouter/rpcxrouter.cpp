@@ -680,7 +680,15 @@ Value xrRegisterDomain(const Array & params, bool fHelp)
     {
         addr = params[2].get_str();
     }
-    
+
+    if (addr.empty()) {
+        Object error;
+        error.emplace_back(Pair("error", "Bad payment address"));
+        error.emplace_back(Pair("code", xrouter::BAD_ADDRESS));
+        error.emplace_back(Pair("uuid", ""));
+        return error;
+    }
+
     return form_reply(xrouter::App::instance().registerDomain(domain, addr, update));
 }
 

@@ -28,7 +28,7 @@ class XRouterServer
     std::map<std::string, WalletConnectorXRouterPtr> connectors;
     std::map<std::string, boost::shared_ptr<boost::mutex> > connectorLocks;
 
-    boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
+    std::map<std::string, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
     
     boost::container::map<CNode*, PaymentChannel> paymentChannels;
     boost::container::map<CNode*, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > paymentChannelLocks;
@@ -227,6 +227,32 @@ protected:
     void closePaymentChannel(std::string id);
     void closeAllPaymentChannels();
     void runPerformanceTests();
+
+    /**
+     * Returns true if the rate limit has been exceeded by the specified node for the command.
+     * @param nodeAddr
+     * @param key
+     * @param rateLimit
+     * @return
+     */
+    bool rateLimitExceeded(const std::string & nodeAddr, const std::string & key, const int & rateLimit);
+
+    /**
+     * Helper to build key for use with lookups.
+     * @param currency
+     * @param command
+     * @return
+     */
+    std::string buildCommandKey(const std::string & currency, const std::string & command) {
+        return currency + "::" + command;
+    }
+
+    /**
+     * Get a raw change address from the wallet.
+     * @return
+     */
+    std::string changeAddress();
+
 };
 
 } // namespace

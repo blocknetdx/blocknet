@@ -192,6 +192,14 @@ int XRouterSettings::getCommandBlockLimit(XRouterCommand c, std::string currency
     return res;
 }    
 
+int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string currency, int def) {
+    int res = get<int>("Main.clientrequestlimit", def);
+    res = get<int>(std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
+    if (!currency.empty())
+        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
+    return res;
+}
+
 bool XRouterSettings::hasPlugin(std::string name)
 {
     return plugins.count(name) > 0;

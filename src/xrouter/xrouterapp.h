@@ -47,15 +47,13 @@ private:
     boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
     boost::container::map<std::string, boost::container::map<CNode*, std::string> > queries;
     boost::container::map<std::string, CNode* > configQueries;
-    boost::container::map<CNode*, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
+    std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
     boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
     boost::container::map<std::string, PaymentChannel> paymentChannels;
     boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
     boost::container::map<std::string, XRouterSettings > snodeConfigs;
     static boost::container::map<CNode*, double > snodeScore;
     boost::container::map<std::string, std::string > snodeDomains;
-    
-    boost::container::map<std::string, XRouterPeer> peers;
     
     XRouterSettings xrouter_settings;
     std::string xrouterpath;
@@ -87,7 +85,7 @@ public:
     bool start();
 
     /**
-     * @brief try to open connections to all service nodes in order
+     * @brief Open connections to service nodes with specified services.
      * @param wallet
      * @param plugin
      */

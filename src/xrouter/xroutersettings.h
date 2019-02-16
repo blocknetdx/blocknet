@@ -116,6 +116,7 @@ public:
     double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
     int getCommandBlockLimit(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_BLOCK_LIMIT);
     double getMaxFee(XRouterCommand c, std::string currency="", double def=0.0);
+    int clientRequestLimit(XRouterCommand c, std::string currency="", int def=-1); // -1 is no limit
     bool hasPlugin(std::string name);
     std::vector<std::string>& getPlugins() { return pluginList; }
     XRouterPluginSettings& getPluginSettings(std::string name) { return plugins[name]; }
