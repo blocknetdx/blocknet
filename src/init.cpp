@@ -170,6 +170,9 @@ void PrepareShutdown()
     xbridge::App::instance().disconnectWallets();
     xbridge::App::instance().stop();
 
+    // Shutdown xrouter
+    xrouter::App::instance().stop();
+
     fRequestShutdown = true;  // Needed when we shutdown the wallet
     fRestartRequested = true; // Needed when we restart the wallet
     LogPrintf("%s: In progress...\n", __func__);

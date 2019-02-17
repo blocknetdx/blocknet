@@ -35,6 +35,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 
 #ifdef ENABLE_WALLET
 #include "wallet.h"
@@ -673,12 +674,15 @@ int main(int argc, char* argv[])
         app.createSplashScreen(networkStyle.data());
 
     xbridge::App & xapp = xbridge::App::instance();
+    xrouter::App & xrapp = xrouter::App::instance();
 
     try {
         RandomInit();
 
         // init xbridge
         xapp.init(argc, argv);
+        // init xrouter
+        xrapp.init(argc, argv);
 
         app.createWindow(networkStyle.data());
         app.requestInitialize();
