@@ -258,11 +258,6 @@ App::App()
 //*****************************************************************************
 App::~App()
 {
-    stop();
-
-#ifdef WIN32
-    WSACleanup();
-#endif
 }
 
 //*****************************************************************************
@@ -379,7 +374,6 @@ bool App::init(int argc, char *argv[])
 bool App::stop()
 {
     bool s = m_p->stop();
-    disconnectWallets();
     return s;
 }
 

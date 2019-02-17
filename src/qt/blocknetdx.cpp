@@ -687,9 +687,6 @@ int main(int argc, char* argv[])
 #endif
         app.exec();
 
-        // stop xbridge
-        xapp.stop();
-
         app.requestShutdown();
 
         app.exec();
@@ -697,9 +694,6 @@ int main(int argc, char* argv[])
     catch (std::exception& e)
     {
         PrintExceptionContinue(&e, "Runaway exception");
-
-        // stop xbridge
-        xapp.stop();
 
         // stop appication
         app.requestShutdown();
