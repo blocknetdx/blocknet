@@ -10,9 +10,9 @@
 #include <deque>
 #include <memory>
 #include <ctime>
+#include <cstdio>
 #include <stdint.h>
 #include <iostream>
-//#include <assert.h>
 #include <string.h>
 #include "keystore.h"
 #include <boost/preprocessor.hpp>
@@ -31,28 +31,82 @@ enum TxCancelReason
 //******************************************************************************
 //******************************************************************************
 
-#define X_DEFINE_ENUM_WITH_STRING_CONVERSIONS_TOSTRING_CASE(r, data, elem)    \
-    case elem : return BOOST_PP_STRINGIZE(elem);
+enum XRouterCommand
+{
+    xbcInvalid                       = 0,
+    xrReply                          = 1,
+    xrConfigReply                    = 2,
+    xrFetchReply                     = 3,
+    xrGetBlockCount                  = 4,
+    xrGetBlockHash                   = 5,
+    xrGetBlock                       = 6,
+    xrGetTransaction                 = 7,
+    xrGetAllBlocks                   = 8,
+    xrGetAllTransactions             = 9,
+    xrGetBalance                     = 10,
+    xrGetBalanceUpdate               = 11,
+    xrGetTransactionsBloomFilter     = 12,
+    xrSendTransaction                = 13,
+    xrTimeToBlockNumber              = 14,
+    xrCustomCall                     = 15,
+    xrGetPaymentAddress              = 16,
+    xrGetXrouterConfig               = 17
+};
 
-#define DEFINE_ENUM_WITH_STRING_CONVERSIONS(name, enumerators)                \
-    enum name {                                                               \
-        BOOST_PP_SEQ_ENUM(enumerators)                                        \
-    };                                                                        \
-                                                                              \
-    inline const char* name##_ToString(name v)                                  \
-    {                                                                         \
-        switch (v)                                                            \
-        {                                                                     \
-            BOOST_PP_SEQ_FOR_EACH(                                            \
-                X_DEFINE_ENUM_WITH_STRING_CONVERSIONS_TOSTRING_CASE,          \
-                name,                                                         \
-                enumerators                                                   \
-            )                                                                 \
-            default: return "[Unknown " BOOST_PP_STRINGIZE(name) "]";         \
-        }                                                                     \
+inline const char* XRouterCommand_ToString(enum XRouterCommand c)
+{
+    switch (c)
+    {
+        case xbcInvalid                   : return "xbcInvalid";
+        case xrReply                      : return "xrReply";
+        case xrConfigReply                : return "xrConfigReply";
+        case xrFetchReply                 : return "xrFetchReply";
+        case xrGetBlockCount              : return "xrGetBlockCount";
+        case xrGetBlockHash               : return "xrGetBlockHash";
+        case xrGetBlock                   : return "xrGetBlock";
+        case xrGetTransaction             : return "xrGetTransaction";
+        case xrGetAllBlocks               : return "xrGetAllBlocks";
+        case xrGetAllTransactions         : return "xrGetAllTransactions";
+        case xrGetBalance                 : return "xrGetBalance";
+        case xrGetBalanceUpdate           : return "xrGetBalanceUpdate";
+        case xrGetTransactionsBloomFilter : return "xrGetTransactionsBloomFilter";
+        case xrSendTransaction            : return "xrSendTransaction";
+        case xrTimeToBlockNumber          : return "xrTimeToBlockNumber";
+        case xrCustomCall                 : return "xrCustomCall";
+        case xrGetPaymentAddress          : return "xrGetPaymentAddress";
+        case xrGetXrouterConfig           : return "xrGetXrouterConfig";
+        default: {
+            char* s;
+            sprintf(s, "[Unknown XRouterCommand] %u", c);
+            return s;
+        }
     }
+};
 
-DEFINE_ENUM_WITH_STRING_CONVERSIONS(XRouterCommand, (xbcInvalid)(xrReply)(xrConfigReply)(xrFetchReply)(xrGetBlockCount)(xrGetBlockHash)(xrGetBlock)(xrGetTransaction)(xrGetAllBlocks)(xrGetAllTransactions)(xrGetBalance)(xrGetBalanceUpdate)(xrGetTransactionsBloomFilter)(xrSendTransaction)(xrTimeToBlockNumber)(xrCustomCall)(xrGetPaymentAddress)(xrGetXrouterConfig))
+inline bool XRouterCommand_IsValid(const char* c)
+{
+    if (XRouterCommand_ToString(xbcInvalid)                   ||
+        XRouterCommand_ToString(xrReply)                      ||
+        XRouterCommand_ToString(xrConfigReply)                ||
+        XRouterCommand_ToString(xrFetchReply)                 ||
+        XRouterCommand_ToString(xrGetBlockCount)              ||
+        XRouterCommand_ToString(xrGetBlockHash)               ||
+        XRouterCommand_ToString(xrGetBlock)                   ||
+        XRouterCommand_ToString(xrGetTransaction)             ||
+        XRouterCommand_ToString(xrGetAllBlocks)               ||
+        XRouterCommand_ToString(xrGetAllTransactions)         ||
+        XRouterCommand_ToString(xrGetBalance)                 ||
+        XRouterCommand_ToString(xrGetBalanceUpdate)           ||
+        XRouterCommand_ToString(xrGetTransactionsBloomFilter) ||
+        XRouterCommand_ToString(xrSendTransaction)            ||
+        XRouterCommand_ToString(xrTimeToBlockNumber)          ||
+        XRouterCommand_ToString(xrCustomCall)                 ||
+        XRouterCommand_ToString(xrGetPaymentAddress)          ||
+        XRouterCommand_ToString(xrGetXrouterConfig))
+        return true;
+
+    return false;
+};
 
 //******************************************************************************
 //******************************************************************************

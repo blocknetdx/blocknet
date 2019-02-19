@@ -60,7 +60,7 @@ Object CallRPC(const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
 {
     boost::asio::ip::tcp::iostream stream;
-    stream.expires_from_now(boost::posix_time::seconds(60));
+    stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
     stream.connect(rpcip, rpcport);
     if (stream.error() != boost::system::errc::success) {
         LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());
