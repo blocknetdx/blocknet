@@ -17,6 +17,7 @@
 #include "spork.h"
 #include "timedata.h"
 #include "util.h"
+#include "xrouter/xrouterapp.h"
 #ifdef ENABLE_WALLET
 #include "currencypair.h"
 #include "wallet.h"
@@ -73,6 +74,7 @@ Value getinfo(const Array& params, bool fHelp)
             "  \"unlocked_until\": ttt,      (numeric) the timestamp in seconds since epoch (midnight Jan 1 1970 GMT) that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
             "  \"paytxfee\": x.xxxx,         (numeric) the transaction fee set in blocknetdx/kb\n"
             "  \"relayfee\": x.xxxx,         (numeric) minimum relay fee for non-free transactions in blocknetdx/kb\n"
+            "  \"xrouter\": true|false,      (boolean) true if xrouter is enabled\n"
             "  \"staking status\": true|false,  (boolean) if the wallet is staking or not\n"
             "  \"errors\": \"...\"           (string) any error messages\n"
             "}\n"
@@ -118,6 +120,8 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("paytxfee", ValueFromAmount(payTxFee.GetFeePerK())));
 #endif
     obj.push_back(Pair("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK())));
+    // Is xrouter enabled
+    obj.push_back(Pair("xrouter", xrouter::App::isEnabled()));
     bool nStaking = false;
     if (mapHashedBlocks.count(chainActive.Tip()->nHeight))
         nStaking = true;
