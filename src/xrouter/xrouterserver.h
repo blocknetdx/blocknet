@@ -238,16 +238,6 @@ protected:
     bool rateLimitExceeded(const std::string & nodeAddr, const std::string & key, const int & rateLimit);
 
     /**
-     * Helper to build key for use with lookups.
-     * @param currency
-     * @param command
-     * @return
-     */
-    std::string buildCommandKey(const std::string & currency, const std::string & command) {
-        return currency + "::" + command;
-    }
-
-    /**
      * Get a raw change address from the wallet.
      * @return
      */

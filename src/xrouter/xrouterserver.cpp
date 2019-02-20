@@ -255,11 +255,6 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         uint32_t offset = 36;
         uuid = std::string((const char *)packet->data()+offset);
 
-        if (!verifyBlockRequirement(packet)) {
-            //state.DoS(10, error("XRouter: block requirement not satisfied"), REJECT_INVALID, "xrouter-error");
-            throw XRouterError("Block requirement not satisfied", xrouter::INSUFFICIENT_FUNDS);
-        }
-
         App& app = App::instance();
 
         offset += uuid.size() + 1;
@@ -325,7 +320,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     fee_part1 = hashedQueries[uuid].second;
 
                 const std::string commandStr(XRouterCommand_ToString(command));
-                const auto & cmd = buildCommandKey(currency, commandStr);
+                const auto & cmd = app.buildCommandKey(currency, commandStr);
                 int rateLimit = app.xrouter_settings.clientRequestLimit(command, currency);
                 if (rateLimit >= 0 && rateLimitExceeded(nodeArr, cmd, rateLimit)) {
                     std::string err_msg = "XRouter: too many requests to plugin " + cmd;

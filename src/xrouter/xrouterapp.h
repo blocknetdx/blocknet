@@ -7,18 +7,21 @@
 #include "xrouterutils.h"
 #include "xrouterpacket.h"
 #include "xroutersettings.h"
-#include "validationstate.h"
 #include "xrouterserver.h"
 #include "xrouterdef.h"
 #include "xrouterpeer.h"
-#include "net.h"
+
+#include "xbridge/xbridgecryptoproviderbtc.h"
+
+#include "uint256.h"
+#include "validationstate.h"
 #include "servicenode.h"
+#include "net.h"
 
 #include <memory>
 #include <chrono>
 #include <boost/container/map.hpp>
 
-#include "uint256.h"
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
@@ -50,14 +53,17 @@ private:
     std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
     boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
     boost::container::map<std::string, PaymentChannel> paymentChannels;
-    boost::container::map<CNode*, boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
+    std::map<std::string, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
     boost::container::map<std::string, XRouterSettings > snodeConfigs;
     static boost::container::map<CNode*, double > snodeScore;
     boost::container::map<std::string, std::string > snodeDomains;
     
     XRouterSettings xrouter_settings;
     std::string xrouterpath;
-    
+
+    // Key management
+    xbridge::BtcCryptoProvider crypto;
+
 public:
     /**
      * @brief instance - the classical implementation of singletone
@@ -309,7 +315,7 @@ public:
     
     /**
      * @brief find the node that supports a given plugin 
-     * @param name pkugin name
+     * @param name plugin name
      * @return
      */
     CNode* getNodeForService(std::string name);
@@ -394,6 +400,16 @@ public:
      * @return deposit pubkey and address
      */
     std::string createDepositAddress(bool update=false);
+
+    /**
+     * Helper to build key for use with lookups.
+     * @param currency
+     * @param command
+     * @return
+     */
+    std::string buildCommandKey(const std::string & currency, const std::string & command) {
+        return currency + "::" + command;
+    }
 };
 
 } // namespace xrouter

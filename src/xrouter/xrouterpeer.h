@@ -24,7 +24,7 @@ namespace xrouter
         std::chrono::time_point<std::chrono::system_clock> lastConfigQuery;
         std::chrono::time_point<std::chrono::system_clock> lastConfigUpdate;
         PaymentChannel paymentChannel;
-        boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastPacketsSent;
+        std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastPacketsSent;
         XRouterPeer() { }
     };
 } // namespace xrouter
