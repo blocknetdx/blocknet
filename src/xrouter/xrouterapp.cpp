@@ -1222,6 +1222,7 @@ std::string App::getXrouterConfig(CNode* node, std::string addr) {
 
 std::string App::getXrouterConfigSync(CNode* node) {
     std::string id = generateUUID();
+    const auto & addr = node->addr.ToString();
 
     XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
     packet->append(id);
@@ -1234,17 +1235,20 @@ std::string App::getXrouterConfigSync(CNode* node) {
     node->PushMessage("xrouter", msg);
 
     boost::mutex::scoped_lock lock(*qcond.first);
-    int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_WAIT);
-    if (!qcond.second->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
+    int timeout = this->xrouter_settings.get<int>("Main.configsynctimeout", XROUTER_DEFAULT_WAIT);
+    if (!qcond.second->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
+        queryMgr.purge(id); // clean up
         return "Could not get XRouter config";
+    }
 
     std::string reply;
     int consensus = queryMgr.reply(id, reply);
     queryMgr.purge(id); // clean up
 
+    // Update settings for node
     XRouterSettings settings;
     settings.read(reply);
-    this->snodeConfigs[node->addr.ToString()] = settings;
+    this->snodeConfigs[addr] = settings;
 
     return reply;
 }
