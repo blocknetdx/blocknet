@@ -242,6 +242,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
 {
     clearHashedQueries();
     std::string uuid, reply;
+
     try {
         if (packet->version() != static_cast<boost::uint32_t>(XROUTER_PROTOCOL_VERSION))
             throw XRouterError("You are using a different version of XRouter protocol. This node runs version " + std::to_string(XROUTER_PROTOCOL_VERSION), xrouter::BAD_VERSION);
@@ -249,21 +250,22 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         if (!packet->verify()) {
             state.DoS(10, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
             throw XRouterError("Unsigned packet or signature error", xrouter::BAD_REQUEST);
-            
         }
-        
-        uint32_t offset = 36;
+
+        App & app = App::instance();
+        uint32_t offset = 0;
+
+        // id
         uuid = std::string((const char *)packet->data()+offset);
-
-        App& app = App::instance();
-
         offset += uuid.size() + 1;
+
+        // wallet currency
         std::string currency((const char *)packet->data()+offset);
         offset += currency.size() + 1;
+
         LOG() << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
-        if (!app.xrouter_settings.isAvailableCommand(packet->command(), currency)) {
+        if (!app.xrouter_settings.isAvailableCommand(packet->command(), currency))
             throw XRouterError("This command is blocked in xrouter.conf", xrouter::UNSUPPORTED_BLOCKCHAIN);
-        }
 
         const auto nodeArr = node->addr.ToString();
         bool usehash = false;
@@ -846,9 +848,8 @@ Value XRouterServer::printPaymentChannels() {
 }
 
 void XRouterServer::clearHashedQueries() {
-    typedef boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > queries_map;
     std::vector<std::string> to_remove;
-    for (queries_map::value_type & it : hashedQueriesDeadlines) {
+    for (auto & it : hashedQueriesDeadlines) {
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::system_clock::duration diff = time - it.second;
         // TODO: move 1000 seconds to settings?

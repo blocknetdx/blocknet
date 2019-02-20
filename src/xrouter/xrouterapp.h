@@ -14,6 +14,7 @@
 #include "xbridge/xbridgecryptoproviderbtc.h"
 
 #include "uint256.h"
+#include "hash.h"
 #include "validationstate.h"
 #include "servicenode.h"
 #include "net.h"
@@ -47,22 +48,125 @@ private:
 
     std::unique_ptr<XRouterServer> server;
 
-    boost::container::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
-    boost::container::map<std::string, boost::container::map<CNode*, std::string> > queries;
-    boost::container::map<std::string, CNode* > configQueries;
-    std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
-    boost::container::map<std::string, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
-    boost::container::map<std::string, PaymentChannel> paymentChannels;
-    std::map<std::string, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
-    boost::container::map<std::string, XRouterSettings > snodeConfigs;
-    static boost::container::map<CNode*, double > snodeScore;
-    boost::container::map<std::string, std::string > snodeDomains;
+    static std::map<std::string, double> snodeScore;
+
+    typedef std::string NodeAddr;
+    std::map<std::string, NodeAddr> configQueries;
+    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
+    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
+    std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
+    std::map<NodeAddr, PaymentChannel> paymentChannels;
+    std::map<NodeAddr, XRouterSettings> snodeConfigs;
+    std::map<std::string, NodeAddr> snodeDomains;
     
     XRouterSettings xrouter_settings;
     std::string xrouterpath;
 
     // Key management
     xbridge::BtcCryptoProvider crypto;
+
+    class QueryMgr {
+    public:
+        typedef std::string QueryReply;
+        typedef std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > QueryCondition;
+        /**
+         * Add a query. This stores interal state including condition variables and associated mutexes.
+         * @param id
+         * @param qc
+         */
+        void addQuery(const std::string & id, QueryCondition & qc) {
+            LOCK(mu);
+
+            if (!queries.count(id))
+                queries[id] = std::map<std::string, std::string>();
+
+            boost::shared_ptr<boost::mutex> m(new boost::mutex());
+            boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+
+            qc = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+            queriesLocks[id] = qc;
+        }
+        /**
+         * Store a query reply.
+         * @param id
+         * @param node
+         * @param reply
+         * @return Total number of replies for the query with specified id.
+         */
+        int addReply(const std::string & id, const std::string & node, const std::string & reply) {
+            LOCK(mu);
+            if (!queries.count(id))
+                return 0; // done, no query found with id
+            queries[id][node] = reply;
+            boost::mutex::scoped_lock l(*queriesLocks[id].first);
+            queriesLocks[id].second->notify_all();
+            return queries.count(id);
+        }
+        /**
+         * Fetch a reply. This method returns the number of matching replies.
+         * @param id
+         * @param reply
+         * @return
+         */
+        int reply(const std::string & id, std::string & reply) {
+            LOCK(mu);
+
+            int consensus = queries.count(id);
+            if (!consensus)
+                return 0;
+
+            std::map<uint256, std::string> hashes;
+            std::map<uint256, int> counts;
+            for (auto & item : queries[id]) {
+                auto hash = Hash(item.second.begin(), item.second.end());
+                hashes[hash] = item.second;
+                counts[hash] = counts.count(hash) + 1; // update counts for common replies
+            }
+
+            // sort replies descending
+            std::vector<std::pair<uint256, int> > tmp(counts.begin(), counts.end());
+            std::sort(tmp.begin(), tmp.end(),
+                      [](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
+                          return a.second > b.second;
+                      });
+
+            // select the most common replies
+            reply = hashes[tmp[0].first];
+            return tmp[0].second;
+        }
+        /**
+         * Returns true if the query with specified id is valid.
+         * @param id
+         * @return
+         */
+        bool hasQuery(const std::string & id) {
+            LOCK(mu);
+            return queries.count(id);
+        }
+        /**
+         * Return all replies associated with a query.
+         * @param id
+         * @return
+         */
+        std::map<std::string, QueryReply> allReplies(const std::string & id) {
+            LOCK(mu);
+            return queries[id];
+        }
+        /**
+         * Purges the ephemeral state of a query with specified id.
+         * @param id
+         */
+        void purge(const std::string & id) {
+            LOCK(mu);
+            queriesLocks.erase(id);
+        }
+    private:
+        CCriticalSection mu;
+        std::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
+        std::map<std::string, std::map<std::string, QueryReply> > queries;
+    };
+
+    QueryMgr queryMgr;
 
 public:
     /**
@@ -303,8 +407,6 @@ public:
      */
     bool processConfigReply(XRouterPacketPtr packet);
     
-    static bool cmpNodeScore(CNode* a, CNode* b) { return snodeScore[a] > snodeScore[b]; }
-    
     /**
      * @brief get all nodes that support the command for a given chain
      * @param packet Xrouter packet formed and ready to be sendTransaction
@@ -409,6 +511,15 @@ public:
      */
     std::string buildCommandKey(const std::string & currency, const std::string & command) {
         return currency + "::" + command;
+    }
+
+    /**
+     * Sort algo for snode scores.
+     * @param a CNode
+     * @param b CNode
+     */
+    static bool cmpNodeScore(const CNode *a, const CNode *b) {
+        return snodeScore[a->addr.ToString()] > snodeScore[b->addr.ToString()];
     }
 };
 

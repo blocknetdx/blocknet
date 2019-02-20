@@ -42,13 +42,13 @@
 //*****************************************************************************
 namespace xrouter
 {   
-boost::container::map<CNode*, double > App::snodeScore = boost::container::map<CNode*, double >(); 
-typedef boost::container::map<CNode*, std::string> queries_map;
+
+std::map<std::string, double> App::snodeScore;
 
 //*****************************************************************************
 //*****************************************************************************
 App::App()
-    : server(new XRouterServer), queries()
+    : server(new XRouterServer)
 {
 }
 
@@ -351,8 +351,9 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
     }
     
     for (CNode *node : selectedNodes) {
-        if (!snodeScore.count(node))
-            snodeScore[node] = 0;
+        const auto & addr = node->addr.ToString();
+        if (!snodeScore.count(addr))
+            snodeScore[addr] = 0;
     }
     
     std::sort(selectedNodes.begin(), selectedNodes.end(), cmpNodeScore);
@@ -541,8 +542,8 @@ bool App::processReply(XRouterPacketPtr packet, CNode* node)
     LOG() << "Received reply to query " << uuid;
     
     // check uuid is in queriesLock keys
-    if (!queriesLocks.count(uuid))
-        return true;
+    if (!queryMgr.hasQuery(uuid))
+        return true; // done, nothing found
     
     Object ret;
     Value reply_val;
@@ -558,13 +559,10 @@ bool App::processReply(XRouterPacketPtr packet, CNode* node)
         }
     }
     
+    // Store the reply
+    queryMgr.addReply(uuid, node->addr.ToString(), reply);
     LOG() << reply;
 
-    boost::mutex::scoped_lock l(*queriesLocks[uuid].first);
-    if (!queries.count(uuid))
-        queries[uuid] = boost::container::map<CNode*, std::string>();
-    queries[uuid][node] = reply;
-    queriesLocks[uuid].second->notify_all();
     return true;
 }
 
@@ -578,7 +576,7 @@ bool App::processConfigReply(XRouterPacketPtr packet)
     offset += reply.size() + 1;
 
     LOG() << "Received reply to query " << uuid;
-    LOG() << "Received xrouter config from node " << configQueries[uuid]->addrName;
+    LOG() << "Received xrouter config from node " << configQueries[uuid];
     LOG() << reply;
     Value reply_val;
     read_string(reply, reply_val);
@@ -596,12 +594,12 @@ bool App::processConfigReply(XRouterPacketPtr packet)
     }
     if (configQueries.count(uuid)) {
         // This is a reply from service node itself
-        snodeConfigs[configQueries[uuid]->addr.ToString()] = settings;
+        snodeConfigs[configQueries[uuid]] = settings;
         
         // Add IP and possibly domain name to table of domains
-        snodeDomains[configQueries[uuid]->addr.ToString()] = configQueries[uuid]->addr.ToString();
+        snodeDomains[configQueries[uuid]] = configQueries[uuid];
         if (settings.get<std::string>("Main.domain", "") != "") {
-            snodeDomains[settings.get<std::string>("Main.domain")] = configQueries[uuid]->addr.ToString();
+            snodeDomains[settings.get<std::string>("Main.domain")] = configQueries[uuid];
         }
         return true;
     } else {
@@ -641,9 +639,10 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
     
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     if (packet->command() == xrGetXrouterConfig) {
-        uint32_t offset = 36;
+        uint32_t offset = 0;
         std::string uuid((const char *)packet->data()+offset);
         offset += uuid.size() + 1;
+
         std::string addr((const char *)packet->data()+offset);
         XRouterSettings cfg;
         if (addr == "self")
@@ -745,12 +744,8 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         }
 
         Object error;
-        boost::shared_ptr<boost::mutex> m(new boost::mutex());
-        boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-        boost::mutex::scoped_lock lock(*m);
 
         LOG() << "Sending query " << id;
-        queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
 
         // Select available nodes
         std::vector<CNode*> selectedNodes = getAvailableNodes(command, currency, confirmations_count);
@@ -762,8 +757,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         if (confirmations_count == 1)
             usehash = false;
         
-        // Disable usehash option
-        usehash = false;
+        usehash = false; // TODO usehash is always disabled here
         std::map<std::string, std::string> paytx_map;
         int snodeCount = 0;
 
@@ -802,10 +796,14 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
             throw XRouterError("Could not create payments to service nodes. Please check that your wallet is fully unlocked and you have at least " + std::to_string(confirmations_count) + " available unspent transaction outputs.", xrouter::INSUFFICIENT_FUNDS);
         }
 
+        // Create query
+        QueryMgr::QueryCondition qcond;
+        queryMgr.addQuery(id, qcond);
+
         // Packet signing key
         std::vector<unsigned char> privkey;
         crypto.makeNewKey(privkey);
-        CKey key; key.Set(privkey.begin(), privkey.end(), false);
+        CKey key; key.Set(privkey.begin(), privkey.end(), true);
         int timeout = GetArg("-rpcxroutertimeout", 60);
 
         // Send xrouter request to each selected node
@@ -823,6 +821,7 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
             if (!param2.empty())
                 packet->append(param2);
             packet->sign(key);
+
             // Send packet to xrouter node
             pnode->PushMessage("xrouter", packet->body());
             
@@ -837,79 +836,72 @@ std::string App::xrouterCall(enum XRouterCommand command, const std::string & cu
         }
 
         // At this point we need to wait for responses
-
         int confirmation_count = 0;
-        while ((confirmation_count < confirmations_count) && cond->timed_wait(lock, boost::posix_time::seconds(timeout)))
-            confirmation_count++;
 
-        std::string result;
-        if(confirmation_count <= confirmations_count / 2) {
+        {
+            boost::mutex::scoped_lock lock(*qcond.first);
+            while ((confirmation_count < confirmations_count) && qcond.second->timed_wait(lock, boost::posix_time::seconds(timeout)))
+                confirmation_count++;
+        }
+
+        // Clean up
+        queryMgr.purge(id);
+
+        if (confirmation_count <= confirmations_count / 2)
             throw XRouterError("Failed to get response in time. Try xrGetReply command later.", xrouter::SERVER_TIMEOUT);
-        }
-        else {
-            for (queries_map::value_type &i : queries[id]) {
-                std::string cand = i.second;
-                int c = 0;
-                for (queries_map::value_type &j : queries[id]) {
-                    if (j.second == cand) {
-                        c++;
-                        if (c > confirmations_count / 2)
-                            result = cand;
-                    }
-                }
-                
-            }
 
-            if (result.empty()) {
-                throw XRouterError("No consensus between responses", xrouter::INTERNAL_SERVER_ERROR);
-            } else {
-                if (!usehash)
-                    return result;
-            }
-        }
-        
+        // Handle the results
+        std::string result;
+        int c = queryMgr.reply(id, result);
+        if (c <= confirmations_count / 2 || result.empty())
+            throw XRouterError("No consensus between responses", xrouter::INTERNAL_SERVER_ERROR);
+
+        if (!usehash)
+            return result;
+
         // We reach here only if usehash == true
 
-        CNode* finalnode;
-        for (queries_map::value_type &i : queries[id]) {
-            if (result == i.second) {
-                finalnode = i.first;
-                break;
-            }
-        }
-        
-        CAmount fee = to_amount(snodeConfigs[finalnode->addr.ToString()].getCommandFee(command, currency));
-        CAmount fee_part2 = fee - fee/2;
-        std::string payment_tx = "nofee";
-        if (fee > 0) {
-            try {
-                payment_tx = "nohash;" + generatePayment(finalnode, fee_part2);
-            } catch (std::runtime_error &) {
-                LOG() << "Failed to create payment to node " << finalnode->addr.ToString();
-                throw XRouterError("Could not create payment to service node", xrouter::INSUFFICIENT_FUNDS);
-            }
-        }
+//        CNode* finalnode;
+//        for (auto & i : queries[id]) {
+//            if (result == i.second) {
+//                finalnode = i.first;
+//                break;
+//            }
+//        }
+//
+//        CAmount fee = to_amount(snodeConfigs[finalnode->addr.ToString()].getCommandFee(command, currency));
+//        CAmount fee_part2 = fee - fee/2;
+//        std::string payment_tx = "nofee";
+//        if (fee > 0) {
+//            try {
+//                payment_tx = "nohash;" + generatePayment(finalnode, fee_part2);
+//            } catch (std::runtime_error &) {
+//                LOG() << "Failed to create payment to node " << finalnode->addr.ToString();
+//                throw XRouterError("Could not create payment to service node", xrouter::INSUFFICIENT_FUNDS);
+//            }
+//        }
+//
+//        XRouterPacketPtr fpacket(new XRouterPacket(xrFetchReply));
+//        fpacket->append(id);
+//        fpacket->append(currency);
+//        fpacket->append(payment_tx);
+//        fpacket->sign(key);
+//
+//        finalnode->PushMessage("xrouter", fpacket->body());
+//
+//        LOG() << "Fetching reply from node " << finalnode->addrName;
+//
+//        boost::shared_ptr<boost::mutex> m2(new boost::mutex());
+//        boost::shared_ptr<boost::condition_variable> cond2(new boost::condition_variable());
+//        boost::mutex::scoped_lock lock2(*m2);
+//        queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m2, cond2);
+//        if (cond2->timed_wait(lock2, boost::posix_time::seconds(timeout))) {
+//            std::string reply = queries[id][finalnode];
+//            return reply;
+//        } else {
+//            throw XRouterError("Failed to fetch reply from service node", xrouter::SERVER_TIMEOUT);
+//        }
 
-        XRouterPacketPtr fpacket(new XRouterPacket(xrFetchReply));
-        fpacket->append(id);
-        fpacket->append(currency);
-        fpacket->append(payment_tx);
-        fpacket->sign(key);
-
-        finalnode->PushMessage("xrouter", fpacket->body());
-
-        LOG() << "Fetching reply from node " << finalnode->addrName;
-
-        boost::shared_ptr<boost::mutex> m2(new boost::mutex());
-        boost::shared_ptr<boost::condition_variable> cond2(new boost::condition_variable());
-        boost::mutex::scoped_lock lock2(*m2);
-        queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m2, cond2);
-        if (cond2->timed_wait(lock2, boost::posix_time::seconds(timeout))) {
-            std::string reply = queries[id][finalnode];
-            return reply;
-        } else {
-            throw XRouterError("Failed to fetch reply from service node", xrouter::SERVER_TIMEOUT);
-        }
     } catch (XRouterError & e) {
         Object error;
         error.emplace_back(Pair("error", e.msg));
@@ -973,20 +965,20 @@ std::string App::convertTimeToBlockCount(const std::string& currency, std::strin
 std::string App::getReply(const std::string & id)
 {
     Object result;
+    auto replies = queryMgr.allReplies(id);
 
-    if(queries[id].empty()) {
+    if (replies.empty()) {
         result.emplace_back(Pair("error", "No replies found"));
         result.emplace_back(Pair("uuid", id));
         return json_spirit::write_string(Value(result), true);
-    } else {
-        BOOST_FOREACH( queries_map::value_type &it, queries[id] ) {
-            std::string cand = it.second;
-            // TODO: display node id
-            result.emplace_back(Pair("reply", cand));
-        }
-
-        return json_spirit::write_string(Value(result), true);
     }
+
+    for (auto & it : replies) {
+        std::string reply = it.second;
+        result.emplace_back(Pair("reply", reply)); // TODO display node id?
+    }
+
+    return json_spirit::write_string(Value(result), true);
 }
 
 std::string App::sendTransaction(const std::string & currency, const std::string & transaction)
@@ -996,7 +988,8 @@ std::string App::sendTransaction(const std::string & currency, const std::string
 
 std::string App::sendCustomCall(const std::string & name, std::vector<std::string> & params)
 {
-    std::string id;
+    std::string id = generateUUID();
+
     try {
         if (!isEnabled())
             throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf to run XRouter.", xrouter::UNAUTHORIZED);
@@ -1007,13 +1000,6 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         }
         
         updateConfigs();
-        
-        id = generateUUID();
-
-        boost::shared_ptr<boost::mutex> m(new boost::mutex());
-        boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-        boost::mutex::scoped_lock lock(*m);
-        queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
 
         CNode* pnode = getNodeForService(name);
         if (!pnode)
@@ -1045,10 +1031,14 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
             }
         }
 
+        // Create query
+        QueryMgr::QueryCondition qcond;
+        queryMgr.addQuery(id, qcond);
+
         // Key
         std::vector<unsigned char> privkey;
         crypto.makeNewKey(privkey);
-        CKey key; key.Set(privkey.begin(), privkey.end(), false);
+        CKey key; key.Set(privkey.begin(), privkey.end(), true);
         int timeout = GetArg("-rpcxroutertimeout", 60);
 
         XRouterPacketPtr packet(new XRouterPacket(xrCustomCall));
@@ -1072,12 +1062,20 @@ std::string App::sendCustomCall(const std::string & name, std::vector<std::strin
         pnode->PushMessage("xrouter", msg);
 
         // Wait for reply
-        if (cond->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
-            std::string reply = queries[id][pnode];
+        boost::mutex::scoped_lock lock(*qcond.first);
+        if (qcond.second->timed_wait(lock, boost::posix_time::milliseconds(timeout))) {
+            std::string reply;
+            int consensus = queryMgr.reply(id, reply);
+            queryMgr.purge(id); // clean up
+            // TODO Handle consensus
             return reply;
         }
-        
+
+        queryMgr.purge(id); // clean up
+
+        // Error if we reach here
         throw XRouterError("Failed to get response in time. Try xrGetReply command later.", xrouter::SERVER_TIMEOUT);
+
     } catch (XRouterError & e) {
         Object error;
         error.emplace_back(Pair("error", e.msg));
@@ -1211,47 +1209,43 @@ std::string App::getXrouterConfig(CNode* node, std::string addr) {
     uint32_t vout = 0;
 
     std::string id = generateUUID();
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
     packet->append(id);
     packet->append(addr);
     
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     
-    this->configQueries[id] = node;
+    this->configQueries[id] = node->addr.ToString();
     node->PushMessage("xrouter", msg);
     return id;
 }
 
 std::string App::getXrouterConfigSync(CNode* node) {
-    XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
-
-    uint256 txHash;
-    uint32_t vout = 0;
-
     std::string id = generateUUID();
 
-    packet->append(txHash.begin(), 32);
-    packet->append(vout);
+    XRouterPacketPtr packet(new XRouterPacket(xrGetXrouterConfig));
     packet->append(id);
 
-    boost::shared_ptr<boost::mutex> m(new boost::mutex());
-    boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-    boost::mutex::scoped_lock lock(*m);
-    queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+    QueryMgr::QueryCondition qcond;
+    queryMgr.addQuery(id, qcond);
 
     std::vector<unsigned char> msg;
     msg.insert(msg.end(), packet->body().begin(), packet->body().end());
     node->PushMessage("xrouter", msg);
+
+    boost::mutex::scoped_lock lock(*qcond.first);
     int timeout = this->xrouter_settings.get<int>("Main.wait", XROUTER_DEFAULT_WAIT);
-    if (!cond->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
+    if (!qcond.second->timed_wait(lock, boost::posix_time::milliseconds(timeout)))
         return "Could not get XRouter config";
 
-    std::string reply = queries[id][node];
+    std::string reply;
+    int consensus = queryMgr.reply(id, reply);
+    queryMgr.purge(id); // clean up
+
     XRouterSettings settings;
     settings.read(reply);
     this->snodeConfigs[node->addr.ToString()] = settings;
+
     return reply;
 }
 
