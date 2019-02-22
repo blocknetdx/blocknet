@@ -1,65 +1,19 @@
+#include "xrouterapp.h"
+#include "xroutererror.h"
+#include "xrouterutils.h"
+
+#include "uint256.h"
+#include "bloom.h"
+#include "core_io.h"
+
+#include <exception>
+#include <iostream>
+
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
 #include "json/json_spirit_utils.h"
 
-#include <exception>
-#include <iostream>
-#include "bloom.h"
-#include "core_io.h"
-
-#include "xrouterapp.h"
-#include "xroutererror.h"
-#include "xrouterutils.h"
-#include "uint256.h"
 using namespace json_spirit;
-
-static Object form_reply(std::string reply)
-{
-    Object ret;
-    Value reply_val;
-    read_string(reply, reply_val);
-    
-    if (reply_val.type() == array_type) {
-        ret.emplace_back(Pair("reply", reply_val));
-        ret.emplace_back(Pair("code", xrouter::SUCCESS));
-        return ret;
-    }
-    
-    if (reply_val.type() != obj_type) {
-        ret.emplace_back(Pair("reply", reply));
-        ret.emplace_back(Pair("code", xrouter::SUCCESS));
-        return ret;
-    }
-    
-    Object reply_obj = reply_val.get_obj();
-    const Value & result = find_value(reply_obj, "result");
-    const Value & error  = find_value(reply_obj, "error");
-    const Value & code  = find_value(reply_obj, "code");
-    const Value & uuid  = find_value(reply_obj, "uuid");
-    
-    if (error.type() != null_type) {
-        ret.emplace_back(Pair("error", error));
-        if (code.type() != null_type)
-            ret.emplace_back(Pair("code", code));
-        else
-            ret.emplace_back(Pair("code", xrouter::INTERNAL_SERVER_ERROR));
-    }
-    else if (result.type() != null_type) {
-        ret.emplace_back(Pair("reply", result));
-        ret.emplace_back(Pair("code", xrouter::SUCCESS));
-    }
-    else {
-        return reply_obj;
-    }
-    
-    if (uuid.type() != null_type) {
-        ret.emplace_back(Pair("uuid", uuid));
-    } else {
-        ret.emplace_back(Pair("uuid", ""));
-    }
-    
-    return ret;
-}
 
 //******************************************************************************
 //******************************************************************************
@@ -72,21 +26,19 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
-    std::string confirmations = "";
+    int confirmations{0};
     if (params.size() >= 2)
-    {
-        confirmations = params[1].get_str();
-    }
+        confirmations = params[1].get_int();
 
-    std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getBlockCount(currency, confirmations);
-    return form_reply(reply);
+    std::string currency = params[0].get_str();
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getBlockCount(uuid, currency, confirmations);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetBlockHash(const Array & params, bool fHelp)
@@ -98,9 +50,8 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
@@ -108,21 +59,19 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Block hash not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Block hash not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
-    
-    std::string confirmations = "";
+
+    int confirmations{0};
     if (params.size() >= 3)
-    {
-        confirmations = params[2].get_str();
-    }
-    
-    std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getBlockHash(currency, params[1].get_str(), confirmations);
-    return form_reply(reply);
+        confirmations = params[2].get_int();
+
+    std::string currency = params[0].get_str();
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getBlockHash(uuid, currency, confirmations, params[1].get_str());
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetBlock(const Array & params, bool fHelp)
@@ -134,30 +83,27 @@ Value xrGetBlock(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Block hash not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Block hash not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
-    
-    std::string confirmations = "";
-    if (params.size() >= 3)
-    {
-        confirmations = params[2].get_str();
-    }
 
-    std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getBlock(currency, params[1].get_str(), confirmations);
-    return form_reply(reply);
+    int confirmations{0};
+    if (params.size() >= 3)
+        confirmations = params[2].get_int();
+
+    std::string currency = params[0].get_str();
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getBlock(uuid, currency, confirmations, params[1].get_str());
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetTransaction(const Array & params, bool fHelp)
@@ -169,30 +115,27 @@ Value xrGetTransaction(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Tx hash not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Tx hash not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
-    
-    std::string confirmations = "";
-    if (params.size() >= 3)
-    {
-        confirmations = params[2].get_str();
-    }
 
-    std::string currency    = params[0].get_str();
-    std::string reply = xrouter::App::instance().getTransaction(currency, params[1].get_str(), confirmations);
-    return form_reply(reply);
+    int confirmations{0};
+    if (params.size() >= 3)
+        confirmations = params[2].get_int();
+
+    std::string currency = params[0].get_str();
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getTransaction(uuid, currency, confirmations, params[1].get_str());
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetBlocks(const Array & params, bool fHelp)
@@ -204,9 +147,8 @@ Value xrGetBlocks(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
@@ -219,16 +161,15 @@ Value xrGetBlocks(const Array & params, bool fHelp)
     {
         number = params[1].get_str();
     }
-    
-    std::string confirmations = "";
+
+    int confirmations{0};
     if (params.size() >= 3)
-    {
-        confirmations = params[2].get_str();
-    }
+        confirmations = params[2].get_int();
 
     std::string currency = params[0].get_str();
-    std::string reply = xrouter::App::instance().getAllBlocks(currency, number, confirmations);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getAllBlocks(uuid, currency, confirmations, number);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetTransactions(const Array & params, bool fHelp)
@@ -240,18 +181,16 @@ Value xrGetTransactions(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Address not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Address not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
@@ -265,15 +204,14 @@ Value xrGetTransactions(const Array & params, bool fHelp)
         number = params[2].get_str();
     }
     
-    std::string confirmations = "";
+    int confirmations{0};
     if (params.size() >= 4)
-    {
-        confirmations = params[3].get_str();
-    }
+        confirmations = params[3].get_int();
 
     std::string currency = params[0].get_str();
-    std::string reply = xrouter::App::instance().getAllTransactions(currency, params[1].get_str(), number, confirmations);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getAllTransactions(uuid, currency, confirmations, params[1].get_str(), number);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetBalance(const Array & params, bool fHelp)
@@ -285,31 +223,28 @@ Value xrGetBalance(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Account not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Account not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
-    
-    std::string confirmations = "";
+
+    int confirmations{0};
     if (params.size() >= 3)
-    {
-        confirmations = params[2].get_str();
-    }
+        confirmations = params[2].get_int();
 
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
-    std::string reply = xrouter::App::instance().getBalance(currency, account, confirmations);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getBalance(uuid, currency, confirmations, account);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetBalanceUpdate(const Array & params, bool fHelp)
@@ -321,18 +256,16 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Account not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Account not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
@@ -345,17 +278,16 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
     {
         number = params[2].get_str();
     }
-    
-    std::string confirmations = "";
+
+    int confirmations{0};
     if (params.size() >= 4)
-    {
-        confirmations = params[3].get_str();
-    }
+        confirmations = params[3].get_int();
     
     std::string currency = params[0].get_str();
     std::string account = params[1].get_str();
-    std::string reply = xrouter::App::instance().getBalanceUpdate(currency, account, number, confirmations);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getBalanceUpdate(uuid, currency, confirmations, account, number);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
@@ -367,18 +299,16 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Filter not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Filter not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
@@ -391,17 +321,15 @@ Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
     {
         number = params[2].get_str();
     }
-    
-    std::string confirmations = "";
+
+    int confirmations{0};
     if (params.size() >= 4)
-    {
-        confirmations = params[3].get_str();
-    }
+        confirmations = params[3].get_int();
     
     std::string currency = params[0].get_str();
-
-    std::string reply = xrouter::App::instance().getTransactionsBloomFilter(currency, params[1].get_str(), number, confirmations);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().getTransactionsBloomFilter(uuid, currency, confirmations, params[1].get_str(), number);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGenerateBloomFilter(const Array & params, bool fHelp)
@@ -412,13 +340,12 @@ Value xrGenerateBloomFilter(const Array & params, bool fHelp)
     
     Object result;
     if (params.size() == 0) {
-        result.emplace_back(Pair("error", "No valid addresses"));
-        result.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        result.emplace_back(Pair("uuid", ""));
+        result.emplace_back("error", "No valid addresses");
+        result.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return result;
     }
     
-    CBloomFilter f(10 * params.size(), 0.1, 5, 0);
+    CBloomFilter f(10 * static_cast<int>(params.size()), 0.1, 5, 0);
     
     vector<unsigned char> data;
     Array invalid;
@@ -447,18 +374,17 @@ Value xrGenerateBloomFilter(const Array & params, bool fHelp)
     }
     
     if (invalid.size() > 0) {
-        result.emplace_back(Pair("skipped-invalid", invalid));
+        result.emplace_back("skipped-invalid", invalid);
     }
     
     if (invalid.size() == params.size()) {
-        result.emplace_back(Pair("error", "No valid addresses"));
-        result.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        result.emplace_back(Pair("uuid", ""));
+        result.emplace_back("error", "No valid addresses");
+        result.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return result;
     }
     
-    result.emplace_back(Pair("reply", f.to_hex()));
-    result.emplace_back(Pair("code", xrouter::SUCCESS));
+    result.emplace_back("reply", f.to_hex());
+    result.emplace_back("code", xrouter::SUCCESS);
     
     return result;
 }
@@ -472,9 +398,8 @@ Value xrCustomCall(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Service name not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Service name not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
@@ -482,8 +407,9 @@ Value xrCustomCall(const Array & params, bool fHelp)
     std::vector<std::string> call_params;
     for (unsigned int i = 1; i < params.size(); i++)
         call_params.push_back(params[i].get_str());
-    std::string reply = xrouter::App::instance().sendCustomCall(name, call_params);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().sendCustomCall(uuid, name, call_params);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrSendTransaction(const Array & params, bool fHelp)
@@ -495,25 +421,24 @@ Value xrSendTransaction(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Transaction not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Transaction not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
     std::string currency = params[0].get_str();
     std::string transaction = params[1].get_str();
-    std::string reply = xrouter::App::instance().sendTransaction(currency, transaction);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().sendTransaction(uuid, currency, transaction);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetReply(const Array & params, bool fHelp)
@@ -525,16 +450,15 @@ Value xrGetReply(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "UUID not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "UUID not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
-    std::string id = params[0].get_str();
+    std::string uuid = params[0].get_str();
     Object result;
-    std::string reply = xrouter::App::instance().getReply(id);
-    return form_reply(reply);
+    std::string reply = xrouter::App::instance().getReply(uuid);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrUpdateConfigs(const Array & params, bool fHelp)
@@ -546,7 +470,7 @@ Value xrUpdateConfigs(const Array & params, bool fHelp)
     Object result;
     std::string reply = xrouter::App::instance().updateConfigs();
     Object obj;
-    obj.emplace_back(Pair("reply", reply));
+    obj.emplace_back("reply", reply);
     return obj;
 }
 
@@ -569,7 +493,7 @@ Value xrReloadConfigs(const Array & params, bool fHelp)
     
     Object result;
     xrouter::App::instance().reloadConfigs();
-    return "XRouter Configs reloaded";
+    return true;
 }
 
 Value xrStatus(const Array & params, bool fHelp)
@@ -591,7 +515,7 @@ Value xrOpenConnections(const Array & params, bool fHelp)
     
     Object result;
     xrouter::App::instance().openConnections();
-    return "";
+    return true;
 }
 
 Value xrTimeToBlockNumber(const Array & params, bool fHelp)
@@ -605,30 +529,27 @@ Value xrTimeToBlockNumber(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Currency not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back(Pair("error", "Timestamp not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Timestamp not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
-    
-    std::string confirmations = "";
+
+    int confirmations{0};
     if (params.size() >= 3)
-    {
-        confirmations = params[2].get_str();
-    }
+        confirmations = params[2].get_int();
     
     std::string currency = params[0].get_str();
-    std::string reply = xrouter::App::instance().convertTimeToBlockCount(currency, params[1].get_str(), confirmations);
-    return form_reply(reply);
+    std::string uuid;
+    std::string reply = xrouter::App::instance().convertTimeToBlockCount(uuid, currency, confirmations, params[1].get_str());
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrRegisterDomain(const Array & params, bool fHelp)
@@ -640,9 +561,8 @@ Value xrRegisterDomain(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Domain name not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Domain name not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
@@ -650,9 +570,8 @@ Value xrRegisterDomain(const Array & params, bool fHelp)
     if (params.size() > 3)
     {
         Object error;
-        error.emplace_back(Pair("error", "Too many parameters"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Too many parameters");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
@@ -663,9 +582,8 @@ Value xrRegisterDomain(const Array & params, bool fHelp)
             update = true;
         } else {
             Object error;
-            error.emplace_back(Pair("error", "Invalid parameter: must be true or false"));
-            error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-            error.emplace_back(Pair("uuid", ""));
+            error.emplace_back("error", "Invalid parameter: must be true or false");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
     }
@@ -683,13 +601,14 @@ Value xrRegisterDomain(const Array & params, bool fHelp)
 
     if (addr.empty()) {
         Object error;
-        error.emplace_back(Pair("error", "Bad payment address"));
-        error.emplace_back(Pair("code", xrouter::BAD_ADDRESS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Bad payment address");
+        error.emplace_back("code", xrouter::BAD_ADDRESS);
         return error;
     }
 
-    return form_reply(xrouter::App::instance().registerDomain(domain, addr, update));
+    std::string uuid;
+    auto reply = xrouter::App::instance().registerDomain(uuid, domain, addr, update);
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrQueryDomain(const Array & params, bool fHelp)
@@ -701,15 +620,15 @@ Value xrQueryDomain(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Domain name not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Domain name not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
     std::string domain = params[0].get_str();
-    bool res = xrouter::App::instance().queryDomain(domain);
-    return form_reply(res ? "true" : "false");
+    std::string uuid;
+    bool reply = xrouter::App::instance().checkDomain(uuid, domain);
+    return xrouter::form_reply(uuid, reply ? "true" : "false");
 }
 
 Value xrCreateDepositAddress(const Array& params, bool fHelp)
@@ -722,9 +641,8 @@ Value xrCreateDepositAddress(const Array& params, bool fHelp)
     if (params.size() > 1)
     {
         Object error;
-        error.emplace_back(Pair("error", "Too many parameters"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
+        error.emplace_back("error", "Too many parameters");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
     
@@ -735,54 +653,15 @@ Value xrCreateDepositAddress(const Array& params, bool fHelp)
             update = true;
         } else {
             Object error;
-            error.emplace_back(Pair("error", "Invalid parameter: must be true or false"));
-            error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-            error.emplace_back(Pair("uuid", ""));
+            error.emplace_back("error", "Invalid parameter: must be true or false");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
     }
 
-    std::string res = xrouter::App::instance().createDepositAddress(update);
-    return form_reply(res);
-}
-
-Value xrPaymentChannels(const Array & params, bool fHelp)
-{
-    if (fHelp) {
-        throw std::runtime_error("xrPaymentChannels\nPrint info about currently open payment channels");
-    }
-    
-    return xrouter::App::instance().printPaymentChannels();
-}
-
-Value xrClosePaymentChannel(const Array& params, bool fHelp)
-{
-    if (fHelp) {
-        throw std::runtime_error("xrClosePaymentChannel id\nClose payment channel with the given id");
-    }
-    
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back(Pair("error", "Node id not specified"));
-        error.emplace_back(Pair("code", xrouter::INVALID_PARAMETERS));
-        error.emplace_back(Pair("uuid", ""));
-        return error;
-    }
-    
-    std::string id = params[0].get_str();
-    xrouter::App::instance().closePaymentChannel(id);
-    return "";
-}
-
-Value xrCloseAllPaymentChannels(const Array& params, bool fHelp)
-{
-    if (fHelp) {
-        throw std::runtime_error("xrClosePaymentChannel\nClose all payment channels");
-    }
-    
-    xrouter::App::instance().closeAllPaymentChannels();
-    return "";
+    std::string uuid;
+    std::string res = xrouter::App::instance().createDepositAddress(uuid, update);
+    return xrouter::form_reply(uuid, res);
 }
 
 Value xrTest(const Array& params, bool fHelp)
@@ -792,5 +671,5 @@ Value xrTest(const Array& params, bool fHelp)
     }
     
     xrouter::App::instance().runTests();
-    return "";
+    return "true";
 }

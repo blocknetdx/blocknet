@@ -9,19 +9,22 @@
 #include "xroutersettings.h"
 #include "xrouterserver.h"
 #include "xrouterdef.h"
-#include "xrouterpeer.h"
 
 #include "xbridge/xbridgecryptoproviderbtc.h"
 
+#include "init.h"
 #include "uint256.h"
 #include "hash.h"
 #include "validationstate.h"
 #include "servicenode.h"
 #include "net.h"
 
+#include <boost/asio.hpp>
+#include <boost/bind.hpp>
+#include <boost/thread.hpp>
+
 #include <memory>
 #include <chrono>
-#include <boost/container/map.hpp>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -46,29 +49,113 @@ private:
      */
     virtual ~App();
 
+    CCriticalSection _lock;
+
+    typedef std::shared_ptr<XRouterSettings> XRouterSettingsPtr;
+    XRouterSettingsPtr xrsettings;
     std::unique_ptr<XRouterServer> server;
 
-    static std::map<std::string, double> snodeScore;
+    std::map<std::string, int> snodeScore;
 
     typedef std::string NodeAddr;
     std::map<std::string, NodeAddr> configQueries;
     std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
-    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigUpdates;
     std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
-    std::map<NodeAddr, PaymentChannel> paymentChannels;
-    std::map<NodeAddr, XRouterSettings> snodeConfigs;
+    std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
     std::map<std::string, NodeAddr> snodeDomains;
-    
-    XRouterSettings xrouter_settings;
+
     std::string xrouterpath;
+
+    // timer
+    void onTimer();
+    boost::asio::io_service timerIo;
+    std::shared_ptr<boost::asio::io_service::work> timerIoWork;
+    boost::thread timerThread;
+    boost::asio::deadline_timer timer;
 
     // Key management
     xbridge::BtcCryptoProvider crypto;
+
+    bool hasScore(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeScore.count(node);
+    }
+    int getScore(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeScore[node];
+    }
+    void updateScore(const NodeAddr & node, const int score) {
+        LOCK(_lock);
+        snodeScore[node] = score;
+    }
+    std::chrono::time_point<std::chrono::system_clock> getLastRequest(const NodeAddr & node, const std::string & command) {
+        LOCK(_lock);
+        if (lastPacketsSent.count(node) && lastPacketsSent[node].count(command))
+            return lastPacketsSent[node][command];
+        return std::chrono::system_clock::from_time_t(0);
+    }
+    bool hasSentRequest(const NodeAddr & node, const std::string & command) {
+        LOCK(_lock);
+        return lastPacketsSent.count(node) && lastPacketsSent[node].count(command);
+    }
+    std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
+        LOCK(_lock);
+        return snodeConfigs;
+    }
+    bool hasDomain(const std::string & domain) {
+        LOCK(_lock);
+        return snodeDomains.count(domain);
+    }
+    NodeAddr getDomainNode(const std::string & domain) {
+        LOCK(_lock);
+        return snodeDomains[domain];
+    }
+    void updateDomainNode(const std::string & domain, const NodeAddr & node) {
+        LOCK(_lock);
+        snodeDomains[domain] = node;
+    }
+    void addQuery(const std::string & queryId, const NodeAddr & node) {
+        LOCK(_lock);
+        configQueries[queryId] = node;
+    }
+    bool hasQuery(const std::string & queryId) {
+        LOCK(_lock);
+        return configQueries.count(queryId);
+    }
+    NodeAddr getNodeFromQuery(const std::string & queryId) {
+        LOCK(_lock);
+        return configQueries[queryId];
+    }
+    bool hasConfig(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeConfigs.count(node);
+    }
+    XRouterSettingsPtr getConfig(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeConfigs[node];
+    }
+    void updateConfig(const NodeAddr & node, XRouterSettingsPtr config) {
+        LOCK(_lock);
+        snodeConfigs[node] = config;
+    }
+    bool hasConfigTime(const NodeAddr & node) {
+        LOCK(_lock);
+        return lastConfigQueries.count(node);
+    }
+    std::chrono::time_point<std::chrono::system_clock> getConfigTime(const NodeAddr & node) {
+        LOCK(_lock);
+        return lastConfigQueries[node];
+    }
+    void updateConfigTime(const NodeAddr & node, std::chrono::time_point<std::chrono::system_clock> & time) {
+        LOCK(_lock);
+        lastConfigQueries[node] = time;
+    }
 
     class QueryMgr {
     public:
         typedef std::string QueryReply;
         typedef std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > QueryCondition;
+        QueryMgr() : queriesLocks(), queries() {}
         /**
          * Add a query. This stores interal state including condition variables and associated mutexes.
          * @param id
@@ -162,7 +249,7 @@ private:
         }
     private:
         CCriticalSection mu;
-        std::map<std::string, std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > > queriesLocks;
+        std::map<std::string, QueryCondition> queriesLocks;
         std::map<std::string, std::map<std::string, QueryReply> > queries;
     };
 
@@ -182,10 +269,10 @@ public:
     static bool isEnabled();
     
     /**
-     * @brief xrouterSettings
+     * @brief XRouter settings
      * @return local xrouter.conf settings
      */
-    XRouterSettings& xrouterSettings() { return xrouter_settings; }
+    XRouterSettingsPtr xrSettings() { return xrsettings; }
 
     /**
      * @brief start - start xrouter
@@ -234,94 +321,104 @@ public:
     /**
      * @brief send packet from client side with the selected command
      * @param command XRouter command code
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @param param1 first additional param (command specific)
      * @param param2 second additional param (command specific)
-     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @return reply from service node
      */
-    std::string xrouterCall(enum XRouterCommand command, const std::string & currency, std::string param1="", std::string param2="", std::string confirmations="");
+    std::string xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & currency, const int & confirmations, std::string param1="", std::string param2="");
 
     /**
      * @brief returns block count (highest tree) in the selected chain
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @return json reply of getblockcount
      */
-    std::string getBlockCount(const std::string & currency, const std::string & confirmations);
+    std::string getBlockCount(std::string & uuidRet, const std::string & currency, const int & confirmations);
 
     /**
      * @brief returns block hash for given block number
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param blockId block number (integer converted to string)
      * @return json reply of getblockhash
      */
-    std::string getBlockHash(const std::string & currency, const std::string & blockId, const std::string & confirmations);
+    std::string getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockId);
 
     /**
      * @brief returns block data by hash
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param blockHash block hash string
      * @return json reply of getblock
      */
-    std::string getBlock(const std::string & currency, const std::string & blockHash, const std::string & confirmations);
+    std::string getBlock(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockHash);
 
     /**
      * @brief returns transaction by hash (requires tx idnex on server side)
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param hash tx hash
      * @return json reply of decoderawtransaction
      */
-    std::string getTransaction(const std::string & currency, const std::string & hash, const std::string & confirmations);
+    std::string getTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & hash);
 
     /**
      * @brief returns all blocks starting from given number
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param number block number (int converted to string)
      * @return json array with block data
      */
-    std::string getAllBlocks(const std::string & currency, const std::string & number, const std::string & confirmations);
+    std::string getAllBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & number);
 
     /**
      * @brief returns transactions belonging to account after given block
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param account address to search in transactionss
      * @param number block number where to start
      * @return json array of transaction data
      */
-    std::string getAllTransactions(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
+    std::string getAllTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number);
 
     /**
      * @brief returns balance for given account
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param account address
      * @return balance (float converted to string)
      */
-    std::string getBalance(const std::string & currency, const std::string & account, const std::string & confirmations);
+    std::string getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account);
 
     /**
      * @brief returns balance cange since given block number
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param account address
      * @param number block number where to start
      * @return balance change (float converted to string)
      */
-    std::string getBalanceUpdate(const std::string & currency, const std::string & account, const std::string & number, const std::string & confirmations);
+    std::string getBalanceUpdate(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number);
 
     /**
      * @brief returns all transactions using bloom filter
+     * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
      * @param account address
      * @param number block number where to start
      * @return balance change (float converted to string)
      */
-    std::string getTransactionsBloomFilter(const std::string & currency, const std::string & filter, const std::string & number, const std::string & confirmations);
+    std::string getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & filter, const std::string & number);
 
     /**
      * @brief fetches the reply to the giver request
-     * @param id UUID of the query
+     * @param uuid UUID of the query
      * @return
      */
-    std::string getReply(const std::string & id);
+    std::string getReply(const std::string & uuid);
 
     /**
      * @brief sends raw transaction to the given chain
@@ -329,15 +426,25 @@ public:
      * @param transaction raw signed transaction
      * @return
      */
-    std::string sendTransaction(const std::string & currency, const std::string & transaction);
+    std::string sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction);
 
     /**
      * @brief sends custom (plugin) call
+     * @param uuidRet uuid of the request
      * @param name plugin name (taken from xrouter config)
      * @param params parameters list from command line. The function checks that the number and type of parameters matches the config
      * @return
      */
-    std::string sendCustomCall(const std::string & name, std::vector<std::string> & params);
+    std::string sendCustomCall(std::string & uuidRet, const std::string & name, std::vector<std::string> & params);
+
+    /**
+     * @brief Returnst the block count at the specified time.
+     * @param uuidRet uuid of the request
+     * @param name plugin name (taken from xrouter config)
+     * @param params parameters list from command line. The function checks that the number and type of parameters matches the config
+     * @return
+     */
+    std::string convertTimeToBlockCount(std::string & uuidRet, const std::string& currency, const int & confirmations, std::string time);
     
     /**
      * @brief reload xrouter.conf and plugin configs from disks
@@ -349,14 +456,13 @@ public:
      */
     std::string getStatus();
     
-    std::string convertTimeToBlockCount(const std::string& currency, std::string time, const std::string& confirmations);
-    
     /**
      * @brief gets address for comission payment
-     * @param node service node
-     * @return service node pubkey hash (address)
+     * @param nodeAddr service node
+     * @param paymentAddress Service node payment address
+     * @return true if found, otherwise false
      */
-    std::string getPaymentAddress(CNode* node);
+    bool getPaymentAddress(const NodeAddr & nodeAddr, std::string & paymentAddress);
     
     /**
      * @brief gets address for comission payment
@@ -366,32 +472,27 @@ public:
     CPubKey getPaymentPubkey(CNode* node);
     
     /**
-     * @brief prints all currently open payment channels
-     * @return info string
-     */
-    std::string printPaymentChannels();
-    
-    /**
      * @brief fetches the xrouter config of a service node
      * @param node node object
      * @param addr "self" means return own xrouter.conf, any other address requests config for this address if present
      * @return config string
      */
-    std::string getXrouterConfig(CNode* node, std::string addr="self");
+    std::string sendXRouterConfigRequest(CNode* node, std::string addr="self");
     
     /**
      * @brief fetches the xrouter config of a service node
      * @param node node object
      * @return config string
      */
-    std::string getXrouterConfigSync(CNode* node);
+    std::string sendXRouterConfigRequestSync(CNode* node);
     
     /**
      * @brief process GetXrouterConfig call on service node side
-     * @param packet Xrouter packet received over the network
+     * @param cfg XRouter settings obj
+     * @param node Node address
      * @return
      */
-    std::string processGetXrouterConfig(XRouterSettings cfg, std::string addr);
+    std::string parseConfig(XRouterSettingsPtr cfg, const NodeAddr & node);
 
     /**
      * @brief process reply from service node on *client* side
@@ -426,10 +527,11 @@ public:
      * @brief generates a payment transaction to given service node
      * @param pnode CNode corresponding to a service node
      * @param fee amount to pay
-     * @return hex-encoded transaction
+     * @param address hex-encoded transaction
+     * @return bool True if payment generated, otherwise false
      * @throws std::runtime_error in case of errors
      */
-    std::string generatePayment(CNode* pnode, CAmount fee);
+    bool generatePayment(CNode* pnode, CAmount fee, std::string & payment);
     
     /**
      * @brief onMessageReceived  call when message from xrouter network received
@@ -438,27 +540,6 @@ public:
      * @param state variable, used to ban misbehaving nodes
      */
     void onMessageReceived(CNode* node, const std::vector<unsigned char> & message, CValidationState & state);
-    
-    /**
-     * @brief close the payment channel with the given id
-     * @param id channel id
-     */
-    void closePaymentChannel(std::string id);
-    
-    /**
-     * @brief close all payment channels
-     */
-    void closeAllPaymentChannels();
-    
-    /**
-     * @brief save payment channels info to paymentchannels.json
-     */
-    void savePaymentChannels();
-    
-    /**
-     * @brief load payment channels from paymentchannels.json
-     */
-    void loadPaymentChannels();
     
     /**
      * @brief run performance tests (xrTest)
@@ -479,6 +560,24 @@ public:
      * @brief returns service node collateral address
      */
     std::string getMyPaymentAddress();
+
+    /**
+     * @brief Create a change address return base58 version.
+     * @return
+     */
+    std::string changeAddress() {
+        if (!pwalletMain->IsLocked())
+            pwalletMain->TopUpKeyPool();
+
+        CReserveKey reservekey(pwalletMain);
+        CPubKey vchPubKey;
+        if (!reservekey.GetReservedKey(vchPubKey))
+            return "";
+
+        reservekey.KeepKey();
+        CKeyID keyID = vchPubKey.GetID();
+        return CBitcoinAddress(keyID).ToString();
+    }
     
     /**
      * @brief register domain to given colalteral address
@@ -487,21 +586,23 @@ public:
      * @param update if true, write result to xrouter.conf
      * @return txid of the registered tx
      */
-    std::string registerDomain(std::string domain, std::string addr, bool update=false);
+    std::string registerDomain(std::string & uuidRet, const std::string & domain, const std::string & addr, bool update=false);
     
     /**
      * @brief check if the given domain is registered
+     * @param uuidRet uuid of the request
      * @param domain domain name
      * @return true if domain is registered
      */
-    bool queryDomain(std::string domain);
+    bool checkDomain(std::string & uuidRet, const std::string & domain);
     
     /**
      * @brief create deposit pubkey and address on service node
+     * @param uuidRet uuid of the request
      * @param update if true, write result to xrouter.conf
      * @return deposit pubkey and address
      */
-    std::string createDepositAddress(bool update=false);
+    std::string createDepositAddress(std::string & uuidRet, bool update=false);
 
     /**
      * Helper to build key for use with lookups.
@@ -514,12 +615,23 @@ public:
     }
 
     /**
-     * Sort algo for snode scores.
-     * @param a CNode
-     * @param b CNode
+     * Returns true if the rate limit has been exceeded on requests to the specified node.
+     * @param node Node address
+     * @param plugin Plugin name
+     * @param lastRequest Time of last request
+     * @param rateLimit Rate limit in milliseconds
+     * @return
      */
-    static bool cmpNodeScore(const CNode *a, const CNode *b) {
-        return snodeScore[a->addr.ToString()] > snodeScore[b->addr.ToString()];
+    bool rateLimitExceeded(const NodeAddr & node, const std::string & plugin,
+            const std::chrono::time_point<std::chrono::system_clock> lastRequest, const int rateLimit)
+    {
+        if (hasSentRequest(node, plugin)) {
+            std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
+            std::chrono::system_clock::duration diff = time - lastRequest;
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds(rateLimit))
+                return true;
+        }
+        return false;
     }
 };
 

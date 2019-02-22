@@ -5,6 +5,7 @@
 #define XROUTERPACKET_H
 
 #include "version.h"
+#include "keystore.h"
 
 #include <vector>
 #include <deque>
@@ -14,7 +15,6 @@
 #include <stdint.h>
 #include <iostream>
 #include <string.h>
-#include "keystore.h"
 #include <boost/preprocessor.hpp>
 
 //*****************************************************************************
@@ -76,7 +76,7 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
         case xrGetPaymentAddress          : return "xrGetPaymentAddress";
         case xrGetXrouterConfig           : return "xrGetXrouterConfig";
         default: {
-            char* s;
+            char* s = nullptr;
             sprintf(s, "[Unknown XRouterCommand] %u", c);
             return s;
         }
@@ -85,27 +85,24 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
 
 inline bool XRouterCommand_IsValid(const char* c)
 {
-    if (XRouterCommand_ToString(xbcInvalid)                   ||
-        XRouterCommand_ToString(xrReply)                      ||
-        XRouterCommand_ToString(xrConfigReply)                ||
-        XRouterCommand_ToString(xrFetchReply)                 ||
-        XRouterCommand_ToString(xrGetBlockCount)              ||
-        XRouterCommand_ToString(xrGetBlockHash)               ||
-        XRouterCommand_ToString(xrGetBlock)                   ||
-        XRouterCommand_ToString(xrGetTransaction)             ||
-        XRouterCommand_ToString(xrGetAllBlocks)               ||
-        XRouterCommand_ToString(xrGetAllTransactions)         ||
-        XRouterCommand_ToString(xrGetBalance)                 ||
-        XRouterCommand_ToString(xrGetBalanceUpdate)           ||
-        XRouterCommand_ToString(xrGetTransactionsBloomFilter) ||
-        XRouterCommand_ToString(xrSendTransaction)            ||
-        XRouterCommand_ToString(xrTimeToBlockNumber)          ||
-        XRouterCommand_ToString(xrCustomCall)                 ||
-        XRouterCommand_ToString(xrGetPaymentAddress)          ||
-        XRouterCommand_ToString(xrGetXrouterConfig))
-        return true;
-
-    return false;
+    return XRouterCommand_ToString(xbcInvalid)                   == c ||
+           XRouterCommand_ToString(xrReply)                      == c ||
+           XRouterCommand_ToString(xrConfigReply)                == c ||
+           XRouterCommand_ToString(xrFetchReply)                 == c ||
+           XRouterCommand_ToString(xrGetBlockCount)              == c ||
+           XRouterCommand_ToString(xrGetBlockHash)               == c ||
+           XRouterCommand_ToString(xrGetBlock)                   == c ||
+           XRouterCommand_ToString(xrGetTransaction)             == c ||
+           XRouterCommand_ToString(xrGetAllBlocks)               == c ||
+           XRouterCommand_ToString(xrGetAllTransactions)         == c ||
+           XRouterCommand_ToString(xrGetBalance)                 == c ||
+           XRouterCommand_ToString(xrGetBalanceUpdate)           == c ||
+           XRouterCommand_ToString(xrGetTransactionsBloomFilter) == c ||
+           XRouterCommand_ToString(xrSendTransaction)            == c ||
+           XRouterCommand_ToString(xrTimeToBlockNumber)          == c ||
+           XRouterCommand_ToString(xrCustomCall)                 == c ||
+           XRouterCommand_ToString(xrGetPaymentAddress)          == c ||
+           XRouterCommand_ToString(xrGetXrouterConfig)           == c;
 };
 
 //******************************************************************************

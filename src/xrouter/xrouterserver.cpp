@@ -3,9 +3,11 @@
 
 #include "xrouterserver.h"
 #include "xrouterlogger.h"
-#include "xbridge/util/settings.h"
 #include "xrouterapp.h"
 #include "xroutererror.h"
+#include "xrouterutils.h"
+#include "xbridge/util/settings.h"
+
 #include "servicenodeman.h"
 #include "activeservicenode.h"
 #include "rpcserver.h"
@@ -108,140 +110,86 @@ bool XRouterServer::start()
 
 void XRouterServer::addConnector(const WalletConnectorXRouterPtr & conn)
 {
+    LOCK(_lock);
     connectors[conn->currency] = conn;
     connectorLocks[conn->currency] = boost::shared_ptr<boost::mutex>(new boost::mutex());
 }
 
 WalletConnectorXRouterPtr XRouterServer::connectorByCurrency(const std::string & currency) const
 {
+    LOCK(_lock);
+
     if (connectors.count(currency))
-    {
         return connectors.at(currency);
-    }
 
     return WalletConnectorXRouterPtr();
 }
 
 void XRouterServer::sendPacketToClient(std::string uuid, std::string reply, CNode* pnode)
 {
-    LOG() << "Sending reply to query " << uuid << ": " << reply;
+    LOG() << "Sending reply to client with query id " << uuid << ": " << reply;
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
     rpacket->append(uuid);
     rpacket->append(reply);
     pnode->PushMessage("xrouter", rpacket->body());
 }
 
-void XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
+bool XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
 {
-    if (fee > 0) {
-        std::vector<std::string> parts;
-        boost::split(parts, feetx, boost::is_any_of(";"));
-        if (parts.size() < 3)
-            throw XRouterError("Incorrect payment data format", xrouter::INVALID_PARAMETERS);
-        bool usehash;
-        if (parts[0] == "nohash")
-            usehash = false;
-        else if (parts[0] == "hash")
-            usehash = true;
-        else
-            throw XRouterError("Incorrect hash/no hash field", xrouter::INVALID_PARAMETERS);
-        
-        CAmount fee_part1 = fee;
-        if (usehash)
-            fee_part1 = fee / 2;
-        
-        if (parts[1] == "single") {
-            // Direct payment, no CLTV channel
-            std::string txid;
-            const auto & addr = getMyPaymentAddress();
-            if (addr.empty())
-                throw XRouterError("Bad payment address", xrouter::BAD_ADDRESS);
-            CAmount paid = to_amount(getTxValue(parts[2], addr));
-            if (paid < fee_part1) {
-                throw XRouterError("Fee paid is not enough", xrouter::INSUFFICIENT_FEE);
-            }
-
-            bool res = sendTransactionBlockchain(parts[2], txid);
-            if (!res) {
-                throw XRouterError("Could not send transaction " + parts[2] + " to blockchain", xrouter::INTERNAL_SERVER_ERROR);
-            }
-            
-            LOG() << "Received direct payment; value = " << paid << " tx = " << parts[2];
-        } else if (parts[1] == "channel") {
-            if (!paymentChannels.count(node)) {
-                // There is no payment channel with this node
-                if (parts.size() != 6) {
-                    throw XRouterError("Incorrect channel creation parameters or expired channel", xrouter::EXPIRED_PAYMENT_CHANNEL);
-                }
-                
-                paymentChannels[node] = PaymentChannel();
-                paymentChannels[node].value = CAmount(0);
-                paymentChannels[node].raw_tx = parts[2];
-                paymentChannels[node].txid = parts[3];
-                std::vector<unsigned char> script = ParseHex(parts[4]);
-                paymentChannels[node].redeemScript = CScript(script.begin(), script.end());
-                feetx = parts[5];
-
-                int date = getChannelExpiryTime(paymentChannels[node].raw_tx);
-                
-                int deadline = date - std::time(0) - 5;
-                LOG() << "Created payment channel date = " << date << " expiry = " << deadline << " seconds"; 
-                
-                boost::shared_ptr<boost::mutex> m(new boost::mutex());
-                boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-                paymentChannelLocks[node] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-                
-                boost::thread([deadline, this, node]() {
-                    // No need to check the result of timed_wait(): if it's true then it means a function to close channel early was called, otherwise it means that the deadline is reached.
-                    boost::mutex::scoped_lock lock(*this->paymentChannelLocks[node].first);
-                    this->paymentChannelLocks[node].second->timed_wait(lock, boost::posix_time::seconds(deadline));
-                    
-                    std::string txid;
-                    LOG() << "Closing payment channel: " << this->paymentChannels[node].txid << " Value = " << this->paymentChannels[node].value;
-                    
-                    try {
-                        bool res = sendTransactionBlockchain(this->paymentChannels[node].latest_tx, txid);
-                        if (!res)
-                            throw "";
-                    } catch (...) {
-                        LOG() << "Failed to submit finalizing transaction";
-                    }
-                    this->paymentChannels.erase(node);
-                }).detach();
-            } else {
-                feetx = parts[2];
-            }
-        
-            if (paymentChannels.count(node)) {
-                //verifyChannelTransaction(feetx);
-                const auto & addr = getMyPaymentAddress();
-                if (addr.empty())
-                    throw XRouterError("Bad payment address", xrouter::BAD_ADDRESS);
-                CAmount paid = to_amount(getTxValue(feetx, addr));
-                LOG() << "Received payment via channel; value = " << paid - paymentChannels[node].value << " total value = " << paid << " tx = " << feetx;
-                if (paid - paymentChannels[node].value < fee_part1) {
-                    throw XRouterError("Fee paid is not enough", xrouter::INSUFFICIENT_FEE);
-                }
-
-                {
-                    boost::mutex::scoped_lock lock(*this->paymentChannelLocks[node].first);
-                    finalizeChannelTransaction(paymentChannels[node], this->getMyPaymentAddressKey(), feetx, paymentChannels[node].latest_tx);
-                    paymentChannels[node].value = paid;
-                }
-            }
-            
-        } else {
-            throw XRouterError("Unknown payment format: " + parts[0], xrouter::INVALID_PARAMETERS);
-        }
+    const auto nodeAddr = node->addr.ToString();
+    if (feetx.empty() && fee > 0) {
+        ERR() << "Client sent a bad feetx: " << nodeAddr;
+        return false; // do not process bad fees
     }
+    else if (feetx.empty())
+        return true; // do not process empty fees if we're not expecting any payment
+
+    std::vector<std::string> parts;
+    boost::split(parts, feetx, boost::is_any_of(";"));
+    if (parts.size() < 3) {
+        ERR() << "Incorrect payment data format from client: " << nodeAddr;
+        return false;
+    }
+
+    bool usehash = parts[0] == "hash";
+    CAmount fee_part1 = fee;
+    if (usehash)
+        fee_part1 = fee / 2;
+
+    if (parts[1] == "single") {
+        // Direct payment, no CLTV channel
+        const auto & addr = getMyPaymentAddress();
+        if (addr.empty())
+            throw XRouterError("Bad payment address", xrouter::BAD_ADDRESS);
+
+        CAmount paid = to_amount(getTxValue(parts[2], addr));
+        if (paid < fee_part1) {
+            ERR() << "Client failed to send enough fees: " << nodeAddr;
+            return false;
+        }
+
+        std::string txid;
+        bool res = sendTransactionBlockchain(parts[2], txid);
+        if (!res) {
+            ERR() << "Failed to spend client fee: Could not send transaction " + parts[2] + " " << nodeAddr;
+            return false;
+        }
+
+        LOG() << "Received direct payment: value = " << paid << " tx = " << parts[2] + " " << nodeAddr;
+        return true;
+    }
+
+    throw XRouterError("Unsupported payment format: " + parts[0], xrouter::INVALID_PARAMETERS);
 }
 
 //*****************************************************************************
 //*****************************************************************************
 void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CValidationState& state)
 {
-    clearHashedQueries();
+    clearHashedQueries(); // clean up
+
     std::string uuid, reply;
+    const auto nodeAddr = node->addr.ToString();
 
     try {
         if (packet->version() != static_cast<boost::uint32_t>(XROUTER_PROTOCOL_VERSION))
@@ -263,33 +211,39 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         std::string currency((const char *)packet->data()+offset);
         offset += currency.size() + 1;
 
-        LOG() << "XRouter command: " << std::string(XRouterCommand_ToString(packet->command()));
-        if (!app.xrouter_settings.isAvailableCommand(packet->command(), currency))
-            throw XRouterError("This command is blocked in xrouter.conf", xrouter::UNSUPPORTED_BLOCKCHAIN);
+        const auto command = packet->command();
+        std::string commandStr(XRouterCommand_ToString(command));
+        const auto commandKey = app.buildCommandKey(currency, commandStr);
 
-        const auto nodeArr = node->addr.ToString();
+        LOG() << "XRouter command: " << commandStr;
+        if (!app.xrSettings()->isAvailableCommand(packet->command(), currency))
+            throw XRouterError("Unsupported xrouter command " + commandKey, xrouter::UNSUPPORTED_BLOCKCHAIN);
+
         bool usehash = false;
         CAmount fee = 0;
-        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
 
         // Handle calls to XRouter plugins
         if (packet->command() == xrCustomCall) {
             // Check rate limit
-            XRouterPluginSettings psettings = app.xrouter_settings.getPluginSettings(currency);
-            auto rateLimit = psettings.get<int>("clientrequestlimit", -1);
-            if (rateLimit >= 0 && rateLimitExceeded(nodeArr, currency, rateLimit)) {
-                std::string err_msg = "XRouter: too many requests to plugin " + currency;
+            XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(currency);
+            auto rateLimit = psettings->clientRequestLimit();
+            if (rateLimit >= 0 && rateLimitExceeded(nodeAddr, currency, rateLimit)) {
+                std::string err_msg = "Rate limit exceeded: " + commandKey;
                 state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
             }
-            
+
             // Spend client payment
             std::string feetx((const char *)packet->data()+offset);
             offset += feetx.size() + 1;
-            fee = to_amount(psettings.getFee());
-            this->processPayment(node, feetx, fee);
-            
+            fee = to_amount(psettings->getFee());
+            if (!this->processPayment(node, feetx, fee)) {
+                std::string err_msg = "Bad fee payment from client: " + commandKey;
+                state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
+            }
+
             std::vector<std::string> params;
-            int count = psettings.getMaxParamCount();
+            int count = psettings->maxParamCount();
             std::string p;
             for (int i = 0; i < count; i++) {
                 p = (const char *)packet->data()+offset;
@@ -305,32 +259,40 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             
             std::vector<std::string> parts;
             boost::split(parts, feetx, boost::is_any_of(";"));
-            if (parts[0] == "hash")
-                usehash = true;        
-            
-            if (usehash)
-                throw XRouterError("Hashing replies is not available in this version.", xrouter::BAD_REQUEST);
+            usehash = parts[0] == "hash"; // TODO Support hashes
 
-            const auto & command = packet->command();
-            fee = to_amount(app.xrouter_settings.getCommandFee(command, currency));
+            fee = to_amount(app.xrSettings()->getCommandFee(command, currency));
             
             LOG() << "Fee = " << fee;
             LOG() << "Feetx = " << feetx;
+
             try {
                 CAmount fee_part1 = fee;
                 if (command == xrFetchReply)
-                    fee_part1 = hashedQueries[uuid].second;
+                    fee_part1 = getQueryFee(uuid);
 
-                const std::string commandStr(XRouterCommand_ToString(command));
-                const auto & cmd = app.buildCommandKey(currency, commandStr);
-                int rateLimit = app.xrouter_settings.clientRequestLimit(command, currency);
-                if (rateLimit >= 0 && rateLimitExceeded(nodeArr, cmd, rateLimit)) {
-                    std::string err_msg = "XRouter: too many requests to plugin " + cmd;
+                int rateLimit = app.xrSettings()->clientRequestLimit(command, currency);
+                if (rateLimit >= 0 && rateLimitExceeded(nodeAddr, commandKey, rateLimit)) {
+                    std::string err_msg = "Rate limit exceeded: " + commandKey;
                     state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
                 }
 
-                // Spend client payment
-                this->processPayment(node, feetx, fee_part1);
+                if (!app.xrSettings()->isAvailableCommand(command, currency))
+                    throw XRouterError("Unsupported command: " + commandKey, xrouter::INVALID_PARAMETERS);
+
+                // Spend client payment if supported command
+                switch (command) {
+                    case xrGetBalance:
+                    case xrTimeToBlockNumber:
+                        break; // commands not supported, do not charge client
+                    default: {
+                        if (!this->processPayment(node, feetx, fee_part1)) {
+                            std::string err_msg = "Bad fee payment from client: " + commandKey;
+                            state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                            throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
+                        }
+                    }
+                }
 
                 switch (command) {
                 case xrGetBlockCount:
@@ -352,7 +314,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     reply = processGetAllTransactions(packet, offset, currency);
                     break;
                 case xrGetBalance:
-                    throw XRouterError("Obsolete command", xrouter::INVALID_PARAMETERS);
+                    throw XRouterError("This call is not supported: " + commandKey, xrouter::INVALID_PARAMETERS);
                     //reply = processGetBalance(packet, offset, currency);
                     break;
                 case xrGetBalanceUpdate:
@@ -362,7 +324,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     reply = processGetTransactionsBloomFilter(packet, offset, currency);
                     break;
                 case xrTimeToBlockNumber:
-                    reply = "This call is not implemented yet";
+                    throw XRouterError("This call is not supported: " + commandKey, xrouter::INVALID_PARAMETERS);
                     //reply = processConvertTimeToBlockCount(packet, offset, currency);
                     break;
                 case xrFetchReply:
@@ -375,26 +337,25 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     throw XRouterError("Unknown packet command", xrouter::INVALID_PARAMETERS);
                 }
             }
-            catch (std::runtime_error & e)
+            catch (XRouterError & e)
             {
-                throw XRouterError("Error happened while processing your request: " + std::string(e.what()), xrouter::INTERNAL_SERVER_ERROR);
+                throw XRouterError("Failed to process your request: " + e.msg, e.code);
             }
         }
-        
-        if (!usehash || (packet->command() == xrSendTransaction) || (packet->command() == xrFetchReply)) {
-            // Send 'reply' string
-        } else {
+
+        // TODO Create func to indicate commands that don't support hashes (e.g. xrSendTransaction, xrFetchReply)
+        if (usehash && packet->command() != xrSendTransaction && packet->command() != xrFetchReply) {
             hashedQueries[uuid] = std::pair<std::string, CAmount>(reply, fee - fee/2);
             std::string hash = Hash160(reply.begin(), reply.end()).ToString();
             hashedQueriesDeadlines[uuid] = std::chrono::system_clock::now();
             reply = hash;
         }
+
     } catch (XRouterError & e) {
-        Object error;
-        error.emplace_back(Pair("error", e.msg));
-        error.emplace_back(Pair("code", e.code));
-        error.emplace_back(Pair("uuid", uuid));
         LOG() << e.msg;
+        Object error;
+        error.emplace_back("error", e.msg);
+        error.emplace_back("code", e.code);
         reply = json_spirit::write_string(Value(error), true);
     }
 
@@ -405,13 +366,12 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
 //*****************************************************************************
 std::string XRouterServer::processGetBlockCount(XRouterPacketPtr packet, uint32_t offset, std::string currency) {
     Object result;
-    Object error;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn)
     {
         boost::mutex::scoped_lock l(*connectorLocks[currency]);
-        result.push_back(Pair("result", conn->getBlockCount()));
+        result.emplace_back("result", conn->getBlockCount());
     }
     else
     {
@@ -426,7 +386,6 @@ std::string XRouterServer::processGetBlockHash(XRouterPacketPtr packet, uint32_t
     offset += blockId.size() + 1;
 
     Object result;
-    Object error;
 
     if (!is_number(blockId))
         throw XRouterError("Incorrect block number: " + blockId, xrouter::INVALID_PARAMETERS);
@@ -450,7 +409,6 @@ std::string XRouterServer::processGetBlock(XRouterPacketPtr packet, uint32_t off
     offset += blockHash.size() + 1;
 
     Object result;
-    Object error;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn)
@@ -471,7 +429,6 @@ std::string XRouterServer::processGetTransaction(XRouterPacketPtr packet, uint32
     offset += hash.size() + 1;
 
     Object result;
-    Object error;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn)
@@ -497,7 +454,7 @@ std::string XRouterServer::processGetAllBlocks(XRouterPacketPtr packet, uint32_t
     int number = std::stoi(number_s);
 
     App& app = App::instance();
-    int blocklimit = app.xrouter_settings.getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
     
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     Array result;
@@ -533,7 +490,7 @@ std::string XRouterServer::processGetAllTransactions(XRouterPacketPtr packet, ui
     Array result;
     
     App& app = App::instance();
-    int blocklimit = app.xrouter_settings.getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
     
     if (conn)
     {
@@ -562,7 +519,7 @@ std::string XRouterServer::processGetBalance(XRouterPacketPtr packet, uint32_t o
     }
     std::string result;
     App& app = App::instance();
-    int blocklimit = app.xrouter_settings.getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
     
     if (conn)
     {
@@ -595,7 +552,7 @@ std::string XRouterServer::processGetBalanceUpdate(XRouterPacketPtr packet, uint
     }
     
     App& app = App::instance();
-    int blocklimit = app.xrouter_settings.getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
     
     std::string result;
     if (conn)
@@ -632,7 +589,7 @@ std::string XRouterServer::processGetTransactionsBloomFilter(XRouterPacketPtr pa
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     App& app = App::instance();
-    int blocklimit = app.xrouter_settings.getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
     
     Array result;
     if (conn)
@@ -659,7 +616,7 @@ std::string XRouterServer::processConvertTimeToBlockCount(XRouterPacketPtr packe
     if (conn)
     {
         boost::mutex::scoped_lock l(*connectorLocks[currency]);
-        result.push_back(Pair("result", conn->convertTimeToBlockCount(timestamp)));
+        result.emplace_back("result", conn->convertTimeToBlockCount(timestamp));
     }
     else
     {
@@ -669,13 +626,13 @@ std::string XRouterServer::processConvertTimeToBlockCount(XRouterPacketPtr packe
     return json_spirit::write_string(Value(result), true);
 }
 
-std::string XRouterServer::processFetchReply(std::string uuid) {
-    if (hashedQueries.count(uuid))
-        return hashedQueries[uuid].first;
+std::string XRouterServer::processFetchReply(const std::string & uuid) {
+    if (hasQuery(uuid))
+        return getQuery(uuid);
     else {
         Object error;
-        error.emplace_back(Pair("error", "Unknown query ID"));
-        error.emplace_back(Pair("errorcode", xrouter::INVALID_PARAMETERS));
+        error.emplace_back("error", "Unknown query id: " + uuid);
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return json_spirit::write_string(Value(error), true);
     }
 }
@@ -690,13 +647,10 @@ std::string XRouterServer::processSendTransaction(XRouterPacketPtr packet, uint3
     Object result;
     Object error;
     
-    if (conn)
-    {
-        boost::mutex::scoped_lock l(*connectorLocks[currency]);
+    if (conn && hasConnectorLock(currency)) {
+        boost::mutex::scoped_lock l(*getConnectorLock(currency));
         result = conn->sendTransaction(transaction);
-    }
-    else
-    {
+    } else {
         throw XRouterError("No connector for currency " + currency, xrouter::BAD_CONNECTOR);
     }
     
@@ -705,18 +659,18 @@ std::string XRouterServer::processSendTransaction(XRouterPacketPtr packet, uint3
 
 std::string XRouterServer::processCustomCall(std::string name, std::vector<std::string> params)
 {
-    App& app = App::instance();    
-    if (!app.xrouter_settings.hasPlugin(name))
+    App & app = App::instance();
+    if (!app.xrSettings()->hasPlugin(name))
         return "Custom call not found";
     
-    XRouterPluginSettings psettings = app.xrouter_settings.getPluginSettings(name);
-    std::string callType = psettings.getParam("type");
+    XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(name);
+    std::string callType = psettings->getParam("type");
     LOG() << "Plugin call " << name << " type = " << callType; 
     if (callType == "rpc") {
         Array jsonparams;
-        int count = psettings.getMaxParamCount();
+        int count = psettings->maxParamCount();
         std::vector<std::string> paramtypes;
-        std::string typestring = psettings.getParam("paramsType");
+        std::string typestring = psettings->getParam("paramsType");
         boost::split(paramtypes, typestring, boost::is_any_of(","));
         std::string p;
         for (int i = 0; i < count; i++) {
@@ -742,11 +696,11 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
         }
         
         std::string user, passwd, ip, port, command;
-        user = psettings.getParam("rpcUser");
-        passwd = psettings.getParam("rpcPassword");
-        ip = psettings.getParam("rpcIp", "127.0.0.1");
-        port = psettings.getParam("rpcPort");
-        command = psettings.getParam("rpcCommand");
+        user = psettings->getParam("rpcUser");
+        passwd = psettings->getParam("rpcPassword");
+        ip = psettings->getParam("rpcIp", "127.0.0.1");
+        port = psettings->getParam("rpcPort");
+        command = psettings->getParam("rpcCommand");
         Object result;
         try {
             result = CallRPC(user, passwd, ip, port, command, jsonparams);
@@ -757,8 +711,8 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
     } else if (callType == "shell") {
         return "Shell plugins are currently disabled";
         
-        std::string cmd = psettings.getParam("cmd");
-        int count = psettings.getMaxParamCount();
+        std::string cmd = psettings->getParam("cmd");
+        int count = psettings->maxParamCount();
         std::string p;
         for (int i = 0; i < count; i++) {
             cmd += " " + params[i];
@@ -771,10 +725,10 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
         return "Shell plugins are currently disabled";
         
         std::string ip, port;
-        ip = psettings.getParam("ip");
-        port = psettings.getParam("port");
-        std::string cmd = psettings.getParam("url");
-        int count = psettings.getMaxParamCount();
+        ip = psettings->getParam("ip");
+        port = psettings->getParam("port");
+        std::string cmd = psettings->getParam("url");
+        int count = psettings->maxParamCount();
         for (int i = 0; i < count; i++) {
             cmd = cmd.replace(cmd.find("%s"), 2, params[i]);
         }
@@ -788,17 +742,7 @@ std::string XRouterServer::processCustomCall(std::string name, std::vector<std::
 }
 
 std::string XRouterServer::changeAddress() {
-    if (!pwalletMain->IsLocked())
-        pwalletMain->TopUpKeyPool();
-
-    CReserveKey reservekey(pwalletMain);
-    CPubKey vchPubKey;
-    if (!reservekey.GetReservedKey(vchPubKey))
-        return "";
-
-    reservekey.KeepKey();
-    CKeyID keyID = vchPubKey.GetID();
-    return CBitcoinAddress(keyID).ToString();
+    return App::instance().changeAddress();
 }
 
 std::string XRouterServer::getMyPaymentAddress()
@@ -817,7 +761,7 @@ std::string XRouterServer::getMyPaymentAddress()
 CKey XRouterServer::getMyPaymentAddressKey()
 {
     App& app = App::instance();
-    std::string addr = app.xrouter_settings.get<std::string>("depositaddress", "");
+    std::string addr = app.xrSettings()->get<std::string>("depositaddress", "");
     if (addr.empty())
         addr = getMyPaymentAddress();
     if (addr.empty())
@@ -831,23 +775,9 @@ CKey XRouterServer::getMyPaymentAddressKey()
     return result;
 }
 
-Value XRouterServer::printPaymentChannels() {
-    Array server;
-    
-    for (const auto& it : this->paymentChannels) {
-        Object val;
-        val.emplace_back("Node id", it.first->id);
-        val.emplace_back("Deposit transaction", it.second.raw_tx);
-        val.emplace_back("Deposit transaction id", it.second.txid);
-        val.emplace_back("Latest redeem transaction", it.second.latest_tx);
-        val.emplace_back("Received amount", it.second.value);
-        server.push_back(Value(val));
-    }
-    
-    return json_spirit::write_string(Value(server), true);
-}
-
 void XRouterServer::clearHashedQueries() {
+    LOCK(_lock);
+
     std::vector<std::string> to_remove;
     for (auto & it : hashedQueriesDeadlines) {
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
@@ -864,28 +794,8 @@ void XRouterServer::clearHashedQueries() {
     }
 }
 
-void XRouterServer::closePaymentChannel(std::string id) {
-    CNode* node = NULL;
-    for (const auto& it : this->paymentChannels) {
-        if (std::to_string(it.first->id) == id) {
-            node = it.first;
-            break;
-        }
-    }
-    
-    if (node) {
-        boost::mutex::scoped_lock lock(*this->paymentChannelLocks[node].first);
-        this->paymentChannelLocks[node].second->notify_all();
-    }
-}
-
-void XRouterServer::closeAllPaymentChannels() {
-    for (const auto& it : this->paymentChannelLocks) {
-        it.second.second->notify_all();
-    }
-}
-
 void XRouterServer::runPerformanceTests() {
+    LOCK(_lock);
     std::chrono::time_point<std::chrono::system_clock> time;
     std::chrono::system_clock::duration diff;
     for (const auto& it : this->connectors) {
@@ -903,7 +813,7 @@ void XRouterServer::runPerformanceTests() {
         time = std::chrono::system_clock::now();
         Object obj = conn->getBlockHash(std::to_string(blocks-1));
         const Value & result = find_value(obj, "result");
-        std::string blockhash = result.get_str();
+        const std::string & blockhash = result.get_str();
         diff = std::chrono::system_clock::now() - time;
         TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
         
@@ -976,6 +886,8 @@ void XRouterServer::runPerformanceTests() {
 }
 
 bool XRouterServer::rateLimitExceeded(const std::string & nodeAddr, const std::string & key, const int & rateLimit) {
+    LOCK(_lock);
+
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     // Check if existing packets on node
     if (lastPacketsReceived.count(nodeAddr)) {

@@ -7,6 +7,7 @@
 #include <string>
 #include "xrouterpacket.h"
 #include "xrouterdef.h"
+#include "sync.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/container/map.hpp>
@@ -15,18 +16,20 @@
 
 namespace xrouter
 {
-
-class XRouterPluginSettings;
     
 class IniConfig
 {
 public:
-    IniConfig() {}
-    bool read(const char * fileName = 0);
-    bool read(std::string config);
-    bool write(const char * fileName = 0);
+    IniConfig() = default;
+
+    virtual bool read(const char * fileName = nullptr);
+    virtual bool read(std::string config);
+    virtual bool write(const char * fileName = nullptr);
     
-    std::string rawText() const { return rawtext; }
+    std::string rawText() const {
+        LOCK(mu);
+        return rawtext;
+    }
     
     template <class _T>
     _T get(const std::string & param, _T def = _T())
@@ -37,6 +40,7 @@ public:
     template <class _T>
     _T get(const char * param, _T def = _T())
     {
+        LOCK(mu);
         _T tmp = def;
         try
         {
@@ -62,12 +66,14 @@ public:
     {
         try
         {
-            m_pt.put<_T>(param, val);
+            {
+                LOCK(mu);
+                m_pt.put<_T>(param, val);
+            }
             write();
         }
         catch (std::exception & e)
         {
-            //LOG() << e.what();
             return false;
         }
         return true;
@@ -77,21 +83,30 @@ protected:
     std::string m_fileName;
     boost::property_tree::ptree m_pt;
     std::string rawtext;
+    mutable CCriticalSection mu;
 };
 
+class XRouterPluginSettings;
+typedef std::shared_ptr<XRouterPluginSettings> XRouterPluginSettingsPtr;
 class XRouterPluginSettings : public IniConfig
 {
 public:
-    XRouterPluginSettings() {}
+    XRouterPluginSettings() = default;
+
     std::string getParam(std::string param, std::string def="");
     double getFee();
-    int getMinParamCount();
-    int getMaxParamCount();
-    std::string rawText() { return publictext; }
-    std::string fullText() { return rawtext; }
-    
-    bool read(const char * fileName = 0);
-    bool read(std::string config);
+    int minParamCount();
+    int maxParamCount();
+    int clientRequestLimit();
+    int commandTimeout();
+
+    std::string rawText() {
+        LOCK(mu);
+        return publictext;
+    }
+
+    bool read(const char * fileName) override;
+    bool read(std::string config) override;
     
     bool verify(std::string name="");
 private:
@@ -103,27 +118,56 @@ private:
 class XRouterSettings : public IniConfig
 {
 public:
-    XRouterSettings() {}
+    XRouterSettings() = default;
+    XRouterSettings(const std::string & config);
+
+    void loadWallets();
+    std::vector<std::string> getWallets() {
+        LOCK(mu);
+        return {wallets.begin(), wallets.end()};
+    }
+    bool hasWallet(const std::string & currency) {
+        LOCK(mu);
+        return wallets.count(currency);
+    }
 
     void loadPlugins();
-    bool loadPlugin(std::string name);
-    std::string pluginPath() const;
-    void addPlugin(std::string name, XRouterPluginSettings s) { plugins[name] = s; pluginList.push_back(name); }
 
-    bool walletEnabled(std::string currency);
-    bool isAvailableCommand(XRouterCommand c, std::string currency="", bool def=true);
+    std::vector<std::string> getPlugins() {
+        LOCK(mu);
+        return {pluginList.begin(),pluginList.end()};
+    }
+
+    std::string pluginPath() const;
+
+    void addPlugin(const std::string &name, XRouterPluginSettingsPtr s) {
+        LOCK(mu);
+        plugins[name] = s; pluginList.insert(name);
+    }
+
+    bool hasPlugin(std::string name);
+
+    XRouterPluginSettingsPtr getPluginSettings(const std::string & name) {
+        LOCK(mu);
+        return plugins[name];
+    }
+
+    bool walletEnabled(std::string & currency);
+    bool isAvailableCommand(XRouterCommand c, std::string currency="");
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
-    double getCommandTimeout(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_TIMEOUT);
-    int getCommandBlockLimit(XRouterCommand c, std::string currency="", double def=XROUTER_DEFAULT_BLOCK_LIMIT);
+    int commandTimeout(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_TIMEOUT);
+    int getCommandBlockLimit(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_BLOCK_LIMIT);
     double getMaxFee(XRouterCommand c, std::string currency="", double def=0.0);
     int clientRequestLimit(XRouterCommand c, std::string currency="", int def=-1); // -1 is no limit
-    bool hasPlugin(std::string name);
-    std::vector<std::string>& getPlugins() { return pluginList; }
-    XRouterPluginSettings& getPluginSettings(std::string name) { return plugins[name]; }
-    
+    int configSyncTimeout();
+
 private:
-    boost::container::map<std::string, XRouterPluginSettings > plugins;
-    std::vector<std::string> pluginList;
+    bool loadPlugin(std::string & name);
+
+private:
+    std::map<std::string, XRouterPluginSettingsPtr> plugins;
+    std::set<std::string> pluginList;
+    std::set<std::string> wallets;
 };
 
 } // namespace

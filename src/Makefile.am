@@ -413,7 +413,6 @@ libxrouter_xrouter_a_SOURCES = \
   xrouter/xrouterconnectoreth.h \
   xrouter/xrouterconnectoreth.cpp \
   xrouter/xroutererror.h \
-  xrouter/xrouterpeer.h \
   xrouter/xrouterlogger.h \
   xrouter/xrouterlogger.cpp \
   xrouter/xroutersettings.h \
@@ -423,7 +422,6 @@ libxrouter_xrouter_a_SOURCES = \
   xrouter/utils-misc.cpp \
   xrouter/utils-network.cpp \
   xrouter/utils-payments.cpp \
-  xrouter/utils-paymentchannels.cpp \
   xrouter/utils-verify.cpp \
   $(BITCOIN_CORE_H)
 

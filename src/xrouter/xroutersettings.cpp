@@ -20,6 +20,7 @@ namespace xrouter
 //******************************************************************************
 bool IniConfig::read(const char * fileName)
 {
+    LOCK(mu);
     try
     {
         if (fileName)
@@ -55,6 +56,7 @@ bool IniConfig::read(const char * fileName)
 
 bool IniConfig::read(std::string config)
 {
+    LOCK(mu);
     try
     {
         istringstream istr(config.c_str());
@@ -72,6 +74,7 @@ bool IniConfig::read(std::string config)
 
 bool IniConfig::write(const char * fileName)
 {
+    LOCK(mu);
     std::string fname = m_fileName;
     try
     {
@@ -101,26 +104,54 @@ bool IniConfig::write(const char * fileName)
 
 //******************************************************************************
 //******************************************************************************
-void XRouterSettings::loadPlugins()
-{
-    this->plugins.clear();
-    this->pluginList.clear();
-    std::vector<std::string> plugins;
-    std::string pstr = get<std::string>("Main.plugins", "");
-    boost::split(plugins, pstr, boost::is_any_of(","));
-    for(std::string s : plugins)
-        if((s.length() > 0) && loadPlugin(s))
-            pluginList.push_back(s);
+XRouterSettings::XRouterSettings(const std::string & config) {
+    read(config);
+    loadWallets();
+    loadPlugins();
 }
 
-bool XRouterSettings::loadPlugin(std::string name)
+void XRouterSettings::loadPlugins()
+{
+    {
+        LOCK(mu);
+        plugins.clear();
+        pluginList.clear();
+    }
+    std::vector<std::string> lplugins;
+    std::string pstr = get<std::string>("Main.plugins", "");
+    boost::split(lplugins, pstr, boost::is_any_of(","));
+
+    for(std::string & s : lplugins)
+        if(!s.empty() && loadPlugin(s)) {
+            LOCK(mu);
+            pluginList.insert(s);
+        }
+}
+
+void XRouterSettings::loadWallets() {
+    {
+        LOCK(mu);
+        wallets.clear();
+    }
+    std::vector<std::string> lwallets;
+    std::string ws = get<std::string>("Main.wallets", "");
+    boost::split(lwallets, ws, boost::is_any_of(","));
+    for (const std::string & w : lwallets)
+        if (!w.empty()) {
+            LOCK(mu);
+            wallets.insert(w);
+        }
+}
+
+bool XRouterSettings::loadPlugin(std::string & name)
 {
     std::string filename = pluginPath() + name + ".conf";
-    XRouterPluginSettings settings;
+    auto settings = std::make_shared<XRouterPluginSettings>();
     LOG() << "Trying to load plugin " << name + ".conf";
-    if(!settings.read(filename.c_str()))
+    if(!settings->read(filename.c_str()))
         return false;
-    
+
+    LOCK(mu);
     this->plugins[name] = settings;
     LOG() << "Successfully loaded plugin " << name;
     return true;
@@ -131,34 +162,26 @@ std::string XRouterSettings::pluginPath() const
     return std::string(GetDataDir(false).string()) + "/plugins/";
 }
 
-bool XRouterSettings::walletEnabled(std::string currency)
+bool XRouterSettings::walletEnabled(std::string & currency)
 {
-    std::vector<string> wallets;
-    std::string wstr = get<std::string>("Main.wallets", "");
-    boost::split(wallets, wstr, boost::is_any_of(","));
-    if (std::find(wallets.begin(), wallets.end(), currency) != wallets.end())
-        return true;
-    else
-        return false;
+    LOCK(mu);
+    return std::find(wallets.begin(), wallets.end(), currency) != wallets.end();
 }
 
-bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string currency, bool def)
+bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string currency)
 {
-    int res = 0;
-    if (def)
-        res = 1;
-    res = get<int>(std::string(XRouterCommand_ToString(c)) + ".run", res);
-    if (!currency.empty())
-        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".run", res);
-    if (res)
-        return true;
-    else
+    if (currency.empty())
         return false;
+    if (!wallets.count(currency)) // check if currency supported
+        return false;
+    // Wallet commands are implicitly enabled until disabled
+    auto disabled = get<bool>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".disabled", false);
+    return !disabled;
 }
 
 double XRouterSettings::getCommandFee(XRouterCommand c, std::string currency, double def)
 {
-    double res = get<double>("Main.fee", def);
+    auto res = get<double>("Main.fee", def);
     res = get<double>(std::string(XRouterCommand_ToString(c)) + ".fee", res);
     if (!currency.empty())
         res = get<double>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".fee", res);
@@ -167,41 +190,48 @@ double XRouterSettings::getCommandFee(XRouterCommand c, std::string currency, do
 
 double XRouterSettings::getMaxFee(XRouterCommand c, std::string currency, double def)
 {
-    double res = get<double>("Main.maxfee", def);
+    auto res = get<double>("Main.maxfee", def);
     res = get<double>(std::string(XRouterCommand_ToString(c)) + ".maxfee", res);
     if (!currency.empty())
         res = get<double>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".maxfee", res);
     return res;
 }
 
-double XRouterSettings::getCommandTimeout(XRouterCommand c, std::string currency, double def)
+int XRouterSettings::commandTimeout(XRouterCommand c, std::string currency, int def)
 {
-    double res = get<double>("Main.timeout", def);
-    res = get<double>(std::string(XRouterCommand_ToString(c)) + ".timeout", res);
+    auto res = get<int>("Main.timeout", def);
+    res = get<int>(std::string(XRouterCommand_ToString(c)) + ".timeout", res);
     if (!currency.empty())
-        res = get<double>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".timeout", res);
+        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".timeout", res);
     return res;
 }
 
-int XRouterSettings::getCommandBlockLimit(XRouterCommand c, std::string currency, double def)
+int XRouterSettings::getCommandBlockLimit(XRouterCommand c, std::string currency, int def)
 {
-    int res = get<int>("Main.blocklimit", def);
+    auto res = get<int>("Main.blocklimit", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
     if (!currency.empty())
-        res = get<double>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
+        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
     return res;
 }    
 
 int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string currency, int def) {
-    int res = get<int>("Main.clientrequestlimit", def);
+    auto res = get<int>("Main.clientrequestlimit", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
     if (!currency.empty())
         res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
     return res;
 }
 
+int XRouterSettings::configSyncTimeout()
+{
+    auto res = get<int>("Main.configsynctimeout", XROUTER_CONFIGSYNC_TIMEOUT);
+    return res;
+}
+
 bool XRouterSettings::hasPlugin(std::string name)
 {
+    LOCK(mu);
     return plugins.count(name) > 0;
 }
 
@@ -229,6 +259,7 @@ bool XRouterPluginSettings::read(std::string config)
 
 bool XRouterPluginSettings::verify(std::string name)
 {
+    LOCK(mu);
     bool result = true;
     std::string type;
     try {
@@ -269,19 +300,18 @@ bool XRouterPluginSettings::verify(std::string name)
             result = false;
         }
     }
-    
-    if (!result)
-        return false;
-    return true;
+
+    return result;
 }
 
 void XRouterPluginSettings::formPublicText()
 {
+    LOCK(mu);
     std::vector<string> lines;
     boost::split(lines, this->rawtext, boost::is_any_of("\n"));
     this->publictext = "";
     std::string prefix = "private::";
-    for (std::string line : lines) {
+    for (const std::string & line : lines) {
         if (line.compare(0, prefix.size(), prefix))
             this->publictext += line + "\n";
     }
@@ -291,6 +321,7 @@ std::string XRouterPluginSettings::getParam(std::string param, std::string def)
 {
     try
     {
+        LOCK(mu);
         return m_pt.get<std::string>(param);
     }
     catch (std::exception & e)
@@ -304,7 +335,7 @@ double XRouterPluginSettings::getFee()
     return get<double>("fee", 0.0);
 }
 
-int XRouterPluginSettings::getMinParamCount()
+int XRouterPluginSettings::minParamCount()
 {
     int res = get<int>("minParamsCount", -1);
     if (res < 0)
@@ -312,11 +343,21 @@ int XRouterPluginSettings::getMinParamCount()
     return res;
 }
 
-int XRouterPluginSettings::getMaxParamCount()
+int XRouterPluginSettings::maxParamCount()
 {
     int res = get<int>("maxParamsCount", -1);
     if (res < 0)
         res = get<int>("paramsCount", 0);
+    return res;
+}
+
+int XRouterPluginSettings::clientRequestLimit() {
+    int res = get<int>("clientrequestlimit", -1);
+    return res;
+}
+
+int XRouterPluginSettings::commandTimeout() {
+    int res = get<int>("timeout", 30);
     return res;
 }
 

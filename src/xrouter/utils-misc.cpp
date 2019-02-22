@@ -4,6 +4,10 @@
 
 #include "rpcprotocol.h"
 
+#include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_utils.h"
+
+using namespace json_spirit;
 
 #ifdef _WIN32
 #include <objbase.h>
@@ -90,6 +94,52 @@ CAmount to_amount(double val)
     if (!MoneyRange(nAmount))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     return nAmount;
+}
+
+Object form_reply(const std::string & uuid, const std::string & reply)
+{
+    Object ret;
+    Value reply_val;
+    read_string(reply, reply_val);
+
+    if (reply_val.type() == array_type) {
+        ret.emplace_back("reply", reply_val);
+        if (!uuid.empty())
+            ret.emplace_back("uuid", uuid);
+        return ret;
+    }
+
+    if (reply_val.type() != obj_type) {
+        ret.emplace_back("reply", reply);
+        if (!uuid.empty())
+            ret.emplace_back("uuid", uuid);
+        return ret;
+    }
+
+    Object reply_obj = reply_val.get_obj();
+    const Value & result = find_value(reply_obj, "result");
+    const Value & error = find_value(reply_obj, "error");
+    const Value & code = find_value(reply_obj, "code");
+
+    if (error.type() != null_type) {
+        ret.emplace_back("error", error);
+        if (code.type() != null_type)
+            ret.emplace_back("code", code);
+        else
+            ret.emplace_back("code", xrouter::INTERNAL_SERVER_ERROR);
+    }
+    else if (result.type() != null_type) {
+        ret.emplace_back("reply", result);
+        if (!uuid.empty())
+            ret.emplace_back("uuid", uuid);
+    }
+    else {
+        if (!uuid.empty())
+            reply_obj.emplace_back("uuid", uuid);
+        return reply_obj;
+    }
+
+    return ret;
 }
 
 } // namespace xrouter
