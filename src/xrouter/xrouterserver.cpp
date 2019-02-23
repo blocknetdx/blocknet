@@ -74,7 +74,8 @@ bool XRouterServer::start()
                 continue;
             }
 
-            LOG() << "Adding connector to currency " << wp.method;
+            LOG() << "Adding connector to " << wp.currency;
+
             xrouter::WalletConnectorXRouterPtr conn;
             if ((wp.method == "ETH") || (wp.method == "ETHER"))
             {
