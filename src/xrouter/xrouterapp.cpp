@@ -41,7 +41,7 @@
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
-{   
+{
 
 //*****************************************************************************
 //*****************************************************************************
@@ -99,8 +99,6 @@ std::vector<std::string> App::getServicesList()
     std::vector<std::string> result;
     if (!isEnabled())
         return result;
-
-    static const auto xr = "xr";
 
     result.push_back(xr); // signal xrouter support
     std::string services = xr;
@@ -166,7 +164,6 @@ void App::openConnections(const std::string wallet, const std::string plugin)
     // Open connections to all service nodes that are not already our peers
     std::vector<CServicenode> snodes = getServiceNodes();
     for (auto & s : snodes) {
-        static const auto xr = "xr";
         if (!s.HasService(xr))
             continue;
 
@@ -301,13 +298,8 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
             nodec[addr] = pnode;
     }
 
-    double maxfee_d = xrsettings->getMaxFee(command, wallet);
-    CAmount maxfee;
-    if (maxfee_d >= 0)
-        maxfee = to_amount(maxfee_d);
-    else
-        maxfee = -1;
-    
+    auto maxfee = xrsettings->getMaxFee(command, wallet);
+
     int supported = 0;
     int ready = 0;
 
@@ -322,7 +314,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
             continue;
         if (!snodes.count(nodeAddr)) // Ignore if not a snode
             continue;
-        if (!snodes[nodeAddr].HasService(wallet)) // Ignore snodes that don't have the wallet
+        if (!snodes[nodeAddr].HasService(buildCommandKey(xr, wallet))) // Ignore snodes that don't have the wallet
             continue;
 
         supported++;
@@ -344,8 +336,9 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
 
         const auto & snodeAddr = CBitcoinAddress(snodes[nodeAddr].pubKeyCollateralAddress.GetID()).ToString();
 
-        if (maxfee >= 0) {
-            CAmount fee = to_amount(settings->getCommandFee(command, wallet));
+        // Only select nodes with a fee smaller than the max fee we're willing to pay
+        if (maxfee > 0) {
+            auto fee = settings->getCommandFee(command, wallet);
             if (fee > maxfee) {
                 LOG() << "Skipping node " << snodeAddr << " because its fee=" << fee << " is higher than maxfee=" << maxfee;
                 continue;
@@ -383,13 +376,6 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, std::str
 
 CNode* App::getNodeForService(std::string name)
 {
-    double maxfee_d = xrsettings->getMaxFee(xrCustomCall, "");
-    CAmount maxfee;
-    if (maxfee_d >= 0)
-        maxfee = to_amount(maxfee_d);
-    else
-        maxfee = -1;
-
     std::vector<CServicenode> vServicenodes = getServiceNodes();
     std::vector<CNode*> nodes;
     {
@@ -409,6 +395,8 @@ CNode* App::getNodeForService(std::string name)
         if (snodes.count(addr))
             nodec[addr] = pnode;
     }
+
+    double maxfee = xrsettings->getMaxFee(xrCustomCall, "");
 
     // Domains
     if (name.find("/") != string::npos) {
@@ -432,6 +420,13 @@ CNode* App::getNodeForService(std::string name)
         auto settings = getConfig(nodeAddr);
         if (!settings->hasPlugin(name_part))
             return nullptr;
+
+        // Check if fee is within expected range
+        if (maxfee >= 0) {
+            CAmount fee = to_amount(settings->getPluginSettings(name)->getFee());
+            if (fee > maxfee)
+                return nullptr; // fee too expensive, ignore node
+        }
 
         CNode *res = nullptr;
 
@@ -470,12 +465,6 @@ CNode* App::getNodeForService(std::string name)
         auto rateLimit = settings->getPluginSettings(name)->clientRequestLimit();
         if (rateLimitExceeded(nodeAddr, name, getLastRequest(nodeAddr, name), rateLimit))
             return nullptr; // exceeded rate limit on this plugin
-
-        if (maxfee >= 0) {
-            CAmount fee = to_amount(settings->getPluginSettings(name)->getFee());
-            if (fee > maxfee)
-                return nullptr;
-        }
         
         return res;
     }
@@ -527,7 +516,7 @@ std::string App::parseConfig(XRouterSettingsPtr cfg, const NodeAddr & node)
         plugins.emplace_back(s, cfg->getPluginSettings(s)->rawText());
     result.emplace_back("plugins", plugins);
     result.emplace_back("addr", node);
-    LOG() << "Sending config " << json_spirit::write_string(Value(result), true);
+    LOG() << "Sending config to " << node;
     return json_spirit::write_string(Value(result), true);
 }
 
@@ -622,7 +611,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char>& messa
 
     const auto nodeAddr = node->addr.ToString();
     const auto command = std::string(XRouterCommand_ToString(packet->command()));
-    LOG() << "XRouter command: " << command;
+    LOG() << "XRouter command: " << command << " from node " << nodeAddr;
 
     if (packet->command() == xrGetXrouterConfig) {
         uint32_t offset = 0;
@@ -729,10 +718,6 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             throw XRouterError("Failed to find " + std::to_string(confirmations_count) + " service node(s) supporting " +
                                buildCommandKey(currency, XRouterCommand_ToString(command)) + " , found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
         
-//        bool usehash = xrsettings->get<int>("Main.usehash", 0) != 0;
-//        if (confirmations_count == 1)
-//            usehash = false;
-        bool usehash = false; // TODO usehash is always disabled here
         std::map<std::string, std::string> paytx_map;
         int snodeCount = 0;
         std::string fundErr{"Could not create payments to service nodes. Please check that your wallet "
@@ -744,29 +729,21 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             const auto & addr = pnode->addr.ToString();
             if (!hasConfig(addr))
                 continue; // skip nodes that do not have configs
+
+            // Create the fee payment
+            std::string feePayment;
             CAmount fee = to_amount(getConfig(addr)->getCommandFee(command, currency));
-            CAmount fee_hashonly = fee / 2; // TODO Fees for hashed requests  should use separate config
-            std::string payment_tx = usehash ? "hash;nofee" : "nohash;nofee";
             if (fee > 0) {
                 try {
-                    std::string payment;
-                    if (!usehash) { // request without hash
-                        if (!generatePayment(pnode, fee, payment))
-                            throw XRouterError(fundErr, xrouter::INSUFFICIENT_FUNDS);
-                        payment_tx = "nohash;" + payment;
-                    }
-                    else {
-                        if (!generatePayment(pnode, fee_hashonly, payment))
-                            throw XRouterError(fundErr, xrouter::INSUFFICIENT_FUNDS);
-                        payment_tx = "hash;" + payment;
-                    }
-                } catch (std::runtime_error & e) {
-                    LOG() << "Failed to create payment to node " << addr;
+                    if (!generatePayment(pnode, fee, feePayment))
+                        throw XRouterError(fundErr, xrouter::INSUFFICIENT_FUNDS);
+                } catch (XRouterError & e) {
+                    ERR() << "Failed to create payment to node " << addr << " " << e.msg;
                     continue;
                 }
             }
             
-            paytx_map[addr] = payment_tx;
+            paytx_map[addr] = feePayment;
             snodeCount++;
             if (snodeCount == confirmations_count)
                 break;
@@ -774,11 +751,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Do we have enough snodes? If not unlock utxos
         if (snodeCount < confirmations_count) {
-            for (CNode *pnode : selectedNodes) {
-                if (paytx_map.count(pnode->addr.ToString()))
-                    unlockOutputs(paytx_map[pnode->addr.ToString()]);
+            for (const auto & item : paytx_map) {
+                const std::string & tx = item.second;
+                unlockOutputs(tx);
             }
-            throw XRouterError(fundErr, xrouter::INSUFFICIENT_FUNDS);
+            throw XRouterError("Unable to find " + std::to_string(confirmations_count) +
+                               " service node(s) to process request", xrouter::NOT_ENOUGH_NODES);
         }
 
         // Create query
@@ -797,10 +775,13 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             if (!paytx_map.count(addr))
                 continue;
 
+            json_spirit::Object jbody;
+            jbody.emplace_back("feetx", paytx_map[addr]);
+
             XRouterPacketPtr packet(new XRouterPacket(command));
             packet->append(id);
             packet->append(currency);
-            packet->append(paytx_map[addr]);
+            packet->append(json_spirit::write_string(Value(jbody)));
             if (!param1.empty())
                 packet->append(param1);
             if (!param2.empty())
@@ -841,51 +822,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         if (c <= confirmations_count / 2 || result.empty())
             throw XRouterError("No consensus between responses", xrouter::INTERNAL_SERVER_ERROR);
 
-        if (!usehash)
-            return result;
-
-        // We reach here only if usehash == true
-
-//        CNode* finalnode;
-//        for (auto & i : queries[id]) {
-//            if (result == i.second) {
-//                finalnode = i.first;
-//                break;
-//            }
-//        }
-//
-//        CAmount fee = to_amount(snodeConfigs[finalnode->addr.ToString()].getCommandFee(command, currency));
-//        CAmount fee_part2 = fee - fee/2;
-//        std::string payment_tx = "nofee";
-//        if (fee > 0) {
-//            try {
-//                payment_tx = "nohash;" + generatePayment(finalnode, fee_part2);
-//            } catch (std::runtime_error &) {
-//                LOG() << "Failed to create payment to node " << finalnode->addr.ToString();
-//                throw XRouterError("Could not create payment to service node", xrouter::INSUFFICIENT_FUNDS);
-//            }
-//        }
-//
-//        XRouterPacketPtr fpacket(new XRouterPacket(xrFetchReply));
-//        fpacket->append(id);
-//        fpacket->append(currency);
-//        fpacket->append(payment_tx);
-//        fpacket->sign(key);
-//
-//        finalnode->PushMessage("xrouter", fpacket->body());
-//
-//        LOG() << "Fetching reply from node " << finalnode->addrName;
-//
-//        boost::shared_ptr<boost::mutex> m2(new boost::mutex());
-//        boost::shared_ptr<boost::condition_variable> cond2(new boost::condition_variable());
-//        boost::mutex::scoped_lock lock2(*m2);
-//        queriesLocks[id] = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m2, cond2);
-//        if (cond2->timed_wait(lock2, boost::posix_time::seconds(timeout))) {
-//            std::string reply = queries[id][finalnode];
-//            return reply;
-//        } else {
-//            throw XRouterError("Failed to fetch reply from service node", xrouter::SERVER_TIMEOUT);
-//        }
+        return result;
 
     } catch (XRouterError & e) {
         Object error;
@@ -1087,36 +1024,23 @@ std::string App::getReply(const std::string & id)
     return json_spirit::write_string(Value(result), true);
 }
 
-bool App::generatePayment(CNode *pnode, CAmount fee, std::string & payment)
+bool App::generatePayment(CNode *pnode, const CAmount fee, std::string & payment)
 {
     const auto nodeAddr = pnode->addr.ToString();
     if (!hasConfig(nodeAddr))
         throw std::runtime_error("No config found for servicenode: " + nodeAddr);
 
-    if (fee <= 0) {
-        payment = "nofee";
+    if (fee <= 0)
         return true;
-    }
 
-    std::string payment_tx;
-    std::string deposit_pubkey_s = getConfig(nodeAddr)->get<std::string>("depositpubkey", "");
-    CAmount deposit = to_amount(xrsettings->get<double>("Main.deposit", 0.0));
+    // Get payment address
+    std::string snodeAddress;
+    if (!getPaymentAddress(nodeAddr, snodeAddress))
+        return false;
 
-    if (deposit == 0 || deposit_pubkey_s.empty()) {
-        // Get payment address
-        std::string snodeAddress;
-        if (!getPaymentAddress(nodeAddr, snodeAddress))
-            return false;
-
-        bool res = createAndSignTransaction(snodeAddress, fee, payment_tx);
-        if (!res)
-            return false;
-
-        payment_tx = "single;" + payment_tx;
-    }
-
-    payment = payment_tx;
-    LOG() << "Payment transaction: " << payment;
+    bool res = createAndSignTransaction(snodeAddress, fee, payment);
+    if (!res)
+        return false;
 
     return true;
 }

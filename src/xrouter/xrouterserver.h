@@ -161,11 +161,11 @@ public:
      * @brief process payment transaction 
      * @param node node that paid the fee
      * @param feetx hex-encoded payment tx and additional data
-     * @param fee fee to be paid
+     * @param requiredFee fee to be paid
      * @return true if a fee was processed, otherwise return false
      * @throws std::runtime_error in case of incorrect payment
      */
-    bool processPayment(CNode* node, std::string feetx, CAmount fee);
+    bool processPayment(CNode* node, const std::string & feetx, CAmount requiredFee);
     
     /**
      * @brief returns own snode pubkey hash

@@ -135,52 +135,41 @@ void XRouterServer::sendPacketToClient(std::string uuid, std::string reply, CNod
     pnode->PushMessage("xrouter", rpacket->body());
 }
 
-bool XRouterServer::processPayment(CNode* node, std::string feetx, CAmount fee)
+bool XRouterServer::processPayment(CNode *node, const std::string & feetx, const CAmount requiredFee)
 {
     const auto nodeAddr = node->addr.ToString();
-    if (feetx.empty() && fee > 0) {
+    if (feetx.empty() && requiredFee > 0) {
         ERR() << "Client sent a bad feetx: " << nodeAddr;
         return false; // do not process bad fees
     }
     else if (feetx.empty())
         return true; // do not process empty fees if we're not expecting any payment
 
-    std::vector<std::string> parts;
-    boost::split(parts, feetx, boost::is_any_of(";"));
-    if (parts.size() < 3) {
-        ERR() << "Incorrect payment data format from client: " << nodeAddr;
+    // Direct payment, no CLTV channel
+    const auto & addr = getMyPaymentAddress();
+    if (addr.empty())
+        throw XRouterError("Bad payment address", xrouter::BAD_ADDRESS);
+
+    CAmount paid = to_amount(checkPayment(feetx, addr));
+    if (paid < requiredFee) {
+        auto requiredDbl = static_cast<double>(requiredFee) / static_cast<double>(COIN);
+        auto paidDbl = static_cast<double>(paid) / static_cast<double>(COIN);
+        ERR() << "Client failed to send enough fees, required " << std::to_string(requiredDbl)
+              << " received: " << std::to_string(paidDbl) << " "
+              << nodeAddr;
         return false;
     }
 
-    bool usehash = parts[0] == "hash";
-    CAmount fee_part1 = fee;
-    if (usehash)
-        fee_part1 = fee / 2;
-
-    if (parts[1] == "single") {
-        // Direct payment, no CLTV channel
-        const auto & addr = getMyPaymentAddress();
-        if (addr.empty())
-            throw XRouterError("Bad payment address", xrouter::BAD_ADDRESS);
-
-        CAmount paid = to_amount(getTxValue(parts[2], addr));
-        if (paid < fee_part1) {
-            ERR() << "Client failed to send enough fees: " << nodeAddr;
-            return false;
-        }
-
-        std::string txid;
-        bool res = sendTransactionBlockchain(parts[2], txid);
-        if (!res) {
-            ERR() << "Failed to spend client fee: Could not send transaction " + parts[2] + " " << nodeAddr;
-            return false;
-        }
-
-        LOG() << "Received direct payment: value = " << paid << " tx = " << parts[2] + " " << nodeAddr;
-        return true;
+    std::string txid;
+    bool res = sendTransactionBlockchain(feetx, txid);
+    if (!res) {
+        ERR() << "Failed to spend client fee: Could not send transaction " + feetx + " " << nodeAddr;
+        return false;
     }
 
-    throw XRouterError("Unsupported payment format: " + parts[0], xrouter::INVALID_PARAMETERS);
+    LOG() << "Received direct payment: value = " << static_cast<double>(paid)/static_cast<double>(COIN) << " tx = "
+          << feetx + " " << nodeAddr;
+    return true;
 }
 
 //*****************************************************************************
@@ -216,11 +205,24 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         std::string commandStr(XRouterCommand_ToString(command));
         const auto commandKey = app.buildCommandKey(currency, commandStr);
 
-        LOG() << "XRouter command: " << commandStr;
+        LOG() << "XRouter command: " << commandKey << " from node " << nodeAddr;
+
         if (!app.xrSettings()->isAvailableCommand(packet->command(), currency))
             throw XRouterError("Unsupported xrouter command " + commandKey, xrouter::UNSUPPORTED_BLOCKCHAIN);
 
-        bool usehash = false;
+        // Read packet body
+        std::string body((const char *)packet->data()+offset);
+        offset += body.size() + 1;
+        json_spirit::Value json;
+        if (!json_spirit::read_string(body, json))
+            throw XRouterError("Bad xrouter packet body " + commandKey, xrouter::BAD_REQUEST);
+        if (json.type() != json_spirit::obj_type)
+            throw XRouterError("Bad xrouter packet body" + commandKey, xrouter::BAD_REQUEST);
+        auto & fee_v = json_spirit::find_value(json.get_obj(), "feetx");
+        if (fee_v.type() != json_spirit::str_type)
+            throw XRouterError("Bad xrouter packet body" + commandKey, xrouter::BAD_REQUEST);
+
+        const auto & feetx = fee_v.get_str();
         CAmount fee = 0;
 
         // Handle calls to XRouter plugins
@@ -233,10 +235,10 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
             }
 
-            // Spend client payment
-            std::string feetx((const char *)packet->data()+offset);
-            offset += feetx.size() + 1;
+            // Expected fee
             fee = to_amount(psettings->getFee());
+
+            // Spend client payment
             if (!this->processPayment(node, feetx, fee)) {
                 std::string err_msg = "Bad fee payment from client: " + commandKey;
                 state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
@@ -255,22 +257,17 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             reply = processCustomCall(currency, params);
         }
         else { // Handle default XRouter calls
-            std::string feetx((const char *)packet->data()+offset);
-            offset += feetx.size() + 1;
-            
-            std::vector<std::string> parts;
-            boost::split(parts, feetx, boost::is_any_of(";"));
-            usehash = parts[0] == "hash"; // TODO Support hashes
+            const auto dfee = app.xrSettings()->getCommandFee(command, currency);
+            LOG() << "Expecting Fee = " << dfee;
+            LOG() << "Received Feetx = " << (feetx.empty() ? "none provided" : feetx);
 
-            fee = to_amount(app.xrSettings()->getCommandFee(command, currency));
-            
-            LOG() << "Fee = " << fee;
-            LOG() << "Feetx = " << feetx;
+            // convert to satoshi
+            fee = to_amount(dfee);
 
             try {
-                CAmount fee_part1 = fee;
+                CAmount cmdFee = fee;
                 if (command == xrFetchReply)
-                    fee_part1 = getQueryFee(uuid);
+                    cmdFee = getQueryFee(uuid);
 
                 int rateLimit = app.xrSettings()->clientRequestLimit(command, currency);
                 if (rateLimit >= 0 && rateLimitExceeded(nodeAddr, commandKey, rateLimit)) {
@@ -287,7 +284,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     case xrTimeToBlockNumber:
                         break; // commands not supported, do not charge client
                     default: {
-                        if (!this->processPayment(node, feetx, fee_part1)) {
+                        if (!this->processPayment(node, feetx, cmdFee)) {
                             std::string err_msg = "Bad fee payment from client: " + commandKey;
                             state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
                             throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
@@ -342,14 +339,6 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             {
                 throw XRouterError("Failed to process your request: " + e.msg, e.code);
             }
-        }
-
-        // TODO Create func to indicate commands that don't support hashes (e.g. xrSendTransaction, xrFetchReply)
-        if (usehash && packet->command() != xrSendTransaction && packet->command() != xrFetchReply) {
-            hashedQueries[uuid] = std::pair<std::string, CAmount>(reply, fee - fee/2);
-            std::string hash = Hash160(reply.begin(), reply.end()).ToString();
-            hashedQueriesDeadlines[uuid] = std::chrono::system_clock::now();
-            reply = hash;
         }
 
     } catch (XRouterError & e) {

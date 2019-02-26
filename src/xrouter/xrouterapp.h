@@ -257,7 +257,7 @@ private:
 
 public:
     /**
-     * @brief instance - the classical implementation of singletone
+     * @brief instance - the classical implementation of singleton
      * @return
      */
     static App & instance();

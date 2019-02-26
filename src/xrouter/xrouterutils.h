@@ -20,7 +20,9 @@ using namespace json_spirit;
 
 namespace xrouter
 {
-    
+
+static const std::string xr = "xr";
+
 class UnknownChainAddress : public CBitcoinAddress {
 public:
     explicit UnknownChainAddress(std::string & s) : CBitcoinAddress(s) { }
@@ -46,12 +48,12 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 bool createAndSignTransaction(std::string address, CAmount amount, std::string & raw_tx);
 bool createAndSignTransaction(boost::container::map<std::string, CAmount> addrs, string & raw_tx);
 bool createAndSignTransaction(Array txparams, std::string & raw_tx);
-void unlockOutputs(std::string & tx);
+void unlockOutputs(const std::string & tx);
 std::string signTransaction(std::string& raw_tx);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
 bool sendTransactionBlockchain(std::string address, CAmount amount, std::string & raw_tx);
 CMutableTransaction decodeTransaction(std::string tx);
-double getTxValue(std::string rawtx, std::string address, std::string type="address");
+double checkPayment(const std::string & rawtx, const std::string & address);
 
 
 // Domains

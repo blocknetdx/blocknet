@@ -90,7 +90,7 @@ CAmount to_amount(double val)
     if (val < 0.0 || val > 21000000.0)
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     double tmp = val * COIN;
-    CAmount nAmount = (int64_t)(tmp > 0 ? tmp + 0.5 : tmp - 0.5);
+    auto nAmount = static_cast<CAmount>(tmp > 0 ? tmp + 0.5 : tmp - 0.5);
     if (!MoneyRange(nAmount))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid amount");
     return nAmount;

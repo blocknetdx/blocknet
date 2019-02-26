@@ -179,7 +179,7 @@ bool createAndSignTransaction(std::map<std::string, CAmount> & addrs, string & r
     return createAndSignTransaction(params, raw_tx);
 }
 
-void unlockOutputs(std::string & tx) {
+void unlockOutputs(const std::string & tx) {
     CMutableTransaction txobj = decodeTransaction(tx);
     for (size_t i = 0; i < txobj.vin.size(); i++) {
         pwalletMain->UnlockCoin(txobj.vin[0].prevout);
@@ -273,7 +273,7 @@ bool sendTransactionBlockchain(std::string address, CAmount amount, std::string 
     return res;
 }
 
-double getTxValue(std::string rawtx, std::string address, std::string type)
+double checkPayment(const std::string & rawtx, const std::string & address)
 {
     const static std::string decodeCommand("decoderawtransaction");
     std::vector<std::string> params;
@@ -281,34 +281,30 @@ double getTxValue(std::string rawtx, std::string address, std::string type)
 
     Value result = tableRPC.execute(decodeCommand, RPCConvertValues(decodeCommand, params));
     if (result.type() != obj_type)
-    {
-        throw std::runtime_error("Decode transaction command finished with error");
-    }
+        throw std::runtime_error("Check payment failed: Decode transaction command finished with error");
 
     Object obj = result.get_obj();
     Array vouts = find_value(obj, "vout").get_array();
-    for (Value vout : vouts) {
-        double val = find_value(vout.get_obj(), "value").get_real();
-        Object script = find_value(vout.get_obj(), "scriptPubKey").get_obj();
-        std::string vouttype = find_value(script, "type").get_str();
-        if (type == "nulldata")
-            if (vouttype == "nulldata")
-                return val;
+    for (const auto & vout : vouts) {
+        // Validate tx type
+        auto & scriptPubKey = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+        const auto & vouttype = find_value(scriptPubKey, "type").get_str();
+        if (vouttype != "pubkeyhash")
+            throw std::runtime_error("Check payment failed: Only pubkeyhash payments are accepted");
 
-        if (type == "scripthash")
-            if (vouttype == "scripthash")
-                return val;
-
-        const Value & addr_val = find_value(script, "addresses");
-        if (addr_val.is_null())
+        // Validate payment address
+        const auto & addr_val = find_value(scriptPubKey, "addresses");
+        if (addr_val.type() != array_type)
             continue;
-        Array addr = addr_val.get_array();
 
-        for (unsigned int k = 0; k != addr.size(); k++ ) {
-            std::string cur_addr = Value(addr[k]).get_str();
-            if (cur_addr == address)
-                return val;
-        }
+        auto & addrs = addr_val.get_array();
+        if (addrs.size() <= 0)
+            continue;
+
+        if (addrs[0].get_str() != address) // check address
+            continue;
+
+        return find_value(vout.get_obj(), "value").get_real();
     }
 
     return 0.0;
