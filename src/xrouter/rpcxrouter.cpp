@@ -290,10 +290,10 @@ Value xrGetBalanceUpdate(const Array & params, bool fHelp)
     return xrouter::form_reply(uuid, reply);
 }
 
-Value xrGetTransactionsBloomFilter(const Array & params, bool fHelp)
+Value xrGetTxBloomFilter(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTransactionsBloomFilter currency filter [number] [servicenode_consensus_number]\nReturns transactions fitting bloom filter starting with block number (default: 0) for selected currency.");
+        throw std::runtime_error("xrGetTxBloomFilter currency filter [number] [servicenode_consensus_number]\nReturns transactions fitting bloom filter starting with block number (default: 0) for selected currency.");
     }
 
     if (params.size() < 1)
@@ -466,9 +466,13 @@ Value xrUpdateConfigs(const Array & params, bool fHelp)
     if (fHelp) {
         throw std::runtime_error("xrUpdateConfigs\nSends requests for all service node configs.");
     }
-    
+
+    bool forceCheck = false;
+    if (params.size() == 1)
+        forceCheck = params[0].get_bool();
+
     Object result;
-    std::string reply = xrouter::App::instance().updateConfigs();
+    std::string reply = xrouter::App::instance().updateConfigs(forceCheck);
     Object obj;
     obj.emplace_back("reply", reply);
     return obj;
@@ -518,10 +522,10 @@ Value xrOpenConnections(const Array & params, bool fHelp)
     return true;
 }
 
-Value xrTimeToBlockNumber(const Array & params, bool fHelp)
+Value xrGetBlockForTime(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrTimeToBlockNumber currency timestamp [servicenode_consensus_number]\nGet the block count at specified time.");
+        throw std::runtime_error("xrGetBlockForTime currency timestamp [servicenode_consensus_number]\nGet the block count at specified time.");
     }
 
     return "This function is not implemented yet";

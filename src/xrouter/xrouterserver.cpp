@@ -39,10 +39,16 @@ namespace xrouter
 //*****************************************************************************
 bool XRouterServer::start()
 {
-    // start xrouter
-    try
-    {
-        // sessions
+    if (!initKeyPair())
+        return false;
+
+    createConnectors();
+
+    return true;
+}
+
+bool XRouterServer::createConnectors() {
+    try {
         Settings & s = settings();
         std::vector<std::string> wallets = s.exchangeWallets();
         for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
@@ -100,20 +106,14 @@ bool XRouterServer::start()
             this->addConnector(conn);
         }
     }
-    catch (std::exception & e)
-    {
-        //ERR() << e.what();
-        //ERR() << __FUNCTION__;
-    }
-
-    return true;
+    catch (std::exception & e) { }
 }
 
 void XRouterServer::addConnector(const WalletConnectorXRouterPtr & conn)
 {
     LOCK(_lock);
     connectors[conn->currency] = conn;
-    connectorLocks[conn->currency] = boost::shared_ptr<boost::mutex>(new boost::mutex());
+    connectorLocks[conn->currency] = std::make_shared<boost::mutex>();
 }
 
 WalletConnectorXRouterPtr XRouterServer::connectorByCurrency(const std::string & currency) const
@@ -129,9 +129,9 @@ WalletConnectorXRouterPtr XRouterServer::connectorByCurrency(const std::string &
 void XRouterServer::sendPacketToClient(std::string uuid, std::string reply, CNode* pnode)
 {
     LOG() << "Sending reply to client with query id " << uuid << ": " << reply;
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply));
-    rpacket->append(uuid);
+    XRouterPacketPtr rpacket(new XRouterPacket(xrReply, uuid));
     rpacket->append(reply);
+    rpacket->sign(spubkey, sprivkey);
     pnode->PushMessage("xrouter", rpacket->body());
 }
 
@@ -178,33 +178,63 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
 {
     clearHashedQueries(); // clean up
 
-    std::string uuid, reply;
     const auto nodeAddr = node->addr.ToString();
+    const std::string & uuid = packet->suuid();
+    std::string reply;
 
     try {
         if (packet->version() != static_cast<boost::uint32_t>(XROUTER_PROTOCOL_VERSION))
             throw XRouterError("You are using a different version of XRouter protocol. This node runs version " + std::to_string(XROUTER_PROTOCOL_VERSION), xrouter::BAD_VERSION);
 
-        if (!packet->verify()) {
-            state.DoS(10, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
+        if (!packet->verify(packet->vpubkey())) {
+            state.DoS(20, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
             throw XRouterError("Unsigned packet or signature error", xrouter::BAD_REQUEST);
         }
 
+        const auto command = packet->command();
         App & app = App::instance();
-        uint32_t offset = 0;
 
-        // id
-        uuid = std::string((const char *)packet->data()+offset);
-        offset += uuid.size() + 1;
+        // Handle config requests
+        if (packet->command() == xrGetConfig) {
+            XRouterSettingsPtr cfg = nullptr;
+            std::string addr((const char *)packet->data());
+
+            if (addr == "self")
+                cfg = app.xrSettings();
+            else {
+                if (!app.hasConfig(addr))
+                    return;
+                else
+                    cfg = app.getConfig(addr);
+            }
+
+            std::string commandStr(XRouterCommand_ToString(command));
+            LOG() << "XRouter command: " << commandStr << " from node " << nodeAddr;
+
+            // Check request rate
+            if (app.hasConfigTime(nodeAddr) && app.rateLimitExceeded(nodeAddr, commandStr, app.getConfigTime(nodeAddr), 10000))
+                state.DoS(10, error("XRouter: too many config requests"), REJECT_INVALID, "xrouter-error");
+            auto time = std::chrono::system_clock::now();
+            app.updateConfigTime(nodeAddr, time);
+
+            // Prep reply (serialize config)
+            reply = app.parseConfig(cfg, addr); // TODO Handle parse errors
+
+            XRouterPacketPtr rpacket(new XRouterPacket(xrConfigReply, uuid));
+            rpacket->append(reply);
+            rpacket->sign(spubkey, sprivkey);
+            node->PushMessage("xrouter", rpacket->body());
+            return;
+        }
+
+        uint32_t offset = 0;
 
         // wallet currency
         std::string currency((const char *)packet->data()+offset);
         offset += currency.size() + 1;
 
-        const auto command = packet->command();
         std::string commandStr(XRouterCommand_ToString(command));
         const auto commandKey = app.buildCommandKey(currency, commandStr);
-
         LOG() << "XRouter command: " << commandKey << " from node " << nodeAddr;
 
         if (!app.xrSettings()->isAvailableCommand(packet->command(), currency))
@@ -281,7 +311,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 // Spend client payment if supported command
                 switch (command) {
                     case xrGetBalance:
-                    case xrTimeToBlockNumber:
+                    case xrGetBlockForTime:
                         break; // commands not supported, do not charge client
                     default: {
                         if (!this->processPayment(node, feetx, cmdFee)) {
@@ -318,10 +348,10 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 case xrGetBalanceUpdate:
                     reply = processGetBalanceUpdate(packet, offset, currency);
                     break;
-                case xrGetTransactionsBloomFilter:
+                case xrGetTxBloomFilter:
                     reply = processGetTransactionsBloomFilter(packet, offset, currency);
                     break;
-                case xrTimeToBlockNumber:
+                case xrGetBlockForTime:
                     throw XRouterError("This call is not supported: " + commandKey, xrouter::INVALID_PARAMETERS);
                     //reply = processConvertTimeToBlockCount(packet, offset, currency);
                     break;
@@ -867,7 +897,7 @@ void XRouterServer::runPerformanceTests() {
         diff = std::chrono::system_clock::now() - time;
         TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
         
-        TESTLOG() << "xrTimeToBlockNumber";
+        TESTLOG() << "xrGetBlockForTime";
         time = std::chrono::system_clock::now();
         conn->convertTimeToBlockCount("1241469643");
         diff = std::chrono::system_clock::now() - time;
@@ -898,6 +928,30 @@ bool XRouterServer::rateLimitExceeded(const std::string & nodeAddr, const std::s
     }
 
     return false;
+}
+
+bool XRouterServer::initKeyPair() {
+    std::string secret = GetArg("-servicenodeprivkey", "");
+    if (secret.empty()) {
+        ERR() << "Failed to initiate xrouter keypair, is servicenodeprivkey config entry set correctly?";
+        return false;
+    }
+
+    CBitcoinSecret vchSecret;
+    if (!vchSecret.SetString(secret)) {
+        ERR() << "Failed to initiate xrouter keypair, there is a problem with servicenodeprivkey config entry";
+        return false;
+    }
+
+    CKey key = vchSecret.GetKey();
+    CPubKey pubkey = key.GetPubKey();
+    if (!pubkey.IsCompressed())
+        pubkey.Compress();
+
+    spubkey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    sprivkey = std::vector<unsigned char>(key.begin(), key.end());
+
+    return true;
 }
 
 } // namespace xrouter

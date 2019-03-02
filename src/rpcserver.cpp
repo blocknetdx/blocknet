@@ -393,9 +393,9 @@ static const CRPCCommand vRPCCommands[] =
         {"xrouter", "xrGetBlocks",                          &xrGetBlocks,                true, true, true},
         {"xrouter", "xrGetTransactions",                    &xrGetTransactions,          true, true, true},
         {"xrouter", "xrGetBalanceUpdate",                   &xrGetBalanceUpdate,         true, true, true},
-        {"xrouter", "xrGetTransactionsBloomFilter",        &xrGetTransactionsBloomFilter,true, true, true},
+        {"xrouter", "xrGetTxBloomFilter",                   &xrGetTxBloomFilter,         true, true, true},
         {"xrouter", "xrGenerateBloomFilter",                &xrGenerateBloomFilter,      true, true, true},
-        {"xrouter", "xrTimeToBlockNumber",                  &xrTimeToBlockNumber,        true, true, true},
+        {"xrouter", "xrGetBlockForTime",                    &xrGetBlockForTime,          true, true, true},
         
         {"xrouter", "xrGetReply",                           &xrGetReply,                 true, true, true},
         {"xrouter", "xrUpdateConfigs",                      &xrUpdateConfigs,            true, true, true},

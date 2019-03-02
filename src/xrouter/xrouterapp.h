@@ -25,235 +25,20 @@
 
 #include <memory>
 #include <chrono>
+#include <algorithm>
 
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
 {
 
+typedef std::shared_ptr<XRouterSettings> XRouterSettingsPtr;
+
 //*****************************************************************************
 //*****************************************************************************
 class App
 {
     friend class XRouterServer;
-
-private:
-    /**
-     * @brief App - default contructor,
-     * initialized and run private implementation
-     */
-    App();
-
-    /**
-     * @brief ~App - destructor
-     */
-    virtual ~App();
-
-    CCriticalSection _lock;
-
-    typedef std::shared_ptr<XRouterSettings> XRouterSettingsPtr;
-    XRouterSettingsPtr xrsettings;
-    std::unique_ptr<XRouterServer> server;
-
-    std::map<std::string, int> snodeScore;
-
-    typedef std::string NodeAddr;
-    std::map<std::string, NodeAddr> configQueries;
-    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
-    std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
-    std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
-    std::map<std::string, NodeAddr> snodeDomains;
-
-    std::string xrouterpath;
-
-    // timer
-    void onTimer();
-    boost::asio::io_service timerIo;
-    std::shared_ptr<boost::asio::io_service::work> timerIoWork;
-    boost::thread timerThread;
-    boost::asio::deadline_timer timer;
-
-    // Key management
-    xbridge::BtcCryptoProvider crypto;
-
-    bool hasScore(const NodeAddr & node) {
-        LOCK(_lock);
-        return snodeScore.count(node);
-    }
-    int getScore(const NodeAddr & node) {
-        LOCK(_lock);
-        return snodeScore[node];
-    }
-    void updateScore(const NodeAddr & node, const int score) {
-        LOCK(_lock);
-        snodeScore[node] = score;
-    }
-    std::chrono::time_point<std::chrono::system_clock> getLastRequest(const NodeAddr & node, const std::string & command) {
-        LOCK(_lock);
-        if (lastPacketsSent.count(node) && lastPacketsSent[node].count(command))
-            return lastPacketsSent[node][command];
-        return std::chrono::system_clock::from_time_t(0);
-    }
-    bool hasSentRequest(const NodeAddr & node, const std::string & command) {
-        LOCK(_lock);
-        return lastPacketsSent.count(node) && lastPacketsSent[node].count(command);
-    }
-    std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
-        LOCK(_lock);
-        return snodeConfigs;
-    }
-    bool hasDomain(const std::string & domain) {
-        LOCK(_lock);
-        return snodeDomains.count(domain);
-    }
-    NodeAddr getDomainNode(const std::string & domain) {
-        LOCK(_lock);
-        return snodeDomains[domain];
-    }
-    void updateDomainNode(const std::string & domain, const NodeAddr & node) {
-        LOCK(_lock);
-        snodeDomains[domain] = node;
-    }
-    void addQuery(const std::string & queryId, const NodeAddr & node) {
-        LOCK(_lock);
-        configQueries[queryId] = node;
-    }
-    bool hasQuery(const std::string & queryId) {
-        LOCK(_lock);
-        return configQueries.count(queryId);
-    }
-    NodeAddr getNodeFromQuery(const std::string & queryId) {
-        LOCK(_lock);
-        return configQueries[queryId];
-    }
-    bool hasConfig(const NodeAddr & node) {
-        LOCK(_lock);
-        return snodeConfigs.count(node);
-    }
-    XRouterSettingsPtr getConfig(const NodeAddr & node) {
-        LOCK(_lock);
-        return snodeConfigs[node];
-    }
-    void updateConfig(const NodeAddr & node, XRouterSettingsPtr config) {
-        LOCK(_lock);
-        snodeConfigs[node] = config;
-    }
-    bool hasConfigTime(const NodeAddr & node) {
-        LOCK(_lock);
-        return lastConfigQueries.count(node);
-    }
-    std::chrono::time_point<std::chrono::system_clock> getConfigTime(const NodeAddr & node) {
-        LOCK(_lock);
-        return lastConfigQueries[node];
-    }
-    void updateConfigTime(const NodeAddr & node, std::chrono::time_point<std::chrono::system_clock> & time) {
-        LOCK(_lock);
-        lastConfigQueries[node] = time;
-    }
-
-    class QueryMgr {
-    public:
-        typedef std::string QueryReply;
-        typedef std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > QueryCondition;
-        QueryMgr() : queriesLocks(), queries() {}
-        /**
-         * Add a query. This stores interal state including condition variables and associated mutexes.
-         * @param id
-         * @param qc
-         */
-        void addQuery(const std::string & id, QueryCondition & qc) {
-            LOCK(mu);
-
-            if (!queries.count(id))
-                queries[id] = std::map<std::string, std::string>();
-
-            boost::shared_ptr<boost::mutex> m(new boost::mutex());
-            boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
-
-            qc = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-            queriesLocks[id] = qc;
-        }
-        /**
-         * Store a query reply.
-         * @param id
-         * @param node
-         * @param reply
-         * @return Total number of replies for the query with specified id.
-         */
-        int addReply(const std::string & id, const std::string & node, const std::string & reply) {
-            LOCK(mu);
-            if (!queries.count(id))
-                return 0; // done, no query found with id
-            queries[id][node] = reply;
-            boost::mutex::scoped_lock l(*queriesLocks[id].first);
-            queriesLocks[id].second->notify_all();
-            return queries.count(id);
-        }
-        /**
-         * Fetch a reply. This method returns the number of matching replies.
-         * @param id
-         * @param reply
-         * @return
-         */
-        int reply(const std::string & id, std::string & reply) {
-            LOCK(mu);
-
-            int consensus = queries.count(id);
-            if (!consensus)
-                return 0;
-
-            std::map<uint256, std::string> hashes;
-            std::map<uint256, int> counts;
-            for (auto & item : queries[id]) {
-                auto hash = Hash(item.second.begin(), item.second.end());
-                hashes[hash] = item.second;
-                counts[hash] = counts.count(hash) + 1; // update counts for common replies
-            }
-
-            // sort replies descending
-            std::vector<std::pair<uint256, int> > tmp(counts.begin(), counts.end());
-            std::sort(tmp.begin(), tmp.end(),
-                      [](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
-                          return a.second > b.second;
-                      });
-
-            // select the most common replies
-            reply = hashes[tmp[0].first];
-            return tmp[0].second;
-        }
-        /**
-         * Returns true if the query with specified id is valid.
-         * @param id
-         * @return
-         */
-        bool hasQuery(const std::string & id) {
-            LOCK(mu);
-            return queries.count(id);
-        }
-        /**
-         * Return all replies associated with a query.
-         * @param id
-         * @return
-         */
-        std::map<std::string, QueryReply> allReplies(const std::string & id) {
-            LOCK(mu);
-            return queries[id];
-        }
-        /**
-         * Purges the ephemeral state of a query with specified id.
-         * @param id
-         */
-        void purge(const std::string & id) {
-            LOCK(mu);
-            queriesLocks.erase(id);
-        }
-    private:
-        CCriticalSection mu;
-        std::map<std::string, QueryCondition> queriesLocks;
-        std::map<std::string, std::map<std::string, QueryReply> > queries;
-    };
-
-    QueryMgr queryMgr;
 
 public:
     /**
@@ -291,7 +76,7 @@ public:
     /**
      * @brief send config update requests to all nodes
      */
-    std::string updateConfigs();
+    std::string updateConfigs(bool force = false);
     
     /**
      * @brief prints xrouter configs
@@ -450,6 +235,12 @@ public:
      * @brief reload xrouter.conf and plugin configs from disks
      */
     void reloadConfigs();
+
+    /**
+     * Loads the exchange wallets specified in settings.
+     * @return true if wallets loaded, otherwise false
+     */
+    bool createConnectors();
     
     /**
      * @brief returns status json object
@@ -496,18 +287,22 @@ public:
 
     /**
      * @brief process reply from service node on *client* side
+     * @param node Connection to node
      * @param packet Xrouter packet received over the network
+     * @param state DOS state
      * @return
      */
-    bool processReply(XRouterPacketPtr packet, CNode* node);
-    
+    bool processReply(CNode *node, XRouterPacketPtr packet, CValidationState & state);
+
     /**
      * @brief process reply about xrouter config contents
+     * @param node Connection to node
      * @param packet Xrouter packet received over the network
+     * @param state DOS state
      * @return
      */
-    bool processConfigReply(XRouterPacketPtr packet);
-    
+    bool processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationState & state);
+
     /**
      * @brief get all nodes that support the command for a given chain
      * @param packet Xrouter packet formed and ready to be sendTransaction
@@ -633,6 +428,276 @@ public:
         }
         return false;
     }
+
+    /**
+     * Return the servicenode for the specified query.
+     * @param node Servicenode address
+     * @param pubkey Return pubkey of specified servicenode
+     * @return true if found, otherwise false
+     */
+    bool servicenodePubKey(const NodeAddr & node, std::vector<unsigned char> & pubkey);
+
+    /**
+     * Keypair initialization for client requests.
+     * @return false on error, otherwise true
+     */
+    bool initKeyPair() {
+        try {
+            crypto.makeNewKey(cprivkey);
+            return crypto.getPubKey(cprivkey, cpubkey);
+        } catch (std::exception &) {
+            return false;
+        }
+    }
+
+private:
+    /**
+     * @brief App - default contructor,
+     * initialized and run private implementation
+     */
+    App();
+
+    /**
+     * @brief ~App - destructor
+     */
+    virtual ~App();
+
+    CCriticalSection _lock;
+
+    XRouterSettingsPtr xrsettings;
+    std::unique_ptr<XRouterServer> server;
+
+    std::map<std::string, int> snodeScore;
+
+    std::map<std::string, std::set<NodeAddr> > configQueries;
+    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
+    std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
+    std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
+    std::map<std::string, NodeAddr> snodeDomains;
+
+    std::string xrouterpath;
+
+    // timer
+    void onTimer();
+    boost::asio::io_service timerIo;
+    std::shared_ptr<boost::asio::io_service::work> timerIoWork;
+    boost::thread timerThread;
+    boost::asio::deadline_timer timer;
+
+    // Key management
+    xbridge::BtcCryptoProvider crypto;
+    std::vector<unsigned char> cpubkey;
+    std::vector<unsigned char> cprivkey;
+
+    bool hasScore(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeScore.count(node);
+    }
+    int getScore(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeScore[node];
+    }
+    void updateScore(const NodeAddr & node, const int score) {
+        LOCK(_lock);
+        snodeScore[node] = score;
+    }
+    std::chrono::time_point<std::chrono::system_clock> getLastRequest(const NodeAddr & node, const std::string & command) {
+        LOCK(_lock);
+        if (lastPacketsSent.count(node) && lastPacketsSent[node].count(command))
+            return lastPacketsSent[node][command];
+        return std::chrono::system_clock::from_time_t(0);
+    }
+    bool hasSentRequest(const NodeAddr & node, const std::string & command) {
+        LOCK(_lock);
+        return lastPacketsSent.count(node) && lastPacketsSent[node].count(command);
+    }
+    std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
+        LOCK(_lock);
+        return snodeConfigs;
+    }
+    bool hasDomain(const std::string & domain) {
+        LOCK(_lock);
+        return snodeDomains.count(domain);
+    }
+    NodeAddr getDomainNode(const std::string & domain) {
+        LOCK(_lock);
+        return snodeDomains[domain];
+    }
+    void updateDomainNode(const std::string & domain, const NodeAddr & node) {
+        LOCK(_lock);
+        snodeDomains[domain] = node;
+    }
+    void addQuery(const std::string & queryId, const NodeAddr & node) {
+        LOCK(_lock);
+        if (!configQueries.count(queryId))
+            configQueries[queryId] = std::set<NodeAddr>{node};
+        else
+            configQueries[queryId].insert(node);
+    }
+    bool hasQuery(const std::string & queryId) {
+        LOCK(_lock);
+        return configQueries.count(queryId);
+    }
+    bool completedQuery(const std::string & queryId) {
+        LOCK(_lock);
+        return configQueries.count(queryId);
+    }
+    std::set<NodeAddr> getNodesForQuery(const std::string & queryId) {
+        LOCK(_lock);
+        if (!configQueries.count(queryId))
+            return std::set<NodeAddr>{};
+        return configQueries[queryId];
+    }
+    bool hasConfig(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeConfigs.count(node);
+    }
+    XRouterSettingsPtr getConfig(const NodeAddr & node) {
+        LOCK(_lock);
+        return snodeConfigs[node];
+    }
+    void updateConfig(const NodeAddr & node, XRouterSettingsPtr config) {
+        LOCK(_lock);
+        snodeConfigs[node] = config;
+    }
+    bool hasConfigTime(const NodeAddr & node) {
+        LOCK(_lock);
+        return lastConfigQueries.count(node);
+    }
+    std::chrono::time_point<std::chrono::system_clock> getConfigTime(const NodeAddr & node) {
+        LOCK(_lock);
+        return lastConfigQueries[node];
+    }
+    void updateConfigTime(const NodeAddr & node, std::chrono::time_point<std::chrono::system_clock> & time) {
+        LOCK(_lock);
+        lastConfigQueries[node] = time;
+    }
+
+    class QueryMgr {
+    public:
+        typedef std::string QueryReply;
+        typedef std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > QueryCondition;
+        QueryMgr() : queriesLocks(), queries() {}
+        /**
+         * Add a query. This stores interal state including condition variables and associated mutexes.
+         * @param id
+         * @param qc
+         */
+        void addQuery(const std::string & id, QueryCondition & qc) {
+            LOCK(mu);
+
+            if (!queries.count(id))
+                queries[id] = std::map<NodeAddr, std::string>{};
+
+            boost::shared_ptr<boost::mutex> m(new boost::mutex());
+            boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+
+            qc = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
+            queriesLocks[id] = qc;
+        }
+        /**
+         * Add a query. This stores interal state for non-sync queries.
+         * @param id
+         */
+        void addQuery(const std::string & id) {
+            LOCK(mu);
+
+            if (!queries.count(id))
+                queries[id] = std::map<NodeAddr, std::string>{};
+        }
+        /**
+         * Store a query reply.
+         * @param id
+         * @param node
+         * @param reply
+         * @return Total number of replies for the query with specified id.
+         */
+        int addReply(const std::string & id, const std::string & node, const std::string & reply) {
+            LOCK(mu);
+            if (!queries.count(id))
+                return 0; // done, no query found with id
+            queries[id][node] = reply;
+            if (queriesLocks.count(id)) { // only handle locks if they exist for this query
+                boost::mutex::scoped_lock l(*queriesLocks[id].first);
+                queriesLocks[id].second->notify_all();
+            }
+            return queries.count(id);
+        }
+        /**
+         * Fetch a reply. This method returns the number of matching replies.
+         * @param id
+         * @param reply
+         * @return
+         */
+        int reply(const std::string & id, std::string & reply) {
+            LOCK(mu);
+
+            int consensus = queries.count(id);
+            if (!consensus)
+                return 0;
+
+            std::map<uint256, std::string> hashes;
+            std::map<uint256, int> counts;
+            for (auto & item : queries[id]) {
+                auto hash = Hash(item.second.begin(), item.second.end());
+                hashes[hash] = item.second;
+                counts[hash] = counts.count(hash) + 1; // update counts for common replies
+            }
+
+            // sort replies descending
+            std::vector<std::pair<uint256, int> > tmp(counts.begin(), counts.end());
+            std::sort(tmp.begin(), tmp.end(),
+                      [](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
+                          return a.second > b.second;
+                      });
+
+            // select the most common replies
+            reply = hashes[tmp[0].first];
+            return tmp[0].second;
+        }
+        /**
+         * Returns true if the query with specified id is valid.
+         * @param id
+         * @return
+         */
+        bool hasQuery(const std::string & id) {
+            LOCK(mu);
+            return queries.count(id);
+        }
+        /**
+         * Returns true if the reply exists for the specified node.
+         * @param id
+         * @param nodeAddr node address
+         * @return
+         */
+        bool hasReply(const std::string & id, const NodeAddr & node) {
+            LOCK(mu);
+            return queries.count(id) && queries[id].count(node);
+        }
+        /**
+         * Return all replies associated with a query.
+         * @param id
+         * @return
+         */
+        std::map<std::string, QueryReply> allReplies(const std::string & id) {
+            LOCK(mu);
+            return queries[id];
+        }
+        /**
+         * Purges the ephemeral state of a query with specified id.
+         * @param id
+         */
+        void purge(const std::string & id) {
+            LOCK(mu);
+            queriesLocks.erase(id);
+        }
+    private:
+        CCriticalSection mu;
+        std::map<std::string, QueryCondition> queriesLocks;
+        std::map<std::string, std::map<std::string, QueryReply> > queries;
+    };
+
+    QueryMgr queryMgr;
 };
 
 } // namespace xrouter

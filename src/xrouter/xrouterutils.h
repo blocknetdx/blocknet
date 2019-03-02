@@ -21,6 +21,9 @@ using namespace json_spirit;
 namespace xrouter
 {
 
+// Type definitions
+typedef std::string NodeAddr;
+
 static const std::string xr = "xr";
 
 class UnknownChainAddress : public CBitcoinAddress {

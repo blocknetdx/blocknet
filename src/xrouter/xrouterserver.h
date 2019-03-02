@@ -27,7 +27,6 @@ typedef std::shared_ptr<WalletConnectorXRouter> WalletConnectorXRouterPtr;
 class XRouterServer
 {
 public:
-    typedef std::string NodeAddr;
 
     XRouterServer() = default;
     
@@ -200,6 +199,23 @@ public:
      */
     bool rateLimitExceeded(const std::string & nodeAddr, const std::string & key, const int & rateLimit);
 
+    /**
+     * Loads the exchange wallets specified in settings.
+     * @return true if wallets loaded, otherwise false
+     */
+    bool createConnectors();
+
+    /**
+     * Servicenode public key.
+     * @return
+     */
+    const std::vector<unsigned char> & pubKey() const { return spubkey; }
+    /**
+     * Servicenode private key.
+     * @return
+     */
+    const std::vector<unsigned char> & privKey() const { return sprivkey; }
+
     void runPerformanceTests();
 
 private:
@@ -224,14 +240,23 @@ private:
      */
     void sendPacketToClient(std::string uuid, std::string reply, CNode* pnode);
 
+    /**
+     * Loads the servicenode key from config.
+     * @return false on error, otherwise true
+     */
+    bool initKeyPair();
+
 private:
     std::map<std::string, WalletConnectorXRouterPtr> connectors;
-    std::map<std::string, boost::shared_ptr<boost::mutex> > connectorLocks;
+    std::map<std::string, std::shared_ptr<boost::mutex> > connectorLocks;
 
     std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
 
     std::map<std::string, std::pair<std::string, CAmount> > hashedQueries;
     std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > hashedQueriesDeadlines;
+
+    std::vector<unsigned char> spubkey;
+    std::vector<unsigned char> sprivkey;
 
     mutable CCriticalSection _lock;
 
@@ -247,7 +272,7 @@ private:
         LOCK(_lock);
         return hashedQueries.count(uuid);
     }
-    boost::shared_ptr<boost::mutex> getConnectorLock(const std::string & currency) {
+    std::shared_ptr<boost::mutex> getConnectorLock(const std::string & currency) {
         LOCK(_lock);
         return connectorLocks[currency];
     }
