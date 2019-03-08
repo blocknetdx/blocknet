@@ -866,7 +866,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
         std::size_t maxOrders = 50;
 
-        if (detailLevel == 2 && params.size() == 4)
+        if (params.size() == 4)
             maxOrders = params[3].get_int();
 
         if (maxOrders < 1)
