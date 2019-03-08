@@ -1083,9 +1083,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             /**
              * @brief bound - calculate upper bound
              */
-            auto bound = std::min(maxOrders, bidsVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            auto bound = std::min<int32_t>(maxOrders, bidsVector.size());
+            for (size_t i = 0; i < bound; ++i) // Best bids are at the beginning of the stack (sorted descending, highest price better)
             {
                 if(bidsVector[i] == nullptr)
                     continue;
@@ -1117,9 +1116,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 bids.emplace_back(bid);
             }
 
-            bound = std::min(maxOrders, asksVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            bound = std::min<int32_t>(maxOrders, asksVector.size());
+            const auto asks_len = static_cast<int32_t>(asksVector.size());
+            for (int32_t i = asks_len - bound; i < asks_len; ++i) // Best asks are at the back of the stack (sorted descending, lowest price better)
             {
                 if(asksVector[i] == nullptr)
                     continue;
@@ -1159,9 +1158,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         case 3:
         {
             //Full order book (non aggregated)
-            auto bound = std::min(maxOrders, bidsVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            auto bound = std::min<int32_t>(maxOrders, bidsVector.size());
+            for (size_t i = 0; i < bound; ++i) // Best bids are at the beginning of the stack (sorted descending, highest price better)
             {
                 if(bidsVector[i] == nullptr)
                     continue;
@@ -1176,9 +1174,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 bids.emplace_back(bid);
             }
 
-            bound = std::min(maxOrders, asksVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            bound = std::min<int32_t>(maxOrders, asksVector.size());
+            const auto asks_len = static_cast<int32_t>(asksVector.size());
+            for (int32_t i = asks_len - bound; i < asks_len; ++i) // Best asks are at the back of the stack (sorted descending, lowest price better)
             {
                 if(asksVector[i] == nullptr)
                     continue;
