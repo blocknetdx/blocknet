@@ -191,7 +191,7 @@ int CommandLineRPC(int argc, char* argv[])
                     const int code = find_value(error.get_obj(), "code").get_int();
                     if (fWait && code == RPC_IN_WARMUP)
                         throw CConnectionFailed("server in warmup");
-                    strPrint = "error: " + write_string(error, false);
+                    strPrint = "error: " + write_string(error, json_spirit::pretty_print, 8);
                     nRet = abs(code);
                 } else {
                     // Result
@@ -200,7 +200,7 @@ int CommandLineRPC(int argc, char* argv[])
                     else if (result.type() == str_type)
                         strPrint = result.get_str();
                     else
-                        strPrint = write_string(result, true);
+                        strPrint = write_string(result, json_spirit::pretty_print, 8);
                 }
 
                 // Connection succeeded, no need to retry.
