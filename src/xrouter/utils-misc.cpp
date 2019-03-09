@@ -96,27 +96,24 @@ CAmount to_amount(double val)
     return nAmount;
 }
 
-Object form_reply(const std::string & uuid, const std::string & reply)
-{
+Object form_reply(const std::string & uuid, const Value & reply) {
     Object ret;
-    Value reply_val;
-    read_string(reply, reply_val);
 
-    if (reply_val.type() == array_type) {
-        ret.emplace_back("reply", reply_val);
-        if (!uuid.empty())
-            ret.emplace_back("uuid", uuid);
-        return ret;
-    }
-
-    if (reply_val.type() != obj_type) {
+    if (reply.type() == array_type) {
         ret.emplace_back("reply", reply);
         if (!uuid.empty())
             ret.emplace_back("uuid", uuid);
         return ret;
     }
 
-    Object reply_obj = reply_val.get_obj();
+    if (reply.type() != obj_type) {
+        ret.emplace_back("reply", reply);
+        if (!uuid.empty())
+            ret.emplace_back("uuid", uuid);
+        return ret;
+    }
+
+    Object reply_obj = reply.get_obj();
     const Value & result = find_value(reply_obj, "result");
     const Value & error = find_value(reply_obj, "error");
     const Value & code = find_value(reply_obj, "code");
@@ -140,6 +137,13 @@ Object form_reply(const std::string & uuid, const std::string & reply)
     }
 
     return ret;
+}
+
+Object form_reply(const std::string & uuid, const std::string & reply)
+{
+    Value reply_val;
+    read_string(reply, reply_val);
+    return form_reply(uuid, reply_val);
 }
 
 } // namespace xrouter

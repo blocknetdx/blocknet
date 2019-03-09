@@ -631,8 +631,9 @@ Value xrQueryDomain(const Array & params, bool fHelp)
 
     std::string domain = params[0].get_str();
     std::string uuid;
-    bool reply = xrouter::App::instance().checkDomain(uuid, domain);
-    return xrouter::form_reply(uuid, reply ? "true" : "false");
+    bool hasDomain = xrouter::App::instance().checkDomain(uuid, domain);
+    std::string reply{hasDomain ? "true" : "false"};
+    return xrouter::form_reply(uuid, reply);
 }
 
 Value xrCreateDepositAddress(const Array& params, bool fHelp)

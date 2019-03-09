@@ -74,6 +74,7 @@ bool is_number(std::string s);
 bool is_hash(std::string s);
 bool is_address(std::string s);
 std::string generateUUID();
+Object form_reply(const std::string & uuid, const Value & reply);
 Object form_reply(const std::string & uuid, const std::string & reply);
 
 } // namespace
