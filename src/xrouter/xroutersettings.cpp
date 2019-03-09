@@ -188,6 +188,10 @@ double XRouterSettings::getCommandFee(XRouterCommand c, std::string currency, do
     return res;
 }
 
+double XRouterSettings::defaultFee() {
+    return get<double>("Main.fee", 0);
+}
+
 double XRouterSettings::getMaxFee(XRouterCommand c, std::string currency, double def)
 {
     auto res = get<double>("Main.maxfee", def);

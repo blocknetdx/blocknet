@@ -669,6 +669,57 @@ Value xrCreateDepositAddress(const Array& params, bool fHelp)
     return xrouter::form_reply(uuid, res);
 }
 
+Value xrConnectedNodes(const Array& params, bool fHelp)
+{
+    if (fHelp)
+        throw std::runtime_error("xrConnectedNodes\nLists all the connected nodes and associated configuration "
+                                 "information and fee schedule.");
+
+    if (!params.empty()) {
+        Object error;
+        error.emplace_back("error", "This call does not support parameters");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    Array data;
+    const std::string & uuid = xrouter::generateUUID();
+    auto & app = xrouter::App::instance();
+
+    // Iterate over all node configs
+    const auto & configs = xrouter::App::instance().getNodeConfigs();
+    for (const auto & item : configs) {
+        auto settings = item.second;
+        Object o;
+
+        // pubkey
+        std::vector<unsigned char> spubkey;
+        app.servicenodePubKey(settings->getNode(), spubkey);
+        o.emplace_back("nodepubkey", HexStr(spubkey));
+
+        // payment address
+        std::string address;
+        app.getPaymentAddress(settings->getNode(), address);
+        o.emplace_back("paymentaddress", address);
+
+        // wallets
+        const auto & wallets = settings->getWallets();
+        o.emplace_back("xwallets", Array(wallets.begin(), wallets.end()));
+
+        // fees
+        o.emplace_back("feedefault", settings->defaultFee());
+        Object ofs;
+        const auto & schedule = settings->getFeeSchedule();
+        for (const auto & s : schedule)
+            ofs.emplace_back(s.first,  s.second);
+        o.emplace_back("feeschedule", ofs);
+
+        data.emplace_back(o);
+    }
+
+    return xrouter::form_reply(uuid, data);
+}
+
 Value xrTest(const Array& params, bool fHelp)
 {
     if (fHelp) {

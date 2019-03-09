@@ -616,6 +616,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
     Object plugins = find_value(reply_obj, "plugins").get_obj();
     
     auto settings = std::make_shared<XRouterSettings>(config);
+    settings->assignNode(nodeAddr);
 
     for (Object::size_type i = 0; i != plugins.size(); i++ ) {
         auto psettings = std::make_shared<XRouterPluginSettings>();
@@ -1116,6 +1117,7 @@ std::string App::sendXRouterConfigRequestSync(CNode* node) {
 
     // Update settings for node
     auto settings = std::make_shared<XRouterSettings>(reply);
+    settings->assignNode(node->addr.ToString());
     updateConfig(node->addr.ToString(), settings);
 
     return reply;

@@ -3,14 +3,17 @@
 #ifndef XROUTERSETTINGS_H
 #define XROUTERSETTINGS_H
 
-#include <vector>
-#include <string>
 #include "xrouterpacket.h"
 #include "xrouterdef.h"
+
 #include "sync.h"
+
+#include <vector>
+#include <string>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/container/map.hpp>
+#include <boost/algorithm/string.hpp>
 
 #define TRY(_STMNT_) try { (_STMNT_); } catch(std::exception & e) { LOG() << e.what(); }
 
@@ -121,6 +124,15 @@ public:
     XRouterSettings() = default;
     XRouterSettings(const std::string & config);
 
+    void assignNode(const std::string & node) {
+        LOCK(mu);
+        this->node = node;
+    }
+    const std::string & getNode() {
+        LOCK(mu);
+        return this->node;
+    }
+
     void loadWallets();
     std::vector<std::string> getWallets() {
         LOCK(mu);
@@ -161,6 +173,47 @@ public:
     int clientRequestLimit(XRouterCommand c, std::string currency="", int def=-1); // -1 is no limit
     int configSyncTimeout();
 
+    double defaultFee();
+    std::map<std::string, double> getFeeSchedule() {
+        LOCK(mu);
+
+        double fee = defaultFee();
+        std::map<std::string, double> s;
+
+        // First pass set top-level fees
+        for (const auto & p : m_pt) {
+            std::vector<std::string> parts;
+            boost::split(parts, p.first, boost::is_any_of("::"));
+            std::string cmd = parts[0];
+
+            if (parts.size() > 1)
+                continue; // skip currency fees (addressed in 2nd pass below)
+            if (boost::algorithm::to_lower_copy(cmd) == "main")
+                continue; // skip Main
+
+            s[p.first] = m_pt.get<double>(p.first + ".fee", fee);
+        }
+
+        // 2nd pass to set currency fees
+        for (const auto & p : m_pt) {
+            if (s.count(p.first))
+                continue; // skip existing
+
+            std::vector<std::string> parts;
+            boost::split(parts, p.first, boost::is_any_of("::"));
+
+            if (parts.size() < 3)
+                continue; // skip
+
+            std::string currency = parts[0];
+            std::string cmd = parts[2];
+
+            s[p.first] = m_pt.get<double>(p.first + ".fee", s.count(cmd) ? s[cmd] : fee); // default to top-level fee
+        }
+
+        return s;
+    }
+
 private:
     bool loadPlugin(std::string & name);
 
@@ -168,6 +221,7 @@ private:
     std::map<std::string, XRouterPluginSettingsPtr> plugins;
     std::set<std::string> pluginList;
     std::set<std::string> wallets;
+    std::string node;
 };
 
 } // namespace

@@ -230,7 +230,15 @@ public:
      * @return
      */
     std::string convertTimeToBlockCount(std::string & uuidRet, const std::string& currency, const int & confirmations, std::string time);
-    
+
+    /**
+     * Returns a map of connected node configurations.
+     * @return
+     */
+    std::map<NodeAddr, XRouterSettingsPtr> getNodeConfigs() {
+        return snodeConfigs;
+    }
+
     /**
      * @brief reload xrouter.conf and plugin configs from disks
      */

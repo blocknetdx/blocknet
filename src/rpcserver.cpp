@@ -407,6 +407,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xrouter", "xrRegisterDomain",                     &xrRegisterDomain,           true, true, true},
         {"xrouter", "xrQueryDomain",                        &xrQueryDomain,              true, true, true},
         {"xrouter", "xrCreateDepositAddress",               &xrCreateDepositAddress,     true, true, true},
+        {"xrouter", "xrConnectedNodes",                     &xrConnectedNodes,           true, true, true},
         {"xrouter", "xrCustomCall",                         &xrCustomCall,               true, true, true},
         {"xrouter", "xrTest",                               &xrTest,                     true, true, true},
 
