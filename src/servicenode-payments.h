@@ -288,6 +288,10 @@ public:
     int GetOldestBlock();
     int GetNewestBlock();
 
+    void EligibleServicenodes(const bool fFilterSigTime, const int & nBlockHeight,
+            std::vector<CServicenode> & snodes, std::map<CScript, bool> & eligibleSnodes);
+    bool ValidNode(CServicenode & mn, const bool & fFilterSigTime, const int & nMnCount);
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
