@@ -35,6 +35,12 @@ public:
      * @return true, if run succesfull
      */
     bool start();
+
+    /**
+     * @brief Shutdown services.
+     * @return true if successful
+     */
+    bool stop();
     
     /**
      * @brief onMessageReceived  call when message from xrouter network received

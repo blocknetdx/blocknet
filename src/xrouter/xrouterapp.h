@@ -33,6 +33,7 @@ namespace xrouter
 {
 
 typedef std::shared_ptr<XRouterSettings> XRouterSettingsPtr;
+typedef std::shared_ptr<XRouterServer> XRouterServerPtr;
 
 //*****************************************************************************
 //*****************************************************************************
@@ -473,7 +474,7 @@ private:
     CCriticalSection _lock;
 
     XRouterSettingsPtr xrsettings;
-    std::unique_ptr<XRouterServer> server;
+    XRouterServerPtr server;
 
     std::map<std::string, int> snodeScore;
 
@@ -488,7 +489,6 @@ private:
     // timer
     void onTimer();
     boost::asio::io_service timerIo;
-    std::shared_ptr<boost::asio::io_service::work> timerIoWork;
     boost::thread timerThread;
     boost::asio::deadline_timer timer;
 

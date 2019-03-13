@@ -47,6 +47,14 @@ bool XRouterServer::start()
     return true;
 }
 
+bool XRouterServer::stop()
+{
+    LOCK(_lock);
+    connectors.clear();
+    connectorLocks.clear();
+    return true;
+}
+
 bool XRouterServer::createConnectors() {
     try {
         Settings & s = settings();

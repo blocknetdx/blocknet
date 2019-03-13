@@ -46,12 +46,8 @@ namespace xrouter
 
 //*****************************************************************************
 //*****************************************************************************
-App::App()
-    : xrsettings(new XRouterSettings)
-        , server(new XRouterServer)
-        , timerIoWork(new boost::asio::io_service::work(timerIo))
-        , timerThread(boost::bind(&boost::asio::io_service::run, &timerIo))
-        , timer(timerIo, boost::posix_time::seconds(XROUTER_TIMER_SECONDS))
+App::App() : timerThread(boost::bind(&boost::asio::io_service::run, &timerIo))
+           , timer(timerIo, boost::posix_time::seconds(XROUTER_TIMER_SECONDS))
 {
 }
 
@@ -83,6 +79,9 @@ bool App::init(int argc, char *argv[])
 {
     if (!isEnabled())
         return true;
+
+    xrsettings = std::make_shared<XRouterSettings>();
+    server = std::make_shared<XRouterServer>();
 
     LOG() << "Loading xrouter config from file " << xrouterpath;
     std::string path(GetDataDir(false).string());
@@ -281,13 +280,15 @@ std::string App::printConfigs()
 //*****************************************************************************
 bool App::stop()
 {
+    timer.cancel();
+    timerIo.stop();
+    timerThread.join();
+
     if (!isEnabled())
         return false;
 
-    timer.cancel();
-    timerIo.stop();
-    timerIoWork.reset();
-    timerThread.join();
+    if (!server->stop())
+        return false;
 
     return true;
 }
