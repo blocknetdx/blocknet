@@ -723,9 +723,6 @@ bool AppInit2(int argc, char* argv[], boost::thread_group& threadGroup)
 #endif
 #endif
 
-    // true if we're an XRouter server
-    bool isXRouterServer = GetBoolArg("-servicenode", false) && GetBoolArg("-xrouter", false);
-
     // ********************************************************* Step 2: parameter interactions
     // Set this early so that parameter interactions go to console
     fPrintToConsole = GetBoolArg("-printtoconsole", false);
@@ -801,24 +798,8 @@ bool AppInit2(int argc, char* argv[], boost::thread_group& threadGroup)
     // Make sure enough file descriptors are available
     int nFD{0};
     int nBind = std::max((int)mapArgs.count("-bind") + (int)mapArgs.count("-whitebind"), 1);
-    // If XRouter server support more connections as this node mimics an http server
-    if (isXRouterServer) {
-        nMaxConnections = GetArg("-maxconnections", 1000);
-        nMaxConnections = std::max(std::min(nMaxConnections, (int)(FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS)), 0);
-        int nFD = RaiseFileDescriptorLimit(nMaxConnections + MIN_CORE_FILEDESCRIPTORS);
-        if (nFD < MIN_CORE_FILEDESCRIPTORS)
-            return InitError(_("Not enough file descriptors available."));
-        if (nFD - MIN_CORE_FILEDESCRIPTORS < nMaxConnections)
-            nMaxConnections = nFD - MIN_CORE_FILEDESCRIPTORS;
-    } else {
-    nMaxConnections = GetArg("-maxconnections", 125);
-    nMaxConnections = std::max(std::min(nMaxConnections, (int)(FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS)), 0);
-    int nFD = RaiseFileDescriptorLimit(nMaxConnections + MIN_CORE_FILEDESCRIPTORS);
-    if (nFD < MIN_CORE_FILEDESCRIPTORS)
+    if (!CNode::SetMaxConnections(FD_SETSIZE, MIN_CORE_FILEDESCRIPTORS, nBind, nFD))
         return InitError(_("Not enough file descriptors available."));
-    if (nFD - MIN_CORE_FILEDESCRIPTORS < nMaxConnections)
-        nMaxConnections = nFD - MIN_CORE_FILEDESCRIPTORS;
-    }
 
     // ********************************************************* Step 3: parameter-to-internal-flags
 
@@ -981,7 +962,7 @@ bool AppInit2(int argc, char* argv[], boost::thread_group& threadGroup)
     LogPrintf("Default data directory %s\n", GetDefaultDataDir().string());
     LogPrintf("Using data directory %s\n", strDataDir);
     LogPrintf("Using config file %s\n", GetConfigFile().string());
-    LogPrintf("Using at most %i connections (%i file descriptors available)\n", nMaxConnections, nFD);
+    LogPrintf("Using at most %i connections (%i file descriptors available)\n", CNode::MaxConnections(), nFD);
     std::ostringstream strErrors;
 
     LogPrintf("Using %u threads for script verification\n", nScriptCheckThreads);

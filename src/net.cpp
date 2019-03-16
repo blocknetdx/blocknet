@@ -60,8 +60,6 @@ using namespace std;
 
 namespace
 {
-const int MAX_OUTBOUND_CONNECTIONS = 16;
-
 struct ListenSocket {
     SOCKET socket;
     bool whitelisted;
@@ -84,7 +82,6 @@ static CNode* pnodeLocalHost = NULL;
 uint64_t nLocalHostNonce = 0;
 static std::vector<ListenSocket> vhListenSocket;
 CAddrMan addrman;
-int nMaxConnections = 125;
 bool fAddressesInitialized = false;
 
 vector<CNode*> vNodes;
@@ -869,7 +866,7 @@ void ThreadSocketHandler()
                 } else if (!IsSelectableSocket(hSocket)) {
                     LogPrintf("connection from %s dropped: non-selectable socket\n", addr.ToString());
                     CloseSocket(hSocket);
-                } else if (nInbound >= nMaxConnections - MAX_OUTBOUND_CONNECTIONS) {
+                } else if (nInbound >= CNode::MaxConnections() - CNode::MaxOutboundConnections()) {
                     LogPrint("net", "connection from %s dropped (full)\n", addr.ToString());
                     CloseSocket(hSocket);
                 } else if (CNode::IsBanned(addr) && !whitelisted) {
@@ -1206,12 +1203,16 @@ void ThreadOpenConnections()
         {
             LOCK(cs_vNodes);
             BOOST_FOREACH (CNode* pnode, vNodes) {
-                if (!pnode->fInbound) {
+                if (!pnode->fInbound && !pnode->isXRouter()) { // do not connect to xrouter nodes
                     setConnected.insert(pnode->addr.GetGroup());
                     nOutbound++;
                 }
             }
         }
+
+        // Do not open connections beyond native
+        if (nOutbound >= CNode::MaxOutboundNativeConnections())
+            continue;
 
         int64_t nANow = GetAdjustedTime();
 
@@ -1317,8 +1318,20 @@ void ThreadOpenAddedConnections()
     }
 }
 
+/**
+ * Opens an xrouter connection.
+ * @param addrConnect
+ * @param pszDest
+ * @return
+ */
+CNode* OpenXRouterConnection(const CAddress& addrConnect, const char* pszDest) {
+    CSemaphoreGrant grant(*semOutbound);
+    return OpenNetworkConnection(addrConnect, &grant, pszDest, false, true);
+}
+
 // if successful, this moves the passed grant to the constructed node
-bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound, const char* pszDest, bool fOneShot)
+CNode* OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound, const char* pszDest,
+                           bool fOneShot, bool xrouter)
 {
     //
     // Initiate outbound network connection
@@ -1328,22 +1341,25 @@ bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOu
         if (IsLocal(addrConnect) ||
             FindNode((CNetAddr)addrConnect) || CNode::IsBanned(addrConnect) ||
             FindNode(addrConnect.ToStringIPPort()))
-            return false;
+            return nullptr;
     } else if (FindNode(pszDest))
-        return false;
+        return nullptr;
 
     CNode* pnode = ConnectNode(addrConnect, pszDest);
     boost::this_thread::interruption_point();
 
     if (!pnode)
-        return false;
+        return nullptr;
     if (grantOutbound)
         grantOutbound->MoveTo(pnode->grantOutbound);
     pnode->fNetworkNode = true;
     if (fOneShot)
         pnode->fOneShot = true;
 
-    return true;
+    if (xrouter) // set xrouter node
+        pnode->setXRouter();
+
+    return pnode;
 }
 
 
@@ -1575,7 +1591,7 @@ void StartNode(boost::thread_group& threadGroup)
 
     if (semOutbound == NULL) {
         // initialize semaphore
-        int nMaxOutbound = min(MAX_OUTBOUND_CONNECTIONS, nMaxConnections);
+        int nMaxOutbound = CNode::MaxOutboundConnections();
         semOutbound = new CSemaphore(nMaxOutbound);
     }
 
@@ -1621,7 +1637,7 @@ bool StopNode()
     LogPrintf("StopNode()\n");
     MapPort(false);
     if (semOutbound)
-        for (int i = 0; i < MAX_OUTBOUND_CONNECTIONS; i++)
+        for (int i = 0; i < CNode::MaxOutboundConnections(); i++)
             semOutbound->post();
 
     if (fAddressesInitialized) {
@@ -1924,6 +1940,7 @@ CNode::CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn, bool fIn
     nPingUsecTime = 0;
     fPingQueued = false;
     fObfuScationMaster = false;
+    fXRouter = false;
 
     {
         LOCK(cs_nLastNodeId);

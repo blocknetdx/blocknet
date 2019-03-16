@@ -162,7 +162,7 @@ std::string XRouterSettings::pluginPath() const
     return std::string(GetDataDir(false).string()) + "/plugins/";
 }
 
-bool XRouterSettings::walletEnabled(std::string & currency)
+bool XRouterSettings::walletEnabled(const std::string & currency)
 {
     LOCK(mu);
     return std::find(wallets.begin(), wallets.end(), currency) != wallets.end();
@@ -224,6 +224,14 @@ int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string currency, 
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
     if (!currency.empty())
         res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
+    return res;
+}
+
+int XRouterSettings::confirmations(XRouterCommand c, std::string currency, int def) {
+    auto res = get<int>("Main.consensus", def);
+    res = get<int>(std::string(XRouterCommand_ToString(c)) + ".consensus", res);
+    if (!currency.empty())
+        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".consensus", res);
     return res;
 }
 

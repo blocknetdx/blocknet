@@ -511,17 +511,6 @@ Value xrStatus(const Array & params, bool fHelp)
     return reply;
 }
 
-Value xrOpenConnections(const Array & params, bool fHelp)
-{
-    if (fHelp) {
-        throw std::runtime_error("xrOpenConnections\nOpens connections to all available service nodes.");
-    }
-    
-    Object result;
-    xrouter::App::instance().openConnections();
-    return true;
-}
-
 Value xrGetBlockForTime(const Array & params, bool fHelp)
 {
     if (fHelp) {

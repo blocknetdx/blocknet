@@ -69,10 +69,11 @@ public:
 
     /**
      * @brief Open connections to service nodes with specified services.
-     * @param wallet
-     * @param plugin
+     * @param wallet Open connections to nodes supported this wallet/currency
+     * @param commandKey Open connections to nodes supporting this command
+     * @param count Number of nodes to open connections to
      */
-    void openConnections(std::string wallet="", std::string plugin="");
+    bool openConnections(const std::string & wallet, const std::string & commandKey, const uint32_t & count);
     
     /**
      * @brief send config update requests to all nodes
@@ -315,10 +316,11 @@ public:
     /**
      * @brief get all nodes that support the command for a given chain
      * @param packet Xrouter packet formed and ready to be sendTransaction
-     * @param wallet currency
+     * @param wallet Wallet or currency name
+     * @param count Number of nodes to fetch (default 1 node)
      * @return
      */
-    std::vector<CNode*> getAvailableNodes(enum XRouterCommand command, std::string wallet, int confirmations=1);
+    std::vector<CNode*> getAvailableNodes(enum XRouterCommand command, const std::string & wallet, int count=1);
     
     /**
      * @brief find the node that supports a given plugin 
@@ -584,34 +586,30 @@ private:
     class QueryMgr {
     public:
         typedef std::string QueryReply;
-        typedef std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> > QueryCondition;
+        typedef std::pair<std::shared_ptr<boost::mutex>, std::shared_ptr<boost::condition_variable> > QueryCondition;
         QueryMgr() : queriesLocks(), queries() {}
         /**
          * Add a query. This stores interal state including condition variables and associated mutexes.
-         * @param id
-         * @param qc
+         * @param id uuid of query, can't be empty
+         * @param node address of node associated with query, can't be empty
          */
-        void addQuery(const std::string & id, QueryCondition & qc) {
+        void addQuery(const std::string & id, const NodeAddr & node) {
+            if (id.empty() || node.empty())
+                return;
+
             LOCK(mu);
 
             if (!queries.count(id))
                 queries[id] = std::map<NodeAddr, std::string>{};
 
-            boost::shared_ptr<boost::mutex> m(new boost::mutex());
-            boost::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
+            std::shared_ptr<boost::mutex> m(new boost::mutex());
+            std::shared_ptr<boost::condition_variable> cond(new boost::condition_variable());
 
-            qc = std::pair<boost::shared_ptr<boost::mutex>, boost::shared_ptr<boost::condition_variable> >(m, cond);
-            queriesLocks[id] = qc;
-        }
-        /**
-         * Add a query. This stores interal state for non-sync queries.
-         * @param id
-         */
-        void addQuery(const std::string & id) {
-            LOCK(mu);
+            if (!queriesLocks.count(id))
+                queriesLocks[id] = std::map<NodeAddr, QueryCondition>{};
 
-            if (!queries.count(id))
-                queries[id] = std::map<NodeAddr, std::string>{};
+            auto qc = QueryCondition{m, cond};
+            queriesLocks[id][node] = qc;
         }
         /**
          * Store a query reply.
@@ -620,15 +618,33 @@ private:
          * @param reply
          * @return Total number of replies for the query with specified id.
          */
-        int addReply(const std::string & id, const std::string & node, const std::string & reply) {
-            LOCK(mu);
-            if (!queries.count(id))
-                return 0; // done, no query found with id
-            queries[id][node] = reply;
-            if (queriesLocks.count(id)) { // only handle locks if they exist for this query
-                boost::mutex::scoped_lock l(*queriesLocks[id].first);
-                queriesLocks[id].second->notify_all();
+        int addReply(const std::string & id, const NodeAddr & node, const std::string & reply) {
+            if (id.empty() || node.empty())
+                return 0;
+
+            int replies{0};
+            QueryCondition qcond;
+
+            {
+                LOCK(mu);
+
+                if (!queries.count(id))
+                    return 0; // done, no query found with id
+
+                // Total replies
+                replies = queriesLocks.count(id);
+                // Query condition
+                if (replies)
+                    qcond = queriesLocks[id][node];
             }
+
+            if (replies) { // only handle locks if they exist for this query
+                boost::mutex::scoped_lock l(*qcond.first);
+                queries[id][node] = reply; // Assign reply
+                qcond.second->notify_all();
+            }
+
+            LOCK(mu);
             return queries.count(id);
         }
         /**
@@ -637,7 +653,24 @@ private:
          * @param reply
          * @return
          */
-        int reply(const std::string & id, std::string & reply) {
+        int reply(const std::string & id, const NodeAddr & node, std::string & reply) {
+            LOCK(mu);
+
+            int consensus = queries.count(id);
+            if (!consensus)
+                return 0;
+
+            reply = queries[id][node];
+            return consensus;
+        }
+        /**
+         * Fetch the most common reply for a specific query. If a group of nodes return results and 2 of 3 are
+         * matching, this will return the most common reply, i.e. the replies of the matching two.
+         * @param id
+         * @param reply
+         * @return
+         */
+        int mostCommonReply(const std::string & id, std::string & reply) {
             LOCK(mu);
 
             int consensus = queries.count(id);
@@ -664,13 +697,23 @@ private:
             return tmp[0].second;
         }
         /**
-         * Returns true if the query with specified id is valid.
+         * Returns true if the query with specified id.
          * @param id
          * @return
          */
         bool hasQuery(const std::string & id) {
             LOCK(mu);
-            return queries.count(id);
+            return queriesLocks.count(id);
+        }
+        /**
+         * Returns true if the query with specified id and node address is valid.
+         * @param id
+         * @param node
+         * @return
+         */
+        bool hasQuery(const std::string & id, const NodeAddr & node) {
+            LOCK(mu);
+            return queriesLocks.count(id) && queriesLocks[id].count(node);
         }
         /**
          * Returns true if the reply exists for the specified node.
@@ -683,6 +726,34 @@ private:
             return queries.count(id) && queries[id].count(node);
         }
         /**
+         * Returns the query's mutex.
+         * @param id
+         * @param node
+         * @return
+         */
+        std::shared_ptr<boost::mutex> queryLock(const std::string & id, const NodeAddr & node) {
+            LOCK(mu);
+            if (!queriesLocks.count(id))
+                return nullptr;
+            if (!queriesLocks[id].count(node))
+                return nullptr;
+            return queriesLocks[id][node].first;
+        }
+        /**
+         * Returns the queries condition variable.
+         * @param id
+         * @param node
+         * @return
+         */
+        std::shared_ptr<boost::condition_variable> queryCond(const std::string & id, const NodeAddr & node) {
+            LOCK(mu);
+            if (!queriesLocks.count(id))
+                return nullptr;
+            if (!queriesLocks[id].count(node))
+                return nullptr;
+            return queriesLocks[id][node].second;
+        }
+        /**
          * Return all replies associated with a query.
          * @param id
          * @return
@@ -692,6 +763,15 @@ private:
             return queries[id];
         }
         /**
+         * Return all query locks associated with an id.
+         * @param id
+         * @return
+         */
+        std::map<std::string, QueryCondition> allLocks(const std::string & id) {
+            LOCK(mu);
+            return queriesLocks[id];
+        }
+        /**
          * Purges the ephemeral state of a query with specified id.
          * @param id
          */
@@ -699,10 +779,20 @@ private:
             LOCK(mu);
             queriesLocks.erase(id);
         }
+        /**
+         * Purges the ephemeral state of a query with specified id and node address.
+         * @param id
+         * @param node
+         */
+        void purge(const std::string & id, const NodeAddr & node) {
+            LOCK(mu);
+            if (queriesLocks.count(id))
+                queriesLocks[id].erase(node);
+        }
     private:
         CCriticalSection mu;
-        std::map<std::string, QueryCondition> queriesLocks;
-        std::map<std::string, std::map<std::string, QueryReply> > queries;
+        std::map<std::string, std::map<NodeAddr, QueryCondition> > queriesLocks;
+        std::map<std::string, std::map<NodeAddr, QueryReply> > queries;
     };
 
     QueryMgr queryMgr;

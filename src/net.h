@@ -70,7 +70,9 @@ CNode* FindNode(const CNetAddr& ip);
 CNode* FindNode(const std::string& addrName);
 CNode* FindNode(const CService& ip);
 CNode* ConnectNode(CAddress addrConnect, const char* pszDest = NULL, bool obfuScationMaster = false);
-bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound = NULL, const char* strDest = NULL, bool fOneShot = false);
+CNode* OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound = NULL,
+        const char* strDest = NULL, bool fOneShot = false, bool xrouter = false);
+CNode* OpenXRouterConnection(const CAddress& addrConnect, const char* strDest = nullptr);
 void MapPort(bool fUseUPnP);
 unsigned short GetListenPort();
 bool BindListenPort(const CService& bindAddr, std::string& strError, bool fWhitelisted = false);
@@ -124,7 +126,9 @@ extern bool fListen;
 extern uint64_t nLocalServices;
 extern uint64_t nLocalHostNonce;
 extern CAddrMan addrman;
-extern int nMaxConnections;
+static int nMaxConnections{125};
+static int nMaxOutboundNavtiveConnections{16}; // max non-xrouter connections
+static int nMaxOutboundConnections{nMaxOutboundNavtiveConnections};
 
 extern std::vector<CNode*> vNodes;
 extern CCriticalSection cs_vNodes;
@@ -266,6 +270,16 @@ public:
     int nRefCount;
     NodeId id;
 
+    // XRouter state
+    void setXRouter() {
+        LOCK(cs_xrouter);
+        fXRouter = true;
+    }
+    bool isXRouter() {
+        LOCK(cs_xrouter);
+        return fXRouter;
+    }
+
 protected:
     // Denial-of-service detection/prevention
     // Key is IP address, value is banned-until-time
@@ -281,6 +295,10 @@ protected:
 
     // Basic fuzz-testing
     void Fuzz(int nChance); // modifies ssSend
+
+    // XRouter flag
+    CCriticalSection cs_xrouter;
+    bool fXRouter{false};
 
 public:
     uint256 hashContinue;
@@ -644,6 +662,81 @@ public:
 
     static uint64_t GetTotalBytesRecv();
     static uint64_t GetTotalBytesSent();
+
+    /**
+     * Max outbound connections. If xrouter enabled node, uses -xroutermaxconnections flag.
+     * @return
+     */
+    static int MaxOutboundConnections() {
+        return nMaxOutboundConnections;
+    }
+
+    /**
+     * Max outbound connections. If xrouter enabled node, uses -xroutermaxconnections flag.
+     * @return
+     */
+    static int MaxOutboundNativeConnections() {
+        return nMaxOutboundNavtiveConnections;
+    }
+
+    /**
+     * Return maximum connections this node can handle.
+     * @return
+     */
+    static int MaxConnections() {
+        return nMaxConnections;
+    }
+
+    /**
+     * Set the maximum connections that this node can handle. XRouter outgoing connections takes
+     * precedence over the default outbound connection max. XRouter outgoing connections defaults
+     * to half of the -xroutermaxconnections flag.
+     * @param fileDescriptors Total file descriptors available
+     * @param minFileDescriptors Minimum file descriptors required
+     * @param reserveBind Number of nodes that are binded via config
+     * @param usingFileDescriptors Return the final file descriptor count
+     * @return
+     */
+    static bool SetMaxConnections(const int & fileDescriptors, const int & minFileDescriptors,
+                                  const int & reserveBind, int & usingFileDescriptors) {
+        auto maxConns = static_cast<int>(GetArg("-maxconnections", 125));
+        nMaxOutboundConnections = std::min(nMaxOutboundConnections, static_cast<int>(GetArg("-maxconnections", 125)));
+        nMaxOutboundNavtiveConnections = nMaxOutboundConnections;
+
+        if (IsXRouterNode()) { // xrouter uses half of specified connections for outbound connections
+            auto xrouterMaxConns = static_cast<int>(GetArg("-xroutermaxconnections", 250));
+            nMaxOutboundConnections = std::max(nMaxOutboundConnections, xrouterMaxConns / 2);
+            maxConns = std::max(maxConns, xrouterMaxConns);
+        }
+
+        // Max connections should not exceed available file descriptors
+        nMaxConnections = std::max(std::min(maxConns, fileDescriptors - reserveBind - minFileDescriptors), 0);
+
+        usingFileDescriptors = RaiseFileDescriptorLimit(nMaxConnections + minFileDescriptors);
+        if (usingFileDescriptors < minFileDescriptors)
+            return false;
+
+        if (usingFileDescriptors - minFileDescriptors < nMaxConnections)
+            nMaxConnections = usingFileDescriptors - minFileDescriptors;
+
+        return true;
+    }
+
+    /**
+     * Returns true if this node is an xrouter server.
+     * @return
+     */
+    static bool IsXRouterServer() {
+        return CNode::IsXRouterNode() && GetBoolArg("-servicenode", false);
+    }
+
+    /**
+     * Returns true if this is an xrouter node.
+     * @return
+     */
+    static bool IsXRouterNode() {
+        return GetBoolArg("-xrouter", false);
+    }
 };
 
 class CExplicitNetCleanup

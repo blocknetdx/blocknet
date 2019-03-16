@@ -701,7 +701,6 @@ extern json_spirit::Value xrQueryDomain(const json_spirit::Array& params, bool f
 extern json_spirit::Value xrCreateDepositAddress(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrConnectedNodes(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetBlockForTime(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrOpenConnections(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrTest(const json_spirit::Array& params, bool fHelp);
 
 /** @} */

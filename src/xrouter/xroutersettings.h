@@ -164,13 +164,14 @@ public:
         return plugins[name];
     }
 
-    bool walletEnabled(std::string & currency);
+    bool walletEnabled(const std::string & currency);
     bool isAvailableCommand(XRouterCommand c, std::string currency="");
     double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
     int commandTimeout(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_TIMEOUT);
     int getCommandBlockLimit(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_BLOCK_LIMIT);
     double getMaxFee(XRouterCommand c, std::string currency="", double def=0.0);
     int clientRequestLimit(XRouterCommand c, std::string currency="", int def=-1); // -1 is no limit
+    int confirmations(XRouterCommand c, std::string currency="", int def=1); // 1 confirmation default
     int configSyncTimeout();
 
     double defaultFee();
