@@ -255,11 +255,14 @@ public:
 
     bool IsBroadcastedWithin(int seconds)
     {
+        LOCK(cs);
         return (GetAdjustedTime() - sigTime) < seconds;
     }
 
     bool IsPingedWithin(int seconds, int64_t now = -1)
     {
+        LOCK(cs);
+
         now == -1 ? now = GetAdjustedTime() : now;
 
         return (lastPing == CServicenodePing()) ? false : now - lastPing.sigTime < seconds;
@@ -267,31 +270,43 @@ public:
 
     void Disable()
     {
+        LOCK(cs);
         sigTime = 0;
         lastPing = CServicenodePing();
     }
 
     bool IsEnabled()
     {
+        LOCK(cs);
         return activeState == SERVICENODE_ENABLED;
     }
 
     int GetServicenodeInputAge()
     {
-        if (chainActive.Tip() == NULL) return 0;
+        int nHeight;
+        {
+            LOCK(cs_main);
+            CBlockIndex* pindex = chainActive.Tip();
+            if (!pindex) return 0;
+            nHeight = pindex->nHeight;
+        }
+
+        LOCK(cs);
 
         if (cacheInputAge == 0) {
             cacheInputAge = GetInputAge(vin);
-            cacheInputAgeBlock = chainActive.Tip()->nHeight;
+            cacheInputAgeBlock = nHeight;
         }
 
-        return cacheInputAge + (chainActive.Tip()->nHeight - cacheInputAgeBlock);
+        return cacheInputAge + (nHeight - cacheInputAgeBlock);
     }
 
     std::string GetStatus();
 
     std::string Status()
     {
+        LOCK(cs);
+
         std::string strStatus = "ACTIVE";
 
         if (activeState == CServicenode::SERVICENODE_ENABLED) strStatus = "ENABLED";

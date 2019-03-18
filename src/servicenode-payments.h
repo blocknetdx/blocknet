@@ -13,10 +13,6 @@
 
 using namespace std;
 
-extern CCriticalSection cs_vecPayments;
-extern CCriticalSection cs_mapServicenodeBlocks;
-extern CCriticalSection cs_mapServicenodePayeeVotes;
-
 class CServicenodePayments;
 class CServicenodePaymentWinner;
 class CServicenodeBlockPayees;
@@ -89,6 +85,13 @@ public:
 // Keep track of votes for payees from servicenodes
 class CServicenodeBlockPayees
 {
+private:
+    CCriticalSection cs_vecPayments;
+    void swap(CServicenodeBlockPayees& first, CServicenodeBlockPayees& second) {
+        std::swap(first.nBlockHeight, second.nBlockHeight);
+        first.vecPayments.swap(second.vecPayments);
+    }
+
 public:
     int nBlockHeight;
     std::vector<CServicenodePayee> vecPayments;
@@ -102,6 +105,18 @@ public:
     {
         nBlockHeight = nBlockHeightIn;
         vecPayments.clear();
+    }
+    CServicenodeBlockPayees(const CServicenodeBlockPayees & c)
+    {
+        LOCK(cs_vecPayments);
+        nBlockHeight = c.nBlockHeight;
+        vecPayments = c.vecPayments;
+    }
+
+    CServicenodeBlockPayees& operator=(CServicenodeBlockPayees from)
+    {
+        swap(*this, from);
+        return *this;
     }
 
     void AddPayee(CScript payeeIn, int nIncrement)
@@ -233,13 +248,14 @@ public:
 class CServicenodePayments
 {
 private:
+    mutable CCriticalSection cs;
     int nSyncedFromPeer;
     int nLastBlockHeight;
-
-public:
     std::map<uint256, CServicenodePaymentWinner> mapServicenodePayeeVotes;
     std::map<int, CServicenodeBlockPayees> mapServicenodeBlocks;
     std::map<uint256, int> mapServicenodesLastVote; //prevout.hash + prevout.n, nBlockHeight
+
+public:
 
     CServicenodePayments()
     {
@@ -249,7 +265,7 @@ public:
 
     void Clear()
     {
-        LOCK2(cs_mapServicenodeBlocks, cs_mapServicenodePayeeVotes);
+        LOCK(cs);
         mapServicenodeBlocks.clear();
         mapServicenodePayeeVotes.clear();
     }
@@ -261,13 +277,13 @@ public:
     void CleanPaymentList();
     int LastPayment(CServicenode& mn);
 
-    bool GetBlockPayee(int nBlockHeight, CScript& payee);
+    bool GetPayeeScript(int nBlockHeight, CScript& payee);
     bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight);
     bool IsScheduled(CServicenode& mn, int nNotBlockHeight);
 
     bool CanVote(COutPoint outServicenode, int nBlockHeight)
     {
-        LOCK(cs_mapServicenodePayeeVotes);
+        LOCK(cs);
 
         if (mapServicenodesLastVote.count(outServicenode.hash + outServicenode.n)) {
             if (mapServicenodesLastVote[outServicenode.hash + outServicenode.n] == nBlockHeight) {
@@ -297,8 +313,31 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
     {
+        LOCK(cs);
         READWRITE(mapServicenodePayeeVotes);
         READWRITE(mapServicenodeBlocks);
+    }
+
+    CServicenodePaymentWinner& GetVote(const uint256 & hash) {
+        LOCK(cs);
+        return mapServicenodePayeeVotes[hash];
+    }
+    void AddVote(const uint256 & hash, CServicenodePaymentWinner & winner) {
+        LOCK(cs);
+        mapServicenodePayeeVotes[hash] = winner;
+    }
+    bool HasVote(const uint256 & hash) {
+        LOCK(cs);
+        return mapServicenodePayeeVotes.count(hash);
+    }
+
+    CServicenodeBlockPayees GetBlockPayee(const int & block) {
+        LOCK(cs);
+        return mapServicenodeBlocks[block];
+    }
+    bool HasBlockPayee(const int & block) {
+        LOCK(cs);
+        return mapServicenodeBlocks.count(block);
     }
 };
 

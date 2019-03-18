@@ -20,10 +20,6 @@
 /** Object for who's going to get paid on which blocks */
 CServicenodePayments servicenodePayments;
 
-CCriticalSection cs_vecPayments;
-CCriticalSection cs_mapServicenodeBlocks;
-CCriticalSection cs_mapServicenodePayeeVotes;
-
 //
 // CServicenodePaymentDB
 //
@@ -286,8 +282,7 @@ void CServicenodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t /*
     bool hasPayment = true;
     CScript payee;
 
-    //spork
-    if (!servicenodePayments.GetBlockPayee(pindexPrev->nHeight + 1, payee)) {
+    if (!GetPayeeScript(pindexPrev->nHeight + 1, payee)) {
         //no servicenode detected
         CServicenode* winningNode = mnodeman.GetCurrentServiceNode(1);
         if (winningNode) {
@@ -372,7 +367,7 @@ void CServicenodePayments::ProcessMessageServicenodePayments(CNode* pfrom, std::
             nHeight = chainActive.Tip()->nHeight;
         }
 
-        if (servicenodePayments.mapServicenodePayeeVotes.count(winner.GetHash())) {
+        if (mapServicenodePayeeVotes.count(winner.GetHash())) {
             LogPrint("mnpayments", "mnw - Already seen - %s bestHeight %d\n", winner.GetHash().ToString().c_str(), nHeight);
             servicenodeSync.AddedServicenodeWinner(winner.GetHash());
             return;
@@ -390,7 +385,7 @@ void CServicenodePayments::ProcessMessageServicenodePayments(CNode* pfrom, std::
             return;
         }
 
-        if (!servicenodePayments.CanVote(winner.vinServicenode.prevout, winner.nBlockHeight)) {
+        if (!CanVote(winner.vinServicenode.prevout, winner.nBlockHeight)) {
             //  LogPrintf("mnw - servicenode already voted - %s\n", winner.vinServicenode.prevout.ToStringShort());
             return;
         }
@@ -438,8 +433,10 @@ bool CServicenodePaymentWinner::Sign(CKey& keyServicenode, CPubKey& pubKeyServic
     return true;
 }
 
-bool CServicenodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
+bool CServicenodePayments::GetPayeeScript(int nBlockHeight, CScript & payee)
 {
+    LOCK(cs);
+
     if (mapServicenodeBlocks.count(nBlockHeight)) {
         return mapServicenodeBlocks[nBlockHeight].GetPayee(payee);
     }
@@ -451,7 +448,7 @@ bool CServicenodePayments::GetBlockPayee(int nBlockHeight, CScript& payee)
 // -- Only look ahead up to 8 blocks to allow for propagation of the latest 2 winners
 bool CServicenodePayments::IsScheduled(CServicenode& mn, int nNotBlockHeight)
 {
-    LOCK(cs_mapServicenodeBlocks);
+    LOCK(cs);
 
     int nHeight;
     {
@@ -485,8 +482,7 @@ bool CServicenodePayments::AddWinningServicenode(CServicenodePaymentWinner& winn
         return false;
     }
 
-    {
-        LOCK2(cs_mapServicenodePayeeVotes, cs_mapServicenodeBlocks);
+    LOCK(cs);
 
         if (mapServicenodePayeeVotes.count(winnerIn.GetHash())) {
             return false;
@@ -498,7 +494,6 @@ bool CServicenodePayments::AddWinningServicenode(CServicenodePaymentWinner& winn
             CServicenodeBlockPayees blockPayees(winnerIn.nBlockHeight);
             mapServicenodeBlocks[winnerIn.nBlockHeight] = blockPayees;
         }
-    }
 
     mapServicenodeBlocks[winnerIn.nBlockHeight].AddPayee(winnerIn.payee, 1);
 
@@ -580,7 +575,7 @@ std::string CServicenodeBlockPayees::GetRequiredPaymentsString()
 
 std::string CServicenodePayments::GetRequiredPaymentsString(int nBlockHeight)
 {
-    LOCK(cs_mapServicenodeBlocks);
+    LOCK(cs);
 
     if (mapServicenodeBlocks.count(nBlockHeight)) {
         return mapServicenodeBlocks[nBlockHeight].GetRequiredPaymentsString();
@@ -606,7 +601,7 @@ bool CServicenodePayments::IsTransactionValid(const CTransaction& txNew, int nBl
         return false;
     }
 
-    LOCK(cs_mapServicenodeBlocks);
+    LOCK(cs);
 
     if (mapServicenodeBlocks.count(nBlockHeight)) {
         return mapServicenodeBlocks[nBlockHeight].IsTransactionValid(txNew);
@@ -660,7 +655,7 @@ void CServicenodePayments::EligibleServicenodes(const bool fFilterSigTime, const
 
 void CServicenodePayments::CleanPaymentList()
 {
-    LOCK2(cs_mapServicenodePayeeVotes, cs_mapServicenodeBlocks);
+    LOCK(cs);
 
     int nHeight;
     {
@@ -820,7 +815,7 @@ bool CServicenodePaymentWinner::SignatureValid()
 
 void CServicenodePayments::Sync(CNode* node, int nCountNeeded)
 {
-    LOCK(cs_mapServicenodePayeeVotes);
+    LOCK(cs);
 
     int nHeight;
     {
@@ -847,6 +842,8 @@ void CServicenodePayments::Sync(CNode* node, int nCountNeeded)
 
 std::string CServicenodePayments::ToString() const
 {
+    LOCK(cs);
+
     std::ostringstream info;
 
     info << "Votes: " << (int)mapServicenodePayeeVotes.size() << ", Blocks: " << (int)mapServicenodeBlocks.size();
@@ -857,7 +854,7 @@ std::string CServicenodePayments::ToString() const
 
 int CServicenodePayments::GetOldestBlock()
 {
-    LOCK(cs_mapServicenodeBlocks);
+    LOCK(cs);
 
     int nOldestBlock = std::numeric_limits<int>::max();
 
@@ -875,7 +872,7 @@ int CServicenodePayments::GetOldestBlock()
 
 int CServicenodePayments::GetNewestBlock()
 {
-    LOCK(cs_mapServicenodeBlocks);
+    LOCK(cs);
 
     int nNewestBlock = 0;
 
