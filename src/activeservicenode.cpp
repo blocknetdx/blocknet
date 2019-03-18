@@ -192,14 +192,14 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool for
         }
 
         pmn->lastPing = mnp;
-        mnodeman.mapSeenServicenodePing.insert(make_pair(mnp.GetHash(), mnp));
+        mnodeman.AddServicenodePing(mnp.GetHash(), mnp);
 
         //mnodeman.mapSeenServicenodeBroadcast.lastPing is probably outdated, so we'll update it
         CServicenodeBroadcast mnb(*pmn);
         uint256 hash = mnb.GetHash();
-        if (mnodeman.mapSeenServicenodeBroadcast.count(hash))
+        if (mnodeman.SeenServicenodeBroadcast(hash))
         {
-            mnodeman.mapSeenServicenodeBroadcast[hash].lastPing = mnp;
+            mnodeman.UpdateServicenodeBroadcastLastPing(hash, mnp);
         }
 
         mnp.Relay();
@@ -271,7 +271,7 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
         LogPrintf("CActiveServicenode::Register() -  %s\n", errorMessage);
         return false;
     }
-    mnodeman.mapSeenServicenodePing.insert(make_pair(mnp.GetHash(), mnp));
+    mnodeman.AddServicenodePing(mnp.GetHash(), mnp);
 
     LogPrintf("CActiveServicenode::Register() - Adding to Servicenode list\n    service: %s\n    vin: %s\n", service.ToString(), vin.ToString());
 
@@ -290,7 +290,7 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
     // Assign the new vin
     this->vin = vin;
 
-    mnodeman.mapSeenServicenodeBroadcast.insert(make_pair(mnb.GetHash(), mnb));
+    mnodeman.AddServicenodeBroadcast(mnb.GetHash(), mnb);
     servicenodeSync.AddedServicenodeList(mnb.GetHash());
 
     CServicenode* pmn = mnodeman.Find(vin);

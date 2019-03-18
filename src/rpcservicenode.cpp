@@ -670,10 +670,9 @@ Value servicenodelist(const Array& params, bool fHelp)
     Array ret;
     int nHeight;
     {
-        LOCK(cs_main);
-        CBlockIndex* pindex = chainActive.Tip();
-        if(!pindex) return 0;
-        nHeight = pindex->nHeight;
+        TRY_LOCK(cs_main, locked);
+        if (!locked || chainActive.Tip() == nullptr) return ret;
+        nHeight = chainActive.Tip()->nHeight;
     }
     std::vector<pair<int, CServicenode> > vServicenodeRanks = mnodeman.GetServicenodeRanks(nHeight);
     BOOST_FOREACH (PAIRTYPE(int, CServicenode) & s, vServicenodeRanks) {

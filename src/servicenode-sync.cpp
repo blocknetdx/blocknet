@@ -86,7 +86,7 @@ void CServicenodeSync::Reset()
 
 void CServicenodeSync::AddedServicenodeList(uint256 hash)
 {
-    if (mnodeman.mapSeenServicenodeBroadcast.count(hash)) {
+    if (mnodeman.SeenServicenodeBroadcast(hash)) {
         if (mapSeenSyncMNB[hash] < SERVICENODE_SYNC_THRESHOLD) {
             lastServicenodeList = GetTime();
             mapSeenSyncMNB[hash]++;
@@ -99,7 +99,7 @@ void CServicenodeSync::AddedServicenodeList(uint256 hash)
 
 void CServicenodeSync::AddedServicenodeWinner(uint256 hash)
 {
-    if (servicenodePayments.mapServicenodePayeeVotes.count(hash)) {
+    if (servicenodePayments.HasVote(hash)) {
         if (mapSeenSyncMNW[hash] < SERVICENODE_SYNC_THRESHOLD) {
             lastServicenodeWinner = GetTime();
             mapSeenSyncMNW[hash]++;

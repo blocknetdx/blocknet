@@ -66,15 +66,14 @@ private:
     std::map<CNetAddr, int64_t> mWeAskedForServicenodeList;
     // which Servicenodes we've asked for
     std::map<COutPoint, int64_t> mWeAskedForServicenodeListEntry;
-
-public:
     // Keep track of all broadcasts I've seen
     map<uint256, CServicenodeBroadcast> mapSeenServicenodeBroadcast;
     // Keep track of all pings I've seen
     map<uint256, CServicenodePing> mapSeenServicenodePing;
-
     // keep track of dsq count to prevent servicenodes from gaming obfuscation queue
     int64_t nDsqCount;
+
+public:
 
     ADD_SERIALIZE_METHODS;
 
@@ -131,7 +130,16 @@ public:
     std::vector<CServicenode> GetFullServicenodeVector()
     {
         Check();
+        LOCK(cs);
         return vServicenodes;
+    }
+    std::vector<CServicenode*> CopyServicenodes()
+    {
+        LOCK(cs);
+        std::vector<CServicenode*> r;
+        for (auto & s : vServicenodes)
+            r.push_back(&s);
+        return r;
     }
 
     std::vector<pair<int, CServicenode> > GetServicenodeRanks(int64_t nBlockHeight, int minProtocol = 0);
@@ -143,7 +151,10 @@ public:
     void ProcessMessage(CNode* pfrom, std::string& strCommand, CDataStream& vRecv);
 
     /// Return the number of (unique) Servicenodes
-    int size() { return vServicenodes.size(); }
+    int size() {
+        LOCK(cs);
+        return vServicenodes.size();
+    }
 
     std::string ToString() const;
 
@@ -151,6 +162,49 @@ public:
 
     /// Update servicenode list and maps using provided CServicenodeBroadcast
     void UpdateServicenodeList(CServicenodeBroadcast mnb);
+
+    CServicenodeBroadcast& GetServicenodeBroadcast(const uint256 & hash) {
+        LOCK(cs);
+        return mapSeenServicenodeBroadcast[hash];
+    }
+    void AddServicenodeBroadcast(const uint256 & hash, CServicenodeBroadcast & mnb) {
+        LOCK(cs);
+        mapSeenServicenodeBroadcast[hash] = mnb;
+    }
+    void RemoveServicenodeBroadcast(const uint256 & hash) {
+        LOCK(cs);
+        mapSeenServicenodeBroadcast.erase(hash);
+    }
+    void UpdateServicenodeBroadcastLastPing(const uint256 & hash, CServicenodePing & ping) {
+        LOCK(cs);
+        mapSeenServicenodeBroadcast[hash].lastPing = ping;
+    }
+    bool SeenServicenodeBroadcast(const uint256 & hash) {
+        LOCK(cs);
+        return mapSeenServicenodeBroadcast.count(hash);
+    }
+
+    CServicenodePing& GetServicenodePing(const uint256 & hash) {
+        LOCK(cs);
+        return mapSeenServicenodePing[hash];
+    }
+    void AddServicenodePing(const uint256 & hash, CServicenodePing & ping) {
+        LOCK(cs);
+        mapSeenServicenodePing[hash] = ping;
+    }
+    bool SeenServicenodePing(const uint256 & hash) {
+        LOCK(cs);
+        return mapSeenServicenodePing.count(hash);
+    }
+
+    int64_t GetDsqCount() {
+        LOCK(cs);
+        return nDsqCount;
+    }
+    void AddDsqCount() {
+        LOCK(cs);
+        ++nDsqCount;
+    }
 };
 
 #endif

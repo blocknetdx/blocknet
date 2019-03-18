@@ -24,10 +24,12 @@ std::map<int64_t, uint256> mapCacheBlockHashes;
 //Get the last hash that matches the modulus given. Processed in reverse order
 bool GetBlockHash(uint256& hash, int nBlockHeight)
 {
-    if (chainActive.Tip() == NULL) return false;
+    LOCK(cs_main);
+    if (!chainActive.Tip()) return false;
+    int nHeight = chainActive.Tip()->nHeight;
 
     if (nBlockHeight == 0)
-        nBlockHeight = chainActive.Tip()->nHeight;
+        nBlockHeight = nHeight;
 
     if (mapCacheBlockHashes.count(nBlockHeight)) {
         hash = mapCacheBlockHashes[nBlockHeight];
@@ -37,10 +39,10 @@ bool GetBlockHash(uint256& hash, int nBlockHeight)
     const CBlockIndex* BlockLastSolved = chainActive.Tip();
     const CBlockIndex* BlockReading = chainActive.Tip();
 
-    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || chainActive.Tip()->nHeight + 1 < nBlockHeight) return false;
+    if (BlockLastSolved == NULL || BlockLastSolved->nHeight == 0 || nHeight + 1 < nBlockHeight) return false;
 
     int nBlocksAgo = 0;
-    if (nBlockHeight > 0) nBlocksAgo = (chainActive.Tip()->nHeight + 1) - nBlockHeight;
+    if (nBlockHeight > 0) nBlocksAgo = (nHeight + 1) - nBlockHeight;
     assert(nBlocksAgo >= 0);
 
     int n = 0;
@@ -147,6 +149,8 @@ CServicenode::CServicenode(const CServicenodeBroadcast& mnb)
 //
 bool CServicenode::UpdateFromNewBroadcast(CServicenodeBroadcast& mnb)
 {
+    LOCK(cs);
+
     if (mnb.sigTime > sigTime) {
         pubKeyServicenode       = mnb.pubKeyServicenode;
         pubKeyCollateralAddress = mnb.pubKeyCollateralAddress;
@@ -161,7 +165,7 @@ bool CServicenode::UpdateFromNewBroadcast(CServicenodeBroadcast& mnb)
             (mnb.lastPing != CServicenodePing() && mnb.lastPing.CheckAndUpdate(nDoS, false)))
         {
             lastPing = mnb.lastPing;
-            mnodeman.mapSeenServicenodePing.insert(make_pair(lastPing.GetHash(), lastPing));
+            mnodeman.AddServicenodePing(lastPing.GetHash(), lastPing);
         }
         return true;
     }
@@ -175,10 +179,12 @@ bool CServicenode::UpdateFromNewBroadcast(CServicenodeBroadcast& mnb)
 //
 uint256 CServicenode::CalculateScore(int /*mod*/, int64_t nBlockHeight)
 {
-    if (chainActive.Tip() == NULL) return 0;
-
     uint256 hash = 0;
-    uint256 aux = vin.prevout.hash + vin.prevout.n;
+    uint256 aux;
+    {
+        LOCK(cs);
+        aux = vin.prevout.hash + vin.prevout.n;
+    }
 
     if (!GetBlockHash(hash, nBlockHeight)) {
         LogPrintf("CalculateScore ERROR - nHeight %d - Returned 0\n", nBlockHeight);
@@ -203,20 +209,23 @@ void CServicenode::Check(bool forceCheck)
 {
     if (ShutdownRequested()) return;
 
+    {
+    LOCK(cs);
     if (!forceCheck && (GetTime() - lastTimeChecked < SERVICENODE_CHECK_SECONDS)) return;
     lastTimeChecked = GetTime();
 
-
     //once spent, stop doing the checks
     if (activeState == SERVICENODE_VIN_SPENT) return;
-
+    }
 
     if (!IsPingedWithin(SERVICENODE_REMOVAL_SECONDS)) {
+        LOCK(cs);
         activeState = SERVICENODE_REMOVE;
         return;
     }
 
     if (!IsPingedWithin(SERVICENODE_EXPIRATION_SECONDS)) {
+        LOCK(cs);
         activeState = SERVICENODE_EXPIRED;
         return;
     }
@@ -225,27 +234,36 @@ void CServicenode::Check(bool forceCheck)
         CValidationState state;
         CMutableTransaction tx = CMutableTransaction();
         CTxOut vout = CTxOut(SERVICENODE_ACCEPTABLE_INPUTS_CHECK_AMOUNT * COIN, obfuScationPool.collateralPubKey);
+
+        {
+        LOCK(cs);
         tx.vin.push_back(vin);
         tx.vout.push_back(vout);
+        }
 
         {
             TRY_LOCK(cs_main, lockMain);
             if (!lockMain) return;
 
             if (!AcceptableInputs(mempool, state, CTransaction(tx), false, NULL)) {
+                LOCK(cs);
                 activeState = SERVICENODE_VIN_SPENT;
                 return;
             }
         }
     }
 
+    LOCK(cs);
     activeState = SERVICENODE_ENABLED; // OK
 }
 
 int64_t CServicenode::SecondsSincePayment()
 {
     CScript pubkeyScript;
+    {
+    LOCK(cs);
     pubkeyScript = GetScriptForDestination(pubKeyCollateralAddress.GetID());
+    }
 
     int64_t sec = (GetAdjustedTime() - GetLastPaid());
     int64_t month = 60 * 60 * 24 * 30;
@@ -262,11 +280,18 @@ int64_t CServicenode::SecondsSincePayment()
 
 int64_t CServicenode::GetLastPaid()
 {
-    CBlockIndex* pindexPrev = chainActive.Tip();
-    if (pindexPrev == NULL) return false;
+    const CBlockIndex* BlockReading = nullptr;
+    {
+        LOCK(cs_main);
+        BlockReading = chainActive.Tip();
+        if (BlockReading == nullptr) return false;
+    }
 
     CScript mnpayee;
+    {
+    LOCK(cs);
     mnpayee = GetScriptForDestination(pubKeyCollateralAddress.GetID());
+    }
 
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
     ss << vin;
@@ -276,10 +301,6 @@ int64_t CServicenode::GetLastPaid()
     // use a deterministic offset to break a tie -- 2.5 minutes
     int64_t nOffset = hash.GetCompact(false) % 150;
 
-    if (chainActive.Tip() == NULL) return false;
-
-    const CBlockIndex* BlockReading = chainActive.Tip();
-
     int nMnCount = mnodeman.CountEnabled() * 1.25;
     int n = 0;
     for (unsigned int i = 1; BlockReading && BlockReading->nHeight > 0; i++) {
@@ -288,12 +309,13 @@ int64_t CServicenode::GetLastPaid()
         }
         n++;
 
-        if (servicenodePayments.mapServicenodeBlocks.count(BlockReading->nHeight)) {
+        if (servicenodePayments.HasBlockPayee(BlockReading->nHeight)) {
             /*
                 Search for this payee, with at least 2 votes. This will aid in consensus allowing the network
                 to converge on the same payees quickly, then keep the same schedule.
             */
-            if (servicenodePayments.mapServicenodeBlocks[BlockReading->nHeight].HasPayeeWithVotes(mnpayee, 2)) {
+            if (servicenodePayments.HasBlockPayee(BlockReading->nHeight) &&
+                servicenodePayments.GetBlockPayee(BlockReading->nHeight).HasPayeeWithVotes(mnpayee, 2)) {
                 return BlockReading->nTime + nOffset;
             }
         }
@@ -310,6 +332,8 @@ int64_t CServicenode::GetLastPaid()
 
 std::string CServicenode::GetStatus()
 {
+    LOCK(cs);
+
     switch (nActiveState) {
     case CServicenode::SERVICENODE_PRE_ENABLED:
         return "PRE_ENABLED";
@@ -332,6 +356,8 @@ std::string CServicenode::GetStatus()
 
 bool CServicenode::IsValidNetAddr()
 {
+    LOCK(cs);
+
     // TODO: regtest is fine with any addresses for now,
     // should probably be a bit smarter if one day we start to implement tests for this
     return Params().NetworkID() == CBaseChainParams::REGTEST ||
@@ -344,6 +370,8 @@ bool CServicenode::IsValidNetAddr()
  */
 std::string CServicenode::GetServices() const
 {
+    LOCK(cs);
+
     auto services = xbridge::App::instance().nodeServices(pubKeyServicenode);
     if (services.empty())
         return "";
@@ -362,6 +390,7 @@ std::string CServicenode::GetServices() const
  */
 bool CServicenode::HasService(const std::string &service) const
 {
+    LOCK(cs);
     return xbridge::App::instance().hasNodeService(pubKeyServicenode, service);
 }
 
@@ -644,7 +673,7 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
         TRY_LOCK(cs_main, lockMain);
         if (!lockMain) {
             // not mnb fault, let it to be checked again later
-            mnodeman.mapSeenServicenodeBroadcast.erase(GetHash());
+            mnodeman.RemoveServicenodeBroadcast(GetHash());
             servicenodeSync.mapSeenSyncMNB.erase(GetHash());
             return false;
         }
@@ -661,7 +690,7 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
     if (GetInputAge(vin) < SERVICENODE_MIN_CONFIRMATIONS) {
         LogPrintf("mnb - Input must have at least %d confirmations\n", SERVICENODE_MIN_CONFIRMATIONS);
         // maybe we miss few blocks, let this mnb to be checked again later
-        mnodeman.mapSeenServicenodeBroadcast.erase(GetHash());
+        mnodeman.RemoveServicenodeBroadcast(GetHash());
         servicenodeSync.mapSeenSyncMNB.erase(GetHash());
         return false;
     }
@@ -819,8 +848,8 @@ bool CServicenodePing::CheckAndUpdate(int& nDos, bool fRequireEnabled)
             //mnodeman.mapSeenServicenodeBroadcast.lastPing is probably outdated, so we'll update it
             CServicenodeBroadcast mnb(*pmn);
             uint256 hash = mnb.GetHash();
-            if (mnodeman.mapSeenServicenodeBroadcast.count(hash)) {
-                mnodeman.mapSeenServicenodeBroadcast[hash].lastPing = *this;
+            if (mnodeman.SeenServicenodeBroadcast(hash)) {
+                mnodeman.UpdateServicenodeBroadcastLastPing(hash, *this);
             }
 
             pmn->Check(true);

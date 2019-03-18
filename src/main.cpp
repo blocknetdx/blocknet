@@ -4482,7 +4482,7 @@ bool static AlreadyHave(const CInv& inv)
     case MSG_SPORK:
         return mapSporks.count(inv.hash);
     case MSG_SERVICENODE_WINNER:
-        if (servicenodePayments.mapServicenodePayeeVotes.count(inv.hash)) {
+        if (servicenodePayments.HasVote(inv.hash)) {
             servicenodeSync.AddedServicenodeWinner(inv.hash);
             return true;
         }
@@ -4512,13 +4512,13 @@ bool static AlreadyHave(const CInv& inv)
         }
         return false;
     case MSG_SERVICENODE_ANNOUNCE:
-        if (mnodeman.mapSeenServicenodeBroadcast.count(inv.hash)) {
+        if (mnodeman.SeenServicenodeBroadcast(inv.hash)) {
             servicenodeSync.AddedServicenodeList(inv.hash);
             return true;
         }
         return false;
     case MSG_SERVICENODE_PING:
-        return mnodeman.mapSeenServicenodePing.count(inv.hash);
+        return mnodeman.SeenServicenodePing(inv.hash);
     }
     // Don't know what it is, just say we already got one
     return true;
@@ -4650,10 +4650,10 @@ void static ProcessGetData(CNode* pfrom)
                     }
                 }
                 if (!pushed && inv.type == MSG_SERVICENODE_WINNER) {
-                    if (servicenodePayments.mapServicenodePayeeVotes.count(inv.hash)) {
+                    if (servicenodePayments.HasVote(inv.hash)) {
                         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                         ss.reserve(1000);
-                        ss << servicenodePayments.mapServicenodePayeeVotes[inv.hash];
+                        ss << servicenodePayments.GetVote(inv.hash);
                         pfrom->PushMessage("mnw", ss);
                         pushed = true;
                     }
@@ -4699,20 +4699,20 @@ void static ProcessGetData(CNode* pfrom)
                 }
 
                 if (!pushed && inv.type == MSG_SERVICENODE_ANNOUNCE) {
-                    if (mnodeman.mapSeenServicenodeBroadcast.count(inv.hash)) {
+                    if (mnodeman.SeenServicenodeBroadcast(inv.hash)) {
                         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                         ss.reserve(1000);
-                        ss << mnodeman.mapSeenServicenodeBroadcast[inv.hash];
+                        ss << mnodeman.GetServicenodeBroadcast(inv.hash);
                         pfrom->PushMessage("mnb", ss);
                         pushed = true;
                     }
                 }
 
                 if (!pushed && inv.type == MSG_SERVICENODE_PING) {
-                    if (mnodeman.mapSeenServicenodePing.count(inv.hash)) {
+                    if (mnodeman.SeenServicenodePing(inv.hash)) {
                         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
                         ss.reserve(1000);
-                        ss << mnodeman.mapSeenServicenodePing[inv.hash];
+                        ss << mnodeman.GetServicenodePing(inv.hash);
                         pfrom->PushMessage("mnp", ss);
                         pushed = true;
                     }
