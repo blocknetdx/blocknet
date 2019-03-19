@@ -52,6 +52,14 @@ public:
 
     // Count peers we've requested the list from
     int RequestedServicenodeAssets;
+    int RequestedServicenodeAssetsLocked() {
+        LOCK(cs);
+        return RequestedServicenodeAssets;
+    };
+    void SetServicenodeAssets(const int & assets) {
+        LOCK(cs);
+        RequestedServicenodeAssets = assets;
+    };
     int RequestedServicenodeAttempt;
 
     // Time when current servicenode asset sync started
@@ -74,6 +82,9 @@ public:
     bool IsBlockchainSynced();
     bool IsServicenodeListSynced() { return RequestedServicenodeAssets > SERVICENODE_SYNC_LIST; }
     void ClearFulfilledRequest();
+
+private:
+    CCriticalSection cs;
 };
 
 #endif
