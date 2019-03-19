@@ -91,8 +91,8 @@ bool IsSporkActive(int nSporkID)
         if (nSporkID == SPORK_17_EXPL_FIX) r = SPORK_17_EXPL_FIX_DEFAULT;
         if (nSporkID == SPORK_18_PROPOSAL_FEE) r = SPORK_18_PROPOSAL_FEE_DEFAULT;
         if (nSporkID == SPORK_18_PROPOSAL_FEE_AMOUNT) r = SPORK_18_PROPOSAL_FEE_AMOUNT_DEFAULT;
-        if (nSporkID == SPORK_19_SNODE_LIST) r = SPORK_19_SNODE_LIST_DEFAULT;
         if (nSporkID == SPORK_20_ONCHAIN_HISTORY) r = SPORK_20_ONCHAIN_HISTORY_DEFAULT;
+        if (nSporkID == SPORK_21_SNODE_PAYMENT) r = SPORK_21_SNODE_PAYMENT_DEFAULT;
 
         if (r == -1) LogPrintf("GetSpork::Unknown Spork %d\n", nSporkID);
     }
@@ -121,8 +121,8 @@ int64_t GetSporkValue(int nSporkID)
         if (nSporkID == SPORK_17_EXPL_FIX) r = SPORK_17_EXPL_FIX_DEFAULT;
         if (nSporkID == SPORK_18_PROPOSAL_FEE) r = SPORK_18_PROPOSAL_FEE_DEFAULT;
         if (nSporkID == SPORK_18_PROPOSAL_FEE_AMOUNT) r = SPORK_18_PROPOSAL_FEE_AMOUNT_DEFAULT;
-        if (nSporkID == SPORK_19_SNODE_LIST) r = SPORK_19_SNODE_LIST_DEFAULT;
         if (nSporkID == SPORK_20_ONCHAIN_HISTORY) r = SPORK_20_ONCHAIN_HISTORY_DEFAULT;
+        if (nSporkID == SPORK_21_SNODE_PAYMENT) r = SPORK_21_SNODE_PAYMENT_DEFAULT;
 
         if (r == -1) LogPrintf("GetSpork::Unknown Spork %d\n", nSporkID);
     }
@@ -270,8 +270,8 @@ int CSporkManager::GetSporkIDByName(std::string strName)
     if (strName == "SPORK_17_EXPL_FIX") return SPORK_17_EXPL_FIX;
     if (strName == "SPORK_18_PROPOSAL_FEE") return SPORK_18_PROPOSAL_FEE;
     if (strName == "SPORK_18_PROPOSAL_FEE_AMOUNT") return SPORK_18_PROPOSAL_FEE_AMOUNT;
-    if (strName == "SPORK_19_SNODE_LIST") return SPORK_19_SNODE_LIST;
     if (strName == "SPORK_20_ONCHAIN_HISTORY") return SPORK_20_ONCHAIN_HISTORY;
+    if (strName == "SPORK_21_SNODE_PAYMENT") return SPORK_21_SNODE_PAYMENT;
 
     return -1;
 }
@@ -290,8 +290,8 @@ std::string CSporkManager::GetSporkNameByID(int id)
     if (id == SPORK_17_EXPL_FIX) return "SPORK_17_EXPL_FIX";
     if (id == SPORK_18_PROPOSAL_FEE) return "SPORK_18_PROPOSAL_FEE";
     if (id == SPORK_18_PROPOSAL_FEE_AMOUNT) return "SPORK_18_PROPOSAL_FEE_AMOUNT";
-    if (id == SPORK_19_SNODE_LIST) return "SPORK_19_SNODE_LIST";
     if (id == SPORK_20_ONCHAIN_HISTORY) return "SPORK_20_ONCHAIN_HISTORY";
+    if (id == SPORK_21_SNODE_PAYMENT) return "SPORK_21_SNODE_PAYMENT";
 
     return "Unknown";
 }

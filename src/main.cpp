@@ -1685,7 +1685,7 @@ int64_t GetBlockValue(int nHeight)
 
 }
 
-int64_t GetServicenodePayment(int nHeight, int64_t blockValue, int nServicenodeCount)
+int64_t GetServicenodePayment(int nHeight, int64_t blockValue)
 {
     int64_t ret = 0;
 
