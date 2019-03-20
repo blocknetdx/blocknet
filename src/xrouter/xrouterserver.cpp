@@ -305,7 +305,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
 
             try {
                 CAmount cmdFee = fee;
-                if (command == xrFetchReply)
+                if (command == xrGetReply)
                     cmdFee = getQueryFee(uuid);
 
                 int rateLimit = app.xrSettings()->clientRequestLimit(command, service);
@@ -366,7 +366,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
 //                    reply = processConvertTimeToBlockCount(packet, offset, currency);
                     break;
-                case xrFetchReply:
+                case xrGetReply:
                     reply = processFetchReply(uuid);
                     break;
                 case xrSendTransaction:

@@ -156,7 +156,7 @@ public:
     std::string processServiceCall(const std::string & name, const std::vector<std::string> & params);
     
     /**
-     * @brief process xrFetchReply call on service node side
+     * @brief process xrGetReply call on service node side
      * @param uuid query UUID
      * @return stored reply
      */

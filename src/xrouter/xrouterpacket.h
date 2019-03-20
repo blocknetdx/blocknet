@@ -31,7 +31,7 @@ enum XRouterCommand
 {
     xrInvalid                        = 0,
     xrReply                          = 1,
-    xrFetchReply                     = 2,
+    xrGetReply                     = 2,
     xrGetConfig                      = 3,
     xrConfigReply                    = 4,
 
@@ -59,7 +59,7 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
     {
         case xrInvalid                    : return "xrInvalid";
         case xrReply                      : return "xrReply";
-        case xrFetchReply                 : return "xrFetchReply";
+        case xrGetReply                 : return "xrGetReply";
         case xrGetConfig                  : return "xrGetConfig";
         case xrConfigReply                : return "xrConfigReply";
         case xrGetBlockCount              : return "xrGetBlockCount";
@@ -86,7 +86,7 @@ inline bool XRouterCommand_IsValid(const char* c)
 {
     return XRouterCommand_ToString(xrInvalid)                    == c ||
            XRouterCommand_ToString(xrReply)                      == c ||
-           XRouterCommand_ToString(xrFetchReply)                 == c ||
+           XRouterCommand_ToString(xrGetReply)                 == c ||
            XRouterCommand_ToString(xrGetConfig)                  == c ||
            XRouterCommand_ToString(xrConfigReply)                == c ||
            XRouterCommand_ToString(xrGetBlockCount)              == c ||
