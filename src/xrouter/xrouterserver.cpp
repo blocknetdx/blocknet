@@ -320,7 +320,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 // Spend client payment if supported command
                 switch (command) {
                     case xrGetBalance:
-                    case xrGetBlockForTime:
+                    case xrGetBlockAtTime:
                         break; // commands not supported, do not charge client
                     default: {
                         if (!processPayment(node, feetx, cmdFee)) {
@@ -360,7 +360,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 case xrGetTxBloomFilter:
                     reply = processGetTransactionsBloomFilter(packet, offset, service);
                     break;
-                case xrGetBlockForTime:
+                case xrGetBlockAtTime:
                     throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
                     //reply = processConvertTimeToBlockCount(packet, offset, currency);
                     break;
@@ -909,7 +909,7 @@ void XRouterServer::runPerformanceTests() {
         diff = std::chrono::system_clock::now() - time;
         TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
         
-        TESTLOG() << "xrGetBlockForTime";
+        TESTLOG() << "xrGetBlockAtTime";
         time = std::chrono::system_clock::now();
         conn->convertTimeToBlockCount("1241469643");
         diff = std::chrono::system_clock::now() - time;

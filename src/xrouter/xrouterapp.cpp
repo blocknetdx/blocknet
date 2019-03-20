@@ -945,7 +945,7 @@ std::string App::getTransactionsBloomFilter(std::string & uuidRet, const std::st
 
 std::string App::convertTimeToBlockCount(std::string & uuidRet, const std::string& currency, const int & confirmations, std::string time) {
 
-    return this->xrouterCall(xrGetBlockForTime, uuidRet, currency, confirmations, { time });
+    return this->xrouterCall(xrGetBlockAtTime, uuidRet, currency, confirmations, { time });
 }
 
 std::string App::sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction)

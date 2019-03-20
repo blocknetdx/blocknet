@@ -511,10 +511,10 @@ Value xrStatus(const Array & params, bool fHelp)
     return reply;
 }
 
-Value xrGetBlockForTime(const Array & params, bool fHelp)
+Value xrGetBlockAtTime(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlockForTime currency timestamp [servicenode_consensus_number]\nGet the block count at specified time.");
+        throw std::runtime_error("xrGetBlockAtTime currency timestamp [servicenode_consensus_number]\nGet the block count at specified time.");
     }
 
     return "This function is not implemented yet";
