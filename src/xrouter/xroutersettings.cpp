@@ -245,6 +245,8 @@ int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string currency, 
 }
 
 int XRouterSettings::confirmations(XRouterCommand c, std::string currency, int def) {
+    if (def > 1) // user requested consensus takes precedence
+        return def;
     auto res = get<int>("Main.consensus", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".consensus", res);
     if (!currency.empty())

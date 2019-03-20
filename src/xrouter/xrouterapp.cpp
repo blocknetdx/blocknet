@@ -763,7 +763,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         }
 
         // Confirmations
-        auto confs = std::max(xrsettings->confirmations(command, service, XROUTER_DEFAULT_CONFIRMATIONS), confirmations);
+        auto confs = xrsettings->confirmations(command, service, confirmations);
         const auto fqService = buildCommandKey(service, XRouterCommand_ToString(command));
 
         // Open connections (at least number equal to how many confirmations we want)
