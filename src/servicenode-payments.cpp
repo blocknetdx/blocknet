@@ -284,7 +284,7 @@ void CServicenodePayments::FillBlockPayee(CMutableTransaction& txNew, int64_t /*
 
     if (!GetPayeeScript(pindexPrev->nHeight + 1, payee)) {
         //no servicenode detected
-        CServicenode* winningNode = mnodeman.GetCurrentServiceNode(1);
+        auto winningNode = mnodeman.GetCurrentServiceNode(1);
         if (winningNode) {
             payee = GetScriptForDestination(winningNode->pubKeyCollateralAddress.GetID());
         } else {
@@ -345,7 +345,9 @@ void CServicenodePayments::ProcessMessageServicenodePayments(CNode* pfrom, std::
         if (Params().NetworkID() == CBaseChainParams::MAIN) {
             if (pfrom->HasFulfilledRequest("mnget")) {
                 LogPrintf("mnget - peer already asked me for the list\n");
-                Misbehaving(pfrom->GetId(), 20);
+                TRY_LOCK(cs_main, locked);
+                if (locked)
+                    Misbehaving(pfrom->GetId(), 20);
                 return;
             }
         }
@@ -392,7 +394,11 @@ void CServicenodePayments::ProcessMessageServicenodePayments(CNode* pfrom, std::
 
         if (!winner.SignatureValid()) {
             // LogPrintf("mnw - invalid signature\n");
-            if (servicenodeSync.IsSynced()) Misbehaving(pfrom->GetId(), 20);
+            if (servicenodeSync.IsSynced()) {
+                TRY_LOCK(cs_main, locked);
+                if (locked)
+                    Misbehaving(pfrom->GetId(), 20);
+            }
             // it could just be a non-synced servicenode
             mnodeman.AskForMN(pfrom, winner.vinServicenode);
             return;
@@ -446,10 +452,8 @@ bool CServicenodePayments::GetPayeeScript(int nBlockHeight, CScript & payee)
 
 // Is this servicenode scheduled to get paid soon?
 // -- Only look ahead up to 8 blocks to allow for propagation of the latest 2 winners
-bool CServicenodePayments::IsScheduled(CServicenode& mn, int nNotBlockHeight)
+bool CServicenodePayments::IsScheduled(CServicenodePtr mn, int nNotBlockHeight)
 {
-    LOCK(cs);
-
     int nHeight;
     {
         TRY_LOCK(cs_main, locked);
@@ -457,8 +461,10 @@ bool CServicenodePayments::IsScheduled(CServicenode& mn, int nNotBlockHeight)
         nHeight = chainActive.Tip()->nHeight;
     }
 
+    LOCK(cs);
+
     CScript mnpayee;
-    mnpayee = GetScriptForDestination(mn.pubKeyCollateralAddress.GetID());
+    mnpayee = GetScriptForDestination(mn->pubKeyCollateralAddress.GetID());
 
     CScript payee;
     for (int64_t h = nHeight; h <= nHeight + 8; h++) {
@@ -588,7 +594,7 @@ bool CServicenodePayments::IsTransactionValid(const CTransaction& txNew, int nBl
 {
     if (IsSporkActive(SPORK_21_SNODE_PAYMENT)) { // enforce snode payments
         std::map<CScript, bool> eligibleSnodes;
-        auto snodes = mnodeman.GetFullServicenodeVector();
+        auto snodes = mnodeman.CheckAndCopyServicenodes();
         EligibleServicenodes(true, nBlockHeight, snodes, eligibleSnodes); // find all eligible snodes
 
         CAmount nReward = GetBlockValue(nBlockHeight);
@@ -610,38 +616,38 @@ bool CServicenodePayments::IsTransactionValid(const CTransaction& txNew, int nBl
     return true;
 }
 
-bool CServicenodePayments::ValidNode(CServicenode & mn, const bool & fFilterSigTime, const int & nMnCount)
+bool CServicenodePayments::ValidNode(CServicenodePtr mn, const bool & fFilterSigTime, const int & nMnCount)
 {
-    mn.Check();
+    mn->Check();
 
-    if (!mn.IsEnabled())
+    if (!mn->IsEnabled())
         return false;
 
     // //check protocol version
-    if (mn.protocolVersion < GetMinServicenodePaymentsProto())
+    if (mn->protocolVersion < GetMinServicenodePaymentsProto())
         return false;
 
-    if (fFilterSigTime && mn.sigTime + SERVICENODE_DELAY_SECONDS > GetAdjustedTime())
+    if (fFilterSigTime && mn->sigTime + SERVICENODE_DELAY_SECONDS > GetAdjustedTime())
         return false;
 
     // make sure it has as many confirmations as there are servicenodes
-    if (mn.GetServicenodeInputAge() < nMnCount)
+    if (mn->GetServicenodeInputAge() < nMnCount)
         return false;
 
     return true;
 }
 
 void CServicenodePayments::EligibleServicenodes(const bool fFilterSigTime, const int & nBlockHeight,
-                                                std::vector<CServicenode> & snodes,
+                                                std::vector<CServicenodePtr> & snodes,
                                                 std::map<CScript, bool> & eligibleSnodes)
 {
     int nMnCount = mnodeman.CountEnabled();
 
-    for (auto & mn : snodes) {
+    for (auto mn : snodes) {
         if (!ValidNode(mn, fFilterSigTime, nMnCount))
             continue;
 
-        eligibleSnodes[GetScriptForDestination(mn.pubKeyCollateralAddress.GetID())] = true;
+        eligibleSnodes[GetScriptForDestination(mn->pubKeyCollateralAddress.GetID())] = true;
     }
 
     int nCount = static_cast<int>(eligibleSnodes.size());
@@ -655,8 +661,6 @@ void CServicenodePayments::EligibleServicenodes(const bool fFilterSigTime, const
 
 void CServicenodePayments::CleanPaymentList()
 {
-    LOCK(cs);
-
     int nHeight;
     {
         TRY_LOCK(cs_main, locked);
@@ -667,7 +671,9 @@ void CServicenodePayments::CleanPaymentList()
     //keep up to five cycles for historical sake
     int nLimit = std::max(int(mnodeman.size() * 1.25), 1000);
 
-    std::map<uint256, CServicenodePaymentWinner>::iterator it = mapServicenodePayeeVotes.begin();
+    LOCK(cs);
+
+    auto it = mapServicenodePayeeVotes.begin();
     while (it != mapServicenodePayeeVotes.end()) {
         CServicenodePaymentWinner winner = (*it).second;
 
@@ -684,7 +690,7 @@ void CServicenodePayments::CleanPaymentList()
 
 bool CServicenodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
 {
-    CServicenode* pmn = mnodeman.Find(vinServicenode);
+    auto pmn = mnodeman.Find(vinServicenode);
 
     if (!pmn) {
         strError = strprintf("Unknown Servicenode %s", vinServicenode.prevout.hash.ToString());
@@ -733,7 +739,10 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
         return false;
     }
 
-    if (nBlockHeight <= nLastBlockHeight) return false;
+    {
+        LOCK(cs);
+        if (nBlockHeight <= nLastBlockHeight) return false;
+    }
 
     CServicenodePaymentWinner newWinner(activeServicenode.vin);
 
@@ -744,9 +753,9 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
 
         // pay to the oldest MN that still had no payment but its input is old enough and it was active long enough
         int nCount = 0;
-        CServicenode* pmn = mnodeman.GetNextServicenodeInQueueForPayment(nBlockHeight, true, nCount);
+        auto pmn = mnodeman.GetNextServicenodeInQueueForPayment(nBlockHeight, true, nCount);
 
-        if (pmn != NULL) {
+        if (pmn != nullptr) {
             LogPrint("mnpayments", "CServicenodePayments::ProcessBlock() Found by FindOldestNotInVec \n");
 
             newWinner.nBlockHeight = nBlockHeight;
@@ -779,6 +788,7 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
 
         if (AddWinningServicenode(newWinner)) {
             newWinner.Relay();
+            LOCK(cs);
             nLastBlockHeight = nBlockHeight;
             return true;
         }
@@ -795,9 +805,9 @@ void CServicenodePaymentWinner::Relay()
 
 bool CServicenodePaymentWinner::SignatureValid()
 {
-    CServicenode* pmn = mnodeman.Find(vinServicenode);
+    auto pmn = mnodeman.Find(vinServicenode);
 
-    if (pmn != NULL) {
+    if (pmn != nullptr) {
         std::string strMessage = vinServicenode.prevout.ToStringShort() +
                                  boost::lexical_cast<std::string>(nBlockHeight) +
                                  payee.ToString();
@@ -815,8 +825,6 @@ bool CServicenodePaymentWinner::SignatureValid()
 
 void CServicenodePayments::Sync(CNode* node, int nCountNeeded)
 {
-    LOCK(cs);
-
     int nHeight;
     {
         TRY_LOCK(cs_main, locked);
@@ -824,19 +832,24 @@ void CServicenodePayments::Sync(CNode* node, int nCountNeeded)
         nHeight = chainActive.Tip()->nHeight;
     }
 
-    int nCount = (mnodeman.CountEnabled() * 1.25);
+    int nCount = static_cast<int>(mnodeman.CountEnabled() * 1.25);
     if (nCountNeeded > nCount) nCountNeeded = nCount;
-
     int nInvCount = 0;
-    std::map<uint256, CServicenodePaymentWinner>::iterator it = mapServicenodePayeeVotes.begin();
-    while (it != mapServicenodePayeeVotes.end()) {
-        CServicenodePaymentWinner winner = (*it).second;
+
+    std::vector<CServicenodePaymentWinner> winners;
+    {
+        LOCK(cs);
+        for (const auto & item : mapServicenodePayeeVotes)
+            winners.push_back(item.second);
+    }
+
+    for (auto & winner : winners) {
         if (winner.nBlockHeight >= nHeight - nCountNeeded && winner.nBlockHeight <= nHeight + 20) {
             node->PushInventory(CInv(MSG_SERVICENODE_WINNER, winner.GetHash()));
             nInvCount++;
         }
-        ++it;
     }
+
     node->PushMessage("ssc", SERVICENODE_SYNC_MNW, nInvCount);
 }
 
@@ -858,7 +871,7 @@ int CServicenodePayments::GetOldestBlock()
 
     int nOldestBlock = std::numeric_limits<int>::max();
 
-    std::map<int, CServicenodeBlockPayees>::iterator it = mapServicenodeBlocks.begin();
+    auto it = mapServicenodeBlocks.begin();
     while (it != mapServicenodeBlocks.end()) {
         if ((*it).first < nOldestBlock) {
             nOldestBlock = (*it).first;
@@ -876,7 +889,7 @@ int CServicenodePayments::GetNewestBlock()
 
     int nNewestBlock = 0;
 
-    std::map<int, CServicenodeBlockPayees>::iterator it = mapServicenodeBlocks.begin();
+    auto it = mapServicenodeBlocks.begin();
     while (it != mapServicenodeBlocks.end()) {
         if ((*it).first > nNewestBlock) {
             nNewestBlock = (*it).first;

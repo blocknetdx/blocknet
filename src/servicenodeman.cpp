@@ -197,19 +197,19 @@ CServicenodeMan::CServicenodeMan()
     nDsqCount = 0;
 }
 
-bool CServicenodeMan::Add(CServicenode& mn)
+bool CServicenodeMan::Add(CServicenodePtr mn)
 {
-    if (!mn.IsEnabled())
+    if (!mn->IsEnabled())
         return false;
 
-    CServicenode* pmn = Find(mn.vin);
+    CServicenodePtr pmn = Find(mn->vin);
     {
-    LOCK(cs);
-    if (pmn == NULL) {
-        LogPrint("servicenode", "CServicenodeMan: Adding new Servicenode %s - %i now\n", mn.vin.prevout.hash.ToString(), vServicenodes.size() + 1);
-        vServicenodes.push_back(mn);
-        return true;
-    }
+        LOCK(cs);
+        if (pmn == nullptr) {
+            LogPrint("servicenode", "CServicenodeMan: Adding new Servicenode %s - %i now\n", mn->vin.prevout.hash.ToString(), vServicenodes.size() + 1);
+            vServicenodes.push_back(mn);
+            return true;
+        }
     }
 
     return false;
@@ -217,18 +217,21 @@ bool CServicenodeMan::Add(CServicenode& mn)
 
 void CServicenodeMan::AskForMN(CNode* pnode, CTxIn& vin)
 {
+    {
     LOCK(cs);
-
     std::map<COutPoint, int64_t>::iterator i = mWeAskedForServicenodeListEntry.find(vin.prevout);
     if (i != mWeAskedForServicenodeListEntry.end()) {
         int64_t t = (*i).second;
         if (GetTime() < t) return; // we've asked recently
+    }
     }
 
     // ask for the mnb info once from the node that sent mnp
 
     LogPrint("servicenode", "CServicenodeMan::AskForMN - Asking node for missing entry, vin: %s\n", vin.prevout.hash.ToString());
     pnode->PushMessage("dseg", vin);
+
+    LOCK(cs);
     int64_t askAgain = GetTime() + SERVICENODE_MIN_MNP_SECONDS;
     mWeAskedForServicenodeListEntry[vin.prevout] = askAgain;
 }
@@ -236,7 +239,7 @@ void CServicenodeMan::AskForMN(CNode* pnode, CTxIn& vin)
 void CServicenodeMan::Check()
 {
     auto snodes = CopyServicenodes();
-    for (CServicenode *mn : snodes)
+    for (auto mn : snodes)
         mn->Check();
 }
 
@@ -247,20 +250,20 @@ void CServicenodeMan::CheckAndRemove(bool forceExpiredRemoval)
     LOCK(cs);
 
     //remove inactive and outdated
-    vector<CServicenode>::iterator it = vServicenodes.begin();
+    auto it = vServicenodes.begin();
     while (it != vServicenodes.end()) {
-        if ((*it).activeState == CServicenode::SERVICENODE_REMOVE ||
-            (*it).activeState == CServicenode::SERVICENODE_VIN_SPENT ||
-            (forceExpiredRemoval && (*it).activeState == CServicenode::SERVICENODE_EXPIRED) ||
-            (*it).protocolVersion < servicenodePayments.GetMinServicenodePaymentsProto()) {
-            LogPrint("servicenode", "CServicenodeMan: Removing inactive Servicenode %s - %i now\n", (*it).vin.prevout.hash.ToString(), vServicenodes.size() - 1);
+        if ((*it)->activeState == CServicenode::SERVICENODE_REMOVE ||
+            (*it)->activeState == CServicenode::SERVICENODE_VIN_SPENT ||
+            (forceExpiredRemoval && (*it)->activeState == CServicenode::SERVICENODE_EXPIRED) ||
+            (*it)->protocolVersion < servicenodePayments.GetMinServicenodePaymentsProto()) {
+            LogPrint("servicenode", "CServicenodeMan: Removing inactive Servicenode %s - %i now\n", (*it)->vin.prevout.hash.ToString(), vServicenodes.size() - 1);
 
             //erase all of the broadcasts we've seen from this vin
             // -- if we missed a few pings and the node was removed, this will allow is to get it back without them
             //    sending a brand new mnb
-            map<uint256, CServicenodeBroadcast>::iterator it3 = mapSeenServicenodeBroadcast.begin();
+            auto it3 = mapSeenServicenodeBroadcast.begin();
             while (it3 != mapSeenServicenodeBroadcast.end()) {
-                if ((*it3).second.vin == (*it).vin) {
+                if ((*it3).second.vin == (*it)->vin) {
                     servicenodeSync.mapSeenSyncMNB.erase((*it3).first);
                     mapSeenServicenodeBroadcast.erase(it3++);
                 } else {
@@ -269,9 +272,9 @@ void CServicenodeMan::CheckAndRemove(bool forceExpiredRemoval)
             }
 
             // allow us to ask for this servicenode again if we see another ping
-            map<COutPoint, int64_t>::iterator it2 = mWeAskedForServicenodeListEntry.begin();
+            auto it2 = mWeAskedForServicenodeListEntry.begin();
             while (it2 != mWeAskedForServicenodeListEntry.end()) {
-                if ((*it2).first == (*it).vin.prevout) {
+                if ((*it2).first == (*it)->vin.prevout) {
                     mWeAskedForServicenodeListEntry.erase(it2++);
                 } else {
                     ++it2;
@@ -285,7 +288,7 @@ void CServicenodeMan::CheckAndRemove(bool forceExpiredRemoval)
     }
 
     // check who's asked for the Servicenode list
-    map<CNetAddr, int64_t>::iterator it1 = mAskedUsForServicenodeList.begin();
+    auto it1 = mAskedUsForServicenodeList.begin();
     while (it1 != mAskedUsForServicenodeList.end()) {
         if ((*it1).second < GetTime()) {
             mAskedUsForServicenodeList.erase(it1++);
@@ -305,7 +308,7 @@ void CServicenodeMan::CheckAndRemove(bool forceExpiredRemoval)
     }
 
     // check which Servicenodes we've asked for
-    map<COutPoint, int64_t>::iterator it2 = mWeAskedForServicenodeListEntry.begin();
+    auto it2 = mWeAskedForServicenodeListEntry.begin();
     while (it2 != mWeAskedForServicenodeListEntry.end()) {
         if ((*it2).second < GetTime()) {
             mWeAskedForServicenodeListEntry.erase(it2++);
@@ -315,7 +318,7 @@ void CServicenodeMan::CheckAndRemove(bool forceExpiredRemoval)
     }
 
     // remove expired mapSeenServicenodeBroadcast
-    map<uint256, CServicenodeBroadcast>::iterator it3 = mapSeenServicenodeBroadcast.begin();
+    auto it3 = mapSeenServicenodeBroadcast.begin();
     while (it3 != mapSeenServicenodeBroadcast.end()) {
         if ((*it3).second.lastPing.sigTime < GetTime() - (SERVICENODE_REMOVAL_SECONDS * 2)) {
             mapSeenServicenodeBroadcast.erase(it3++);
@@ -326,7 +329,7 @@ void CServicenodeMan::CheckAndRemove(bool forceExpiredRemoval)
     }
 
     // remove expired mapSeenServicenodePing
-    map<uint256, CServicenodePing>::iterator it4 = mapSeenServicenodePing.begin();
+    auto it4 = mapSeenServicenodePing.begin();
     while (it4 != mapSeenServicenodePing.end()) {
         if ((*it4).second.sigTime < GetTime() - (SERVICENODE_REMOVAL_SECONDS * 2)) {
             mapSeenServicenodePing.erase(it4++);
@@ -354,7 +357,7 @@ int CServicenodeMan::CountEnabled(int protocolVersion)
     protocolVersion = protocolVersion == -1 ? servicenodePayments.GetMinServicenodePaymentsProto() : protocolVersion;
 
     auto snodes = CopyServicenodes();
-    for (CServicenode *mn : snodes) {
+    for (auto mn : snodes) {
         mn->Check();
         if (mn->protocolVersion < protocolVersion || !mn->IsEnabled()) continue;
         i++;
@@ -365,11 +368,10 @@ int CServicenodeMan::CountEnabled(int protocolVersion)
 
 void CServicenodeMan::DsegUpdate(CNode* pnode)
 {
-    LOCK(cs);
-
     if (Params().NetworkID() == CBaseChainParams::MAIN) {
         if (!(pnode->addr.IsRFC1918() || pnode->addr.IsLocal())) {
-            std::map<CNetAddr, int64_t>::iterator it = mWeAskedForServicenodeList.find(pnode->addr);
+            LOCK(cs);
+            auto it = mWeAskedForServicenodeList.find(pnode->addr);
             if (it != mWeAskedForServicenodeList.end()) {
                 if (GetTime() < (*it).second) {
                     LogPrint("servicenode", "dseg - we already asked peer %i for the list; skipping...\n", pnode->GetId());
@@ -380,52 +382,54 @@ void CServicenodeMan::DsegUpdate(CNode* pnode)
     }
 
     pnode->PushMessage("dseg", CTxIn());
+
+    LOCK(cs);
     int64_t askAgain = GetTime() + SERVICENODES_DSEG_SECONDS;
     mWeAskedForServicenodeList[pnode->addr] = askAgain;
 }
 
-CServicenode* CServicenodeMan::Find(const CScript& payee)
+CServicenodePtr CServicenodeMan::Find(const CScript& payee)
 {
     LOCK(cs);
+
     CScript payee2;
-
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        payee2 = GetScriptForDestination(mn.pubKeyCollateralAddress.GetID());
+    for (auto mn : vServicenodes) {
+        payee2 = GetScriptForDestination(mn->pubKeyCollateralAddress.GetID());
         if (payee2 == payee)
-            return &mn;
+            return mn;
     }
-    return NULL;
+    return nullptr;
 }
 
-CServicenode* CServicenodeMan::Find(const CTxIn& vin)
+CServicenodePtr CServicenodeMan::Find(const CTxIn& vin)
 {
     LOCK(cs);
 
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        if (mn.vin.prevout == vin.prevout)
-            return &mn;
+    for (auto mn : vServicenodes) {
+        if (mn->vin.prevout == vin.prevout)
+            return mn;
     }
-    return NULL;
+    return nullptr;
 }
 
 
-CServicenode* CServicenodeMan::Find(const CPubKey& pubKeyServicenode)
+CServicenodePtr CServicenodeMan::Find(const CPubKey& pubKeyServicenode)
 {
     LOCK(cs);
 
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        if (mn.pubKeyServicenode == pubKeyServicenode)
-            return &mn;
+    for (auto mn : vServicenodes) {
+        if (mn->pubKeyServicenode == pubKeyServicenode)
+            return mn;
     }
-    return NULL;
+    return nullptr;
 }
 
 //
 // Deterministically select the oldest/best servicenode to pay on the network
 //
-CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCount)
+CServicenodePtr CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCount)
 {
-    CServicenode* pBestServicenode = NULL;
+    CServicenodePtr pBestServicenode = nullptr;
     std::vector<pair<int64_t, CTxIn> > vecServicenodeLastPaid;
 
     int nMnCount = CountEnabled();
@@ -435,13 +439,13 @@ CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHei
     */
 
     auto snodes = CopyServicenodes();
-    for (CServicenode *mn : snodes) {
-        if (!servicenodePayments.ValidNode(*mn, fFilterSigTime, nMnCount))
+    for (auto mn : snodes) {
+        if (!servicenodePayments.ValidNode(mn, fFilterSigTime, nMnCount))
             continue;
         
-        if (servicenodePayments.IsScheduled(*mn, nBlockHeight)) continue;
+        if (servicenodePayments.IsScheduled(mn, nBlockHeight)) continue;
 
-        vecServicenodeLastPaid.push_back(make_pair(mn->SecondsSincePayment(), mn->vin));
+        vecServicenodeLastPaid.emplace_back(mn->SecondsSincePayment(), mn->vin);
     }
 
     nCount = (int)vecServicenodeLastPaid.size();
@@ -460,7 +464,7 @@ CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHei
     int nCountTenth = 0;
     uint256 nHigh = 0;
     BOOST_FOREACH (PAIRTYPE(int64_t, CTxIn) & s, vecServicenodeLastPaid) {
-        CServicenode* pmn = Find(s.second);
+        auto pmn = Find(s.second);
         if (!pmn) break;
 
         uint256 n = pmn->CalculateScore(1, nBlockHeight - 100);
@@ -474,7 +478,7 @@ CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHei
     return pBestServicenode;
 }
 
-CServicenode* CServicenodeMan::FindRandomNotInVec(std::vector<CTxIn>& vecToExclude, int protocolVersion)
+CServicenodePtr CServicenodeMan::FindRandomNotInVec(std::vector<CTxIn>& vecToExclude, int protocolVersion)
 {
     protocolVersion = protocolVersion == -1 ? servicenodePayments.GetMinServicenodePaymentsProto() : protocolVersion;
 
@@ -487,7 +491,7 @@ CServicenode* CServicenodeMan::FindRandomNotInVec(std::vector<CTxIn>& vecToExclu
     bool found;
 
     auto snodes = CopyServicenodes();
-    for (CServicenode *mn : snodes) {
+    for (auto mn : snodes) {
         if (mn->protocolVersion < protocolVersion || !mn->IsEnabled()) continue;
         found = false;
         BOOST_FOREACH (CTxIn& usedVin, vecToExclude) {
@@ -505,24 +509,25 @@ CServicenode* CServicenodeMan::FindRandomNotInVec(std::vector<CTxIn>& vecToExclu
     return NULL;
 }
 
-CServicenode* CServicenodeMan::GetCurrentServiceNode(int mod, int64_t nBlockHeight, int minProtocol)
+CServicenodePtr CServicenodeMan::GetCurrentServiceNode(int mod, int64_t nBlockHeight, int minProtocol)
 {
     int64_t score = 0;
-    CServicenode* winner = NULL;
+    CServicenodePtr winner = NULL;
 
     // scan for winner
-    BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        mn.Check();
-        if (mn.protocolVersion < minProtocol || !mn.IsEnabled()) continue;
+    auto snodes = CopyServicenodes();
+    for (auto mn : snodes) {
+        mn->Check();
+        if (mn->protocolVersion < minProtocol || !mn->IsEnabled()) continue;
 
         // calculate the score for each Servicenode
-        uint256 n = mn.CalculateScore(mod, nBlockHeight);
+        uint256 n = mn->CalculateScore(mod, nBlockHeight);
         int64_t n2 = n.GetCompact(false);
 
         // determine the winner
         if (n2 > score) {
             score = n2;
-            winner = &mn;
+            winner = mn;
         }
     }
 
@@ -539,7 +544,7 @@ int CServicenodeMan::GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, 
 
     // scan for winner
     auto snodes = CopyServicenodes();
-    for (CServicenode *mn : snodes) {
+    for (auto mn : snodes) {
         if (mn->protocolVersion < minProtocol) {
             if (fDebug)
                 LogPrintf("Skipping Servicenode %s with obsolete version: %d)\n", mn->vin.prevout.hash.ToString(), mn->protocolVersion);
@@ -589,7 +594,7 @@ std::vector<pair<int, CServicenode> > CServicenodeMan::GetServicenodeRanks(int64
     if (!GetBlockHash(hash, nBlockHeight)) return vecServicenodeRanks;
 
     auto snodes = CopyServicenodes();
-    for (CServicenode *mn : snodes) {
+    for (auto mn : snodes) {
         mn->Check();
 
         if (mn->protocolVersion < minProtocol) continue;
@@ -616,13 +621,13 @@ std::vector<pair<int, CServicenode> > CServicenodeMan::GetServicenodeRanks(int64
     return vecServicenodeRanks;
 }
 
-CServicenode* CServicenodeMan::GetServicenodeByRank(int nRank, int64_t nBlockHeight, int minProtocol, bool fOnlyActive)
+CServicenodePtr CServicenodeMan::GetServicenodeByRank(int nRank, int64_t nBlockHeight, int minProtocol, bool fOnlyActive)
 {
     std::vector<pair<int64_t, CTxIn> > vecServicenodeScores;
 
     // scan for winner
     auto snodes = CopyServicenodes();
-    for (CServicenode *mn : snodes) {
+    for (auto mn : snodes) {
         if (mn->protocolVersion < minProtocol) continue;
         if (fOnlyActive) {
             mn->Check();
@@ -669,22 +674,25 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
     if (fLiteMode) return; //disable all Obfuscation/Servicenode related functionality
     if (!servicenodeSync.IsBlockchainSynced()) return;
 
-    if (strCommand == "mnb") { //Servicenode Broadcast
-        LOCK2(cs_process_message, cs);
+    LOCK(cs_process_message);
 
+    if (strCommand == "mnb") { //Servicenode Broadcast
         CServicenodeBroadcast mnb;
         vRecv >> mnb;
 
-        if (mapSeenServicenodeBroadcast.count(mnb.GetHash())) { //seen
+        if (SeenServicenodeBroadcast(mnb.GetHash())) { //seen
             servicenodeSync.AddedServicenodeList(mnb.GetHash());
             return;
         }
-        mapSeenServicenodeBroadcast.insert(make_pair(mnb.GetHash(), mnb));
+        AddServicenodeBroadcast(mnb.GetHash(), mnb);
 
         int nDoS = 0;
         if (!mnb.CheckAndUpdate(nDoS)) {
-            if (nDoS > 0)
-                Misbehaving(pfrom->GetId(), nDoS);
+            if (nDoS > 0) {
+                TRY_LOCK(cs_main, locked);
+                if (locked)
+                    Misbehaving(pfrom->GetId(), nDoS);
+            }
 
             //failed
             return;
@@ -694,7 +702,9 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
         //  - this is expensive, so it's only done once per Servicenode
         if (!obfuScationSigner.IsVinAssociatedWithPubkey(mnb.vin, mnb.pubKeyCollateralAddress)) {
             LogPrintf("mnb - Got mismatched pubkey and vin\n");
-            Misbehaving(pfrom->GetId(), 33);
+            TRY_LOCK(cs_main, locked);
+            if (locked)
+                Misbehaving(pfrom->GetId(), 33);
             return;
         }
 
@@ -707,33 +717,36 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
         } else {
             LogPrintf("mnb - Rejected Servicenode entry %s\n", mnb.vin.prevout.hash.ToString());
 
-            if (nDoS > 0)
-                Misbehaving(pfrom->GetId(), nDoS);
+            if (nDoS > 0) {
+                TRY_LOCK(cs_main, locked);
+                if (locked)
+                    Misbehaving(pfrom->GetId(), nDoS);
+            }
         }
     }
 
     else if (strCommand == "mnp") { //Servicenode Ping
-        LOCK2(cs_process_message, cs);
-
         CServicenodePing mnp;
         vRecv >> mnp;
 
         LogPrint("servicenode", "mnp - Servicenode ping, vin: %s\n", mnp.vin.prevout.hash.ToString());
 
-        if (mapSeenServicenodePing.count(mnp.GetHash())) return; //seen
-        mapSeenServicenodePing.insert(make_pair(mnp.GetHash(), mnp));
+        if (SeenServicenodePing(mnp.GetHash())) return; //seen
+        AddServicenodePing(mnp.GetHash(), mnp);
 
         int nDoS = 0;
         if (mnp.CheckAndUpdate(nDoS)) return;
 
         if (nDoS > 0) {
             // if anything significant failed, mark that node
-            Misbehaving(pfrom->GetId(), nDoS);
+            TRY_LOCK(cs_main, locked);
+            if (locked)
+                Misbehaving(pfrom->GetId(), nDoS);
         } else {
             // if nothing significant failed, search existing Servicenode list
-            CServicenode* pmn = Find(mnp.vin);
+            auto pmn = Find(mnp.vin);
             // if it's known, don't ask for the mnb, just return
-            if (pmn != NULL) return;
+            if (pmn != nullptr) return;
         }
 
         // something significant is broken or mn is unknown,
@@ -741,8 +754,6 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
         AskForMN(pfrom, mnp.vin);
 
     } else if (strCommand == "dseg") { //Get Servicenode list or specific entry
-        LOCK(cs_process_message);
-
         CTxIn vin;
         vRecv >> vin;
 
@@ -750,13 +761,15 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
             //local network
             bool isLocal = (pfrom->addr.IsRFC1918() || pfrom->addr.IsLocal());
 
-            LOCK(cs);
             if (!isLocal && Params().NetworkID() == CBaseChainParams::MAIN) {
-                std::map<CNetAddr, int64_t>::iterator i = mAskedUsForServicenodeList.find(pfrom->addr);
+                LOCK(cs);
+                auto i = mAskedUsForServicenodeList.find(pfrom->addr);
                 if (i != mAskedUsForServicenodeList.end()) {
                     int64_t t = (*i).second;
                     if (GetTime() < t) {
-                        Misbehaving(pfrom->GetId(), 34);
+                        TRY_LOCK(cs_main, locked);
+                        if (locked)
+                            Misbehaving(pfrom->GetId(), 34);
                         LogPrintf("dseg - peer already asked me for the list\n");
                         return;
                     }
@@ -768,7 +781,7 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
 
         int nInvCount = 0;
         auto snodes = CopyServicenodes();
-        for (CServicenode *mn : snodes) {
+        for (auto mn : snodes) {
             if (mn->addr.IsRFC1918()) continue; //local network
 
             if (mn->IsEnabled()) {
@@ -778,11 +791,8 @@ void CServicenodeMan::ProcessMessage(CNode* pfrom, std::string& strCommand, CDat
                     uint256 hash = mnb.GetHash();
                     pfrom->PushInventory(CInv(MSG_SERVICENODE_ANNOUNCE, hash));
                     nInvCount++;
-                    {
-                        LOCK(cs);
-                        if (!mapSeenServicenodeBroadcast.count(hash))
-                            mapSeenServicenodeBroadcast.insert(make_pair(hash, mnb));
-                    }
+                    if (!SeenServicenodeBroadcast(hash))
+                        AddServicenodeBroadcast(hash, mnb);
                     if (vin == mn->vin) {
                         LogPrint("servicenode", "dseg - Sent 1 Servicenode entry to peer %i\n", pfrom->GetId());
                         return;
@@ -802,10 +812,10 @@ void CServicenodeMan::Remove(CTxIn vin)
 {
     LOCK(cs);
 
-    vector<CServicenode>::iterator it = vServicenodes.begin();
+    auto it = vServicenodes.begin();
     while (it != vServicenodes.end()) {
-        if ((*it).vin == vin) {
-            LogPrint("servicenode", "CServicenodeMan: Removing Servicenode %s - %i now\n", (*it).vin.prevout.hash.ToString(), vServicenodes.size() - 1);
+        if ((*it)->vin == vin) {
+            LogPrint("servicenode", "CServicenodeMan: Removing Servicenode %s - %i now\n", (*it)->vin.prevout.hash.ToString(), vServicenodes.size() - 1);
             vServicenodes.erase(it);
             break;
         }
@@ -819,9 +829,9 @@ void CServicenodeMan::UpdateServicenodeList(CServicenodeBroadcast mnb)
     AddServicenodeBroadcast(mnb.GetHash(), mnb);
     LogPrintf("CServicenodeMan::UpdateServicenodeList -- servicenode=%s\n", mnb.vin.prevout.ToStringShort());
 
-    CServicenode* pmn = Find(mnb.vin);
-    if (pmn == NULL) {
-        CServicenode mn(mnb);
+    auto pmn = Find(mnb.vin);
+    if (pmn == nullptr) {
+        auto mn = std::make_shared<CServicenode>(mnb);
         if (Add(mn)) {
             servicenodeSync.AddedServicenodeList(mnb.GetHash());
         }

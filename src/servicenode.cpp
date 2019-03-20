@@ -612,10 +612,10 @@ bool CServicenodeBroadcast::CheckAndUpdate(int& nDos)
         return false;
 
     //search existing Servicenode list, this is where we update existing Servicenodes with new mnb broadcasts
-    CServicenode* pmn = mnodeman.Find(vin);
+    auto pmn = mnodeman.Find(vin);
 
     // no such servicenode, nothing to update
-    if (pmn == NULL)
+    if (pmn == nullptr)
         return true;
     else {
         // this broadcast older than we have, it's bad.
@@ -651,10 +651,10 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
         return true;
 
     // search existing Servicenode list
-    CServicenode* pmn = mnodeman.Find(vin);
+    auto pmn = mnodeman.Find(vin);
     bool thisSnode = pubKeyServicenode == activeServicenode.pubKeyServicenode && protocolVersion == PROTOCOL_VERSION;
 
-    if (pmn != NULL) {
+    if (pmn != nullptr) {
         // nothing to do here if we already know about this servicenode and it's enabled
         if (pmn->IsEnabled() && !thisSnode) // allow remote activations through
             return true;
@@ -712,7 +712,7 @@ bool CServicenodeBroadcast::CheckInputsAndAdd(int& nDoS)
     }
 
     LogPrintf("mnb - Got NEW Servicenode entry - %s - %lli \n", vin.prevout.hash.ToString(), sigTime);
-    CServicenode mn(*this);
+    auto mn = std::make_shared<CServicenode>(*this);
     mnodeman.Add(mn);
 
     // if it matches our Servicenode privkey, then we've been remotely activated
@@ -809,8 +809,8 @@ bool CServicenodePing::CheckAndUpdate(int& nDos, bool fRequireEnabled)
     LogPrint("servicenode", "CServicenodePing::CheckAndUpdate - New Ping - %s - %lli\n", blockHash.ToString(), sigTime);
 
     // see if we have this Servicenode
-    CServicenode* pmn = mnodeman.Find(vin);
-    if (pmn != NULL && pmn->protocolVersion >= servicenodePayments.GetMinServicenodePaymentsProto()) {
+    auto pmn = mnodeman.Find(vin);
+    if (pmn != nullptr && pmn->protocolVersion >= servicenodePayments.GetMinServicenodePaymentsProto()) {
         if (fRequireEnabled && !pmn->IsEnabled()) return false;
 
         // LogPrintf("mnping - Found corresponding mn for vin: %s\n", vin.ToString());

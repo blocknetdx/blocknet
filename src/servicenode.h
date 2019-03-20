@@ -33,6 +33,7 @@ extern map<int64_t, uint256> mapCacheBlockHashes;
 
 bool GetBlockHash(uint256& hash, int nBlockHeight);
 
+typedef std::shared_ptr<CServicenode> CServicenodePtr;
 
 //
 // The Servicenode Ping Class : Contains a different serialize method for sending pings from servicenodes throughout the network

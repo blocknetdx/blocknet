@@ -727,10 +727,10 @@ std::vector<std::string> App::availableCurrencies() const
 std::vector<std::string> App::networkCurrencies() const
 {
     std::set<string> coins;
-    std::vector<CServicenode> snodes = mnodeman.GetFullServicenodeVector();
+    auto snodes = mnodeman.CheckAndCopyServicenodes();
     // Obtain unique xwallets supported across network
-    for (CServicenode &sn : snodes) {
-        for (auto &w : sn.connectedWallets) {
+    for (auto sn : snodes) {
+        for (auto &w : sn->connectedWallets) {
             if (!coins.count(w.strWalletName))
                 coins.insert(w.strWalletName);
         }
@@ -1270,7 +1270,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::NO_SERVICE_NODE;
     }
 
-    CServicenode *pmn = mnodeman.Find(snode);
+    auto pmn = mnodeman.Find(snode);
     if (pmn == nullptr) {
         if (snode.Decompress()) // try to uncompress pubkey and search
             pmn = mnodeman.Find(snode);
@@ -1594,7 +1594,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     // Get servicenode collateral address
     CKeyID snodePubKey;
     {
-        CServicenode * snode = mnodeman.Find(pksnode);
+        auto  snode = mnodeman.Find(pksnode);
         if (!snode)
         {
             // try to uncompress pubkey and search
@@ -2028,7 +2028,7 @@ void App::unwatchTraderDeposit(TransactionPtr tr) {
 //******************************************************************************
 bool App::sendServicePing()
 {
-    CServicenode *pmn = nullptr;
+    CServicenodePtr pmn = nullptr;
     {
         LOCK(cs_main);
         if (activeServicenode.status != ACTIVE_SERVICENODE_STARTED)
@@ -2270,7 +2270,7 @@ std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
             continue;
 
         // Make sure this xwallet entry is in the servicenode list
-        CServicenode *pmn = mnodeman.Find(x.first);
+        auto pmn = mnodeman.Find(x.first);
         if (pmn == nullptr) {
             auto k = x.first;
             if (k.Decompress()) // try to uncompress pubkey and search

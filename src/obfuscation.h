@@ -192,8 +192,8 @@ public:
 
     bool GetAddress(CService& addr)
     {
-        CServicenode* pmn = mnodeman.Find(vin);
-        if (pmn != NULL) {
+        auto pmn = mnodeman.Find(vin);
+        if (pmn != nullptr) {
             addr = pmn->addr;
             return true;
         }
@@ -203,8 +203,8 @@ public:
     /// Get the protocol version
     bool GetProtocolVersion(int& protocolVersion)
     {
-        CServicenode* pmn = mnodeman.Find(vin);
-        if (pmn != NULL) {
+        auto pmn = mnodeman.Find(vin);
+        if (pmn != nullptr) {
             protocolVersion = pmn->protocolVersion;
             return true;
         }
@@ -327,7 +327,7 @@ public:
     // where collateral should be made out to
     CScript collateralPubKey;
 
-    CServicenode* pSubmittedToServicenode;
+    CServicenodePtr pSubmittedToServicenode = nullptr;
     int sessionDenom;    //Users must submit an denom matching this
     int cachedNumBlocks; //used for the overview screen
 

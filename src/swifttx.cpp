@@ -292,8 +292,8 @@ bool ProcessConsensusVote(CNode* pnode, CConsensusVote& ctx)
 {
     int n = mnodeman.GetServicenodeRank(ctx.vinServicenode, ctx.nBlockHeight, MIN_SWIFTTX_PROTO_VERSION);
 
-    CServicenode* pmn = mnodeman.Find(ctx.vinServicenode);
-    if (pmn != NULL)
+    auto pmn = mnodeman.Find(ctx.vinServicenode);
+    if (pmn != nullptr)
         LogPrint("swifttx", "SwiftTX::ProcessConsensusVote - Servicenode ADDR %s %d\n", pmn->addr.ToString().c_str(), n);
 
     if (n == -1) {
@@ -459,7 +459,7 @@ bool CConsensusVote::SignatureValid()
     std::string strMessage = txHash.ToString().c_str() + boost::lexical_cast<std::string>(nBlockHeight);
     //LogPrintf("verify strMessage %s \n", strMessage.c_str());
 
-    CServicenode* pmn = mnodeman.Find(vinServicenode);
+    auto pmn = mnodeman.Find(vinServicenode);
 
     if (pmn == NULL) {
         LogPrintf("SwiftTX::CConsensusVote::SignatureValid() - Unknown Servicenode\n");

@@ -205,7 +205,7 @@ Value servicenode(const Array& params, bool fHelp)
     }
 
     if (strCommand == "current") {
-        CServicenode* winner = mnodeman.GetCurrentServiceNode(1);
+        auto winner = mnodeman.GetCurrentServiceNode(1);
         if (winner) {
             Object obj;
 
@@ -391,7 +391,7 @@ Value servicenode(const Array& params, bool fHelp)
             if(!mne.castOutputIndex(nIndex))
                 continue;
             CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(nIndex));
-            CServicenode* pmn = mnodeman.Find(vin);
+            auto pmn = mnodeman.Find(vin);
 
             if (strCommand == "start-missing" && pmn) continue;
             if (strCommand == "start-disabled" && pmn && pmn->IsEnabled()) continue;
@@ -482,7 +482,7 @@ Value servicenode(const Array& params, bool fHelp)
             if(!mne.castOutputIndex(nIndex))
                 continue;
             CTxIn vin = CTxIn(uint256(mne.getTxHash()), uint32_t(nIndex));
-            CServicenode* pmn = mnodeman.Find(vin);
+            auto pmn = mnodeman.Find(vin);
 
             std::string strStatus = pmn ? pmn->Status() : "MISSING";
 
@@ -517,7 +517,7 @@ Value servicenode(const Array& params, bool fHelp)
     if (strCommand == "status") {
         if (!fServiceNode) throw runtime_error("This is not a servicenode\n");
 
-        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
+        auto pmn = mnodeman.Find(activeServicenode.vin);
 
         if (pmn) {
             Object mnObj;
@@ -612,15 +612,15 @@ Value servicenode(const Array& params, bool fHelp)
         }
         Object obj;
 
-        std::vector<CServicenode> vServicenodes = mnodeman.GetFullServicenodeVector();
+        auto vServicenodes = mnodeman.CheckAndCopyServicenodes();
         for (int nHeight = chainActive.Tip()->nHeight - nLast; nHeight < chainActive.Tip()->nHeight + 20; nHeight++) {
             uint256 nHigh = 0;
-            CServicenode* pBestServicenode = NULL;
-            BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-                uint256 n = mn.CalculateScore(1, nHeight - 100);
+            CServicenodePtr pBestServicenode = nullptr;
+            for (auto mn : vServicenodes) {
+                uint256 n = mn->CalculateScore(1, nHeight - 100);
                 if (n > nHigh) {
                     nHigh = n;
-                    pBestServicenode = &mn;
+                    pBestServicenode = mn;
                 }
             }
             if (pBestServicenode)
@@ -681,7 +681,7 @@ Value servicenodelist(const Array& params, bool fHelp)
         std::string strTxHash = s.second.vin.prevout.hash.ToString();
         uint32_t oIdx = s.second.vin.prevout.n;
 
-        CServicenode* mn = mnodeman.Find(s.second.vin);
+        auto mn = mnodeman.Find(s.second.vin);
 
         if (strFilter != "" && strTxHash.find(strFilter) == string::npos &&
             mn->Status().find(strFilter) == string::npos &&

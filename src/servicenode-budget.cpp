@@ -1069,8 +1069,8 @@ void CBudgetManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
             return;
         }
 
-        CServicenode* pmn = mnodeman.Find(vote.vin);
-        if (pmn == NULL) {
+        auto pmn = mnodeman.Find(vote.vin);
+        if (pmn == nullptr) {
             LogPrintf("mvote - unknown servicenode - vin: %s\n", vote.vin.prevout.hash.ToString());
             mnodeman.AskForMN(pfrom, vote.vin);
             return;
@@ -1142,8 +1142,8 @@ void CBudgetManager::ProcessMessage(CNode* pfrom, std::string& strCommand, CData
             return;
         }
 
-        CServicenode* pmn = mnodeman.Find(vote.vin);
-        if (pmn == NULL) {
+        auto pmn = mnodeman.Find(vote.vin);
+        if (pmn == nullptr) {
             LogPrint("mnbudget", "fbvote - unknown servicenode - vin: %s\n", vote.vin.prevout.hash.ToString());
             mnodeman.AskForMN(pfrom, vote.vin);
             return;
@@ -1682,9 +1682,9 @@ bool CBudgetVote::SignatureValid(bool fSignatureCheck)
     std::string errorMessage;
     std::string strMessage = vin.prevout.ToStringShort() + nProposalHash.ToString() + boost::lexical_cast<std::string>(nVote) + boost::lexical_cast<std::string>(nTime);
 
-    CServicenode* pmn = mnodeman.Find(vin);
+    auto pmn = mnodeman.Find(vin);
 
-    if (pmn == NULL) {
+    if (pmn == nullptr) {
         LogPrint("mnbudget", "CBudgetVote::SignatureValid() - Unknown Servicenode - %s\n", vin.prevout.hash.ToString());
         return false;
     }
@@ -2119,9 +2119,9 @@ bool CFinalizedBudgetVote::SignatureValid(bool fSignatureCheck)
 
     std::string strMessage = vin.prevout.ToStringShort() + nBudgetHash.ToString() + boost::lexical_cast<std::string>(nTime);
 
-    CServicenode* pmn = mnodeman.Find(vin);
+    auto pmn = mnodeman.Find(vin);
 
-    if (pmn == NULL) {
+    if (pmn == nullptr) {
         LogPrint("mnbudget", "CFinalizedBudgetVote::SignatureValid() - Unknown Servicenode\n");
         return false;
     }

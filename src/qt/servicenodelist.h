@@ -46,7 +46,7 @@ private:
     bool fFilterUpdated;
 
 public Q_SLOTS:
-    void updateMyServicenodeInfo(QString strAlias, QString strAddr, CServicenode* pmn);
+    void updateMyServicenodeInfo(QString strAlias, QString strAddr, CServicenodePtr pmn);
     void updateMyNodeList(bool fForce = false);
 
 Q_SIGNALS:

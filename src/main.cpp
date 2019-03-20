@@ -5029,8 +5029,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             //these allow servicenodes to publish a limited amount of free transactions
             vRecv >> tx >> vin >> vchSig >> sigTime;
 
-            CServicenode* pmn = mnodeman.Find(vin);
-            if (pmn != NULL) {
+            auto pmn = mnodeman.Find(vin);
+            if (pmn != nullptr) {
                 if (!pmn->allowFreeTx) {
                     //multiple peers can send us a valid servicenode transaction
                     if (fDebug) LogPrintf("dstx: Servicenode sending too many transactions %s\n", tx.GetHash().ToString());

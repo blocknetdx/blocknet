@@ -73,8 +73,8 @@ void CObfuscationPool::ProcessMessageObfuscation(CNode* pfrom, std::string& strC
         CTransaction txCollateral;
         vRecv >> nDenom >> txCollateral;
 
-        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
-        if (pmn == NULL) {
+        auto pmn = mnodeman.Find(activeServicenode.vin);
+        if (pmn == nullptr) {
             errorID = ERR_MN_LIST;
             pfrom->PushMessage("dssu", sessionID, GetState(), GetEntriesCount(), SERVICENODE_REJECTED, errorID);
             return;
@@ -117,8 +117,8 @@ void CObfuscationPool::ProcessMessageObfuscation(CNode* pfrom, std::string& strC
 
         if (dsq.IsExpired()) return;
 
-        CServicenode* pmn = mnodeman.Find(dsq.vin);
-        if (pmn == NULL) return;
+        auto pmn = mnodeman.Find(dsq.vin);
+        if (pmn == nullptr) return;
 
         // if the queue is ready, submit if we can
         if (dsq.ready) {
@@ -1561,8 +1561,8 @@ bool CObfuscationPool::DoAutomaticDenominating(bool fDryRun)
                     continue;
                 }
 
-                CServicenode* pmn = mnodeman.Find(dsq.vin);
-                if (pmn == NULL) {
+                auto pmn = mnodeman.Find(dsq.vin);
+                if (pmn == nullptr) {
                     LogPrintf("DoAutomaticDenominating --- dsq vin %s is not in servicenode list!", dsq.vin.ToString());
                     continue;
                 }
@@ -1598,8 +1598,8 @@ bool CObfuscationPool::DoAutomaticDenominating(bool fDryRun)
 
         // otherwise, try one randomly
         while (i < 10) {
-            CServicenode* pmn = mnodeman.FindRandomNotInVec(vecServicenodesUsed, ActiveProtocol());
-            if (pmn == NULL) {
+            auto pmn = mnodeman.FindRandomNotInVec(vecServicenodesUsed, ActiveProtocol());
+            if (pmn == nullptr) {
                 LogPrintf("DoAutomaticDenominating --- Can't find random servicenode!\n");
                 strAutoDenomResult = _("Can't find random Servicenode.");
                 return false;
@@ -2220,9 +2220,9 @@ bool CObfuscationQueue::Relay()
 
 bool CObfuscationQueue::CheckSignature()
 {
-    CServicenode* pmn = mnodeman.Find(vin);
+    auto pmn = mnodeman.Find(vin);
 
-    if (pmn != NULL) {
+    if (pmn != nullptr) {
         std::string strMessage = vin.ToString() + boost::lexical_cast<std::string>(nDenom) + boost::lexical_cast<std::string>(time) + boost::lexical_cast<std::string>(ready);
 
         std::string errorMessage = "";

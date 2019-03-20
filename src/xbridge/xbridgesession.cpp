@@ -360,7 +360,7 @@ bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
     }
 
     // Find Servicenode in list
-    CServicenode *pmn = mnodeman.Find(nodePubKey);
+    auto pmn = mnodeman.Find(nodePubKey);
     if (pmn == nullptr)
     {
         // try to uncompress pubkey and search
@@ -1154,7 +1154,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         pksnode.Set(packet->pubkey(), packet->pubkey()+len);
 
         // check servicenode
-        CServicenode * snode = mnodeman.Find(pksnode);
+        auto snode = mnodeman.Find(pksnode);
         if (!snode)
         {
             // try to uncompress pubkey and search

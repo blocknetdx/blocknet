@@ -59,7 +59,7 @@ private:
     mutable CCriticalSection cs_process_message;
 
     // map to hold all MNs
-    std::vector<CServicenode> vServicenodes;
+    std::vector<CServicenodePtr> vServicenodes;
     // who's asked for the Servicenode list and the last time
     std::map<CNetAddr, int64_t> mAskedUsForServicenodeList;
     // who we asked for the Servicenode list and the last time
@@ -81,7 +81,16 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion)
     {
         LOCK(cs);
-        READWRITE(vServicenodes);
+        std::vector<CServicenode> snodes;
+        if (ser_action.ForRead()) {
+            READWRITE(snodes);
+            for (const auto & mn : snodes)
+                vServicenodes.push_back(std::make_shared<CServicenode>(mn));
+        } else { // Write
+            for (const auto & mn : vServicenodes)
+                snodes.push_back(*mn);
+            READWRITE(snodes);
+        }
         READWRITE(mAskedUsForServicenodeList);
         READWRITE(mWeAskedForServicenodeList);
         READWRITE(mWeAskedForServicenodeListEntry);
@@ -95,7 +104,7 @@ public:
     CServicenodeMan(CServicenodeMan& other);
 
     /// Add an entry
-    bool Add(CServicenode& mn);
+    bool Add(CServicenodePtr mn);
 
     /// Ask (source) node for mnb
     void AskForMN(CNode* pnode, CTxIn& vin);
@@ -114,37 +123,34 @@ public:
     void DsegUpdate(CNode* pnode);
 
     /// Find an entry
-    CServicenode* Find(const CScript& payee);
-    CServicenode* Find(const CTxIn& vin);
-    CServicenode* Find(const CPubKey& pubKeyServicenode);
+    CServicenodePtr Find(const CScript& payee);
+    CServicenodePtr Find(const CTxIn& vin);
+    CServicenodePtr Find(const CPubKey& pubKeyServicenode);
 
     /// Find an entry in the servicenode list that is next to be paid
-    CServicenode* GetNextServicenodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCount);
+    CServicenodePtr GetNextServicenodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCount);
 
     /// Find a random entry
-    CServicenode* FindRandomNotInVec(std::vector<CTxIn>& vecToExclude, int protocolVersion = -1);
+    CServicenodePtr FindRandomNotInVec(std::vector<CTxIn>& vecToExclude, int protocolVersion = -1);
 
     /// Get the current winner for this block
-    CServicenode* GetCurrentServiceNode(int mod = 1, int64_t nBlockHeight = 0, int minProtocol = 0);
+    CServicenodePtr GetCurrentServiceNode(int mod = 1, int64_t nBlockHeight = 0, int minProtocol = 0);
 
-    std::vector<CServicenode> GetFullServicenodeVector()
+    std::vector<CServicenodePtr> CheckAndCopyServicenodes()
     {
         Check();
         LOCK(cs);
         return vServicenodes;
     }
-    std::vector<CServicenode*> CopyServicenodes()
+    std::vector<CServicenodePtr> CopyServicenodes()
     {
         LOCK(cs);
-        std::vector<CServicenode*> r;
-        for (auto & s : vServicenodes)
-            r.push_back(&s);
-        return r;
+        return vServicenodes;
     }
 
     std::vector<pair<int, CServicenode> > GetServicenodeRanks(int64_t nBlockHeight, int minProtocol = 0);
     int GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, int minProtocol = 0, bool fOnlyActive = true);
-    CServicenode* GetServicenodeByRank(int nRank, int64_t nBlockHeight, int minProtocol = 0, bool fOnlyActive = true);
+    CServicenodePtr GetServicenodeByRank(int nRank, int64_t nBlockHeight, int minProtocol = 0, bool fOnlyActive = true);
 
     void ProcessServicenodeConnections();
 
@@ -153,7 +159,7 @@ public:
     /// Return the number of (unique) Servicenodes
     int size() {
         LOCK(cs);
-        return vServicenodes.size();
+        return static_cast<int>(vServicenodes.size());
     }
 
     std::string ToString() const;

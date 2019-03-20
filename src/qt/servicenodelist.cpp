@@ -136,7 +136,7 @@ void ServicenodeList::StartAll(std::string strCommand)
             continue;
 
         CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(nIndex));
-        CServicenode* pmn = mnodeman.Find(txin);
+        auto pmn = mnodeman.Find(txin);
 
         if (strCommand == "start-missing" && pmn)
         {
@@ -173,7 +173,7 @@ void ServicenodeList::StartAll(std::string strCommand)
     updateMyNodeList(true);
 }
 
-void ServicenodeList::updateMyServicenodeInfo(QString strAlias, QString strAddr, CServicenode* pmn)
+void ServicenodeList::updateMyServicenodeInfo(QString strAlias, QString strAddr, CServicenodePtr pmn)
 {
     LOCK(cs_mnlistupdate);
     bool fOldRowFound = false;
@@ -228,7 +228,7 @@ void ServicenodeList::updateMyNodeList(bool fForce)
             continue;
 
         CTxIn txin = CTxIn(uint256S(mne.getTxHash()), uint32_t(nIndex));
-        CServicenode* pmn = mnodeman.Find(txin);
+        auto pmn = mnodeman.Find(txin);
 
         updateMyServicenodeInfo(QString::fromStdString(mne.getAlias()), QString::fromStdString(mne.getIp()), pmn);
     }

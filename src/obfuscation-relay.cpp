@@ -96,9 +96,9 @@ void CObfuScationRelay::Relay()
 
 void CObfuScationRelay::RelayThroughNode(int nRank)
 {
-    CServicenode* pmn = mnodeman.GetServicenodeByRank(nRank, nBlockHeight, ActiveProtocol());
+    auto pmn = mnodeman.GetServicenodeByRank(nRank, nBlockHeight, ActiveProtocol());
 
-    if (pmn != NULL) {
+    if (pmn != nullptr) {
         //printf("RelayThroughNode %s\n", pmn->addr.ToString().c_str());
         CNode* pnode = ConnectNode((CAddress)pmn->addr, NULL, false);
         if (pnode) {

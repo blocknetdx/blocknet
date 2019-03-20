@@ -275,11 +275,11 @@ public:
 
     void Sync(CNode* node, int nCountNeeded);
     void CleanPaymentList();
-    int LastPayment(CServicenode& mn);
+    int LastPayment(CServicenodePtr mn);
 
     bool GetPayeeScript(int nBlockHeight, CScript& payee);
     bool IsTransactionValid(const CTransaction& txNew, int nBlockHeight);
-    bool IsScheduled(CServicenode& mn, int nNotBlockHeight);
+    bool IsScheduled(CServicenodePtr mn, int nNotBlockHeight);
 
     bool CanVote(COutPoint outServicenode, int nBlockHeight)
     {
@@ -305,8 +305,8 @@ public:
     int GetNewestBlock();
 
     void EligibleServicenodes(const bool fFilterSigTime, const int & nBlockHeight,
-            std::vector<CServicenode> & snodes, std::map<CScript, bool> & eligibleSnodes);
-    bool ValidNode(CServicenode & mn, const bool & fFilterSigTime, const int & nMnCount);
+            std::vector<CServicenodePtr> & snodes, std::map<CScript, bool> & eligibleSnodes);
+    bool ValidNode(CServicenodePtr mn, const bool & fFilterSigTime, const int & nMnCount);
 
     ADD_SERIALIZE_METHODS;
 

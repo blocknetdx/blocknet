@@ -33,9 +33,8 @@ void CActiveServicenode::ManageStatus()
     if (status == ACTIVE_SERVICENODE_SYNC_IN_PROCESS) status = ACTIVE_SERVICENODE_INITIAL;
 
     if (status == ACTIVE_SERVICENODE_INITIAL) {
-        CServicenode* pmn;
-        pmn = mnodeman.Find(pubKeyServicenode);
-        if (pmn != NULL) {
+        auto pmn = mnodeman.Find(pubKeyServicenode);
+        if (pmn != nullptr) {
             pmn->Check();
             if (pmn->IsEnabled() && pmn->protocolVersion == PROTOCOL_VERSION) {
                 forceSendPing = true;
@@ -183,8 +182,8 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool for
     }
 
     // Update lastPing for our servicenode in Servicenode list
-    CServicenode* pmn = mnodeman.Find(vin);
-    if (pmn != NULL) {
+    auto pmn = mnodeman.Find(vin);
+    if (pmn != nullptr) {
         // If we have a force send ping request, skip the time check here
         if (!force && pmn->IsPingedWithin(SERVICENODE_PING_SECONDS, mnp.sigTime)) {
             errorMessage = "Too early to send Servicenode Ping";
@@ -293,9 +292,9 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
     mnodeman.AddServicenodeBroadcast(mnb.GetHash(), mnb);
     servicenodeSync.AddedServicenodeList(mnb.GetHash());
 
-    CServicenode* pmn = mnodeman.Find(vin);
-    if (pmn == NULL) {
-        CServicenode mn(mnb);
+    auto pmn = mnodeman.Find(vin);
+    if (pmn == nullptr) {
+        auto mn = std::make_shared<CServicenode>(mnb);
         mnodeman.Add(mn);
     } else {
         pmn->UpdateFromNewBroadcast(mnb);

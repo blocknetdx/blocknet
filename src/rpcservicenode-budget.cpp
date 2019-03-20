@@ -235,8 +235,8 @@ Value mnbudget(const Array& params, bool fHelp)
                 continue;
             }
 
-            CServicenode* pmn = mnodeman.Find(pubKeyServicenode);
-            if (pmn == NULL) {
+            auto pmn = mnodeman.Find(pubKeyServicenode);
+            if (pmn == nullptr) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
                 statusObj.push_back(Pair("errorMessage", "Can't find servicenode by pubkey"));
@@ -323,8 +323,8 @@ if(strCommand == "vote-alias")
                 continue;
             }
 
-            CServicenode* pmn = mnodeman.Find(pubKeyServicenode);
-            if(pmn == NULL)
+            auto pmn = mnodeman.Find(pubKeyServicenode);
+            if(pmn == nullptr)
             {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
@@ -383,8 +383,8 @@ if(strCommand == "vote-alias")
         if (!obfuScationSigner.SetKey(strServiceNodePrivKey, errorMessage, keyServicenode, pubKeyServicenode))
             return "Error upon calling SetKey";
 
-        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
-        if (pmn == NULL) {
+        auto pmn = mnodeman.Find(activeServicenode.vin);
+        if (pmn == nullptr) {
             return "Failure to find servicenode in list : " + activeServicenode.vin.ToString();
         }
 
@@ -602,8 +602,8 @@ Value mnbudgetvoteraw(const Array& params, bool fHelp)
     if (fInvalid)
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Malformed base64 encoding");
 
-    CServicenode* pmn = mnodeman.Find(vin);
-    if (pmn == NULL) {
+    auto pmn = mnodeman.Find(vin);
+    if (pmn == nullptr) {
         return "Failure to find servicenode in list : " + vin.ToString();
     }
 
@@ -674,8 +674,8 @@ Value mnfinalbudget(const Array& params, bool fHelp)
                 continue;
             }
 
-            CServicenode* pmn = mnodeman.Find(pubKeyServicenode);
-            if (pmn == NULL) {
+            auto pmn = mnodeman.Find(pubKeyServicenode);
+            if (pmn == nullptr) {
                 failed++;
                 statusObj.push_back(Pair("result", "failed"));
                 statusObj.push_back(Pair("errorMessage", "Can't find servicenode by pubkey"));
@@ -728,8 +728,8 @@ Value mnfinalbudget(const Array& params, bool fHelp)
         if (!obfuScationSigner.SetKey(strServiceNodePrivKey, errorMessage, keyServicenode, pubKeyServicenode))
             return "Error upon calling SetKey";
 
-        CServicenode* pmn = mnodeman.Find(activeServicenode.vin);
-        if (pmn == NULL) {
+        auto pmn = mnodeman.Find(activeServicenode.vin);
+        if (pmn == nullptr) {
             return "Failure to find servicenode in list : " + activeServicenode.vin.ToString();
         }
 
