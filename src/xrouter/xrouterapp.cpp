@@ -766,28 +766,28 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         }
 
         // Confirmations
-        auto confirmations = std::max(xrsettings->confirmations(command, currency, XROUTER_DEFAULT_CONFIRMATIONS), 1);
+        auto confs = std::max(xrsettings->confirmations(command, currency, XROUTER_DEFAULT_CONFIRMATIONS), confirmations);
         const auto commandKey = buildCommandKey(currency, XRouterCommand_ToString(command));
 
         // Open connections (at least number equal to how many confirmations we want)
-        if (!openConnections(currency, commandKey, static_cast<uint32_t>(confirmations))) {
-            std::string err("Not enough connections, require " + std::to_string(confirmations) + " for " + commandKey);
+        if (!openConnections(currency, commandKey, static_cast<uint32_t>(confs))) {
+            std::string err("Not enough connections, require " + std::to_string(confs) + " for " + commandKey);
             ERR() << err;
             throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
         }
 
         // Select available nodes
-        std::vector<CNode*> selectedNodes = getAvailableNodes(command, currency, confirmations);
+        std::vector<CNode*> selectedNodes = getAvailableNodes(command, currency, confs);
         auto selected = static_cast<int>(selectedNodes.size());
         
-        if (selected < confirmations)
-            throw XRouterError("Failed to find " + std::to_string(confirmations) + " service node(s) supporting " +
+        if (selected < confs)
+            throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
                                buildCommandKey(currency, XRouterCommand_ToString(command)) + " found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
         
         std::map<std::string, std::string> paytx_map;
         int snodeCount = 0;
         std::string fundErr{"Could not create payments to service nodes. Please check that your wallet "
-                            "is fully unlocked and you have at least " + std::to_string(confirmations) +
+                            "is fully unlocked and you have at least " + std::to_string(confs) +
                             " available unspent transaction outputs."};
 
         // Obtain all the snodes that meet our criteria
@@ -811,17 +811,17 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             
             paytx_map[addr] = feePayment;
             snodeCount++;
-            if (snodeCount == confirmations)
+            if (snodeCount == confs)
                 break;
         }
 
         // Do we have enough snodes? If not unlock utxos
-        if (snodeCount < confirmations) {
+        if (snodeCount < confs) {
             for (const auto & item : paytx_map) {
                 const std::string & tx = item.second;
                 unlockOutputs(tx);
             }
-            throw XRouterError("Unable to find " + std::to_string(confirmations) +
+            throw XRouterError("Unable to find " + std::to_string(confs) +
                                " service node(s) to process request", xrouter::NOT_ENOUGH_NODES);
         }
 
@@ -870,7 +870,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             review.push_back(query.first);
 
         // Check that all replies have arrived, only run as long as timeout
-        while (!ShutdownRequested() && confirmation_count < confirmations
+        while (!ShutdownRequested() && confirmation_count < confs
             && GetAdjustedTime() - queryCheckStart < timeout)
         {
             boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
@@ -884,13 +884,13 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         // Clean up
         queryMgr.purge(uuid);
 
-        if (confirmation_count < confirmations)
+        if (confirmation_count < confs)
             throw XRouterError("Failed to get response in time. Try xrGetReply command later.", xrouter::SERVER_TIMEOUT);
 
         // Handle the results
         std::string result;
         int c = queryMgr.mostCommonReply(uuid, result); // TODO Send all replies and handle confirmations
-//        if (c <= confirmations || result.empty())
+//        if (c <= confs || result.empty())
 //            throw XRouterError("No consensus between responses", xrouter::INTERNAL_SERVER_ERROR);
 
         return result;
