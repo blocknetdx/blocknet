@@ -69,11 +69,10 @@ public:
 
     /**
      * @brief Open connections to service nodes with specified services.
-     * @param wallet Open connections to nodes supported this wallet/currency
-     * @param commandKey Open connections to nodes supporting this command
+     * @param fqService Open connections to nodes supporting this fully qualified service
      * @param count Number of nodes to open connections to
      */
-    bool openConnections(const std::string & wallet, const std::string & commandKey, const uint32_t & count);
+    bool openConnections(const std::string & fqService, const uint32_t & count);
     
     /**
      * @brief send config update requests to all nodes
@@ -109,13 +108,14 @@ public:
      * @brief send packet from client side with the selected command
      * @param command XRouter command code
      * @param uuidRet uuid of the request
-     * @param currency chain code (BTC, LTC etc)
+     * @param service chain code (BTC, LTC etc)
      * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @param param1 first additional param (command specific)
      * @param param2 second additional param (command specific)
      * @return reply from service node
      */
-    std::string xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & currency, const int & confirmations, std::string param1="", std::string param2="");
+    std::string xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & service,
+                            const int & confirmations, const std::vector<std::string> & params);
 
     /**
      * @brief returns block count (highest tree) in the selected chain
@@ -216,15 +216,6 @@ public:
     std::string sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction);
 
     /**
-     * @brief sends custom (plugin) call
-     * @param uuidRet uuid of the request
-     * @param name plugin name (taken from xrouter config)
-     * @param params parameters list from command line. The function checks that the number and type of parameters matches the config
-     * @return
-     */
-    std::string sendCustomCall(std::string & uuidRet, const std::string & name, std::vector<std::string> & params);
-
-    /**
      * @brief Returnst the block count at the specified time.
      * @param uuidRet uuid of the request
      * @param name plugin name (taken from xrouter config)
@@ -316,11 +307,11 @@ public:
     /**
      * @brief get all nodes that support the command for a given chain
      * @param packet Xrouter packet formed and ready to be sendTransaction
-     * @param wallet Wallet or currency name
+     * @param service Wallet or currency name
      * @param count Number of nodes to fetch (default 1 node)
      * @return
      */
-    std::vector<CNode*> getAvailableNodes(enum XRouterCommand command, const std::string & wallet, int count=1);
+    std::vector<CNode*> getAvailableNodes(enum XRouterCommand command, const std::string & service, int count=1);
     
     /**
      * @brief find the node that supports a given plugin 
@@ -412,12 +403,21 @@ public:
 
     /**
      * Helper to build key for use with lookups.
-     * @param currency
+     * @param wallet
      * @param command
      * @return
      */
-    std::string buildCommandKey(const std::string & currency, const std::string & command) {
-        return currency + "::" + command;
+    std::string buildCommandKey(const std::string & wallet, const std::string & command) {
+        return wallet + "::" + command;
+    }
+
+    /**
+     * Helper to build service key for use with lookups.
+     * @param service
+     * @return
+     */
+    std::string buildCommandKey(const std::string & service) {
+        return xr + "::" + service;
     }
 
     /**

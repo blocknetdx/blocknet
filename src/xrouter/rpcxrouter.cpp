@@ -389,10 +389,10 @@ Value xrGenerateBloomFilter(const Array & params, bool fHelp)
     return result;
 }
 
-Value xrCustomCall(const Array & params, bool fHelp)
+Value xrService(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrCustomCall service_name param1 param2 param3 ... paramN\nSends the custom call with [service_name] name.");
+        throw std::runtime_error("xrService service_name param1 param2 param3 ... paramN\nSends the custom call with [service_name] name.");
     }
 
     if (params.size() < 1)
@@ -403,12 +403,12 @@ Value xrCustomCall(const Array & params, bool fHelp)
         return error;
     }
     
-    std::string name = params[0].get_str();
+    const std::string & service = params[0].get_str();
     std::vector<std::string> call_params;
     for (unsigned int i = 1; i < params.size(); i++)
         call_params.push_back(params[i].get_str());
     std::string uuid;
-    std::string reply = xrouter::App::instance().sendCustomCall(uuid, name, call_params);
+    std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, 0, call_params);
     return xrouter::form_reply(uuid, reply);
 }
 

@@ -96,7 +96,7 @@ class XRouterPluginSettings : public IniConfig
 public:
     XRouterPluginSettings() = default;
 
-    std::string getParam(std::string param, std::string def="");
+    std::string getParam(const std::string param, const std::string def="");
     double getFee();
     int minParamCount();
     int maxParamCount();
@@ -157,7 +157,7 @@ public:
         plugins[name] = s; pluginList.insert(name);
     }
 
-    bool hasPlugin(std::string name);
+    bool hasPlugin(const std::string & name);
 
     XRouterPluginSettingsPtr getPluginSettings(const std::string & name) {
         LOCK(mu);
@@ -165,9 +165,9 @@ public:
     }
 
     bool walletEnabled(const std::string & currency);
-    bool isAvailableCommand(XRouterCommand c, std::string currency="");
-    double getCommandFee(XRouterCommand c, std::string currency="", double def=0.0);
-    int commandTimeout(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_TIMEOUT);
+    bool isAvailableCommand(XRouterCommand c, std::string service="");
+    double getCommandFee(XRouterCommand c, std::string service="", double def=0.0);
+    int commandTimeout(XRouterCommand c, std::string service="", int def=XROUTER_DEFAULT_TIMEOUT);
     int getCommandBlockLimit(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_BLOCK_LIMIT);
     double getMaxFee(XRouterCommand c, std::string currency="", double def=0.0);
     int clientRequestLimit(XRouterCommand c, std::string currency="", int def=-1); // -1 is no limit

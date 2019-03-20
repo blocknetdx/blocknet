@@ -50,7 +50,7 @@ enum XRouterCommand
     xrGetBalance                     = 60,
     xrGetBalanceUpdate               = 61,
 
-    xrCustomCall                     = 1000,
+    xrService                     = 1000,
 };
 
 inline const char* XRouterCommand_ToString(enum XRouterCommand c)
@@ -73,7 +73,7 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
         case xrGetBlockForTime            : return "xrGetBlockForTime";
         case xrGetBalance                 : return "xrGetBalance";
         case xrGetBalanceUpdate           : return "xrGetBalanceUpdate";
-        case xrCustomCall                 : return "xrCustomCall";
+        case xrService                    : return "xr"; // tied to global var "xr"
         default: {
             char * s = nullptr;
             sprintf(s, "[Unknown XRouterCommand] %u", c);
@@ -100,7 +100,7 @@ inline bool XRouterCommand_IsValid(const char* c)
            XRouterCommand_ToString(xrGetBlockForTime)            == c ||
            XRouterCommand_ToString(xrGetBalance)                 == c ||
            XRouterCommand_ToString(xrGetBalanceUpdate)           == c ||
-           XRouterCommand_ToString(xrCustomCall)                 == c;
+           XRouterCommand_ToString(xrService)                 == c;
 };
 
 //******************************************************************************

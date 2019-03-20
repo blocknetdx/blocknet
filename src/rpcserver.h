@@ -691,7 +691,7 @@ extern json_spirit::Value xrGetTxBloomFilter(const json_spirit::Array& params, b
 extern json_spirit::Value xrGenerateBloomFilter(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetReply(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrSendTransaction(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrCustomCall(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrService(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrUpdateConfigs(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrShowConfigs(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrReloadConfigs(const json_spirit::Array& params, bool fHelp);

@@ -148,12 +148,12 @@ public:
     std::string processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
 
     /**
-     * @brief process xrCustomCall call on service node side
+     * @brief process xrService call on service node side
      * @param name plugin name
      * @param params plugin parameters
      * @return
      */
-    std::string processCustomCall(std::string name, std::vector<std::string> params);
+    std::string processServiceCall(const std::string & name, const std::vector<std::string> & params);
     
     /**
      * @brief process xrFetchReply call on service node side

@@ -168,23 +168,34 @@ bool XRouterSettings::walletEnabled(const std::string & currency)
     return std::find(wallets.begin(), wallets.end(), currency) != wallets.end();
 }
 
-bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string currency)
+bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string service)
 {
-    if (currency.empty())
+    // Handle plugin
+    if (c == xrService)
+        return hasPlugin(service);
+
+    // XRouter command...
+    if (service.empty())
         return false;
-    if (!wallets.count(currency)) // check if currency supported
+    if (!hasWallet(service)) // check if wallet supported
         return false;
     // Wallet commands are implicitly enabled until disabled
-    auto disabled = get<bool>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".disabled", false);
+    auto disabled = get<bool>(service + "::" + std::string(XRouterCommand_ToString(c)) + ".disabled", false);
     return !disabled;
 }
 
-double XRouterSettings::getCommandFee(XRouterCommand c, std::string currency, double def)
+double XRouterSettings::getCommandFee(XRouterCommand c, std::string service, double def)
 {
+    // Handle plugin
+    if (c == xrService && plugins.count(service)) {
+        auto ps = getPluginSettings(service);
+        return ps->getFee();
+    }
+
     auto res = get<double>("Main.fee", def);
     res = get<double>(std::string(XRouterCommand_ToString(c)) + ".fee", res);
-    if (!currency.empty())
-        res = get<double>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".fee", res);
+    if (!service.empty())
+        res = get<double>(service + "::" + std::string(XRouterCommand_ToString(c)) + ".fee", res);
     return res;
 }
 
@@ -201,12 +212,18 @@ double XRouterSettings::getMaxFee(XRouterCommand c, std::string currency, double
     return res;
 }
 
-int XRouterSettings::commandTimeout(XRouterCommand c, std::string currency, int def)
+int XRouterSettings::commandTimeout(XRouterCommand c, std::string service, int def)
 {
+    // Handle plugin
+    if (c == xrService && plugins.count(service)) {
+        auto ps = getPluginSettings(service);
+        return ps->commandTimeout();
+    }
+
     auto res = get<int>("Main.timeout", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".timeout", res);
-    if (!currency.empty())
-        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".timeout", res);
+    if (!service.empty())
+        res = get<int>(service + "::" + std::string(XRouterCommand_ToString(c)) + ".timeout", res);
     return res;
 }
 
@@ -241,7 +258,7 @@ int XRouterSettings::configSyncTimeout()
     return res;
 }
 
-bool XRouterSettings::hasPlugin(std::string name)
+bool XRouterSettings::hasPlugin(const std::string & name)
 {
     LOCK(mu);
     return plugins.count(name) > 0;
@@ -272,7 +289,9 @@ bool XRouterPluginSettings::read(std::string config)
 bool XRouterPluginSettings::verify(std::string name)
 {
     LOCK(mu);
-    bool result = true;
+
+    bool result{true};
+
     std::string type;
     try {
         type = m_pt.get<std::string>("type");
@@ -287,28 +306,28 @@ bool XRouterPluginSettings::verify(std::string name)
     
     int min_count = -1, max_count = -1;
     try {
-        min_count = m_pt.get<int>("paramsCount");
+        min_count = m_pt.get<int>("paramscount");
         max_count = min_count;
     } catch (std::exception & e) {
         try {
-            min_count = m_pt.get<int>("minParamsCount");
-            max_count = m_pt.get<int>("maxParamsCount");
+            min_count = m_pt.get<int>("minparamscount");
+            max_count = m_pt.get<int>("maxparamscount");
         } catch (std::exception & e) {
-            LOG() << "Can't load plugin " << name << ": paramsCount or min/max paramsCount not specified";
+            LOG() << "Failed to load plugin: " << name << " bad minparamscount/maxparamscount are they missing?";
             result = false;
         }
     }
     
     if (type == "rpc") {
         try {
-            std::string typestring = m_pt.get<std::string>("paramsType");
-            int type_count = std::count(typestring.begin(), typestring.end(), ',') + 1;
+            std::string typestring = m_pt.get<std::string>("paramstype");
+            auto type_count = static_cast<int>(std::count(typestring.begin(), typestring.end(), ',')) + 1;
             if (type_count != max_count) {
-                LOG() << "Can't load plugin " << name << ": paramsType string countains less elements than maxParamsCount";
+                LOG() << "Can't load plugin " << name << ": paramstype string countains less elements than maxparamscount";
                 result = false;
             }
         } catch (std::exception & e) {
-            LOG() << "Can't load plugin " << name << ": paramsType not specified";
+            LOG() << "Can't load plugin " << name << ": paramstype is missing";
             result = false;
         }
     }
@@ -329,15 +348,13 @@ void XRouterPluginSettings::formPublicText()
     }
 }
 
-std::string XRouterPluginSettings::getParam(std::string param, std::string def)
+std::string XRouterPluginSettings::getParam(const std::string param, const std::string def)
 {
-    try
-    {
+    try {
         LOCK(mu);
         return m_pt.get<std::string>(param);
     }
-    catch (std::exception & e)
-    {
+    catch (std::exception & e) {
         return get<std::string>("private::" + param, def);
     }
 }
@@ -349,17 +366,17 @@ double XRouterPluginSettings::getFee()
 
 int XRouterPluginSettings::minParamCount()
 {
-    int res = get<int>("minParamsCount", -1);
+    int res = get<int>("minparamscount", -1);
     if (res < 0)
-        res = get<int>("paramsCount", 0);
+        res = get<int>("paramscount", 0);
     return res;
 }
 
 int XRouterPluginSettings::maxParamCount()
 {
-    int res = get<int>("maxParamsCount", -1);
+    int res = get<int>("maxparamscount", -1);
     if (res < 0)
-        res = get<int>("paramsCount", 0);
+        res = get<int>("paramscount", 0);
     return res;
 }
 

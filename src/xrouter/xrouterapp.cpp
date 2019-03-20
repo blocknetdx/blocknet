@@ -163,11 +163,13 @@ bool App::createConnectors() {
     return false;
 }
 
-bool App::openConnections(const std::string & wallet, const std::string & commandKey, const uint32_t & count)
+bool App::openConnections(const std::string & fqService, const uint32_t & count)
 {
+    if (fqService.empty())
+        return false;
     if (count < 1) {
         ERR() << "Cannot open connections: " << std::to_string(count) << ", possibly bad config entry for "
-              << commandKey;
+              << fqService;
         return false;
     }
 
@@ -224,7 +226,7 @@ bool App::openConnections(const std::string & wallet, const std::string & comman
         if (!s.HasService(xr)) // has xrouter
             continue;
 
-        if (!wallet.empty() && !s.HasService(buildCommandKey(xr, wallet))) // has the wallet
+        if (!s.HasService(fqService)) // has the service
             continue;
 
         fetchConfig(nodec[snodeAddr], s, connected);
@@ -241,7 +243,7 @@ bool App::openConnections(const std::string & wallet, const std::string & comman
         if (!s.HasService(xr)) // has xrouter
             continue;
 
-        if (!wallet.empty() && !s.HasService(buildCommandKey(xr, wallet))) // has the wallet
+        if (!s.HasService(fqService)) // has the service
             continue;
 
         const auto & snodeAddr = s.addr.ToString();
@@ -345,7 +347,7 @@ bool App::stop()
  
 //*****************************************************************************
 //*****************************************************************************
-std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const std::string & wallet, int count)
+std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const std::string & service, int count)
 {
     // Send only to the service nodes that have the required wallet
     std::vector<CServicenode> vServicenodes = getServiceNodes();
@@ -372,9 +374,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
             nodec[addr] = pnode;
     }
 
-    // TODO Handle plugin here?
-    auto maxfee = xrsettings->getMaxFee(command, wallet);
-
+    auto maxfee = xrsettings->getMaxFee(command, service);
     int supported = 0;
     int ready = 0;
 
@@ -386,14 +386,17 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
     {
         const auto nodeAddr = item.first;
         auto settings = item.second;
+        const std::string commandStr(XRouterCommand_ToString(command));
+        const auto & fqCmd = // fully qualified command e.g. xr::ServiceName
+                (command == xrService ?buildCommandKey(service) : buildCommandKey(service, commandStr));
 
-        if (!settings->walletEnabled(wallet))
+        if (command != xrService && !settings->walletEnabled(service))
             continue;
-        if (!settings->isAvailableCommand(command, wallet))
+        if (!settings->isAvailableCommand(command, service))
             continue;
         if (!snodes.count(nodeAddr)) // Ignore if not a snode
             continue;
-        if (!snodes[nodeAddr].HasService(buildCommandKey(xr, wallet))) // Ignore snodes that don't have the wallet
+        if (!snodes[nodeAddr].HasService(fqCmd)) // Ignore snodes that don't have the service
             continue;
 
         supported++;
@@ -403,13 +406,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
         if (nodec.count(nodeAddr))
             node = nodec[nodeAddr];
 
-        // If the service node is not among peers, we try to connect to it right now
-        if (!node) {
-            CAddress addr;
-            node = ConnectNode(addr, nodeAddr.c_str());
-        }
-
-        // Could not connect to service node
+        // If the service node is not among peers skip
         if (!node)
             continue;
 
@@ -417,17 +414,15 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
 
         // Only select nodes with a fee smaller than the max fee we're willing to pay
         if (maxfee > 0) {
-            auto fee = settings->getCommandFee(command, wallet);
+            auto fee = settings->getCommandFee(command, service);
             if (fee > maxfee) {
                 LOG() << "Skipping node " << snodeAddr << " because its fee=" << fee << " is higher than maxfee=" << maxfee;
                 continue;
             }
         }
 
-        const std::string commandStr(XRouterCommand_ToString(command));
-        const auto & cmd = buildCommandKey(wallet, commandStr);
-        auto rateLimit = settings->clientRequestLimit(command, wallet);
-        if (hasSentRequest(nodeAddr, cmd) && rateLimitExceeded(nodeAddr, cmd, getLastRequest(nodeAddr, cmd), rateLimit)) {
+        auto rateLimit = settings->clientRequestLimit(command, service);
+        if (hasSentRequest(nodeAddr, fqCmd) && rateLimitExceeded(nodeAddr, fqCmd, getLastRequest(nodeAddr, fqCmd), rateLimit)) {
             LOG() << "Skipping node " << snodeAddr << " because not enough time passed since the last call";
             continue;
         }
@@ -477,7 +472,7 @@ CNode* App::getNodeForService(std::string name)
             nodec[addr] = pnode;
     }
 
-    double maxfee = xrsettings->getMaxFee(xrCustomCall, "");
+    double maxfee = xrsettings->getMaxFee(xrService, "");
 
     // Domains
     if (name.find("/") != string::npos) {
@@ -718,8 +713,8 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & currency,
-                             const int & confirmations, const std::string param1, const std::string param2)
+std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & service,
+                             const int & confirmations, const std::vector<std::string> & params)
 {
     const std::string & uuid = generateUUID();
     uuidRet = uuid; // set uuid
@@ -727,62 +722,64 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
     try {
         if (!isEnabled())
             throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf", xrouter::UNAUTHORIZED);
-        
-        // Check param1
-        switch (command) {
-            case xrGetBlockHash:
-            case xrGetAllBlocks:
-                if (!is_number(param1))
-                    throw XRouterError("Incorrect block number: " + param1, xrouter::INVALID_PARAMETERS);
-                break;
-            case xrGetTxBloomFilter:
-                if (!is_hash(param1) || (param1.size() % 10 != 0))
-                    throw XRouterError("Incorrect bloom filter: " + param1, xrouter::INVALID_PARAMETERS);
-                break;
-            case xrGetBlock:
-            case xrGetTransaction:
-                if (!is_hash(param1))
-                    throw XRouterError("Incorrect hash: " + param1, xrouter::INVALID_PARAMETERS);
-                break;
-            case xrGetAllTransactions:
-            case xrGetBalanceUpdate:
-                if (!is_address(param1))
-                    throw XRouterError("Incorrect address: " + param1, xrouter::INVALID_PARAMETERS);
-                break;
-            default:
-                break;
-        }
-        
-        // Check param2
-        switch (command) {
-            case xrGetAllTransactions:
-            case xrGetBalanceUpdate:
-            case xrGetTxBloomFilter:
-                if (!is_number(param2))
-                    throw XRouterError("Incorrect block number: " + param2, xrouter::INVALID_PARAMETERS);
-                break;
-            default:
-                break;
+
+        if (command != xrService) {
+            // Check param1
+            switch (command) {
+                case xrGetBlockHash:
+                case xrGetAllBlocks:
+                    if (params.size() > 0 && !is_number(params[0]))
+                        throw XRouterError("Incorrect block number: " + params[0], xrouter::INVALID_PARAMETERS);
+                    break;
+                case xrGetTxBloomFilter:
+                    if (params.size() > 0 && (!is_hash(params[0]) || (params[0].size() % 10 != 0)))
+                        throw XRouterError("Incorrect bloom filter: " + params[0], xrouter::INVALID_PARAMETERS);
+                    break;
+                case xrGetBlock:
+                case xrGetTransaction:
+                    if (params.size() > 0 && !is_hash(params[0]))
+                        throw XRouterError("Incorrect hash: " + params[0], xrouter::INVALID_PARAMETERS);
+                    break;
+                case xrGetAllTransactions:
+                case xrGetBalanceUpdate:
+                    if (params.size() > 0 && !is_address(params[0]))
+                        throw XRouterError("Incorrect address: " + params[0], xrouter::INVALID_PARAMETERS);
+                    break;
+                default:
+                    break;
+            }
+
+            // Check param2
+            switch (command) {
+                case xrGetAllTransactions:
+                case xrGetBalanceUpdate:
+                case xrGetTxBloomFilter:
+                    if (params.size() > 1 && !is_number(params[1]))
+                        throw XRouterError("Incorrect block number: " + params[1], xrouter::INVALID_PARAMETERS);
+                    break;
+                default:
+                    break;
+            }
         }
 
         // Confirmations
-        auto confs = std::max(xrsettings->confirmations(command, currency, XROUTER_DEFAULT_CONFIRMATIONS), confirmations);
-        const auto commandKey = buildCommandKey(currency, XRouterCommand_ToString(command));
+        auto confs = std::max(xrsettings->confirmations(command, service, XROUTER_DEFAULT_CONFIRMATIONS), confirmations);
+        const auto fqService = buildCommandKey(service, XRouterCommand_ToString(command));
 
         // Open connections (at least number equal to how many confirmations we want)
-        if (!openConnections(currency, commandKey, static_cast<uint32_t>(confs))) {
-            std::string err("Not enough connections, require " + std::to_string(confs) + " for " + commandKey);
+        if (!openConnections(fqService, static_cast<uint32_t>(confs))) {
+            std::string err("Not enough connections, require " + std::to_string(confs) + " for " + fqService);
             ERR() << err;
             throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
         }
 
         // Select available nodes
-        std::vector<CNode*> selectedNodes = getAvailableNodes(command, currency, confs);
+        std::vector<CNode*> selectedNodes = getAvailableNodes(command, service, confs);
         auto selected = static_cast<int>(selectedNodes.size());
         
         if (selected < confs)
             throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
-                               buildCommandKey(currency, XRouterCommand_ToString(command)) + " found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
+                               fqService + " found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
         
         std::map<std::string, std::string> paytx_map;
         int snodeCount = 0;
@@ -798,7 +795,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
             // Create the fee payment
             std::string feePayment;
-            CAmount fee = to_amount(getConfig(addr)->getCommandFee(command, currency));
+            CAmount fee = to_amount(getConfig(addr)->getCommandFee(command, service));
             if (fee > 0) {
                 try {
                     if (!generatePayment(pnode, fee, feePayment))
@@ -825,7 +822,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                                " service node(s) to process request", xrouter::NOT_ENOUGH_NODES);
         }
 
-        int timeout = xrsettings->commandTimeout(command, currency);
+        int timeout = xrsettings->commandTimeout(command, service);
 
         // Send xrouter request to each selected node
         for (CNode* pnode : selectedNodes) {
@@ -842,21 +839,17 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
             // Send packet to xrouter node
             XRouterPacketPtr packet(new XRouterPacket(command, uuid));
-            packet->append(currency);
+            packet->append(service);
             packet->append(json_spirit::write_string(Value(jbody)));
-            if (!param1.empty())
-                packet->append(param1);
-            if (!param2.empty())
-                packet->append(param2);
+            for (const std::string & p : params)
+                packet->append(p);
             packet->sign(cpubkey, cprivkey);
             pnode->PushMessage("xrouter", packet->body());
             
             std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-            const std::string commandStr(XRouterCommand_ToString(command));
-            const auto & cmd = buildCommandKey(currency, commandStr);
             if (!lastPacketsSent.count(addr))
                 lastPacketsSent[addr] = std::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-            lastPacketsSent[addr][cmd] = time;
+            lastPacketsSent[addr][fqService] = time;
 
             LOG() << "Sent message to node " << pnode->addrName;
         }
@@ -907,150 +900,58 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
 std::string App::getBlockCount(std::string & uuidRet, const std::string & currency, const int & confirmations)
 {
-    return this->xrouterCall(xrGetBlockCount, uuidRet, currency, confirmations, "", "");
+    return this->xrouterCall(xrGetBlockCount, uuidRet, currency, confirmations, {});
 }
 
 std::string App::getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockId)
 {
-    return this->xrouterCall(xrGetBlockHash, uuidRet, currency, confirmations, blockId, "");
+    return this->xrouterCall(xrGetBlockHash, uuidRet, currency, confirmations, { blockId });
 }
 
 std::string App::getBlock(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockHash)
 {
-    return this->xrouterCall(xrGetBlock, uuidRet, currency, confirmations, blockHash, "");
+    return this->xrouterCall(xrGetBlock, uuidRet, currency, confirmations, { blockHash });
 }
 
 std::string App::getTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & hash)
 {
-    return this->xrouterCall(xrGetTransaction, uuidRet, currency, confirmations, hash, "");
+    return this->xrouterCall(xrGetTransaction, uuidRet, currency, confirmations, { hash });
 }
 
 std::string App::getAllBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & number)
 {
-    return this->xrouterCall(xrGetAllBlocks, uuidRet, currency, confirmations, number, "");
+    return this->xrouterCall(xrGetAllBlocks, uuidRet, currency, confirmations, { number });
 }
 
 std::string App::getAllTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number)
 {
-    return this->xrouterCall(xrGetAllTransactions, uuidRet, currency, confirmations, account, number);
+    return this->xrouterCall(xrGetAllTransactions, uuidRet, currency, confirmations, { account, number });
 }
 
 std::string App::getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account)
 {
-    return this->xrouterCall(xrGetBalance, uuidRet, currency, confirmations, account, "");
+    return this->xrouterCall(xrGetBalance, uuidRet, currency, confirmations, { account });
 }
 
 std::string App::getBalanceUpdate(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number)
 {
-    return this->xrouterCall(xrGetBalanceUpdate, uuidRet, currency, confirmations, account, number);
+    return this->xrouterCall(xrGetBalanceUpdate, uuidRet, currency, confirmations, { account, number });
 }
 
 std::string App::getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & filter, const std::string & number)
 {
-    return this->xrouterCall(xrGetTxBloomFilter, uuidRet, currency, confirmations, filter, number);
+    return this->xrouterCall(xrGetTxBloomFilter, uuidRet, currency, confirmations, { filter, number });
 }
 
 std::string App::convertTimeToBlockCount(std::string & uuidRet, const std::string& currency, const int & confirmations, std::string time) {
 
-    return this->xrouterCall(xrGetBlockForTime, uuidRet, currency, confirmations, time, "");
+    return this->xrouterCall(xrGetBlockForTime, uuidRet, currency, confirmations, { time });
 }
 
 std::string App::sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction)
 {
     int confirmations{1}; // default 1 on this call
-    return this->xrouterCall(xrSendTransaction, uuidRet, currency, confirmations, transaction, "");
-}
-
-std::string App::sendCustomCall(std::string & uuidRet, const std::string & name, std::vector<std::string> & params)
-{
-    std::string uuid = generateUUID();
-    uuidRet = uuid;
-
-    try {
-        if (!isEnabled())
-            throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf to run XRouter.", xrouter::UNAUTHORIZED);
-        
-        if (xrsettings->hasPlugin(name)) // Run the plugin locally
-            return server->processCustomCall(name, params);
-
-        CNode* pnode = getNodeForService(name);
-        if (!pnode)
-            throw XRouterError("Plugin not found", xrouter::UNSUPPORTED_SERVICE);
-
-        const auto & addr = pnode->addr.ToString();
-        const auto psize = static_cast<int>(params.size());
-
-        auto pluginSettings = snodeConfigs[addr]->getPluginSettings(name);
-        int min_count = pluginSettings->minParamCount();
-        if (psize < min_count)
-            throw XRouterError("Not enough plugin parameters", xrouter::INVALID_PARAMETERS);
-
-        int max_count = snodeConfigs[addr]->getPluginSettings(name)->maxParamCount();
-        if (psize > max_count)
-            throw XRouterError("Too many plugin parameters", xrouter::INVALID_PARAMETERS);
-
-        CAmount fee = to_amount(snodeConfigs[addr]->getPluginSettings(name)->getFee());
-        std::string payment_tx = "nofee";
-        if (fee > 0) {
-            try {
-                if (!generatePayment(pnode, fee, payment_tx))
-                    throw XRouterError("Failed to create servicenode payment", xrouter::INSUFFICIENT_FEE);
-                payment_tx = "nohash;" + payment_tx;
-                LOG() << "Payment transaction: " << payment_tx;
-            } catch (std::runtime_error &) {
-                LOG() << "Failed to create payment to node " << addr;
-            }
-        }
-
-        // Create query
-        addQuery(uuid, addr);
-        queryMgr.addQuery(uuid, addr);
-
-        Object result;
-        int timeout = pluginSettings->commandTimeout();
-
-        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-        if (!lastPacketsSent.count(addr))
-            lastPacketsSent[addr] = std::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-        lastPacketsSent[addr][name] = time;
-
-        // Send packet
-        XRouterPacketPtr packet(new XRouterPacket(xrCustomCall, uuid));
-        packet->append(name);
-        packet->append(payment_tx);
-        for (std::string & param : params)
-            packet->append(param);
-        packet->sign(cpubkey, cprivkey);
-        pnode->PushMessage("xrouter", packet->body());
-
-        // Wait for reply
-        auto qcond = queryMgr.queryCond(uuid, addr);
-        if (qcond) {
-            auto l = queryMgr.queryLock(uuid, addr);
-            boost::mutex::scoped_lock lock(*l);
-            if (qcond->timed_wait(lock, boost::posix_time::seconds(timeout),
-                    [this,&uuid,&addr]() { return ShutdownRequested() || queryMgr.hasReply(uuid, addr); }))
-            {
-                std::string reply;
-                int consensus = queryMgr.reply(uuid, addr, reply); // TODO Handle consensus
-                queryMgr.purge(uuid); // clean up
-                return reply;
-            }
-        }
-
-        queryMgr.purge(uuid); // clean up
-
-        // Error if we reach here
-        throw XRouterError("Failed to get response in time. Try xrGetReply command later.", xrouter::SERVER_TIMEOUT);
-
-    } catch (XRouterError & e) {
-        Object error;
-        error.emplace_back(Pair("error", e.msg));
-        error.emplace_back(Pair("code", e.code));
-        error.emplace_back(Pair("uuid", uuid));
-        LOG() << e.msg;
-        return json_spirit::write_string(Value(error), true);
-    }
+    return this->xrouterCall(xrSendTransaction, uuidRet, currency, confirmations, { transaction });
 }
 
 std::string App::getReply(const std::string & id)
