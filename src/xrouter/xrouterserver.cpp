@@ -322,6 +322,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     case xrGetBalance:
                     case xrGetBalanceUpdate:
                     case xrGetBlockAtTime:
+                    case xrGenerateBloomFilter:
                         break; // commands not supported, do not charge client
                     default: {
                         if (!processPayment(node, feetx, cmdFee)) {
@@ -361,6 +362,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     break;
                 case xrGetTxBloomFilter:
                     reply = processGetTransactionsBloomFilter(packet, offset, service);
+                    break;
+                case xrGenerateBloomFilter:
+                    throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
                     break;
                 case xrGetBlockAtTime:
                     throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);

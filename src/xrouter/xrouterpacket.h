@@ -42,6 +42,7 @@ enum XRouterCommand
     xrSendTransaction                = 24,
 
     xrGetTxBloomFilter               = 40,
+    xrGenerateBloomFilter            = 41,
 
     xrGetBlocks                   = 50,
     xrGetTransactions             = 51,
@@ -68,6 +69,7 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
         case xrGetTransaction             : return "xrGetTransaction";
         case xrSendTransaction            : return "xrSendTransaction";
         case xrGetTxBloomFilter           : return "xrGetTxBloomFilter";
+        case xrGenerateBloomFilter        : return "xrGenerateBloomFilter";
         case xrGetBlocks               : return "xrGetBlocks";
         case xrGetTransactions         : return "xrGetTransactions";
         case xrGetBlockAtTime            : return "xrGetBlockAtTime";
@@ -95,6 +97,7 @@ inline bool XRouterCommand_IsValid(const char* c)
            XRouterCommand_ToString(xrGetTransaction)             == c ||
            XRouterCommand_ToString(xrSendTransaction)            == c ||
            XRouterCommand_ToString(xrGetTxBloomFilter)           == c ||
+           XRouterCommand_ToString(xrGenerateBloomFilter)        == c ||
            XRouterCommand_ToString(xrGetBlocks)               == c ||
            XRouterCommand_ToString(xrGetTransactions)         == c ||
            XRouterCommand_ToString(xrGetBlockAtTime)            == c ||
