@@ -320,6 +320,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 // Spend client payment if supported command
                 switch (command) {
                     case xrGetBalance:
+                    case xrGetBalanceUpdate:
                     case xrGetBlockAtTime:
                         break; // commands not supported, do not charge client
                     default: {
@@ -352,17 +353,18 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     break;
                 case xrGetBalance:
                     throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
-                    //reply = processGetBalance(packet, offset, currency);
+//                    reply = processGetBalance(packet, offset, currency);
                     break;
                 case xrGetBalanceUpdate:
-                    reply = processGetBalanceUpdate(packet, offset, service);
+                    throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
+//                    reply = processGetBalanceUpdate(packet, offset, service);
                     break;
                 case xrGetTxBloomFilter:
                     reply = processGetTransactionsBloomFilter(packet, offset, service);
                     break;
                 case xrGetBlockAtTime:
                     throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
-                    //reply = processConvertTimeToBlockCount(packet, offset, currency);
+//                    reply = processConvertTimeToBlockCount(packet, offset, currency);
                     break;
                 case xrFetchReply:
                     reply = processFetchReply(uuid);
