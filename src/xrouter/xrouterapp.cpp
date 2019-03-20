@@ -727,7 +727,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             // Check param1
             switch (command) {
                 case xrGetBlockHash:
-                case xrGetAllBlocks:
+                case xrGetBlocks:
                     if (params.size() > 0 && !is_number(params[0]))
                         throw XRouterError("Incorrect block number: " + params[0], xrouter::INVALID_PARAMETERS);
                     break;
@@ -920,7 +920,7 @@ std::string App::getTransaction(std::string & uuidRet, const std::string & curre
 
 std::string App::getAllBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & number)
 {
-    return this->xrouterCall(xrGetAllBlocks, uuidRet, currency, confirmations, { number });
+    return this->xrouterCall(xrGetBlocks, uuidRet, currency, confirmations, { number });
 }
 
 std::string App::getAllTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number)
