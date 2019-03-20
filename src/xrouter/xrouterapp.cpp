@@ -740,7 +740,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                     if (params.size() > 0 && !is_hash(params[0]))
                         throw XRouterError("Incorrect hash: " + params[0], xrouter::INVALID_PARAMETERS);
                     break;
-                case xrGetAllTransactions:
+                case xrGetTransactions:
                 case xrGetBalanceUpdate:
                     if (params.size() > 0 && !is_address(params[0]))
                         throw XRouterError("Incorrect address: " + params[0], xrouter::INVALID_PARAMETERS);
@@ -751,7 +751,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
             // Check param2
             switch (command) {
-                case xrGetAllTransactions:
+                case xrGetTransactions:
                 case xrGetBalanceUpdate:
                 case xrGetTxBloomFilter:
                     if (params.size() > 1 && !is_number(params[1]))
@@ -925,7 +925,7 @@ std::string App::getAllBlocks(std::string & uuidRet, const std::string & currenc
 
 std::string App::getAllTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number)
 {
-    return this->xrouterCall(xrGetAllTransactions, uuidRet, currency, confirmations, { account, number });
+    return this->xrouterCall(xrGetTransactions, uuidRet, currency, confirmations, { account, number });
 }
 
 std::string App::getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account)

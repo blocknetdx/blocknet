@@ -347,7 +347,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 case xrGetBlocks:
                     reply = processGetAllBlocks(packet, offset, service);
                     break;
-                case xrGetAllTransactions:
+                case xrGetTransactions:
                     reply = processGetAllTransactions(packet, offset, service);
                     break;
                 case xrGetBalance:
