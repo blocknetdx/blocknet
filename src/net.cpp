@@ -20,6 +20,7 @@
 #include "primitives/transaction.h"
 #include "ui_interface.h"
 #include "wallet.h"
+#include "xrouter/xrouterapp.h"
 
 #ifdef WIN32
 #include <string.h>
@@ -946,10 +947,16 @@ void ThreadSocketHandler()
             }
 
             //
-            // Inactivity checking
+            // Inactivity checking (xrouter clients should timeout after 15 seconds)
             //
             int64_t nTime = GetTime();
-            if (nTime - pnode->nTimeConnected > 60) {
+            if (nTime - pnode->nTimeConnected > 60 || (pnode->isXRouter() && nTime - pnode->nTimeConnected > 15)) {
+                if (pnode->isXRouter()) { // Disconnect xrouter client if there's no pending queries
+                    if (!xrouter::App::instance().hasPendingQuery(pnode->addr.ToString())) {
+                        LogPrintf("disconnecting xrouter client: %s\n", pnode->addr.ToString());
+                        pnode->fDisconnect = true;
+                    }
+                }
                 if (pnode->nLastRecv == 0 || pnode->nLastSend == 0) {
                     LogPrint("net", "socket no message in first 60 seconds, %d %d from %d\n", pnode->nLastRecv != 0, pnode->nLastSend != 0, pnode->id);
                     pnode->fDisconnect = true;

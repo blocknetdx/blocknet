@@ -771,7 +771,16 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
         processConfigReply(node, packet, state);
         return;
     } else {
-        server->onMessageReceived(node, packet, state);
+        const auto & nodeAddr = node->addr.ToString();
+        const auto & uuid = packet->suuid();
+        try {
+            server->addInFlightQuery(nodeAddr, uuid);
+            server->onMessageReceived(node, packet, state);
+            server->removeInFlightQuery(nodeAddr, uuid);
+        } catch (std::exception & e) {
+            server->removeInFlightQuery(nodeAddr, uuid);
+            throw e;
+        }
         return;
     }
 }

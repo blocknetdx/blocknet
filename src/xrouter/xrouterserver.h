@@ -212,6 +212,37 @@ public:
     bool createConnectors();
 
     /**
+     * Returns true if this server has a pending query.
+     * @param node
+     */
+    bool hasInFlightQuery(const NodeAddr & node) {
+        LOCK(_lock);
+        return inFlightQueries.count(node) > 0;
+    }
+
+    /**
+     * Watches the specified query.
+     * @param node
+     * @param uuid
+     */
+    void addInFlightQuery(const NodeAddr & node, const std::string & uuid) {
+        LOCK(_lock);
+        inFlightQueries[node].insert(uuid);
+    }
+
+    /**
+     * Unwatches the specified query.
+     * @param node
+     * @param uuid
+     */
+    void removeInFlightQuery(const NodeAddr & node, const std::string & uuid) {
+        LOCK(_lock);
+        inFlightQueries[node].erase(uuid);
+        if (inFlightQueries[node].empty())
+            inFlightQueries.erase(node);
+    }
+
+    /**
      * Servicenode public key.
      * @return
      */
@@ -260,6 +291,7 @@ private:
 
     std::map<std::string, std::pair<std::string, CAmount> > hashedQueries;
     std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > hashedQueriesDeadlines;
+    std::map<NodeAddr, std::set<std::string> > inFlightQueries;
 
     std::vector<unsigned char> spubkey;
     std::vector<unsigned char> sprivkey;

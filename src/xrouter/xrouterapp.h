@@ -441,6 +441,16 @@ public:
         }
     }
 
+    /**
+     * Returns true if any queries are pending for the specified node.
+     * @param node
+     * @return
+     */
+    bool hasPendingQuery(const NodeAddr & node) {
+        LOCK(_lock);
+        return server->hasInFlightQuery(node);
+    }
+
 private:
     /**
      * @brief App - default contructor,

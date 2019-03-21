@@ -190,6 +190,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
 {
     clearHashedQueries(); // clean up
 
+    // Make sure this node is designated as an xrouter node
+    node->setXRouter();
+
     const auto nodeAddr = node->addr.ToString();
     const std::string & uuid = packet->suuid();
     std::string reply;
