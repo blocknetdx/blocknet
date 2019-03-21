@@ -11,6 +11,7 @@
 #include <vector>
 #include <string>
 
+#include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/container/map.hpp>
 #include <boost/algorithm/string.hpp>
@@ -94,12 +95,12 @@ typedef std::shared_ptr<XRouterPluginSettings> XRouterPluginSettingsPtr;
 class XRouterPluginSettings : public IniConfig
 {
 public:
-    XRouterPluginSettings() = default;
+    explicit XRouterPluginSettings(const bool & ismine = true) : ismine(ismine) { }
 
-    std::string getParam(const std::string param, const std::string def="");
-    double getFee();
-    int minParamCount();
-    int maxParamCount();
+    std::string stringParam(const std::string & param, const std::string def = "");
+    std::string type();
+    double fee();
+    std::vector<std::string> parameters();
     int clientRequestLimit();
     int commandTimeout();
 
@@ -110,11 +111,17 @@ public:
 
     bool read(const char * fileName) override;
     bool read(std::string config) override;
-    
-    bool verify(std::string name="");
+
+    bool verify(const std::string & name);
+    bool has(const std::string & key) {
+        LOCK(mu);
+        return m_pt.count(key) > 0;
+    }
+
 private:
     void formPublicText();
     std::string publictext;
+    bool ismine{true};
 };
 
 //******************************************************************************
@@ -122,7 +129,7 @@ class XRouterSettings : public IniConfig
 {
 public:
     XRouterSettings() = default;
-    XRouterSettings(const std::string & config);
+    explicit XRouterSettings(const std::string & config, const bool & ismine = true);
 
     void assignNode(const std::string & node) {
         LOCK(mu);
@@ -138,91 +145,48 @@ public:
         LOCK(mu);
         return {wallets.begin(), wallets.end()};
     }
-    bool hasWallet(const std::string & currency) {
-        LOCK(mu);
-        return wallets.count(currency);
-    }
+    bool hasWallet(const std::string & currency);
 
     void loadPlugins();
-
     std::vector<std::string> getPlugins() {
         LOCK(mu);
         return {pluginList.begin(),pluginList.end()};
     }
+    bool hasPlugin(const std::string & name);
 
-    std::string pluginPath() const;
 
     void addPlugin(const std::string &name, XRouterPluginSettingsPtr s) {
         LOCK(mu);
         plugins[name] = s; pluginList.insert(name);
     }
 
-    bool hasPlugin(const std::string & name);
-
     XRouterPluginSettingsPtr getPluginSettings(const std::string & name) {
         LOCK(mu);
         return plugins[name];
     }
 
-    bool walletEnabled(const std::string & currency);
     bool isAvailableCommand(XRouterCommand c, std::string service="");
-    double getCommandFee(XRouterCommand c, std::string service="", double def=0.0);
+    double commandFee(XRouterCommand c, std::string service="", double def=0.0);
     int commandTimeout(XRouterCommand c, std::string service="", int def=XROUTER_DEFAULT_TIMEOUT);
-    int getCommandBlockLimit(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_BLOCK_LIMIT);
-    double getMaxFee(XRouterCommand c, std::string currency="", double def=0.0);
-    int clientRequestLimit(XRouterCommand c, std::string currency="", int def=-1); // -1 is no limit
+    int commandBlockLimit(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_BLOCK_LIMIT);
+    double maxFee(XRouterCommand c, std::string currency="", double def=0.0);
+    int clientRequestLimit(XRouterCommand c, std::string service="", int def=-1); // -1 is no limit
     int confirmations(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_CONFIRMATIONS); // 1 confirmation default
     int configSyncTimeout();
 
     double defaultFee();
-    std::map<std::string, double> getFeeSchedule() {
-        LOCK(mu);
-
-        double fee = defaultFee();
-        std::map<std::string, double> s;
-
-        // First pass set top-level fees
-        for (const auto & p : m_pt) {
-            std::vector<std::string> parts;
-            boost::split(parts, p.first, boost::is_any_of("::"));
-            std::string cmd = parts[0];
-
-            if (parts.size() > 1)
-                continue; // skip currency fees (addressed in 2nd pass below)
-            if (boost::algorithm::to_lower_copy(cmd) == "main")
-                continue; // skip Main
-
-            s[p.first] = m_pt.get<double>(p.first + ".fee", fee);
-        }
-
-        // 2nd pass to set currency fees
-        for (const auto & p : m_pt) {
-            if (s.count(p.first))
-                continue; // skip existing
-
-            std::vector<std::string> parts;
-            boost::split(parts, p.first, boost::is_any_of("::"));
-
-            if (parts.size() < 3)
-                continue; // skip
-
-            std::string currency = parts[0];
-            std::string cmd = parts[2];
-
-            s[p.first] = m_pt.get<double>(p.first + ".fee", s.count(cmd) ? s[cmd] : fee); // default to top-level fee
-        }
-
-        return s;
-    }
+    std::map<std::string, double> feeSchedule();
 
 private:
-    bool loadPlugin(std::string & name);
+    boost::filesystem::path pluginPath() const;
+    bool loadPlugin(const std::string & name);
 
 private:
     std::map<std::string, XRouterPluginSettingsPtr> plugins;
     std::set<std::string> pluginList;
     std::set<std::string> wallets;
     std::string node;
+    bool ismine{true}; // indicating if the config is our own
 };
 
 } // namespace

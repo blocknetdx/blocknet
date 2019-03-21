@@ -244,7 +244,7 @@ private:
      * @param packet send message via xrouter
      * @param wallet walletconnector ID = currency ID (BTC, LTC etc)
      */
-    void sendPacketToClient(std::string uuid, std::string reply, CNode* pnode);
+    void sendPacketToClient(const std::string & uuid, const std::string & reply, CNode* pnode);
 
     /**
      * Loads the servicenode key from config.

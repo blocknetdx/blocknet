@@ -40,7 +40,7 @@ static CCriticalSection cs_rpcBlockchainStore;
 
 bool createAndSignTransaction(Array txparams, std::string & raw_tx)
 {
-    LOCK2(cs_rpcBlockchainStore, pwalletMain->cs_wallet);
+    LOCK(cs_rpcBlockchainStore);
     
     int         errCode = 0;
     std::string errMessage;
@@ -52,7 +52,8 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
 
         {
             // call create
-            result = createrawtransaction(txparams, false);
+            static const std::string createrawtransaction{"createrawtransaction"};
+            result = tableRPC.execute(createrawtransaction, txparams);
             LOG() << "Create transaction: " << json_spirit::write_string(Value(result), true);
             if (result.type() != str_type)
             {
@@ -70,7 +71,8 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
             params.push_back(options);
 
             // call fund
-            result = fundrawtransaction(params, false);
+            static const std::string fundrawtransaction{"fundrawtransaction"};
+            result = tableRPC.execute(fundrawtransaction, params);
             LOG() << "Fund transaction: " << json_spirit::write_string(Value(result), true);
             if (result.type() != obj_type)
             {
@@ -91,7 +93,8 @@ bool createAndSignTransaction(Array txparams, std::string & raw_tx)
             Array params;
             params.push_back(rawtx);
 
-            result = signrawtransaction(params, false);
+            static const std::string signrawtransaction{"signrawtransaction"};
+            result = tableRPC.execute(signrawtransaction, params);
             LOG() << "Sign transaction: " << json_spirit::write_string(Value(result), true);
             if (result.type() != obj_type)
             {
@@ -188,7 +191,7 @@ void unlockOutputs(const std::string & tx) {
 
 std::string signTransaction(std::string& raw_tx)
 {
-    LOCK2(cs_rpcBlockchainStore, pwalletMain->cs_wallet);
+    LOCK(cs_rpcBlockchainStore);
     
     std::vector<std::string> params;
     params.push_back(raw_tx);

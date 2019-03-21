@@ -24,7 +24,29 @@ namespace xrouter
 // Type definitions
 typedef std::string NodeAddr;
 
-static const std::string xr = "xr";
+static const std::string xr = "xr"; // XRouter SPV
+static const std::string xrs = "xrs"; // XRouter services
+
+/**
+ * Helper to build key for use with lookups.
+ * @param wallet
+ * @param command
+ * @return
+ */
+extern std::string walletCommandKey(const std::string & wallet, const std::string & command);
+/**
+ * Helper to build key for use with lookups.
+ * @param wallet
+ * @return
+ */
+extern std::string walletCommandKey(const std::string & wallet);
+
+/**
+ * Helper to build service key for use with lookups.
+ * @param service
+ * @return
+ */
+extern std::string pluginCommandKey(const std::string & service);
 
 class UnknownChainAddress : public CBitcoinAddress {
 public:
@@ -40,8 +62,8 @@ public:
 
 
 // Network and RPC interface
-std::string CallCMD(std::string cmd);
-std::string CallURL(std::string ip, std::string port, std::string url);
+std::string CallCMD(const std::string & cmd);
+std::string CallURL(const std::string & ip, const std::string & port, const std::string & url);
 Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params);

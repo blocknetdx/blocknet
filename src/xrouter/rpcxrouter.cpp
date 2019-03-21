@@ -698,7 +698,7 @@ Value xrConnectedNodes(const Array& params, bool fHelp)
         // fees
         o.emplace_back("feedefault", settings->defaultFee());
         Object ofs;
-        const auto & schedule = settings->getFeeSchedule();
+        const auto & schedule = settings->feeSchedule();
         for (const auto & s : schedule)
             ofs.emplace_back(s.first,  s.second);
         o.emplace_back("feeschedule", ofs);

@@ -114,7 +114,11 @@ bool XRouterServer::createConnectors() {
             this->addConnector(conn);
         }
     }
-    catch (std::exception & e) { }
+    catch (std::exception & e) {
+        return false;
+    }
+
+    return true;
 }
 
 void XRouterServer::addConnector(const WalletConnectorXRouterPtr & conn)
@@ -134,7 +138,7 @@ WalletConnectorXRouterPtr XRouterServer::connectorByCurrency(const std::string &
     return WalletConnectorXRouterPtr();
 }
 
-void XRouterServer::sendPacketToClient(std::string uuid, std::string reply, CNode* pnode)
+void XRouterServer::sendPacketToClient(const std::string & uuid, const std::string & reply, CNode* pnode)
 {
     LOG() << "Sending reply to client with query id " << uuid << ": " << reply;
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply, uuid));
@@ -226,7 +230,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             app.updateConfigTime(nodeAddr, time);
 
             // Prep reply (serialize config)
-            reply = app.parseConfig(cfg, addr); // TODO Handle parse errors
+            reply = app.parseConfig(cfg); // TODO Handle parse errors
+            LOG() << "Sending config to " << nodeAddr;
 
             XRouterPacketPtr rpacket(new XRouterPacket(xrConfigReply, uuid));
             rpacket->append(reply);
@@ -241,7 +246,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         std::string service((const char *)packet->data()+offset);
         offset += service.size() + 1;
 
-        const auto fqService = app.buildCommandKey(service, commandStr);
+        const auto & fqService = (command == xrService) ? pluginCommandKey(service)
+                                                        : walletCommandKey(service, commandStr);
         LOG() << "XRouter command: " << fqService << " from node " << nodeAddr;
 
         if (!app.xrSettings()->isAvailableCommand(command, service))
@@ -262,10 +268,17 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         const auto & feetx = fee_v.get_str();
         CAmount fee = 0;
 
+        // Params count
+        const auto paramsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+        offset += sizeof(uint32_t);
+        if (paramsCount > XROUTER_MAX_PARAMETERS)
+            throw XRouterError("Too many parameters from client, max is " +
+                               std::to_string(XROUTER_MAX_PARAMETERS) + ": " + fqService, xrouter::BAD_REQUEST);
+
         // Handle calls to XRouter plugins
         if (command == xrService) {
             if (!app.xrSettings()->hasPlugin(service))
-                throw XRouterError("Do not support this service: " + fqService, xrouter::BAD_REQUEST);
+                throw XRouterError("Service not supported: " + fqService, xrouter::BAD_REQUEST);
             // Check rate limit
             XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(service);
             auto rateLimit = psettings->clientRequestLimit();
@@ -275,28 +288,29 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             }
 
             // Expected fee
-            fee = to_amount(psettings->getFee());
+            fee = to_amount(psettings->fee());
 
             // Spend client payment
             if (!processPayment(node, feetx, fee)) {
-                std::string err_msg = "Bad fee payment from client: " + fqService;
+                std::string err_msg = strprintf("Bad fee payment from client %s service %s", node, fqService);
                 state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
                 throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
             }
 
+            // Get parameters from packet
             std::vector<std::string> params;
-            int count = psettings->maxParamCount();
-            std::string p;
-            for (int i = 0; i < count; i++) {
-                p = (const char *)packet->data()+offset;
+            for (int i = 0; i < paramsCount; ++i) {
+                if (offset >= packet->allSize())
+                    break;
+                std::string p = (const char *)packet->data()+offset;
                 params.push_back(p);
                 offset += p.size() + 1;
             }
-            
+
             reply = processServiceCall(service, params);
         }
         else { // Handle default XRouter calls
-            const auto dfee = app.xrSettings()->getCommandFee(command, service);
+            const auto dfee = app.xrSettings()->commandFee(command, service);
             LOG() << "Expecting Fee = " << dfee;
             LOG() << "Received Feetx = " << (feetx.empty() ? "none provided" : feetx);
 
@@ -489,7 +503,7 @@ std::string XRouterServer::processGetAllBlocks(XRouterPacketPtr packet, uint32_t
     int number = std::stoi(number_s);
 
     App& app = App::instance();
-    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->commandBlockLimit(packet->command(), currency);
     
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     Array result;
@@ -525,7 +539,7 @@ std::string XRouterServer::processGetAllTransactions(XRouterPacketPtr packet, ui
     Array result;
     
     App& app = App::instance();
-    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->commandBlockLimit(packet->command(), currency);
     
     if (conn)
     {
@@ -554,7 +568,7 @@ std::string XRouterServer::processGetBalance(XRouterPacketPtr packet, uint32_t o
     }
     std::string result;
     App& app = App::instance();
-    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->commandBlockLimit(packet->command(), currency);
     
     if (conn)
     {
@@ -587,7 +601,7 @@ std::string XRouterServer::processGetBalanceUpdate(XRouterPacketPtr packet, uint
     }
     
     App& app = App::instance();
-    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->commandBlockLimit(packet->command(), currency);
     
     std::string result;
     if (conn)
@@ -624,7 +638,7 @@ std::string XRouterServer::processGetTransactionsBloomFilter(XRouterPacketPtr pa
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     App& app = App::instance();
-    int blocklimit = app.xrSettings()->getCommandBlockLimit(packet->command(), currency);
+    int blocklimit = app.xrSettings()->commandBlockLimit(packet->command(), currency);
     
     Array result;
     if (conn)
@@ -699,80 +713,93 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         return "Service not found";
     
     XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(name);
-    const std::string & callType = psettings->getParam("type");
+    const std::string & callType = psettings->type();
     LOG() << "Calling plugin " << name << " with type = " << callType;
+
+    // Check if parameters matches expected
+    const auto & expectedParams = psettings->parameters();
+    if (expectedParams.size() != params.size())
+        return strprintf("Received parameters count %ld do not match expected %ld", params.size(), expectedParams.size());
 
     if (callType == "rpc") {
         Array jsonparams;
-        int count = psettings->maxParamCount();
-        std::vector<std::string> paramtypes;
-        std::string typestring = psettings->getParam("paramstype");
-        boost::split(paramtypes, typestring, boost::is_any_of(","));
-
-        for (int i = 0; i < count; i++) {
-            const auto & p = params[i];
-            if (p.empty())
-                continue;
-            if (paramtypes[i] == "string")
-                jsonparams.push_back(p);
-            else if (paramtypes[i] == "int") {
+        for (int i = 0; i < expectedParams.size(); ++i) {
+            const auto & p = expectedParams[i];
+            const auto & rec = params[i];
+            if (p == "bool") {
+                jsonparams.push_back(!(rec == "false" || rec == "0"));
+            } else if (p == "int") {
                 try {
-                    jsonparams.push_back(std::stoi(p));
+                    jsonparams.push_back(boost::lexical_cast<int64_t>(rec));
                 } catch (...) {
-                    return "Parameter #" + std::to_string(i+1) + " cannot be converted to integer";
+                    return "Parameter " + std::to_string(i + 1) + " cannot be converted to integer";
                 }
-            } else if (paramtypes[i] == "bool") {
-                if (params[i] == "true")
-                    jsonparams.push_back(true);
-                else if (params[i] == "false")
-                    jsonparams.push_back(true);
-                else
-                    return "Parameter #" + std::to_string(i+1) + " cannot be converted to bool";
+            } else if (p == "double") {
+                try {
+                    jsonparams.push_back(boost::lexical_cast<double>(rec));
+                } catch (...) {
+                    return "Parameter " + std::to_string(i + 1) + " cannot be converted to double";
+                }
+            } else { // string
+                jsonparams.push_back(rec);
             }
         }
-        
-        const auto user = psettings->getParam("rpcuser");
-        const auto passwd = psettings->getParam("rpcpassword");
-        const auto ip = psettings->getParam("rpcip", "127.0.0.1");
-        const auto port = psettings->getParam("rpcport");
-        const auto command = psettings->getParam("rpccommand");
 
         Object result;
         try {
+            const auto & user     = psettings->stringParam("rpcuser");
+            const auto & passwd   = psettings->stringParam("rpcpassword");
+            const auto & ip       = psettings->stringParam("rpcip", "127.0.0.1");
+            const auto & port     = psettings->stringParam("rpcport");
+            const auto & command  = psettings->stringParam("rpccommand");
             result = CallRPC(user, passwd, ip, port, command, jsonparams);
         } catch (...) {
-            return "Internal error in " + name;
+            return "Internal Server Error in rpc command " + name;
         }
 
         return json_spirit::write_string(Value(result), true);
 
     } else if (callType == "shell") {
-        return "Shell plugins are currently disabled";
-        
-        std::string cmd = psettings->getParam("cmd");
-        int count = psettings->maxParamCount();
-        std::string p;
-        for (int i = 0; i < count; i++) {
-            cmd += " " + params[i];
+        return "shell calls are unsupported at this time";
+
+        std::string cmd = psettings->stringParam("cmd");
+        for (int i = 0; i < expectedParams.size(); ++i) {
+            const auto & p = expectedParams[i];
+            const auto & rec = params[i];
+            if (p == "bool") {
+                cmd += " " + std::string(rec == "false" || rec == "0" ? "0" : "1");
+            } else if (rec.find(' ') != std::string::npos) {
+                cmd += " \"" + rec + "\"";
+            }
         }
-        
-        LOG() << "Executing shell command " << cmd;
-        std::string result = CallCMD(cmd);
+
+        std::string result;
+        try {
+            LOG() << "Executing shell command " << cmd;
+            std::string result = CallCMD(cmd);
+        } catch (...) {
+            return "Internal Server Error in shell command " + name;
+        }
         return result;
+
     } else if (callType == "url") {
-        return "Url plugins are currently disabled";
-        
-        std::string ip, port;
-        ip = psettings->getParam("ip");
-        port = psettings->getParam("port");
-        std::string cmd = psettings->getParam("url");
-        int count = psettings->maxParamCount();
-        for (int i = 0; i < count; i++) {
-            cmd = cmd.replace(cmd.find("%s"), 2, params[i]);
+        return "url calls are unsupported at this time";
+
+        const std::string & ip = psettings->stringParam("ip");
+        const std::string & port = psettings->stringParam("port");
+        std::string cmd = psettings->stringParam("url");
+        // Replace params in command
+        for (const auto & p : params) {
+            cmd = cmd.replace(cmd.find("%s"), 2, p);
         }
-        
-        LOG() << "Executing url command " << cmd;
-        std::string result = CallURL(ip, port, cmd);
+
+        std::string result;
+        try {
+            LOG() << "Executing url command " << cmd;
+            result = CallURL(ip, port, cmd);
+        } catch (...) {
+            return "Internal Server Error in Url command " + name;
+        }
         return result;
     }
     

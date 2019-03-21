@@ -281,10 +281,9 @@ public:
     /**
      * @brief process GetXrouterConfig call on service node side
      * @param cfg XRouter settings obj
-     * @param node Node address
      * @return
      */
-    std::string parseConfig(XRouterSettingsPtr cfg, const NodeAddr & node);
+    std::string parseConfig(XRouterSettingsPtr cfg);
 
     /**
      * @brief process reply from service node on *client* side
@@ -400,25 +399,6 @@ public:
      * @return deposit pubkey and address
      */
     std::string createDepositAddress(std::string & uuidRet, bool update=false);
-
-    /**
-     * Helper to build key for use with lookups.
-     * @param wallet
-     * @param command
-     * @return
-     */
-    std::string buildCommandKey(const std::string & wallet, const std::string & command) {
-        return wallet + "::" + command;
-    }
-
-    /**
-     * Helper to build service key for use with lookups.
-     * @param service
-     * @return
-     */
-    std::string buildCommandKey(const std::string & service) {
-        return xr + "::" + service;
-    }
 
     /**
      * Returns true if the rate limit has been exceeded on requests to the specified node.

@@ -49,6 +49,16 @@ std::string generateUUID()
 namespace xrouter
 {
 
+std::string walletCommandKey(const std::string & wallet, const std::string & command) {
+    return wallet + "::" + command;
+}
+std::string walletCommandKey(const std::string & wallet) {
+    return xr + "::" + wallet;
+}
+std::string pluginCommandKey(const std::string & service) {
+    return xrs + "::" + service;
+}
+
 bool is_number(std::string s)
 {
     try {

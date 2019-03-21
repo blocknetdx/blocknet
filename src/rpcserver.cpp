@@ -395,7 +395,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xrouter", "xrGetBalanceUpdate",                   &xrGetBalanceUpdate,         true, true, true},
         {"xrouter", "xrGetTxBloomFilter",                   &xrGetTxBloomFilter,         true, true, true},
         {"xrouter", "xrGenerateBloomFilter",                &xrGenerateBloomFilter,      true, true, true},
-        {"xrouter", "xrGetBlockAtTime",                    &xrGetBlockAtTime,          true, true, true},
+        {"xrouter", "xrGetBlockAtTime",                     &xrGetBlockAtTime,           true, true, true},
         
         {"xrouter", "xrGetReply",                           &xrGetReply,                 true, true, true},
         {"xrouter", "xrUpdateConfigs",                      &xrUpdateConfigs,            true, true, true},
@@ -407,7 +407,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xrouter", "xrQueryDomain",                        &xrQueryDomain,              true, true, true},
         {"xrouter", "xrCreateDepositAddress",               &xrCreateDepositAddress,     true, true, true},
         {"xrouter", "xrConnectedNodes",                     &xrConnectedNodes,           true, true, true},
-        {"xrouter", "xrService",                         &xrService,               true, true, true},
+        {"xrouter", "xrService",                            &xrService,                  true, true, true},
         {"xrouter", "xrTest",                               &xrTest,                     true, true, true},
 
     #endif // ENABLE_WALLET

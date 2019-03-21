@@ -93,7 +93,8 @@ bool App::init(int argc, char *argv[])
     return true;
 }
 
-// We append "xr" if XRouter is activated at all, and "xr::service_name" for each activated plugin and wallet
+// We append "xr" if XRouter is activated at all, "xr::spv_command" for wallet commands,
+// and "xrs::service_name" for custom services (plugins).
 std::vector<std::string> App::getServicesList() 
 {
     std::vector<std::string> result;
@@ -105,14 +106,14 @@ std::vector<std::string> App::getServicesList()
 
     // Add wallet services
     for (const std::string & s : xrsettings->getWallets()) {
-        const auto w = buildCommandKey(xr, s);
+        const auto w = walletCommandKey(xr, s);
         result.push_back(w);
         services += "," + w;
     }
 
     // Add plugin services
     for (const std::string & s : xrsettings->getPlugins()) {
-        const auto p = buildCommandKey(xr, s);
+        const auto p = pluginCommandKey(s);
         result.push_back(p);
         services += "," + p;
     }
@@ -177,7 +178,15 @@ bool App::openConnections(const std::string & fqService, const uint32_t & count)
     {
         LOCK(cs_vNodes);
         nodes = vNodes;
+        for (auto & pnode : nodes)
+            pnode->AddRef();
     }
+
+    auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
+        LOCK(cs_);
+        for (auto & pnode : ns_)
+            pnode->Release();
+    };
 
     // Build node cache
     std::map<std::string, CNode*> nodec;
@@ -229,11 +238,16 @@ bool App::openConnections(const std::string & fqService, const uint32_t & count)
         if (!s.HasService(fqService)) // has the service
             continue;
 
-        fetchConfig(nodec[snodeAddr], s, connected);
+        if (!hasConfig(snodeAddr)) // missing a config, fetch it
+            fetchConfig(nodec[snodeAddr], s, connected);
+        else // found the config
+            ++connected;
     }
 
-    if (connected >= count)
+    if (connected >= count) {
+        releaseNodes(cs_vNodes, nodes);
         return true; // done if we have enough existing connections
+    }
 
     // Open connections to all service nodes up to the desired number that are not already our peers
     for (auto & s : snodes) {
@@ -262,6 +276,7 @@ bool App::openConnections(const std::string & fqService, const uint32_t & count)
             LOG() << "Failed to connect to servicenode " << CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString();
     }
 
+    releaseNodes(cs_vNodes, nodes);
     return connected >= count;
 }
 
@@ -275,7 +290,15 @@ std::string App::updateConfigs(bool force)
     {
         LOCK(cs_vNodes);
         nodes = vNodes;
+        for (auto & pnode : nodes)
+            pnode->AddRef();
     }
+
+    auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
+        LOCK(cs_);
+        for (auto & pnode : ns_)
+            pnode->Release();
+    };
 
     // Build snode cache
     std::map<std::string, CServicenode> snodes;
@@ -311,7 +334,8 @@ std::string App::updateConfigs(bool force)
         LOG() << "Requesting config from snode " << CBitcoinAddress(snode.pubKeyCollateralAddress.GetID()).ToString()
               << " request id = " << uuid;
     }
-    
+
+    releaseNodes(cs_vNodes, nodes);
     return "Config requests have been sent";
 }
 
@@ -357,7 +381,15 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
     {
         LOCK(cs_vNodes);
         nodes = vNodes;
+        for (auto & pnode : nodes)
+            pnode->AddRef();
     }
+
+    auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
+        LOCK(cs_);
+        for (auto & pnode : ns_)
+            pnode->Release();
+    };
 
     // Build snode cache
     std::map<std::string, CServicenode> snodes;
@@ -374,30 +406,33 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
             nodec[addr] = pnode;
     }
 
-    auto maxfee = xrsettings->getMaxFee(command, service);
+    auto maxfee = xrsettings->maxFee(command, service);
     int supported = 0;
     int ready = 0;
 
     auto configs = getConfigs();
-    if (configs.empty()) // don't have any configs
+    if (configs.empty()) { // don't have any configs
+        releaseNodes(cs_vNodes, nodes);
         return selectedNodes;
+    }
 
     for (const auto & item : configs)
     {
         const auto nodeAddr = item.first;
         auto settings = item.second;
-        const std::string commandStr(XRouterCommand_ToString(command));
-        const auto & fqCmd = // fully qualified command e.g. xr::ServiceName
-                (command == xrService ?buildCommandKey(service) : buildCommandKey(service, commandStr));
+        const auto & commandStr = XRouterCommand_ToString(command);
+        // fully qualified command e.g. xr::ServiceName
+        const auto & fqCmd = (command == xrService) ? pluginCommandKey(service) // plugin
+                                                    : walletCommandKey(service, commandStr); // spv wallet
 
-        if (command != xrService && !settings->walletEnabled(service))
+        if (command != xrService && !settings->hasWallet(service))
             continue;
         if (!settings->isAvailableCommand(command, service))
             continue;
         if (!snodes.count(nodeAddr)) // Ignore if not a snode
             continue;
-        if (!snodes[nodeAddr].HasService(fqCmd)) // Ignore snodes that don't have the service
-            continue;
+        if (!snodes[nodeAddr].HasService(command == xrService ? fqCmd : walletCommandKey(service))) // use top-level wallet key (e.g. xr::BLOCK)
+            continue; // Ignore snodes that don't have the service
 
         supported++;
 
@@ -414,7 +449,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
 
         // Only select nodes with a fee smaller than the max fee we're willing to pay
         if (maxfee > 0) {
-            auto fee = settings->getCommandFee(command, service);
+            auto fee = settings->commandFee(command, service);
             if (fee > maxfee) {
                 LOG() << "Skipping node " << snodeAddr << " because its fee=" << fee << " is higher than maxfee=" << maxfee;
                 continue;
@@ -442,9 +477,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
         return getScore(a->addr.ToString()) > getScore(b->addr.ToString());
     });
 
-    if (ready < count)
-        throw XRouterError("Could not find " + std::to_string(count) + " Service Node(s), only found " + std::to_string(ready), xrouter::NOT_ENOUGH_NODES);
-    
+    releaseNodes(cs_vNodes, nodes);
     return selectedNodes;
 }
 
@@ -455,7 +488,15 @@ CNode* App::getNodeForService(std::string name)
     {
         LOCK(cs_vNodes);
         nodes = vNodes;
+        for (auto & pnode : nodes)
+            pnode->AddRef();
     }
+
+    auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
+        LOCK(cs_);
+        for (auto & pnode : ns_)
+            pnode->Release();
+    };
 
     // Build snode cache
     std::map<std::string, CServicenode> snodes;
@@ -472,7 +513,7 @@ CNode* App::getNodeForService(std::string name)
             nodec[addr] = pnode;
     }
 
-    double maxfee = xrsettings->getMaxFee(xrService, "");
+    double maxfee = xrsettings->maxFee(xrService, name);
 
     // Domains
     if (name.find("/") != string::npos) {
@@ -480,35 +521,44 @@ CNode* App::getNodeForService(std::string name)
         boost::split(parts, name, boost::is_any_of("/"));
         std::string domain = parts[0];
         std::string name_part = parts[1];
-        if (!hasDomain(domain))
+        if (!hasDomain(domain)) {
+            releaseNodes(cs_vNodes, nodes);
             return nullptr; // Domain not found
+        }
 
         std::vector<CNode*> candidates; // TODO Multiple candidates?
         const auto nodeAddr = snodeDomains[domain];
 
-        if (!nodec.count(nodeAddr))
+        if (!nodec.count(nodeAddr)) {
+            releaseNodes(cs_vNodes, nodes);
             return nullptr; // unknown node
+        }
 
         CNode *pnode = nodec[nodeAddr];
         candidates.push_back(pnode);
 
         // Check if node has settings
         auto settings = getConfig(nodeAddr);
-        if (!settings->hasPlugin(name_part))
+        if (!settings->hasPlugin(name_part)) {
+            releaseNodes(cs_vNodes, nodes);
             return nullptr;
+        }
 
-        // Check if fee is within expected range
+            // Check if fee is within expected range
         if (maxfee >= 0) {
-            CAmount fee = to_amount(settings->getPluginSettings(name)->getFee());
-            if (fee > maxfee)
+            CAmount fee = to_amount(settings->getPluginSettings(name)->fee());
+            if (fee > maxfee) {
+                releaseNodes(cs_vNodes, nodes);
                 return nullptr; // fee too expensive, ignore node
+            }
         }
 
         CNode *res = nullptr;
 
-        if (candidates.empty())
+        if (candidates.empty()) {
+            releaseNodes(cs_vNodes, nodes);
             return nullptr;
-        else if (candidates.size() == 1)
+        } else if (candidates.size() == 1)
             res = candidates[0];
         else {
             // Perform verification check of domain names
@@ -534,14 +584,19 @@ CNode* App::getNodeForService(std::string name)
                 }
             }
             
-            if (!res)
+            if (!res) {
+                releaseNodes(cs_vNodes, nodes);
                 return nullptr;
+            }
         }
 
         auto rateLimit = settings->getPluginSettings(name)->clientRequestLimit();
-        if (rateLimitExceeded(nodeAddr, name, getLastRequest(nodeAddr, name), rateLimit))
+        if (rateLimitExceeded(nodeAddr, name, getLastRequest(nodeAddr, name), rateLimit)) {
+            releaseNodes(cs_vNodes, nodes);
             return nullptr; // exceeded rate limit on this plugin
-        
+        }
+
+        releaseNodes(cs_vNodes, nodes);
         return res;
     }
 
@@ -572,27 +627,27 @@ CNode* App::getNodeForService(std::string name)
 
         // Check if we're willing to pay this fee
         if (maxfee >= 0) {
-            CAmount fee = to_amount(settings->getPluginSettings(name)->getFee());
+            CAmount fee = to_amount(settings->getPluginSettings(name)->fee());
             if (fee > maxfee)
                 continue; // unwilling to pay fee, too much
         }
-        
+
+        releaseNodes(cs_vNodes, nodes);
         return res;
     }
-    
+
+    releaseNodes(cs_vNodes, nodes);
     return nullptr;
 }
 
-std::string App::parseConfig(XRouterSettingsPtr cfg, const NodeAddr & node)
+std::string App::parseConfig(XRouterSettingsPtr cfg)
 {
     Object result;
     result.emplace_back("config", cfg->rawText());
     Object plugins;
-    for (std::string s : cfg->getPlugins())
+    for (const std::string & s : cfg->getPlugins())
         plugins.emplace_back(s, cfg->getPluginSettings(s)->rawText());
     result.emplace_back("plugins", plugins);
-    result.emplace_back("addr", node);
-    LOG() << "Sending config to " << node;
     return json_spirit::write_string(Value(result), true);
 }
 
@@ -648,25 +703,35 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
 
-    Value reply_val;
-    read_string(reply, reply_val);
-    Object reply_obj = reply_val.get_obj();
-    std::string config = find_value(reply_obj, "config").get_str();
-    Object plugins = find_value(reply_obj, "plugins").get_obj();
-    
-    auto settings = std::make_shared<XRouterSettings>(config);
-    settings->assignNode(nodeAddr);
+    try {
+        Value reply_val;
+        read_string(reply, reply_val);
+        Object reply_obj = reply_val.get_obj();
+        std::string config = find_value(reply_obj, "config").get_str();
+        Object plugins = find_value(reply_obj, "plugins").get_obj();
 
-    for (Object::size_type i = 0; i != plugins.size(); i++ ) {
-        auto psettings = std::make_shared<XRouterPluginSettings>();
-        psettings->read(plugins[i].value_.get_str());
-        settings->addPlugin(plugins[i].name_, psettings);
+        auto settings = std::make_shared<XRouterSettings>(config, false); // not our config
+        settings->assignNode(nodeAddr);
+
+        for (const auto & plugin : plugins) {
+            try {
+                auto psettings = std::make_shared<XRouterPluginSettings>(false); // not our config
+                psettings->read(plugin.value_.get_str());
+                settings->addPlugin(plugin.name_, psettings);
+            } catch (...) {
+                ERR() << "Failed to read plugin " << plugin.name_ << " on query " << uuid << " from node " << nodeAddr;
+            }
+        }
+
+        // Update settings for node
+        updateConfig(nodeAddr, settings);
+        queryMgr.addReply(uuid, nodeAddr, reply);
+        queryMgr.purge(uuid, nodeAddr);
+
+    } catch (...) {
+        ERR() << "Failed to load config " << uuid << " from node " << nodeAddr;
+        return false;
     }
-
-    // Update settings for node
-    updateConfig(nodeAddr, settings);
-    queryMgr.addReply(uuid, nodeAddr, reply);
-    queryMgr.purge(uuid, nodeAddr);
 
     LOG() << "Received reply to query " << uuid << " from node " << nodeAddr;
     LOG() << reply;
@@ -764,19 +829,30 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Confirmations
         auto confs = xrsettings->confirmations(command, service, confirmations);
-        const auto fqService = buildCommandKey(service, XRouterCommand_ToString(command));
-
-        // Open connections (at least number equal to how many confirmations we want)
-        if (!openConnections(fqService, static_cast<uint32_t>(confs))) {
-            std::string err("Not enough connections, require " + std::to_string(confs) + " for " + fqService);
-            ERR() << err;
-            throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
-        }
+        const auto & commandStr = XRouterCommand_ToString(command);
+        const auto & fqService = (command == xrService) ? pluginCommandKey(service) // plugin
+                                                        : walletCommandKey(service, commandStr); // spv wallet
 
         // Select available nodes
         std::vector<CNode*> selectedNodes = getAvailableNodes(command, service, confs);
         auto selected = static_cast<int>(selectedNodes.size());
-        
+
+        // If we don't have enough open connections...
+        if (selected < confs) {
+            // Open connections (at least number equal to how many confirmations we want)
+            const auto & serviceName = (command == xrService) ? fqService : walletCommandKey(service); // use top-level wallet key (e.g. xr::BLOCK)
+            if (!openConnections(serviceName, static_cast<uint32_t>(confs - selected))) {
+                std::string err("Not enough connections, require " + std::to_string(confs) + " for " + fqService);
+                ERR() << err;
+                throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
+            }
+
+            // Reselect available nodes
+            selectedNodes = getAvailableNodes(command, service, confs);
+            selected = static_cast<int>(selectedNodes.size());
+        }
+
+        // Check if we have enough nodes
         if (selected < confs)
             throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
                                fqService + " found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
@@ -795,7 +871,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
             // Create the fee payment
             std::string feePayment;
-            CAmount fee = to_amount(getConfig(addr)->getCommandFee(command, service));
+            CAmount fee = to_amount(getConfig(addr)->commandFee(command, service));
             if (fee > 0) {
                 try {
                     if (!generatePayment(pnode, fee, feePayment))
@@ -841,6 +917,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             XRouterPacketPtr packet(new XRouterPacket(command, uuid));
             packet->append(service);
             packet->append(json_spirit::write_string(Value(jbody)));
+            packet->append(static_cast<uint32_t>(params.size()));
             for (const std::string & p : params)
                 packet->append(p);
             packet->sign(cpubkey, cprivkey);
@@ -1103,29 +1180,29 @@ void App::reloadConfigs() {
 }
 
 std::string App::getStatus() {
+    LOCK(_lock);
+
     Object result;
-    result.emplace_back(Pair("enabled", isEnabled()));
-    result.emplace_back(Pair("config", xrsettings->rawText()));
+    result.emplace_back("enabled", isEnabled());
+    result.emplace_back("config", xrsettings->rawText());
+
     Object myplugins;
     for (std::string s : xrsettings->getPlugins())
         myplugins.emplace_back(s, xrsettings->getPluginSettings(s)->rawText());
-    result.emplace_back(Pair("plugins", myplugins));
-
-    LOCK(_lock);
+    result.emplace_back("plugins", myplugins);
 
     Array nodes;
     for (auto& it : this->snodeConfigs) {
         Object val;
-        //val.emplace_back("node", it.first);
         val.emplace_back("config", it.second->rawText());
         Object plugins;
         for (std::string s : it.second->getPlugins())
             plugins.emplace_back(s, it.second->getPluginSettings(s)->rawText());
-        val.emplace_back(Pair("plugins", plugins));
+        val.emplace_back("plugins", plugins);
         nodes.push_back(Value(val));
     }
     
-    result.emplace_back(Pair("nodes", nodes));
+    result.emplace_back("nodes", nodes);
     
     return json_spirit::write_string(Value(result), true);
 }

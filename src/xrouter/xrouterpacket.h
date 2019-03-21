@@ -60,7 +60,7 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
     {
         case xrInvalid                    : return "xrInvalid";
         case xrReply                      : return "xrReply";
-        case xrGetReply                 : return "xrGetReply";
+        case xrGetReply                   : return "xrGetReply";
         case xrGetConfig                  : return "xrGetConfig";
         case xrConfigReply                : return "xrConfigReply";
         case xrGetBlockCount              : return "xrGetBlockCount";
@@ -70,12 +70,12 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
         case xrSendTransaction            : return "xrSendTransaction";
         case xrGetTxBloomFilter           : return "xrGetTxBloomFilter";
         case xrGenerateBloomFilter        : return "xrGenerateBloomFilter";
-        case xrGetBlocks               : return "xrGetBlocks";
-        case xrGetTransactions         : return "xrGetTransactions";
-        case xrGetBlockAtTime            : return "xrGetBlockAtTime";
+        case xrGetBlocks                  : return "xrGetBlocks";
+        case xrGetTransactions            : return "xrGetTransactions";
+        case xrGetBlockAtTime             : return "xrGetBlockAtTime";
         case xrGetBalance                 : return "xrGetBalance";
         case xrGetBalanceUpdate           : return "xrGetBalanceUpdate";
-        case xrService                    : return "xr"; // tied to global var "xr"
+        case xrService                    : return "xrs";
         default: {
             char * s = nullptr;
             sprintf(s, "[Unknown XRouterCommand] %u", c);
@@ -88,7 +88,7 @@ inline bool XRouterCommand_IsValid(const char* c)
 {
     return XRouterCommand_ToString(xrInvalid)                    == c ||
            XRouterCommand_ToString(xrReply)                      == c ||
-           XRouterCommand_ToString(xrGetReply)                 == c ||
+           XRouterCommand_ToString(xrGetReply)                   == c ||
            XRouterCommand_ToString(xrGetConfig)                  == c ||
            XRouterCommand_ToString(xrConfigReply)                == c ||
            XRouterCommand_ToString(xrGetBlockCount)              == c ||
@@ -98,12 +98,12 @@ inline bool XRouterCommand_IsValid(const char* c)
            XRouterCommand_ToString(xrSendTransaction)            == c ||
            XRouterCommand_ToString(xrGetTxBloomFilter)           == c ||
            XRouterCommand_ToString(xrGenerateBloomFilter)        == c ||
-           XRouterCommand_ToString(xrGetBlocks)               == c ||
-           XRouterCommand_ToString(xrGetTransactions)         == c ||
-           XRouterCommand_ToString(xrGetBlockAtTime)            == c ||
+           XRouterCommand_ToString(xrGetBlocks)                  == c ||
+           XRouterCommand_ToString(xrGetTransactions)            == c ||
+           XRouterCommand_ToString(xrGetBlockAtTime)             == c ||
            XRouterCommand_ToString(xrGetBalance)                 == c ||
            XRouterCommand_ToString(xrGetBalanceUpdate)           == c ||
-           XRouterCommand_ToString(xrService)                 == c;
+           XRouterCommand_ToString(xrService)                    == c;
 };
 
 //******************************************************************************

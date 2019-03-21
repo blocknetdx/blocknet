@@ -153,18 +153,17 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     return reply;
 }
 
-std::string CallURL(std::string ip, std::string port, std::string url)
+std::string CallURL(const std::string & ip, const std::string & port, const std::string & url)
 {
     // Connect to localhost
-    bool fUseSSL = false;//GetBoolArg("-rpcssl");
-    asio::io_service io_service;
-    ssl::context context(io_service, ssl::context::sslv23);
-    context.set_options(ssl::context::no_sslv2);
-    asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
-    SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
-    iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
-    if (!d.connect(ip, port))
-        throw runtime_error("couldn't connect to server");
+    boost::asio::ip::tcp::iostream stream;
+    stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
+    stream.connect(ip, port);
+    if (stream.error() != boost::system::errc::success) {
+        LogPrint("net", "Failed to make connection to %s:%s error %d: %s", ip, port, stream.error(), stream.error().message());
+        throw runtime_error(strprintf("no response from server %s:%s - %s", ip.c_str(), port.c_str(),
+                                      stream.error().message().c_str()));
+    }
 
     // Send request
     ostringstream s;
@@ -174,7 +173,6 @@ std::string CallURL(std::string ip, std::string port, std::string url)
     if (fDebug)
         LOG() << "HTTP: req  " << strRequest;
 
-    map<string, string> mapRequestHeaders;
     stream << strRequest << std::flush;
 
     // Receive reply
@@ -185,14 +183,14 @@ std::string CallURL(std::string ip, std::string port, std::string url)
     LOG() << "HTTP: resp " << nStatus << " " << strReply;
 
     if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-        throw runtime_error("server returned HTTP error " + nStatus);
+        throw runtime_error("server returned HTTP error " + std::to_string(nStatus));
     else if (strReply.empty())
         throw runtime_error("no response from server");
 
     return strReply;
 }
 
-std::string CallCMD(std::string cmd) {
+std::string CallCMD(const std::string & cmd) {
     std::array<char, 128> buffer;
     std::string result;
     std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
