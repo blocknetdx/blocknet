@@ -330,8 +330,6 @@ RES_IMAGES = \
   qt/res/images/Blocknet_splash_Logo_Hor_Neg_022718.png \
   qt/res/images/Blocknet_splash_Logo_Symbol_Pos_022718.png \
   qt/res/images/Blocknet_splash_Logo_Symbol_Neg_022718.png \
-  qt/res/images/alt_splash_net1_trans.png \
-  qt/res/images/alt_splash_net1_blackbg.png \
   qt/res/images/blocknetdx_logo_horizontal.png \
   qt/res/images/BlockDX_Logo_Hor_Hifi_Pos_022718.png \
   qt/res/images/Blocknet_Logo_Hor_Neg_022718.png \
