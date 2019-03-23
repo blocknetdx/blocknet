@@ -25,7 +25,7 @@ static const std::string privatePrefix{"private::"};
 //******************************************************************************
 bool IniConfig::read(const char * fileName)
 {
-    LOCK(mu);
+    WaitableLock l(mu);
     try
     {
         if (fileName)
@@ -61,7 +61,7 @@ bool IniConfig::read(const char * fileName)
 
 bool IniConfig::read(std::string config)
 {
-    LOCK(mu);
+    WaitableLock l(mu);
     try
     {
         istringstream istr(config.c_str());
@@ -79,7 +79,7 @@ bool IniConfig::read(std::string config)
 
 bool IniConfig::write(const char * fileName)
 {
-    LOCK(mu);
+    WaitableLock l(mu);
     std::string fname = m_fileName;
     try
     {
@@ -117,7 +117,7 @@ XRouterSettings::XRouterSettings(const std::string & config, const bool & ismine
 
 void XRouterSettings::loadWallets() {
     {
-        LOCK(mu);
+        WaitableLock l(mu);
         wallets.clear();
     }
     std::vector<std::string> lwallets;
@@ -125,7 +125,7 @@ void XRouterSettings::loadWallets() {
     boost::split(lwallets, ws, boost::is_any_of(","));
     for (const std::string & w : lwallets)
         if (!w.empty()) {
-            LOCK(mu);
+            WaitableLock l(mu);
             wallets.insert(w);
         }
 }
@@ -133,7 +133,7 @@ void XRouterSettings::loadWallets() {
 void XRouterSettings::loadPlugins()
 {
     {
-        LOCK(mu);
+        WaitableLock l(mu);
         plugins.clear();
         pluginList.clear();
     }
@@ -143,20 +143,20 @@ void XRouterSettings::loadPlugins()
 
     for(std::string & s : lplugins)
         if(!s.empty() && loadPlugin(s)) {
-            LOCK(mu);
+            WaitableLock l(mu);
             pluginList.insert(s);
         }
 }
 
 bool XRouterSettings::hasPlugin(const std::string & name)
 {
-    LOCK(mu);
+    WaitableLock l(mu);
     return plugins.count(name) > 0;
 }
 
 bool XRouterSettings::hasWallet(const std::string & currency)
 {
-    LOCK(mu);
+    WaitableLock l(mu);
     return wallets.count(currency) > 0;
 }
 
@@ -288,7 +288,7 @@ std::map<std::string, double> XRouterSettings::feeSchedule() {
     double fee = defaultFee();
     std::map<std::string, double> s;
 
-    LOCK(mu);
+    WaitableLock l(mu);
 
     // First pass set top-level fees
     for (const auto & p : m_pt) {
@@ -338,7 +338,7 @@ bool XRouterSettings::loadPlugin(const std::string & name)
     }
     LOG() << "Successfully loaded plugin " << name;
 
-    LOCK(mu);
+    WaitableLock l(mu);
     plugins[name] = settings;
     return true;
 }
@@ -397,7 +397,7 @@ bool XRouterPluginSettings::verify(const std::string & name)
 
 void XRouterPluginSettings::formPublicText()
 {
-    LOCK(mu);
+    WaitableLock l(mu);
 
     publictext.clear(); // reset
     std::vector<string> lines;

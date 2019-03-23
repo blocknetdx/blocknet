@@ -390,6 +390,7 @@ std::string App::updateConfigs(bool force)
 
 std::string App::printConfigs()
 {
+    WaitableLock l(mu);
     Array result;
 
     for (const auto& it : this->snodeConfigs) {
@@ -1339,7 +1340,7 @@ void App::reloadConfigs() {
 }
 
 std::string App::getStatus() {
-    LOCK(_lock);
+    WaitableLock l(mu);
 
     Object result;
     result.emplace_back("enabled", isEnabled());

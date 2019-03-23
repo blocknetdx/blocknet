@@ -31,7 +31,7 @@ public:
     virtual bool write(const char * fileName = nullptr);
     
     virtual std::string rawText() const {
-        LOCK(mu);
+        WaitableLock l(mu);
         return rawtext;
     }
     
@@ -44,7 +44,7 @@ public:
     template <class _T>
     _T get(const char * param, _T def = _T())
     {
-        LOCK(mu);
+        WaitableLock l(mu);
         _T tmp = def;
         try
         {
@@ -71,7 +71,7 @@ public:
         try
         {
             {
-                LOCK(mu);
+                WaitableLock l(mu);
                 m_pt.put<_T>(param, val);
             }
             write();
@@ -87,7 +87,7 @@ protected:
     std::string m_fileName;
     boost::property_tree::ptree m_pt;
     std::string rawtext;
-    mutable CCriticalSection mu;
+    mutable CWaitableCriticalSection mu;
 };
 
 class XRouterPluginSettings;
@@ -105,7 +105,7 @@ public:
     int commandTimeout();
 
     std::string rawText() const override {
-        LOCK(mu);
+        WaitableLock l(mu);
         return publictext;
     }
 
@@ -114,7 +114,7 @@ public:
 
     bool verify(const std::string & name);
     bool has(const std::string & key) {
-        LOCK(mu);
+        WaitableLock l(mu);
         return m_pt.count(key) > 0;
     }
 
@@ -132,36 +132,36 @@ public:
     explicit XRouterSettings(const std::string & config, const bool & ismine = true);
 
     void assignNode(const std::string & node) {
-        LOCK(mu);
+        WaitableLock l(mu);
         this->node = node;
     }
     std::string getNode() {
-        LOCK(mu);
+        WaitableLock l(mu);
         return this->node;
     }
 
     void loadWallets();
     std::vector<std::string> getWallets() {
-        LOCK(mu);
+        WaitableLock l(mu);
         return {wallets.begin(), wallets.end()};
     }
     bool hasWallet(const std::string & currency);
 
     void loadPlugins();
     std::vector<std::string> getPlugins() {
-        LOCK(mu);
+        WaitableLock l(mu);
         return {pluginList.begin(),pluginList.end()};
     }
     bool hasPlugin(const std::string & name);
 
 
     void addPlugin(const std::string &name, XRouterPluginSettingsPtr s) {
-        LOCK(mu);
+        WaitableLock l(mu);
         plugins[name] = s; pluginList.insert(name);
     }
 
     XRouterPluginSettingsPtr getPluginSettings(const std::string & name) {
-        LOCK(mu);
+        WaitableLock l(mu);
         return plugins[name];
     }
 

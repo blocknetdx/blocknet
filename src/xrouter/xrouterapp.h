@@ -18,6 +18,7 @@
 #include "validationstate.h"
 #include "servicenode.h"
 #include "net.h"
+#include "sync.h"
 
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
@@ -463,7 +464,7 @@ public:
      * @return
      */
     bool hasPendingQuery(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return server->hasInFlightQuery(node);
     }
 
@@ -480,86 +481,86 @@ private:
     virtual ~App();
 
     bool hasScore(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return snodeScore.count(node);
     }
     int getScore(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return snodeScore[node];
     }
     void updateScore(const NodeAddr & node, const int score) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         snodeScore[node] = score;
     }
     std::chrono::time_point<std::chrono::system_clock> getLastRequest(const NodeAddr & node, const std::string & command) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         if (lastPacketsSent.count(node) && lastPacketsSent[node].count(command))
             return lastPacketsSent[node][command];
         return std::chrono::system_clock::from_time_t(0);
     }
     bool hasSentRequest(const NodeAddr & node, const std::string & command) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return lastPacketsSent.count(node) && lastPacketsSent[node].count(command);
     }
     std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return snodeConfigs;
     }
     bool hasDomain(const std::string & domain) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return snodeDomains.count(domain);
     }
     NodeAddr getDomainNode(const std::string & domain) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return snodeDomains[domain];
     }
     void updateDomainNode(const std::string & domain, const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         snodeDomains[domain] = node;
     }
     void addQuery(const std::string & queryId, const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         if (!configQueries.count(queryId))
             configQueries[queryId] = std::set<NodeAddr>{node};
         else
             configQueries[queryId].insert(node);
     }
     bool hasQuery(const std::string & queryId) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return configQueries.count(queryId);
     }
     bool completedQuery(const std::string & queryId) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return configQueries.count(queryId);
     }
     std::set<NodeAddr> getNodesForQuery(const std::string & queryId) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         if (!configQueries.count(queryId))
             return std::set<NodeAddr>{};
         return configQueries[queryId];
     }
     bool hasConfig(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return snodeConfigs.count(node);
     }
     XRouterSettingsPtr getConfig(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return snodeConfigs[node];
     }
     void updateConfig(const NodeAddr & node, XRouterSettingsPtr config) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         snodeConfigs[node] = config;
     }
     bool hasConfigTime(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return lastConfigQueries.count(node);
     }
     std::chrono::time_point<std::chrono::system_clock> getConfigTime(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         return lastConfigQueries[node];
     }
     void updateConfigTime(const NodeAddr & node, std::chrono::time_point<std::chrono::system_clock> & time) {
-        LOCK(_lock);
+        WaitableLock l(mu);
         lastConfigQueries[node] = time;
     }
     bool needConfigUpdate(const NodeAddr & node) {
@@ -581,7 +582,7 @@ private:
             if (hasPendingConnection(node))
                 return false; // skip adding duplilcate entries
 
-            LOCK(mu);
+            WaitableLock l(mu);
             auto m = std::make_shared<boost::mutex>();
             auto cond = std::make_shared<boost::condition_variable>();
             auto qc = PendingConnection{m, cond};
@@ -596,7 +597,7 @@ private:
          * @return
          */
         bool hasPendingConnection(const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             return pendingConnections.count(node);
         }
         /**
@@ -606,7 +607,7 @@ private:
          * @return
          */
         bool hasPendingConnection(const NodeAddr & node, PendingConnection & conn) {
-            LOCK(mu);
+            WaitableLock l(mu);
             bool found = pendingConnections.count(node);
             if (found)
                 conn = pendingConnections[node];
@@ -617,7 +618,7 @@ private:
          * @param node
          */
         void removePendingConnection(const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             pendingConnections.erase(node);
         }
         /**
@@ -626,7 +627,7 @@ private:
          * @return
          */
         PendingConnection pendingConnection(const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             return pendingConnections[node];
         }
         /**
@@ -635,7 +636,7 @@ private:
          * @return
          */
         std::shared_ptr<boost::mutex> connectionLock(const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             if (!pendingConnections.count(node))
                 return nullptr;
             return pendingConnections[node].first;
@@ -646,7 +647,7 @@ private:
          * @return
          */
         std::shared_ptr<boost::condition_variable> connectionCond(const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             if (!pendingConnections.count(node))
                 return nullptr;
             return pendingConnections[node].second;
@@ -667,7 +668,7 @@ private:
             bool valid{false};
 
             {
-                LOCK(mu);
+                WaitableLock l(mu);
                 if (pendingConnections.count(node)) {
                     conn = pendingConnections[node];
                     valid = true;
@@ -681,7 +682,7 @@ private:
             }
         }
     private:
-        CCriticalSection mu;
+        CWaitableCriticalSection mu;
         std::map<NodeAddr, PendingConnection> pendingConnections;
     };
 
@@ -699,7 +700,7 @@ private:
             if (id.empty() || node.empty())
                 return;
 
-            LOCK(mu);
+            WaitableLock l(mu);
 
             if (!queries.count(id))
                 queries[id] = std::map<NodeAddr, std::string>{};
@@ -728,7 +729,7 @@ private:
             QueryCondition qcond;
 
             {
-                LOCK(mu);
+                WaitableLock l(mu);
 
                 if (!queries.count(id))
                     return 0; // done, no query found with id
@@ -746,7 +747,7 @@ private:
                 qcond.second->notify_all();
             }
 
-            LOCK(mu);
+            WaitableLock l(mu);
             return queries.count(id);
         }
         /**
@@ -756,7 +757,7 @@ private:
          * @return
          */
         int reply(const std::string & id, const NodeAddr & node, std::string & reply) {
-            LOCK(mu);
+            WaitableLock l(mu);
 
             int consensus = queries.count(id);
             if (!consensus)
@@ -773,7 +774,7 @@ private:
          * @return
          */
         int mostCommonReply(const std::string & id, std::string & reply) {
-            LOCK(mu);
+            WaitableLock l(mu);
 
             int consensus = queries.count(id);
             if (!consensus)
@@ -804,7 +805,7 @@ private:
          * @return
          */
         bool hasQuery(const std::string & id) {
-            LOCK(mu);
+            WaitableLock l(mu);
             return queriesLocks.count(id);
         }
         /**
@@ -814,7 +815,7 @@ private:
          * @return
          */
         bool hasQuery(const std::string & id, const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             return queriesLocks.count(id) && queriesLocks[id].count(node);
         }
         /**
@@ -824,7 +825,7 @@ private:
          * @return
          */
         bool hasReply(const std::string & id, const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             return queries.count(id) && queries[id].count(node);
         }
         /**
@@ -834,7 +835,7 @@ private:
          * @return
          */
         std::shared_ptr<boost::mutex> queryLock(const std::string & id, const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             if (!queriesLocks.count(id))
                 return nullptr;
             if (!queriesLocks[id].count(node))
@@ -848,7 +849,7 @@ private:
          * @return
          */
         std::shared_ptr<boost::condition_variable> queryCond(const std::string & id, const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             if (!queriesLocks.count(id))
                 return nullptr;
             if (!queriesLocks[id].count(node))
@@ -861,7 +862,7 @@ private:
          * @return
          */
         std::map<std::string, QueryReply> allReplies(const std::string & id) {
-            LOCK(mu);
+            WaitableLock l(mu);
             return queries[id];
         }
         /**
@@ -870,7 +871,7 @@ private:
          * @return
          */
         std::map<std::string, QueryCondition> allLocks(const std::string & id) {
-            LOCK(mu);
+            WaitableLock l(mu);
             return queriesLocks[id];
         }
         /**
@@ -878,7 +879,7 @@ private:
          * @param id
          */
         void purge(const std::string & id) {
-            LOCK(mu);
+            WaitableLock l(mu);
             queriesLocks.erase(id);
         }
         /**
@@ -887,18 +888,18 @@ private:
          * @param node
          */
         void purge(const std::string & id, const NodeAddr & node) {
-            LOCK(mu);
+            WaitableLock l(mu);
             if (queriesLocks.count(id))
                 queriesLocks[id].erase(node);
         }
     private:
-        CCriticalSection mu;
+        CWaitableCriticalSection mu;
         std::map<std::string, std::map<NodeAddr, QueryCondition> > queriesLocks;
         std::map<std::string, std::map<NodeAddr, QueryReply> > queries;
     };
 
 private:
-    CCriticalSection _lock;
+    CWaitableCriticalSection mu;
 
     XRouterSettingsPtr xrsettings;
     XRouterServerPtr server;

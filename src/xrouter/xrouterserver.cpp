@@ -49,7 +49,7 @@ bool XRouterServer::start()
 
 bool XRouterServer::stop()
 {
-    LOCK(_lock);
+    WaitableLock l(_lock);
     connectors.clear();
     connectorLocks.clear();
     return true;
@@ -123,14 +123,14 @@ bool XRouterServer::createConnectors() {
 
 void XRouterServer::addConnector(const WalletConnectorXRouterPtr & conn)
 {
-    LOCK(_lock);
+    WaitableLock l(_lock);
     connectors[conn->currency] = conn;
     connectorLocks[conn->currency] = std::make_shared<boost::mutex>();
 }
 
 WalletConnectorXRouterPtr XRouterServer::connectorByCurrency(const std::string & currency) const
 {
-    LOCK(_lock);
+    WaitableLock l(_lock);
 
     if (connectors.count(currency))
         return connectors.at(currency);
@@ -841,7 +841,7 @@ CKey XRouterServer::getMyPaymentAddressKey()
 }
 
 void XRouterServer::clearHashedQueries() {
-    LOCK(_lock);
+    WaitableLock l(_lock);
 
     std::vector<std::string> to_remove;
     for (auto & it : hashedQueriesDeadlines) {
@@ -860,7 +860,7 @@ void XRouterServer::clearHashedQueries() {
 }
 
 void XRouterServer::runPerformanceTests() {
-    LOCK(_lock);
+    WaitableLock l(_lock);
     std::chrono::time_point<std::chrono::system_clock> time;
     std::chrono::system_clock::duration diff;
     for (const auto& it : this->connectors) {
@@ -951,7 +951,7 @@ void XRouterServer::runPerformanceTests() {
 }
 
 bool XRouterServer::rateLimitExceeded(const std::string & nodeAddr, const std::string & key, const int & rateLimit) {
-    LOCK(_lock);
+    WaitableLock l(_lock);
 
     std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
     // Check if existing packets on node

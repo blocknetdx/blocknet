@@ -216,7 +216,7 @@ public:
      * @param node
      */
     bool hasInFlightQuery(const NodeAddr & node) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         return inFlightQueries.count(node) > 0;
     }
 
@@ -226,7 +226,7 @@ public:
      * @param uuid
      */
     void addInFlightQuery(const NodeAddr & node, const std::string & uuid) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         inFlightQueries[node].insert(uuid);
     }
 
@@ -236,7 +236,7 @@ public:
      * @param uuid
      */
     void removeInFlightQuery(const NodeAddr & node, const std::string & uuid) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         inFlightQueries[node].erase(uuid);
         if (inFlightQueries[node].empty())
             inFlightQueries.erase(node);
@@ -296,26 +296,26 @@ private:
     std::vector<unsigned char> spubkey;
     std::vector<unsigned char> sprivkey;
 
-    mutable CCriticalSection _lock;
+    mutable CWaitableCriticalSection _lock;
 
     std::string getQuery(const std::string & uuid) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         return hashedQueries[uuid].first;
     }
     CAmount getQueryFee(const std::string & uuid) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         return hashedQueries[uuid].second;
     }
     bool hasQuery(const std::string & uuid) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         return hashedQueries.count(uuid);
     }
     std::shared_ptr<boost::mutex> getConnectorLock(const std::string & currency) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         return connectorLocks[currency];
     }
     bool hasConnectorLock(const std::string & currency) {
-        LOCK(_lock);
+        WaitableLock l(_lock);
         return connectorLocks.count(currency);
     }
 
