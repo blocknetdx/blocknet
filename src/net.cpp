@@ -220,7 +220,7 @@ bool IsPeerAddrLocalGood(CNode* pnode)
 // pushes our own address to a peer
 void AdvertizeLocal(CNode* pnode)
 {
-    if (fListen && pnode->fSuccessfullyConnected) {
+    if (fListen && pnode->SuccessfullyConnected()) {
         CAddress addrLocal = GetLocalAddress(&pnode->addr);
         // If discovery is enabled, sometimes give our peer the address it
         // tells us that it sees us as in case it has a better idea of our
@@ -971,13 +971,7 @@ void ThreadSocketHandler()
             // Inactivity checking (xrouter clients should timeout after 15 seconds)
             //
             int64_t nTime = GetTime();
-            if (nTime - pnode->nTimeConnected > 60 || (pnode->isXRouter() && nTime - pnode->nTimeConnected > 15)) {
-                if (pnode->isXRouter()) { // Disconnect xrouter client if there's no pending queries
-                    if (!xrouter::App::instance().hasPendingQuery(pnode->addr.ToString()) && nTime - pnode->nLastSend > 15) {
-                        LogPrintf("disconnecting xrouter client: %s\n", pnode->addr.ToString());
-                        pnode->fDisconnect = true;
-                    }
-                }
+            if (nTime - pnode->nTimeConnected > 60) {
                 if (pnode->nLastRecv == 0 || pnode->nLastSend == 0) {
                     LogPrint("net", "socket no message in first 60 seconds, %d %d from %d\n", pnode->nLastRecv != 0, pnode->nLastSend != 0, pnode->id);
                     pnode->fDisconnect = true;
@@ -991,6 +985,14 @@ void ThreadSocketHandler()
                     LogPrintf("ping timeout: %fs\n", 0.000001 * (GetTimeMicros() - pnode->nPingUsecStart));
                     pnode->fDisconnect = true;
                 }
+            }
+
+            // Disconnect xrouter client if there's no pending queries
+            if (pnode->isXRouter() && !xrouter::App::instance().hasPendingQuery(pnode->addr.ToString())
+                && fServiceNode && nTime - pnode->nLastSend >= 15)
+            {
+                LogPrintf("disconnecting xrouter client: %s\n", pnode->addr.ToString());
+                pnode->fDisconnect = true;
             }
         }
         {

@@ -488,7 +488,7 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
     {
         LOCK(cs_vNodes);
         for (CNode * pnode : vNodes) {
-            if (pnode->fSuccessfullyConnected && !pnode->fDisconnect)
+            if (pnode->SuccessfullyConnected() && !pnode->Disconnecting())
                 pnode->PushMessage("xbridge", msg);
         }
     }

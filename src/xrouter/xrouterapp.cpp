@@ -178,13 +178,7 @@ bool App::openConnections(const std::string & fqService, const uint32_t & count)
         return false;
     }
 
-    std::vector<CNode*> nodes;
-    {
-        LOCK(cs_vNodes);
-        nodes = vNodes;
-        for (auto & pnode : nodes)
-            pnode->AddRef();
-    }
+    std::vector<CNode*> nodes = CNode::CopyNodes();
 
     auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
         LOCK(cs_);
@@ -347,13 +341,7 @@ std::string App::updateConfigs(bool force)
         return "XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf to run XRouter.";
     
     std::vector<CServicenode> vServicenodes = getServiceNodes();
-    std::vector<CNode*> nodes;
-    {
-        LOCK(cs_vNodes);
-        nodes = vNodes;
-        for (auto & pnode : nodes)
-            pnode->AddRef();
-    }
+    std::vector<CNode*> nodes = CNode::CopyNodes();
 
     auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
         LOCK(cs_);
@@ -372,8 +360,8 @@ std::string App::updateConfigs(bool force)
     for (CNode* pnode : nodes) {
         const auto nodeAddr = pnode->NodeAddress();
         // skip non-xrouter nodes, disconnecting nodes, and self
-        if (!snodes.count(nodeAddr) || !snodes[nodeAddr].HasService(xr) || !pnode->fSuccessfullyConnected
-            || pnode->fDisconnect || snodes[nodeAddr].pubKeyServicenode == activeServicenode.pubKeyServicenode)
+        if (!snodes.count(nodeAddr) || !snodes[nodeAddr].HasService(xr) || !pnode->SuccessfullyConnected()
+            || pnode->Disconnecting() || snodes[nodeAddr].pubKeyServicenode == activeServicenode.pubKeyServicenode)
             continue;
 
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
@@ -442,13 +430,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
     std::vector<CServicenode> vServicenodes = getServiceNodes();
 
     std::vector<CNode*> selectedNodes;
-    std::vector<CNode*> nodes;
-    {
-        LOCK(cs_vNodes);
-        nodes = vNodes;
-        for (auto & pnode : nodes)
-            pnode->AddRef();
-    }
+    std::vector<CNode*> nodes = CNode::CopyNodes();
 
     auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
         LOCK(cs_);
@@ -549,13 +531,7 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
 CNode* App::getNodeForService(std::string name)
 {
     std::vector<CServicenode> vServicenodes = getServiceNodes();
-    std::vector<CNode*> nodes;
-    {
-        LOCK(cs_vNodes);
-        nodes = vNodes;
-        for (auto & pnode : nodes)
-            pnode->AddRef();
-    }
+    std::vector<CNode*> nodes = CNode::CopyNodes();
 
     auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
         LOCK(cs_);

@@ -644,6 +644,24 @@ public:
         return addr.ToString();
     }
 
+    void Disconnect() {
+        LOCK(cs);
+        fDisconnect = true;
+    }
+    bool Disconnecting() {
+        LOCK(cs);
+        return fDisconnect;
+    }
+
+    void SuccessfullyConnect() {
+        LOCK(cs);
+        fSuccessfullyConnected = true;
+    }
+    bool SuccessfullyConnected() {
+        LOCK(cs);
+        return fSuccessfullyConnected;
+    }
+
     // Denial-of-service detection/prevention
     // The idea is to detect peers that are behaving
     // badly and disconnect/ban them, but do it in a
@@ -746,6 +764,22 @@ public:
      */
     static bool IsXRouterNode() {
         return GetBoolArg("-xrouter", false);
+    }
+
+    /**
+     * Return a copy of nodes, with incremented reference count.
+     * @return
+     */
+    static std::vector<CNode*> CopyNodes() {
+        LOCK(cs_vNodes);
+        std::vector<CNode*> nodes;
+        for (auto & pnode : vNodes) {
+            if (!pnode->Disconnecting()) {
+                pnode->AddRef();
+                nodes.push_back(pnode);
+            }
+        }
+        return nodes;
     }
 };
 
