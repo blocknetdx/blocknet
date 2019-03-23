@@ -30,7 +30,7 @@ public:
     virtual bool read(std::string config);
     virtual bool write(const char * fileName = nullptr);
     
-    std::string rawText() const {
+    virtual std::string rawText() const {
         LOCK(mu);
         return rawtext;
     }
@@ -104,7 +104,7 @@ public:
     int clientRequestLimit();
     int commandTimeout();
 
-    std::string rawText() {
+    std::string rawText() const override {
         LOCK(mu);
         return publictext;
     }
@@ -135,7 +135,7 @@ public:
         LOCK(mu);
         this->node = node;
     }
-    const std::string & getNode() {
+    std::string getNode() {
         LOCK(mu);
         return this->node;
     }

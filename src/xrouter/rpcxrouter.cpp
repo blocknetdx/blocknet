@@ -671,40 +671,46 @@ Value xrConnectedNodes(const Array& params, bool fHelp)
         return error;
     }
 
-    Array data;
     const std::string & uuid = xrouter::generateUUID();
     auto & app = xrouter::App::instance();
+    const auto configs = app.getNodeConfigs();
 
-    // Iterate over all node configs
-    const auto & configs = xrouter::App::instance().getNodeConfigs();
-    for (const auto & item : configs) {
-        auto settings = item.second;
-        Object o;
+    Array data;
+    app.snodeConfigJSON(configs, data);
 
-        // pubkey
-        std::vector<unsigned char> spubkey;
-        app.servicenodePubKey(settings->getNode(), spubkey);
-        o.emplace_back("nodepubkey", HexStr(spubkey));
+    return xrouter::form_reply(uuid, data);
+}
 
-        // payment address
-        std::string address;
-        app.getPaymentAddress(settings->getNode(), address);
-        o.emplace_back("paymentaddress", address);
-
-        // wallets
-        const auto & wallets = settings->getWallets();
-        o.emplace_back("xwallets", Array(wallets.begin(), wallets.end()));
-
-        // fees
-        o.emplace_back("feedefault", settings->defaultFee());
-        Object ofs;
-        const auto & schedule = settings->feeSchedule();
-        for (const auto & s : schedule)
-            ofs.emplace_back(s.first,  s.second);
-        o.emplace_back("feeschedule", ofs);
-
-        data.emplace_back(o);
+Value xrConnect(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrConnect fully_qualified_service_name [node_count, optional, default=1]\n"
+                                 "Connects to Service Nodes with the specified service and downloads their configs.\n"
+                                 "\"fully_qualified_service_name\": Service name including the namespace, "
+                                 "xr:: for SPV commands or xrs:: for plugin commands (e.g. xr::BLOCK)\n"
+                                 "\"node_count\": Optionally specify the number of Service Nodes to connect to");
     }
+
+    if (params.size() < 1) {
+        Object error;
+        error.emplace_back("error", "Service not specified. Example: xrConnect xr::BLOCK");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    const std::string & service = params[0].get_str();
+    int nodeCount{1};
+
+    if (params.size() > 1) {
+        nodeCount = params[1].get_int();
+    }
+
+    const std::string & uuid = xrouter::generateUUID();
+    auto & app = xrouter::App::instance();
+    const auto configs = app.xrConnect(service, nodeCount);
+
+    Array data;
+    app.snodeConfigJSON(configs, data);
 
     return xrouter::form_reply(uuid, data);
 }

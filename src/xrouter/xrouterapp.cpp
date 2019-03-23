@@ -391,7 +391,7 @@ std::string App::updateConfigs(bool force)
 std::string App::printConfigs()
 {
     Array result;
-    
+
     for (const auto& it : this->snodeConfigs) {
         Object val;
         val.emplace_back("config", it.second->rawText());
@@ -1215,6 +1215,75 @@ CPubKey App::getPaymentPubkey(CNode* node)
     }
     
     return CPubKey();
+}
+
+std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & service, const int & count) {
+    std::map<NodeAddr, XRouterSettingsPtr> selectedConfigs;
+    std::string svc;
+    bool isWallet = removeWalletNamespace(service, svc);
+    removePluginNamespace(svc, svc);
+    if (openConnections(isWallet ? walletCommandKey(svc) : pluginCommandKey(svc), count)) { // open connections to snodes that have our service
+        const auto configs = getNodeConfigs(); // get configs and store matching ones
+        for (const auto & item : configs) {
+            if (isWallet && item.second->hasWallet(svc)) {
+                selectedConfigs.insert(item);
+                continue;
+            }
+            if (item.second->hasPlugin(svc))
+                selectedConfigs.insert(item);
+        }
+    }
+    return selectedConfigs;
+}
+
+void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs, json_spirit::Array & data) {
+    if (configs.empty()) // no configs
+        return;
+
+    for (const auto & item : configs) { // Iterate over all node configs
+        if (item.second == nullptr)
+            continue;
+
+        Object o;
+
+        // pubkey
+        std::vector<unsigned char> spubkey;
+        servicenodePubKey(item.second->getNode(), spubkey);
+        o.emplace_back("nodepubkey", HexStr(spubkey));
+
+        // payment address
+        std::string address;
+        getPaymentAddress(item.second->getNode(), address);
+        o.emplace_back("paymentaddress", address);
+
+        // wallets
+        const auto & wallets = item.second->getWallets();
+        o.emplace_back("xwallets", Array(wallets.begin(), wallets.end()));
+
+        // fees
+        o.emplace_back("feedefault", item.second->defaultFee());
+        Object ofs;
+        const auto & schedule = item.second->feeSchedule();
+        for (const auto & s : schedule)
+            ofs.emplace_back(s.first,  s.second);
+        o.emplace_back("feeschedule", ofs);
+
+        // plugins
+        Object plugins;
+        for (const auto & plugin : item.second->getPlugins()) {
+            auto pls = item.second->getPluginSettings(plugin);
+            if (pls) {
+                Object plg;
+                plg.emplace_back("parameters", boost::algorithm::join(pls->parameters(), ","));
+                plg.emplace_back("fee", pls->fee());
+                plg.emplace_back("requestlimit", pls->clientRequestLimit());
+                plugins.emplace_back(plugin, plg);
+            }
+        }
+        o.emplace_back("plugins", plugins);
+
+        data.emplace_back(o);
+    }
 }
 
 std::string App::sendXRouterConfigRequest(CNode* node, std::string addr) {

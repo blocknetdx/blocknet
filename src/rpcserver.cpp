@@ -399,6 +399,7 @@ static const CRPCCommand vRPCCommands[] =
         
         {"xrouter", "xrGetReply",                           &xrGetReply,                 true, true, true},
         {"xrouter", "xrUpdateConfigs",                      &xrUpdateConfigs,            true, true, true},
+        {"xrouter", "xrConnect",                            &xrConnect,                  true, true, true},
         {"xrouter", "xrShowConfigs",                        &xrShowConfigs,              true, true, true},
         {"xrouter", "xrStatus",                             &xrStatus,                   true, true, true},
         {"xrouter", "xrReloadConfigs",                      &xrReloadConfigs,            true, true, true},

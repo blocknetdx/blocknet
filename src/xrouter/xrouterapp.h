@@ -225,11 +225,28 @@ public:
     std::string convertTimeToBlockCount(std::string & uuidRet, const std::string& currency, const int & confirmations, std::string time);
 
     /**
+     * Attempts to connects to at least number of indicated service nodes with the specified service and
+     * returns a map of connections less than equal to count.
+     * @param service
+     * @param count Number of service nodes to query.
+     * @return
+     */
+    std::map<NodeAddr, XRouterSettingsPtr> xrConnect(const std::string & service, const int & count);
+
+    /**
+     * JSON output of specified configurations.
+     * @param configs
+     * @param data Array with json output.
+     * @return
+     */
+    void snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs, json_spirit::Array & data);
+
+    /**
      * Returns a map of connected node configurations.
      * @return
      */
     std::map<NodeAddr, XRouterSettingsPtr> getNodeConfigs() {
-        return snodeConfigs;
+        return getConfigs();
     }
 
     /**

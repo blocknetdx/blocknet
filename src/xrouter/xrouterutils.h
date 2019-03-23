@@ -40,6 +40,13 @@ extern std::string walletCommandKey(const std::string & wallet, const std::strin
  * @return
  */
 extern std::string walletCommandKey(const std::string & wallet);
+/**
+ * Remove the namespace from the wallet. Returns true if successful, otherwise false.
+ * @param wallet
+ * @param result Stripped wallet name stored here.
+ * @return
+ */
+extern bool removeWalletNamespace(const std::string & wallet, std::string & result);
 
 /**
  * Helper to build service key for use with lookups.
@@ -47,6 +54,14 @@ extern std::string walletCommandKey(const std::string & wallet);
  * @return
  */
 extern std::string pluginCommandKey(const std::string & service);
+
+/**
+ * Remove the namespace from the plugin. Returns true if successful, otherwise false.
+ * @param service
+ * @param result Stripped service name stored here.
+ * @return
+ */
+extern bool removePluginNamespace(const std::string & service, std::string & result);
 
 class UnknownChainAddress : public CBitcoinAddress {
 public:

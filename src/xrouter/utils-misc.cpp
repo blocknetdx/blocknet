@@ -55,8 +55,28 @@ std::string walletCommandKey(const std::string & wallet, const std::string & com
 std::string walletCommandKey(const std::string & wallet) {
     return xr + "::" + wallet;
 }
+bool removeWalletNamespace(const std::string & wallet, std::string & result) {
+    const std::string search{xr + "::"};
+    auto s = wallet.find(search);
+    if (s == std::string::npos) {
+        result = wallet;
+        return false;
+    }
+    result = std::string{wallet}.erase(s, search.size());
+    return true;
+}
 std::string pluginCommandKey(const std::string & service) {
     return xrs + "::" + service;
+}
+bool removePluginNamespace(const std::string & service, std::string & result) {
+    const std::string search{xrs + "::"};
+    auto s = service.find(search);
+    if (s == std::string::npos) {
+        result = service;
+        return false;
+    }
+    result = std::string{service}.erase(s, search.size());
+    return true;
 }
 
 bool is_number(std::string s)
