@@ -5559,34 +5559,17 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             }
         } // if (isEnabled)
     } else if (strCommand == "xrouter") {
-        std::vector<unsigned char> raw;
-        vRecv >> raw;
-
-
         static bool isEnabled = xrouter::App::isEnabled();
         if (isEnabled) {
+            std::vector<unsigned char> raw;
+            vRecv >> raw;
             if (raw.size() < (20 + sizeof(time_t))) {
                 // bad packet, small penalty
+                LOCK(cs_main);
                 Misbehaving(pfrom->GetId(), 10);
             } else {
-                CValidationState state;
                 xrouter::App& app = xrouter::App::instance();
-                app.onMessageReceived(pfrom, raw, state);
-
-                int dos = 0;
-                if (state.IsInvalid(dos)) {
-                    LogPrint("xrouter", "invalid xrouter packet from peer=%d %s : %s\n",
-                        pfrom->id, pfrom->cleanSubVer,
-                        state.GetRejectReason());
-                    if (dos > 0) {
-                        Misbehaving(pfrom->GetId(), dos);
-                    }
-                } else if (state.IsError()) {
-                    LogPrint("xrouter", "xrouter packet from peer=%d %s processed with error: %s\n",
-                        pfrom->id, pfrom->cleanSubVer,
-                        state.GetRejectReason());
-                    // Misbehaving(pfrom->GetId(), 10);
-                }
+                app.onMessageReceived(pfrom, raw);
             }
         }
     }

@@ -333,9 +333,8 @@ public:
      * @brief onMessageReceived  call when message from xrouter network received
      * @param node source CNode
      * @param message packet contents
-     * @param state variable, used to ban misbehaving nodes
      */
-    void onMessageReceived(CNode* node, const std::vector<unsigned char> & message, CValidationState & state);
+    void onMessageReceived(CNode* node, const std::vector<unsigned char> & message);
     
     /**
      * @brief run performance tests (xrTest)
@@ -463,32 +462,6 @@ private:
      */
     virtual ~App();
 
-    CCriticalSection _lock;
-
-    XRouterSettingsPtr xrsettings;
-    XRouterServerPtr server;
-
-    std::map<std::string, int> snodeScore;
-
-    std::map<std::string, std::set<NodeAddr> > configQueries;
-    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
-    std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
-    std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
-    std::map<std::string, NodeAddr> snodeDomains;
-
-    std::string xrouterpath;
-
-    // timer
-    void onTimer();
-    boost::asio::io_service timerIo;
-    boost::thread timerThread;
-    boost::asio::deadline_timer timer;
-
-    // Key management
-    xbridge::BtcCryptoProvider crypto;
-    std::vector<unsigned char> cpubkey;
-    std::vector<unsigned char> cprivkey;
-
     bool hasScore(const NodeAddr & node) {
         LOCK(_lock);
         return snodeScore.count(node);
@@ -572,6 +545,128 @@ private:
         LOCK(_lock);
         lastConfigQueries[node] = time;
     }
+    bool needConfigUpdate(const NodeAddr & node) {
+        return !(hasConfigTime(node) &&
+                 rateLimitExceeded(node, XRouterCommand_ToString(xrGetConfig), getConfigTime(node), 10000));
+    }
+
+    class PendingConnectionMgr {
+    public:
+        PendingConnectionMgr() = default;
+        typedef std::pair<std::shared_ptr<boost::mutex>, std::shared_ptr<boost::condition_variable> > PendingConnection;
+        /**
+         * Add a pending connection for this node.
+         * @param node
+         * @param conn Pending connection returned.
+         * @return
+         */
+        bool addPendingConnection(const NodeAddr & node, PendingConnection & conn) {
+            if (hasPendingConnection(node))
+                return false; // skip adding duplilcate entries
+
+            LOCK(mu);
+            auto m = std::make_shared<boost::mutex>();
+            auto cond = std::make_shared<boost::condition_variable>();
+            auto qc = PendingConnection{m, cond};
+            pendingConnections[node] = qc;
+            conn = qc;
+
+            return true;
+        }
+        /**
+         * Return true if a pending connection exists.
+         * @param node
+         * @return
+         */
+        bool hasPendingConnection(const NodeAddr & node) {
+            LOCK(mu);
+            return pendingConnections.count(node);
+        }
+        /**
+         * Return true if a pending connection exists.
+         * @param node
+         * @param conn Pending connection object.
+         * @return
+         */
+        bool hasPendingConnection(const NodeAddr & node, PendingConnection & conn) {
+            LOCK(mu);
+            bool found = pendingConnections.count(node);
+            if (found)
+                conn = pendingConnections[node];
+            return found;
+        }
+        /**
+         * Remove the pending connection for this node.
+         * @param node
+         */
+        void removePendingConnection(const NodeAddr & node) {
+            LOCK(mu);
+            pendingConnections.erase(node);
+        }
+        /**
+         * Get the pending connection for this node.
+         * @param node
+         * @return
+         */
+        PendingConnection pendingConnection(const NodeAddr & node) {
+            LOCK(mu);
+            return pendingConnections[node];
+        }
+        /**
+         * Returns the pending connection mutex or null if not found.
+         * @param node
+         * @return
+         */
+        std::shared_ptr<boost::mutex> connectionLock(const NodeAddr & node) {
+            LOCK(mu);
+            if (!pendingConnections.count(node))
+                return nullptr;
+            return pendingConnections[node].first;
+        }
+        /**
+         * Returns the pending connection condition variable or null if not found.
+         * @param node
+         * @return
+         */
+        std::shared_ptr<boost::condition_variable> connectionCond(const NodeAddr & node) {
+            LOCK(mu);
+            if (!pendingConnections.count(node))
+                return nullptr;
+            return pendingConnections[node].second;
+        }
+        /**
+         * Return number of pending connections.
+         * @return
+         */
+        int size() {
+            return static_cast<int>(pendingConnections.size());
+        }
+        /**
+         * Notify observers.
+         * @param node
+         */
+        void notify(const NodeAddr & node) {
+            PendingConnection conn;
+            bool valid{false};
+
+            {
+                LOCK(mu);
+                if (pendingConnections.count(node)) {
+                    conn = pendingConnections[node];
+                    valid = true;
+                }
+            }
+
+            if (valid) { // only handle locks if they exist
+                boost::mutex::scoped_lock l(*conn.first);
+                removePendingConnection(node); // remove the connection, we're done
+                conn.second->notify_all();
+            }
+        }
+    private:
+        CCriticalSection mu;
+        std::map<NodeAddr, PendingConnection> pendingConnections;
+    };
 
     class QueryMgr {
     public:
@@ -785,7 +880,39 @@ private:
         std::map<std::string, std::map<NodeAddr, QueryReply> > queries;
     };
 
+private:
+    CCriticalSection _lock;
+
+    XRouterSettingsPtr xrsettings;
+    XRouterServerPtr server;
+
+    std::map<std::string, int> snodeScore;
+
+    std::map<std::string, std::set<NodeAddr> > configQueries;
+    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
+    std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
+    std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
+    std::map<std::string, NodeAddr> snodeDomains;
+
+    std::string xrouterpath;
+
+    boost::thread_group requestHandlers;
+    std::deque<std::shared_ptr<boost::asio::io_service> > ioservices;
+    std::deque<std::shared_ptr<boost::asio::io_service::work> > ioworkers;
+
+    // timer
+    void onTimer();
+    boost::asio::io_service timerIo;
+    boost::thread timerThread;
+    boost::asio::deadline_timer timer;
+
+    // Key management
+    xbridge::BtcCryptoProvider crypto;
+    std::vector<unsigned char> cpubkey;
+    std::vector<unsigned char> cprivkey;
+
     QueryMgr queryMgr;
+    PendingConnectionMgr pendingConnMgr;
 };
 
 } // namespace xrouter

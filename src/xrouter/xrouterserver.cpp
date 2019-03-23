@@ -140,7 +140,7 @@ WalletConnectorXRouterPtr XRouterServer::connectorByCurrency(const std::string &
 
 void XRouterServer::sendPacketToClient(const std::string & uuid, const std::string & reply, CNode* pnode)
 {
-    LOG() << "Sending reply to client with query id " << uuid << ": " << reply;
+    LOG() << "Sending reply to client for query " << uuid;
     XRouterPacketPtr rpacket(new XRouterPacket(xrReply, uuid));
     rpacket->append(reply);
     rpacket->sign(spubkey, sprivkey);
@@ -149,7 +149,7 @@ void XRouterServer::sendPacketToClient(const std::string & uuid, const std::stri
 
 bool XRouterServer::processPayment(CNode *node, const std::string & feetx, const CAmount requiredFee)
 {
-    const auto nodeAddr = node->addr.ToString();
+    const auto nodeAddr = node->NodeAddress();
     if (feetx.empty() && requiredFee > 0) {
         ERR() << "Client sent a bad feetx: " << nodeAddr;
         return false; // do not process bad fees
@@ -193,8 +193,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
     // Make sure this node is designated as an xrouter node
     node->setXRouter();
 
-    const auto nodeAddr = node->addr.ToString();
-    const std::string & uuid = packet->suuid();
+    const auto & nodeAddr = node->NodeAddress();
+    const auto & uuid = packet->suuid();
     std::string reply;
 
     try {
@@ -224,17 +224,15 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     cfg = app.getConfig(addr);
             }
 
-            LOG() << "XRouter command: " << commandStr << " from node " << nodeAddr;
-
             // Check request rate
-            if (app.hasConfigTime(nodeAddr) && app.rateLimitExceeded(nodeAddr, commandStr, app.getConfigTime(nodeAddr), 10000))
+            if (!app.needConfigUpdate(nodeAddr))
                 state.DoS(10, error("XRouter: too many config requests"), REJECT_INVALID, "xrouter-error");
             auto time = std::chrono::system_clock::now();
             app.updateConfigTime(nodeAddr, time);
 
             // Prep reply (serialize config)
             reply = app.parseConfig(cfg); // TODO Handle parse errors
-            LOG() << "Sending config to " << nodeAddr;
+            LOG() << "Sending config to client " << nodeAddr << " for query " << uuid;
 
             XRouterPacketPtr rpacket(new XRouterPacket(xrConfigReply, uuid));
             rpacket->append(reply);
@@ -251,7 +249,6 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
 
         const auto & fqService = (command == xrService) ? pluginCommandKey(service)
                                                         : walletCommandKey(service, commandStr);
-        LOG() << "XRouter command: " << fqService << " from node " << nodeAddr;
 
         if (!app.xrSettings()->isAvailableCommand(command, service))
             throw XRouterError("Unsupported xrouter command: " + fqService, xrouter::UNSUPPORTED_BLOCKCHAIN);
@@ -314,8 +311,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         }
         else { // Handle default XRouter calls
             const auto dfee = app.xrSettings()->commandFee(command, service);
-            LOG() << "Expecting Fee = " << dfee;
-            LOG() << "Received Feetx = " << (feetx.empty() ? "none provided" : feetx);
+            LOG() << "Expecting fee = " << dfee << " for " << uuid << " received feetx: "
+                  << (feetx.empty() ? "none provided" : "\n" + feetx);
 
             // convert to satoshi
             fee = to_amount(dfee);

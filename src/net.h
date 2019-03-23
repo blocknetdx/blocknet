@@ -270,16 +270,6 @@ public:
     int nRefCount;
     NodeId id;
 
-    // XRouter state
-    void setXRouter() {
-        LOCK(cs_xrouter);
-        fXRouter = true;
-    }
-    bool isXRouter() {
-        LOCK(cs_xrouter);
-        return fXRouter;
-    }
-
 protected:
     // Denial-of-service detection/prevention
     // Key is IP address, value is banned-until-time
@@ -297,7 +287,7 @@ protected:
     void Fuzz(int nChance); // modifies ssSend
 
     // XRouter flag
-    CCriticalSection cs_xrouter;
+    mutable CCriticalSection cs;
     bool fXRouter{false};
 
 public:
@@ -386,11 +376,13 @@ public:
 
     void AddAddressKnown(const CAddress& addr)
     {
+        LOCK(cs);
         setAddrKnown.insert(addr);
     }
 
     void PushAddress(const CAddress& addr)
     {
+        LOCK(cs);
         // Known checking here is only to save space from duplicates.
         // SendMessages will filter it again for knowns that were added
         // after addresses were pushed.
@@ -604,6 +596,7 @@ public:
 
     bool HasFulfilledRequest(std::string strRequest)
     {
+        LOCK(cs);
         BOOST_FOREACH (std::string& type, vecRequestsFulfilled) {
             if (type == strRequest) return true;
         }
@@ -612,6 +605,7 @@ public:
 
     void ClearFulfilledRequest(std::string strRequest)
     {
+        LOCK(cs);
         std::vector<std::string>::iterator it = vecRequestsFulfilled.begin();
         while (it != vecRequestsFulfilled.end()) {
             if ((*it) == strRequest) {
@@ -625,6 +619,7 @@ public:
     void FulfilledRequest(std::string strRequest)
     {
         if (HasFulfilledRequest(strRequest)) return;
+        LOCK(cs);
         vecRequestsFulfilled.push_back(strRequest);
     }
 
@@ -633,6 +628,21 @@ public:
     void CancelSubscribe(unsigned int nChannel);
     void CloseSocketDisconnect();
     bool DisconnectOldProtocol(int nVersionRequired, std::string strLastCommand = "");
+
+    // XRouter state
+    void setXRouter() {
+        LOCK(cs);
+        fXRouter = true;
+    }
+    bool isXRouter() {
+        LOCK(cs);
+        return fXRouter;
+    }
+
+    const std::string NodeAddress() const {
+        LOCK(cs);
+        return addr.ToString();
+    }
 
     // Denial-of-service detection/prevention
     // The idea is to detect peers that are behaving

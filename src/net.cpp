@@ -435,7 +435,10 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool obfuScationMa
 
 void CNode::CloseSocketDisconnect()
 {
+    {
+        LOCK(cs);
     fDisconnect = true;
+    }
     if (hSocket != INVALID_SOCKET) {
         LogPrint("net", "disconnecting peer=%d\n", id);
         CloseSocket(hSocket);
@@ -449,29 +452,45 @@ void CNode::CloseSocketDisconnect()
 
 bool CNode::DisconnectOldProtocol(int nVersionRequired, string strLastCommand)
 {
+    bool flag{false};
+    {
+        LOCK(cs);
     fDisconnect = false;
-    if (nVersion < nVersionRequired) {
+        flag = nVersion < nVersionRequired;
+    }
+    if (flag) {
         LogPrintf("%s : peer=%d using obsolete version %i; disconnecting\n", __func__, id, nVersion);
         PushMessage("reject", strLastCommand, REJECT_OBSOLETE, strprintf("Version must be %d or greater", ActiveProtocol()));
+        LOCK(cs);
         fDisconnect = true;
     }
 
+    LOCK(cs);
     return fDisconnect;
 }
 
 void CNode::PushVersion()
 {
-    int nBestHeight = g_signals.GetHeight().get_value_or(0);
+    int nBestHeight;
+    {
+        LOCK(cs);
+        nBestHeight = g_signals.GetHeight().get_value_or(0);
+    }
 
     /// when NTP implemented, change to just nTime = GetAdjustedTime()
     int64_t nTime = (fInbound ? GetAdjustedTime() : GetTime());
-    CAddress addrYou = (addr.IsRoutable() && !IsProxy(addr) ? addr : CAddress(CService("0.0.0.0", 0)));
-    CAddress addrMe = GetLocalAddress(&addr);
-    GetRandBytes((unsigned char*)&nLocalHostNonce, sizeof(nLocalHostNonce));
+    CAddress addrYou;
+    CAddress addrMe;
+    {
+        LOCK(cs);
+        addrYou = (addr.IsRoutable() && !IsProxy(addr) ? addr : CAddress(CService("0.0.0.0", 0)));
+        addrMe = GetLocalAddress(&addr);
+        GetRandBytes((unsigned char*)&nLocalHostNonce, sizeof(nLocalHostNonce));
     if (fLogIPs)
         LogPrint("net", "send version message: version %d, blocks=%d, us=%s, them=%s, peer=%d\n", PROTOCOL_VERSION, nBestHeight, addrMe.ToString(), addrYou.ToString(), id);
     else
         LogPrint("net", "send version message: version %d, blocks=%d, us=%s, peer=%d\n", PROTOCOL_VERSION, nBestHeight, addrMe.ToString(), id);
+    }
     PushMessage("version", PROTOCOL_VERSION, nLocalServices, nTime, addrYou, addrMe,
         nLocalHostNonce, FormatSubVersion(CLIENT_NAME, CLIENT_VERSION, std::vector<string>()), nBestHeight, true);
 }
@@ -536,6 +555,8 @@ void CNode::AddWhitelistedRange(const CSubNet& subnet)
 void CNode::copyStats(CNodeStats& stats)
 {
     stats.nodeid = this->GetId();
+
+    LOCK(cs);
     X(nServices);
     X(nLastSend);
     X(nLastRecv);
@@ -952,7 +973,7 @@ void ThreadSocketHandler()
             int64_t nTime = GetTime();
             if (nTime - pnode->nTimeConnected > 60 || (pnode->isXRouter() && nTime - pnode->nTimeConnected > 15)) {
                 if (pnode->isXRouter()) { // Disconnect xrouter client if there's no pending queries
-                    if (!xrouter::App::instance().hasPendingQuery(pnode->addr.ToString())) {
+                    if (!xrouter::App::instance().hasPendingQuery(pnode->addr.ToString()) && nTime - pnode->nLastSend > 15) {
                         LogPrintf("disconnecting xrouter client: %s\n", pnode->addr.ToString());
                         pnode->fDisconnect = true;
                     }
@@ -1783,6 +1804,8 @@ uint64_t CNode::GetTotalBytesSent()
 
 void CNode::Fuzz(int nChance)
 {
+    {
+    LOCK(cs);
     if (!fSuccessfullyConnected) return; // Don't fuzz initial handshake
     if (GetRand(nChance) != 0) return;   // Fuzz 1 of every nChance messages
 
@@ -1809,6 +1832,7 @@ void CNode::Fuzz(int nChance)
             ssSend.insert(ssSend.begin() + pos, ch);
         }
         break;
+    }
     }
     // Chance of more than one change half the time:
     // (more changes exponentially less likely):
@@ -1978,6 +2002,7 @@ CNode::~CNode()
 
 void CNode::AskFor(const CInv& inv)
 {
+    LOCK(cs);
     if (mapAskFor.size() > MAPASKFOR_MAX_SZ)
         return;
     // We're using mapAskFor as a priority queue,
