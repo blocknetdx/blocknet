@@ -225,7 +225,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             }
 
             // Check request rate
-            if (!app.needConfigUpdate(nodeAddr))
+            if (!app.needConfigUpdate(nodeAddr, true))
                 state.DoS(10, error("XRouter: too many config requests"), REJECT_INVALID, "xrouter-error");
             auto time = std::chrono::system_clock::now();
             app.updateConfigTime(nodeAddr, time);

@@ -563,9 +563,10 @@ private:
         WaitableLock l(mu);
         lastConfigQueries[node] = time;
     }
-    bool needConfigUpdate(const NodeAddr & node) {
+    bool needConfigUpdate(const NodeAddr & node, const bool & isServer = false) {
         return !(hasConfigTime(node) &&
-                 rateLimitExceeded(node, XRouterCommand_ToString(xrGetConfig), getConfigTime(node), 10000));
+                 rateLimitExceeded(node, XRouterCommand_ToString(xrGetConfig), getConfigTime(node),
+                         isServer ? 10000 : 600000)); // server default is 10 seconds, client default is 10 minutes
     }
 
     class PendingConnectionMgr {
