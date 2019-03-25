@@ -304,6 +304,16 @@ public:
     std::string parseConfig(XRouterSettingsPtr cfg);
 
     /**
+     * @brief process an "invalid" reply from an XRouter node. I.e. a valid reply indicating that the client
+     *        sent an invalid packet.
+     * @param node Connection to node
+     * @param packet Xrouter packet received over the network
+     * @param state DOS state
+     * @return
+     */
+    bool processInvalid(CNode *node, XRouterPacketPtr packet, CValidationState & state);
+
+    /**
      * @brief process reply from service node on *client* side
      * @param node Connection to node
      * @param packet Xrouter packet received over the network
@@ -818,6 +828,19 @@ private:
         bool hasQuery(const std::string & id, const NodeAddr & node) {
             WaitableLock l(mu);
             return queriesLocks.count(id) && queriesLocks[id].count(node);
+        }
+        /**
+         * Returns true if a query for the specified node exists.
+         * @param node
+         * @return
+         */
+        bool hasNodeQuery(const NodeAddr & node) {
+            WaitableLock l(mu);
+            for (const auto & item : queriesLocks) {
+                if (item.second.count(node))
+                    return true;
+            }
+            return false;
         }
         /**
          * Returns true if the reply exists for the specified node.

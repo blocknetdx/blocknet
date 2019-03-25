@@ -41,6 +41,15 @@ public:
      * @return true if successful
      */
     bool stop();
+
+    /**
+     * Returns true if the server has been started, otherwise false.
+     * @return
+     */
+    bool isStarted() {
+        WaitableLock l(_lock);
+        return started;
+    }
     
     /**
      * @brief onMessageReceived  call when message from xrouter network received
@@ -48,7 +57,7 @@ public:
      * @param message packet contents
      * @param state variable, used to ban misbehaving nodes
      */
-    void onMessageReceived(CNode* node, XRouterPacketPtr& packet, CValidationState & state);
+    void onMessageReceived(CNode* node, XRouterPacketPtr packet, CValidationState & state);
     
        /**
      * @brief process GetBlockCount call on service node side
@@ -284,6 +293,8 @@ private:
     bool initKeyPair();
 
 private:
+    bool started{false};
+
     std::map<std::string, WalletConnectorXRouterPtr> connectors;
     std::map<std::string, std::shared_ptr<boost::mutex> > connectorLocks;
 

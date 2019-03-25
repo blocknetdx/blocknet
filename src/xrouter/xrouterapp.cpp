@@ -695,6 +695,33 @@ std::string App::parseConfig(XRouterSettingsPtr cfg)
 
 //*****************************************************************************
 //*****************************************************************************
+
+bool App::processInvalid(CNode *node, XRouterPacketPtr packet, CValidationState & state)
+{
+    const auto & uuid = packet->suuid();
+    const auto & nodeAddr = node->NodeAddress();
+
+    // Do not process if we aren't expecting a result
+    if (!queryMgr.hasNodeQuery(nodeAddr))
+        return false; // done, nothing found
+
+    // Verify servicenode response
+    std::vector<unsigned char> spubkey;
+    if (!servicenodePubKey(nodeAddr, spubkey) || !packet->verify(spubkey)) {
+        state.DoS(20, error("XRouter: unsigned packet or signature error"), REJECT_INVALID, "xrouter-error");
+        return false;
+    }
+
+    uint32_t offset = 0;
+    std::string reply((const char *)packet->data()+offset);
+    offset += reply.size() + 1;
+
+    // Log the invalid reply
+    LOG() << "Received error reply to query " << uuid << "\n" << reply;
+
+    return true;
+}
+
 bool App::processReply(CNode *node, XRouterPacketPtr packet, CValidationState & state)
 {
     const auto & uuid = packet->suuid();
@@ -719,8 +746,7 @@ bool App::processReply(CNode *node, XRouterPacketPtr packet, CValidationState & 
     queryMgr.addReply(uuid, nodeAddr, reply);
     queryMgr.purge(uuid, nodeAddr);
 
-    LOG() << "Received reply to query " << uuid;
-    LOG() << reply;
+    LOG() << "Received reply to query " << uuid << "\n" << reply;
 
     return true;
 }
@@ -775,8 +801,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         return false;
     }
 
-    LOG() << "Received reply to query " << uuid << " from node " << nodeAddr;
-    LOG() << reply;
+    LOG() << "Received reply to query " << uuid << " from node " << nodeAddr << "\n" << reply;
 
     // TODO Handle domain requests
 //    auto domain = settings->get<std::string>("Main.domain");
@@ -813,56 +838,95 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
     auto retainNode = [](CNode *pnode) {
         pnode->AddRef();
     };
-    auto releaseNode = [](CNode *pnode) {
-        pnode->Release();
-    };
 
-    retainNode(node); // by default retain for thread below
+    retainNode(node); // retain for thread below
 
     // Handle the xrouter request
-    requestHandlers.create_thread([this, node, message, &checkDoS, &releaseNode]() {
+    requestHandlers.create_thread([this, node, message, &checkDoS]() {
         RenameThread("blocknetdx-xrouter");
         boost::this_thread::interruption_point();
         CValidationState state;
 
-        XRouterPacketPtr packet(new XRouterPacket);
-        if (!packet->copyFrom(message)) {
-            state.DoS(10, error("XRouter: invalid packet received"), REJECT_INVALID, "xrouter-error");
-            checkDoS(state, node);
-            releaseNode(node);
-            return;
-        }
+        bool released{false};
+        auto releaseNode = [&released](CNode *pnode) {
+            if (!released) {
+                released = true;
+                pnode->Release();
+            }
+        };
 
-        const auto & command = packet->command();
-        const auto & uuid = packet->suuid();
-        const auto & nodeAddr = node->NodeAddress();
-        const auto & commandStr = XRouterCommand_ToString(command);
-        LOG() << "XRouter command: " << commandStr << " query: " << uuid << " node: " << nodeAddr;
+        try {
+            XRouterPacketPtr packet(new XRouterPacket);
+            if (!packet->copyFrom(message)) {
+                if (server->isStarted()) { // Send error back to client
+                    try {
+                        Object error;
+                        error.emplace_back("error", "XRouter Node reported a protocol error on a received packet. "
+                                                    "Unable to deserialize packet, possible bad packet header");
+                        error.emplace_back("code", xrouter::BAD_REQUEST);
+                        const std::string reply = json_spirit::write_string(Value(error), true);
+                        XRouterPacket packet(xrInvalid, "protocol_error");
+                        packet.append(reply);
+                        packet.sign(server->pubKey(), server->privKey());
+                        node->PushMessage("xrouter", packet.body());
+                    } catch (std::exception & e) { // catch json errors
+                        ERR() << "Failed to send error reply to client " << node->NodeAddress() << " error: "
+                              << e.what();
+                    }
+                }
 
-        if (command == xrReply) {
-            processReply(node, packet, state);
-            checkDoS(state, node);
-            releaseNode(node);
-            return;
-        } else if (command == xrConfigReply) {
-            processConfigReply(node, packet, state);
-            checkDoS(state, node);
-            releaseNode(node);
-            return;
-        } else {
-            const auto & nodeAddr = node->NodeAddress();
-            const auto & uuid = packet->suuid();
-            try {
-                server->addInFlightQuery(nodeAddr, uuid);
-                server->onMessageReceived(node, packet, state);
-                server->removeInFlightQuery(nodeAddr, uuid);
+                state.DoS(10, error("XRouter: invalid packet received"), REJECT_INVALID, "xrouter-error");
                 checkDoS(state, node);
                 releaseNode(node);
-            } catch (std::exception & e) {
-                server->removeInFlightQuery(nodeAddr, uuid);
-                releaseNode(node);
-                throw e;
+
+                return;
             }
+
+            const auto & command = packet->command();
+            const auto & uuid = packet->suuid();
+            const auto & nodeAddr = node->NodeAddress();
+            const auto & commandStr = XRouterCommand_ToString(command);
+
+            if (command == xrService) {
+                auto service = packet->service();
+                if (service.size() > 100) // truncate service name
+                    service = service.substr(0, 100);
+                LOG() << "XRouter command: " << commandStr << "::" + service << " query: " << uuid << " node: " << nodeAddr;
+            }
+            else
+                LOG() << "XRouter command: " << commandStr << " query: " << uuid << " node: " << nodeAddr;
+
+            if (command == xrInvalid) { // Process invalid packets (protocol error packets)
+                processInvalid(node, packet, state);
+                checkDoS(state, node);
+                releaseNode(node);
+            } else if (command == xrReply) { // Process replies
+                processReply(node, packet, state);
+                checkDoS(state, node);
+                releaseNode(node);
+            } else if (command == xrConfigReply) { // Process config replies
+                processConfigReply(node, packet, state);
+                checkDoS(state, node);
+                releaseNode(node);
+            } else if (server->isStarted()) { // Process server requests
+                server->addInFlightQuery(nodeAddr, uuid);
+                try {
+                    server->onMessageReceived(node, packet, state);
+                    server->removeInFlightQuery(nodeAddr, uuid);
+                    releaseNode(node);
+                } catch (...) { // clean up on error
+                    server->removeInFlightQuery(nodeAddr, uuid);
+                    releaseNode(node);
+                }
+                checkDoS(state, node);
+            } else {
+                releaseNode(node);
+            }
+
+        } catch (...) {
+            ERR() << strprintf("xrouter query from %s processed with error: ", node->NodeAddress());
+            checkDoS(state, node);
+            releaseNode(node);
         }
     });
 }
@@ -874,6 +938,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 {
     const std::string & uuid = generateUUID();
     uuidRet = uuid; // set uuid
+    std::map<std::string, std::string> feePaymentTxs;
 
     try {
         if (!isEnabled())
@@ -947,14 +1012,13 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         if (selected < confs)
             throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
                                fqService + " found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
-        
-        std::map<std::string, std::string> paytx_map;
+
         int snodeCount = 0;
         std::string fundErr{"Could not create payments to service nodes. Please check that your wallet "
                             "is fully unlocked and you have at least " + std::to_string(confs) +
                             " available unspent transaction outputs."};
 
-        // Obtain all the snodes that meet our criteria
+        // Calculate fees for selected nodes
         for (CNode* pnode : selectedNodes) {
             const auto & addr = pnode->NodeAddress();
             if (!hasConfig(addr))
@@ -973,7 +1037,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 }
             }
             
-            paytx_map[addr] = feePayment;
+            feePaymentTxs[addr] = feePayment;
             snodeCount++;
             if (snodeCount == confs)
                 break;
@@ -981,10 +1045,6 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Do we have enough snodes? If not unlock utxos
         if (snodeCount < confs) {
-            for (const auto & item : paytx_map) {
-                const std::string & tx = item.second;
-                unlockOutputs(tx);
-            }
             throw XRouterError("Unable to find " + std::to_string(confs) +
                                " service node(s) to process request", xrouter::NOT_ENOUGH_NODES);
         }
@@ -994,25 +1054,22 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         // Send xrouter request to each selected node
         for (CNode* pnode : selectedNodes) {
             const auto & addr = pnode->NodeAddress();
-            if (!paytx_map.count(addr))
+            if (!feePaymentTxs.count(addr))
                 continue;
 
             // Record the node sending request to
             addQuery(uuid, addr);
             queryMgr.addQuery(uuid, addr);
 
-            json_spirit::Object jbody;
-            jbody.emplace_back("feetx", paytx_map[addr]);
-
             // Send packet to xrouter node
-            XRouterPacketPtr packet(new XRouterPacket(command, uuid));
-            packet->append(service);
-            packet->append(json_spirit::write_string(Value(jbody)));
-            packet->append(static_cast<uint32_t>(params.size()));
+            XRouterPacket packet(command, uuid);
+            packet.append(service);
+            packet.append(feePaymentTxs[addr]); // fee
+            packet.append(static_cast<uint32_t>(params.size()));
             for (const std::string & p : params)
-                packet->append(p);
-            packet->sign(cpubkey, cprivkey);
-            pnode->PushMessage("xrouter", packet->body());
+                packet.append(p);
+            packet.sign(cpubkey, cprivkey);
+            pnode->PushMessage("xrouter", packet.body());
             
             std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
             if (!lastPacketsSent.count(addr))
@@ -1057,11 +1114,30 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         return result;
 
     } catch (XRouterError & e) {
+        LOG() << e.msg;
+
+        for (const auto & item : feePaymentTxs) { // unlock any fee txs
+            const std::string & tx = item.second;
+            unlockOutputs(tx);
+        }
+
         Object error;
         error.emplace_back(Pair("error", e.msg));
         error.emplace_back(Pair("code", e.code));
         error.emplace_back(Pair("uuid", uuid));
-        LOG() << e.msg;
+        return json_spirit::write_string(Value(error), true);
+    } catch (std::exception & e) {
+        LOG() << e.what();
+
+        for (const auto & item : feePaymentTxs) { // unlock any fee txs
+            const std::string & tx = item.second;
+            unlockOutputs(tx);
+        }
+
+        Object error;
+        error.emplace_back(Pair("error", "Internal Server Error"));
+        error.emplace_back(Pair("code", INTERNAL_SERVER_ERROR));
+        error.emplace_back(Pair("uuid", uuid));
         return json_spirit::write_string(Value(error), true);
     }
 }
@@ -1293,10 +1369,10 @@ std::string App::sendXRouterConfigRequest(CNode* node, std::string addr) {
     addQuery(uuid, nodeAddr);
     queryMgr.addQuery(uuid, nodeAddr);
 
-    XRouterPacketPtr packet(new XRouterPacket(xrGetConfig, uuid));
-    packet->append(addr);
-    packet->sign(cpubkey, cprivkey);
-    node->PushMessage("xrouter", packet->body());
+    XRouterPacket packet(xrGetConfig, uuid);
+    packet.append(addr);
+    packet.sign(cpubkey, cprivkey);
+    node->PushMessage("xrouter", packet.body());
 
     return uuid;
 }
@@ -1307,9 +1383,9 @@ std::string App::sendXRouterConfigRequestSync(CNode* node) {
     addQuery(uuid, nodeAddr);
     queryMgr.addQuery(uuid, nodeAddr);
 
-    XRouterPacketPtr packet(new XRouterPacket(xrGetConfig, uuid));
-    packet->sign(cpubkey, cprivkey);
-    node->PushMessage("xrouter", packet->body());
+    XRouterPacket packet(xrGetConfig, uuid);
+    packet.sign(cpubkey, cprivkey);
+    node->PushMessage("xrouter", packet.body());
 
     // Wait for response
     auto qcond = queryMgr.queryCond(uuid, nodeAddr);

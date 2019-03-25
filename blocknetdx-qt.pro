@@ -4,8 +4,7 @@ VERSION = 1.0.0
 
 DEFINES += \
     QT_GUI \
-    BOOST_THREAD_USE_LIB \
-    BOOST_SPIRIT_THREADSAFE
+    BOOST_THREAD_USE_LIB
 
 QT += core gui network
 greaterThan(QT_MAJOR_VERSION, 4) {

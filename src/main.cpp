@@ -5569,7 +5569,15 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 Misbehaving(pfrom->GetId(), 10);
             } else {
                 xrouter::App& app = xrouter::App::instance();
-                app.onMessageReceived(pfrom, raw);
+                try {
+                    app.onMessageReceived(pfrom, raw);
+                } catch (std::exception & e) {
+                    LogPrint("xrouter", "xrouter packet from peer=%d %s processed with error: %s\n",
+                             pfrom->id, pfrom->cleanSubVer, std::string(e.what()));
+                    // bad packet, small penalty
+                    LOCK(cs_main);
+                    Misbehaving(pfrom->GetId(), 10);
+                }
             }
         }
     }

@@ -233,8 +233,6 @@ bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
 
             txid = result.get_str();
         }
-
-        LOG() << "sendrawtransaction " << raw_tx;
     }
     catch (json_spirit::Object & obj)
     {

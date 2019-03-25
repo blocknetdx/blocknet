@@ -44,6 +44,9 @@ bool XRouterServer::start()
 
     createConnectors();
 
+    WaitableLock l(_lock);
+    started = true;
+
     return true;
 }
 
@@ -141,10 +144,10 @@ WalletConnectorXRouterPtr XRouterServer::connectorByCurrency(const std::string &
 void XRouterServer::sendPacketToClient(const std::string & uuid, const std::string & reply, CNode* pnode)
 {
     LOG() << "Sending reply to client for query " << uuid;
-    XRouterPacketPtr rpacket(new XRouterPacket(xrReply, uuid));
-    rpacket->append(reply);
-    rpacket->sign(spubkey, sprivkey);
-    pnode->PushMessage("xrouter", rpacket->body());
+    XRouterPacket rpacket(xrReply, uuid);
+    rpacket.append(reply);
+    rpacket.sign(spubkey, sprivkey);
+    pnode->PushMessage("xrouter", rpacket.body());
 }
 
 bool XRouterServer::processPayment(CNode *node, const std::string & feetx, const CAmount requiredFee)
@@ -186,7 +189,7 @@ bool XRouterServer::processPayment(CNode *node, const std::string & feetx, const
 
 //*****************************************************************************
 //*****************************************************************************
-void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CValidationState& state)
+void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CValidationState& state)
 {
     clearHashedQueries(); // clean up
 
@@ -234,17 +237,17 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
             reply = app.parseConfig(cfg); // TODO Handle parse errors
             LOG() << "Sending config to client " << nodeAddr << " for query " << uuid;
 
-            XRouterPacketPtr rpacket(new XRouterPacket(xrConfigReply, uuid));
-            rpacket->append(reply);
-            rpacket->sign(spubkey, sprivkey);
-            node->PushMessage("xrouter", rpacket->body());
+            XRouterPacket rpacket(xrConfigReply, uuid);
+            rpacket.append(reply);
+            rpacket.sign(spubkey, sprivkey);
+            node->PushMessage("xrouter", rpacket.body());
             return;
         }
 
         uint32_t offset = 0;
 
         // wallet/service name
-        std::string service((const char *)packet->data()+offset);
+        const auto service = packet->service();
         offset += service.size() + 1;
 
         const auto & fqService = (command == xrService) ? pluginCommandKey(service)
@@ -253,20 +256,10 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         if (!app.xrSettings()->isAvailableCommand(command, service))
             throw XRouterError("Unsupported xrouter command: " + fqService, xrouter::UNSUPPORTED_BLOCKCHAIN);
 
-        // Read packet body
-        std::string body((const char *)packet->data()+offset);
-        offset += body.size() + 1;
-        json_spirit::Value json;
-        if (!json_spirit::read_string(body, json))
-            throw XRouterError("Bad xrouter packet body: " + fqService, xrouter::BAD_REQUEST);
-        if (json.type() != json_spirit::obj_type)
-            throw XRouterError("Bad xrouter packet body: " + fqService, xrouter::BAD_REQUEST);
-        auto & fee_v = json_spirit::find_value(json.get_obj(), "feetx");
-        if (fee_v.type() != json_spirit::str_type)
-            throw XRouterError("Bad xrouter packet body: " + fqService, xrouter::BAD_REQUEST);
-
-        const auto & feetx = fee_v.get_str();
+        // Store fee tx
         CAmount fee = 0;
+        std::string feetx((const char *)packet->data()+offset);
+        offset += feetx.size() + 1;
 
         // Params count
         const auto paramsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
@@ -279,6 +272,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         if (command == xrService) {
             if (!app.xrSettings()->hasPlugin(service))
                 throw XRouterError("Service not supported: " + fqService, xrouter::BAD_REQUEST);
+
             // Check rate limit
             XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(service);
             auto rateLimit = psettings->clientRequestLimit();
@@ -287,19 +281,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
             }
 
-            // Expected fee
-            fee = to_amount(psettings->fee());
-
-            // Spend client payment
-            if (!processPayment(node, feetx, fee)) {
-                std::string err_msg = strprintf("Bad fee payment from client %s service %s", node, fqService);
-                state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
-                throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
-            }
-
             // Get parameters from packet
             std::vector<std::string> params;
-            for (int i = 0; i < paramsCount; ++i) {
+            for (int i = 0; i < static_cast<int>(paramsCount); ++i) {
                 if (offset >= packet->allSize())
                     break;
                 std::string p = (const char *)packet->data()+offset;
@@ -307,29 +291,91 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                 offset += p.size() + 1;
             }
 
-            reply = processServiceCall(service, params);
-        }
-        else { // Handle default XRouter calls
+            try {
+                reply = processServiceCall(service, params);
+            } catch (XRouterError & e) {
+                state.DoS(1, error("XRouter: bad request"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                throw e;
+            } catch (std::exception & e) {
+                state.DoS(1, error("XRouter: server error"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                throw XRouterError(e.what(), xrouter::INTERNAL_SERVER_ERROR);
+            }
+
+            // Spend client payment after processing reply to avoid charging client on errors
+            fee = to_amount(psettings->fee());
+            LOG() << "XRouter command: " << fqService << " expecting fee = " << fee << " for query " << uuid;
+            if (!processPayment(node, feetx, fee)) {
+                std::string err_msg = strprintf("Bad fee payment from client %s service %s", node, fqService);
+                state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
+            }
+
+        } else { // Handle default XRouter calls
             const auto dfee = app.xrSettings()->commandFee(command, service);
-            LOG() << "Expecting fee = " << dfee << " for " << uuid << " received feetx: "
-                  << (feetx.empty() ? "none provided" : "\n" + feetx);
+            LOG() << "XRouter command: " << fqService << " expecting fee = " << dfee << " for query " << uuid;
 
             // convert to satoshi
             fee = to_amount(dfee);
+            CAmount cmdFee = fee;
+            if (command == xrGetReply)
+                cmdFee = getQueryFee(uuid);
+
+            int rateLimit = app.xrSettings()->clientRequestLimit(command, service);
+            if (rateLimit >= 0 && rateLimitExceeded(nodeAddr, fqService, rateLimit)) {
+                std::string err_msg = "Rate limit exceeded: " + fqService;
+                state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+            }
+
+            if (!app.xrSettings()->isAvailableCommand(command, service))
+                throw XRouterError("Unsupported command: " + fqService, xrouter::INVALID_PARAMETERS);
 
             try {
-                CAmount cmdFee = fee;
-                if (command == xrGetReply)
-                    cmdFee = getQueryFee(uuid);
-
-                int rateLimit = app.xrSettings()->clientRequestLimit(command, service);
-                if (rateLimit >= 0 && rateLimitExceeded(nodeAddr, fqService, rateLimit)) {
-                    std::string err_msg = "Rate limit exceeded: " + fqService;
-                    state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                switch (command) {
+                    case xrGetBlockCount:
+                        reply = processGetBlockCount(packet, offset, service);
+                        break;
+                    case xrGetBlockHash:
+                        reply = processGetBlockHash(packet, offset, service);
+                        break;
+                    case xrGetBlock:
+                        reply = processGetBlock(packet, offset, service);
+                        break;
+                    case xrGetTransaction:
+                        reply = processGetTransaction(packet, offset, service);
+                        break;
+                    case xrGetBlocks:
+                        reply = processGetAllBlocks(packet, offset, service);
+                        break;
+                    case xrGetTransactions:
+                        reply = processGetAllTransactions(packet, offset, service);
+                        break;
+                    case xrGetBalance:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
+//                    reply = processGetBalance(packet, offset, currency);
+                        break;
+                    case xrGetBalanceUpdate:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
+//                    reply = processGetBalanceUpdate(packet, offset, service);
+                        break;
+                    case xrGetTxBloomFilter:
+                        reply = processGetTransactionsBloomFilter(packet, offset, service);
+                        break;
+                    case xrGenerateBloomFilter:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
+                        break;
+                    case xrGetBlockAtTime:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
+//                    reply = processConvertTimeToBlockCount(packet, offset, currency);
+                        break;
+                    case xrGetReply:
+                        reply = processFetchReply(uuid);
+                        break;
+                    case xrSendTransaction:
+                        reply = processSendTransaction(packet, offset, service);
+                        break;
+                    default:
+                        throw XRouterError("Unknown packet command", xrouter::INVALID_PARAMETERS);
                 }
-
-                if (!app.xrSettings()->isAvailableCommand(command, service))
-                    throw XRouterError("Unsupported command: " + fqService, xrouter::INVALID_PARAMETERS);
 
                 // Spend client payment if supported command
                 switch (command) {
@@ -347,56 +393,12 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
                     }
                 }
 
-                switch (command) {
-                case xrGetBlockCount:
-                    reply = processGetBlockCount(packet, offset, service);
-                    break;
-                case xrGetBlockHash:
-                    reply = processGetBlockHash(packet, offset, service);
-                    break;
-                case xrGetBlock:
-                    reply = processGetBlock(packet, offset, service);
-                    break;
-                case xrGetTransaction:
-                    reply = processGetTransaction(packet, offset, service);
-                    break;
-                case xrGetBlocks:
-                    reply = processGetAllBlocks(packet, offset, service);
-                    break;
-                case xrGetTransactions:
-                    reply = processGetAllTransactions(packet, offset, service);
-                    break;
-                case xrGetBalance:
-                    throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
-//                    reply = processGetBalance(packet, offset, currency);
-                    break;
-                case xrGetBalanceUpdate:
-                    throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
-//                    reply = processGetBalanceUpdate(packet, offset, service);
-                    break;
-                case xrGetTxBloomFilter:
-                    reply = processGetTransactionsBloomFilter(packet, offset, service);
-                    break;
-                case xrGenerateBloomFilter:
-                    throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
-                    break;
-                case xrGetBlockAtTime:
-                    throw XRouterError("This call is not supported: " + fqService, xrouter::INVALID_PARAMETERS);
-//                    reply = processConvertTimeToBlockCount(packet, offset, currency);
-                    break;
-                case xrGetReply:
-                    reply = processFetchReply(uuid);
-                    break;
-                case xrSendTransaction:
-                    reply = processSendTransaction(packet, offset, service);
-                    break;
-                default:
-                    throw XRouterError("Unknown packet command", xrouter::INVALID_PARAMETERS);
-                }
-            }
-            catch (XRouterError & e)
-            {
-                throw XRouterError("Failed to process your request: " + e.msg, e.code);
+            } catch (XRouterError & e) {
+                state.DoS(1, error("XRouter: bad request"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                throw e;
+            } catch (std::exception & e) {
+                state.DoS(1, error("XRouter: server error"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                throw XRouterError(e.what(), xrouter::INTERNAL_SERVER_ERROR);
             }
         }
 
@@ -405,6 +407,12 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr& packet, CVa
         Object error;
         error.emplace_back("error", e.msg);
         error.emplace_back("code", e.code);
+        reply = json_spirit::write_string(Value(error), true);
+    } catch (std::exception & e) {
+        LOG() << "Exception: " << e.what();
+        Object error;
+        error.emplace_back("error", "Internal Server Error");
+        error.emplace_back("code", xrouter::INTERNAL_SERVER_ERROR);
         reply = json_spirit::write_string(Value(error), true);
     }
 
@@ -710,7 +718,7 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
 {
     App & app = App::instance();
     if (!app.xrSettings()->hasPlugin(name))
-        return "Service not found";
+        throw XRouterError("Service not found", UNSUPPORTED_SERVICE);
     
     XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(name);
     const std::string & callType = psettings->type();
@@ -719,11 +727,12 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
     // Check if parameters matches expected
     const auto & expectedParams = psettings->parameters();
     if (expectedParams.size() != params.size())
-        return strprintf("Received parameters count %ld do not match expected %ld", params.size(), expectedParams.size());
+        throw XRouterError(strprintf("Received parameters count %ld do not match expected %ld",
+                params.size(), expectedParams.size()), INVALID_PARAMETERS);
 
     if (callType == "rpc") {
         Array jsonparams;
-        for (int i = 0; i < expectedParams.size(); ++i) {
+        for (int i = 0; i < static_cast<int>(expectedParams.size()); ++i) {
             const auto & p = expectedParams[i];
             const auto & rec = params[i];
             if (p == "bool") {
@@ -732,38 +741,38 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
                 try {
                     jsonparams.push_back(boost::lexical_cast<int64_t>(rec));
                 } catch (...) {
-                    return "Parameter " + std::to_string(i + 1) + " cannot be converted to integer";
+                    throw XRouterError("Parameter " + std::to_string(i + 1) + " cannot be converted to integer", INVALID_PARAMETERS);
                 }
             } else if (p == "double") {
                 try {
                     jsonparams.push_back(boost::lexical_cast<double>(rec));
                 } catch (...) {
-                    return "Parameter " + std::to_string(i + 1) + " cannot be converted to double";
+                    throw XRouterError("Parameter " + std::to_string(i + 1) + " cannot be converted to double", INVALID_PARAMETERS);
                 }
             } else { // string
                 jsonparams.push_back(rec);
             }
         }
 
-        Object result;
+        std::string result;
         try {
             const auto & user     = psettings->stringParam("rpcuser");
             const auto & passwd   = psettings->stringParam("rpcpassword");
             const auto & ip       = psettings->stringParam("rpcip", "127.0.0.1");
             const auto & port     = psettings->stringParam("rpcport");
             const auto & command  = psettings->stringParam("rpccommand");
-            result = CallRPC(user, passwd, ip, port, command, jsonparams);
+            Object o = CallRPC(user, passwd, ip, port, command, jsonparams);
+            result = json_spirit::write_string(Value(o), true);
         } catch (...) {
-            return "Internal Server Error in rpc command " + name;
+            throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
         }
-
-        return json_spirit::write_string(Value(result), true);
+        return result;
 
     } else if (callType == "shell") {
-        return "shell calls are unsupported at this time";
+        throw XRouterError("shell calls are unsupported at this time", UNSUPPORTED_SERVICE);
 
         std::string cmd = psettings->stringParam("cmd");
-        for (int i = 0; i < expectedParams.size(); ++i) {
+        for (int i = 0; i < static_cast<int>(expectedParams.size()); ++i) {
             const auto & p = expectedParams[i];
             const auto & rec = params[i];
             if (p == "bool") {
@@ -776,14 +785,14 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         std::string result;
         try {
             LOG() << "Executing shell command " << cmd;
-            std::string result = CallCMD(cmd);
+            result = CallCMD(cmd);
         } catch (...) {
-            return "Internal Server Error in shell command " + name;
+            throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
         }
         return result;
 
     } else if (callType == "url") {
-        return "url calls are unsupported at this time";
+        throw XRouterError("url calls are unsupported at this time", UNSUPPORTED_SERVICE);
 
         const std::string & ip = psettings->stringParam("ip");
         const std::string & port = psettings->stringParam("port");
@@ -798,12 +807,12 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
             LOG() << "Executing url command " << cmd;
             result = CallURL(ip, port, cmd);
         } catch (...) {
-            return "Internal Server Error in Url command " + name;
+            throw XRouterError("Internal Server Error in Url command " + name, INTERNAL_SERVER_ERROR);
         }
         return result;
     }
     
-    return "Unknown type";
+    return "";
 }
 
 std::string XRouterServer::changeAddress() {

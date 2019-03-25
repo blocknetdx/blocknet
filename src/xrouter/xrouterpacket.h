@@ -31,7 +31,7 @@ enum XRouterCommand
 {
     xrInvalid                        = 0,
     xrReply                          = 1,
-    xrGetReply                     = 2,
+    xrGetReply                       = 2,
     xrGetConfig                      = 3,
     xrConfigReply                    = 4,
 
@@ -44,14 +44,14 @@ enum XRouterCommand
     xrGetTxBloomFilter               = 40,
     xrGenerateBloomFilter            = 41,
 
-    xrGetBlocks                   = 50,
-    xrGetTransactions             = 51,
-    xrGetBlockAtTime                = 52,
+    xrGetBlocks                      = 50,
+    xrGetTransactions                = 51,
+    xrGetBlockAtTime                 = 52,
 
     xrGetBalance                     = 60,
     xrGetBalanceUpdate               = 61,
 
-    xrService                     = 1000,
+    xrService                        = 1000,
 };
 
 inline const char* XRouterCommand_ToString(enum XRouterCommand c)
@@ -185,6 +185,12 @@ public:
     const std::string suuid() const                  {
         std::vector<unsigned char> s{uuid(), uuid()+uuidSize};
         return std::string{s.begin(), s.end()};
+    }
+
+    // Service name
+    const std::string service() {
+        std::string s((const char *)data());
+        return s;
     }
 
     const std::vector<unsigned char> & body() const  { return m_body; }
