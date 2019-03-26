@@ -244,6 +244,7 @@ int XRouterSettings::commandTimeout(XRouterCommand c, std::string service, int d
 int XRouterSettings::confirmations(XRouterCommand c, std::string service, int def) {
     if (def > 1) // user requested consensus takes precedence
         return def;
+    def = std::max(def, 1); // default must be at least 1 confirmation
 
     const std::string cstr{XRouterCommand_ToString(c)};
     auto res = get<int>("Main.consensus", def);
