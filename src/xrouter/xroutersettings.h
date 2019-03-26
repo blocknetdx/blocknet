@@ -26,8 +26,8 @@ class IniConfig
 public:
     IniConfig() = default;
 
-    virtual bool read(const char * fileName = nullptr);
-    virtual bool read(std::string config);
+    virtual bool read(const boost::filesystem::path & fileName);
+    virtual bool read(const std::string & config);
     virtual bool write(const char * fileName = nullptr);
     
     virtual std::string rawText() const {
@@ -35,13 +35,13 @@ public:
         return rawtext;
     }
     
-    template <class _T>
+    template <typename _T>
     _T get(const std::string & param, _T def = _T())
     {
         return get<_T>(param.c_str(), def);
     }
 
-    template <class _T>
+    template <typename _T>
     _T get(const char * param, _T def = _T())
     {
         WaitableLock l(mu);
@@ -59,13 +59,13 @@ public:
         return tmp;
     }
     
-    template <class _T>
-    _T set(const std::string & param, _T def = _T())
+    template <typename _T>
+    bool set(const std::string & param, _T def = _T())
     {
         return set<_T>(param.c_str(), def);
     }
     
-    template <class _T>
+    template <typename _T>
     bool set(const char * param, const _T & val)
     {
         try
@@ -76,10 +76,10 @@ public:
             }
             write();
         }
-        catch (std::exception & e)
-        {
+        catch (std::exception & e) {
             return false;
         }
+
         return true;
     }
     
@@ -103,14 +103,15 @@ public:
     std::vector<std::string> parameters();
     int clientRequestLimit();
     int commandTimeout();
+    std::string paymentAddress();
 
     std::string rawText() const override {
         WaitableLock l(mu);
         return publictext;
     }
 
-    bool read(const char * fileName) override;
-    bool read(std::string config) override;
+    bool read(const boost::filesystem::path & fileName) override;
+    bool read(const std::string & config) override;
 
     bool verify(const std::string & name);
     bool has(const std::string & key) {
@@ -128,8 +129,12 @@ private:
 class XRouterSettings : public IniConfig
 {
 public:
-    XRouterSettings() = default;
-    explicit XRouterSettings(const std::string & config, const bool & ismine = true);
+    explicit XRouterSettings(const bool & ismine = true);
+
+    bool init(const boost::filesystem::path & configPath);
+    bool init(const std::string & config);
+
+    void defaultPaymentAddress(const std::string & paymentAddress);
 
     void assignNode(const std::string & node) {
         WaitableLock l(mu);
@@ -172,6 +177,7 @@ public:
     double maxFee(XRouterCommand c, std::string currency="", double def=0.0);
     int clientRequestLimit(XRouterCommand c, std::string service="", int def=-1); // -1 is no limit
     int confirmations(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_CONFIRMATIONS); // 1 confirmation default
+    std::string paymentAddress(XRouterCommand c, std::string service="");
     int configSyncTimeout();
 
     double defaultFee();

@@ -23,14 +23,14 @@ static const std::string privatePrefix{"private::"};
 
 //******************************************************************************
 //******************************************************************************
-bool IniConfig::read(const char * fileName)
+bool IniConfig::read(const boost::filesystem::path & fileName)
 {
     WaitableLock l(mu);
     try
     {
-        if (fileName)
+        if (!fileName.string().empty())
         {
-            m_fileName = std::string(fileName);
+            m_fileName = fileName.string();
         }
 
         if (m_fileName.empty())
@@ -59,7 +59,7 @@ bool IniConfig::read(const char * fileName)
     return true;
 }
 
-bool IniConfig::read(std::string config)
+bool IniConfig::read(const std::string & config)
 {
     WaitableLock l(mu);
     try
@@ -109,10 +109,27 @@ bool IniConfig::write(const char * fileName)
 
 //******************************************************************************
 //******************************************************************************
-XRouterSettings::XRouterSettings(const std::string & config, const bool & ismine) : ismine(ismine) {
-    read(config);
-    loadWallets();
+
+XRouterSettings::XRouterSettings(const bool & ismine) : ismine(ismine) { }
+
+bool XRouterSettings::init(const boost::filesystem::path & configPath) {
+    if (!read(configPath)) {
+        ERR() << "Failed to read xrouter config " << configPath.string();
+        return false;
+    }
     loadPlugins();
+    loadWallets();
+    return true;
+}
+
+bool XRouterSettings::init(const std::string & config) {
+    if (!read(config)) {
+        ERR() << "Failed to read xrouter config " << config;
+        return false;
+    }
+    loadPlugins();
+    loadWallets();
+    return true;
 }
 
 void XRouterSettings::loadWallets() {
@@ -158,6 +175,20 @@ bool XRouterSettings::hasWallet(const std::string & currency)
 {
     WaitableLock l(mu);
     return wallets.count(currency) > 0;
+}
+
+void XRouterSettings::defaultPaymentAddress(const std::string & paymentAddress) {
+    {
+        WaitableLock l(mu);
+        if (!ismine)
+            return;
+    }
+
+    const std::string s_paymentaddress{"paymentaddress"};
+    const auto s_mainpaymentaddress = "Main."+s_paymentaddress;
+    const auto & address = get<std::string>(s_mainpaymentaddress, "");
+    if (address.empty() && !paymentAddress.empty())
+        this->set<std::string>(s_mainpaymentaddress, paymentAddress); // assign the new payment address to the config
 }
 
 bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string service)
@@ -277,6 +308,27 @@ int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string service, i
     return res;
 }
 
+std::string XRouterSettings::paymentAddress(XRouterCommand c, const std::string service) {
+    std::string def;
+    static const auto s_paymentaddress = "paymentaddress";
+    static const auto s_mainpaymentaddress = "Main.paymentaddress";
+
+    // Handle plugin
+    if (c == xrService && hasPlugin(service)) {
+        auto ps = getPluginSettings(service);
+        if (ps->has(s_paymentaddress) && !ps->paymentAddress().empty())
+            return ps->paymentAddress();
+        else
+            return get<std::string>(s_mainpaymentaddress, def);
+    }
+
+    auto res = get<std::string>(s_mainpaymentaddress, def);
+    res = get<std::string>(std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
+    if (!service.empty())
+        res = get<std::string>(service + "::" + std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
+    return res;
+}
+
 int XRouterSettings::configSyncTimeout()
 {
     auto res = get<int>("Main.configsynctimeout", XROUTER_CONFIGSYNC_TIMEOUT);
@@ -328,11 +380,12 @@ bool XRouterSettings::loadPlugin(const std::string & name)
 {
     if (!ismine) // only load our own configs
         return true;
+
     auto conf = name + ".conf";
     auto filename = pluginPath() / conf;
     auto settings = std::make_shared<XRouterPluginSettings>();
 
-    if(!settings->read(filename.string().c_str())) {
+    if(!settings->read(filename)) {
         LOG() << "Failed to load plugin: " << conf;
         return false;
     }
@@ -352,18 +405,18 @@ boost::filesystem::path XRouterSettings::pluginPath() const
 ///////////////////////////////////
 ///////////////////////////////////
 
-bool XRouterPluginSettings::read(const char * fileName)
+bool XRouterPluginSettings::read(const boost::filesystem::path & fileName)
 {
     if (!IniConfig::read(fileName))
         return false;
-    if (!verify(fileName))
+    if (!verify(fileName.string()))
         return false;
     
     formPublicText();
     return true;
 }
 
-bool XRouterPluginSettings::read(const std::string config)
+bool XRouterPluginSettings::read(const std::string & config)
 {
     if (!IniConfig::read(config))
         return false;
@@ -446,6 +499,11 @@ int XRouterPluginSettings::clientRequestLimit() {
 
 int XRouterPluginSettings::commandTimeout() {
     int res = get<int>("timeout", 30);
+    return res;
+}
+
+std::string XRouterPluginSettings::paymentAddress() {
+    auto res = get<std::string>("paymentaddress", "");
     return res;
 }
 

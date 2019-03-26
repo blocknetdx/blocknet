@@ -62,11 +62,39 @@ public:
     XRouterSettingsPtr xrSettings() { return xrsettings; }
 
     /**
+     * @brief load xbridge.conf to get connection to xwallets
+     * @param argc
+     * @param argv
+     * @return true if successful
+     */
+    bool init(int argc, char *argv[]);
+
+    /**
      * @brief start - start xrouter
      * run services, sessions,
      * @return true if all components run successfull
      */
     bool start();
+
+    /**
+     * @brief stop - stopped services
+     * @return
+     */
+    bool stop();
+
+    /**
+     * @brief Returns true if XRouter is ready to receive packets.
+     * @return
+     */
+    bool isReady();
+
+    /**
+     * Activates the XRouter server node including updating its payment address.
+     */
+    void updatePaymentAddress(CPubKey & collateral) {
+        auto paymentAddress = CBitcoinAddress(collateral.GetID()).ToString();
+        xrsettings->defaultPaymentAddress(paymentAddress);
+    }
 
     /**
      * @brief Open connections to service nodes with specified services.
@@ -84,20 +112,6 @@ public:
      * @brief prints xrouter configs
      */
     std::string printConfigs();
-    
-    /**
-     * @brief stop - stopped services
-     * @return
-     */
-    bool stop();
-
-    /**
-     * @brief load xbridge.conf to get connection to xwallets
-     * @param argc
-     * @param argv
-     * @return true if successful
-     */
-    bool init(int argc, char *argv[]);
 
     /**
      * @brief this function is called when serviceping packet is generated (see details in Xbridge) 
@@ -295,13 +309,6 @@ public:
      * @return config string
      */
     std::string sendXRouterConfigRequestSync(CNode* node);
-    
-    /**
-     * @brief process GetXrouterConfig call on service node side
-     * @param cfg XRouter settings obj
-     * @return
-     */
-    std::string parseConfig(XRouterSettingsPtr cfg);
 
     /**
      * @brief process an "invalid" reply from an XRouter node. I.e. a valid reply indicating that the client
@@ -578,6 +585,13 @@ private:
                  rateLimitExceeded(node, XRouterCommand_ToString(xrGetConfig), getConfigTime(node),
                          isServer ? 10000 : 600000)); // server default is 10 seconds, client default is 10 minutes
     }
+
+    /**
+     * @brief Serialize configuration.
+     * @param cfg XRouter settings obj
+     * @return
+     */
+    std::string parseConfig(XRouterSettingsPtr cfg);
 
     class PendingConnectionMgr {
     public:
@@ -936,7 +950,8 @@ private:
     std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
     std::map<std::string, NodeAddr> snodeDomains;
 
-    std::string xrouterpath;
+    boost::filesystem::path xrouterpath;
+    bool xrouterIsReady{false};
 
     boost::thread_group requestHandlers;
     std::deque<std::shared_ptr<boost::asio::io_service> > ioservices;

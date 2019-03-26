@@ -215,17 +215,12 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
 
         // Handle config requests
         if (packet->command() == xrGetConfig) {
-            XRouterSettingsPtr cfg = nullptr;
-            std::string addr((const char *)packet->data());
-
-            if (addr == "self")
-                cfg = app.xrSettings();
-            else {
-                if (!app.hasConfig(addr))
-                    return;
-                else
-                    cfg = app.getConfig(addr);
+            if (packet->size() > 200) {
+                state.DoS(20, error("XRouter: packet larger than expected"), REJECT_INVALID, "xrouter-error");
+                throw XRouterError("Packet is too large, must be smaller than 200 bytes", xrouter::BAD_REQUEST);
             }
+
+            XRouterSettingsPtr cfg = app.xrSettings();
 
             // Check request rate
             if (!app.needConfigUpdate(nodeAddr, true))
@@ -234,7 +229,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             app.updateConfigTime(nodeAddr, time);
 
             // Prep reply (serialize config)
-            reply = app.parseConfig(cfg); // TODO Handle parse errors
+            reply = app.parseConfig(cfg);
             LOG() << "Sending config to client " << nodeAddr << " for query " << uuid;
 
             XRouterPacket rpacket(xrConfigReply, uuid);

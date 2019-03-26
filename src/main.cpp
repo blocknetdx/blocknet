@@ -5559,8 +5559,8 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             }
         } // if (isEnabled)
     } else if (strCommand == "xrouter") {
-        static bool isEnabled = xrouter::App::isEnabled();
-        if (isEnabled) {
+        bool isReady = xrouter::App::isEnabled() && xrouter::App::instance().isReady();
+        if (isReady) {
             std::vector<unsigned char> raw;
             vRecv >> raw;
             if (raw.size() < (20 + sizeof(time_t))) {

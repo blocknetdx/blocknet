@@ -80,17 +80,65 @@ bool App::init(int argc, char *argv[])
     if (!isEnabled())
         return true;
 
+    xrouterpath = GetDataDir(false) / "xrouter.conf";
+    LOG() << "Loading xrouter config from file " << xrouterpath.string();
     xrsettings = std::make_shared<XRouterSettings>();
+    if (!xrsettings->init(xrouterpath))
+        return false;
+
     server = std::make_shared<XRouterServer>();
 
-    LOG() << "Loading xrouter config from file " << xrouterpath;
-    std::string path(GetDataDir(false).string());
-    xrouterpath = path + "/xrouter.conf";
-    xrsettings->read(xrouterpath.c_str());
-    xrsettings->loadPlugins();
-    xrsettings->loadWallets();
+    return true;
+}
+
+bool App::start()
+{
+    if (!isEnabled())
+        return true;
+
+    // Only start server mode if we're a servicenode
+    if (fServiceNode) {
+        bool res = server->start();
+        if (res) { // set outgoing xrouter requests to use snode key
+            WaitableLock l(mu);
+            cpubkey = server->pubKey();
+            cprivkey = server->privKey();
+        }
+        // Update the node's default payment address
+        if (activeServicenode.status == ACTIVE_SERVICENODE_STARTED) {
+            auto pmn = mnodeman.Find(activeServicenode.vin);
+            if (pmn)
+                updatePaymentAddress(pmn->pubKeyCollateralAddress);
+        }
+    } else if (!initKeyPair()) // init on regular xrouter clients (non-snodes)
+        return false;
+
+    // Start the xrouter timer
+    try {
+        timer.expires_at(boost::posix_time::second_clock::universal_time() + boost::posix_time::seconds(XROUTER_TIMER_SECONDS));
+        timer.async_wait(boost::bind(&App::onTimer, this));
+    }
+    catch (std::exception & e) {
+        ERR() << "Failed to start the xrouter timer: " << e.what() << " "
+              << __FUNCTION__;
+        return false;
+    }
+
+    {
+        WaitableLock l(mu);
+        xrouterIsReady = true;
+    }
 
     return true;
+}
+
+/**
+ * Returns true if XRouter is ready to receive packets.
+ * @return
+ */
+bool App::isReady() {
+    WaitableLock l(mu);
+    return xrouterIsReady;
 }
 
 // We append "xr" if XRouter is activated at all, "xr::spv_command" for wallet commands,
@@ -128,37 +176,6 @@ std::vector<std::string> App::getServicesList()
 static std::vector<CServicenode> getServiceNodes()
 {
     return mnodeman.GetCurrentList();
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool App::start()
-{
-    if (!isEnabled())
-        return true;
-
-    // Only start server mode if we're a servicenode
-    if (fServiceNode) {
-        bool res = server->start();
-        if (res) { // set outgoing xrouter requests to use snode key
-            cpubkey = server->pubKey();
-            cprivkey = server->privKey();
-        }
-    } else if (!initKeyPair()) // init on regular xrouter clients (non-snodes)
-        return false;
-
-    // Start the xrouter timer
-    try {
-        timer.expires_at(boost::posix_time::second_clock::universal_time() + boost::posix_time::seconds(XROUTER_TIMER_SECONDS));
-        timer.async_wait(boost::bind(&App::onTimer, this));
-    }
-    catch (std::exception & e) {
-        ERR() << "Failed to start the xrouter timer: " << e.what() << " "
-              << __FUNCTION__;
-        return false;
-    }
-
-    return true;
 }
 
 bool App::createConnectors() {
@@ -778,7 +795,13 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         std::string config = find_value(reply_obj, "config").get_str();
         Object plugins = find_value(reply_obj, "plugins").get_obj();
 
-        auto settings = std::make_shared<XRouterSettings>(config, false); // not our config
+        auto settings = std::make_shared<XRouterSettings>(false); // not our config
+        auto configInit = settings->init(config);
+        if (!configInit) {
+            ERR() << "Failed to read config on query " << uuid << " from node " << nodeAddr;
+            return false;
+        }
+
         settings->assignNode(nodeAddr);
 
         for (const auto & plugin : plugins) {
@@ -792,9 +815,15 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         }
 
         // Update settings for node
-        updateConfig(nodeAddr, settings);
+        if (configInit)
+            updateConfig(nodeAddr, settings);
+        else
+            reply = "Failed to parse config from XRouter node " + nodeAddr + "\n" + reply;
         queryMgr.addReply(uuid, nodeAddr, reply);
         queryMgr.purge(uuid, nodeAddr);
+
+        if (!configInit)
+            return false;
 
     } catch (...) {
         ERR() << "Failed to load config " << uuid << " from node " << nodeAddr;
@@ -802,11 +831,6 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
     }
 
     LOG() << "Received reply to query " << uuid << " from node " << nodeAddr << "\n" << reply;
-
-    // TODO Handle domain requests
-//    auto domain = settings->get<std::string>("Main.domain");
-//    if (!addr.empty()) // Add node to table of domains
-//        updateDomainNode(domain, addr);
 
     return true;
 }
@@ -1354,6 +1378,7 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
                 plg.emplace_back("parameters", boost::algorithm::join(pls->parameters(), ","));
                 plg.emplace_back("fee", pls->fee());
                 plg.emplace_back("requestlimit", pls->clientRequestLimit());
+                plg.emplace_back("paymentaddress", item.second->paymentAddress(xrService, plugin));
                 plugins.emplace_back(plugin, plg);
             }
         }
@@ -1408,10 +1433,8 @@ std::string App::sendXRouterConfigRequestSync(CNode* node) {
 }
 
 void App::reloadConfigs() {
-    LOG() << "Reloading xrouter config from file " << xrouterpath;
-    xrsettings->read(xrouterpath.c_str());
-    xrsettings->loadPlugins();
-    xrsettings->loadWallets();
+    LOG() << "Reloading xrouter config from file " << xrouterpath.string();
+    xrsettings->init(xrouterpath);
     createConnectors();
 }
 

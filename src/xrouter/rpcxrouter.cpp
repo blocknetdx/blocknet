@@ -464,7 +464,7 @@ Value xrGetReply(const Array & params, bool fHelp)
 Value xrUpdateConfigs(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrUpdateConfigs\nSends requests for all service node configs.");
+        throw std::runtime_error("xrUpdateConfigs\nRequests latest configuration files for all connected service nodes.");
     }
 
     bool forceCheck = false;
