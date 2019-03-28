@@ -139,6 +139,17 @@ Array BtcWalletConnectorXRouter::getTransactions(const std::set<std::string> & t
     return result;
 }
 
+Object BtcWalletConnectorXRouter::decodeRawTransaction(const std::string & hex) const
+{
+    static const std::string commandDRT("decoderawtransaction");
+
+    Object decTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { hex });
+    Value resValue;
+    getResultOrError(decTr, resValue);
+    Object o; o.emplace_back(Pair("result", resValue));
+    return o;
+}
+
 Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int & number, CDataStream & stream, const int & blocklimit) const
 {
     std::string commandGBC("getblockcount");

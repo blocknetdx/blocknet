@@ -351,6 +351,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                     case xrGetTransactions:
                         reply = processGetTransactions(service, params);
                         break;
+                    case xrDecodeRawTransaction:
+                        reply = processDecodeRawTransaction(service, params);
+                        break;
                     case xrGetBalance:
                         throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
 //                    reply = processGetBalance(service, params);
@@ -520,6 +523,21 @@ std::string XRouterServer::processGetTransactions(const std::string & currency, 
         throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
     }
     
+    return json_spirit::write_string(Value(result), true);
+}
+
+std::string XRouterServer::processDecodeRawTransaction(const std::string & currency, const std::vector<std::string> & params) {
+    Object result;
+
+    const auto & hex = params[0];
+    xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
+    if (conn && hasConnectorLock(currency)) {
+        boost::mutex::scoped_lock l(*getConnectorLock(currency));
+        result = conn->decodeRawTransaction(hex);
+    } else {
+        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+    }
+
     return json_spirit::write_string(Value(result), true);
 }
 

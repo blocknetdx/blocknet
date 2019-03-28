@@ -12,7 +12,6 @@
 #include "rpcprotocol.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#include "xrouter/xrouterpacket.h"
 
 #include <boost/filesystem/operations.hpp>
 
@@ -112,10 +111,8 @@ Object CallRPC(const string& strMethod, const Array& params)
     std::string rpcport(GetArg("-rpcport", itostr(BaseParams().RPCPort())));
 
     boost::asio::ip::tcp::iostream stream;
-    if (xrouter::XRouterCommand_IsValid(strMethod.c_str()))
-        stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
-    else
-        stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcclienttimeout", 15)));
+    stream.expires_from_now(boost::posix_time::seconds(GetBoolArg("-xrouter", false) ? GetArg("-rpcxroutertimeout", 60)
+                                                                                     : GetArg("-rpcclienttimeout", 15)));
     stream.connect(rpcip, rpcport);
     if (stream.error() != boost::system::errc::success) {
         LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());

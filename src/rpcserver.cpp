@@ -17,6 +17,8 @@
 #include "wallet.h"
 #endif
 
+#include "xrouter/xrouterapp.h"
+
 #include "json/json_spirit_writer_template.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -391,6 +393,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xrouter", "xrGetBlocks",                          &xrGetBlocks,                true, true, true},
         {"xrouter", "xrGetTransaction",                     &xrGetTransaction,           true, true, true},
         {"xrouter", "xrGetTransactions",                    &xrGetTransactions,          true, true, true},
+        {"xrouter", "xrDecodeRawTransaction",               &xrDecodeRawTransaction,     true, true, true},
 //        {"xrouter", "xrGetTxBloomFilter",                   &xrGetTxBloomFilter,         true, true, true},
 //        {"xrouter", "xrGenerateBloomFilter",                &xrGenerateBloomFilter,      true, true, true},
 //        {"xrouter", "xrGetBlockAtTime",                     &xrGetBlockAtTime,           true, true, true},
@@ -497,7 +500,8 @@ public:
     }
 
     virtual void start() {
-        _stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpctimeout", 30)));
+        _stream.expires_from_now(boost::posix_time::seconds(xrouter::App::isEnabled() ? GetArg("-rpcxroutertimeout", 60)
+                                                                                      : GetArg("-rpctimeout", 30)));
     }
 
     virtual void close() {

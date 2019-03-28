@@ -128,6 +128,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"xrGetBlocks",2},
         {"xrGetTransaction",2},
         {"xrGetTransactions",2},
+        {"xrDecodeRawTransaction",2},
         {"xrSendTransaction",2},
         {"xrServiceConsensus",1},
         {"xrUpdateConfigs",0},

@@ -27,6 +27,7 @@ public:
     Array       getTransactions(const std::set<std::string> & txHashes) const override;
     Array       getTransactionsBloomFilter(const int &, CDataStream &, const int & blocklimit=0) const override;
     Object      sendTransaction(const std::string &) const override;
+    Object      decodeRawTransaction(const std::string & hex) const override;
     std::string convertTimeToBlockCount(const std::string & timestamp) const override;
     std::string getBalance(const std::string & address) const override;
 };

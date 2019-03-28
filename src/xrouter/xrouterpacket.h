@@ -47,6 +47,7 @@ enum XRouterCommand
     xrGetBlocks                      = 50,
     xrGetTransactions                = 51,
     xrGetBlockAtTime                 = 52,
+    xrDecodeRawTransaction           = 53,
 
     xrGetBalance                     = 60,
 
@@ -72,6 +73,7 @@ inline const char* XRouterCommand_ToString(enum XRouterCommand c)
         case xrGetBlocks                  : return "xrGetBlocks";
         case xrGetTransactions            : return "xrGetTransactions";
         case xrGetBlockAtTime             : return "xrGetBlockAtTime";
+        case xrDecodeRawTransaction       : return "xrDecodeRawTransaction";
         case xrGetBalance                 : return "xrGetBalance";
         case xrService                    : return "xrs";
         default: {
@@ -99,6 +101,7 @@ inline bool XRouterCommand_IsValid(const char* c)
            XRouterCommand_ToString(xrGetBlocks)                  == c ||
            XRouterCommand_ToString(xrGetTransactions)            == c ||
            XRouterCommand_ToString(xrGetBlockAtTime)             == c ||
+           XRouterCommand_ToString(xrDecodeRawTransaction)       == c ||
            XRouterCommand_ToString(xrGetBalance)                 == c ||
            XRouterCommand_ToString(xrService)                    == c;
 };
@@ -122,6 +125,7 @@ inline XRouterCommand XRouterCommand_FromString(const std::string & service)
     if (XRouterCommand_ToString(xrGetBlocks)            == c) return xrGetBlocks;
     if (XRouterCommand_ToString(xrGetTransactions)      == c) return xrGetTransactions;
     if (XRouterCommand_ToString(xrGetBlockAtTime)       == c) return xrGetBlockAtTime;
+    if (XRouterCommand_ToString(xrDecodeRawTransaction) == c) return xrDecodeRawTransaction;
     if (XRouterCommand_ToString(xrGetBalance)           == c) return xrGetBalance;
 
     return xrService; // default

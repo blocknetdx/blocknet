@@ -195,6 +195,12 @@ Object EthWalletConnectorXRouter::getTransaction(const std::string & trHash) con
     return getResult(resp).get_obj();
 }
 
+Object EthWalletConnectorXRouter::decodeRawTransaction(const std::string & trHash) const
+{
+    Object unsupported; unsupported.emplace_back("error", "Unsupported");
+    return unsupported;
+}
+
 Array EthWalletConnectorXRouter::getTransactions(const std::set<std::string> & txHashes) const
 {
     Array result;

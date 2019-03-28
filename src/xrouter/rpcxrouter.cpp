@@ -193,6 +193,60 @@ Value xrGetTransaction(const Array & params, bool fHelp)
     return xrouter::form_reply(uuid, reply);
 }
 
+Value xrDecodeRawTransaction(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrDecodeRawTransaction currency hex [consensus_number]\n"
+                                 "Decodes the specified transaction hex and returns the transaction data in json format.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "hex (string) Raw transaction hex string\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrDecodeRawTransaction BLOCK 010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrDecodeRawTransaction BLOCK 010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000 2\n");
+    }
+
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    if (params.size() < 2)
+    {
+        Object error;
+        error.emplace_back("error", "Transaction hex not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    const auto & hex = params[1].get_str();
+    if (hex.empty()) {
+        Object error;
+        error.emplace_back("error", "Transaction hex cannot be empty");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    int confirmations{0};
+    if (params.size() >= 3)
+        confirmations = params[2].get_int();
+
+    std::string currency = params[0].get_str();
+    std::string uuid;
+    std::string reply = xrouter::App::instance().decodeRawTransaction(uuid, currency, confirmations, hex);
+    return xrouter::form_reply(uuid, reply);
+}
+
 Value xrGetBlocks(const Array & params, bool fHelp)
 {
     if (fHelp) {

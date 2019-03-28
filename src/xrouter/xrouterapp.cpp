@@ -1248,7 +1248,13 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         // Clean up
         queryMgr.purge(uuid);
 
+        bool incompleteRequest{false};
+        std::set<NodeAddr> failed;
+
         if (confirmation_count < confs) {
+            incompleteRequest = true;
+            failed.insert(review.begin(), review.end());
+
             auto snodes = getServiceNodes();
             std::map<NodeAddr, CServicenode*> snodec;
             for (auto & s : snodes) {
@@ -1260,7 +1266,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             for (const auto & addr : review) {
                 if (!snodec.count(addr))
                     continue;
-                updateScore(addr, -10);
+                updateScore(addr, -25);
             }
 
             std::set<std::string> snodeAddresses;
@@ -1270,20 +1276,23 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 auto s = snodec[addr];
                 snodeAddresses.insert(CBitcoinAddress(s->pubKeyCollateralAddress.GetID()).ToString());
             }
+
             const auto & nodes = boost::algorithm::join(snodeAddresses, ",");
-            throw XRouterError("Failed to get response in time. These nodes failed to respond: " + nodes, xrouter::SERVER_TIMEOUT);
+            ERR() << "Failed to get response in time for query " << uuid << " Nodes failed to respond, penalizing: " << nodes;
         }
 
         // Handle the results
         std::set<NodeAddr> diff;
         std::set<NodeAddr> agree;
-        std::string result;
+        std::string result; // TODO need field to communicate non-fatal consensus errors to client
         int c = queryMgr.mostCommonReply(uuid, result, agree, diff);
         for (const auto & addr : diff) // penalize nodes that didn't match consensus
             updateScore(addr, -5);
         if (c > 1) { // only update score if there's consensus
-            for (const auto & addr : agree)
-                updateScore(addr, c > 1 ? c * 2 : 0); // boost majority consensus nodes
+            for (const auto & addr : agree) {
+                if (!failed.count(addr))
+                    updateScore(addr, c > 1 ? c * 2 : 0); // boost majority consensus nodes
+            }
         }
 
 //        if (c <= confs || result.empty())
@@ -1354,6 +1363,11 @@ std::string App::getTransaction(std::string & uuidRet, const std::string & curre
 std::string App::getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & txs)
 {
     return this->xrouterCall(xrGetTransactions, uuidRet, currency, confirmations, std::vector<std::string>(txs.begin(), txs.end()));
+}
+
+std::string App::decodeRawTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & rawtx)
+{
+    return this->xrouterCall(xrDecodeRawTransaction, uuidRet, currency, confirmations, { rawtx });
 }
 
 std::string App::getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & filter, const int & number)

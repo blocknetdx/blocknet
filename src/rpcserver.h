@@ -685,6 +685,7 @@ extern json_spirit::Value xrGetBlock(const json_spirit::Array& params, bool fHel
 extern json_spirit::Value xrGetBlocks(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTransactions(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrDecodeRawTransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTxBloomFilter(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGenerateBloomFilter(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrSendTransaction(const json_spirit::Array& params, bool fHelp);

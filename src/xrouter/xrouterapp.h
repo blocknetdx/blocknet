@@ -201,6 +201,16 @@ public:
     std::string getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & txHashes);
 
     /**
+     * @brief Decodes the specified raw transaction.
+     * @param uuidRet uuid of the request
+     * @param currency chain code (BTC, LTC etc)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
+     * @param rawtx raw transaction as a hex string
+     * @return json array of transaction data
+     */
+    std::string decodeRawTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & rawtx);
+
+    /**
      * @brief sends raw transaction to the given chain
      * @param currency chain code (BTC, LTC etc)
      * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)

@@ -35,6 +35,7 @@ public:
     virtual Array       getTransactions(const std::set<std::string> & txHashes) const = 0;
     virtual Array       getTransactionsBloomFilter(const int & number, CDataStream & stream, const int & blocklimit=0) const = 0;
     virtual Object      sendTransaction(const std::string & transaction) const = 0;
+    virtual Object      decodeRawTransaction(const std::string & hex) const = 0;
     virtual std::string convertTimeToBlockCount(const std::string & timestamp) const = 0;
     virtual std::string getBalance(const std::string & address) const = 0;
 };

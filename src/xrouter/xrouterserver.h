@@ -108,6 +108,14 @@ public:
     std::string processGetTransactions(const std::string & currency, const std::vector<std::string> & params);
 
     /**
+     * @brief process xrDecodeRawTransaction call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
+     * @return
+     */
+    std::string processDecodeRawTransaction(const std::string & currency, const std::vector<std::string> & params);
+
+    /**
      * @brief process xrGetTransactionsBloomFilter call on service node side
      * @param currency blockchain to query
      * @param params list of parameters
