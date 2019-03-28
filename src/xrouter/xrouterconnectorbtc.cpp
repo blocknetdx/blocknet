@@ -14,7 +14,7 @@ static Value getResult(Object obj)
     return Value();
 }
 
-static bool getResultOrError(Object obj, Value& res)
+static bool getResultOrError(const Object & obj, Value & res)
 {
     const Value & result = find_value(obj, "result");
     const Value & error  = find_value(obj, "error");
@@ -55,44 +55,6 @@ static double parseVout(Value vout, std::string account)
     return result;
 }
 
-double BtcWalletConnectorXRouter::getBalanceChange(Object tx, std::string account) const
-{
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
-
-    double result = 0.0;
-
-    Array vout = find_value(tx, "vout").get_array();
-    for (unsigned int j = 0; j != vout.size(); j++ )
-    {
-        result += parseVout(vout[j], account);
-    }
-
-    Array vin = find_value(tx, "vin").get_array();
-    for (unsigned int j = 0; j != vin.size(); j++ )
-    {
-        const Value& txid_val = find_value(vin[j].get_obj(), "txid");
-        if (txid_val.is_null())
-            continue;
-
-        std::string txid = txid_val.get_str();
-        int voutid = find_value(vin[j].get_obj(), "vout").get_int();
-
-        Array paramsGRT { Value(txid) };
-        Object rawTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-        std::string txdata = getResult(rawTr).get_str();
-
-        Array paramsDRT { Value(txdata) };
-        Object decRawTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-        Object prev_tx = getResult(decRawTr).get_obj();
-        Array prev_vouts = find_value(prev_tx, "vout").get_array();
-
-        result -= parseVout(prev_vouts[voutid], account);
-    }
-
-    return result;
-}
-
 std::string BtcWalletConnectorXRouter::getBlockCount() const
 {
     std::string command("getblockcount");
@@ -103,10 +65,10 @@ std::string BtcWalletConnectorXRouter::getBlockCount() const
     return std::to_string(getResult(resp).get_int());
 }
 
-Object BtcWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
+Object BtcWalletConnectorXRouter::getBlockHash(const int & block) const
 {
     std::string command("getblockhash");
-    Array params { std::stoi(blockId) };
+    Array params { block };
 
     return CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
 }
@@ -119,10 +81,22 @@ Object BtcWalletConnectorXRouter::getBlock(const std::string & blockHash) const
     return CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
 }
 
-Object BtcWalletConnectorXRouter::getTransaction(const std::string & trHash) const
+Array BtcWalletConnectorXRouter::getBlocks(const std::set<std::string> & blockHashes) const
 {
-    std::string commandGRT("getrawtransaction");
-    Array paramsGRT { trHash };
+    Array result;
+    static const std::string commandGB("getblock");
+    for (const auto & hash : blockHashes) {
+        Array paramsGB { hash };
+        Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
+        result.push_back(getResult(blockObj));
+    }
+    return result;
+}
+
+Object BtcWalletConnectorXRouter::getTransaction(const std::string & hash) const
+{
+    static const std::string commandGRT("getrawtransaction");
+    Array paramsGRT { hash };
 
     Object rawTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
 
@@ -137,7 +111,7 @@ Object BtcWalletConnectorXRouter::getTransaction(const std::string & trHash) con
     {
         std::string txdata = raw.get_str();
 
-        std::string commandDRT("decoderawtransaction");
+        static const std::string commandDRT("decoderawtransaction");
         Array paramsDRT { txdata };
 
         Object decTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
@@ -150,146 +124,22 @@ Object BtcWalletConnectorXRouter::getTransaction(const std::string & trHash) con
     }
 }
 
-Array BtcWalletConnectorXRouter::getAllBlocks(const int number, int blocklimit) const
+Array BtcWalletConnectorXRouter::getTransactions(const std::set<std::string> & txHashes) const
 {
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-
-    Object blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-
-    Value res = getResult(blockCountObj);
-    int blockcount = res.get_int();
+    static const std::string commandGRT("getrawtransaction");
+    static const std::string commandDRT("decoderawtransaction");
 
     Array result;
-    if ((blocklimit > 0) && (blockcount - number > blocklimit)) {
-        throw XRouterError("Too many blocks requested", xrouter::INVALID_PARAMETERS);
+    for (const auto & hash : txHashes) {
+        Array paramsGRT { hash };
+        Object rawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+        const std::string & txdata = getResult(rawTrObj).get_str();
+        result.push_back(txdata);
     }
-    
-    for (int id = number; id <= blockcount; id++)
-    {
-        Array paramsGBH { id };
-        Object blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-
-        std::string hash = getResult(blockHashObj).get_str();
-
-        Array paramsGB { hash };
-        Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-
-        result.push_back(getResult(blockObj));
-    }
-
     return result;
 }
 
-Array BtcWalletConnectorXRouter::getAllTransactions(const std::string & account, const int number, const int time, int blocklimit) const
-{
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
-
-    Object blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-    int blockcount = getResult(blockCountObj).get_int();
-
-    Array result;
-    if ((blocklimit > 0) && (blockcount - number > blocklimit)) {
-        throw XRouterError("Too many blocks requested", xrouter::INVALID_PARAMETERS);
-    }
-    
-    for (int id = blockcount; id >= number; id--)
-    {
-        Array paramsGBH { id };
-        Object blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-        std::string hash = getResult(blockHashObj).get_str();
-
-        Array paramsGB { hash };
-        Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        Object block = getResult(blockObj).get_obj();
-
-        Array txs = find_value(block, "tx").get_array();
-        int blocktime = find_value(block, "time").get_int();
-        if (blocktime < time)
-            break;
-
-        for (unsigned int j = 0; j < txs.size(); j++)
-        {
-            std::string txid = Value(txs[j]).get_str();
-
-            Array paramsGRT { txid };
-            Object rawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
-
-            Array paramsDRT { txdata };
-            Object decRawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
-
-            if (getBalanceChange(tx, account) != 0.0)
-                result.push_back(Value(tx));
-        }
-    }
-
-    return result;
-}
-
-std::string BtcWalletConnectorXRouter::getBalance(const std::string & account, const int time, int blocklimit) const
-{
-    return getBalanceUpdate(account, 0, time, blocklimit);
-}
-
-std::string BtcWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number, const int time, int blocklimit) const
-{
-    std::string commandGBC("getblockcount");
-    std::string commandGBH("getblockhash");
-    std::string commandGB("getblock");
-    std::string commandGRT("getrawtransaction");
-    std::string commandDRT("decoderawtransaction");
-
-    double result = 0.0;
-
-    Object blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
-    int blockcount = getResult(blockCountObj).get_int();
-
-    if ((blocklimit > 0) && (blockcount - number > blocklimit)) {
-        throw XRouterError("Too many blocks requested", xrouter::INVALID_PARAMETERS);
-    }
-    
-    for (int id = blockcount; id >= number; id--)
-    {
-        Array paramsGBH { id };
-        Object blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, paramsGBH);
-        std::string hash = getResult(blockHashObj).get_str();
-
-        Array paramsGB { hash };
-        Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        Object block = getResult(blockObj).get_obj();
-
-        Array txs = find_value(block, "tx").get_array();
-        int blocktime = find_value(block, "time").get_int();
-        if (blocktime < time)
-            break;
-
-        for (unsigned int j = 0; j < txs.size(); j++)
-        {
-            std::string txid = Value(txs[j]).get_str();
-
-            Array paramsGRT { txid };
-            Object rawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-            std::string txdata = getResult(rawTrObj).get_str();
-
-            Array paramsDRT { txdata };
-            Object decRawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, paramsDRT);
-            Object tx = getResult(decRawTrObj).get_obj();
-
-            result += getBalanceChange(tx, account);
-        }
-    }
-
-    return std::to_string(result);
-}
-
-Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number, CDataStream & stream, int blocklimit) const
+Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int & number, CDataStream & stream, const int & blocklimit) const
 {
     std::string commandGBC("getblockcount");
     std::string commandGBH("getblockhash");
@@ -323,9 +173,8 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int number, CD
 
         Array txs = find_value(block, "tx").get_array();
 
-        for (unsigned int j = 0; j < txs.size(); j++)
-        {
-            std::string txid = Value(txs[j]).get_str();
+        for (const auto & j : txs) {
+            std::string txid = Value(j).get_str();
 
             Array paramsGRT { txid };
             Object rawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
@@ -424,6 +273,11 @@ std::string BtcWalletConnectorXRouter::convertTimeToBlockCount(const std::string
     }
     
     return "0";
+}
+
+std::string BtcWalletConnectorXRouter::getBalance(const std::string & address) const
+{
+    return "0"; // TODO Implement
 }
 
 } // namespace xrouter

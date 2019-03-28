@@ -4,6 +4,8 @@
 
 #include "rpcprotocol.h"
 
+#include <regex>
+
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_utils.h"
 
@@ -65,6 +67,12 @@ bool removeWalletNamespace(const std::string & wallet, std::string & result) {
     result = std::string{wallet}.erase(s, search.size());
     return true;
 }
+bool hasWalletNamespace(const std::string & service) {
+    const std::string s{xr + "::"};
+    std::regex r("^"+s+"[a-zA-Z0-9\\-:\\$]+$");
+    std::smatch m;
+    return std::regex_match(service, m, r);
+}
 std::string pluginCommandKey(const std::string & service) {
     return xrs + "::" + service;
 }
@@ -77,6 +85,22 @@ bool removePluginNamespace(const std::string & service, std::string & result) {
     }
     result = std::string{service}.erase(s, search.size());
     return true;
+}
+bool hasPluginNamespace(const std::string & service) {
+    const std::string s{xrs + "::"};
+    std::regex r("^"+s+"[a-zA-Z0-9\\-:\\$]+$");
+    std::smatch m;
+    return std::regex_match(service, m, r);
+}
+bool commandFromNamespace(const std::string & fqService, std::string & command) {
+    std::regex r(".*?::([a-zA-Z0-9\\-:\\$]+)$");
+    std::smatch m;
+    std::regex_search(fqService, m, r);
+    if (m.size() > 1) {
+        command = m[1];
+        return true; // found!
+    }
+    return false; // no match
 }
 
 bool is_number(std::string s)

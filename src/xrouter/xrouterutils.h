@@ -47,6 +47,11 @@ extern std::string walletCommandKey(const std::string & wallet);
  * @return
  */
 extern bool removeWalletNamespace(const std::string & wallet, std::string & result);
+/**
+ * Returns true if the specified service has the wallet namespace (xr::).
+ * @return
+ */
+extern bool hasWalletNamespace(const std::string & service);
 
 /**
  * Helper to build service key for use with lookups.
@@ -62,10 +67,20 @@ extern std::string pluginCommandKey(const std::string & service);
  * @return
  */
 extern bool removePluginNamespace(const std::string & service, std::string & result);
+/**
+ * Returns true if the specified service has the plugin namespace (xrs::).
+ * @return
+ */
+extern bool hasPluginNamespace(const std::string & service);
+/**
+ * Returns true if successfully parsed service name from fully qualified service name.
+ * @return
+ */
+extern bool commandFromNamespace(const std::string & fqService, std::string & command);
 
 class UnknownChainAddress : public CBitcoinAddress {
 public:
-    explicit UnknownChainAddress(std::string & s) : CBitcoinAddress(s) { }
+    explicit UnknownChainAddress(const std::string & s) : CBitcoinAddress(s) { }
     bool IsValid() const { return vchData.size() == 20; }
     bool GetKeyID(CKeyID& keyID) const {
         uint160 id;

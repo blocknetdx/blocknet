@@ -682,27 +682,27 @@ extern json_spirit::Value gettradingdata(const json_spirit::Array & params, bool
 extern json_spirit::Value xrGetBlockCount(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetBlockHash(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetBlock(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetBlocks(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTransactions(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrGetBalance(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrGetBalanceUpdate(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGetTxBloomFilter(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrGenerateBloomFilter(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrGetReply(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrSendTransaction(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrService(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrUpdateConfigs(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value xrGetReply(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrConnect(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrConnectedNodes(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrUpdateConfigs(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrShowConfigs(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrReloadConfigs(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrStatus(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrTest(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value xrGetBlockAtTime(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrRegisterDomain(const json_spirit::Array& params, bool fHelp);
 extern json_spirit::Value xrQueryDomain(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrCreateDepositAddress(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrConnectedNodes(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrGetBlockAtTime(const json_spirit::Array& params, bool fHelp);
-extern json_spirit::Value xrTest(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBalance(const json_spirit::Array& params, bool fHelp);
 
 /** @} */
 

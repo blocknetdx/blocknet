@@ -34,6 +34,7 @@
 #include <numeric>
 #include <random>
 #include <string.h>
+#include <regex>
 
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
@@ -2308,7 +2309,16 @@ bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
                                 const uint32_t version)
 {
     LOCK(m_xwalletsLocker);
-    m_xwallets[nodePubKey] = XWallets{version, nodePubKey, std::set<std::string>{services.begin(), services.end()}};
+
+    std::set<std::string> validServices;
+    std::regex r("^[a-zA-Z0-9\\-:\\$]+$");
+    std::smatch m;
+    for (const auto & s : services) { // validate service names
+        if (std::regex_match(s, m, r))
+            validServices.insert(s);
+    }
+
+    m_xwallets[nodePubKey] = XWallets{version, nodePubKey, validServices};
     return true;
 }
 

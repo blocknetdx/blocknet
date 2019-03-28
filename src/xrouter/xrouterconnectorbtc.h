@@ -22,22 +22,16 @@ namespace xrouter
 class BtcWalletConnectorXRouter : public WalletConnectorXRouter {
 public:
     std::string getBlockCount() const override;
-    Object      getBlockHash(const std::string & blockId) const override;
-    Object      getBlock(const std::string & blockHash) const override;
-    Object      getTransaction(const std::string & trHash) const override;
-    Array       getAllBlocks(const int number, int blocklimit=0) const override;
-    Array       getAllTransactions(const std::string & account, const int number, const int time=0, int blocklimit=0) const override;
-    std::string getBalance(const std::string & account, const int time=0, int blocklimit=0) const override;
-    std::string getBalanceUpdate(const std::string & account, const int number, const int time=0, int blocklimit=0) const override;
-    Array       getTransactionsBloomFilter(const int number, CDataStream& stream, int blocklimit=0) const override;
+    Object      getBlockHash(const int & block) const override;
+    Object      getBlock(const std::string & hash) const override;
+    Array       getBlocks(const std::set<std::string> & blockHashes) const override;
+    Object      getTransaction(const std::string & hash) const override;
+    Array       getTransactions(const std::set<std::string> & txHashes) const override;
+    Array       getTransactionsBloomFilter(const int & number, CDataStream & stream, const int & blocklimit) const override;
     Object      sendTransaction(const std::string & transaction) const override;
     std::string convertTimeToBlockCount(const std::string & timestamp) const override;
-
-private:
-    double getBalanceChange(Object tx, std::string account) const;
-    bool checkFilterFit(Object tx, CBloomFilter filter) const;
+    std::string getBalance(const std::string & address) const override;
 };
-
 
 } // namespace xrouter
 

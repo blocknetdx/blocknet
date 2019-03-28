@@ -108,7 +108,8 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
     stream.connect(rpcip, rpcport);
     if (stream.error() != boost::system::errc::success) {
-        LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());
+        LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport,
+                stream.error(), stream.error().message());
         throw runtime_error(strprintf("no response from server %s:%s - %s", rpcip.c_str(), rpcport.c_str(),
                                       stream.error().message().c_str()));
     }
@@ -160,7 +161,8 @@ std::string CallURL(const std::string & ip, const std::string & port, const std:
     stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
     stream.connect(ip, port);
     if (stream.error() != boost::system::errc::success) {
-        LogPrint("net", "Failed to make connection to %s:%s error %d: %s", ip, port, stream.error(), stream.error().message());
+        LogPrint("net", "Failed to make connection to %s:%s error %d: %s", ip, port,
+                stream.error(), stream.error().message());
         throw runtime_error(strprintf("no response from server %s:%s - %s", ip.c_str(), port.c_str(),
                                       stream.error().message().c_str()));
     }

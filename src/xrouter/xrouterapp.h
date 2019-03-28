@@ -83,10 +83,16 @@ public:
     bool stop();
 
     /**
-     * @brief Returns true if XRouter is ready to receive packets.
+     * @brief Returns true if XRouter configs have finished loading.
      * @return
      */
     bool isReady();
+
+    /**
+     * @brief Returns true if XRouter is ready to accept packets.
+     * @return
+     */
+    bool canListen();
 
     /**
      * Activates the XRouter server node including updating its payment address.
@@ -98,10 +104,13 @@ public:
 
     /**
      * @brief Open connections to service nodes with specified services.
-     * @param fqService Open connections to nodes supporting this fully qualified service
+     * @param command XRouter command
+     * @param service Wallet name or plugin name
      * @param count Number of nodes to open connections to
+     * @param skipNodes avoids connecting to these nodes
      */
-    bool openConnections(const std::string & fqService, const uint32_t & count);
+    bool openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
+                         const std::vector<CNode*> & skipNodes);
     
     /**
      * @brief send config update requests to all nodes
@@ -136,6 +145,7 @@ public:
      * @brief returns block count (highest tree) in the selected chain
      * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @return json reply of getblockcount
      */
     std::string getBlockCount(std::string & uuidRet, const std::string & currency, const int & confirmations);
@@ -144,83 +154,51 @@ public:
      * @brief returns block hash for given block number
      * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
-     * @param blockId block number (integer converted to string)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
+     * @param block block number
      * @return json reply of getblockhash
      */
-    std::string getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockId);
+    std::string getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const int & block);
 
     /**
      * @brief returns block data by hash
      * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @param blockHash block hash string
      * @return json reply of getblock
      */
     std::string getBlock(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockHash);
 
     /**
+     * @brief returns all blocks starting from given number
+     * @param uuidRet uuid of the request
+     * @param currency chain code (BTC, LTC etc)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
+     * @param blockHashes set of hashes to obtain block information for
+     * @return json array with block data
+     */
+    std::string getBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & blockHashes);
+
+    /**
      * @brief returns transaction by hash (requires tx idnex on server side)
      * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @param hash tx hash
      * @return json reply of decoderawtransaction
      */
     std::string getTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & hash);
 
     /**
-     * @brief returns all blocks starting from given number
-     * @param uuidRet uuid of the request
-     * @param currency chain code (BTC, LTC etc)
-     * @param number block number (int converted to string)
-     * @return json array with block data
-     */
-    std::string getAllBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & number);
-
-    /**
      * @brief returns transactions belonging to account after given block
      * @param uuidRet uuid of the request
      * @param currency chain code (BTC, LTC etc)
-     * @param account address to search in transactionss
-     * @param number block number where to start
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
+     * @param txs set of transaction hashes
      * @return json array of transaction data
      */
-    std::string getAllTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number);
-
-    /**
-     * @brief returns balance for given account
-     * @param uuidRet uuid of the request
-     * @param currency chain code (BTC, LTC etc)
-     * @param account address
-     * @return balance (float converted to string)
-     */
-    std::string getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account);
-
-    /**
-     * @brief returns balance cange since given block number
-     * @param uuidRet uuid of the request
-     * @param currency chain code (BTC, LTC etc)
-     * @param account address
-     * @param number block number where to start
-     * @return balance change (float converted to string)
-     */
-    std::string getBalanceUpdate(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number);
-
-    /**
-     * @brief returns all transactions using bloom filter
-     * @param uuidRet uuid of the request
-     * @param currency chain code (BTC, LTC etc)
-     * @param account address
-     * @param number block number where to start
-     * @return balance change (float converted to string)
-     */
-    std::string getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & filter, const std::string & number);
-
-    /**
-     * @brief fetches the reply to the giver request
-     * @param uuid UUID of the query
-     * @return
-     */
-    std::string getReply(const std::string & uuid);
+    std::string getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & txHashes);
 
     /**
      * @brief sends raw transaction to the given chain
@@ -231,13 +209,36 @@ public:
     std::string sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction);
 
     /**
-     * @brief Returnst the block count at the specified time.
+     * @brief returns all transactions using bloom filter
      * @param uuidRet uuid of the request
-     * @param name plugin name (taken from xrouter config)
-     * @param params parameters list from command line. The function checks that the number and type of parameters matches the config
+     * @param currency chain code (BTC, LTC etc)
+     * @param confirmations consensus number of snodes (must be at least 1)
+     * @param filter
+     * @param number block number where to start
      * @return
      */
-    std::string convertTimeToBlockCount(std::string & uuidRet, const std::string& currency, const int & confirmations, std::string time);
+    std::string getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency,
+            const int & confirmations, const std::string & filter, const int & number);
+
+    /**
+     * @brief Returnst the block count at the specified time.
+     * @param uuidRet uuid of the request
+     * @param currency chain to query
+     * @param confirmations consensus number (must be at least 1)
+     * @param time Estimated block time
+     * @return
+     */
+    std::string convertTimeToBlockCount(std::string & uuidRet, const std::string& currency,
+            const int & confirmations, const int64_t & time);
+
+    /**
+     * @brief returns balance for given account
+     * @param uuidRet uuid of the request
+     * @param currency chain code (BTC, LTC etc)
+     * @param address payment address
+     * @return balance (float converted to string)
+     */
+    std::string getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & address);
 
     /**
      * Attempts to connects to at least number of indicated service nodes with the specified service and
@@ -247,6 +248,13 @@ public:
      * @return
      */
     std::map<NodeAddr, XRouterSettingsPtr> xrConnect(const std::string & service, const int & count);
+
+    /**
+     * @brief fetches the reply to the giver request
+     * @param uuid UUID of the query
+     * @return
+     */
+    std::string getReply(const std::string & uuid);
 
     /**
      * JSON output of specified configurations.
@@ -340,12 +348,15 @@ public:
 
     /**
      * @brief get all nodes that support the command for a given chain
-     * @param packet Xrouter packet formed and ready to be sendTransaction
+     * @param command XRouter command
      * @param service Wallet or currency name
      * @param count Number of nodes to fetch (default 1 node)
+     * @param nodes Currently connected nodes
+     * @param nodec Nodes mapped by node address
+     * @param snodes Servicenodes mapped by node address
      * @return
      */
-    std::vector<CNode*> getAvailableNodes(enum XRouterCommand command, const std::string & service, int count=1);
+    std::vector<CNode*> availableNodesRetained(enum XRouterCommand command, const std::string & service, const int & count = 1);
     
     /**
      * @brief find the node that supports a given plugin 
@@ -356,13 +367,15 @@ public:
     
     /**
      * @brief generates a payment transaction to given service node
-     * @param pnode CNode corresponding to a service node
+     * @param node Service node address
+     * @param paymentAddress Payment address to use
      * @param fee amount to pay
      * @param address hex-encoded transaction
      * @return bool True if payment generated, otherwise false
      * @throws std::runtime_error in case of errors
      */
-    bool generatePayment(CNode* pnode, CAmount fee, std::string & payment);
+    bool generatePayment(const NodeAddr & pnode, const std::string & paymentAddress,
+            const CAmount & fee, std::string & payment);
     
     /**
      * @brief onMessageReceived  call when message from xrouter network received
@@ -437,18 +450,18 @@ public:
     /**
      * Returns true if the rate limit has been exceeded on requests to the specified node.
      * @param node Node address
-     * @param plugin Plugin name
+     * @param service Name of the command or service
      * @param lastRequest Time of last request
      * @param rateLimit Rate limit in milliseconds
      * @return
      */
-    bool rateLimitExceeded(const NodeAddr & node, const std::string & plugin,
+    bool rateLimitExceeded(const NodeAddr & node, const std::string & service,
             const std::chrono::time_point<std::chrono::system_clock> lastRequest, const int rateLimit)
     {
-        if (hasSentRequest(node, plugin)) {
+        if (hasSentRequest(node, service)) {
             std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
             std::chrono::system_clock::duration diff = time - lastRequest;
-            if (std::chrono::duration_cast<std::chrono::milliseconds>(diff) < std::chrono::milliseconds(rateLimit))
+            if (std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() < std::chrono::milliseconds(rateLimit).count())
                 return true;
         }
         return false;
@@ -485,6 +498,40 @@ public:
         return server->hasInFlightQuery(node);
     }
 
+    /**
+     * Return time of the last request to specified node.
+     * @param node
+     * @param command
+     * @return
+     */
+    std::chrono::time_point<std::chrono::system_clock> getLastRequest(const NodeAddr & node, const std::string & command) {
+        WaitableLock l(mu);
+        if (lastPacketsSent.count(node) && lastPacketsSent[node].count(command))
+            return lastPacketsSent[node][command];
+        return std::chrono::system_clock::from_time_t(0);
+    }
+
+    /**
+     * Returns true if a request to a node has been made previously.
+     * @param node
+     * @param command
+     * @return
+     */
+    bool hasSentRequest(const NodeAddr & node, const std::string & command) {
+        WaitableLock l(mu);
+        return lastPacketsSent.count(node) && lastPacketsSent[node].count(command);
+    }
+
+    /**
+     * Updates (or adds) a request time for the specified node and command.
+     * @param node
+     * @param command
+     */
+    void updateSentRequest(const NodeAddr & node, const std::string & command) {
+        WaitableLock l(mu);
+        lastPacketsSent[node][command] = std::chrono::system_clock::now();
+    }
+
 private:
     /**
      * @brief App - default contructor,
@@ -501,23 +548,15 @@ private:
         WaitableLock l(mu);
         return snodeScore.count(node);
     }
-    int getScore(const NodeAddr & node) {
+    int64_t getScore(const NodeAddr & node) {
         WaitableLock l(mu);
         return snodeScore[node];
     }
     void updateScore(const NodeAddr & node, const int score) {
         WaitableLock l(mu);
-        snodeScore[node] = score;
-    }
-    std::chrono::time_point<std::chrono::system_clock> getLastRequest(const NodeAddr & node, const std::string & command) {
-        WaitableLock l(mu);
-        if (lastPacketsSent.count(node) && lastPacketsSent[node].count(command))
-            return lastPacketsSent[node][command];
-        return std::chrono::system_clock::from_time_t(0);
-    }
-    bool hasSentRequest(const NodeAddr & node, const std::string & command) {
-        WaitableLock l(mu);
-        return lastPacketsSent.count(node) && lastPacketsSent[node].count(command);
+        if (!snodeScore.count(node))
+            snodeScore[node] = 0;
+        snodeScore[node] += score;
     }
     std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
         WaitableLock l(mu);
@@ -568,22 +607,10 @@ private:
         WaitableLock l(mu);
         snodeConfigs[node] = config;
     }
-    bool hasConfigTime(const NodeAddr & node) {
-        WaitableLock l(mu);
-        return lastConfigQueries.count(node);
-    }
-    std::chrono::time_point<std::chrono::system_clock> getConfigTime(const NodeAddr & node) {
-        WaitableLock l(mu);
-        return lastConfigQueries[node];
-    }
-    void updateConfigTime(const NodeAddr & node, std::chrono::time_point<std::chrono::system_clock> & time) {
-        WaitableLock l(mu);
-        lastConfigQueries[node] = time;
-    }
     bool needConfigUpdate(const NodeAddr & node, const bool & isServer = false) {
-        return !(hasConfigTime(node) &&
-                 rateLimitExceeded(node, XRouterCommand_ToString(xrGetConfig), getConfigTime(node),
-                         isServer ? 10000 : 600000)); // server default is 10 seconds, client default is 10 minutes
+        const auto & service = XRouterCommand_ToString(xrGetConfig);
+        return !rateLimitExceeded(node, service, getLastRequest(node, service),
+                isServer ? 10000 : 600000); // server default is 10 seconds, client default is 10 minutes
     }
 
     /**
@@ -592,6 +619,25 @@ private:
      * @return
      */
     std::string parseConfig(XRouterSettingsPtr cfg);
+
+    /**
+     * Fills the specified containers with the latest active nodes.
+     * @param snodes Servicenode list
+     * @param nodes Connected node list
+     * @param snodec Map of servicenodes
+     * @param nodec Map of connected servicenodes node refs
+     */
+    void getLatestNodeContainers(std::vector<CServicenode> & snodes, std::vector<CNode*> & nodes,
+                                 std::map<NodeAddr, CServicenode> & snodec, std::map<NodeAddr, CNode*> & nodec);
+    /**
+     * Decrements node references.
+     * @param nodes
+     */
+    void releaseNodes(const std::vector<CNode*> & nodes) {
+        LOCK(cs_vNodes);
+        for (auto & pnode : nodes)
+            pnode->Release();
+    }
 
     class PendingConnectionMgr {
     public:
@@ -796,9 +842,11 @@ private:
          * matching, this will return the most common reply, i.e. the replies of the matching two.
          * @param id
          * @param reply
+         * @param agree Set of nodes that provided most common replies
+         * @param diff Set of nodes that provided non-common replies
          * @return
          */
-        int mostCommonReply(const std::string & id, std::string & reply) {
+        int mostCommonReply(const std::string & id, std::string & reply, std::set<NodeAddr> & agree, std::set<NodeAddr> & diff) {
             WaitableLock l(mu);
 
             int consensus = queries.count(id);
@@ -807,21 +855,40 @@ private:
 
             std::map<uint256, std::string> hashes;
             std::map<uint256, int> counts;
+            std::map<uint256, std::set<NodeAddr> > nodes;
             for (auto & item : queries[id]) {
                 auto hash = Hash(item.second.begin(), item.second.end());
                 hashes[hash] = item.second;
                 counts[hash] = counts.count(hash) + 1; // update counts for common replies
+                nodes[hash].insert(item.first);
             }
 
-            // sort replies descending
+            // sort replies counts descending (most similar replies are more valuable)
             std::vector<std::pair<uint256, int> > tmp(counts.begin(), counts.end());
             std::sort(tmp.begin(), tmp.end(),
                       [](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
                           return a.second > b.second;
                       });
 
+            diff.clear();
+            if (tmp.size() > 1) {
+                for (int i = 1; i < tmp.size(); ++i) {
+                    auto & hash = tmp[i].first;
+                    if (!nodes.count(hash) || tmp[i].second >= tmp[0].second) // do not penalize equal counts, only fewer
+                        continue;
+                    auto ns = nodes[hash];
+                    diff.insert(ns.begin(), ns.end());
+                }
+            }
+
+            auto selhash = tmp[0].first;
+
+            // store agreeing nodes
+            agree.clear();
+            agree = nodes[selhash];
+
             // select the most common replies
-            reply = hashes[tmp[0].first];
+            reply = hashes[selhash];
             return tmp[0].second;
         }
         /**
@@ -942,10 +1009,9 @@ private:
     XRouterSettingsPtr xrsettings;
     XRouterServerPtr server;
 
-    std::map<std::string, int> snodeScore;
+    std::map<std::string, int64_t> snodeScore;
 
     std::map<std::string, std::set<NodeAddr> > configQueries;
-    std::map<NodeAddr, std::chrono::time_point<std::chrono::system_clock> > lastConfigQueries;
     std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
     std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
     std::map<std::string, NodeAddr> snodeDomains;

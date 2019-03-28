@@ -97,6 +97,7 @@ Object CallRPC(const std::string & rpcip, const std::string & rpcport,
 
     return reply;
 }
+
 }
 
 namespace xrouter
@@ -111,10 +112,14 @@ static Value getResult(Object obj) {
     return Value();
 }
 
-static std::string dec2hex(std::string s) {
+static std::string dec2hex(const int & s) {
     std::stringstream ss;
-    ss << std::hex << std::stoi(s);
+    ss << std::hex << s;
     return "0x" + ss.str();
+}
+
+static std::string dec2hex(const std::string & s) {
+    return dec2hex(std::stoi(s));
 }
 
 static int hex2dec(std::string s) {
@@ -141,16 +146,16 @@ std::string EthWalletConnectorXRouter::getBlockCount() const
     return std::string();
 }
 
-Object EthWalletConnectorXRouter::getBlockHash(const std::string & blockId) const
+Object EthWalletConnectorXRouter::getBlockHash(const int & block) const
 {
     std::string command("eth_getBlockByNumber");
       
-    Array params { dec2hex(blockId), false };
+    Array params { dec2hex(block), false };
 
     Object resp = rpc::CallRPC(m_ip, m_port, command, params);
 
-    Object block = getResult(resp).get_obj();
-    std::string hash = find_value(block, "hash").get_str();
+    Object blockResult = getResult(resp).get_obj();
+    std::string hash = find_value(blockResult, "hash").get_str();
 
     Object result;
     result.emplace_back(Pair("result", hash));
@@ -167,6 +172,19 @@ Object EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
     return getResult(resp).get_obj();
 }
 
+Array EthWalletConnectorXRouter::getBlocks(const std::set<std::string> & blockHashes) const
+{
+    static const std::string commandBN("eth_getBlockByHash");
+
+    Array result;
+    for (const auto & hash : blockHashes) {
+        Array params { hash, true };
+        Object resp = rpc::CallRPC(m_ip, m_port, commandBN, params);
+        result.push_back(getResult(resp));
+    }
+    return result;
+}
+
 Object EthWalletConnectorXRouter::getTransaction(const std::string & trHash) const
 {
     std::string command("eth_getTransactionByHash");
@@ -177,149 +195,18 @@ Object EthWalletConnectorXRouter::getTransaction(const std::string & trHash) con
     return getResult(resp).get_obj();
 }
 
-Array EthWalletConnectorXRouter::getAllBlocks(const int number, int blocklimit) const
+Array EthWalletConnectorXRouter::getTransactions(const std::set<std::string> & txHashes) const
 {
-    std::string commandBN("eth_blockNumber");
-    std::string commandgGBBN("eth_getBlockByNumber");
-
-    Object blockCountObj = rpc::CallRPC(m_ip, m_port, commandBN, Array());
-    std::string hexValueStr = getResult(blockCountObj).get_str();
-    int blockCount = hex2dec(hexValueStr);
-
-    if ((blocklimit > 0) && (blockCount - number > blocklimit)) {
-        throw XRouterError("Too many blocks requested", xrouter::INVALID_PARAMETERS);
-    }
-    
     Array result;
-
-    for(int id = number; id <= blockCount; id++)
-    {
-        Array params { dec2hex(std::to_string(id)), true };
-
-        Object resp = rpc::CallRPC(m_ip, m_port, commandgGBBN, params);
-
-        result.push_back(getResult(resp));
+    for (const auto & hash : txHashes) {
+        result.push_back(getTransaction(hash));
     }
-
     return result;
 }
 
-Array EthWalletConnectorXRouter::getAllTransactions(const std::string & account, const int number, const int time, int blocklimit) const
+Array EthWalletConnectorXRouter::getTransactionsBloomFilter(const int &, CDataStream &, const int &) const
 {
-    std::string commandBN("eth_blockNumber");
-    std::string commandgGBBN("eth_getBlockByNumber");
-
-    Object blockCountObj = rpc::CallRPC(m_ip, m_port, commandBN, Array());
-    std::string hexValueStr = getResult(blockCountObj).get_str();
-    int blockCount = hex2dec(hexValueStr);
-
-    if ((blocklimit > 0) && (blockCount - number > blocklimit)) {
-        throw XRouterError("Too many blocks requested", xrouter::INVALID_PARAMETERS);
-    }
-    
-    Array result;
-
-    for(int id = number; id <= blockCount; id++)
-    {
-        Array params { dec2hex(std::to_string(id)), true };
-
-        Object resp = rpc::CallRPC(m_ip, m_port, commandgGBBN, params);
-        Object blockObj = getResult(resp).get_obj();
-
-        const Array & transactionsInBlock = find_value(blockObj, "transactions").get_array();
-
-        for(const Value & transaction : transactionsInBlock)
-        {
-            Object transactionObj = transaction.get_obj();
-
-            std::string from = find_value(transactionObj, "from").get_str();
-
-            if(from == account)
-                result.push_back(transaction);
-        }
-    }
-
-    return result;
-}
-
-std::string EthWalletConnectorXRouter::getBalance(const std::string & account, const int time, int blocklimit) const
-{
-    return getBalanceUpdate(account, 0, time, blocklimit);
-}
-
-std::string EthWalletConnectorXRouter::getBalanceUpdate(const std::string & account, const int number, const int time, int blocklimit) const
-{
-    std::string commandBN("eth_blockNumber");
-    std::string commandgGBBN("eth_getBlockByNumber");
-
-    Object blockCountObj = rpc::CallRPC(m_ip, m_port, commandBN, Array());
-    std::string hexValueStr = getResult(blockCountObj).get_str();
-    int blockCount = hex2dec(hexValueStr);
-
-
-    int result = 0;
-    bool isPositive = true;
-
-    if ((blocklimit > 0) && (blockCount - number > blocklimit)) {
-        throw XRouterError("Too many blocks requested", xrouter::INVALID_PARAMETERS);
-    }
-    
-    for(int id = number; id <= blockCount; id++)
-    {
-        Array params { dec2hex(std::to_string(id)), true };
-
-        Object resp = rpc::CallRPC(m_ip, m_port, commandgGBBN, params);
-        Object blockObj = getResult(resp).get_obj();
-
-        const Array & transactionsInBlock = find_value(blockObj, "transactions").get_array();
-
-        for(const Value & transaction : transactionsInBlock)
-        {
-            Object transactionObj = transaction.get_obj();
-
-            std::string from = find_value(transactionObj, "from").get_str();
-            std::string to = find_value(transactionObj, "to").get_str();
-
-            if(from == account)
-            {
-                int value = hex2dec(find_value(transactionObj, "value").get_str());
-
-                if(result < value)
-                {
-                    isPositive = false;
-                    result = value - result;
-                }
-            }
-            else if(to == account)
-            {
-                int value = hex2dec(find_value(transactionObj, "value").get_str());
-
-                if(isPositive)
-                {
-                    result += value;
-                }
-                else
-                {
-                    if(result > value)
-                    {
-                        result -= value;
-                    }
-                    else
-                    {
-                        result = value - result;
-                        isPositive = true;
-                    }
-                }
-            }
-        }
-    }
-
-    return std::to_string(result);
-}
-
-Array EthWalletConnectorXRouter::getTransactionsBloomFilter(const int, CDataStream &, int blocklimit) const
-{
-    // not realized for Ethereum
+    // TODO Implement
     return Array();
 }
 
@@ -333,6 +220,11 @@ std::string EthWalletConnectorXRouter::convertTimeToBlockCount(const std::string
 {
     // TODO: implement
     return "";
+}
+
+std::string EthWalletConnectorXRouter::getBalance(const std::string & address) const
+{
+    return "0";
 }
 
 } // namespace xrouter

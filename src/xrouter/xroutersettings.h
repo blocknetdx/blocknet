@@ -13,6 +13,7 @@
 
 #include <boost/filesystem.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 #include <boost/container/map.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -73,8 +74,11 @@ public:
             {
                 WaitableLock l(mu);
                 m_pt.put<_T>(param, val);
+
+                std::ostringstream oss;
+                boost::property_tree::ini_parser::write_ini(oss, m_pt);
+                this->rawtext = oss.str();
             }
-            write();
         }
         catch (std::exception & e) {
             return false;

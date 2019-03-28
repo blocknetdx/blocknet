@@ -141,12 +141,20 @@ bool App::isReady() {
     return xrouterIsReady;
 }
 
+/**
+ * Returns true if xrouter is ready to accept packets.
+ * @return
+ */
+bool App::canListen() {
+    return isReady() && activeServicenode.status == ACTIVE_SERVICENODE_STARTED;
+}
+
 // We append "xr" if XRouter is activated at all, "xr::spv_command" for wallet commands,
 // and "xrs::service_name" for custom services (plugins).
 std::vector<std::string> App::getServicesList() 
 {
     std::vector<std::string> result;
-    if (!isEnabled())
+    if (!isEnabled() || !isReady())
         return result;
 
     // If shutting down send empty list
@@ -185,139 +193,134 @@ bool App::createConnectors() {
     return false;
 }
 
-bool App::openConnections(const std::string & fqService, const uint32_t & count)
+bool App::openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
+                          const std::vector<CNode*> & skipNodes)
 {
-    if (fqService.empty())
+    const auto fqService = (command == xrService) ? pluginCommandKey(service) // plugin
+                                                  : walletCommandKey(service, XRouterCommand_ToString(command)); // spv wallet
+    // use top-level wallet key (e.g. xr::BLOCK)
+    const auto fqServiceAdjusted = (command == xrService) ? fqService
+                                                          : walletCommandKey(service);
+    if (fqServiceAdjusted.empty())
         return false;
-    if (count < 1) {
-        ERR() << "Cannot open connections: " << std::to_string(count) << ", possibly bad config entry for "
-              << fqService;
+    if (count < 1 || count > 50) {
+        WARN() << "Cannot open less than 1 connection or more than 50, attempted: " << std::to_string(count) << " "
+               << fqService;
         return false;
     }
 
-    std::vector<CNode*> nodes = CNode::CopyNodes();
-
-    auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
-        LOCK(cs_);
-        for (auto & pnode : ns_)
-            pnode->Release();
-    };
-
-    // Build node cache
-    std::map<std::string, CNode*> nodec;
-    for (auto & pnode : nodes) {
-        if (!pnode->NodeAddress().empty())
-            nodec[pnode->NodeAddress()] = pnode;
-    }
+    std::vector<CServicenode> snodes;
+    std::vector<CNode*> nodes;
+    std::map<NodeAddr, CServicenode> snodec;
+    std::map<NodeAddr, CNode*> nodec;
+    getLatestNodeContainers(snodes, nodes, snodec, nodec);
+    CWaitableCriticalSection lu;
 
     uint32_t connected{0};
+    std::set<NodeAddr> connectedSnodes;
+    for (auto & pnode : skipNodes) // add skipped nodes to prevent connection attempts
+        connectedSnodes.insert(pnode->NodeAddress());
+
+    // Retain node and add to containers
+    auto addNode = [&lu,&nodes,&nodec](CNode *pnode) {
+        if (!pnode)
+            return;
+        WaitableLock l(lu);
+        pnode->AddRef();
+        nodes.push_back(pnode);
+        nodec[pnode->NodeAddress()] = pnode;
+    };
+
+    auto connectedCount = [&connected,&lu]() {
+        WaitableLock l(lu);
+        return connected;
+    };
+
+    // Only select nodes with a fee smaller than the max fee we're willing to pay
+    const auto maxfee = xrsettings->maxFee(command, service);
+    auto failedChecks = [this,maxfee,command,service,fqService](const NodeAddr & nodeAddr,
+                                                                XRouterSettingsPtr settings) -> bool
+    {
+        if (maxfee > 0) {
+            auto fee = settings->commandFee(command, service);
+            if (fee > maxfee)
+                return true;
+        }
+        auto rateLimit = settings->clientRequestLimit(command, service);
+        return rateLimitExceeded(nodeAddr, fqService, getLastRequest(nodeAddr, fqService), rateLimit);
+    };
+
+    auto addSelected = [this,&connected,&connectedSnodes,&lu,&failedChecks](const std::string & snodeAddr) -> bool {
+        WaitableLock l(lu);
+        if (!hasConfig(snodeAddr) || connectedSnodes.count(snodeAddr))
+            return false;
+        auto settings = getConfig(snodeAddr);
+        if (settings && !failedChecks(snodeAddr, settings)) {
+            ++connected;
+            connectedSnodes.insert(snodeAddr);
+            return true;
+        }
+        return false;
+    };
+
+    // Check if existing snode connections have what we need
+    std::map<NodeAddr, CServicenode> snodesNeedConfig;
+    for (auto & s : snodes) {
+        if (connected >= count)
+            break; // done, found enough nodes
+
+        const auto & snodeAddr = s.addr.ToString();
+        if (!nodec.count(snodeAddr)) // skip non-connected nodes
+            continue;
+
+        if (connectedSnodes.count(snodeAddr)) // skip already selected nodes
+            continue;
+
+        if (!s.HasService(xr)) // has xrouter
+            continue;
+
+        if (!s.HasService(fqServiceAdjusted)) // has the service
+            continue;
+
+        if (hasConfig(snodeAddr)) // has config, count it
+            addSelected(snodeAddr);
+        else
+            snodesNeedConfig[snodeAddr] = s;
+    }
+
+    if (connected >= count) {
+        releaseNodes(nodes);
+        return true; // done if we have enough existing connections
+    }
 
     // Manages fetching the config from specified nodes
-    auto fetchConfig = [this](CNode *node, CServicenode & snode, uint32_t & connected) {
+    auto fetchConfig = [this,&addSelected](CNode *node, const CServicenode & snode)
+    {
         const std::string & nodeAddr = node->NodeAddress();
-        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-        updateConfigTime(nodeAddr, time);
 
         // fetch config
+        updateSentRequest(nodeAddr, XRouterCommand_ToString(xrGetConfig));
         std::string uuid = sendXRouterConfigRequest(node);
         LOG() << "Requesting config from snode " << CBitcoinAddress(snode.pubKeyCollateralAddress.GetID()).ToString()
-              << " request id = " << uuid;
+              << " query " << uuid;
+
         auto qcond = queryMgr.queryCond(uuid, nodeAddr);
         if (qcond) {
             auto l = queryMgr.queryLock(uuid, nodeAddr);
             boost::mutex::scoped_lock lock(*l);
             if (qcond->timed_wait(lock, boost::posix_time::milliseconds(3500),
-                [this,&uuid,&nodeAddr]() { return ShutdownRequested() || queryMgr.hasReply(uuid, nodeAddr); }))
+                                  [this,&uuid,&nodeAddr]() { return ShutdownRequested() || queryMgr.hasReply(uuid, nodeAddr); }))
             {
                 if (queryMgr.hasReply(uuid, nodeAddr))
-                    ++connected;
+                    addSelected(nodeAddr);
             }
             queryMgr.purge(uuid); // clean up
         }
     };
 
-    auto checkConnectedNode = [&connected](const NodeAddr & snodeAddr) -> bool {
-        if (ShutdownRequested())
-            return false;
-
-        // Make sure the connection has been found
-        bool found{false};
-        {
-            LOCK(cs_vNodes);
-            for (auto & pnode : vNodes) {
-                if (snodeAddr == pnode->NodeAddress()) {
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if (found) // if we found a valid connection
-            ++connected;
-
-        return found;
-    };
-
-    std::vector<CServicenode> snodes = getServiceNodes();
-
-    // Check if existing snode connections have what we need
-    for (auto & s : snodes) {
-        if (connected >= count)
-            break; // done, found enough nodes
-
-        const auto & snodeAddr = s.addr.ToString();
-        if (!nodec.count(snodeAddr))
-            continue;
-
-        if (!s.HasService(xr)) // has xrouter
-            continue;
-
-        if (!s.HasService(fqService)) // has the service
-            continue;
-
-        if (!hasConfig(snodeAddr)) { // missing a config, fetch it if existing request is not pending
-            PendingConnectionMgr::PendingConnection conn;
-            if (!pendingConnMgr.addPendingConnection(snodeAddr, conn)) {
-                auto l = pendingConnMgr.connectionLock(snodeAddr);
-                auto cond = pendingConnMgr.connectionCond(snodeAddr);
-                if (l && cond) {
-                    boost::mutex::scoped_lock lock(*l);
-                    if (cond->timed_wait(lock, boost::posix_time::milliseconds(4500),
-                        [this,&snodeAddr]() { return ShutdownRequested() || !pendingConnMgr.hasPendingConnection(snodeAddr); }))
-                    {
-                        if (hasConfig(snodeAddr))
-                            ++connected;
-                    }
-                }
-            } else {
-                fetchConfig(nodec[snodeAddr], s, connected);
-                pendingConnMgr.notify(snodeAddr);
-            }
-        }
-        else // found the config
-            ++connected;
-    }
-
-    if (connected >= count) {
-        releaseNodes(cs_vNodes, nodes);
-        return true; // done if we have enough existing connections
-    }
-
-    // Open connections to all service nodes up to the desired number that are not already our peers
-    for (auto & s : snodes) {
-        if (connected >= count)
-            break; // done, found enough nodes
-
-        if (!s.HasService(xr)) // has xrouter
-            continue;
-
-        if (!s.HasService(fqService)) // has the service
-            continue;
-
-        const auto & snodeAddr = s.addr.ToString();
-
-        if (snodeAddr.empty()) // Sanity check
-            continue;
-
+    auto connect = [this,&lu,&connectedSnodes,&fetchConfig,&addSelected,&addNode](const std::string & snodeAddr,
+                                                                                  const CServicenode & snode)
+    {
         // If we have a pending connection proceed in this block and wait for it to complete, otherwise add a pending
         // connection if none found and then skip waiting here to avoid race conditions and proceed to open a connection
         PendingConnectionMgr::PendingConnection conn;
@@ -329,42 +332,190 @@ bool App::openConnections(const std::string & fqService, const uint32_t & count)
                 if (cond->timed_wait(lock, boost::posix_time::milliseconds(4500),
                     [this,&snodeAddr]() { return ShutdownRequested() || !pendingConnMgr.hasPendingConnection(snodeAddr); }))
                 {
-                    if (checkConnectedNode(snodeAddr))
-                        continue;
+                    bool alreadyConnected{false};
+                    {
+                        WaitableLock l(lu);
+                        alreadyConnected = connectedSnodes.count(snodeAddr) > 0;
+                    }
+                    if (ShutdownRequested() || alreadyConnected)
+                        return; // no need to connect
+
+                    // Make sure the connection has been found
+                    bool found{false};
+                    {
+                        LOCK(cs_vNodes);
+                        for (auto & pnode : vNodes) {
+                            if (snodeAddr == pnode->NodeAddress()) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (found) { // if we found a valid connection
+                        addSelected(snodeAddr);
+                        return; // done
+                    }
                 }
             }
+        }
+
+        bool alreadyConnected{false};
+        {
+            WaitableLock l(lu);
+            alreadyConnected = connectedSnodes.count(snodeAddr) > 0;
+        }
+        if (alreadyConnected) {
+            pendingConnMgr.notify(snodeAddr);
+            return; // already connected
         }
 
         // Connect to snode
         CAddress addr;
         CNode *node = OpenXRouterConnection(addr, snodeAddr.c_str()); // Filters out bad nodes (banned, etc)
         if (node) {
-            LOG() << "Connected to servicenode " << CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString();
-            if (needConfigUpdate(node->NodeAddress()))
-                fetchConfig(node, s, connected);
+            LOG() << "Connected to servicenode " << CBitcoinAddress(snode.pubKeyCollateralAddress.GetID()).ToString();
+            addNode(node); // store the node connection
+            if (!hasConfig(snodeAddr) || needConfigUpdate(snodeAddr))
+                fetchConfig(node, snode);
+            else
+                addSelected(snodeAddr);
         } else
-            LOG() << "Failed to connect to servicenode " << CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString();
+            LOG() << "Failed to connect to servicenode " << CBitcoinAddress(snode.pubKeyCollateralAddress.GetID()).ToString();
 
         pendingConnMgr.notify(snodeAddr);
+    };
+
+
+    // Check our snode configs and connect to any nodes with required services
+    // that we're not already connected to
+    std::map<NodeAddr, CServicenode> needConnectionsHaveConfigs;
+    auto configs = getConfigs();
+    for (const auto & item : configs) {
+        if (connected >= count)
+            break; // done, found enough nodes
+
+        const auto & snodeAddr = item.first;
+        auto config = item.second;
+
+        if (nodec.count(snodeAddr) || connectedSnodes.count(snodeAddr) || snodesNeedConfig.count(snodeAddr))
+            continue; // already processed, skip
+
+        if (config->hasWallet(service) || config->hasPlugin(service)) {
+            if (snodec.count(snodeAddr)) // only connect if snode is in the list
+                needConnectionsHaveConfigs[snodeAddr] = snodec[snodeAddr];
+        }
     }
 
-    releaseNodes(cs_vNodes, nodes);
+    // At this point all remaining snodes are ones we don't have configs for.
+    std::map<NodeAddr, CServicenode> needConnectionsNoConfigs;
+    for (auto & s : snodes) {
+        if (connected >= count)
+            break; // done, found enough nodes
+
+        const auto & snodeAddr = s.addr.ToString();
+        if (snodeAddr.empty()) // Sanity check
+            continue;
+        if (nodec.count(snodeAddr) || connectedSnodes.count(snodeAddr) || snodesNeedConfig.count(snodeAddr)
+            || needConnectionsHaveConfigs.count(snodeAddr))
+            continue; // already processed, skip
+
+        if (!s.HasService(xr)) // has xrouter
+            continue;
+
+        if (!s.HasService(fqServiceAdjusted)) // has the service
+            continue;
+
+        needConnectionsNoConfigs[snodeAddr] = s;
+    }
+
+    // Connect to already connected snodes that need configs
+    if (!snodesNeedConfig.empty() || !needConnectionsHaveConfigs.empty() || !needConnectionsNoConfigs.empty()) {
+        std::vector<NodeAddr> all;
+        for (auto & it : snodesNeedConfig)
+            all.push_back(it.first);
+        for (auto & it : needConnectionsHaveConfigs)
+            all.push_back(it.first);
+        for (auto & it : needConnectionsNoConfigs)
+            all.push_back(it.first);
+
+        if (all.size() < count - connectedCount()) { // not enough nodes
+            releaseNodes(nodes);
+            return connectedCount() >= count;
+        }
+
+        boost::thread_group tg;
+
+        // Make connections via threads (max 2 per cpu core)
+        for (auto & snodeAddr : all) {
+            if (count - connectedCount() <= 0)
+                break; // done, all connected!
+
+            bool needConfig = snodesNeedConfig.count(snodeAddr) > 0;
+            bool needConnectionHaveConfig = needConnectionsHaveConfigs.count(snodeAddr) > 0;
+            bool needConnectionAndConfig = needConnectionsNoConfigs.count(snodeAddr) > 0;
+
+            CServicenode s;
+            if (needConfig)                    s = snodesNeedConfig[snodeAddr];
+            else if (needConnectionHaveConfig) s = needConnectionsHaveConfigs[snodeAddr];
+            else if (needConnectionAndConfig)  s = needConnectionsNoConfigs[snodeAddr];
+
+            CNode *node = nullptr;
+            if (needConfig) {
+                node = nodec[snodeAddr];
+                if (!node || node->Disconnecting())
+                    continue;
+            }
+
+            tg.create_thread([node,s,snodeAddr,needConfig,needConnectionHaveConfig,
+                              needConnectionAndConfig,count,&fetchConfig,&connect,&connectedCount]()
+            {
+                RenameThread("blocknetdx-xrouter-connections");
+                boost::this_thread::interruption_point();
+
+                if (needConfig) {
+                    if (!node || node->Disconnecting()) // ignore disconnecting nodes
+                        return;
+                    fetchConfig(node, s);
+                } else if (needConnectionHaveConfig) {
+                    connect(snodeAddr, s);
+                } else if (needConnectionAndConfig) {
+                    connect(snodeAddr, s);
+                }
+            });
+
+            // Wait until we have all required connections (count - connected = 0)
+            // Wait while thread group has more running threads than we need connections for -or-
+            //            thread group has too many threads (2 per cpu core)
+            while (tg.size() > (count - connectedCount()) || tg.size() >= boost::thread::hardware_concurrency() * 2) {
+                if (ShutdownRequested()) {
+                    releaseNodes(nodes);
+                    tg.interrupt_all();
+                    tg.join_all();
+                    return false;
+                }
+                boost::this_thread::interruption_point();
+                boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
+            }
+
+            if (ShutdownRequested())
+                break;
+        }
+
+        tg.join_all();
+    }
+
+    releaseNodes(nodes);
     return connected >= count;
 }
 
 std::string App::updateConfigs(bool force)
 {
-    if (!isEnabled())
+    if (!isEnabled() || !isReady())
         return "XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf to run XRouter.";
     
     std::vector<CServicenode> vServicenodes = getServiceNodes();
     std::vector<CNode*> nodes = CNode::CopyNodes();
-
-    auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
-        LOCK(cs_);
-        for (auto & pnode : ns_)
-            pnode->Release();
-    };
 
     // Build snode cache
     std::map<std::string, CServicenode> snodes;
@@ -381,27 +532,22 @@ std::string App::updateConfigs(bool force)
             || pnode->Disconnecting() || snodes[nodeAddr].pubKeyServicenode == activeServicenode.pubKeyServicenode)
             continue;
 
-        std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         // If not force check, rate limit config requests
         if (!force) {
-            if (hasConfigTime(nodeAddr)) {
-                const auto prev_time = getConfigTime(nodeAddr);
-                std::chrono::system_clock::duration diff = time - prev_time;
-                // There was a request to this node already, a new one will be sent only after 5 minutes
-                if (std::chrono::duration_cast<std::chrono::seconds>(diff) < std::chrono::seconds(300))
-                    continue;
-            }
+            const auto & service = XRouterCommand_ToString(xrGetConfig);
+            if (!needConfigUpdate(nodeAddr, service))
+                continue;
         }
 
         // Request the config
         auto & snode = snodes[nodeAddr]; // safe here due to check above
-        updateConfigTime(nodeAddr, time);
+        updateSentRequest(nodeAddr, XRouterCommand_ToString(xrGetConfig));
         std::string uuid = sendXRouterConfigRequest(pnode);
         LOG() << "Requesting config from snode " << CBitcoinAddress(snode.pubKeyCollateralAddress.GetID()).ToString()
-              << " request id = " << uuid;
+              << " query " << uuid;
     }
 
-    releaseNodes(cs_vNodes, nodes);
+    releaseNodes(nodes);
     return "Config requests have been sent";
 }
 
@@ -442,51 +588,30 @@ bool App::stop()
  
 //*****************************************************************************
 //*****************************************************************************
-std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const std::string & service, int count)
+std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, const std::string & service, const int & count)
 {
-    // Send only to the service nodes that have the required wallet
-    std::vector<CServicenode> vServicenodes = getServiceNodes();
-
     std::vector<CNode*> selectedNodes;
-    std::vector<CNode*> nodes = CNode::CopyNodes();
 
-    auto releaseNodes = [](CCriticalSection & cs_, std::vector<CNode*> & ns_) {
-        LOCK(cs_);
-        for (auto & pnode : ns_)
-            pnode->Release();
-    };
+    auto sconfigs = getConfigs();
+    if (sconfigs.empty())
+        return selectedNodes; // don't have any configs, return
 
-    // Build snode cache
-    std::map<std::string, CServicenode> snodes;
-    for (CServicenode & s : vServicenodes) {
-        if (!s.addr.ToString().empty())
-            snodes[s.addr.ToString()] = s;
-    }
+    std::vector<CServicenode> snodes;
+    std::vector<CNode*> nodes;
+    std::map<NodeAddr, CServicenode> snodec;
+    std::map<NodeAddr, CNode*> nodec;
+    getLatestNodeContainers(snodes, nodes, snodec, nodec);
 
-    // Build node cache
-    std::map<std::string, CNode*> nodec;
-    for (auto & pnode : nodes) {
-        const auto addr = pnode->NodeAddress();
-        if (snodes.count(addr))
-            nodec[addr] = pnode;
-    }
-
+    // Max fee we're willing to pay to snodes
     auto maxfee = xrsettings->maxFee(command, service);
-    int supported = 0;
-    int ready = 0;
 
-    auto configs = getConfigs();
-    if (configs.empty()) { // don't have any configs
-        releaseNodes(cs_vNodes, nodes);
-        return selectedNodes;
-    }
-
-    for (const auto & item : configs)
-    {
-        const auto nodeAddr = item.first;
+    // Look through known xrouter node configs and select those that support command/service/fees
+    for (const auto & item : sconfigs) {
+        const auto & nodeAddr = item.first;
         auto settings = item.second;
-        const auto & commandStr = XRouterCommand_ToString(command);
+
         // fully qualified command e.g. xr::ServiceName
+        const auto & commandStr = XRouterCommand_ToString(command);
         const auto & fqCmd = (command == xrService) ? pluginCommandKey(service) // plugin
                                                     : walletCommandKey(service, commandStr); // spv wallet
 
@@ -494,12 +619,10 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
             continue;
         if (!settings->isAvailableCommand(command, service))
             continue;
-        if (!snodes.count(nodeAddr)) // Ignore if not a snode
+        if (!snodec.count(nodeAddr)) // Ignore if not a snode
             continue;
-        if (!snodes[nodeAddr].HasService(command == xrService ? fqCmd : walletCommandKey(service))) // use top-level wallet key (e.g. xr::BLOCK)
+        if (!snodec[nodeAddr].HasService(command == xrService ? fqCmd : walletCommandKey(service))) // use top-level wallet key (e.g. xr::BLOCK)
             continue; // Ignore snodes that don't have the service
-
-        supported++;
 
         // This is the node whose config we are looking at now
         CNode *node = nullptr;
@@ -514,27 +637,20 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
         if (maxfee > 0) {
             auto fee = settings->commandFee(command, service);
             if (fee > maxfee) {
-                const auto & snodeAddr = CBitcoinAddress(snodes[nodeAddr].pubKeyCollateralAddress.GetID()).ToString();
+                const auto & snodeAddr = CBitcoinAddress(snodec[nodeAddr].pubKeyCollateralAddress.GetID()).ToString();
                 LOG() << "Skipping node " << snodeAddr << " because its fee=" << fee << " is higher than maxfee=" << maxfee;
                 continue;
             }
         }
 
         auto rateLimit = settings->clientRequestLimit(command, service);
-        if (hasSentRequest(nodeAddr, fqCmd) && rateLimitExceeded(nodeAddr, fqCmd, getLastRequest(nodeAddr, fqCmd), rateLimit)) {
-            const auto & snodeAddr = CBitcoinAddress(snodes[nodeAddr].pubKeyCollateralAddress.GetID()).ToString();
+        if (rateLimitExceeded(nodeAddr, fqCmd, getLastRequest(nodeAddr, fqCmd), rateLimit)) {
+            const auto & snodeAddr = CBitcoinAddress(snodec[nodeAddr].pubKeyCollateralAddress.GetID()).ToString();
             LOG() << "Skipping node " << snodeAddr << " because not enough time passed since the last call";
             continue;
         }
         
-        ready++;
         selectedNodes.push_back(node);
-    }
-    
-    for (CNode *node : selectedNodes) {
-        const auto & addr = node->NodeAddress();
-        if (!hasScore(addr))
-            updateScore(addr, 0);
     }
 
     // Sort selected nodes descending by score
@@ -542,7 +658,13 @@ std::vector<CNode*> App::getAvailableNodes(enum XRouterCommand command, const st
         return getScore(a->NodeAddress()) > getScore(b->NodeAddress());
     });
 
-    releaseNodes(cs_vNodes, nodes);
+    // Retain selected nodes
+    for (auto & pnode : selectedNodes)
+        pnode->AddRef();
+
+    // Release other nodes
+    releaseNodes(nodes);
+
     return selectedNodes;
 }
 
@@ -799,6 +921,10 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         auto configInit = settings->init(config);
         if (!configInit) {
             ERR() << "Failed to read config on query " << uuid << " from node " << nodeAddr;
+            updateScore(nodeAddr, -10);
+            reply = "Failed to parse config from XRouter node " + nodeAddr + "\n" + reply;
+            queryMgr.addReply(uuid, nodeAddr, reply);
+            queryMgr.purge(uuid, nodeAddr);
             return false;
         }
 
@@ -811,22 +937,21 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
                 settings->addPlugin(plugin.name_, psettings);
             } catch (...) {
                 ERR() << "Failed to read plugin " << plugin.name_ << " on query " << uuid << " from node " << nodeAddr;
+                updateScore(nodeAddr, -2);
             }
         }
 
         // Update settings for node
-        if (configInit)
-            updateConfig(nodeAddr, settings);
-        else
-            reply = "Failed to parse config from XRouter node " + nodeAddr + "\n" + reply;
+        updateConfig(nodeAddr, settings);
         queryMgr.addReply(uuid, nodeAddr, reply);
         queryMgr.purge(uuid, nodeAddr);
 
-        if (!configInit)
-            return false;
-
     } catch (...) {
-        ERR() << "Failed to load config " << uuid << " from node " << nodeAddr;
+        ERR() << "Failed to read config on query " << uuid << " from node " << nodeAddr;
+        updateScore(nodeAddr, -10);
+        reply = "Failed to parse config from XRouter node " + nodeAddr + "\n" + reply;
+        queryMgr.addReply(uuid, nodeAddr, reply);
+        queryMgr.purge(uuid, nodeAddr);
         return false;
     }
 
@@ -840,7 +965,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
 void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & message)
 {
     // If xrouter == 0, xrouter is turned off on this node
-    if (!isEnabled())
+    if (!isEnabled() || !isReady())
         return;
 
     auto checkDoS = [](CValidationState & state, CNode *pnode) {
@@ -899,6 +1024,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
                     }
                 }
 
+                updateScore(node->NodeAddress(), -10);
                 state.DoS(10, error("XRouter: invalid packet received"), REJECT_INVALID, "xrouter-error");
                 checkDoS(state, node);
                 releaseNode(node);
@@ -932,7 +1058,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
                 processConfigReply(node, packet, state);
                 checkDoS(state, node);
                 releaseNode(node);
-            } else if (server->isStarted()) { // Process server requests
+            } else if (canListen() && server->isStarted()) { // Process server requests
                 server->addInFlightQuery(nodeAddr, uuid);
                 try {
                     server->onMessageReceived(node, packet, state);
@@ -963,9 +1089,10 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
     const std::string & uuid = generateUUID();
     uuidRet = uuid; // set uuid
     std::map<std::string, std::string> feePaymentTxs;
+    std::vector<CNode*> selectedNodes;
 
     try {
-        if (!isEnabled())
+        if (!isEnabled() || !isReady())
             throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf", xrouter::UNAUTHORIZED);
 
         if (command != xrService) {
@@ -986,7 +1113,6 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                         throw XRouterError("Incorrect hash: " + params[0], xrouter::INVALID_PARAMETERS);
                     break;
                 case xrGetTransactions:
-                case xrGetBalanceUpdate:
                     if (params.size() > 0 && !is_address(params[0]))
                         throw XRouterError("Incorrect address: " + params[0], xrouter::INVALID_PARAMETERS);
                     break;
@@ -997,7 +1123,6 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             // Check param2
             switch (command) {
                 case xrGetTransactions:
-                case xrGetBalanceUpdate:
                 case xrGetTxBloomFilter:
                     if (params.size() > 1 && !is_number(params[1]))
                         throw XRouterError("Incorrect block number: " + params[1], xrouter::INVALID_PARAMETERS);
@@ -1007,28 +1132,26 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             }
         }
 
-        // Confirmations
-        auto confs = xrsettings->confirmations(command, service, confirmations);
+        auto confs = xrsettings->confirmations(command, service, confirmations); // Confirmations
         const auto & commandStr = XRouterCommand_ToString(command);
         const auto & fqService = (command == xrService) ? pluginCommandKey(service) // plugin
                                                         : walletCommandKey(service, commandStr); // spv wallet
 
         // Select available nodes
-        std::vector<CNode*> selectedNodes = getAvailableNodes(command, service, confs);
+        selectedNodes = availableNodesRetained(command, service, confs);
         auto selected = static_cast<int>(selectedNodes.size());
 
         // If we don't have enough open connections...
         if (selected < confs) {
             // Open connections (at least number equal to how many confirmations we want)
-            const auto & serviceName = (command == xrService) ? fqService : walletCommandKey(service); // use top-level wallet key (e.g. xr::BLOCK)
-            if (!openConnections(serviceName, static_cast<uint32_t>(confs - selected))) {
-                std::string err("Not enough connections, require " + std::to_string(confs) + " for " + fqService);
-                ERR() << err;
+            if (!openConnections(command, service, static_cast<uint32_t>(confs - selected), selectedNodes)) {
+                std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService + " found " + std::to_string(selected));
                 throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
             }
 
             // Reselect available nodes
-            selectedNodes = getAvailableNodes(command, service, confs);
+            releaseNodes(selectedNodes);
+            selectedNodes = availableNodesRetained(command, service, confs);
             selected = static_cast<int>(selectedNodes.size());
         }
 
@@ -1048,12 +1171,15 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             if (!hasConfig(addr))
                 continue; // skip nodes that do not have configs
 
+            auto config = getConfig(addr);
+
             // Create the fee payment
             std::string feePayment;
-            CAmount fee = to_amount(getConfig(addr)->commandFee(command, service));
+            CAmount fee = to_amount(config->commandFee(command, service));
             if (fee > 0) {
                 try {
-                    if (!generatePayment(pnode, fee, feePayment))
+                    const auto paymentAddress = config->paymentAddress(command, service);
+                    if (!generatePayment(addr, paymentAddress, fee, feePayment))
                         throw XRouterError(fundErr, xrouter::INSUFFICIENT_FUNDS);
                 } catch (XRouterError & e) {
                     ERR() << "Failed to create payment to node " << addr << " " << e.msg;
@@ -1094,13 +1220,9 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 packet.append(p);
             packet.sign(cpubkey, cprivkey);
             pnode->PushMessage("xrouter", packet.body());
-            
-            std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
-            if (!lastPacketsSent.count(addr))
-                lastPacketsSent[addr] = std::map<std::string, std::chrono::time_point<std::chrono::system_clock> >();
-            lastPacketsSent[addr][fqService] = time;
 
-            LOG() << "Sent message to node " << pnode->addrName;
+            updateSentRequest(addr, fqService);
+            LOG() << "Sent command " << fqService << " query " << uuid << " to node " << pnode->addrName;
         }
 
         // At this point we need to wait for responses
@@ -1126,15 +1248,48 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         // Clean up
         queryMgr.purge(uuid);
 
-        if (confirmation_count < confs)
-            throw XRouterError("Failed to get response in time. Try xrGetReply command later.", xrouter::SERVER_TIMEOUT);
+        if (confirmation_count < confs) {
+            auto snodes = getServiceNodes();
+            std::map<NodeAddr, CServicenode*> snodec;
+            for (auto & s : snodes) {
+                if (!s.addr.ToString().empty())
+                    snodec[s.addr.ToString()] = &s;
+            }
+
+            // Penalize the snodes that didn't respond
+            for (const auto & addr : review) {
+                if (!snodec.count(addr))
+                    continue;
+                updateScore(addr, -10);
+            }
+
+            std::set<std::string> snodeAddresses;
+            for (const auto & addr : review) {
+                if (!snodec.count(addr))
+                    continue;
+                auto s = snodec[addr];
+                snodeAddresses.insert(CBitcoinAddress(s->pubKeyCollateralAddress.GetID()).ToString());
+            }
+            const auto & nodes = boost::algorithm::join(snodeAddresses, ",");
+            throw XRouterError("Failed to get response in time. These nodes failed to respond: " + nodes, xrouter::SERVER_TIMEOUT);
+        }
 
         // Handle the results
+        std::set<NodeAddr> diff;
+        std::set<NodeAddr> agree;
         std::string result;
-        int c = queryMgr.mostCommonReply(uuid, result); // TODO Send all replies and handle confirmations
+        int c = queryMgr.mostCommonReply(uuid, result, agree, diff);
+        for (const auto & addr : diff) // penalize nodes that didn't match consensus
+            updateScore(addr, -5);
+        if (c > 1) { // only update score if there's consensus
+            for (const auto & addr : agree)
+                updateScore(addr, c > 1 ? c * 2 : 0); // boost majority consensus nodes
+        }
+
 //        if (c <= confs || result.empty())
 //            throw XRouterError("No consensus between responses", xrouter::INTERNAL_SERVER_ERROR);
 
+        releaseNodes(selectedNodes);
         return result;
 
     } catch (XRouterError & e) {
@@ -1149,7 +1304,10 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         error.emplace_back(Pair("error", e.msg));
         error.emplace_back(Pair("code", e.code));
         error.emplace_back(Pair("uuid", uuid));
+
+        releaseNodes(selectedNodes);
         return json_spirit::write_string(Value(error), true);
+
     } catch (std::exception & e) {
         LOG() << e.what();
 
@@ -1162,6 +1320,8 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         error.emplace_back(Pair("error", "Internal Server Error"));
         error.emplace_back(Pair("code", INTERNAL_SERVER_ERROR));
         error.emplace_back(Pair("uuid", uuid));
+
+        releaseNodes(selectedNodes);
         return json_spirit::write_string(Value(error), true);
     }
 }
@@ -1171,9 +1331,9 @@ std::string App::getBlockCount(std::string & uuidRet, const std::string & curren
     return this->xrouterCall(xrGetBlockCount, uuidRet, currency, confirmations, {});
 }
 
-std::string App::getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockId)
+std::string App::getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const int & block)
 {
-    return this->xrouterCall(xrGetBlockHash, uuidRet, currency, confirmations, { blockId });
+    return this->xrouterCall(xrGetBlockHash, uuidRet, currency, confirmations, { std::to_string(block) });
 }
 
 std::string App::getBlock(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockHash)
@@ -1181,39 +1341,24 @@ std::string App::getBlock(std::string & uuidRet, const std::string & currency, c
     return this->xrouterCall(xrGetBlock, uuidRet, currency, confirmations, { blockHash });
 }
 
+std::string App::getBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & blockHashes)
+{
+    return this->xrouterCall(xrGetBlocks, uuidRet, currency, confirmations, { blockHashes.begin(), blockHashes.end() });
+}
+
 std::string App::getTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & hash)
 {
     return this->xrouterCall(xrGetTransaction, uuidRet, currency, confirmations, { hash });
 }
 
-std::string App::getAllBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & number)
+std::string App::getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & txs)
 {
-    return this->xrouterCall(xrGetBlocks, uuidRet, currency, confirmations, { number });
+    return this->xrouterCall(xrGetTransactions, uuidRet, currency, confirmations, std::vector<std::string>(txs.begin(), txs.end()));
 }
 
-std::string App::getAllTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number)
+std::string App::getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & filter, const int & number)
 {
-    return this->xrouterCall(xrGetTransactions, uuidRet, currency, confirmations, { account, number });
-}
-
-std::string App::getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account)
-{
-    return this->xrouterCall(xrGetBalance, uuidRet, currency, confirmations, { account });
-}
-
-std::string App::getBalanceUpdate(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & account, const std::string & number)
-{
-    return this->xrouterCall(xrGetBalanceUpdate, uuidRet, currency, confirmations, { account, number });
-}
-
-std::string App::getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & filter, const std::string & number)
-{
-    return this->xrouterCall(xrGetTxBloomFilter, uuidRet, currency, confirmations, { filter, number });
-}
-
-std::string App::convertTimeToBlockCount(std::string & uuidRet, const std::string& currency, const int & confirmations, std::string time) {
-
-    return this->xrouterCall(xrGetBlockAtTime, uuidRet, currency, confirmations, { time });
+    return this->xrouterCall(xrGetTxBloomFilter, uuidRet, currency, confirmations, { filter, std::to_string(number) });
 }
 
 std::string App::sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction)
@@ -1222,9 +1367,30 @@ std::string App::sendTransaction(std::string & uuidRet, const std::string & curr
     return this->xrouterCall(xrSendTransaction, uuidRet, currency, confirmations, { transaction });
 }
 
+std::string App::convertTimeToBlockCount(std::string & uuidRet, const std::string & currency, const int & confirmations, const int64_t & time)
+{
+    return this->xrouterCall(xrGetBlockAtTime, uuidRet, currency, confirmations, { std::to_string(time) });
+}
+
+std::string App::getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & address)
+{
+    return this->xrouterCall(xrGetBalance, uuidRet, currency, confirmations, { address });
+}
+
 std::string App::getReply(const std::string & id)
 {
     auto replies = queryMgr.allReplies(id);
+    std::vector<CServicenode> snodes = getServiceNodes();
+    std::map<NodeAddr, std::tuple<std::string, int64_t, std::string> > snodec;
+    for (auto & s : snodes) {
+        if (!s.addr.ToString().empty()) {
+            const auto & snodeAddr = s.addr.ToString();
+            std::vector<unsigned char> spubkey; // pubkey
+            servicenodePubKey(snodeAddr, spubkey);
+            snodec[snodeAddr] = { HexStr(spubkey), getScore(snodeAddr), CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString() };
+        }
+    }
+
 
     if (replies.empty()) {
         Object result;
@@ -1246,12 +1412,17 @@ std::string App::getReply(const std::string & id)
     } else {
         Array arr;
         for (auto & it : replies) {
-            std::string reply = it.second;
+            const auto & reply = it.second;
+            const auto & item = snodec[it.first];
             try {
                 Value reply_val;
                 static const std::string nouuid;
                 read_string(write_string(Value(form_reply(nouuid, reply))), reply_val);
-                arr.emplace_back(reply_val);
+                Object o = reply_val.get_obj();
+                o.emplace_back("nodepubkey", std::get<0>(item));
+                o.emplace_back("score", std::get<1>(item));
+                o.emplace_back("address", std::get<2>(item));
+                arr.emplace_back(o);
             } catch (...) { }
         }
         result = arr;
@@ -1260,19 +1431,21 @@ std::string App::getReply(const std::string & id)
     return json_spirit::write_string(Value(result), true);
 }
 
-bool App::generatePayment(CNode *pnode, const CAmount fee, std::string & payment)
+bool App::generatePayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,
+        const CAmount & fee, std::string & payment)
 {
-    const auto nodeAddr = pnode->NodeAddress();
     if (!hasConfig(nodeAddr))
         throw std::runtime_error("No config found for servicenode: " + nodeAddr);
 
     if (fee <= 0)
         return true;
 
-    // Get payment address
-    std::string snodeAddress;
-    if (!getPaymentAddress(nodeAddr, snodeAddress))
-        return false;
+    // Get payment address from snode list if the default is empty
+    std::string snodeAddress = paymentAddress;
+    if (snodeAddress.empty()) {
+        if (!getPaymentAddress(nodeAddr, snodeAddress))
+            return false;
+    }
 
     bool res = createAndSignTransaction(snodeAddress, fee, payment);
     if (!res)
@@ -1318,20 +1491,23 @@ CPubKey App::getPaymentPubkey(CNode* node)
     return CPubKey();
 }
 
-std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & service, const int & count) {
+std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqService, const int & count) {
     std::map<NodeAddr, XRouterSettingsPtr> selectedConfigs;
-    std::string svc;
-    bool isWallet = removeWalletNamespace(service, svc);
-    removePluginNamespace(svc, svc);
-    if (openConnections(isWallet ? walletCommandKey(svc) : pluginCommandKey(svc), count)) { // open connections to snodes that have our service
-        const auto configs = getNodeConfigs(); // get configs and store matching ones
-        for (const auto & item : configs) {
-            if (isWallet && item.second->hasWallet(svc)) {
-                selectedConfigs.insert(item);
-                continue;
+    std::string service;
+    if (commandFromNamespace(fqService, service)) {
+        auto command = XRouterCommand_FromString(service);
+        if (openConnections(command, service, count, { })) { // open connections to snodes that have our service
+            bool isWallet = command != xrService;
+            std::string svc; removeWalletNamespace(fqService, svc); removePluginNamespace(svc, svc);
+            const auto configs = getNodeConfigs(); // get configs and store matching ones
+            for (const auto & item : configs) {
+                if (isWallet && item.second->hasWallet(svc)) {
+                    selectedConfigs.insert(item);
+                    continue;
+                }
+                if (item.second->hasPlugin(svc))
+                    selectedConfigs.insert(item);
             }
-            if (item.second->hasPlugin(svc))
-                selectedConfigs.insert(item);
         }
     }
     return selectedConfigs;
@@ -1351,6 +1527,9 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
         std::vector<unsigned char> spubkey;
         servicenodePubKey(item.second->getNode(), spubkey);
         o.emplace_back("nodepubkey", HexStr(spubkey));
+
+        // score
+        o.emplace_back("score", getScore(item.first));
 
         // payment address
         std::string address;
@@ -1464,6 +1643,28 @@ std::string App::getStatus() {
     result.emplace_back("nodes", nodes);
     
     return json_spirit::write_string(Value(result), true);
+}
+
+void App::getLatestNodeContainers(std::vector<CServicenode> & snodes, std::vector<CNode*> & nodes,
+                                  std::map<NodeAddr, CServicenode> & snodec, std::map<NodeAddr, CNode*> & nodec)
+{
+    snodes.clear(); nodes.clear(); snodec.clear(); nodec.clear();
+
+    snodes = getServiceNodes();
+    nodes = CNode::CopyNodes();
+
+    // Build snode cache
+    for (CServicenode & s : snodes) {
+        if (!s.addr.ToString().empty())
+            snodec[s.addr.ToString()] = s;
+    }
+
+    // Build node cache
+    for (auto & pnode : nodes) {
+        const auto & addr = pnode->NodeAddress();
+        if (!addr.empty())
+            nodec[addr] = pnode;
+    }
 }
 
 std::string App::createDepositAddress(std::string & uuidRet, bool update) {

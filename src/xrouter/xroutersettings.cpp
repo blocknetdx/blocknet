@@ -10,8 +10,6 @@
 #include <algorithm>
 #include <iostream>
 
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
 

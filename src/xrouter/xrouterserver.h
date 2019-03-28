@@ -60,101 +60,92 @@ public:
     void onMessageReceived(CNode* node, XRouterPacketPtr packet, CValidationState & state);
     
        /**
-     * @brief process GetBlockCount call on service node side
-     * @param packet Xrouter packet received over the network
+     * @brief process xrGetBlockCount call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetBlockCount(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGetBlockCount(const std::string & currency, const std::vector<std::string> & params);
 
     /**
-     * @brief process GetBlockHash call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @brief process xrGetBlockHash call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetBlockHash(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGetBlockHash(const std::string & currency, const std::vector<std::string> & params);
 
     /**
-     * @brief process GetBlock call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @brief process xrGetBlock call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetBlock(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGetBlock(const std::string & currency, const std::vector<std::string> & params);
 
     /**
-     * @brief process GetTransaction call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @brief process xrGetBlocks call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGetBlocks(const std::string & currency, const std::vector<std::string> & params);
 
     /**
-     * @brief process GetAllBlocks call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @brief process xrGetTransaction call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetAllBlocks(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGetTransaction(const std::string & currency, const std::vector<std::string> & params);
 
     /**
-     * @brief process GetAllTransactions call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @brief process xrGetAllTransactions call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetAllTransactions(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGetTransactions(const std::string & currency, const std::vector<std::string> & params);
 
     /**
-     * @brief process GetBalance call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @brief process xrGetTransactionsBloomFilter call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetBalance(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGetTxBloomFilter(const std::string & currency, const std::vector<std::string> & params);
 
     /**
-     * @brief process GetBalanceUpdate call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @brief process xrGenerateBloomFilter call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
      * @return
      */
-    std::string processGetBalanceUpdate(XRouterPacketPtr packet, uint32_t offset, std::string currency);
-
-    /**
-     * @brief process GetTransactionsBloomFilter call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
-     * @return
-     */
-    std::string processGetTransactionsBloomFilter(XRouterPacketPtr packet, uint32_t offset, std::string currency);
-    
-    /**
-     * @brief process ConvertTimeToBlockCount call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
-     * @return
-     */
-    std::string processConvertTimeToBlockCount(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processGenerateBloomFilter(const std::string & currency, const std::vector<std::string> & params);
 
     /**
      * @brief process SendTransaction call on service node side
-     * @param packet Xrouter packet received over the network
-     * @param offset offset in the packet where to start reading additional parameters
-     * @param currency chain id
+     * @param currency blockchain to send transaction on
+     * @param params list of parameters
      * @return
      */
-    std::string processSendTransaction(XRouterPacketPtr packet, uint32_t offset, std::string currency);
+    std::string processSendTransaction(const std::string & currency, const std::vector<std::string> & params);
+
+    /**
+     * @brief process ConvertTimeToBlockCount call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
+     * @return
+     */
+    std::string processConvertTimeToBlockCount(const std::string & currency, const std::vector<std::string> & params);
+
+    /**
+     * @brief process xrGetBalance call on service node side
+     * @param currency blockchain to query
+     * @param params list of parameters
+     * @return
+     */
+    std::string processGetBalance(const std::string & currency, const std::vector<std::string> & params);
 
     /**
      * @brief process xrService call on service node side
@@ -173,25 +164,21 @@ public:
     
     /**
      * @brief process payment transaction 
-     * @param node node that paid the fee
+     * @param nodeAddr node address payment is intended for
+     * @param paymentAddress the desired payment address
      * @param feetx hex-encoded payment tx and additional data
      * @param requiredFee fee to be paid
      * @return true if a fee was processed, otherwise return false
      * @throws std::runtime_error in case of incorrect payment
      */
-    bool processPayment(CNode* node, const std::string & feetx, CAmount requiredFee);
+    bool processPayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,
+            const std::string & feetx, const CAmount & requiredFee);
     
     /**
      * @brief returns own snode pubkey hash
      * @return blocknet address
      */
     std::string getMyPaymentAddress();
-    
-    /**
-     * @brief returns own snode private key (used to sign transactions)
-     * @return blocknet private key
-     */
-    CKey getMyPaymentAddressKey();
     
     /**
      * @brief clears stored replies to queries periodically after timeout
@@ -292,13 +279,21 @@ private:
      */
     bool initKeyPair();
 
+    /**
+     * Pulls the parameters out of the packet and adds to "parameters"
+     * @param packet
+     * @param params
+     * @param offset position of the first byte following the parameters
+     * @return
+     */
+    bool processParameters(XRouterPacketPtr packet, const int & paramsCount,
+            std::vector<std::string> & params, uint32_t & offset);
+
 private:
     bool started{false};
 
     std::map<std::string, WalletConnectorXRouterPtr> connectors;
     std::map<std::string, std::shared_ptr<boost::mutex> > connectorLocks;
-
-    std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsReceived;
 
     std::map<std::string, std::pair<std::string, CAmount> > hashedQueries;
     std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > hashedQueriesDeadlines;
