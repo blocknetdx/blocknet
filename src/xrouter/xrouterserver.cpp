@@ -356,7 +356,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
 //                    reply = processGetBalance(service, params);
                         break;
                     case xrGetTxBloomFilter:
-                        reply = processGetTxBloomFilter(service, params);
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+//                        reply = processGetTxBloomFilter(service, params);
                         break;
                     case xrGenerateBloomFilter:
                         throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);

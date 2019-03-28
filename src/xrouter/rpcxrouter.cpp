@@ -20,7 +20,20 @@ using namespace json_spirit;
 Value xrGetBlockCount(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlockCount currency [servicenode_consensus_number]\nLookup total number of blocks in a specified blockchain.");
+        throw std::runtime_error("xrGetBlockCount currency [consensus_number]\n"
+                                 "Block count for the longest chain in the specified blockchain.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetBlockCount BLOCK\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetBlockCount BLOCK 2\n");
     }
 
     if (params.size() < 1)
@@ -44,7 +57,21 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
 Value xrGetBlockHash(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlockHash currency number [servicenode_consensus_number]\nLookup block hash by block number in a specified blockchain.");
+        throw std::runtime_error("xrGetBlockHash currency block_number [consensus_number]\n"
+                                 "Hash of block with the specified block number.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "block_number (int) Block number\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetBlockHash BLOCK 0\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetBlockHash BLOCK 0 2\n");
     }
 
     if (params.size() < 1)
@@ -58,7 +85,7 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Block hash not specified");
+        error.emplace_back("error", "Block number not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
@@ -77,7 +104,21 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
 Value xrGetBlock(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlock currency hash [servicenode_consensus_number]\nLookup block data by block hash in a specified blockchain.");
+        throw std::runtime_error("xrGetBlock currency hash [consensus_number]\n"
+                                 "Block data in json format with the specified hash.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "hash (string) Block hash\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetBlock BLOCK b74e07f3badb51c5968096e055a68389706c17a9da625f0f5a710116a61549c5\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetBlock BLOCK b74e07f3badb51c5968096e055a68389706c17a9da625f0f5a710116a61549c5 2\n");
     }
 
     if (params.size() < 1)
@@ -109,7 +150,21 @@ Value xrGetBlock(const Array & params, bool fHelp)
 Value xrGetTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTransaction currency txid [servicenode_consensus_number]\nLookup transaction data by transaction id in a specified blockchain.");
+        throw std::runtime_error("xrGetTransaction currency txid [consensus_number]\n"
+                                 "Transaction data in json format with the specified transaction id.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "txid (string) Transaction id\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetTransaction BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetTransaction BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7 2\n");
     }
 
     if (params.size() < 1)
@@ -141,7 +196,21 @@ Value xrGetTransaction(const Array & params, bool fHelp)
 Value xrGetBlocks(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlocks currency blockhash1,blockhash2,blockhash3 [servicenode_consensus_number]\nReturns blocks associated with the specified hashes.");
+        throw std::runtime_error("xrGetBlocks currency blockhash1,blockhash2,blockhash3 [consensus_number]\n"
+                                 "List of blocks in json format with the specified block hashes.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "txhash1,txhash2,txhash3 (string) Transaction ids separated by commas (,)\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetTransactions BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetTransactions BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d 2\n");
     }
 
     if (params.size() < 1) {
@@ -186,7 +255,21 @@ Value xrGetBlocks(const Array & params, bool fHelp)
 Value xrGetTransactions(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTransactions currency txhash1,txhash2,txhash3 [servicenode_consensus_number]\nReturns all transactions to/from account starting from block [number] for selected currency.");
+        throw std::runtime_error("xrGetTransactions currency txhash1,txhash2,txhash3 [consensus_number]\n"
+                                 "List of transactions in json format with the specified transaction ids.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "txhash1,txhash2,txhash3 (string) Transaction ids separated by commas (,)\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetTransactions BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetTransactions BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d 2\n");
     }
 
     if (params.size() < 1)
@@ -233,7 +316,21 @@ Value xrGetTransactions(const Array & params, bool fHelp)
 Value xrGetBalance(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance currency account [servicenode_consensus_number]\nReturns balance for selected account for selected currency.");
+        throw std::runtime_error("xrGetBalance currency address [consensus_number]\n"
+                                 "Balance of the account with the specified blockchain address.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "address (string) Blockchain address\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetBalance BLOCK xziGHUkfUnCBBZf2z7EkbwC4jKzVVBG82G\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetBalance BLOCK xziGHUkfUnCBBZf2z7EkbwC4jKzVVBG82G 2\n");
     }
 
     if (params.size() < 1)
@@ -257,16 +354,30 @@ Value xrGetBalance(const Array & params, bool fHelp)
         confirmations = params[2].get_int();
 
     std::string currency = params[0].get_str();
-    std::string account = params[1].get_str();
+    std::string address = params[1].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getBalance(uuid, currency, confirmations, account);
+    std::string reply = xrouter::App::instance().getBalance(uuid, currency, confirmations, address);
     return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetTxBloomFilter(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTxBloomFilter currency filter [number] [servicenode_consensus_number]\nReturns transactions fitting bloom filter starting with block number (default: 0) for selected currency.");
+        throw std::runtime_error("xrGetTxBloomFilter currency filter [block_number] [consensus_number]\n"
+                                 "Lists transactions in json format matching bloom filter starting with block number.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "filter (string) Bloom filter\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetTxBloomFilter BLOCK 0x0000000018\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetTxBloomFilter BLOCK 0x0000000018 2\n");
     }
 
     if (params.size() < 1)
@@ -303,7 +414,20 @@ Value xrGetTxBloomFilter(const Array & params, bool fHelp)
 Value xrGenerateBloomFilter(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGenerateBloomFilter address1 address2 ...\nReturns bloom filter for given base58 addresses or public key hashes.");
+        throw std::runtime_error("xrGenerateBloomFilter address1,address2 [consensus_number]\n"
+                                 "Generates a bloom filter for given base58 addresses.\n"
+                                 "\n"
+                                 "address1,address2 (string) Addresses to apply to the bloom filter.\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGenerateBloomFilter BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGenerateBloomFilter BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX 2\n");
     }
     
     Object result;
@@ -360,7 +484,23 @@ Value xrGenerateBloomFilter(const Array & params, bool fHelp)
 Value xrService(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrService service_name param1 param2 param3 ... paramN\nSends the custom call with [service_name] name.");
+        throw std::runtime_error("xrService service_name [param1 param2 param3 ... paramN]\n"
+                                 "Send request to the service with the specified name.\n"
+                                 "XRouter services are custom plugins that XRouter node operators advertise on\n"
+                                 "the network. Anyone capable of running a service node can create or install\n"
+                                 "custom XRouter services or plugins and provide access to them for free or for\n"
+                                 "a fee. This is a great way to earn fees for your custom plugin.\n"
+                                 "\n"
+                                 "[param1 param2 param3 ... paramN] (arguments) Optional, refer to the plugin\n"
+                                 "documentation for parameter requirements. Information about a custom XRouter\n"
+                                 "service can be viewed in the plugin configuration. Use xrConnect to find a node\n"
+                                 "with the plugin, then use xrConnectedNodes to review plugin information.\n"
+                                 "\n"
+                                 "Example:\n"
+                                 "xrService GetBestBlockHashBTC\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrService GetBestBlockHashBTC 2\n");
     }
 
     if (params.size() < 1)
@@ -375,15 +515,94 @@ Value xrService(const Array & params, bool fHelp)
     std::vector<std::string> call_params;
     for (unsigned int i = 1; i < params.size(); i++)
         call_params.push_back(params[i].get_str());
+
     std::string uuid;
     std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, 0, call_params);
+    return xrouter::form_reply(uuid, reply);
+}
+
+Value xrServiceConsensus(const Array & params, bool fHelp)
+{
+    if (fHelp) {
+        throw std::runtime_error("xrService service_name consensus_number [param1 param2 param3 ... paramN]\n"
+                                 "Send request to the service with the specified name and consensus number.\n"
+                                 "XRouter services are custom plugins that XRouter node operators advertise on\n"
+                                 "the network. Anyone capable of running a service node can create or install\n"
+                                 "custom XRouter services or plugins and provide access to them for free or for\n"
+                                 "a fee. This is a great way to earn fees for your custom plugin.\n"
+                                 "\n"
+                                 "service_name (string) Name of the custom service or plugin\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query.\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "[param1 param2 param3 ... paramN] (string) Optional, refer to the service's\n"
+                                 "documentation for parameter requirements. Information about a custom XRouter\n"
+                                 "service can be viewed in the plugin configuration. Use xrConnect to find a node\n"
+                                 "with the service, then use xrConnectedNodes to review plugin information.\n"
+                                 "\n"
+                                 "Example:\n"
+                                 "xrService GetBestBlockHashBTC\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrService GetBestBlockHashBTC 2\n");
+    }
+
+    if (params.size() < 1)
+    {
+        Object error;
+        error.emplace_back("error", "Service name not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    if (params.size() < 2)
+    {
+        Object error;
+        error.emplace_back("error", "Consensus number not specified, must specify at least 1");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    const auto & service = params[0].get_str();
+    const auto & consensus = params[1].get_int();
+
+    if (consensus < 1) {
+        Object error;
+        error.emplace_back("error", "Consensus must be at least 1");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    std::vector<std::string> call_params;
+    for (unsigned int i = 2; i < params.size(); i++)
+        call_params.push_back(params[i].get_str());
+
+    std::string uuid;
+    std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, consensus, call_params);
     return xrouter::form_reply(uuid, reply);
 }
 
 Value xrSendTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrSendTransaction txdata\nSends signed transaction for selected currency.");
+        throw std::runtime_error("xrSendTransaction currency signed_transaction_hex [consensus_number]\n"
+                                 "Send a signed transaction to any supported blockchain network.\n"
+                                 "This is useful if you want to send transactions to a blockchain without having\n"
+                                 "to download the entire chain, or if you are running a lite-wallet/multi-wallet.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to send transaction to\n"
+                                 "signed_transaction_hex (string) Raw transaction hex (must be signed!)\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to relay this tx.(default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrSendTransaction BLOCK 010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrSendTransaction BLOCK 010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000 2\n");
     }
 
     if (params.size() < 1)
@@ -397,28 +616,38 @@ Value xrSendTransaction(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Transaction not specified");
+        error.emplace_back("error", "Transaction data not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
+
+    int confirmations{0};
+    if (params.size() >= 3)
+        confirmations = params[2].get_int();
     
     std::string currency = params[0].get_str();
     std::string transaction = params[1].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().sendTransaction(uuid, currency, transaction);
+    std::string reply = xrouter::App::instance().sendTransaction(uuid, currency, confirmations, transaction);
     return xrouter::form_reply(uuid, reply);
 }
 
 Value xrGetReply(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetReply uuid\nRetrieves reply to request with uuid.");
+        throw std::runtime_error("xrGetReply uuid\n"
+                                 "Returns all the replies from XRouter nodes matching the specified query uuid.\n"
+                                 "Useful to lookup previous calls without having to request from the XRouter"
+                                 "network.\n"
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetReply cc25f823-06a9-48e7-8245-f04991c09d6a\n");
     }
 
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "UUID not specified");
+        error.emplace_back("error", "Please specify the uuid");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
@@ -432,7 +661,18 @@ Value xrGetReply(const Array & params, bool fHelp)
 Value xrUpdateConfigs(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrUpdateConfigs\nRequests latest configuration files for all connected service nodes.");
+        throw std::runtime_error("xrUpdateConfigs [force_check]\n"
+                                 "Requests latest configuration files for all known service nodes.\n"
+                                 "\n"
+                                 "[force_check] (boolean) If true node configs will be updated regardless of\n"
+                                 "                        rate limiting checks. (default=false)\n"
+                                 "\n"
+                                 "Example:\n"
+                                 "xrUpdateConfigs\n"
+                                 "\n"
+                                 "With force check parameter:\n"
+                                 "xrUpdateConfigs true\n"
+                                 "xrUpdateConfigs 1\n");
     }
 
     bool forceCheck = false;
@@ -449,7 +689,8 @@ Value xrUpdateConfigs(const Array & params, bool fHelp)
 Value xrShowConfigs(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrShowConfigs\nPrints all service node configs.");
+        throw std::runtime_error("xrShowConfigs\n"
+                                 "Shows the raw configurations received from XRouter nodes.");
     }
     
     Object result;
@@ -460,7 +701,9 @@ Value xrShowConfigs(const Array & params, bool fHelp)
 Value xrReloadConfigs(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrReloadConfigs\nReloads xrouter.conf and plugin configs from disk in case they were changed externally.");
+        throw std::runtime_error("xrReloadConfigs\n"
+                                 "Reloads the xrouter.conf and all associated plugin configs. If a plugin conf is\n"
+                                 "changed while the client is running call this to apply those changes.");
     }
     
     Object result;
@@ -471,7 +714,8 @@ Value xrReloadConfigs(const Array & params, bool fHelp)
 Value xrStatus(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrStatus\nShow current XRouter status and info.");
+        throw std::runtime_error("xrStatus\n"
+                                 "Show XRouter status and info.");
     }
     
     Object result;
@@ -482,8 +726,9 @@ Value xrStatus(const Array & params, bool fHelp)
 Value xrConnectedNodes(const Array& params, bool fHelp)
 {
     if (fHelp)
-        throw std::runtime_error("xrConnectedNodes\nLists all the connected nodes and associated configuration "
-                                 "information and fee schedule.");
+        throw std::runtime_error("xrConnectedNodes\n"
+                                 "Lists all the data about current and previously connected nodes. This information\n"
+                                 "includes supported blockchains, plugins, and fee schedules.");
 
     if (!params.empty()) {
         Object error;
@@ -505,11 +750,35 @@ Value xrConnectedNodes(const Array& params, bool fHelp)
 Value xrConnect(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrConnect fully_qualified_service_name [node_count, optional, default=1]\n"
-                                 "Connects to Service Nodes with the specified service and downloads their configs.\n"
-                                 "\"fully_qualified_service_name\": Service name including the namespace, "
-                                 "xr:: for SPV commands or xrs:: for plugin commands (e.g. xr::BLOCK)\n"
-                                 "\"node_count\": Optionally specify the number of Service Nodes to connect to");
+        throw std::runtime_error("xrConnect fully_qualified_service_name [node_count]\n"
+                                 "Connects to XRouter nodes with the specified service and downloads their configs.\n"
+                                 "This command is useful to determine how much nodes are charging for services. It's\n"
+                                 "also useful to \"warm up\" connections. By connecting to nodes immediately before\n"
+                                 "making a large request it can speed up the reponse time (since those connections\n"
+                                 "will be open). However, XRouter nodes do close inactive connections after 15 seconds\n"
+                                 "so keep that in mind. After connecting call xrConnectedNodes to display information\n"
+                                 "about these XRouter nodes.\n"
+                                 "\n"
+                                 "fully_qualified_service_name (string) Service name including the namespace. Must specify\n"
+                                 "                                      xr:: for SPV commands and xrs:: for plugin commands\n"
+                                 "                                      Example: xr::BLOCK or xrs::GetBestBlockHashBTC\n"
+                                 "[node_count] (int) Optional, The number of XRouter nodes to connect to. An error will\n"
+                                 "                   be returned if not enough nodes can be found.\n"
+                                 "\n"
+                                 "Examples:\n"
+                                 "\n"
+                                 "Connect to one XRouter node supporting BLOCK\n"
+                                 "xrConnect xr::BLOCK\n"
+                                 "\n"
+                                 "Connect to two XRouter nodes supporting BLOCK\n"
+                                 "xrConnect xr::BLOCK 2\n"
+                                 "\n"
+                                 "Connect to two XRouter nodes supporting BTC\n"
+                                 "xrConnect xr::BTC 2\n"
+                                 "\n"
+                                 "Connect to one XRouter node supporting custom service (plugin) GetBestBlockHashBTC\n"
+                                 "xrConnect xr::GetBestBlockHashBTC\n"
+                                 "");
     }
 
     if (params.size() < 1) {
@@ -539,7 +808,21 @@ Value xrConnect(const Array & params, bool fHelp)
 Value xrGetBlockAtTime(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlockAtTime currency timestamp [servicenode_consensus_number]\nGet the block count at specified time.");
+        throw std::runtime_error("xrGetBlockAtTime currency unix_time [consensus_number]\n"
+                                 "Block data in json format of the block closest to the specified unix time.\n"
+                                 "\n"
+                                 "currency (string) Blockchain to query\n"
+                                 "unix_time (int) Unix time of the desired block\n"
+                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "                         The most common reply will be returned (i.e. the reply\n"
+                                 "                         with the most consensus. To see all reply results use\n"
+                                 "                         xrGetReply uuid."
+                                 "\n"
+                                 "Example:\n"
+                                 "xrGetBlockAtTime BLOCK 1553795164\n"
+                                 "\n"
+                                 "With consensus parameter:\n"
+                                 "xrGetBlockAtTime BLOCK 1553795164 3\n");
     }
 
     if (params.size() < 1)
@@ -553,7 +836,7 @@ Value xrGetBlockAtTime(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Timestamp not specified");
+        error.emplace_back("error", "Unix time not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }

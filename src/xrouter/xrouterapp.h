@@ -203,10 +203,11 @@ public:
     /**
      * @brief sends raw transaction to the given chain
      * @param currency chain code (BTC, LTC etc)
+     * @param confirmations number of service nodes to call (final result is selected from all answers by majority vote)
      * @param transaction raw signed transaction
      * @return
      */
-    std::string sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction);
+    std::string sendTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & transaction);
 
     /**
      * @brief returns all transactions using bloom filter

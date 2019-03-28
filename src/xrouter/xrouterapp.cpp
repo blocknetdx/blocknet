@@ -1361,9 +1361,8 @@ std::string App::getTransactionsBloomFilter(std::string & uuidRet, const std::st
     return this->xrouterCall(xrGetTxBloomFilter, uuidRet, currency, confirmations, { filter, std::to_string(number) });
 }
 
-std::string App::sendTransaction(std::string & uuidRet, const std::string & currency, const std::string & transaction)
+std::string App::sendTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & transaction)
 {
-    int confirmations{1}; // default 1 on this call
     return this->xrouterCall(xrSendTransaction, uuidRet, currency, confirmations, { transaction });
 }
 
