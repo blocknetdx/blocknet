@@ -40,7 +40,7 @@ void SendMoney(const CTxDestination& address, CAmount nValue, CWalletTx& wtxNew,
         throw JSONRPCError(RPC_WALLET_ERROR, strError);
     }
 
-    // Parse Blocknetdx address
+    // Parse Blocknet address
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
@@ -60,8 +60,8 @@ Value obfuscation(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() == 0)
         throw runtime_error(
-            "obfuscation <blocknetdxaddress> <amount>\n"
-            "blocknetdxaddress, reset, or auto (AutoDenominate)"
+            "obfuscation <blocknetaddress> <amount>\n"
+            "blocknetaddress, reset, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1" +
             HelpRequiringPassphrase());
 
@@ -82,14 +82,14 @@ Value obfuscation(const Array& params, bool fHelp)
 
     if (params.size() != 2)
         throw runtime_error(
-            "obfuscation <blocknetdxaddress> <amount>\n"
-            "blocknetdxaddress, denominate, or auto (AutoDenominate)"
+            "obfuscation <blocknetaddress> <amount>\n"
+            "blocknetaddress, denominate, or auto (AutoDenominate)"
             "<amount> is a real and will be rounded to the next 0.1" +
             HelpRequiringPassphrase());
 
     CBitcoinAddress address(params[0].get_str());
     if (!address.IsValid())
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Blocknetdx address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Blocknet address");
 
     // Amount
     CAmount nAmount = AmountFromValue(params[1]);
@@ -654,7 +654,7 @@ Value servicenodelist(const Array& params, bool fHelp)
             "    \"txhash\": \"hash\",       (string) Collateral transaction hash\n"
             "    \"outidx\": n,              (numeric) Collateral transaction output index\n"
             "    \"status\": s,              (string) Status (ENABLED/EXPIRED/REMOVE/etc)\n"
-            "    \"addr\": \"addr\",         (string) Servicenode BlocknetDX address\n"
+            "    \"addr\": \"addr\",         (string) Servicenode Blocknet address\n"
             "    \"version\": v,             (numeric) Servicenode protocol version\n"
             "    \"lastseen\": ttt,          (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last seen\n"
             "    \"activetime\": ttt,        (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode has been active\n"

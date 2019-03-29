@@ -13,7 +13,7 @@
  * for both blocknetdxd and blocknetdx-qt, to make it harder for attackers to
  * target servers or GUI users specifically.
  */
-const std::string CLIENT_NAME("BlocknetDX Core");
+const std::string CLIENT_NAME("Blocknet");
 
 /**
  * Client version number

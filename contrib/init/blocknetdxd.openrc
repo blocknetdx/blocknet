@@ -16,8 +16,8 @@ BITCOIND_USER=${BITCOIND_USER:-blocknetdx}
 BITCOIND_GROUP=${BITCOIND_GROUP:-blocknetdx}
 BITCOIND_BIN=${BITCOIND_BIN:-/usr/bin/blocknetdxd}
 
-name="BlocknetDX Core Daemon"
-description="BlocknetDX crypto-currency p2p network daemon"
+name="Blocknet Daemon"
+description="Blocknet crypto-currency p2p network daemon"
 
 command="/usr/bin/blocknetdxd"
 command_args="-pid=\"${BITCOIND_PIDFILE}\" \
@@ -78,7 +78,7 @@ checkconfig()
 		eerror "It is also recommended that you also set alertnotify so you are "
 		eerror "notified of problems:"
 		eerror ""
-		eerror "ie: alertnotify=echo %%s | mail -s \"Blocknetdx Alert\"" \
+		eerror "ie: alertnotify=echo %%s | mail -s \"Blocknet Alert\"" \
 			"admin@foo.com"
 		eerror ""
 		return 1

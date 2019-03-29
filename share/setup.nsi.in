@@ -6,7 +6,7 @@ SetCompressor /SOLID lzma
 # General Symbol Definitions
 !define REGKEY "SOFTWARE\$(^Name)"
 !define VERSION @CLIENT_VERSION_MAJOR@.@CLIENT_VERSION_MINOR@.@CLIENT_VERSION_REVISION@
-!define COMPANY "Blocknetdx Core project"
+!define COMPANY "Blocknet"
 !define URL https://www.blocknet.co
 
 # MUI Symbol Definitions
@@ -59,7 +59,7 @@ XPStyle on
 BrandingText " "
 ShowInstDetails show
 VIProductVersion ${VERSION}.@CLIENT_VERSION_BUILD@
-VIAddVersionKey ProductName "Blocknetdx Core"
+VIAddVersionKey ProductName "Blocknet Core"
 VIAddVersionKey ProductVersion "${VERSION}"
 VIAddVersionKey CompanyName "${COMPANY}"
 VIAddVersionKey CompanyWebsite "${URL}"
@@ -107,7 +107,7 @@ Section -post SEC0001
     WriteRegDWORD HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$(^Name)" NoModify 1
     WriteRegDWORD HKCU "SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\$(^Name)" NoRepair 1
     WriteRegStr HKCR "blocknetdx" "URL Protocol" ""
-    WriteRegStr HKCR "blocknetdx" "" "URL:Blocknetdx"
+    WriteRegStr HKCR "blocknetdx" "" "URL:Blocknet"
     WriteRegStr HKCR "blocknetdx\DefaultIcon" "" $INSTDIR\blocknetdx-qt.exe
     WriteRegStr HKCR "blocknetdx\shell\open\command" "" '"$INSTDIR\blocknetdx-qt.exe" "%1"'
 SectionEnd

@@ -29,10 +29,10 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>BlocknetDX-Qt</string>
+  <string>Blocknet</string>
 
   <key>CFBundleIdentifier</key>
-  <string>io.blocknetdx.Blocknetdx-Qt</string>
+  <string>co.blocknet.Blocknet-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>
@@ -40,7 +40,7 @@
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>CFBundleURLName</key>
-      <string>io.blocknetdx.BlocknetdxPayment</string>
+      <string>co.blocknet.BlocknetdxPayment</string>
       <key>CFBundleURLSchemes</key>
       <array>
         <string>blocknetdx</string>
@@ -52,9 +52,9 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>io.blocknetdx.paymentrequest</string>
+      <string>co.blocknet.paymentrequest</string>
       <key>UTTypeDescription</key>
-      <string>Blocknetdx payment request</string>
+      <string>Blocknet payment request</string>
       <key>UTTypeConformsTo</key>
       <array>
         <string>public.data</string>
@@ -78,7 +78,7 @@
       <string>Editor</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>io.blocknetdx.paymentrequest</string>
+        <string>co.blocknet.paymentrequest</string>
       </array>
       <key>LSHandlerRank</key>
       <string>Owner</string>

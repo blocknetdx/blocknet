@@ -30,7 +30,7 @@
        <item>
         <widget class="QLabel" name="infoLabel_ENC">
          <property name="text">
-          <string>Enter a Blocknetdx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</string>
+          <string>Enter a Blocknet Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</string>
          </property>
          <property name="textFormat">
           <enum>Qt::PlainText</enum>
@@ -55,7 +55,7 @@
          <item>
           <widget class="QValidatedLineEdit" name="addressIn_ENC">
            <property name="toolTip">
-            <string>The BlocknetDX address to sign the message with</string>
+            <string>The Blocknet address to sign the message with</string>
            </property>
           </widget>
          </item>
@@ -170,7 +170,7 @@
          <item>
           <widget class="QPushButton" name="encryptKeyButton_ENC">
            <property name="toolTip">
-            <string>Sign the message to prove you own this BlocknetDX address</string>
+            <string>Sign the message to prove you own this Blocknet address</string>
            </property>
            <property name="text">
             <string>Encrypt &amp;Key</string>
@@ -280,7 +280,7 @@
          <item>
           <widget class="QValidatedLineEdit" name="encryptedKeyIn_DEC">
            <property name="toolTip">
-            <string>The BlocknetDX address the message was signed with</string>
+            <string>The Blocknet address the message was signed with</string>
            </property>
           </widget>
          </item>
@@ -309,7 +309,7 @@
          <item>
           <widget class="QPushButton" name="decryptKeyButton_DEC">
            <property name="toolTip">
-            <string>Verify the message to ensure it was signed with the specified BlocknetDX address</string>
+            <string>Verify the message to ensure it was signed with the specified Blocknet address</string>
            </property>
            <property name="text">
             <string>Decrypt &amp;Key</string>

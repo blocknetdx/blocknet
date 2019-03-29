@@ -84,6 +84,7 @@ src/qt/test/moc*.cpp
 Makefile
 blocknetdx-qt
 BlocknetDX-Qt.app
+Blocknet-Qt.app
 
 # Unit-tests
 Makefile.test
