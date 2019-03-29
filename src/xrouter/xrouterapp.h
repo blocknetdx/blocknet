@@ -861,7 +861,7 @@ private:
             WaitableLock l(mu);
 
             int consensus = queries.count(id);
-            if (!consensus)
+            if (!consensus || queries[id].empty())
                 return 0;
 
             std::map<uint256, std::string> hashes;
