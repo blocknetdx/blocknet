@@ -192,15 +192,16 @@ std::string CallURL(const std::string & ip, const std::string & port, const std:
     return strReply;
 }
 
-std::string CallCMD(const std::string & cmd) {
+std::string CallCMD(const std::string & cmd, int & exit) {
     std::array<char, 128> buffer;
     std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
     if (!pipe) throw std::runtime_error("popen() failed!");
-    while (!feof(pipe.get())) {
-        if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-            result += buffer.data();
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
     }
+    auto n = pclose(pipe.get());
+    exit = WEXITSTATUS(n);
     return result;
 }
 

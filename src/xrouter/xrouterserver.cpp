@@ -709,27 +709,73 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         }
         return result;
 
-    } else if (callType == "shell") {
+    } else if (callType == "docker") {
+        auto replace = [](std::string & s, size_t pos, const size_t & spos, const std::string & from, const std::string & to) -> bool {
+            pos = s.find(from, spos);
+            if (pos == std::string::npos)
+                return false;
+            s.replace(pos, from.length(), to);
+            return true;
+        };
 
-        std::string cmd = psettings->stringParam("cmd");
+        const auto & container = psettings->container();
+        const auto & exe = psettings->command();
+
+        if (container.empty()) {
+            ERR() << "Failed to run plugin " + name + " \"containername\" cannot be empty";
+            throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
+        }
+        if (exe.empty()) {
+            ERR() << "Failed to run plugin " + name + " \"command\" cannot be empty";
+            throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
+        }
+        if (psettings->commandArgs().empty() && expectedParams.size() > 0) {
+            ERR() << "Failed to run plugin " + name + " \"args\" cannot be empty when parameters= is set";
+            throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
+        }
+
+        std::string cmdargs = psettings->commandArgs();
+        size_t spos = 0;
+
         for (int i = 0; i < static_cast<int>(expectedParams.size()); ++i) {
             const auto & p = expectedParams[i];
             const auto & rec = params[i];
-            if (p == "bool") {
-                cmd += " " + std::string(rec == "false" || rec == "0" ? "0" : "1");
-            } else if (rec.find(' ') != std::string::npos) {
-                cmd += " \"" + rec + "\"";
-            }
-        }
+            const auto & arg = "$" + std::to_string(i + 1);
+            std::string argv;
 
-        std::string result;
+            if (psettings->quoteArgs())
+                argv = std::string("\""+rec+"\"");
+            else
+                argv = rec;
+
+            size_t pos;
+            replace(cmdargs, pos, spos, arg, argv);
+
+            // prevent backtracking
+            if (pos + argv.size() > spos)
+                spos = pos + argv.size();
+        }
+        // Insert docker command info
+        const auto & cmd = strprintf("docker exec -t %s %s %s", container, exe, cmdargs);
+
+        Object o;
         try {
-            LOG() << "Executing shell command " << cmd;
-            result = CallCMD(cmd);
+            LOG() << "Executing " << name << " with command: " << cmd;
+            int nexit;
+            const auto & r = CallCMD(cmd, nexit);
+            if (nexit != 0) {
+                ERR() << "docker command reported non-zero exit status (" << std::to_string(nexit) << ") on command: "
+                      << cmd << "\n" << r;
+                if (nexit == 1 || nexit == 2 || (nexit >= 126 && nexit <= 165) || nexit == 255)
+                    throw std::runtime_error("");
+                o.emplace_back("error", r);
+            }
+            o.emplace_back("result", r);
+
         } catch (...) {
             throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
         }
-        return result;
+        return json_spirit::write_string(Value(o), false);
 
     } else if (callType == "url") {
         throw XRouterError("url calls are unsupported at this time", UNSUPPORTED_SERVICE);

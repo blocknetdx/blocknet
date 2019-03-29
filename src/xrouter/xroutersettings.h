@@ -109,6 +109,10 @@ public:
     int commandTimeout();
     std::string paymentAddress();
     bool disabled();
+    bool quoteArgs();
+    std::string container();
+    std::string command();
+    std::string commandArgs();
 
     std::string rawText() const override {
         WaitableLock l(mu);

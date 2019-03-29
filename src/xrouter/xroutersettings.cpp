@@ -518,4 +518,28 @@ bool XRouterPluginSettings::disabled() {
     return res;
 }
 
+bool XRouterPluginSettings::quoteArgs() {
+    auto t = get<bool>("quoteargs", true);
+    t = get<bool>(privatePrefix + "quoteargs", t);
+    return t;
+}
+
+std::string XRouterPluginSettings::container() {
+    auto t = get<std::string>("containername", "");
+    t = get<std::string>(privatePrefix + "containername", t);
+    return t;
+}
+
+std::string XRouterPluginSettings::command() {
+    auto t = get<std::string>("command", "");
+    t = get<std::string>(privatePrefix + "command", t);
+    return t;
+}
+
+std::string XRouterPluginSettings::commandArgs() {
+    auto t = get<std::string>("args", "");
+    t = get<std::string>(privatePrefix + "args", t);
+    return t;
+}
+
 } // namespace xrouter

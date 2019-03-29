@@ -102,7 +102,7 @@ public:
 
 
 // Network and RPC interface
-std::string CallCMD(const std::string & cmd);
+std::string CallCMD(const std::string & cmd, int & exit);
 std::string CallURL(const std::string & ip, const std::string & port, const std::string & url);
 Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
