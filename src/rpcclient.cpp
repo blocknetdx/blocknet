@@ -184,7 +184,7 @@ Array RPCConvertValues(const std::string& strMethod, const std::vector<std::stri
         else {
             Value jVal;
             if (!read_string(strVal, jVal))
-                throw runtime_error(string("Error parsing JSON:") + strVal);
+                throw runtime_error(string("Failed to parse input parameters: ") + strVal + string(" check the docs: help ") + strMethod);
             params.push_back(jVal);
         }
     }

@@ -578,7 +578,7 @@ Value xrService(const Array & params, bool fHelp)
 Value xrServiceConsensus(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrService service_name consensus_number [param1 param2 param3 ... paramN]\n"
+        throw std::runtime_error("xrServiceConsensus service_name consensus_number [param1 param2 param3 ... paramN]\n"
                                  "Send request to the service with the specified name and consensus number.\n"
                                  "XRouter services are custom plugins that XRouter node operators advertise on\n"
                                  "the network. Anyone capable of running a service node can create or install\n"
