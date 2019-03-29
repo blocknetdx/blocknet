@@ -464,7 +464,7 @@ void XRouterPluginSettings::formPublicText()
 
     // Exclude commands with the private prefix
     for (const std::string & line : lines) {
-        if (line.compare(0, privatePrefix.size(), privatePrefix))
+        if (line.find(privatePrefix) == std::string::npos)
             publictext += line + "\n";
     }
 }

@@ -710,7 +710,6 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         return result;
 
     } else if (callType == "shell") {
-        throw XRouterError("shell calls are unsupported at this time", UNSUPPORTED_SERVICE);
 
         std::string cmd = psettings->stringParam("cmd");
         for (int i = 0; i < static_cast<int>(expectedParams.size()); ++i) {
