@@ -277,6 +277,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             }
             app.updateSentRequest(nodeAddr, fqService); // Record request time
 
+            if (!app.xrSettings()->isAvailableCommand(command, service))
+                throw XRouterError("Unsupported command: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+
             // Get parameters from packet
             std::vector<std::string> params;
             if (!processParameters(packet, paramsCount, params, offset)) {

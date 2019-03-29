@@ -190,11 +190,17 @@ void XRouterSettings::defaultPaymentAddress(const std::string & paymentAddress) 
         this->set<std::string>(s_mainpaymentaddress, paymentAddress); // assign the new payment address to the config
 }
 
-bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string service)
+bool XRouterSettings::isAvailableCommand(XRouterCommand c, const std::string & service)
 {
     // Handle plugin
-    if (c == xrService)
-        return hasPlugin(service);
+    if (c == xrService) {
+        if (!hasPlugin(service))
+            return false;
+        auto ps = getPluginSettings(service); // check if plugin is disabled
+        if (ps)
+            return !ps->disabled();
+        return false; // something's wrong with the plugin, report that it's disabled
+    }
 
     // XRouter command...
     if (service.empty())
@@ -504,6 +510,11 @@ int XRouterPluginSettings::commandTimeout() {
 
 std::string XRouterPluginSettings::paymentAddress() {
     auto res = get<std::string>("paymentaddress", "");
+    return res;
+}
+
+bool XRouterPluginSettings::disabled() {
+    auto res = get<bool>("disabled", false);
     return res;
 }
 

@@ -173,6 +173,8 @@ std::vector<std::string> App::getServicesList()
 
     // Add plugin services
     for (const std::string & s : xrsettings->getPlugins()) {
+        if (!xrsettings->isAvailableCommand(xrService, s)) // exclude any disabled plugins
+            continue;
         const auto p = pluginCommandKey(s);
         result.push_back(p);
         services += "," + p;

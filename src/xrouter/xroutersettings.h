@@ -108,6 +108,7 @@ public:
     int clientRequestLimit();
     int commandTimeout();
     std::string paymentAddress();
+    bool disabled();
 
     std::string rawText() const override {
         WaitableLock l(mu);
@@ -174,7 +175,7 @@ public:
         return plugins[name];
     }
 
-    bool isAvailableCommand(XRouterCommand c, std::string service="");
+    bool isAvailableCommand(XRouterCommand c, const std::string & service);
     double commandFee(XRouterCommand c, std::string service="", double def=0.0);
     int commandTimeout(XRouterCommand c, std::string service="", int def=XROUTER_DEFAULT_TIMEOUT);
     int commandBlockLimit(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_BLOCK_LIMIT);
