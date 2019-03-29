@@ -842,19 +842,46 @@ Value xrConnect(const Array & params, bool fHelp)
         return error;
     }
 
-    const std::string & service = params[0].get_str();
-    int nodeCount{1};
+    const auto & service = params[0].get_str();
+    if (service.empty()) {
+        Object error;
+        error.emplace_back("error", "Service not specified. Example: xrConnect xr::BLOCK");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
 
+    int nodeCount{1};
     if (params.size() > 1) {
         nodeCount = params[1].get_int();
     }
 
     const std::string & uuid = xrouter::generateUUID();
     auto & app = xrouter::App::instance();
-    const auto configs = app.xrConnect(service, nodeCount);
+    std::map<std::string, xrouter::XRouterSettingsPtr> configs;
 
     Array data;
-    app.snodeConfigJSON(configs, data);
+
+    try {
+        configs = app.xrConnect(service, nodeCount);
+        if (configs.size() < nodeCount) {
+            Object error;
+            error.emplace_back("error", "Failed to connect to nodes, found " + std::to_string(configs.size()) +
+                                        " expected " + std::to_string(nodeCount));
+            error.emplace_back("code", xrouter::NOT_ENOUGH_NODES);
+            return error;
+        }
+        app.snodeConfigJSON(configs, data);
+    } catch (std::exception & e) {
+        Object error;
+        error.emplace_back("error", e.what());
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    } catch (xrouter::XRouterError & e) {
+        Object error;
+        error.emplace_back("error", e.msg);
+        error.emplace_back("code", e.code);
+        return error;
+    }
 
     return xrouter::form_reply(uuid, data);
 }

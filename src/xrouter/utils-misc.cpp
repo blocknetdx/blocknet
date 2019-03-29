@@ -4,10 +4,13 @@
 
 #include "rpcprotocol.h"
 
+#include <string>
 #include <regex>
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_utils.h"
+
+#include <boost/algorithm/string.hpp>
 
 using namespace json_spirit;
 
@@ -52,13 +55,13 @@ namespace xrouter
 {
 
 std::string walletCommandKey(const std::string & wallet, const std::string & command) {
-    return wallet + "::" + command;
+    return wallet + xrdelimiter + command;
 }
 std::string walletCommandKey(const std::string & wallet) {
-    return xr + "::" + wallet;
+    return xr + xrdelimiter + wallet;
 }
 bool removeWalletNamespace(const std::string & wallet, std::string & result) {
-    const std::string search{xr + "::"};
+    const std::string search{xr + xrdelimiter};
     auto s = wallet.find(search);
     if (s == std::string::npos) {
         result = wallet;
@@ -68,16 +71,16 @@ bool removeWalletNamespace(const std::string & wallet, std::string & result) {
     return true;
 }
 bool hasWalletNamespace(const std::string & service) {
-    const std::string s{xr + "::"};
+    const std::string s{xr + xrdelimiter};
     std::regex r("^"+s+"[a-zA-Z0-9\\-:\\$]+$");
     std::smatch m;
     return std::regex_match(service, m, r);
 }
 std::string pluginCommandKey(const std::string & service) {
-    return xrs + "::" + service;
+    return xrs + xrdelimiter + service;
 }
 bool removePluginNamespace(const std::string & service, std::string & result) {
-    const std::string search{xrs + "::"};
+    const std::string search{xrs + xrdelimiter};
     auto s = service.find(search);
     if (s == std::string::npos) {
         result = service;
@@ -87,7 +90,7 @@ bool removePluginNamespace(const std::string & service, std::string & result) {
     return true;
 }
 bool hasPluginNamespace(const std::string & service) {
-    const std::string s{xrs + "::"};
+    const std::string s{xrs + xrdelimiter};
     std::regex r("^"+s+"[a-zA-Z0-9\\-:\\$]+$");
     std::smatch m;
     return std::regex_match(service, m, r);
@@ -101,6 +104,43 @@ bool commandFromNamespace(const std::string & fqService, std::string & command) 
         return true; // found!
     }
     return false; // no match
+}
+bool commandNamespaceParts(const std::string & fqService, std::vector<std::string> & parts) {
+    parts.clear();
+    std::vector<std::string> p;
+    return true;
+}
+bool xrsplit(const std::string & fqService, const std::string & del, std::vector<std::string> & vout) {
+    vout.clear();
+    std::regex r("^[a-zA-Z0-9\\-:\\$]+$");
+    std::smatch m;
+    std::vector<std::string> v;
+
+    if (del.size() == 1) {
+        boost::algorithm::split(v, fqService, boost::is_any_of(del));
+    } else {
+        auto t = fqService;
+        size_t found{0};
+        while (found != std::string::npos) {
+            found = t.find(del);
+            if (found != std::string::npos) {
+                v.push_back(t.substr(0, found));
+                t.erase(0, found+del.size());
+            } else v.push_back(t);
+        }
+    }
+
+    // Check
+    std::vector<std::string> tmp;
+    for (const auto & part : v) {
+        if (!std::regex_match(part, m, r)) // check if part is valid
+            return false;
+        else
+            tmp.push_back(part);
+    }
+
+    vout = tmp;
+    return true;
 }
 
 bool is_number(std::string s)

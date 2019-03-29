@@ -106,29 +106,29 @@ inline bool XRouterCommand_IsValid(const char* c)
            XRouterCommand_ToString(xrService)                    == c;
 };
 
-inline XRouterCommand XRouterCommand_FromString(const std::string & service)
+inline XRouterCommand XRouterCommand_FromString(const std::string & command)
 {
-    const char* c = service.c_str();
+    const char* c = command.c_str();
 
-    if (XRouterCommand_ToString(xrInvalid)              == c) return xrInvalid;
-    if (XRouterCommand_ToString(xrReply)                == c) return xrReply;
-    if (XRouterCommand_ToString(xrGetReply)             == c) return xrGetReply;
-    if (XRouterCommand_ToString(xrGetConfig)            == c) return xrGetConfig;
-    if (XRouterCommand_ToString(xrConfigReply)          == c) return xrConfigReply;
-    if (XRouterCommand_ToString(xrGetBlockCount)        == c) return xrGetBlockCount;
-    if (XRouterCommand_ToString(xrGetBlockHash)         == c) return xrGetBlockHash;
-    if (XRouterCommand_ToString(xrGetBlock)             == c) return xrGetBlock;
-    if (XRouterCommand_ToString(xrGetTransaction)       == c) return xrGetTransaction;
-    if (XRouterCommand_ToString(xrSendTransaction)      == c) return xrSendTransaction;
-    if (XRouterCommand_ToString(xrGetTxBloomFilter)     == c) return xrGetTxBloomFilter;
-    if (XRouterCommand_ToString(xrGenerateBloomFilter)  == c) return xrGenerateBloomFilter;
-    if (XRouterCommand_ToString(xrGetBlocks)            == c) return xrGetBlocks;
-    if (XRouterCommand_ToString(xrGetTransactions)      == c) return xrGetTransactions;
-    if (XRouterCommand_ToString(xrGetBlockAtTime)       == c) return xrGetBlockAtTime;
-    if (XRouterCommand_ToString(xrDecodeRawTransaction) == c) return xrDecodeRawTransaction;
-    if (XRouterCommand_ToString(xrGetBalance)           == c) return xrGetBalance;
+    if (strcmp(XRouterCommand_ToString(xrInvalid)              , c) == 0) return xrInvalid;
+    if (strcmp(XRouterCommand_ToString(xrReply)                , c) == 0) return xrReply;
+    if (strcmp(XRouterCommand_ToString(xrGetReply)             , c) == 0) return xrGetReply;
+    if (strcmp(XRouterCommand_ToString(xrGetConfig)            , c) == 0) return xrGetConfig;
+    if (strcmp(XRouterCommand_ToString(xrConfigReply)          , c) == 0) return xrConfigReply;
+    if (strcmp(XRouterCommand_ToString(xrGetBlockCount)        , c) == 0) return xrGetBlockCount;
+    if (strcmp(XRouterCommand_ToString(xrGetBlockHash)         , c) == 0) return xrGetBlockHash;
+    if (strcmp(XRouterCommand_ToString(xrGetBlock)             , c) == 0) return xrGetBlock;
+    if (strcmp(XRouterCommand_ToString(xrGetTransaction)       , c) == 0) return xrGetTransaction;
+    if (strcmp(XRouterCommand_ToString(xrSendTransaction)      , c) == 0) return xrSendTransaction;
+    if (strcmp(XRouterCommand_ToString(xrGetTxBloomFilter)     , c) == 0) return xrGetTxBloomFilter;
+    if (strcmp(XRouterCommand_ToString(xrGenerateBloomFilter)  , c) == 0) return xrGenerateBloomFilter;
+    if (strcmp(XRouterCommand_ToString(xrGetBlocks)            , c) == 0) return xrGetBlocks;
+    if (strcmp(XRouterCommand_ToString(xrGetTransactions)      , c) == 0) return xrGetTransactions;
+    if (strcmp(XRouterCommand_ToString(xrGetBlockAtTime)       , c) == 0) return xrGetBlockAtTime;
+    if (strcmp(XRouterCommand_ToString(xrDecodeRawTransaction) , c) == 0) return xrDecodeRawTransaction;
+    if (strcmp(XRouterCommand_ToString(xrGetBalance)           , c) == 0) return xrGetBalance;
 
-    return xrService; // default
+    return xrInvalid; // default
 };
 
 //******************************************************************************

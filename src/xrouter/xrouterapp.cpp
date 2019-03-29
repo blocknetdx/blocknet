@@ -468,7 +468,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             }
 
             tg.create_thread([node,s,snodeAddr,needConfig,needConnectionHaveConfig,
-                              needConnectionAndConfig,count,&fetchConfig,&connect,&connectedCount]()
+                              needConnectionAndConfig,&fetchConfig,&connect]()
             {
                 RenameThread("blocknetdx-xrouter-connections");
                 boost::this_thread::interruption_point();
@@ -1041,7 +1041,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
                 auto service = packet->service();
                 if (service.size() > 100) // truncate service name
                     service = service.substr(0, 100);
-                LOG() << "XRouter command: " << commandStr << "::" + service << " query: " << uuid << " node: " << nodeAddr;
+                LOG() << "XRouter command: " << commandStr << xrdelimiter + service << " query: " << uuid << " node: " << nodeAddr;
             }
             else
                 LOG() << "XRouter command: " << commandStr << " query: " << uuid << " node: " << nodeAddr;
@@ -1506,23 +1506,40 @@ CPubKey App::getPaymentPubkey(CNode* node)
 
 std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqService, const int & count) {
     std::map<NodeAddr, XRouterSettingsPtr> selectedConfigs;
-    std::string service;
-    if (commandFromNamespace(fqService, service)) {
-        auto command = XRouterCommand_FromString(service);
-        if (openConnections(command, service, count, { })) { // open connections to snodes that have our service
-            bool isWallet = command != xrService;
-            std::string svc; removeWalletNamespace(fqService, svc); removePluginNamespace(svc, svc);
-            const auto configs = getNodeConfigs(); // get configs and store matching ones
-            for (const auto & item : configs) {
-                if (isWallet && item.second->hasWallet(svc)) {
-                    selectedConfigs.insert(item);
-                    continue;
-                }
-                if (item.second->hasPlugin(svc))
-                    selectedConfigs.insert(item);
+    std::vector<std::string> nparts;
+    if (!xrsplit(fqService, xrdelimiter, nparts))
+        throw XRouterError("Bad service name", BAD_REQUEST);
+
+    if (nparts.size() <= 1)
+        throw XRouterError("Bad service name", BAD_REQUEST);
+
+    std::string ns = nparts[0];
+    if (ns != xr && ns != xrs)
+        throw XRouterError("Missing top-level namespace xr:: or xrs::", BAD_REQUEST);
+
+    XRouterCommand command = ns == xrs ? xrService
+                                       : (nparts.size() == 2 ? xrGetBlockCount : XRouterCommand_FromString(nparts.back()));
+    std::string commandStr = XRouterCommand_ToString(command);
+
+    if (command == xrInvalid)
+        throw XRouterError("Unknown xr:: command", BAD_REQUEST);
+
+    const std::string wallet = nparts[1];
+    const std::string plugin = boost::algorithm::join(std::vector<std::string>{nparts.begin()+1, nparts.end()}, xrdelimiter);
+    const std::string service = command != xrService ? wallet : plugin;
+
+    if (openConnections(command, service, count, { })) { // open connections to snodes that have our service
+        const auto configs = getNodeConfigs(); // get configs and store matching ones
+        for (const auto & item : configs) {
+            if (command != xrService && item.second->hasWallet(service)) {
+                selectedConfigs.insert(item);
+                continue;
             }
+            if (item.second->hasPlugin(service))
+                selectedConfigs.insert(item);
         }
     }
+
     return selectedConfigs;
 }
 

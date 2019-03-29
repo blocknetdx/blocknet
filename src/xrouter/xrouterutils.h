@@ -26,6 +26,7 @@ typedef std::string NodeAddr;
 
 static const std::string xr = "xr"; // XRouter SPV
 static const std::string xrs = "xrs"; // XRouter services
+static const std::string xrdelimiter = "::"; // XRouter namespace delimiter
 
 /**
  * Helper to build key for use with lookups.
@@ -77,6 +78,21 @@ extern bool hasPluginNamespace(const std::string & service);
  * @return
  */
 extern bool commandFromNamespace(const std::string & fqService, std::string & command);
+/**
+ * Returns list of namespace parts.
+ * @param fqService fully qualified service
+ * @param parts return namespace parts
+ * @return
+ */
+extern bool commandNamespaceParts(const std::string & fqService, std::vector<std::string> & parts);
+/**
+ * Returns list of namespace parts.
+ * @param s fully qualified service name
+ * @param del Delimited (e.g. ::)
+ * @param vout Return list of parts in order
+ * @return
+ */
+extern bool xrsplit(const std::string & fqService, const std::string & del, std::vector<std::string> & vout);
 
 class UnknownChainAddress : public CBitcoinAddress {
 public:

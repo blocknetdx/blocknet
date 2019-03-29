@@ -4,6 +4,7 @@
 #include "xroutersettings.h"
 #include "xrouterlogger.h"
 #include "xroutererror.h"
+#include "xrouterutils.h"
 
 #include "main.h" // GetDataDir
 
@@ -201,7 +202,7 @@ bool XRouterSettings::isAvailableCommand(XRouterCommand c, std::string service)
     if (!hasWallet(service)) // check if wallet supported
         return false;
     // Wallet commands are implicitly enabled until disabled
-    auto disabled = get<bool>(service + "::" + std::string(XRouterCommand_ToString(c)) + ".disabled", false);
+    auto disabled = get<bool>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".disabled", false);
     return !disabled;
 }
 
@@ -212,11 +213,11 @@ double XRouterSettings::maxFee(XRouterCommand c, std::string service, double def
 
     if (c == xrService) { // Handle plugin
         if (!service.empty())
-            res = get<double>(cstr + "::" + service + ".maxfee", res);
+            res = get<double>(cstr + xrdelimiter + service + ".maxfee", res);
     } else {
         res = get<double>(cstr + ".maxfee", res);
         if (!service.empty())
-            res = get<double>(service + "::" + cstr + ".maxfee", res);
+            res = get<double>(service + xrdelimiter + cstr + ".maxfee", res);
     }
 
     return res;
@@ -229,11 +230,11 @@ int XRouterSettings::commandTimeout(XRouterCommand c, std::string service, int d
 
     if (c == xrService) { // Handle plugin
         if (!service.empty())
-            res = get<int>(cstr + "::" + service + ".timeout", res);
+            res = get<int>(cstr + xrdelimiter + service + ".timeout", res);
     } else {
         res = get<int>(cstr + ".timeout", res);
         if (!service.empty())
-            res = get<int>(service + "::" + cstr + ".timeout", res);
+            res = get<int>(service + xrdelimiter + cstr + ".timeout", res);
     }
 
     return res;
@@ -249,11 +250,11 @@ int XRouterSettings::confirmations(XRouterCommand c, std::string service, int de
 
     if (c == xrService) { // Handle plugin
         if (!service.empty())
-            res = get<int>(cstr + "::" + service + ".consensus", res);
+            res = get<int>(cstr + xrdelimiter + service + ".consensus", res);
     } else {
         res = get<int>(cstr + ".consensus", res);
         if (!service.empty())
-            res = get<int>(service + "::" + cstr + ".consensus", res);
+            res = get<int>(service + xrdelimiter + cstr + ".consensus", res);
     }
 
     return res;
@@ -277,7 +278,7 @@ double XRouterSettings::commandFee(XRouterCommand c, std::string service, double
     auto res = get<double>("Main.fee", def);
     res = get<double>(std::string(XRouterCommand_ToString(c)) + ".fee", res);
     if (!service.empty())
-        res = get<double>(service + "::" + std::string(XRouterCommand_ToString(c)) + ".fee", res);
+        res = get<double>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".fee", res);
     return res;
 }
 
@@ -286,7 +287,7 @@ int XRouterSettings::commandBlockLimit(XRouterCommand c, std::string currency, i
     auto res = get<int>("Main.blocklimit", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
     if (!currency.empty())
-        res = get<int>(currency + "::" + std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
+        res = get<int>(currency + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
     return res;
 }    
 
@@ -303,7 +304,7 @@ int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string service, i
     auto res = get<int>("Main.clientrequestlimit", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
     if (!service.empty())
-        res = get<int>(service + "::" + std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
+        res = get<int>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
     return res;
 }
 
@@ -324,7 +325,7 @@ std::string XRouterSettings::paymentAddress(XRouterCommand c, const std::string 
     auto res = get<std::string>(s_mainpaymentaddress, def);
     res = get<std::string>(std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
     if (!service.empty())
-        res = get<std::string>(service + "::" + std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
+        res = get<std::string>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
     return res;
 }
 
@@ -344,7 +345,7 @@ std::map<std::string, double> XRouterSettings::feeSchedule() {
     // First pass set top-level fees
     for (const auto & p : m_pt) {
         std::vector<std::string> parts;
-        boost::split(parts, p.first, boost::is_any_of("::"));
+        xrsplit(p.first, xrdelimiter, parts);
         std::string cmd = parts[0];
 
         if (parts.size() > 1)
@@ -361,7 +362,7 @@ std::map<std::string, double> XRouterSettings::feeSchedule() {
             continue; // skip existing
 
         std::vector<std::string> parts;
-        boost::split(parts, p.first, boost::is_any_of("::"));
+        xrsplit(p.first, xrdelimiter, parts);
 
         if (parts.size() < 3)
             continue; // skip

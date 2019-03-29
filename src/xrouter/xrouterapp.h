@@ -883,7 +883,7 @@ private:
 
             diff.clear();
             if (tmp.size() > 1) {
-                for (int i = 1; i < tmp.size(); ++i) {
+                for (int i = 1; i < static_cast<int>(tmp.size()); ++i) {
                     auto & hash = tmp[i].first;
                     if (!nodes.count(hash) || tmp[i].second >= tmp[0].second) // do not penalize equal counts, only fewer
                         continue;
