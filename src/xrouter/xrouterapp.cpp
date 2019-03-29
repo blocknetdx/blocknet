@@ -1085,7 +1085,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & service,
+std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & fqService,
                              const int & confirmations, const std::vector<std::string> & params)
 {
     const std::string & uuid = generateUUID();
@@ -1096,6 +1096,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
     try {
         if (!isEnabled() || !isReady())
             throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf", xrouter::UNAUTHORIZED);
+
+        std::string cleaned;
+        if (!removeNamespace(fqService, cleaned))
+            throw XRouterError("Bad service name: " + fqService, xrouter::INVALID_PARAMETERS);
+
+        const auto & service = cleaned;
 
         if (command != xrService) {
             // Check param1

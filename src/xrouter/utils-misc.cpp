@@ -60,14 +60,24 @@ std::string walletCommandKey(const std::string & wallet, const std::string & com
 std::string walletCommandKey(const std::string & wallet) {
     return xr + xrdelimiter + wallet;
 }
-bool removeWalletNamespace(const std::string & wallet, std::string & result) {
-    const std::string search{xr + xrdelimiter};
-    auto s = wallet.find(search);
-    if (s == std::string::npos) {
-        result = wallet;
+bool removeNamespace(const std::string & service, std::string & result) {
+    auto namespaces = std::vector<std::string>{xr, xrs};
+
+    std::vector<std::string> parts;
+    if (!xrsplit(service, xrdelimiter, parts) || parts.empty())
         return false;
+
+    for (const auto & ns : namespaces) {
+        if (parts[0] == ns) {
+            if (parts.size() > 2) // exclude namespace in result
+                result = boost::algorithm::join(std::vector<std::string>{parts.begin()+1, parts.end()}, xrdelimiter);
+            else // only 1 part here, no need to join
+                result = parts[1];
+            return true;
+        }
     }
-    result = std::string{wallet}.erase(s, search.size());
+
+    result = service;
     return true;
 }
 bool hasWalletNamespace(const std::string & service) {
@@ -78,16 +88,6 @@ bool hasWalletNamespace(const std::string & service) {
 }
 std::string pluginCommandKey(const std::string & service) {
     return xrs + xrdelimiter + service;
-}
-bool removePluginNamespace(const std::string & service, std::string & result) {
-    const std::string search{xrs + xrdelimiter};
-    auto s = service.find(search);
-    if (s == std::string::npos) {
-        result = service;
-        return false;
-    }
-    result = std::string{service}.erase(s, search.size());
-    return true;
 }
 bool hasPluginNamespace(const std::string & service) {
     const std::string s{xrs + xrdelimiter};

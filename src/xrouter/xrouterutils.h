@@ -42,12 +42,13 @@ extern std::string walletCommandKey(const std::string & wallet, const std::strin
  */
 extern std::string walletCommandKey(const std::string & wallet);
 /**
- * Remove the namespace from the wallet. Returns true if successful, otherwise false.
- * @param wallet
- * @param result Stripped wallet name stored here.
+ * Remove the top-level namespace from the service name. Returns true if successful, otherwise false.
+ * @param service
+ * @param result Stripped service name stored here.
  * @return
  */
-extern bool removeWalletNamespace(const std::string & wallet, std::string & result);
+extern bool removeNamespace(const std::string & service, std::string & result);
+
 /**
  * Returns true if the specified service has the wallet namespace (xr::).
  * @return
@@ -61,13 +62,6 @@ extern bool hasWalletNamespace(const std::string & service);
  */
 extern std::string pluginCommandKey(const std::string & service);
 
-/**
- * Remove the namespace from the plugin. Returns true if successful, otherwise false.
- * @param service
- * @param result Stripped service name stored here.
- * @return
- */
-extern bool removePluginNamespace(const std::string & service, std::string & result);
 /**
  * Returns true if the specified service has the plugin namespace (xrs::).
  * @return
