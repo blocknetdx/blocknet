@@ -201,7 +201,11 @@ std::string CallCMD(const std::string & cmd, int & exit) {
         result += buffer.data();
     }
     auto n = pclose(pipe.get());
+#ifdef WIN32
+    exit = n & 0xff;
+#else
     exit = WEXITSTATUS(n);
+#endif
     return result;
 }
 
