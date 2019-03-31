@@ -44,13 +44,20 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
         return error;
     }
     
-    int confirmations{0};
-    if (params.size() >= 2)
-        confirmations = params[1].get_int();
+    int consensus{0};
+    if (params.size() >= 2) {
+        consensus = params[1].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getBlockCount(uuid, currency, confirmations);
+    std::string reply = xrouter::App::instance().getBlockCount(uuid, currency, consensus);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -90,14 +97,21 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
         return error;
     }
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     int block = params[1].get_int();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getBlockHash(uuid, currency, confirmations, block);
+    std::string reply = xrouter::App::instance().getBlockHash(uuid, currency, consensus, block);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -137,13 +151,20 @@ Value xrGetBlock(const Array & params, bool fHelp)
         return error;
     }
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getBlock(uuid, currency, confirmations, params[1].get_str());
+    std::string reply = xrouter::App::instance().getBlock(uuid, currency, consensus, params[1].get_str());
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -183,13 +204,20 @@ Value xrGetTransaction(const Array & params, bool fHelp)
         return error;
     }
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getTransaction(uuid, currency, confirmations, params[1].get_str());
+    std::string reply = xrouter::App::instance().getTransaction(uuid, currency, consensus, params[1].get_str());
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -237,13 +265,20 @@ Value xrDecodeRawTransaction(const Array & params, bool fHelp)
         return error;
     }
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().decodeRawTransaction(uuid, currency, confirmations, hex);
+    std::string reply = xrouter::App::instance().decodeRawTransaction(uuid, currency, consensus, hex);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -296,13 +331,20 @@ Value xrGetBlocks(const Array & params, bool fHelp)
         }
     }
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getBlocks(uuid, currency, confirmations, blockHashes);
+    std::string reply = xrouter::App::instance().getBlocks(uuid, currency, consensus, blockHashes);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -357,13 +399,20 @@ Value xrGetTransactions(const Array & params, bool fHelp)
         }
     }
     
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getTransactions(uuid, currency, confirmations, txHashes);
+    std::string reply = xrouter::App::instance().getTransactions(uuid, currency, consensus, txHashes);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -403,14 +452,21 @@ Value xrGetBalance(const Array & params, bool fHelp)
         return error;
     }
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
 
     std::string currency = params[0].get_str();
     std::string address = params[1].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getBalance(uuid, currency, confirmations, address);
+    std::string reply = xrouter::App::instance().getBalance(uuid, currency, consensus, address);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -454,14 +510,21 @@ Value xrGetTxBloomFilter(const Array & params, bool fHelp)
     if (params.size() >= 3)
         number = params[2].get_int();
 
-    int confirmations{0};
-    if (params.size() >= 4)
-        confirmations = params[3].get_int();
+    int consensus{0};
+    if (params.size() >= 4) {
+        consensus = params[3].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
     
     const auto & currency = params[0].get_str();
     const auto & filter = params[1].get_str();
     std::string uuid;
-    const auto reply = xrouter::App::instance().getTransactionsBloomFilter(uuid, currency, confirmations, filter, number);
+    const auto reply = xrouter::App::instance().getTransactionsBloomFilter(uuid, currency, consensus, filter, number);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -675,14 +738,21 @@ Value xrSendTransaction(const Array & params, bool fHelp)
         return error;
     }
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
     
     std::string currency = params[0].get_str();
     std::string transaction = params[1].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().sendTransaction(uuid, currency, confirmations, transaction);
+    std::string reply = xrouter::App::instance().sendTransaction(uuid, currency, consensus, transaction);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -853,6 +923,12 @@ Value xrConnect(const Array & params, bool fHelp)
     int nodeCount{1};
     if (params.size() > 1) {
         nodeCount = params[1].get_int();
+        if (nodeCount < 1) {
+            Object error;
+            error.emplace_back("error", "nodeCount must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
     }
 
     const std::string & uuid = xrouter::generateUUID();
@@ -924,13 +1000,20 @@ Value xrGetBlockAtTime(const Array & params, bool fHelp)
 
     int64_t time = params[1].get_int64();
 
-    int confirmations{0};
-    if (params.size() >= 3)
-        confirmations = params[2].get_int();
+    int consensus{0};
+    if (params.size() >= 3) {
+        consensus = params[2].get_int();
+        if (consensus < 1) {
+            Object error;
+            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    }
     
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().convertTimeToBlockCount(uuid, currency, confirmations, time);
+    std::string reply = xrouter::App::instance().convertTimeToBlockCount(uuid, currency, consensus, time);
     return xrouter::form_reply(uuid, reply);
 }
 
