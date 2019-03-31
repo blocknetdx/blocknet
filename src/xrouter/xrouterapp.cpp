@@ -1536,16 +1536,16 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
     const std::string plugin = boost::algorithm::join(std::vector<std::string>{nparts.begin()+1, nparts.end()}, xrdelimiter);
     const std::string service = command != xrService ? wallet : plugin;
 
-    if (openConnections(command, service, count, { })) { // open connections to snodes that have our service
-        const auto configs = getNodeConfigs(); // get configs and store matching ones
-        for (const auto & item : configs) {
-            if (command != xrService && item.second->hasWallet(service)) {
-                selectedConfigs.insert(item);
-                continue;
-            }
-            if (item.second->hasPlugin(service))
-                selectedConfigs.insert(item);
+    openConnections(command, service, count, { }); // open connections to snodes that have our service
+
+    const auto configs = getNodeConfigs(); // get configs and store matching ones
+    for (const auto & item : configs) {
+        if (command != xrService && item.second->hasWallet(service)) {
+            selectedConfigs.insert(item);
+            continue;
         }
+        if (item.second->hasPlugin(service))
+            selectedConfigs.insert(item);
     }
 
     return selectedConfigs;
