@@ -641,18 +641,18 @@ Value xrService(const Array & params, bool fHelp)
 Value xrServiceConsensus(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrServiceConsensus service_name consensus_number [param1 param2 param3 ... paramN]\n"
+        throw std::runtime_error("xrServiceConsensus consensus_number service_name [param1 param2 param3 ... paramN]\n"
                                  "Send request to the service with the specified name and consensus number.\n"
                                  "XRouter services are custom plugins that XRouter node operators advertise on\n"
                                  "the network. Anyone capable of running a service node can create or install\n"
                                  "custom XRouter services or plugins and provide access to them for free or for\n"
                                  "a fee. This is a great way to earn fees for your custom plugin.\n"
                                  "\n"
-                                 "service_name (string) Name of the custom service or plugin\n"
                                  "[consensus_number] (int) Optional, number of XRouter nodes to query.\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
+                                 "service_name (string) Name of the custom service or plugin\n"
                                  "[param1 param2 param3 ... paramN] (string) Optional, refer to the service's\n"
                                  "documentation for parameter requirements. Information about a custom XRouter\n"
                                  "service can be viewed in the plugin configuration. Use xrConnect to find a node\n"
@@ -668,7 +668,7 @@ Value xrServiceConsensus(const Array & params, bool fHelp)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "Service name not specified");
+        error.emplace_back("error", "Consensus number not specified, must specify at least 1");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
@@ -676,13 +676,13 @@ Value xrServiceConsensus(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Consensus number not specified, must specify at least 1");
+        error.emplace_back("error", "Service name not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 
-    const auto & service = params[0].get_str();
-    const auto & consensus = params[1].get_int();
+    const auto & consensus = params[0].get_int();
+    const auto & service = params[1].get_str();
 
     if (consensus < 1) {
         Object error;
