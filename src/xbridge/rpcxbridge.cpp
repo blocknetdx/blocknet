@@ -120,7 +120,7 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
     }
 
     std::set<std::string> services;
-    auto nodeServices = xbridge::App::instance().allServices();
+    auto nodeServices = xbridge::App::instance().walletServices();
     for (auto & serviceItem : nodeServices) {
         auto s = serviceItem.second.services();
         services.insert(s.begin(), s.end());

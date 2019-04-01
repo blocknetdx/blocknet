@@ -3,6 +3,13 @@
 
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
+#include "xbridgewalletconnector.h"
+#include "xbridgewalletconnectorbtc.h"
+#include "xbridgecryptoproviderbtc.h"
+#include "xbridgewalletconnectorbch.h"
+#include "xbridgewalletconnectordgb.h"
+#include "xrouter/xrouterapp.h"
+
 #include "util/xutil.h"
 #include "util/logger.h"
 #include "util/settings.h"
@@ -20,14 +27,8 @@
 #include "wallet.h"
 #include "servicenodeman.h"
 #include "activeservicenode.h"
-#include "xbridgewalletconnector.h"
-#include "xbridgewalletconnectorbtc.h"
-#include "xbridgecryptoproviderbtc.h"
-#include "xbridgewalletconnectorbch.h"
-#include "xbridgewalletconnectordgb.h"
 #include "sync.h"
 #include "spork.h"
-#include "xrouter/xrouterapp.h"
 
 #include <algorithm>
 #include <assert.h>
@@ -2137,6 +2138,36 @@ std::map<::CPubKey, App::XWallets> App::allServices()
 {
     LOCK(m_p->m_xwalletsLocker);
     return m_p->m_xwallets;
+}
+
+//******************************************************************************
+/**
+ * @brief Returns all wallets supported by the network.
+ * @return
+ */
+//******************************************************************************
+std::map<::CPubKey, App::XWallets> App::walletServices()
+{
+    LOCK(m_p->m_xwalletsLocker);
+
+    std::regex rwallet("^[^:]+$"); // match wallets
+    std::smatch m;
+    std::map<::CPubKey, App::XWallets> ws;
+
+    for (const auto & item : m_p->m_xwallets) {
+        const auto & services = item.second.services();
+        std::vector<std::string> tmp{services.begin(), services.end()};
+        std::set<std::string> xwallets;
+        for (const auto & s : tmp) {
+            if (!std::regex_match(s, m, rwallet) || s == xrouter::xr || s == xrouter::xrs)
+                continue;
+            xwallets.insert(s);
+        }
+        App::XWallets & x = ws[item.first];
+        ws[item.first] = XWallets{x.version(), x.nodePubKey(), xwallets};
+    }
+
+    return ws;
 }
 
 //******************************************************************************
