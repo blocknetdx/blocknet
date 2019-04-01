@@ -13,7 +13,10 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
+#include "xrouter/xrouterutils.h"
+
 #include <boost/filesystem/operations.hpp>
+#include <boost/algorithm/string.hpp>
 
 #define _(x) std::string(x) /* Keep the _() around in case gettext or such will be used later to translate non-UI */
 
@@ -161,6 +164,7 @@ int CommandLineRPC(int argc, char* argv[])
 {
     string strPrint;
     int nRet = 0;
+    string strMethod;
     try {
         // Skip switches
         while (argc > 1 && IsSwitchChar(argv[1][0])) {
@@ -171,7 +175,7 @@ int CommandLineRPC(int argc, char* argv[])
         // Method
         if (argc < 2)
             throw runtime_error("too few parameters");
-        string strMethod = argv[1];
+        strMethod = argv[1];
 
         // Parameters default to strings
         std::vector<std::string> strParams(&argv[2], &argv[argc]);
@@ -216,7 +220,10 @@ int CommandLineRPC(int argc, char* argv[])
     } catch (boost::thread_interrupted) {
         throw;
     } catch (std::exception& e) {
-        strPrint = string("error: ") + e.what();
+        if (!strMethod.empty() && boost::algorithm::starts_with(strMethod, xrouter::xr)) // if xrouter call
+            strPrint = e.what();
+        else
+            strPrint = string("error: ") + e.what();
         nRet = EXIT_FAILURE;
     } catch (...) {
         PrintExceptionContinue(NULL, "CommandLineRPC()");

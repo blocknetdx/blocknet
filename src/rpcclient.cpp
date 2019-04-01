@@ -12,8 +12,12 @@
 #include "ui_interface.h"
 #include "util.h"
 
+#include "xrouter/xrouterutils.h"
+
 #include <set>
 #include <stdint.h>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace json_spirit;
@@ -183,8 +187,16 @@ Array RPCConvertValues(const std::string& strMethod, const std::vector<std::stri
         // parse string as JSON, insert bool/number/object/etc. value
         else {
             Value jVal;
-            if (!read_string(strVal, jVal))
-                throw runtime_error(string("Failed to parse input parameters: ") + strVal + string(" check the docs: help ") + strMethod);
+            if (!read_string(strVal, jVal)) {
+                auto errmsg = strprintf("Failed to parse input parameters: %s, check the docs: help %s", strVal, strMethod);
+                if (boost::algorithm::starts_with(strMethod, xrouter::xr)) { // if xrouter call
+                    Object error;
+                    error.emplace_back("error", errmsg);
+                    error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+                    throw runtime_error(write_string(Value(error), json_spirit::pretty_print));
+                } else
+                    throw runtime_error(errmsg);
+            }
             params.push_back(jVal);
         }
     }
