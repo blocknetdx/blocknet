@@ -17,7 +17,11 @@
 #include "spork.h"
 #include "timedata.h"
 #include "util.h"
+
+#include "xbridge/version.h"
+#include "xrouter/version.h"
 #include "xrouter/xrouterapp.h"
+
 #ifdef ENABLE_WALLET
 #include "currencypair.h"
 #include "wallet.h"
@@ -87,6 +91,8 @@ Value getinfo(const Array& params, bool fHelp)
     Object obj;
     obj.push_back(Pair("version", CLIENT_VERSION));
     obj.push_back(Pair("protocolversion", PROTOCOL_VERSION));
+    obj.emplace_back("xbridgeprotocolversion", static_cast<int64_t>(XBRIDGE_PROTOCOL_VERSION));
+    obj.emplace_back("xrouterprotocolversion", static_cast<int64_t>(XROUTER_PROTOCOL_VERSION));
 
     LOCK(cs_main);
 
