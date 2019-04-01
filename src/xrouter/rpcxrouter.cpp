@@ -20,11 +20,11 @@ using namespace json_spirit;
 Value xrGetBlockCount(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlockCount currency [consensus_number]\n"
+        throw std::runtime_error("xrGetBlockCount currency [node_count]\n"
                                  "Block count for the longest chain in the specified blockchain.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -64,12 +64,12 @@ Value xrGetBlockCount(const Array & params, bool fHelp)
 Value xrGetBlockHash(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlockHash currency block_number [consensus_number]\n"
+        throw std::runtime_error("xrGetBlockHash currency block_number [node_count]\n"
                                  "Hash of block with the specified block number.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "block_number (int) Block number\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -118,12 +118,12 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
 Value xrGetBlock(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlock currency hash [consensus_number]\n"
+        throw std::runtime_error("xrGetBlock currency hash [node_count]\n"
                                  "Block data in json format with the specified hash.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "hash (string) Block hash\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -171,12 +171,12 @@ Value xrGetBlock(const Array & params, bool fHelp)
 Value xrGetTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTransaction currency txid [consensus_number]\n"
+        throw std::runtime_error("xrGetTransaction currency txid [node_count]\n"
                                  "Transaction data in json format with the specified transaction id.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "txid (string) Transaction id\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -224,12 +224,12 @@ Value xrGetTransaction(const Array & params, bool fHelp)
 Value xrDecodeRawTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrDecodeRawTransaction currency hex [consensus_number]\n"
+        throw std::runtime_error("xrDecodeRawTransaction currency hex [node_count]\n"
                                  "Decodes the specified transaction hex and returns the transaction data in json format.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "hex (string) Raw transaction hex string\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -285,12 +285,12 @@ Value xrDecodeRawTransaction(const Array & params, bool fHelp)
 Value xrGetBlocks(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlocks currency blockhash1,blockhash2,blockhash3 [consensus_number]\n"
+        throw std::runtime_error("xrGetBlocks currency blockhash1,blockhash2,blockhash3 [node_count]\n"
                                  "List of blocks in json format with the specified block hashes.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "txhash1,txhash2,txhash3 (string) Transaction ids separated by commas (,)\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -351,12 +351,12 @@ Value xrGetBlocks(const Array & params, bool fHelp)
 Value xrGetTransactions(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTransactions currency txhash1,txhash2,txhash3 [consensus_number]\n"
+        throw std::runtime_error("xrGetTransactions currency txhash1,txhash2,txhash3 [node_count]\n"
                                  "List of transactions in json format with the specified transaction ids.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "txhash1,txhash2,txhash3 (string) Transaction ids separated by commas (,)\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -419,12 +419,12 @@ Value xrGetTransactions(const Array & params, bool fHelp)
 Value xrGetBalance(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBalance currency address [consensus_number]\n"
+        throw std::runtime_error("xrGetBalance currency address [node_count]\n"
                                  "Balance of the account with the specified blockchain address.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "address (string) Blockchain address\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -473,12 +473,12 @@ Value xrGetBalance(const Array & params, bool fHelp)
 Value xrGetTxBloomFilter(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetTxBloomFilter currency filter [block_number] [consensus_number]\n"
+        throw std::runtime_error("xrGetTxBloomFilter currency filter [block_number] [node_count]\n"
                                  "Lists transactions in json format matching bloom filter starting with block number.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "filter (string) Bloom filter\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -531,11 +531,11 @@ Value xrGetTxBloomFilter(const Array & params, bool fHelp)
 Value xrGenerateBloomFilter(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGenerateBloomFilter address1,address2 [consensus_number]\n"
+        throw std::runtime_error("xrGenerateBloomFilter address1,address2 [node_count]\n"
                                  "Generates a bloom filter for given base58 addresses.\n"
                                  "\n"
                                  "address1,address2 (string) Addresses to apply to the bloom filter.\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -641,14 +641,14 @@ Value xrService(const Array & params, bool fHelp)
 Value xrServiceConsensus(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrServiceConsensus consensus_number service_name [param1 param2 param3 ... paramN]\n"
+        throw std::runtime_error("xrServiceConsensus node_count service_name [param1 param2 param3 ... paramN]\n"
                                  "Send request to the service with the specified name and consensus number.\n"
                                  "XRouter services are custom plugins that XRouter node operators advertise on\n"
                                  "the network. Anyone capable of running a service node can create or install\n"
                                  "custom XRouter services or plugins and provide access to them for free or for\n"
                                  "a fee. This is a great way to earn fees for your custom plugin.\n"
                                  "\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query.\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query.\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -703,14 +703,14 @@ Value xrServiceConsensus(const Array & params, bool fHelp)
 Value xrSendTransaction(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrSendTransaction currency signed_transaction_hex [consensus_number]\n"
+        throw std::runtime_error("xrSendTransaction currency signed_transaction_hex [node_count]\n"
                                  "Send a signed transaction to any supported blockchain network.\n"
                                  "This is useful if you want to send transactions to a blockchain without having\n"
                                  "to download the entire chain, or if you are running a lite-wallet/multi-wallet.\n"
                                  "\n"
                                  "currency (string) Blockchain to send transaction to\n"
                                  "signed_transaction_hex (string) Raw transaction hex (must be signed!)\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to relay this tx.(default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to relay this tx.(default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
@@ -965,12 +965,12 @@ Value xrConnect(const Array & params, bool fHelp)
 Value xrGetBlockAtTime(const Array & params, bool fHelp)
 {
     if (fHelp) {
-        throw std::runtime_error("xrGetBlockAtTime currency unix_time [consensus_number]\n"
+        throw std::runtime_error("xrGetBlockAtTime currency unix_time [node_count]\n"
                                  "Block data in json format of the block closest to the specified unix time.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
                                  "unix_time (int) Unix time of the desired block\n"
-                                 "[consensus_number] (int) Optional, number of XRouter nodes to query (default=1)\n"
+                                 "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
                                  "                         xrGetReply uuid."
