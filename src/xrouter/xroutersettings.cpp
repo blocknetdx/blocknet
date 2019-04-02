@@ -288,12 +288,12 @@ double XRouterSettings::commandFee(XRouterCommand c, std::string service, double
     return res;
 }
 
-int XRouterSettings::commandBlockLimit(XRouterCommand c, std::string currency, int def)
+int XRouterSettings::commandFetchLimit(XRouterCommand c, std::string currency, int def)
 {
-    auto res = get<int>("Main.blocklimit", def);
-    res = get<int>(std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
+    auto res = get<int>("Main.fetchlimit", def);
+    res = get<int>(std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
     if (!currency.empty())
-        res = get<int>(currency + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".blocklimit", res);
+        res = get<int>(currency + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
     return res;
 }    
 

@@ -150,7 +150,7 @@ Object BtcWalletConnectorXRouter::decodeRawTransaction(const std::string & hex) 
     return o;
 }
 
-Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int & number, CDataStream & stream, const int & blocklimit) const
+Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int & number, CDataStream & stream, const int & fetchlimit) const
 {
     std::string commandGBC("getblockcount");
     std::string commandGBH("getblockhash");
@@ -168,7 +168,7 @@ Array BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int & number, 
     Object blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
     int blockcount = getResult(blockCountObj).get_int();
 
-    if ((blocklimit > 0) && (blockcount - number > blocklimit)) {
+    if ((fetchlimit > 0) && (blockcount - number > fetchlimit)) {
         throw XRouterError("Too many blocks requested", xrouter::INVALID_PARAMETERS);
     }
     

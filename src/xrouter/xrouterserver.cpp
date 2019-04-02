@@ -475,10 +475,10 @@ std::string XRouterServer::processGetBlock(const std::string & currency, const s
 
 std::string XRouterServer::processGetBlocks(const std::string & currency, const std::vector<std::string> & params) {
     App & app = App::instance();
-    const auto & blocklimit = app.xrSettings()->commandBlockLimit(xrGetBlocks, currency);
-    if (params.size() > blocklimit)
+    const auto & fetchlimit = app.xrSettings()->commandFetchLimit(xrGetBlocks, currency);
+    if (params.size() > fetchlimit)
         throw XRouterError("Too many blocks requested for " + currency + " limit is " +
-                           std::to_string(blocklimit), xrouter::BAD_REQUEST);
+                           std::to_string(fetchlimit), xrouter::BAD_REQUEST);
 
     Array result;
 
@@ -511,10 +511,10 @@ std::string XRouterServer::processGetTransaction(const std::string & currency, c
 
 std::string XRouterServer::processGetTransactions(const std::string & currency, const std::vector<std::string> & params) {
     App & app = App::instance();
-    const auto & blocklimit = app.xrSettings()->commandBlockLimit(xrGetTransactions, currency);
-    if (params.size() > blocklimit)
+    const auto & fetchlimit = app.xrSettings()->commandFetchLimit(xrGetTransactions, currency);
+    if (params.size() > fetchlimit)
         throw XRouterError("Too many transactions requested for " + currency + " limit is " +
-                           std::to_string(blocklimit), xrouter::BAD_REQUEST);
+                           std::to_string(fetchlimit), xrouter::BAD_REQUEST);
     
     Array result;
 
@@ -581,14 +581,14 @@ std::string XRouterServer::processGetTxBloomFilter(const std::string & currency,
     int number = std::stoi(number_s);
 
     App & app = App::instance();
-    int blocklimit = app.xrSettings()->commandBlockLimit(xrGetTxBloomFilter, currency);
+    int fetchlimit = app.xrSettings()->commandFetchLimit(xrGetTxBloomFilter, currency);
 
     Array result;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getTransactionsBloomFilter(number, stream, blocklimit);
+        result = conn->getTransactionsBloomFilter(number, stream, fetchlimit);
     } else {
         throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
     }
