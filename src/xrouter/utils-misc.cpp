@@ -105,11 +105,6 @@ bool commandFromNamespace(const std::string & fqService, std::string & command) 
     }
     return false; // no match
 }
-bool commandNamespaceParts(const std::string & fqService, std::vector<std::string> & parts) {
-    parts.clear();
-    std::vector<std::string> p;
-    return true;
-}
 bool xrsplit(const std::string & fqService, const std::string & del, std::vector<std::string> & vout) {
     vout.clear();
     std::regex r("^[a-zA-Z0-9\\-:\\$]+$");

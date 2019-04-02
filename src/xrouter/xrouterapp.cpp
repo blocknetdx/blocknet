@@ -1516,14 +1516,15 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
     std::map<NodeAddr, XRouterSettingsPtr> selectedConfigs;
     std::vector<std::string> nparts;
     if (!xrsplit(fqService, xrdelimiter, nparts))
-        throw XRouterError("Bad service name", BAD_REQUEST);
+        throw XRouterError("Bad service name, acceptable characters [a-z A-Z 0-9 $], sample format: xrs::ExampleServiceName123", BAD_REQUEST);
 
+    const auto msg = "Missing top-level namespace (xr:: or xrs::) Example xr::BLOCK or xrs::CustomServiceName";
     if (nparts.size() <= 1)
-        throw XRouterError("Bad service name", BAD_REQUEST);
+        throw XRouterError(msg, BAD_REQUEST);
 
     std::string ns = nparts[0];
     if (ns != xr && ns != xrs)
-        throw XRouterError("Missing top-level namespace xr:: or xrs::", BAD_REQUEST);
+        throw XRouterError(msg, BAD_REQUEST);
 
     XRouterCommand command = ns == xrs ? xrService
                                        : (nparts.size() == 2 ? xrGetBlockCount : XRouterCommand_FromString(nparts.back()));
@@ -1659,6 +1660,11 @@ std::string App::getStatus() {
     WaitableLock l(mu);
 
     Object result;
+
+    std::vector<unsigned char> spubkey{activeServicenode.pubKeyServicenode.begin(),
+                                       activeServicenode.pubKeyServicenode.end()};
+    result.emplace_back("enabled", HexStr(spubkey));
+
     result.emplace_back("enabled", isEnabled());
     result.emplace_back("config", xrsettings->rawText());
 
@@ -1667,19 +1673,6 @@ std::string App::getStatus() {
         myplugins.emplace_back(s, xrsettings->getPluginSettings(s)->rawText());
     result.emplace_back("plugins", myplugins);
 
-    Array nodes;
-    for (auto& it : this->snodeConfigs) {
-        Object val;
-        val.emplace_back("config", it.second->rawText());
-        Object plugins;
-        for (std::string s : it.second->getPlugins())
-            plugins.emplace_back(s, it.second->getPluginSettings(s)->rawText());
-        val.emplace_back("plugins", plugins);
-        nodes.push_back(Value(val));
-    }
-    
-    result.emplace_back("nodes", nodes);
-    
     return json_spirit::write_string(Value(result), true);
 }
 

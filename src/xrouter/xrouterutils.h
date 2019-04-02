@@ -74,13 +74,6 @@ extern bool hasPluginNamespace(const std::string & service);
 extern bool commandFromNamespace(const std::string & fqService, std::string & command);
 /**
  * Returns list of namespace parts.
- * @param fqService fully qualified service
- * @param parts return namespace parts
- * @return
- */
-extern bool commandNamespaceParts(const std::string & fqService, std::vector<std::string> & parts);
-/**
- * Returns list of namespace parts.
  * @param s fully qualified service name
  * @param del Delimited (e.g. ::)
  * @param vout Return list of parts in order
