@@ -55,6 +55,12 @@ public:
      * @return enabled by default
      */
     static bool isEnabled();
+
+    /**
+     * @brief createConf creates an empty xrouter.conf if one is not found
+     * @return true if created otherwise false
+     */
+    static bool createConf();
     
     /**
      * @brief XRouter settings

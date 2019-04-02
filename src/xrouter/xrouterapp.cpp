@@ -75,6 +75,43 @@ bool App::isEnabled()
     return GetBoolArg("-xrouter", false);
 }
 
+// static
+bool App::createConf()
+{
+    auto p = GetDataDir(false) / "xrouter.conf";
+    if (!boost::filesystem::exists(p)) {
+        boost::filesystem::save_string_file(p,
+                "[Main]\n"
+                "# maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call\n"
+                "# 0 means you only want free calls\n"
+                "maxfee=0\n"
+                "# consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)\n"
+                "#           Paid calls will send a payment to each selected service node.\n"
+                "consensus=1\n"
+                "# timeout is the maximum time in seconds you're willing to wait for an XRouter response\n"
+                "timeout=30\n"
+                "\n"
+                "# It's possible to set per-call config options\n"
+                "# [xrGetBlockCount]\n"
+                "# maxfee=0.01\n"
+                "\n"
+                "# [BLOCK::xrGetBlockCount]\n"
+                "# maxfee=0.01\n"
+                "\n"
+                "# [SYS::xrGetBlockCount]\n"
+                "# maxfee=0.01\n"
+                "\n"
+                "# It's possible to set config options for Custom XRouter services\n"
+                "# [xrs::GetBestBlockHashBTC]\n"
+                "# maxfee=0.1\n"
+        );
+        return true;
+    }
+    return false;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool App::init(int argc, char *argv[])
 {
     if (!isEnabled())

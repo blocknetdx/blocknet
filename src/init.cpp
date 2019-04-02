@@ -1704,7 +1704,8 @@ bool AppInit2(int argc, char* argv[], boost::thread_group& threadGroup)
 
         // init xrouter if enabled
         xrouter::App & xrapp = xrouter::App::instance();
-        if (xrapp.isEnabled()) {
+        xrouter::App::createConf(); // create config if it doesn't exist
+        if (xrouter::App::isEnabled()) {
             if (xrapp.init(argc, argv)) {
                 uiInterface.InitMessage(_("Start xrouter service"));
                 xrapp.start();
