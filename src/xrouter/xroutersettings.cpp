@@ -7,6 +7,7 @@
 #include "xrouterutils.h"
 
 #include "main.h" // GetDataDir
+#include "servicenodeman.h"
 
 #include <algorithm>
 #include <iostream>
@@ -222,8 +223,10 @@ double XRouterSettings::maxFee(XRouterCommand c, std::string service, double def
             res = get<double>(cstr + xrdelimiter + service + ".maxfee", res);
     } else {
         res = get<double>(cstr + ".maxfee", res);
-        if (!service.empty())
+        if (!service.empty()) {
+            res = get<double>(service + ".maxfee", res);
             res = get<double>(service + xrdelimiter + cstr + ".maxfee", res);
+        }
     }
 
     return res;
@@ -239,8 +242,10 @@ int XRouterSettings::commandTimeout(XRouterCommand c, std::string service, int d
             res = get<int>(cstr + xrdelimiter + service + ".timeout", res);
     } else {
         res = get<int>(cstr + ".timeout", res);
-        if (!service.empty())
+        if (!service.empty()) {
+            res = get<int>(service + ".timeout", res);
             res = get<int>(service + xrdelimiter + cstr + ".timeout", res);
+        }
     }
 
     return res;
@@ -259,8 +264,10 @@ int XRouterSettings::confirmations(XRouterCommand c, std::string service, int de
             res = get<int>(cstr + xrdelimiter + service + ".consensus", res);
     } else {
         res = get<int>(cstr + ".consensus", res);
-        if (!service.empty())
+        if (!service.empty()) {
+            res = get<int>(service + ".consensus", res);
             res = get<int>(service + xrdelimiter + cstr + ".consensus", res);
+        }
     }
 
     return res;
@@ -283,8 +290,10 @@ double XRouterSettings::commandFee(XRouterCommand c, std::string service, double
 
     auto res = get<double>("Main.fee", def);
     res = get<double>(std::string(XRouterCommand_ToString(c)) + ".fee", res);
-    if (!service.empty())
+    if (!service.empty()) {
+        res = get<double>(service + ".fee", res);
         res = get<double>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".fee", res);
+    }
     return res;
 }
 
@@ -292,8 +301,10 @@ int XRouterSettings::commandFetchLimit(XRouterCommand c, std::string currency, i
 {
     auto res = get<int>("Main.fetchlimit", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
-    if (!currency.empty())
+    if (!currency.empty()) {
+        res = get<int>(currency + ".fetchlimit", res);
         res = get<int>(currency + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
+    }
     return res;
 }    
 
@@ -309,8 +320,10 @@ int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string service, i
 
     auto res = get<int>("Main.clientrequestlimit", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
-    if (!service.empty())
+    if (!service.empty()) {
+        res = get<int>(service + ".clientrequestlimit", res);
         res = get<int>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".clientrequestlimit", res);
+    }
     return res;
 }
 
@@ -328,10 +341,15 @@ std::string XRouterSettings::paymentAddress(XRouterCommand c, const std::string 
             return get<std::string>(s_mainpaymentaddress, def);
     }
 
+    auto snode = mnodeman.Find(node); // default payment address is snode vin address
+    if (snode)
+        def = CBitcoinAddress(snode->pubKeyCollateralAddress.GetID()).ToString();
     auto res = get<std::string>(s_mainpaymentaddress, def);
     res = get<std::string>(std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
-    if (!service.empty())
+    if (!service.empty()) {
+        res = get<std::string>(service + "." + s_paymentaddress, res);
         res = get<std::string>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
+    }
     return res;
 }
 

@@ -131,6 +131,25 @@ inline XRouterCommand XRouterCommand_FromString(const std::string & command)
     return xrInvalid; // default
 };
 
+inline std::set<XRouterCommand> XRouterCommands()
+{
+    std::set<XRouterCommand> r;
+    r.insert(xrGetConfig);
+    r.insert(xrGetBlockCount);
+    r.insert(xrGetBlockHash);
+    r.insert(xrGetBlock);
+    r.insert(xrGetTransaction);
+    r.insert(xrSendTransaction);
+//    r.insert(xrGetTxBloomFilter);
+//    r.insert(xrGenerateBloomFilter);
+    r.insert(xrGetBlocks);
+    r.insert(xrGetTransactions);
+//    r.insert(xrGetBlockAtTime);
+    r.insert(xrDecodeRawTransaction);
+//    r.insert(xrGetBalance);
+    return r;
+};
+
 //******************************************************************************
 //******************************************************************************
 

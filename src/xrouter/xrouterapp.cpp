@@ -1614,7 +1614,28 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
 
         // wallets
         const auto & wallets = item.second->getWallets();
-        o.emplace_back("xwallets", Array(wallets.begin(), wallets.end()));
+        o.emplace_back("spvwallets", Array(wallets.begin(), wallets.end()));
+
+        // wallet configs
+        Array wc;
+        for (const auto & w : wallets) {
+            Object wlg;
+            wlg.emplace_back("spvwallet", w);
+            Array cmds;
+            const auto xrcommands = XRouterCommands();
+            for (const auto & cmd : xrcommands) {
+                Object co;
+                co.emplace_back("command", XRouterCommand_ToString(cmd));
+                co.emplace_back("fee", item.second->commandFee(cmd, w));
+                co.emplace_back("requestlimit", item.second->clientRequestLimit(cmd, w));
+                co.emplace_back("paymentaddress", item.second->paymentAddress(cmd, w));
+                co.emplace_back("disabled", !item.second->isAvailableCommand(cmd, w));
+                cmds.push_back(co);
+            }
+            wlg.emplace_back("commands", cmds);
+            wc.push_back(wlg);
+        }
+        o.emplace_back("spvconfigs", wc);
 
         // fees
         o.emplace_back("feedefault", item.second->defaultFee());

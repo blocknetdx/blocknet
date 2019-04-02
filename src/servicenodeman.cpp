@@ -418,6 +418,17 @@ CServicenode* CServicenodeMan::Find(const CPubKey& pubKeyServicenode)
     return NULL;
 }
 
+CServicenode* CServicenodeMan::Find(const std::string & nodeAddr)
+{
+    LOCK(cs);
+
+    for (CServicenode & mn : vServicenodes) {
+        if (mn.addr.ToString() == nodeAddr)
+            return &mn;
+    }
+    return nullptr;
+}
+
 //
 // Deterministically select the oldest/best servicenode to pay on the network
 //
