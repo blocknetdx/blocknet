@@ -80,30 +80,34 @@ bool App::createConf()
 {
     auto p = GetDataDir(false) / "xrouter.conf";
     if (!boost::filesystem::exists(p)) {
+        std::string eol = "\n";
+#ifdef WIN32
+        eol = "\r\n";
+#endif
         boost::filesystem::save_string_file(p,
-                "[Main]\n"
-                "# maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call\n"
-                "# 0 means you only want free calls\n"
-                "maxfee=0\n"
-                "# consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)\n"
-                "#           Paid calls will send a payment to each selected service node.\n"
-                "consensus=1\n"
-                "# timeout is the maximum time in seconds you're willing to wait for an XRouter response\n"
-                "timeout=30\n"
-                "\n"
-                "# It's possible to set per-call config options\n"
-                "# [xrGetBlockCount]\n"
-                "# maxfee=0.01\n"
-                "\n"
-                "# [BLOCK::xrGetBlockCount]\n"
-                "# maxfee=0.01\n"
-                "\n"
-                "# [SYS::xrGetBlockCount]\n"
-                "# maxfee=0.01\n"
-                "\n"
-                "# It's possible to set config options for Custom XRouter services\n"
-                "# [xrs::GetBestBlockHashBTC]\n"
-                "# maxfee=0.1\n"
+                "[Main]"                                                                                        + eol +
+                "# maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"         + eol +
+                "# 0 means you only want free calls"                                                            + eol +
+                "maxfee=0"                                                                                      + eol +
+                "# consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)"   + eol +
+                "#           Paid calls will send a payment to each selected service node."                     + eol +
+                "consensus=1"                                                                                   + eol +
+                "# timeout is the maximum time in seconds you're willing to wait for an XRouter response"       + eol +
+                "timeout=30"                                                                                    + eol +
+                ""                                                                                              + eol +
+                "# It's possible to set per-call config options"                                                + eol +
+                "# [xrGetBlockCount]"                                                                           + eol +
+                "# maxfee=0.01"                                                                                 + eol +
+                ""                                                                                              + eol +
+                "# [BLOCK::xrGetBlockCount]"                                                                    + eol +
+                "# maxfee=0.01"                                                                                 + eol +
+                ""                                                                                              + eol +
+                "# [SYS::xrGetBlockCount]"                                                                      + eol +
+                "# maxfee=0.01"                                                                                 + eol +
+                ""                                                                                              + eol +
+                "# It's possible to set config options for Custom XRouter services"                             + eol +
+                "# [xrs::GetBestBlockHashBTC]"                                                                  + eol +
+                "# maxfee=0.1"                                                                                  + eol
         );
         return true;
     }
