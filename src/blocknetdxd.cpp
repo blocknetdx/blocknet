@@ -26,7 +26,7 @@
  *
  * \section intro_sec Introduction
  *
- * This is the developer documentation of the reference client for a 2nd blockchain interoperability protocol called BlocknetDX (https://www.blocknet.co),
+ * This is the developer documentation of the reference client for a 2nd blockchain interoperability protocol called Blocknet (https://www.blocknet.co),
  * which enables communication, interaction, and exchange between different blockchains in a permissionless and trustless manner. This implemented through 
  * the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network (Service Nodes) to host 
  * the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
@@ -80,13 +80,13 @@ bool AppInit(int argc, char* argv[])
 
     // Process help and version before taking care about datadir
     if (mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
-        std::string strUsage = _("Blocknet Core Daemon") + " " + _("version") + " " + FormatFullVersion() + "\n";
+        std::string strUsage = _("Blocknet Daemon") + " " + _("version") + " " + FormatFullVersion() + "\n";
 
         if (mapArgs.count("-version")) {
             strUsage += LicenseInfo();
         } else {
             strUsage += "\n" + _("Usage:") + "\n" +
-                        "  blocknetdxd [options]                     " + _("Start Blocknet Core Daemon") + "\n";
+                        "  blocknetdxd [options]                     " + _("Start Blocknet Daemon") + "\n";
 
             strUsage += "\n" + HelpMessage(HMM_BITCOIND);
         }
@@ -132,7 +132,7 @@ bool AppInit(int argc, char* argv[])
 #ifndef WIN32
         fDaemon = GetBoolArg("-daemon", false);
         if (fDaemon) {
-            fprintf(stdout, "BlocknetDX server starting\n");
+            fprintf(stdout, "Blocknet server starting\n");
 
             // Daemonize
             pid_t pid = fork();

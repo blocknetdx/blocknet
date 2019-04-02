@@ -78,11 +78,11 @@ Remember... this is local. Make sure your QT is not running.
 
 Create the servicenode.conf file in the same directory as your wallet.dat.
 
-Copy the servicenode private key and correspondig collateral output transaction that holds the 1K BlocknetDX.
+Copy the servicenode private key and correspondig collateral output transaction that holds the 5000 BLOCK.
 
 The servicenode private key may be an existing key from [Option 1](#option1), or a newly generated key from [Option 2](#option2). 
 
-*Please note, the servicenode priviate key is not the same as a wallet private key. Never put your wallet private key in the servicenode.conf file. That is equivalent to putting your 10,000 BlocknetDX on the remote server and defeats the purpose of a hot/cold setup.*
+*Please note, the servicenode priviate key is not the same as a wallet private key. Never put your wallet private key in the servicenode.conf file. That is equivalent to putting your 5000 Block on the remote server and defeats the purpose of a hot/cold setup.*
 
 ### Get the collateral output
 

@@ -45,7 +45,7 @@ using namespace boost;
 using namespace std;
 
 #if defined(NDEBUG)
-#error "BlocknetDX cannot be compiled without assertions."
+#error "Blocknet cannot be compiled without assertions."
 #endif
 
 /**

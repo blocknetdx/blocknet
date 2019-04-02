@@ -1,7 +1,7 @@
 Servicenode Budget API
 =======================
 
-Blocknetdx now supports full decentralized budgets that are paid directly from the blockchain via superblocks once per month.
+Blocknet now supports full decentralized budgets that are paid directly from the blockchain via superblocks once per month.
 
 Budgets go through a series of stages before being paid:
 * prepare - create a special transaction that destroys coins in order to make a proposal
@@ -25,7 +25,7 @@ mnbudget prepare cool-project http://www.cool-project/one.json 12 100000 y6R9oN1
 
 Output: `464a0eb70ea91c94295214df48c47baa72b3876cfb658744aaf863c7b5bf1ff0` - This is the collateral hash, copy this output for the next step
 
-In this transaction we prepare collateral for "_cool-project_". This proposal will pay _1200_ BlocknetDX, _12_ times over the course of a year totaling _24000_ BlocknetDX.
+In this transaction we prepare collateral for "_cool-project_". This proposal will pay _1200_ BLOCK, _12_ times over the course of a year totaling _24000_ BLOCK.
 
 **Warning -- if you change any fields within this command, the collateral transaction will become invalid.**
 
@@ -138,7 +138,7 @@ Finalized budget
 Get paid
 ------------------------
 
-When block `1000000` is reached you'll receive a payment for `1200` BlocknetDX.
+When block `1000000` is reached you'll receive a payment for `1200` BLOCK.
 
 
 RPC Commands

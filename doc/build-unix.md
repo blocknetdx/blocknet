@@ -1,6 +1,6 @@
 UNIX BUILD NOTES
 ====================
-Some notes on how to build BlocknetDX in Unix.
+Some notes on how to build Blocknet in Unix.
 
 Note
 ---------------------
@@ -83,7 +83,7 @@ Optional:
 Dependencies for the GUI: Ubuntu & Debian
 -----------------------------------------
 
-If you want to build BlocknetDX-Qt, make sure that the required packages for Qt development
+If you want to build Blocknet, make sure that the required packages for Qt development
 are installed. Qt 5 is necessary to build the GUI.
 If both Qt 4 and Qt 5 are installed, Qt 5 will be used.
 To build without GUI pass `--without-gui`.
@@ -166,7 +166,7 @@ If you need to build Boost yourself:
 
 Security
 --------
-To help make your BlocknetDX installation more secure by making certain attacks impossible to
+To help make your Blocknet installation more secure by making certain attacks impossible to
 exploit even if a vulnerability is found, binaries are hardened by default.
 This can be disabled with:
 

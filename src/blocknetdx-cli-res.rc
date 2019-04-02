@@ -16,8 +16,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "Blocknetdx"
-            VALUE "FileDescription",    "Blocknetdx-cli (OSS RPC client for Blocknetdx)"
+            VALUE "CompanyName",        "Blocknet"
+            VALUE "FileDescription",    "Blocknetdx-cli (OSS RPC client for Blocknet)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "blocknetdx-cli"
             VALUE "LegalCopyright",     COPYRIGHT_STR

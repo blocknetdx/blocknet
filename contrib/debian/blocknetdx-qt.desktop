@@ -1,9 +1,9 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=Blocknetdx
-Comment=Blocknetdx P2P Cryptocurrency
-Comment[fr]=Blocknetdx, monnaie virtuelle cryptographique pair à pair
-Comment[tr]=Blocknetdx, eşten eşe kriptografik sanal para birimi
+Name=Blocknet
+Comment=Blocknet P2P Cryptocurrency
+Comment[fr]=Blocknet, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Blocknet, eşten eşe kriptografik sanal para birimi
 Exec=blocknetdx-qt %u
 Terminal=false
 Type=Application

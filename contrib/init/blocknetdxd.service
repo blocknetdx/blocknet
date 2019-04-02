@@ -1,5 +1,5 @@
 [Unit]
-Description=BlocknetDX's distributed currency daemon
+Description=Blocknet's distributed currency daemon
 After=network.target
 
 [Service]

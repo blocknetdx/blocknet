@@ -16,8 +16,8 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "BlocknetDX"
-            VALUE "FileDescription",    "blocknetdxd (OSS daemon/client for Blocknetdx)"
+            VALUE "CompanyName",        "Blocknet"
+            VALUE "FileDescription",    "blocknetdxd (OSS daemon/client for Blocknet)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
             VALUE "InternalName",       "blocknetdxd"
             VALUE "LegalCopyright",     COPYRIGHT_STR
