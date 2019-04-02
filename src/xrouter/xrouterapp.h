@@ -17,6 +17,7 @@
 #include "hash.h"
 #include "validationstate.h"
 #include "servicenode.h"
+#include "servicenodeman.h"
 #include "net.h"
 #include "sync.h"
 

@@ -455,8 +455,10 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
 
     // Notify xrouter this snode is activated
     auto pmn = mnodeman.Find(vin);
-    if (pmn && xrouter::App::instance().isReady()) {
-        xrouter::App::instance().updatePaymentAddress(pmn->pubKeyCollateralAddress);
+    auto & xr = xrouter::App::instance();
+    if (pmn && xr.isReady()) {
+        xr.updatePaymentAddress(pmn->pubKeyCollateralAddress);
+        xr.xrSettings()->assignNode(pmn->addr.ToString());
     }
 
     return true;

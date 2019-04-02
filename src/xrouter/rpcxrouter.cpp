@@ -839,7 +839,7 @@ Value xrStatus(const Array & params, bool fHelp)
 {
     if (fHelp) {
         throw std::runtime_error("xrStatus\n"
-                                 "Show XRouter status and info.");
+                                 "Prints your XRouter node configuration.");
     }
     
     Object result;

@@ -1585,7 +1585,7 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
         const auto & schedule = item.second->feeSchedule();
         for (const auto & s : schedule)
             ofs.emplace_back(s.first,  s.second);
-        o.emplace_back("feeschedule", ofs);
+        o.emplace_back("fees", ofs);
 
         // plugins
         Object plugins;
@@ -1657,23 +1657,27 @@ void App::reloadConfigs() {
 }
 
 std::string App::getStatus() {
-    WaitableLock l(mu);
-
     Object result;
 
-    std::vector<unsigned char> spubkey{activeServicenode.pubKeyServicenode.begin(),
-                                       activeServicenode.pubKeyServicenode.end()};
-    result.emplace_back("enabled", HexStr(spubkey));
+    auto snode = mnodeman.Find(activeServicenode.vin);
+    if (snode != nullptr) {
+        std::map<NodeAddr, XRouterSettingsPtr> my;
+        my[snode->addr.ToString()] = xrsettings;
 
-    result.emplace_back("enabled", isEnabled());
+        Array data;
+        snodeConfigJSON(my, data);
+
+        if (data.empty() || data.size() > 1)
+            return "";
+
+        result = data[0].get_obj();
+    }
+
+    result.emplace_back("xrouter", isEnabled());
+    result.emplace_back("servicenode", snode != nullptr);
     result.emplace_back("config", xrsettings->rawText());
 
-    Object myplugins;
-    for (std::string s : xrsettings->getPlugins())
-        myplugins.emplace_back(s, xrsettings->getPluginSettings(s)->rawText());
-    result.emplace_back("plugins", myplugins);
-
-    return json_spirit::write_string(Value(result), true);
+    return json_spirit::write_string(Value(result), json_spirit::pretty_print, 8);
 }
 
 void App::getLatestNodeContainers(std::vector<CServicenode> & snodes, std::vector<CNode*> & nodes,
