@@ -795,8 +795,7 @@ Value xrUpdateConfigs(const Array & params, bool fHelp)
                                  "xrUpdateConfigs\n"
                                  "\n"
                                  "With force check parameter:\n"
-                                 "xrUpdateConfigs true\n"
-                                 "xrUpdateConfigs 1\n");
+                                 "xrUpdateConfigs true\n");
     }
 
     bool forceCheck = false;
