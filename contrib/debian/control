@@ -59,4 +59,4 @@ Description: peer-to-peer network based digital currency - Qt GUI
  Full transaction history is stored locally at each client.  This
  requires 1+ GB of space, slowly growing.
  .
- This package provides Blocknet-Qt, a GUI for Blocknet based on Qt.
+ This package provides Blocknet, a GUI for Blocknet based on Qt.

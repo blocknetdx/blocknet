@@ -85,6 +85,7 @@ Makefile
 blocknetdx-qt
 BlocknetDX-Qt.app
 Blocknet-Qt.app
+Blocknet.app
 
 # Unit-tests
 Makefile.test

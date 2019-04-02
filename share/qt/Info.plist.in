@@ -32,7 +32,7 @@
   <string>Blocknet</string>
 
   <key>CFBundleIdentifier</key>
-  <string>co.blocknet.Blocknet-Qt</string>
+  <string>co.blocknet.Blocknet</string>
 
   <key>CFBundleURLTypes</key>
   <array>
