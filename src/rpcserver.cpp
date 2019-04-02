@@ -1040,6 +1040,17 @@ json_spirit::Value CRPCTable::execute(const std::string& strMethod, const json_s
         throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found (disabled)");
 #endif
 
+    // Do not process xrouter calls if it's disabled or not ready
+    if (pcmd->category == "xrouter" && (!xrouter::App::isEnabled() || !xrouter::App::instance().isReady())) {
+        Object error;
+        if (!xrouter::App::isEnabled())
+            error.emplace_back("error", "XRouter is disabled, add xrouter=1 to blocknetdx.conf");
+        else
+            error.emplace_back("error", "XRouter is not ready yet, please wait");
+        error.emplace_back("code", xrouter::UNSUPPORTED_SERVICE);
+        return error;
+    }
+
     // Observe safe mode
     string strWarning = GetWarnings("rpc");
     if (strWarning != "" && !GetBoolArg("-disablesafemode", false) &&
