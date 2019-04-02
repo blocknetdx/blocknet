@@ -78,7 +78,7 @@ bool App::isEnabled()
 bool App::init(int argc, char *argv[])
 {
     if (!isEnabled())
-        return true;
+        return false;
 
     xrouterpath = GetDataDir(false) / "xrouter.conf";
     LOG() << "Loading xrouter config from file " << xrouterpath.string();
@@ -94,7 +94,7 @@ bool App::init(int argc, char *argv[])
 bool App::start()
 {
     if (!isEnabled())
-        return true;
+        return false;
 
     // Only start server mode if we're a servicenode
     if (fServiceNode) {
