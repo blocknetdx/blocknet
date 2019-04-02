@@ -1709,7 +1709,7 @@ bool AppInit2(int argc, char* argv[], boost::thread_group& threadGroup)
                 uiInterface.InitMessage(_("Start xrouter service"));
                 xrapp.start();
             } else uiInterface.InitMessage(_("Failed to start xrouter service"));
-        }
+        } else uiInterface.InitMessage(_("xrouter is disabled"));
     }
 #endif
 
