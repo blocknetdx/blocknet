@@ -282,7 +282,6 @@ SOURCES += \
     src/support/cleanse.cpp \
     src/crypto/chacha20.cpp \
     src/bip38.cpp \
-    src/s3downloader.cpp \
     src/coinvalidator.cpp \
     src/xbridge/xbitcoinaddress.cpp \
     src/qt/xbridgeui/xbridgeaddressbookmodel.cpp \
@@ -571,7 +570,6 @@ HEADERS += \
     src/crypto/chacha20.h \
     src/compat/endian.h \
     src/compat/byteswap.h \
-    src/s3downloader.h \
     src/coinvalidator.h \
     src/xbridge/xkey.h \
     src/xbridge/xpubkey.h \
