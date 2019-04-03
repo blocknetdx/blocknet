@@ -335,52 +335,61 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             }
 
             try {
-                switch (command) {
-                    case xrGetBlockCount:
-                        reply = processGetBlockCount(service, params);
-                        break;
-                    case xrGetBlockHash:
-                        reply = processGetBlockHash(service, params);
-                        break;
-                    case xrGetBlock:
-                        reply = processGetBlock(service, params);
-                        break;
-                    case xrGetTransaction:
-                        reply = processGetTransaction(service, params);
-                        break;
-                    case xrGetBlocks:
-                        reply = processGetBlocks(service, params);
-                        break;
-                    case xrGetTransactions:
-                        reply = processGetTransactions(service, params);
-                        break;
-                    case xrDecodeRawTransaction:
-                        reply = processDecodeRawTransaction(service, params);
-                        break;
-                    case xrGetBalance:
-                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-//                    reply = processGetBalance(service, params);
-                        break;
-                    case xrGetTxBloomFilter:
-                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-//                        reply = processGetTxBloomFilter(service, params);
-                        break;
-                    case xrGenerateBloomFilter:
-                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-//                        reply = processGenerateBloomFilter(service, params);
-                        break;
-                    case xrGetBlockAtTime:
-                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-//                    reply = processConvertTimeToBlockCount(service, params);
-                        break;
-                    case xrGetReply:
-                        reply = processFetchReply(uuid);
-                        break;
-                    case xrSendTransaction:
-                        reply = processSendTransaction(service, params);
-                        break;
-                    default:
-                        throw XRouterError("Unknown command " + fqService, xrouter::UNSUPPORTED_SERVICE);
+
+                try {
+                    switch (command) {
+                        case xrGetBlockCount:
+                            reply = processGetBlockCount(service, params);
+                            break;
+                        case xrGetBlockHash:
+                            reply = processGetBlockHash(service, params);
+                            break;
+                        case xrGetBlock:
+                            reply = processGetBlock(service, params);
+                            break;
+                        case xrGetTransaction:
+                            reply = processGetTransaction(service, params);
+                            break;
+                        case xrGetBlocks:
+                            reply = processGetBlocks(service, params);
+                            break;
+                        case xrGetTransactions:
+                            reply = processGetTransactions(service, params);
+                            break;
+                        case xrDecodeRawTransaction:
+                            reply = processDecodeRawTransaction(service, params);
+                            break;
+                        case xrGetBalance:
+                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+    //                    reply = processGetBalance(service, params);
+                            break;
+                        case xrGetTxBloomFilter:
+                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+    //                        reply = processGetTxBloomFilter(service, params);
+                            break;
+                        case xrGenerateBloomFilter:
+                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+    //                        reply = processGenerateBloomFilter(service, params);
+                            break;
+                        case xrGetBlockAtTime:
+                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+    //                    reply = processConvertTimeToBlockCount(service, params);
+                            break;
+                        case xrGetReply:
+                            reply = processFetchReply(uuid);
+                            break;
+                        case xrSendTransaction:
+                            reply = processSendTransaction(service, params);
+                            break;
+                        default:
+                            throw XRouterError("Unknown command " + fqService, xrouter::UNSUPPORTED_SERVICE);
+                    }
+                } catch (std::exception & e) {
+                    ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " " << e.what();
+                    throw XRouterError("Internal Server Error: Bad connector for currency " + fqService, xrouter::BAD_CONNECTOR);
+                } catch (XRouterError & e) {
+                    ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " msg: " << e.msg << " code: " << e.code;
+                    throw XRouterError("Internal Server Error: Bad connector for currency " + fqService, xrouter::BAD_CONNECTOR);
                 }
 
                 // Spend client payment if supported command

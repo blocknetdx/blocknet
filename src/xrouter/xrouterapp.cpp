@@ -691,9 +691,9 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
         if (nodec.count(nodeAddr))
             node = nodec[nodeAddr];
 
-        // If the service node is not among peers skip
-        if (!node)
-            continue;
+        // If the service node is not among peers or it's disconnecting
+        if (!node || node->Disconnecting())
+            continue; // skip
 
         // Only select nodes with a fee smaller than the max fee we're willing to pay
         if (maxfee > 0) {
@@ -1145,7 +1145,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
 
 //*****************************************************************************
 //*****************************************************************************
-std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & fqService,
+std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & fqServiceName,
                              const int & confirmations, const std::vector<std::string> & params)
 {
     const std::string & uuid = generateUUID();
@@ -1158,8 +1158,8 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf", xrouter::UNAUTHORIZED);
 
         std::string cleaned;
-        if (!removeNamespace(fqService, cleaned))
-            throw XRouterError("Bad service name: " + fqService, xrouter::INVALID_PARAMETERS);
+        if (!removeNamespace(fqServiceName, cleaned))
+            throw XRouterError("Bad service name: " + fqServiceName, xrouter::INVALID_PARAMETERS);
 
         const auto & service = cleaned;
 
@@ -1307,7 +1307,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         while (!ShutdownRequested() && confirmation_count < confs
             && GetAdjustedTime() - queryCheckStart < timeout)
         {
-            boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
+            boost::this_thread::sleep_for(boost::chrono::milliseconds(5));
             for (int i = review.size() - 1; i >= 0; --i)
                 if (queryMgr.hasReply(uuid, review[i])) {
                     ++confirmation_count;
@@ -1318,11 +1318,9 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         // Clean up
         queryMgr.purge(uuid);
 
-        bool incompleteRequest{false};
         std::set<NodeAddr> failed;
 
         if (confirmation_count < confs) {
-            incompleteRequest = true;
             failed.insert(review.begin(), review.end());
 
             auto snodes = getServiceNodes();
@@ -1352,10 +1350,11 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         }
 
         // Handle the results
+        std::map<NodeAddr, std::string> replies;
         std::set<NodeAddr> diff;
         std::set<NodeAddr> agree;
-        std::string result; // TODO need field to communicate non-fatal consensus errors to client
-        int c = queryMgr.mostCommonReply(uuid, result, agree, diff);
+        std::string result;
+        int c = queryMgr.mostCommonReply(uuid, result, replies, agree, diff);
         for (const auto & addr : diff) // penalize nodes that didn't match consensus
             updateScore(addr, -5);
         if (c > 1) { // only update score if there's consensus
@@ -1365,8 +1364,51 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             }
         }
 
-//        if (c <= confs || result.empty())
-//            throw XRouterError("No consensus between responses", xrouter::INTERNAL_SERVER_ERROR);
+        // Handle multiple replies
+        if (replies.size() > 1) {
+            Value resultVal; read_string(result, resultVal);
+
+            Object resultObj;
+            std::string resultStr;
+
+            if (resultVal.type() == obj_type) {
+                resultObj = resultVal.get_obj();
+                const Value & rv = find_value(resultObj, "result");
+                if (rv.type() == str_type)
+                    resultStr = rv.get_str();
+            } else if (resultVal.type() == str_type)
+                resultStr = resultVal.get_str();
+
+            Object r;
+            if (!resultStr.empty())
+                r.emplace_back("reply", resultStr);
+            else
+                r.emplace_back("reply", resultObj);
+
+            Array allr;
+            for (const auto & item : replies) {
+                const auto & nodeAddr = item.first;
+                const auto & reply = item.second;
+
+                Value replyVal; read_string(reply, replyVal);
+                Object replyObj;
+                if (replyVal.type() == obj_type)
+                    replyObj = replyVal.get_obj();
+
+                Object ar;
+                std::vector<unsigned char> spubkey; servicenodePubKey(nodeAddr, spubkey);
+                ar.emplace_back("nodepubkey", HexStr(spubkey));
+                ar.emplace_back("score", getScore(nodeAddr));
+                if (replyVal.type() == obj_type)
+                    ar.emplace_back("reply", replyObj);
+                else
+                    ar.emplace_back("reply", reply);
+                allr.push_back(ar);
+            }
+            r.emplace_back("allreplies", allr);
+
+            result = json_spirit::write_string(Value(r), pretty_print);
+        }
 
         releaseNodes(selectedNodes);
         return result;

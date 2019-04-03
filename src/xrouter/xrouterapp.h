@@ -29,6 +29,9 @@
 #include <chrono>
 #include <algorithm>
 
+#include <json/json_spirit.h>
+#include <json/json_spirit_reader_template.h>
+
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
@@ -873,17 +876,23 @@ private:
          * Fetch the most common reply for a specific query. If a group of nodes return results and 2 of 3 are
          * matching, this will return the most common reply, i.e. the replies of the matching two.
          * @param id
-         * @param reply
+         * @param reply Most common reply
+         * @param replies All replies
          * @param agree Set of nodes that provided most common replies
          * @param diff Set of nodes that provided non-common replies
          * @return
          */
-        int mostCommonReply(const std::string & id, std::string & reply, std::set<NodeAddr> & agree, std::set<NodeAddr> & diff) {
+        int mostCommonReply(const std::string & id, std::string & reply, std::map<NodeAddr, std::string> & replies,
+                            std::set<NodeAddr> & agree, std::set<NodeAddr> & diff)
+        {
             WaitableLock l(mu);
 
             int consensus = queries.count(id);
             if (!consensus || queries[id].empty())
                 return 0;
+
+            // all replies
+            replies = queries[id];
 
             std::map<uint256, std::string> hashes;
             std::map<uint256, int> counts;
@@ -895,7 +904,7 @@ private:
                 nodes[hash].insert(item.first);
             }
 
-            // sort replies counts descending (most similar replies are more valuable)
+            // sort reply counts descending (most similar replies are more valuable)
             std::vector<std::pair<uint256, int> > tmp(counts.begin(), counts.end());
             std::sort(tmp.begin(), tmp.end(),
                       [](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
@@ -904,8 +913,22 @@ private:
 
             diff.clear();
             if (tmp.size() > 1) {
+                if (tmp[0].second == tmp[1].second) { // Check for errors and re-sort if there's a tie and highest rank has error
+                    const auto &r = hashes[tmp[0].first];
+                    if (hasError(r)) { // in tie arrangements we don't want errors to take precendence
+                        std::sort(tmp.begin(), tmp.end(), // sort descending
+                            [this, &hashes](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
+                                const auto & ae = hasError(hashes[a.first]);
+                                const auto & be = hasError(hashes[b.first]);
+                                if ((!ae && !be) || (ae && be))
+                                    return a.second > b.second;
+                                return be;
+                            });
+                    }
+                }
+                // Filter nodes that responded with different results
                 for (int i = 1; i < static_cast<int>(tmp.size()); ++i) {
-                    auto & hash = tmp[i].first;
+                    const auto & hash = tmp[i].first;
                     if (!nodes.count(hash) || tmp[i].second >= tmp[0].second) // do not penalize equal counts, only fewer
                         continue;
                     auto ns = nodes[hash];
@@ -1028,6 +1051,14 @@ private:
             WaitableLock l(mu);
             if (queriesLocks.count(id))
                 queriesLocks[id].erase(node);
+        }
+    private:
+        bool hasError(const std::string & reply) {
+            Value v; json_spirit::read_string(reply, v);
+            if (v.type() != json_spirit::obj_type)
+                return false;
+            const auto & err_v = json_spirit::find_value(v.get_obj(), "error");
+            return err_v.type() != json_spirit::null_type;
         }
     private:
         CWaitableCriticalSection mu;
