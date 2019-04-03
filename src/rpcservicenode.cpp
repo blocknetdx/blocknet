@@ -696,6 +696,11 @@ Value servicenodelist(const Array& params, bool fHelp)
         std::string strStatus = mn->Status();
 
         obj.push_back(Pair("rank", (strStatus == "ENABLED" ? s.first : 0)));
+        auto key = mn->pubKeyServicenode;
+        if (!key.IsCompressed())
+            key.Compress();
+        std::vector<unsigned char> pubkey{key.begin(), key.end()};
+        obj.push_back(Pair("nodepubkey", HexStr(std::string(pubkey.begin(), pubkey.end()))));
         obj.push_back(Pair("txhash", strTxHash));
         obj.push_back(Pair("outidx", (uint64_t)oIdx));
         obj.push_back(Pair("status", strStatus));
