@@ -678,6 +678,7 @@ public:
     // new code.
     static void ClearBanned(); // needed for unit testing
     static bool IsBanned(CNetAddr ip);
+    static bool IsBanned(const std::string & ipPort);
     static bool Ban(const CNetAddr& ip);
     void copyStats(CNodeStats& stats);
 

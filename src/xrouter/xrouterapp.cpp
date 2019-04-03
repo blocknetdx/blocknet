@@ -89,13 +89,15 @@ bool App::createConf()
                 "# maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"         + eol +
                 "# 0 means you only want free calls"                                                            + eol +
                 "maxfee=0"                                                                                      + eol +
+                ""                                                                                              + eol +
                 "# consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)"   + eol +
-                "#           Paid calls will send a payment to each selected service node."                     + eol +
+                "# Paid calls will send a payment to each selected service node."                               + eol +
                 "consensus=1"                                                                                   + eol +
+                ""                                                                                              + eol +
                 "# timeout is the maximum time in seconds you're willing to wait for an XRouter response"       + eol +
                 "timeout=30"                                                                                    + eol +
                 ""                                                                                              + eol +
-                "# It's possible to set per-call config options"                                                + eol +
+                "# Optionally set per-call config options:"                                                     + eol +
                 "# [xrGetBlockCount]"                                                                           + eol +
                 "# maxfee=0.01"                                                                                 + eol +
                 ""                                                                                              + eol +
@@ -237,13 +239,16 @@ bool App::createConnectors() {
 }
 
 bool App::openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
-                          const std::vector<CNode*> & skipNodes)
+                          const std::vector<CNode*> & skipNodes, uint32_t & foundCount)
 {
     const auto fqService = (command == xrService) ? pluginCommandKey(service) // plugin
                                                   : walletCommandKey(service, XRouterCommand_ToString(command)); // spv wallet
     // use top-level wallet key (e.g. xr::BLOCK)
     const auto fqServiceAdjusted = (command == xrService) ? fqService
                                                           : walletCommandKey(service);
+    // Initially set to 0
+    foundCount = 0;
+
     if (fqServiceAdjusted.empty())
         return false;
     if (count < 1 || count > 50) {
@@ -281,6 +286,8 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 
     // Only select nodes with a fee smaller than the max fee we're willing to pay
     const auto maxfee = xrsettings->maxFee(command, service);
+    const auto connwait = xrsettings->configSyncTimeout();
+
     auto failedChecks = [this,maxfee,command,service,fqService](const NodeAddr & nodeAddr,
                                                                 XRouterSettingsPtr settings) -> bool
     {
@@ -333,11 +340,12 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 
     if (connected >= count) {
         releaseNodes(nodes);
+        foundCount = connected;
         return true; // done if we have enough existing connections
     }
 
     // Manages fetching the config from specified nodes
-    auto fetchConfig = [this,&addSelected](CNode *node, const CServicenode & snode)
+    auto fetchConfig = [this,connwait,&addSelected](CNode *node, const CServicenode & snode)
     {
         const std::string & nodeAddr = node->NodeAddress();
 
@@ -351,8 +359,8 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         if (qcond) {
             auto l = queryMgr.queryLock(uuid, nodeAddr);
             boost::mutex::scoped_lock lock(*l);
-            if (qcond->timed_wait(lock, boost::posix_time::milliseconds(3500),
-                                  [this,&uuid,&nodeAddr]() { return ShutdownRequested() || queryMgr.hasReply(uuid, nodeAddr); }))
+            if (qcond->timed_wait(lock, boost::posix_time::seconds(connwait),
+                [this,&uuid,&nodeAddr]() { return ShutdownRequested() || queryMgr.hasReply(uuid, nodeAddr); }))
             {
                 if (queryMgr.hasReply(uuid, nodeAddr))
                     addSelected(nodeAddr);
@@ -361,8 +369,8 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         }
     };
 
-    auto connect = [this,&lu,&connectedSnodes,&fetchConfig,&addSelected,&addNode](const std::string & snodeAddr,
-                                                                                  const CServicenode & snode)
+    auto connect = [this,connwait,&lu,&connectedSnodes,&fetchConfig,&addSelected,&addNode](const std::string & snodeAddr,
+                                                                                           const CServicenode & snode)
     {
         // If we have a pending connection proceed in this block and wait for it to complete, otherwise add a pending
         // connection if none found and then skip waiting here to avoid race conditions and proceed to open a connection
@@ -372,7 +380,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             auto cond = pendingConnMgr.connectionCond(snodeAddr);
             if (l && cond) {
                 boost::mutex::scoped_lock lock(*l);
-                if (cond->timed_wait(lock, boost::posix_time::milliseconds(4500),
+                if (cond->timed_wait(lock, boost::posix_time::milliseconds(connwait*1000*1.5),
                     [this,&snodeAddr]() { return ShutdownRequested() || !pendingConnMgr.hasPendingConnection(snodeAddr); }))
                 {
                     bool alreadyConnected{false};
@@ -482,9 +490,10 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         for (auto & it : needConnectionsNoConfigs)
             all.push_back(it.first);
 
-        if (all.size() < count - connectedCount()) { // not enough nodes
+        if (all.size() < count - connected) { // not enough nodes
             releaseNodes(nodes);
-            return connectedCount() >= count;
+            foundCount = all.size();
+            return connected >= count;
         }
 
         boost::thread_group tg;
@@ -530,12 +539,19 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             // Wait until we have all required connections (count - connected = 0)
             // Wait while thread group has more running threads than we need connections for -or-
             //            thread group has too many threads (2 per cpu core)
-            while (tg.size() > (count - connectedCount()) || tg.size() >= boost::thread::hardware_concurrency() * 2) {
+            auto waitTime = GetAdjustedTime();
+            while (count - connectedCount() > 0 && // only continue waiting for threads if we need more connections
+                  (tg.size() > (count - connectedCount()) || tg.size() >= boost::thread::hardware_concurrency() * 2)) {
                 if (ShutdownRequested()) {
-                    releaseNodes(nodes);
                     tg.interrupt_all();
                     tg.join_all();
+                    releaseNodes(nodes);
+                    foundCount = connectedCount();
                     return false;
+                }
+                if (GetAdjustedTime() - waitTime > connwait) { // stop waiting after n seconds
+                    tg.interrupt_all();
+                    break;
                 }
                 boost::this_thread::interruption_point();
                 boost::this_thread::sleep_for(boost::chrono::milliseconds(50));
@@ -545,10 +561,13 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                 break;
         }
 
+        if (count - connectedCount() <= 0)
+            tg.interrupt_all();
         tg.join_all();
     }
 
     releaseNodes(nodes);
+    foundCount = connected;
     return connected >= count;
 }
 
@@ -1193,8 +1212,10 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         // If we don't have enough open connections...
         if (selected < confs) {
             // Open connections (at least number equal to how many confirmations we want)
-            if (!openConnections(command, service, static_cast<uint32_t>(confs - selected), selectedNodes)) {
-                std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService + " found " + std::to_string(selected));
+            uint32_t found{0};
+            if (!openConnections(command, service, static_cast<uint32_t>(confs - selected), selectedNodes, found)) {
+                std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService +
+                                " found " + std::to_string(found > selected ? found : selected));
                 throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
             }
 
@@ -1553,7 +1574,7 @@ CPubKey App::getPaymentPubkey(CNode* node)
     return CPubKey();
 }
 
-std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqService, const int & count) {
+std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqService, const int & count, uint32_t & foundCount) {
     std::map<NodeAddr, XRouterSettingsPtr> selectedConfigs;
     std::vector<std::string> nparts;
     if (!xrsplit(fqService, xrdelimiter, nparts))
@@ -1578,10 +1599,14 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
     const std::string plugin = boost::algorithm::join(std::vector<std::string>{nparts.begin()+1, nparts.end()}, xrdelimiter);
     const std::string service = command != xrService ? wallet : plugin;
 
-    openConnections(command, service, count, { }); // open connections to snodes that have our service
+    uint32_t found{0};
+    openConnections(command, service, count, { }, found); // open connections to snodes that have our service
+    foundCount = found;
 
     const auto configs = getNodeConfigs(); // get configs and store matching ones
     for (const auto & item : configs) {
+        if (CNode::IsBanned(item.first)) // exclude banned
+            continue;
         if (command != xrService && item.second->hasWallet(service)) {
             selectedConfigs.insert(item);
             continue;
@@ -1610,6 +1635,8 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
 
         // score
         o.emplace_back("score", getScore(item.first));
+        // banned
+        o.emplace_back("banned", CNode::IsBanned(item.first));
 
         // payment address
         std::string address;
@@ -1752,7 +1779,7 @@ void App::getLatestNodeContainers(std::vector<CServicenode> & snodes, std::vecto
 
     // Build snode cache
     for (CServicenode & s : snodes) {
-        if (!s.addr.ToString().empty())
+        if (!s.addr.ToString().empty() && !CNode::IsBanned(s.addr.ToString())) // skip banned snodes
             snodec[s.addr.ToString()] = s;
     }
 

@@ -115,9 +115,10 @@ public:
      * @param service Wallet name or plugin name
      * @param count Number of nodes to open connections to
      * @param skipNodes avoids connecting to these nodes
+     * @param foundCount number of nodes found
      */
     bool openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
-                         const std::vector<CNode*> & skipNodes);
+                         const std::vector<CNode*> & skipNodes, uint32_t & foundCount);
     
     /**
      * @brief send config update requests to all nodes
@@ -263,9 +264,10 @@ public:
      * returns a map of connections less than equal to count.
      * @param service
      * @param count Number of service nodes to query.
+     * @param foundCount Number of service nodes that were found.
      * @return
      */
-    std::map<NodeAddr, XRouterSettingsPtr> xrConnect(const std::string & service, const int & count);
+    std::map<NodeAddr, XRouterSettingsPtr> xrConnect(const std::string & service, const int & count, uint32_t & foundCount);
 
     /**
      * @brief fetches the reply to the giver request
@@ -566,7 +568,7 @@ private:
         WaitableLock l(mu);
         return snodeScore.count(node);
     }
-    int64_t getScore(const NodeAddr & node) {
+    int getScore(const NodeAddr & node) {
         WaitableLock l(mu);
         return snodeScore[node];
     }
@@ -575,6 +577,18 @@ private:
         if (!snodeScore.count(node))
             snodeScore[node] = 0;
         snodeScore[node] += score;
+        const auto scr = snodeScore[node];
+        int banscore = GetArg("-xrouterbanscore", -200);
+        if (scr <= banscore) {
+            CService s(node);
+            auto pnode = FindNode(s);
+            if (pnode) {
+                LOG() << strprintf("Banning XRouter Node %s because score is too low: %i", node, scr);
+                snodeScore[node] = -30; // default score when ban expires
+                LOCK(cs_main);
+                Misbehaving(pnode->GetId(), 100);
+            }
+        }
     }
     std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
         WaitableLock l(mu);
@@ -1027,7 +1041,7 @@ private:
     XRouterSettingsPtr xrsettings;
     XRouterServerPtr server;
 
-    std::map<std::string, int64_t> snodeScore;
+    std::map<NodeAddr, int> snodeScore;
 
     std::map<std::string, std::set<NodeAddr> > configQueries;
     std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;

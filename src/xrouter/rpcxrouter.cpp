@@ -937,10 +937,12 @@ Value xrConnect(const Array & params, bool fHelp)
     Array data;
 
     try {
-        configs = app.xrConnect(service, nodeCount);
+        uint32_t found{0};
+        configs = app.xrConnect(service, nodeCount, found);
         if (configs.size() < nodeCount) {
             Object error;
-            error.emplace_back("error", "Failed to connect to nodes, found " + std::to_string(configs.size()) +
+            error.emplace_back("error", "Failed to connect to nodes, found " +
+                                        std::to_string(found > configs.size() ? found : configs.size()) +
                                         " expected " + std::to_string(nodeCount));
             error.emplace_back("code", xrouter::NOT_ENOUGH_NODES);
             return error;

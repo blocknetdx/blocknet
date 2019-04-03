@@ -519,6 +519,12 @@ bool CNode::IsBanned(CNetAddr ip)
     return fResult;
 }
 
+bool CNode::IsBanned(const std::string & ipPort)
+{
+    CService s(ipPort);
+    return CNode::IsBanned(CNetAddr(s.ToStringIP(), false));
+}
+
 bool CNode::Ban(const CNetAddr& addr)
 {
     int64_t banTime = GetTime() + GetArg("-bantime", 60 * 60 * 24); // Default 24-hour ban
@@ -1355,6 +1361,8 @@ void ThreadOpenAddedConnections()
  * @return
  */
 CNode* OpenXRouterConnection(const CAddress& addrConnect, const char* pszDest) {
+    if (CNode::IsBanned(std::string{pszDest}))
+        return nullptr;
     CSemaphoreGrant grant(*semOutbound);
     return OpenNetworkConnection(addrConnect, &grant, pszDest, false, true);
 }
