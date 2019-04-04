@@ -15,20 +15,20 @@ The Blocknet Protocol enables decentralized communication and exchange between d
 [Block DX](https://docs.blocknet.co/blockdx/introduction) is a completely decentralized and trustless exchange built on the Blocknet Protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/block-dx]
 
 #### Blocknet Specifications:
-| BLOCK Details 			  | 					         |
+| BLOCK Details         |                    |
 ------------------------|--------------------
-Creation Date   		    | October 20th, 2014
-Release Method  		    | ITO, No Premine
-Proof Type   			      | Proof of Stake (PoS)
-Algo					          | Quark
-Block Time 				      | 60 seconds
-Block Reward 			      | 1.0 BLOCK <br>0.3 awarded to stakers <br>0.7 awarded to Service Nodes
-Superblock 				      | Up to 40,000 BLOCK
-Difficulty				      | Adjusted per block
-Staking Requirement		  | No minimum
+Creation Date           | October 20th, 2014
+Release Method          | ITO, No Premine
+Proof Type              | Proof of Stake (PoS)
+Algo                    | Quark
+Block Time              | 60 seconds
+Block Reward            | 1.0 BLOCK <br>0.3 awarded to stakers <br>0.7 awarded to Service Nodes
+Superblock              | Up to 40,000 BLOCK
+Difficulty              | Adjusted per block
+Staking Requirement     | No minimum
 Service Node Requirement| 5000 BLOCK
-Circulation 			      | [View on explorer](https://chainz.cryptoid.info/block/)
-Max Supply 				      | No maximum supply (PoS), but there is a maximum to [inflation](https://docs.blocknet.co/blockchain/introduction/#inflation)
+Circulation             | [View on explorer](https://chainz.cryptoid.info/block/)
+Max Supply              | No maximum supply (PoS), but there is a maximum to [inflation](https://docs.blocknet.co/blockchain/introduction/#inflation)
 
 
 #### Decentralized Atomic Swap Algo Summary
