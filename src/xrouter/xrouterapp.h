@@ -117,11 +117,12 @@ public:
      * @param command XRouter command
      * @param service Wallet name or plugin name
      * @param count Number of nodes to open connections to
+     * @param parameterCount Number of parameters used in the call
      * @param skipNodes avoids connecting to these nodes
      * @param foundCount number of nodes found
      */
     bool openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
-                         const std::vector<CNode*> & skipNodes, uint32_t & foundCount);
+                         const int & parameterCount, const std::vector<CNode*> & skipNodes, uint32_t & foundCount);
     
     /**
      * @brief send config update requests to all nodes
@@ -189,7 +190,7 @@ public:
      * @param blockHashes set of hashes to obtain block information for
      * @return json array with block data
      */
-    std::string getBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & blockHashes);
+    std::string getBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::vector<std::string> & blockHashes);
 
     /**
      * @brief returns transaction by hash (requires tx idnex on server side)
@@ -209,7 +210,7 @@ public:
      * @param txs set of transaction hashes
      * @return json array of transaction data
      */
-    std::string getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & txHashes);
+    std::string getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::vector<std::string> & txHashes);
 
     /**
      * @brief Decodes the specified raw transaction.

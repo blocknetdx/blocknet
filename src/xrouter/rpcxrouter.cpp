@@ -316,7 +316,7 @@ Value xrGetBlocks(const Array & params, bool fHelp)
         return error;
     }
 
-    std::set<std::string> blockHashes;
+    std::vector<std::string> blockHashes;
     const auto & hashes = params[1].get_str();
     boost::split(blockHashes, hashes, boost::is_any_of(","));
     for (const auto & hash : blockHashes) {
@@ -384,7 +384,7 @@ Value xrGetTransactions(const Array & params, bool fHelp)
         return error;
     }
 
-    std::set<std::string> txHashes;
+    std::vector<std::string> txHashes;
     const auto & hashes = params[1].get_str();
     boost::split(txHashes, hashes, boost::is_any_of(","));
     for (const auto & hash : txHashes) {

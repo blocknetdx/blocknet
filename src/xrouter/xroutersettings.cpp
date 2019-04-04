@@ -297,13 +297,22 @@ double XRouterSettings::commandFee(XRouterCommand c, std::string service, double
     return res;
 }
 
-int XRouterSettings::commandFetchLimit(XRouterCommand c, std::string currency, int def)
+int XRouterSettings::commandFetchLimit(XRouterCommand c, const std::string & service, int def)
 {
+    // Handle plugin
+    if (c == xrService && hasPlugin(service)) {
+        auto ps = getPluginSettings(service);
+        if (ps->has("fetchlimit"))
+            return ps->fetchLimit();
+        else
+            return get<int>("Main.fetchlimit", def);
+    }
+
     auto res = get<int>("Main.fetchlimit", def);
     res = get<int>(std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
-    if (!currency.empty()) {
-        res = get<int>(currency + ".fetchlimit", res);
-        res = get<int>(currency + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
+    if (!service.empty()) {
+        res = get<int>(service + ".fetchlimit", res);
+        res = get<int>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
     }
     return res;
 }    
@@ -518,6 +527,11 @@ double XRouterPluginSettings::fee() {
 
 int XRouterPluginSettings::clientRequestLimit() {
     int res = get<int>("clientrequestlimit", -1);
+    return res;
+}
+
+int XRouterPluginSettings::fetchLimit() {
+    int res = get<int>("fetchlimit", -1);
     return res;
 }
 

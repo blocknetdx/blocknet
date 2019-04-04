@@ -239,7 +239,7 @@ bool App::createConnectors() {
 }
 
 bool App::openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
-                          const std::vector<CNode*> & skipNodes, uint32_t & foundCount)
+                          const int & parameterCount, const std::vector<CNode*> & skipNodes, uint32_t & foundCount)
 {
     const auto fqService = (command == xrService) ? pluginCommandKey(service) // plugin
                                                   : walletCommandKey(service, XRouterCommand_ToString(command)); // spv wallet
@@ -288,14 +288,16 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     const auto maxfee = xrsettings->maxFee(command, service);
     const auto connwait = xrsettings->configSyncTimeout();
 
-    auto failedChecks = [this,maxfee,command,service,fqService](const NodeAddr & nodeAddr,
-                                                                XRouterSettingsPtr settings) -> bool
+    auto failedChecks = [this,maxfee,parameterCount,command,service,fqService](const NodeAddr & nodeAddr,
+                                                                               XRouterSettingsPtr settings) -> bool
     {
         if (maxfee > 0) {
             auto fee = settings->commandFee(command, service);
             if (fee > maxfee)
                 return true;
         }
+        if (parameterCount > 0 && settings->commandFetchLimit(command, service) < parameterCount)
+            return true; // fetch limit exceeded
         auto rateLimit = settings->clientRequestLimit(command, service);
         return rateLimitExceeded(nodeAddr, fqService, getLastRequest(nodeAddr, fqService), rateLimit);
     };
@@ -1207,7 +1209,8 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         if (selected < confs) {
             // Open connections (at least number equal to how many confirmations we want)
             uint32_t found{0};
-            if (!openConnections(command, service, static_cast<uint32_t>(confs - selected), selectedNodes, found)) {
+            const auto remaining = static_cast<uint32_t>(confs - selected);
+            if (!openConnections(command, service, remaining, params.size(), selectedNodes, found)) {
                 std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService +
                                 " found " + std::to_string(found > selected ? found : selected));
                 throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
@@ -1445,7 +1448,7 @@ std::string App::getBlock(std::string & uuidRet, const std::string & currency, c
     return this->xrouterCall(xrGetBlock, uuidRet, currency, confirmations, { blockHash });
 }
 
-std::string App::getBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & blockHashes)
+std::string App::getBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::vector<std::string> & blockHashes)
 {
     return this->xrouterCall(xrGetBlocks, uuidRet, currency, confirmations, { blockHashes.begin(), blockHashes.end() });
 }
@@ -1455,7 +1458,7 @@ std::string App::getTransaction(std::string & uuidRet, const std::string & curre
     return this->xrouterCall(xrGetTransaction, uuidRet, currency, confirmations, { hash });
 }
 
-std::string App::getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::set<std::string> & txs)
+std::string App::getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::vector<std::string> & txs)
 {
     return this->xrouterCall(xrGetTransactions, uuidRet, currency, confirmations, std::vector<std::string>(txs.begin(), txs.end()));
 }
@@ -1625,7 +1628,7 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
     const std::string service = command != xrService ? wallet : plugin;
 
     uint32_t found{0};
-    openConnections(command, service, count, { }, found); // open connections to snodes that have our service
+    openConnections(command, service, count, -1, { }, found); // open connections to snodes that have our service
     foundCount = found;
 
     const auto configs = getNodeConfigs(); // get configs and store matching ones

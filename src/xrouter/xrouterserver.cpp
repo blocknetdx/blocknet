@@ -384,11 +384,11 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                         default:
                             throw XRouterError("Unknown command " + fqService, xrouter::UNSUPPORTED_SERVICE);
                     }
-                } catch (std::exception & e) {
-                    ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " " << e.what();
-                    throw XRouterError("Internal Server Error: Bad connector for currency " + fqService, xrouter::BAD_CONNECTOR);
                 } catch (XRouterError & e) {
                     ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " msg: " << e.msg << " code: " << e.code;
+                    throw e;
+                } catch (std::exception & e) {
+                    ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " " << e.what();
                     throw XRouterError("Internal Server Error: Bad connector for currency " + fqService, xrouter::BAD_CONNECTOR);
                 }
 
