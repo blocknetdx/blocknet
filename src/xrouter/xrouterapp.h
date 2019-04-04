@@ -414,11 +414,6 @@ public:
     void runTests();
     
     /**
-     * @brief returns true if [Main]debug_on_client=1 is set
-     */
-    bool debug_on_client();
-    
-    /**
      * @brief returns true if [Main]debug=1 is set
      */
     bool isDebug();

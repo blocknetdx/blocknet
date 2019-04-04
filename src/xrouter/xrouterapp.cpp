@@ -1576,11 +1576,6 @@ bool App::getPaymentAddress(const NodeAddr & nodeAddr, std::string & paymentAddr
         }
     }
     
-    if (debug_on_client()) {
-        paymentAddress = changeAddress();
-        return true;
-    }
-
     return false;
 }
 
@@ -1592,11 +1587,6 @@ CPubKey App::getPaymentPubkey(CNode* node)
         if (s.addr.ToString() == node->NodeAddress()) {
             return s.pubKeyCollateralAddress;
         }
-    }
-    
-    if (debug_on_client()) {
-        std::string test = "03872bfe748a5a3868c74c8f820ed1387a58d48c67a7c415c7b3fad1ca61803365";
-        return CPubKey(ParseHex(test));
     }
     
     return CPubKey();
@@ -1854,10 +1844,6 @@ std::string App::createDepositAddress(std::string & uuidRet, bool update) {
 
 void App::runTests() {
     server->runPerformanceTests();
-}
-
-bool App::debug_on_client() {
-    return xrsettings->get<int>("Main.debug_on_client", 0) != 0;
 }
 
 bool App::isDebug() {
