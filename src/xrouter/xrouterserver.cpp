@@ -453,9 +453,7 @@ std::string XRouterServer::processGetBlockHash(const std::string & currency, con
     Object result;
 
     const auto & blockId = params[0];
-    if (!is_number(blockId))
-        throw XRouterError("Incorrect block number: " + blockId, xrouter::INVALID_PARAMETERS);
-    
+
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
@@ -483,18 +481,21 @@ std::string XRouterServer::processGetBlock(const std::string & currency, const s
 }
 
 std::string XRouterServer::processGetBlocks(const std::string & currency, const std::vector<std::string> & params) {
+    if (params.empty())
+        throw XRouterError("Missing block hashes for " + currency, xrouter::BAD_REQUEST);
+
     App & app = App::instance();
     const auto & fetchlimit = app.xrSettings()->commandFetchLimit(xrGetBlocks, currency);
     if (params.size() > fetchlimit)
         throw XRouterError("Too many blocks requested for " + currency + " limit is " +
-                           std::to_string(fetchlimit), xrouter::BAD_REQUEST);
+                           std::to_string(fetchlimit) + " received " + std::to_string(params.size()), xrouter::BAD_REQUEST);
 
     Array result;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getBlocks(std::set<std::string>(params.begin(), params.end()));
+        result = conn->getBlocks(params);
     } else {
         throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
     }
@@ -519,18 +520,21 @@ std::string XRouterServer::processGetTransaction(const std::string & currency, c
 }
 
 std::string XRouterServer::processGetTransactions(const std::string & currency, const std::vector<std::string> & params) {
+    if (params.empty())
+        throw XRouterError("Missing transaction hashes for " + currency, xrouter::BAD_REQUEST);
+
     App & app = App::instance();
     const auto & fetchlimit = app.xrSettings()->commandFetchLimit(xrGetTransactions, currency);
     if (params.size() > fetchlimit)
         throw XRouterError("Too many transactions requested for " + currency + " limit is " +
-                           std::to_string(fetchlimit), xrouter::BAD_REQUEST);
+                           std::to_string(fetchlimit) + " received " + std::to_string(params.size()), xrouter::BAD_REQUEST);
     
     Array result;
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getTransactions(std::set<std::string>(params.begin(), params.end()));
+        result = conn->getTransactions(params);
     } else {
         throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
     }

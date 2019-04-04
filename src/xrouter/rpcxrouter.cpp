@@ -289,17 +289,17 @@ Value xrGetBlocks(const Array & params, bool fHelp)
                                  "List of blocks in json format with the specified block hashes.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
-                                 "txhash1,txhash2,txhash3 (string) Transaction ids separated by commas (,)\n"
+                                 "blockhash1,blockhash2,blockhash3 (string) Block hashes separated by commas (,)\n"
                                  "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
-                                 "                         The most common reply will be returned (i.e. the reply\n"
-                                 "                         with the most consensus. To see all reply results use\n"
-                                 "                         xrGetReply uuid."
+                                 "                   The most common reply will be returned (i.e. the reply\n"
+                                 "                   with the most consensus. To see all reply results use\n"
+                                 "                   xrGetReply uuid."
                                  "\n"
                                  "Example:\n"
-                                 "xrGetTransactions BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\n"
+                                 "xrGetBlocks BLOCK 39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\n"
                                  "\n"
                                  "With consensus parameter:\n"
-                                 "xrGetTransactions BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d 2\n");
+                                 "xrGetBlocks BLOCK 39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c 2\n");
     }
 
     if (params.size() < 1) {

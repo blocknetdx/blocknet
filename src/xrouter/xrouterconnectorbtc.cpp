@@ -4,14 +4,12 @@
 namespace xrouter
 {
 
-static Value getResult(Object obj)
+static Value getResult(const Object & obj)
 {
-    for (Object::size_type i = 0; i != obj.size(); i++ ) {
-        if (obj[i].name_ == "result") {
-            return obj[i].value_;
-        }
-    }
-    return Value();
+    const Value & r = find_value(obj, "result");
+    if (r.type() == null_type)
+        return Value(obj);
+    return r;
 }
 
 static bool getResultOrError(const Object & obj, Value & res)
@@ -75,21 +73,28 @@ Object BtcWalletConnectorXRouter::getBlockHash(const int & block) const
 
 Object BtcWalletConnectorXRouter::getBlock(const std::string & blockHash) const
 {
-    std::string command("getblock");
+    static const std::string command("getblock");
     Array params { blockHash };
 
     return CallRPC(m_user, m_passwd, m_ip, m_port, command, params);
 }
 
-Array BtcWalletConnectorXRouter::getBlocks(const std::set<std::string> & blockHashes) const
+Array BtcWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const
 {
-    Array result;
     static const std::string commandGB("getblock");
-    for (const auto & hash : blockHashes) {
+
+    std::set<std::string> unique{blockHashes.begin(), blockHashes.end()};
+    std::map<std::string, Value> results;
+    Array result;
+
+    for (const auto & hash : unique) {
         Array paramsGB { hash };
-        Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, paramsGB);
-        result.push_back(getResult(blockObj));
+        results[hash] = getResult(getBlock(hash));
     }
+
+    for (const auto & hash : blockHashes)
+        result.push_back(results[hash]);
+
     return result;
 }
 
@@ -124,18 +129,25 @@ Object BtcWalletConnectorXRouter::getTransaction(const std::string & hash) const
     }
 }
 
-Array BtcWalletConnectorXRouter::getTransactions(const std::set<std::string> & txHashes) const
+Array BtcWalletConnectorXRouter::getTransactions(const std::vector<std::string> & txHashes) const
 {
     static const std::string commandGRT("getrawtransaction");
     static const std::string commandDRT("decoderawtransaction");
 
+    std::set<std::string> unique{txHashes.begin(), txHashes.end()};
+    std::map<std::string, Value> results;
     Array result;
-    for (const auto & hash : txHashes) {
+
+    for (const auto & hash : unique) {
         Array paramsGRT { hash };
-        Object rawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
-        const std::string & txdata = getResult(rawTrObj).get_str();
-        result.push_back(txdata);
+        Object rawtxObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, paramsGRT);
+        Object txObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { getResult(rawtxObj).get_str() });
+        results[hash] = getResult(txObj);
     }
+
+    for (const auto & hash : txHashes)
+        result.push_back(results[hash]);
+
     return result;
 }
 

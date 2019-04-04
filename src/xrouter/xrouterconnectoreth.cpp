@@ -172,7 +172,7 @@ Object EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
     return getResult(resp).get_obj();
 }
 
-Array EthWalletConnectorXRouter::getBlocks(const std::set<std::string> & blockHashes) const
+Array EthWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const
 {
     static const std::string commandBN("eth_getBlockByHash");
 
@@ -201,7 +201,7 @@ Object EthWalletConnectorXRouter::decodeRawTransaction(const std::string & trHas
     return unsupported;
 }
 
-Array EthWalletConnectorXRouter::getTransactions(const std::set<std::string> & txHashes) const
+Array EthWalletConnectorXRouter::getTransactions(const std::vector<std::string> & txHashes) const
 {
     Array result;
     for (const auto & hash : txHashes) {

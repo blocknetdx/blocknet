@@ -1167,7 +1167,6 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             // Check param1
             switch (command) {
                 case xrGetBlockHash:
-                case xrGetBlocks:
                     if (params.size() > 0 && !is_number(params[0]))
                         throw XRouterError("Incorrect block number: " + params[0], xrouter::INVALID_PARAMETERS);
                     break;
@@ -1180,17 +1179,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                     if (params.size() > 0 && !is_hash(params[0]))
                         throw XRouterError("Incorrect hash: " + params[0], xrouter::INVALID_PARAMETERS);
                     break;
-                case xrGetTransactions:
-                    if (params.size() > 0 && !is_address(params[0]))
-                        throw XRouterError("Incorrect address: " + params[0], xrouter::INVALID_PARAMETERS);
-                    break;
                 default:
                     break;
             }
 
             // Check param2
             switch (command) {
-                case xrGetTransactions:
                 case xrGetTxBloomFilter:
                     if (params.size() > 1 && !is_number(params[1]))
                         throw XRouterError("Incorrect block number: " + params[1], xrouter::INVALID_PARAMETERS);
@@ -1366,43 +1360,32 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Handle multiple replies
         if (replies.size() > 1) {
+            Object r;
+
             Value resultVal; read_string(result, resultVal);
-
-            Object resultObj;
-            std::string resultStr;
-
             if (resultVal.type() == obj_type) {
-                resultObj = resultVal.get_obj();
+                Object resultObj = resultVal.get_obj();
                 const Value & rv = find_value(resultObj, "result");
                 if (rv.type() == str_type)
-                    resultStr = rv.get_str();
-            } else if (resultVal.type() == str_type)
-                resultStr = resultVal.get_str();
-
-            Object r;
-            if (!resultStr.empty())
-                r.emplace_back("reply", resultStr);
-            else
-                r.emplace_back("reply", resultObj);
+                    r.emplace_back("reply", rv.get_str());
+                else
+                    r.emplace_back("reply", resultObj);
+            }
+            else r.emplace_back("reply", resultVal);
 
             Array allr;
             for (const auto & item : replies) {
                 const auto & nodeAddr = item.first;
                 const auto & reply = item.second;
 
-                Value replyVal; read_string(reply, replyVal);
-                Object replyObj;
-                if (replyVal.type() == obj_type)
-                    replyObj = replyVal.get_obj();
-
                 Object ar;
                 std::vector<unsigned char> spubkey; servicenodePubKey(nodeAddr, spubkey);
                 ar.emplace_back("nodepubkey", HexStr(spubkey));
                 ar.emplace_back("score", getScore(nodeAddr));
-                if (replyVal.type() == obj_type)
-                    ar.emplace_back("reply", replyObj);
-                else
-                    ar.emplace_back("reply", reply);
+
+                Value replyVal; read_string(reply, replyVal);
+                ar.emplace_back("reply", replyVal);
+
                 allr.push_back(ar);
             }
             r.emplace_back("allreplies", allr);
