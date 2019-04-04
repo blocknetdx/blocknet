@@ -336,7 +336,7 @@ int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string service, i
     return res;
 }
 
-std::string XRouterSettings::paymentAddress(XRouterCommand c, const std::string service) {
+std::string XRouterSettings::paymentAddress(XRouterCommand c, const std::string & service) {
     std::string def;
     static const auto s_paymentaddress = "paymentaddress";
     static const auto s_mainpaymentaddress = "Main.paymentaddress";

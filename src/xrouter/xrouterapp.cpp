@@ -1655,11 +1655,8 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
         o.emplace_back("score", getScore(item.first));
         // banned
         o.emplace_back("banned", CNode::IsBanned(item.first));
-
         // payment address
-        std::string address;
-        getPaymentAddress(item.second->getNode(), address);
-        o.emplace_back("paymentaddress", address);
+        o.emplace_back("paymentaddress", item.second->paymentAddress(xrGetConfig));
 
         // wallets
         const auto & wallets = item.second->getWallets();

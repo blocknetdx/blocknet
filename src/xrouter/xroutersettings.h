@@ -187,7 +187,7 @@ public:
     double maxFee(XRouterCommand c, std::string currency="", double def=0.0);
     int clientRequestLimit(XRouterCommand c, std::string service="", int def=-1); // -1 is no limit
     int confirmations(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_CONFIRMATIONS); // 1 confirmation default
-    std::string paymentAddress(XRouterCommand c, std::string service="");
+    std::string paymentAddress(XRouterCommand c, const std::string & service="");
     int configSyncTimeout();
 
     double defaultFee();
