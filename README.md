@@ -1,34 +1,34 @@
-Welcome to the Blocknet repository. This repo is for the Blocknet Protocol, a 2nd layer blockchain interoperability protocol that enables communication, interaction, and exchange between different blockchains. This allows for the development of multi-chain applications and blockchain microservices, creating exponentially more capabilities and possibilities for the blockchain ecosystem. The repository for Block DX, a decentralized exchange powered by the Blocknet Protocol, can be found [here](https://github.com/BlocknetDX/block-dx).
+Welcome to the Blocknet repository. This repo is for the Blocknet Protocol, a 2nd layer blockchain interoperability protocol that enables communication, interaction, and exchange between different blockchains. This allows for the development of multi-chain applications and blockchain microservices, creating exponentially more capabilities and possibilities for the blockchain ecosystem.
+
+[Contributors are welcome!](https://github.com/BlocknetDX/blocknet/blob/master/CONTRIBUTING.md)
 
 [Website](https://blocknet.co) | [API](https://api.blocknet.co) | [Documentation](https://docs.blocknet.co) | [Discord](https://discord.gg/2e6s7H8)
 -------------|-------------|-------------|-------------
 
 #### Blocknet
-Started in 2014, Blocknet is a decentralized, community-governed, self-funded, open-source project that serves as a connector between different blockchains, markets, and communities. 
+Started in 2014, [Blocknet](https://docs.blocknet.co/project/introduction) is a decentralized, community-governed, self-funded, open-source project that serves as a connector between different blockchains, markets, and communities. 
 
 #### The Blocknet Protocol
-The Blocknet Protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network (Service Nodes) to host the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
+The Blocknet Protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network ([Service Nodes](https://docs.blocknet.co/service-nodes/introduction)) to host the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
 
 #### Block DX
-Block DX is a completely decentralized and trustless exchange built on the Blocknet Protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/block-dx]
-
-[Contributors are welcome!](https://github.com/BlocknetDX/blocknet/blob/master/CONTRIBUTING.md)
+[Block DX](https://docs.blocknet.co/blockdx/introduction) is a completely decentralized and trustless exchange built on the Blocknet Protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/block-dx]
 
 #### Blocknet Specifications:
-|BLOCK Details 			| 					|
+| BLOCK Details         |                    |
 ------------------------|--------------------
-Creation Date   		| October 20th, 2014
-Release Method  		| ITO, No Premine
-Proof Type   			| Proof of Stake (PoS)
-Algo					| Quark
-Block Time 				| 60 seconds
-Block Reward 			| 1.0 BLOCK <br>0.3 awarded to stakers <br>0.7 awarded to Service Nodes
-Superblock 				| Up to 4,320 BLOCK
-Difficulty				| Adjusted per block
-Staking Requirement		| No minimum
+Creation Date           | October 20th, 2014
+Release Method          | ITO, No Premine
+Proof Type              | Proof of Stake (PoS)
+Algo                    | Quark
+Block Time              | 60 seconds
+Block Reward            | 1.0 BLOCK <br>0.3 awarded to stakers <br>0.7 awarded to Service Nodes
+Superblock              | Up to 40,000 BLOCK
+Difficulty              | Adjusted per block
+Staking Requirement     | No minimum
 Service Node Requirement| 5000 BLOCK
-Circulation 			| [View on explorer](https://chainz.cryptoid.info/block/)
-Max Supply 				| No maximum supply (PoS), but there is a maximum to [inflation](https://docs.blocknet.co/blockchain/introduction/#inflation)
+Circulation             | [View on explorer](https://chainz.cryptoid.info/block/)
+Max Supply              | No maximum supply (PoS), but there is a maximum to [inflation](https://docs.blocknet.co/blockchain/introduction/#inflation)
 
 
 #### Decentralized Atomic Swap Algo Summary
