@@ -693,8 +693,8 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
         if (nodec.count(nodeAddr))
             node = nodec[nodeAddr];
 
-        // If the service node is not among peers or it's disconnecting
-        if (!node || node->Disconnecting())
+        // If the service node is not among peers
+        if (!node)
             continue; // skip
 
         // Only select nodes with a fee smaller than the max fee we're willing to pay
@@ -1253,8 +1253,9 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                     continue;
                 }
             }
-            
-            feePaymentTxs[addr] = feePayment;
+            if (!feePayment.empty()) // record fee if it's not empty
+                feePaymentTxs[addr] = feePayment;
+
             snodeCount++;
             if (snodeCount == confs)
                 break;
@@ -1271,9 +1272,9 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         // Send xrouter request to each selected node
         for (CNode* pnode : selectedNodes) {
             const auto & addr = pnode->NodeAddress();
-            if (!feePaymentTxs.count(addr))
-                continue;
-
+            std::string feetx;
+            if (feePaymentTxs.count(addr))
+                feetx = feePaymentTxs[addr];
             // Record the node sending request to
             addQuery(uuid, addr);
             queryMgr.addQuery(uuid, addr);
@@ -1281,7 +1282,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             // Send packet to xrouter node
             XRouterPacket packet(command, uuid);
             packet.append(service);
-            packet.append(feePaymentTxs[addr]); // fee
+            packet.append(feetx); // feetx
             packet.append(static_cast<uint32_t>(params.size()));
             for (const std::string & p : params)
                 packet.append(p);
@@ -1367,7 +1368,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             }
         }
 
-        // Handle multiple replies
+        // Show all replies in the response (along with the majority consensus reply)
         if (replies.size() > 1) {
             Object r;
 
@@ -1379,8 +1380,8 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                     r.emplace_back("result", rv.get_str());
                 else
                     r.emplace_back("result", resultObj);
-            }
-            else r.emplace_back("result", resultVal);
+            } else
+                r.emplace_back("result", resultVal);
 
             Array allr;
             for (const auto & item : replies) {
@@ -1399,7 +1400,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             }
             r.emplace_back("allreplies", allr);
 
-            result = json_spirit::write_string(Value(r), pretty_print);
+            result = json_spirit::write_string(Value(r));
         }
 
         // Unlock any utxos associated with replies that returned an error
@@ -1524,44 +1525,39 @@ std::string App::getReply(const std::string & id)
         }
     }
 
-
     if (replies.empty()) {
         Object result;
         result.emplace_back("error", "No replies found");
         result.emplace_back("code", xrouter::NO_REPLIES);
-        return json_spirit::write_string(Value(result), true);
+        return json_spirit::write_string(Value(result), json_spirit::pretty_print);
     }
-
-    Value result;
 
     if (replies.size() == 1) {
-        std::string reply = replies.begin()->second;
-        try {
-            Value reply_val;
-            static const std::string nouuid;
-            read_string(write_string(Value(form_reply(nouuid, reply))), reply_val);
-            result = reply_val;
-        } catch (...) { }
+        return replies.begin()->second;
     } else {
         Array arr;
-        for (auto & it : replies) {
+        for (const auto & it : replies) {
             const auto & reply = it.second;
             const auto & item = snodec[it.first];
+            Object o;
             try {
-                Value reply_val;
-                static const std::string nouuid;
-                read_string(write_string(Value(form_reply(nouuid, reply))), reply_val);
-                Object o = reply_val.get_obj();
-                o.emplace_back("nodepubkey", std::get<0>(item));
-                o.emplace_back("score", std::get<1>(item));
-                o.emplace_back("address", std::get<2>(item));
-                arr.emplace_back(o);
-            } catch (...) { }
+                Value reply_val; read_string(reply, reply_val);
+                if (reply_val.type() == obj_type)
+                    o = reply_val.get_obj();
+                else
+                    o.emplace_back("result", reply_val);
+            } catch (...) {
+                o = Object();
+                o.emplace_back("result", "");
+            }
+            o.emplace_back("nodepubkey", std::get<0>(item));
+            o.emplace_back("score", std::get<1>(item));
+            o.emplace_back("address", std::get<2>(item));
+            arr.emplace_back(o);
         }
-        result = arr;
+        return json_spirit::write_string(Value(arr), json_spirit::pretty_print);
     }
 
-    return json_spirit::write_string(Value(result), true);
 }
 
 bool App::generatePayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,

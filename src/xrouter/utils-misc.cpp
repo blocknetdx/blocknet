@@ -202,25 +202,50 @@ Object form_reply(const std::string & uuid, const Value & reply) {
         return ret;
     }
 
-    Object reply_obj = reply.get_obj();
-    const Value & result = find_value(reply_obj, "result");
-    const Value & error = find_value(reply_obj, "error");
-    const Value & code = find_value(reply_obj, "code");
-    const Value & uuid_val = find_value(reply_obj, "uuid");
+    ret = reply.get_obj();
+    const Value rply = find_value(ret, "reply");
+    const Value result = find_value(ret, "result");
+    const Value error = find_value(ret, "error");
+    const Value code = find_value(ret, "code");
+    const Value uuid_val = find_value(ret, "uuid");
 
+    // Display result/reply
+    if (result.type() != null_type && rply.type() == null_type) {
+        for (int i = 0; i < ret.size(); ++i) {
+            const auto & item = ret[i];
+            if (item.name_ == std::string{"result"}) {
+                ret.erase(ret.begin()+i);
+                break;
+            }
+        }
+        ret.insert(ret.begin(), Pair("reply", result));
+    }
+
+    // Display errors
     if (error.type() != null_type) {
-        ret.emplace_back("error", error);
-        if (code.type() != null_type)
-            ret.emplace_back("code", code);
-        else
-            ret.emplace_back("code", xrouter::INTERNAL_SERVER_ERROR);
-    }
-    else if (result.type() != null_type) {
-        ret.emplace_back("reply", result);
+        if (code.type() == null_type) {
+            // insert after error
+            for (int i = 0; i < ret.size(); ++i) {
+                const auto & item = ret[i];
+                if (item.name_ == std::string{"error"}) {
+                    ret.insert(ret.begin()+i, Pair("code", xrouter::INTERNAL_SERVER_ERROR));
+                    break;
+                }
+            }
+        }
     }
 
-    if (!uuid.empty()) // Make sure uuid is not empty
+    // Display uuid if necessary
+    if (!uuid.empty()) {
+        for (int i = 0; i < ret.size(); ++i) {
+            const auto & item = ret[i];
+            if (item.name_ == std::string{"uuid"}) {
+                ret.erase(ret.begin()+i);
+                break;
+            }
+        }
         ret.emplace_back("uuid", uuid);
+    }
 
     return ret;
 }
