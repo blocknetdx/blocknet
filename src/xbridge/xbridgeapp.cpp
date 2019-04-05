@@ -1344,8 +1344,17 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         uint64_t fee1 = 0;
         uint64_t fee2 = 0;
 
+        auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee1(inputs, outputs);
+        };
+        auto minTxFee2 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee2(inputs, outputs);
+        };
+
         // Select utxos
-        if (!selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2)) {
+        if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, fromAmount,
+                         TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
+        {
             WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
@@ -1700,9 +1709,17 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         uint64_t fee1       = 0;
         uint64_t fee2       = 0;
 
+        auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee1(inputs, outputs);
+        };
+        auto minTxFee2 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee2(inputs, outputs);
+        };
+
         // Select utxos
         std::vector<wallet::UtxoEntry> outputsForUse;
-        if (!selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
+        if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, ptr->fromAmount,
+                         TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
         {
             WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
             unlockFeeUtxos(ptr->feeUtxos);
@@ -2391,16 +2408,18 @@ T random_element(T begin, T end)
 //******************************************************************************
 //******************************************************************************
 bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
-                      const WalletConnectorPtr &connFrom, const uint64_t &requiredAmount,
-                      std::vector<wallet::UtxoEntry> &outputsForUse, uint64_t &utxoAmount,
-                      uint64_t &fee1, uint64_t &fee2) const
+                      const std::function<double(uint32_t, uint32_t)> &minTxFee1,
+                      const std::function<double(uint32_t, uint32_t)> &minTxFee2,
+                      const uint64_t &requiredAmount, const int64_t &coinDenomination,
+                      std::vector<wallet::UtxoEntry> &outputsForUse,
+                      uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const
 {
-    auto feeAmount = [&connFrom](const double amt, const uint32_t inputs, const uint32_t outputs) -> double {
-        return amt + connFrom->minTxFee1(inputs, outputs) + connFrom->minTxFee2(1, 1);
+    auto feeAmount = [&minTxFee1,&minTxFee2](const double amt, const uint32_t inputs, const uint32_t outputs) -> double {
+        return amt + minTxFee1(inputs, outputs) + minTxFee2(1, 1);
     };
 
     // Fee utxo selector
-    auto selUtxos = [&connFrom, &addr, &feeAmount](std::vector<xbridge::wallet::UtxoEntry> & a,
+    auto selUtxos = [&minTxFee1,&minTxFee2, &addr, &feeAmount](std::vector<xbridge::wallet::UtxoEntry> & a,
                         std::vector<xbridge::wallet::UtxoEntry> & o,
                         const double amt) -> void
     {
@@ -2412,7 +2431,7 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
         double minAmount{feeAmount(amt, 1, 3)};
         for (const auto & utxo : a) {
             if (utxo.amount >= minAmount
-               && utxo.amount < minAmount + (connFrom->minTxFee1(1, 3) + connFrom->minTxFee2(1, 1)) * 1000
+               && utxo.amount < minAmount + (minTxFee1(1, 3) + minTxFee2(1, 1)) * 1000
                && (utxo.address == addr || addr.empty()))
             {
                 o.push_back(utxo);
@@ -2456,8 +2475,8 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
                 sel.push_back(utxo);
 
                 // Add amount and incorporate fee calc
-                double fee1 = connFrom->minTxFee1(sel.size(), 3);
-                double fee2 = connFrom->minTxFee2(1, 1);
+                double fee1 = minTxFee1(sel.size(), 3);
+                double fee2 = minTxFee2(1, 1);
                 double runningAmount{(fee1 + fee2) * -1}; // subtract the fees
 
                 for (auto & u : sel)
@@ -2480,17 +2499,17 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
              return a.amount > b.amount;
          });
 
-    selUtxos(utxos, outputsForUse, static_cast<double>(requiredAmount)/static_cast<double>(TransactionDescr::COIN));
+    selUtxos(utxos, outputsForUse, static_cast<double>(requiredAmount)/static_cast<double>(coinDenomination));
     if (outputsForUse.empty())
         return false;
 
-    // Add up all selected utxos in TransactionDescr::COIN denomination
+    // Add up all selected utxos in COIN denomination
     for (const auto & utxo : outputsForUse)
-        utxoAmount += utxo.amount * TransactionDescr::COIN;
+        utxoAmount += utxo.amount * coinDenomination;
 
-    // Fees in TransactionDescr::COIN denomination
-    fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
-    fee2 = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
+    // Fees in COIN denomination
+    fee1 = minTxFee1(outputsForUse.size(), 3) * coinDenomination;
+    fee2 = minTxFee2(1, 1) * coinDenomination;
 
     return true;
 }

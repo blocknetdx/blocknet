@@ -103,9 +103,7 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 
 
 // Payment functions
-bool createAndSignTransaction(std::string address, CAmount amount, std::string & raw_tx);
-bool createAndSignTransaction(boost::container::map<std::string, CAmount> addrs, string & raw_tx);
-bool createAndSignTransaction(Array txparams, std::string & raw_tx);
+bool createAndSignTransaction(const std::string & address, const CAmount & amount, std::string & raw_tx);
 void unlockOutputs(const std::string & tx);
 std::string signTransaction(std::string& raw_tx);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);

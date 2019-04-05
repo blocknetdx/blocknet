@@ -32,11 +32,11 @@ std::string generateDomainRegistrationTx(std::string domain, std::string addr) {
 
     Array params;
     params.push_back(inputs);
-    params.push_back(outputs);    
-    bool res = createAndSignTransaction(params, raw_tx);
+    params.push_back(outputs);
+    bool res{false}; // TODO Fixme
     if (!res)
         return "";
-    
+
     sendTransactionBlockchain(raw_tx, txid);
     return txid;
 }

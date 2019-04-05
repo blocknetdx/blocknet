@@ -1342,6 +1342,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 snodeAddresses.insert(CBitcoinAddress(s->pubKeyCollateralAddress.GetID()).ToString());
             }
 
+            // Unlock failed txs
+            for (const auto & addr : failed) { // unlock any fee txs
+                const auto & tx = feePaymentTxs[addr];
+                unlockOutputs(tx);
+            }
+
             const auto & nodes = boost::algorithm::join(snodeAddresses, ",");
             ERR() << "Failed to get response in time for query " << uuid << " Nodes failed to respond, penalizing: " << nodes;
         }
@@ -1394,6 +1400,22 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             r.emplace_back("allreplies", allr);
 
             result = json_spirit::write_string(Value(r), pretty_print);
+        }
+
+        // Unlock any utxos associated with replies that returned an error
+        if (!feePaymentTxs.empty()) {
+            for (const auto & item : replies) {
+                const auto & nodeAddr = item.first;
+                const auto & reply = item.second;
+                Value replyVal; read_string(reply, replyVal);
+                if (replyVal.type() == obj_type) {
+                    const auto & err = find_value(replyVal.get_obj(), "error");
+                    if (err.type() != null_type) {
+                        const auto & tx = feePaymentTxs[nodeAddr];
+                        unlockOutputs(tx);
+                    }
+                }
+            }
         }
 
         releaseNodes(selectedNodes);
