@@ -154,13 +154,20 @@ bool is_number(std::string s)
     return true;
 }
 
-bool is_hash(std::string s)
+bool is_hash(const std::string & hash)
 {
-    std::string symbols = "0123456789abcdef";
-    for (size_t i = 0; i < s.size(); i++)
-        if (symbols.find(s[i]) == std::string::npos)
-            return false;
-    return true;
+    if (hash.size() < 10)
+        return false;
+    std::regex r("^[a-zA-Z0-9]+$");
+    std::smatch m;
+    return std::regex_match(hash, m, r);
+}
+
+bool is_hex(const std::string & hex)
+{
+    std::regex r("^[a-fA-F0-9]{2,}$");
+    std::smatch m;
+    return std::regex_match(hex, m, r);
 }
 
 bool is_address(std::string s)

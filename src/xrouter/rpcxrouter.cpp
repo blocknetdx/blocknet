@@ -135,7 +135,7 @@ Value xrGetBlock(const Array & params, bool fHelp)
                                  "xrGetBlock BLOCK b74e07f3badb51c5968096e055a68389706c17a9da625f0f5a710116a61549c5 2\n");
     }
 
-    if (params.size() < 1)
+    if (params.size() < 1 || (params.size() == 1 && xrouter::is_hash(params[0].get_str())))
     {
         Object error;
         error.emplace_back("error", "Currency not specified");
@@ -147,6 +147,14 @@ Value xrGetBlock(const Array & params, bool fHelp)
     {
         Object error;
         error.emplace_back("error", "Block hash not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    const auto & hash = params[1].get_str();
+    if (!xrouter::is_hash(hash)) {
+        Object error;
+        error.emplace_back("error", "Block hash is bad");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
@@ -164,7 +172,7 @@ Value xrGetBlock(const Array & params, bool fHelp)
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getBlock(uuid, currency, consensus, params[1].get_str());
+    std::string reply = xrouter::App::instance().getBlock(uuid, currency, consensus, hash);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -188,7 +196,7 @@ Value xrGetTransaction(const Array & params, bool fHelp)
                                  "xrGetTransaction BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7 2\n");
     }
 
-    if (params.size() < 1)
+    if (params.size() < 1 || (params.size() == 1 && xrouter::is_hash(params[0].get_str())))
     {
         Object error;
         error.emplace_back("error", "Currency not specified");
@@ -199,7 +207,15 @@ Value xrGetTransaction(const Array & params, bool fHelp)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Tx hash not specified");
+        error.emplace_back("error", "Transaction hash not specified");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    const auto & hash = params[1].get_str();
+    if (!xrouter::is_hash(hash)) {
+        Object error;
+        error.emplace_back("error", "Transaction hash is bad");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
@@ -217,7 +233,7 @@ Value xrGetTransaction(const Array & params, bool fHelp)
 
     std::string currency = params[0].get_str();
     std::string uuid;
-    std::string reply = xrouter::App::instance().getTransaction(uuid, currency, consensus, params[1].get_str());
+    std::string reply = xrouter::App::instance().getTransaction(uuid, currency, consensus, hash);
     return xrouter::form_reply(uuid, reply);
 }
 
@@ -258,9 +274,9 @@ Value xrDecodeRawTransaction(const Array & params, bool fHelp)
     }
 
     const auto & hex = params[1].get_str();
-    if (hex.empty()) {
+    if (hex.empty() || !xrouter::is_hex(hex)) {
         Object error;
-        error.emplace_back("error", "Transaction hex cannot be empty");
+        error.emplace_back("error", "Transaction hex is bad");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return error;
     }

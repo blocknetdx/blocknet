@@ -90,11 +90,16 @@ std::string BtcWalletConnectorXRouter::getTransaction(const std::string & hash) 
     static const std::string commandGRT("getrawtransaction");
     const auto & rawTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, { hash });
 
-    if (!hasError(rawTr)) {
+    if (hasError(rawTr)) {
         return rawTr;
     } else {
+        const auto & rawTr_val = getResult(rawTr);
+        std::string hex;
+        if (rawTr_val.type() != str_type)
+            return "";
+        hex = rawTr_val.get_str();
         static const std::string commandDRT("decoderawtransaction");
-        return CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { rawTr });
+        return CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { hex });
     }
 }
 

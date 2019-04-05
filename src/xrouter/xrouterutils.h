@@ -124,7 +124,8 @@ bool verifyBlockRequirement(const XRouterPacketPtr& packet);
 // Miscellaneous functions
 CAmount to_amount(double val);
 bool is_number(std::string s);
-bool is_hash(std::string s);
+bool is_hash(const std::string & hash);
+bool is_hex(const std::string & hex);
 bool is_address(std::string s);
 std::string generateUUID();
 Object form_reply(const std::string & uuid, const Value & reply);

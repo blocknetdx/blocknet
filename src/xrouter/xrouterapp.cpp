@@ -1201,6 +1201,16 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                     if (params.size() > 0 && !is_hash(params[0]))
                         throw XRouterError("Incorrect hash: " + params[0], xrouter::INVALID_PARAMETERS);
                     break;
+                case xrGetBlocks:
+                case xrGetTransactions: {
+                    if (params.empty())
+                        throw XRouterError("Missing parameters for " + fqServiceName, xrouter::INVALID_PARAMETERS);
+                    for (const auto & p : params) {
+                        if (!is_hash(p))
+                            throw XRouterError("Incorrect hash " + p + " for " + fqServiceName, xrouter::INVALID_PARAMETERS);
+                    }
+                    break;
+                }
                 default:
                     break;
             }
