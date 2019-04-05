@@ -193,15 +193,21 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
 }
 
 void unlockOutputs(const std::string & tx) {
-    CMutableTransaction txobj = decodeTransaction(tx);
-    std::set<xbridge::wallet::UtxoEntry> coins;
-    for (const auto & vin : txobj.vin) {
-        xbridge::wallet::UtxoEntry entry;
-        entry.txId = vin.prevout.hash.ToString();
-        entry.vout = vin.prevout.n;
-        coins.insert(entry);
+    if (tx.empty())
+        return;
+    try {
+        CMutableTransaction txobj = decodeTransaction(tx);
+        std::set<xbridge::wallet::UtxoEntry> coins;
+        for (const auto & vin : txobj.vin) {
+            xbridge::wallet::UtxoEntry entry;
+            entry.txId = vin.prevout.hash.ToString();
+            entry.vout = vin.prevout.n;
+            coins.insert(entry);
+        }
+        xbridge::App::instance().unlockFeeUtxos(coins);
+    } catch (...) {
+        ERR() << "Failed to unlock fee utxos for tx: " + tx;
     }
-    xbridge::App::instance().unlockFeeUtxos(coins);
 }
 
 std::string signTransaction(std::string& raw_tx)

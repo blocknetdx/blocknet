@@ -303,7 +303,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             LOG() << "XRouter command: " << fqService << " expecting fee = " << fee << " for query " << uuid;
             if (!processPayment(nodeAddr, app.xrSettings()->paymentAddress(command, service), feetx, fee)) {
                 const std::string err_msg = strprintf("Bad fee payment from client %s service %s", nodeAddr, fqService);
-                state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                state.DoS(25, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
                 throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
             }
 
@@ -335,64 +335,65 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             }
 
             try {
-
-                try {
-                    switch (command) {
-                        case xrGetBlockCount:
-                            reply = processGetBlockCount(service, params);
-                            break;
-                        case xrGetBlockHash:
-                            reply = processGetBlockHash(service, params);
-                            break;
-                        case xrGetBlock:
-                            reply = processGetBlock(service, params);
-                            break;
-                        case xrGetTransaction:
-                            reply = processGetTransaction(service, params);
-                            break;
-                        case xrGetBlocks:
-                            reply = processGetBlocks(service, params);
-                            break;
-                        case xrGetTransactions:
-                            reply = processGetTransactions(service, params);
-                            break;
-                        case xrDecodeRawTransaction:
-                            reply = processDecodeRawTransaction(service, params);
-                            break;
-                        case xrGetBalance:
-                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-    //                    reply = processGetBalance(service, params);
-                            break;
-                        case xrGetTxBloomFilter:
-                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-    //                        reply = processGetTxBloomFilter(service, params);
-                            break;
-                        case xrGenerateBloomFilter:
-                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-    //                        reply = processGenerateBloomFilter(service, params);
-                            break;
-                        case xrGetBlockAtTime:
-                            throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
-    //                    reply = processConvertTimeToBlockCount(service, params);
-                            break;
-                        case xrGetReply:
-                            reply = processFetchReply(uuid);
-                            break;
-                        case xrSendTransaction:
-                            reply = processSendTransaction(service, params);
-                            break;
-                        default:
-                            throw XRouterError("Unknown command " + fqService, xrouter::UNSUPPORTED_SERVICE);
-                    }
-                } catch (XRouterError & e) {
-                    ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " msg: " << e.msg << " code: " << e.code;
-                    throw e;
-                } catch (std::exception & e) {
-                    ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " " << e.what();
-                    throw XRouterError("Internal Server Error: Bad connector for currency " + fqService, xrouter::BAD_CONNECTOR);
+                switch (command) {
+                    case xrGetBlockCount:
+                        reply = parseResult(processGetBlockCount(service, params));
+                        break;
+                    case xrGetBlockHash:
+                        reply = parseResult(processGetBlockHash(service, params));
+                        break;
+                    case xrGetBlock:
+                        reply = parseResult(processGetBlock(service, params));
+                        break;
+                    case xrGetTransaction:
+                        reply = parseResult(processGetTransaction(service, params));
+                        break;
+                    case xrGetBlocks:
+                        reply = parseResult(processGetBlocks(service, params));
+                        break;
+                    case xrGetTransactions:
+                        reply = parseResult(processGetTransactions(service, params));
+                        break;
+                    case xrDecodeRawTransaction:
+                        reply = parseResult(processDecodeRawTransaction(service, params));
+                        break;
+                    case xrGetBalance:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+//                        reply = parseResult(processGetBalance(service, params));
+                        break;
+                    case xrGetTxBloomFilter:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+//                        reply = parseResult(processGetTxBloomFilter(service, params));
+                        break;
+                    case xrGenerateBloomFilter:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+//                        reply = parseResult(processGenerateBloomFilter(service, params));
+                        break;
+                    case xrGetBlockAtTime:
+                        throw XRouterError("This call is not supported: " + fqService, xrouter::UNSUPPORTED_SERVICE);
+//                        reply = parseResult(processConvertTimeToBlockCount(service, params));
+                        break;
+                    case xrGetReply:
+                        reply = parseResult(processFetchReply(uuid));
+                        break;
+                    case xrSendTransaction:
+                        reply = parseResult(processSendTransaction(service, params));
+                        break;
+                    default:
+                        throw XRouterError("Unknown command " + fqService, xrouter::UNSUPPORTED_SERVICE);
                 }
+            } catch (XRouterError & e) {
+                state.DoS(1, error("XRouter: bad request"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " msg: " << e.msg << " code: " << e.code;
+                throw e;
+            } catch (std::exception & e) {
+                state.DoS(1, error("XRouter: server error"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " " << e.what();
+                throw XRouterError("Internal Server Error: Bad connector for " + fqService, xrouter::BAD_CONNECTOR);
+            }
 
-                // Spend client payment if supported command
+            // Spend client payment if supported command
+            try {
                 switch (command) {
                     case xrGetBalance:
                     case xrGetBlockAtTime:
@@ -401,12 +402,11 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                     default: {
                         if (!processPayment(nodeAddr, app.xrSettings()->paymentAddress(command, service), feetx, cmdFee)) {
                             const std::string err_msg = strprintf("Bad fee payment from client %s service %s", nodeAddr, fqService);
-                            state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                            state.DoS(25, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
                             throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
                         }
                     }
                 }
-
             } catch (XRouterError & e) {
                 state.DoS(1, error("XRouter: bad request"), REJECT_INVALID, "xrouter-error"); // prevent abuse
                 throw e;
@@ -436,51 +436,40 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
 //*****************************************************************************
 //*****************************************************************************
 std::string XRouterServer::processGetBlockCount(const std::string & currency, const std::vector<std::string> & params) {
-    Object result;
-
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result.emplace_back("result", conn->getBlockCount());
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->getBlockCount();
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 std::string XRouterServer::processGetBlockHash(const std::string & currency, const std::vector<std::string> & params) {
-    Object result;
-
     const auto & blockId = params[0];
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getBlockHash(std::stoi(blockId));
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->getBlockHash(std::stoi(blockId));
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 std::string XRouterServer::processGetBlock(const std::string & currency, const std::vector<std::string> & params) {
-    Object result;
-
     const auto & blockHash = params[0];
+
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getBlock(blockHash);
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->getBlock(blockHash);
     }
-    
-    return json_spirit::write_string(Value(result), true);
+
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
-std::string XRouterServer::processGetBlocks(const std::string & currency, const std::vector<std::string> & params) {
+std::vector<std::string> XRouterServer::processGetBlocks(const std::string & currency, const std::vector<std::string> & params) {
     if (params.empty())
         throw XRouterError("Missing block hashes for " + currency, xrouter::BAD_REQUEST);
 
@@ -490,36 +479,29 @@ std::string XRouterServer::processGetBlocks(const std::string & currency, const 
         throw XRouterError("Too many blocks requested for " + currency + " limit is " +
                            std::to_string(fetchlimit) + " received " + std::to_string(params.size()), xrouter::BAD_REQUEST);
 
-    Array result;
-
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getBlocks(params);
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->getBlocks(params);
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 
 std::string XRouterServer::processGetTransaction(const std::string & currency, const std::vector<std::string> & params) {
-    Object result;
-
     const auto & hash = params[0];
+
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getTransaction(hash);
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->getTransaction(hash);
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
-std::string XRouterServer::processGetTransactions(const std::string & currency, const std::vector<std::string> & params) {
+std::vector<std::string> XRouterServer::processGetTransactions(const std::string & currency, const std::vector<std::string> & params) {
     if (params.empty())
         throw XRouterError("Missing transaction hashes for " + currency, xrouter::BAD_REQUEST);
 
@@ -529,55 +511,44 @@ std::string XRouterServer::processGetTransactions(const std::string & currency, 
         throw XRouterError("Too many transactions requested for " + currency + " limit is " +
                            std::to_string(fetchlimit) + " received " + std::to_string(params.size()), xrouter::BAD_REQUEST);
     
-    Array result;
-
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getTransactions(params);
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->getTransactions(params);
     }
-    
-    return json_spirit::write_string(Value(result), true);
+
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 std::string XRouterServer::processDecodeRawTransaction(const std::string & currency, const std::vector<std::string> & params) {
-    Object result;
-
     const auto & hex = params[0];
+
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->decodeRawTransaction(hex);
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->decodeRawTransaction(hex);
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 std::string XRouterServer::processSendTransaction(const std::string & currency, const std::vector<std::string> & params) {
-    std::string transaction(params[0]);
-
-    Object result;
+    const auto & transaction = params[0];
 
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->sendTransaction(transaction);
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->sendTransaction(transaction);
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 //*****************************************************************************
 //*****************************************************************************
 
-std::string XRouterServer::processGetTxBloomFilter(const std::string & currency, const std::vector<std::string> & params) {
-    std::string filter(params[0]);
+std::vector<std::string> XRouterServer::processGetTxBloomFilter(const std::string & currency, const std::vector<std::string> & params) {
+    const auto & filter = params[0];
 
     // 10 is a constant for bloom filters currently
     if (!is_hash(filter) || (filter.size() % 10 != 0))
@@ -596,17 +567,13 @@ std::string XRouterServer::processGetTxBloomFilter(const std::string & currency,
     App & app = App::instance();
     int fetchlimit = app.xrSettings()->commandFetchLimit(xrGetTxBloomFilter, currency);
 
-    Array result;
-
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result = conn->getTransactionsBloomFilter(number, stream, fetchlimit);
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->getTransactionsBloomFilter(number, stream, fetchlimit);
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 std::string XRouterServer::processGenerateBloomFilter(const std::string & currency, const std::vector<std::string> & params) {
@@ -651,17 +618,13 @@ std::string XRouterServer::processGenerateBloomFilter(const std::string & curren
 std::string XRouterServer::processConvertTimeToBlockCount(const std::string & currency, const std::vector<std::string> & params) {
     const std::string timestamp(params[0]);
 
-    Object result;
-
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        result.emplace_back("result", conn->convertTimeToBlockCount(timestamp));
-    } else {
-        throw XRouterError("Internal Server Error: No connector for currency " + currency, xrouter::BAD_CONNECTOR);
+        return conn->convertTimeToBlockCount(timestamp);
     }
 
-    return json_spirit::write_string(Value(result), true);
+    throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);
 }
 
 std::string XRouterServer::processGetBalance(const std::string & currency, const std::vector<std::string> & params) {
@@ -715,8 +678,7 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
             const auto & ip       = psettings->stringParam("rpcip", "127.0.0.1");
             const auto & port     = psettings->stringParam("rpcport");
             const auto & command  = psettings->stringParam("rpccommand");
-            Object o = CallRPC(user, passwd, ip, port, command, jsonparams);
-            result = json_spirit::write_string(Value(o), true);
+            result = CallRPC(user, passwd, ip, port, command, jsonparams);;
         } catch (...) {
             throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
         }
@@ -875,95 +837,95 @@ void XRouterServer::clearHashedQueries() {
 }
 
 void XRouterServer::runPerformanceTests() {
-    WaitableLock l(_lock);
-    std::chrono::time_point<std::chrono::system_clock> time;
-    std::chrono::system_clock::duration diff;
-    for (const auto& it : this->connectors) {
-        std::string currency = it.first;
-        WalletConnectorXRouterPtr conn = it.second;
-        boost::mutex::scoped_lock l(*connectorLocks[currency]);
-        TESTLOG() << "Testing connector to currency " << currency;
-        TESTLOG() << "xrGetBlockCount";
-        time = std::chrono::system_clock::now();
-        int blocks = std::stoi(conn->getBlockCount());
-        diff = std::chrono::system_clock::now() - time;
-        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
-        TESTLOG() << "xrGetBlockHash";
-        time = std::chrono::system_clock::now();
-        Object obj = conn->getBlockHash(blocks-1);
-        const Value & result = find_value(obj, "result");
-        const std::string & blockhash = result.get_str();
-        diff = std::chrono::system_clock::now() - time;
-        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
-        TESTLOG() << "xrGetBlock";
-        time = std::chrono::system_clock::now();
-        conn->getBlock(blockhash);
-        diff = std::chrono::system_clock::now() - time;
-        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
-        TESTLOG() << "xrGetBlocks - 10 blocks";
-        time = std::chrono::system_clock::now();
-        conn->getBlocks({ "302a309d6b6c4a65e4b9ff06c7ea81bb17e985d00abdb01978ace62cc5e18421",
-                          "175d2a428b5649c2a4732113e7f348ba22a0e69cc0a87631449d1d77cd6e1b04",
-                          "34989eca8ed66ff53631294519e147a12f4860123b4bdba36feac6da8db492ab",
-                          "504540bb0c63470e2007a1c0145d9c92513a1a309b6452445f21eb1f7223dc85",
-                          "309eff15ee88810ddb779bad676ba1ac13e0b92ef3d335e63f83633cc3fa3c78",
-                          "8bfe0b683a7cc5301f40252090f59c98850ee9d2337c446e7d64e7c141cbfdfa",
-                          "fe5fe66e026624c2cc39024212c0e27ecbb50f83b96da007c7e5f28af0d340ec",
-                          "4f4b6ab9094ff37edfd708834c70c9aa8e4c5bb72ba85ebe0d287018cbcbcbef",
-                          "22e379280b11bdd006229a0192116a16a7ce22628435fe035788e414ae0ce5fa",
-                          "f1450f0dac81bb08470217abe27a8303c34e31626b0a09afa851ffea5e35c788",
-                          "695038b66bc7b1bcd2c4e60ef1017209a832e94fe78bbcd81a5c8fc166817457" });
-        diff = std::chrono::system_clock::now() - time;
-        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
+//    WaitableLock l(_lock);
+//    std::chrono::time_point<std::chrono::system_clock> time;
+//    std::chrono::system_clock::duration diff;
+//    for (const auto& it : this->connectors) {
+//        std::string currency = it.first;
+//        WalletConnectorXRouterPtr conn = it.second;
+//        boost::mutex::scoped_lock l(*connectorLocks[currency]);
+//        TESTLOG() << "Testing connector to currency " << currency;
+//        TESTLOG() << "xrGetBlockCount";
+//        time = std::chrono::system_clock::now();
+//        int blocks = std::stoi(conn->getBlockCount());
+//        diff = std::chrono::system_clock::now() - time;
+//        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
+//
+//        TESTLOG() << "xrGetBlockHash";
+//        time = std::chrono::system_clock::now();
+//        Object obj = conn->getBlockHash(blocks-1);
+//        const Value & result = find_value(obj, "result");
+//        const std::string & blockhash = result.get_str();
+//        diff = std::chrono::system_clock::now() - time;
+//        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
+//
+//        TESTLOG() << "xrGetBlock";
+//        time = std::chrono::system_clock::now();
+//        conn->getBlock(blockhash);
+//        diff = std::chrono::system_clock::now() - time;
+//        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
+//
+//        TESTLOG() << "xrGetBlocks - 10 blocks";
+//        time = std::chrono::system_clock::now();
+//        conn->getBlocks({ "302a309d6b6c4a65e4b9ff06c7ea81bb17e985d00abdb01978ace62cc5e18421",
+//                          "175d2a428b5649c2a4732113e7f348ba22a0e69cc0a87631449d1d77cd6e1b04",
+//                          "34989eca8ed66ff53631294519e147a12f4860123b4bdba36feac6da8db492ab",
+//                          "504540bb0c63470e2007a1c0145d9c92513a1a309b6452445f21eb1f7223dc85",
+//                          "309eff15ee88810ddb779bad676ba1ac13e0b92ef3d335e63f83633cc3fa3c78",
+//                          "8bfe0b683a7cc5301f40252090f59c98850ee9d2337c446e7d64e7c141cbfdfa",
+//                          "fe5fe66e026624c2cc39024212c0e27ecbb50f83b96da007c7e5f28af0d340ec",
+//                          "4f4b6ab9094ff37edfd708834c70c9aa8e4c5bb72ba85ebe0d287018cbcbcbef",
+//                          "22e379280b11bdd006229a0192116a16a7ce22628435fe035788e414ae0ce5fa",
+//                          "f1450f0dac81bb08470217abe27a8303c34e31626b0a09afa851ffea5e35c788",
+//                          "695038b66bc7b1bcd2c4e60ef1017209a832e94fe78bbcd81a5c8fc166817457" });
+//        diff = std::chrono::system_clock::now() - time;
+//        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
+//
 //        TESTLOG() << "xrGetBlocks - 100 blocks";
 //        time = std::chrono::system_clock::now();
 //        conn->getBlocks({ });
 //        diff = std::chrono::system_clock::now() - time;
 //        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
+//
 //        TESTLOG() << "xrGetBlocks - 1000 blocks";
 //        time = std::chrono::system_clock::now();
 //        conn->getBlocks({ });
 //        diff = std::chrono::system_clock::now() - time;
 //        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
-        TESTLOG() << "xrGetTransactions - 10 blocks";
-        time = std::chrono::system_clock::now();
-        conn->getTransactions({ "24ff5506a30772acfb65012f1b3309d62786bc386be3b6ea853a798a71c010c8",
-                                "24b6bcb44f045d7a4cf8cd47c94a14cc609352851ea973f8a47b20578391629f",
-                                "66a5809c7090456965fe30280b88f69943e620894e1c4538a724ed9a89c769be",
-                                "b981a5f85354342ad9d627b367f070a688d8cd054eb9df6e7549c9d388dd6070",
-                                "7821c916acc487e019e11fab947aa3ace75b035831790f7d06796a92b6cb5f18",
-                                "34e876cbe8d4e97290db089c680bd4b6c5d4f7f56f916d0c9bd4393739f273eb",
-                                "e5d585f6d0fa35accda2113a55f5a090c746592b4afc1fae770bc1bb3dd0b6e7",
-                                "28de1d6012490c8421480644dd644eb9c800bad33f76c477f792ef13d24baac1",
-                                "fddd4e01390653b5cfea74ef717515738b04b63a33f646ed25210c1cc9a68385",
-                                "b8d9cb15d6a1d8e0c79e3a7140f974185d08ce78d38bfdfe705ce80f48e57e7b" });
-        diff = std::chrono::system_clock::now() - time;
-        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
+//
+//        TESTLOG() << "xrGetTransactions - 10 blocks";
+//        time = std::chrono::system_clock::now();
+//        conn->getTransactions({ "24ff5506a30772acfb65012f1b3309d62786bc386be3b6ea853a798a71c010c8",
+//                                "24b6bcb44f045d7a4cf8cd47c94a14cc609352851ea973f8a47b20578391629f",
+//                                "66a5809c7090456965fe30280b88f69943e620894e1c4538a724ed9a89c769be",
+//                                "b981a5f85354342ad9d627b367f070a688d8cd054eb9df6e7549c9d388dd6070",
+//                                "7821c916acc487e019e11fab947aa3ace75b035831790f7d06796a92b6cb5f18",
+//                                "34e876cbe8d4e97290db089c680bd4b6c5d4f7f56f916d0c9bd4393739f273eb",
+//                                "e5d585f6d0fa35accda2113a55f5a090c746592b4afc1fae770bc1bb3dd0b6e7",
+//                                "28de1d6012490c8421480644dd644eb9c800bad33f76c477f792ef13d24baac1",
+//                                "fddd4e01390653b5cfea74ef717515738b04b63a33f646ed25210c1cc9a68385",
+//                                "b8d9cb15d6a1d8e0c79e3a7140f974185d08ce78d38bfdfe705ce80f48e57e7b" });
+//        diff = std::chrono::system_clock::now() - time;
+//        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
+//
 //        TESTLOG() << "xrGetTransactions - 100 blocks";
 //        time = std::chrono::system_clock::now();
 //        conn->getTransactions({ "" });
 //        diff = std::chrono::system_clock::now() - time;
 //        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
+//
 //        TESTLOG() << "xrGetTransactions - 1000 blocks";
 //        time = std::chrono::system_clock::now();
 //        conn->getTransactions({ "" });
 //        diff = std::chrono::system_clock::now() - time;
 //        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-        
-        TESTLOG() << "xrGetBlockAtTime";
-        time = std::chrono::system_clock::now();
-        conn->convertTimeToBlockCount("1241469643");
-        diff = std::chrono::system_clock::now() - time;
-        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
-    }
+//
+//        TESTLOG() << "xrGetBlockAtTime";
+//        time = std::chrono::system_clock::now();
+//        conn->convertTimeToBlockCount("1241469643");
+//        diff = std::chrono::system_clock::now() - time;
+//        TESTLOG() << std::chrono::duration_cast<std::chrono::milliseconds>(diff).count() << " ms";
+//    }
 }
 
 bool XRouterServer::rateLimitExceeded(const std::string & nodeAddr, const std::string & key, const int & rateLimit) {
@@ -994,5 +956,23 @@ bool XRouterServer::initKeyPair() {
 
     return true;
 }
+
+std::string XRouterServer::parseResult(const std::string & res) {
+    Value res_val; read_string(res, res_val);
+    if (res_val.type() == obj_type) {
+        const auto & r_val = find_value(res_val.get_obj(), "result");
+        if (r_val.type() == null_type)
+            return res;
+        return write_string(r_val);
+    }
+    return res;
+};
+
+std::string XRouterServer::parseResult(const std::vector<std::string> & resv) {
+    std::vector<std::string> parsed;
+    for (const auto & r : resv)
+        parsed.push_back(parseResult(r));
+    return "[" + boost::algorithm::join(parsed, ",") + "]";
+};
 
 } // namespace xrouter

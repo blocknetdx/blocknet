@@ -1376,11 +1376,11 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 Object resultObj = resultVal.get_obj();
                 const Value & rv = find_value(resultObj, "result");
                 if (rv.type() == str_type)
-                    r.emplace_back("reply", rv.get_str());
+                    r.emplace_back("result", rv.get_str());
                 else
-                    r.emplace_back("reply", resultObj);
+                    r.emplace_back("result", resultObj);
             }
-            else r.emplace_back("reply", resultVal);
+            else r.emplace_back("result", resultVal);
 
             Array allr;
             for (const auto & item : replies) {

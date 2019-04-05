@@ -89,7 +89,7 @@ public:
      * @param params list of parameters
      * @return
      */
-    std::string processGetBlocks(const std::string & currency, const std::vector<std::string> & params);
+    std::vector<std::string> processGetBlocks(const std::string & currency, const std::vector<std::string> & params);
 
     /**
      * @brief process xrGetTransaction call on service node side
@@ -105,7 +105,7 @@ public:
      * @param params list of parameters
      * @return
      */
-    std::string processGetTransactions(const std::string & currency, const std::vector<std::string> & params);
+    std::vector<std::string> processGetTransactions(const std::string & currency, const std::vector<std::string> & params);
 
     /**
      * @brief process xrDecodeRawTransaction call on service node side
@@ -121,7 +121,7 @@ public:
      * @param params list of parameters
      * @return
      */
-    std::string processGetTxBloomFilter(const std::string & currency, const std::vector<std::string> & params);
+    std::vector<std::string> processGetTxBloomFilter(const std::string & currency, const std::vector<std::string> & params);
 
     /**
      * @brief process xrGenerateBloomFilter call on service node side
@@ -296,6 +296,20 @@ private:
      */
     bool processParameters(XRouterPacketPtr packet, const int & paramsCount,
             std::vector<std::string> & params, uint32_t & offset);
+
+    /**
+     * Removes the {"result": ""} object wrapper.
+     * @param res
+     * @return
+     */
+    std::string parseResult(const std::string & res);
+
+    /**
+     * Removes the {"result": ""} object wrapper.
+     * @param resv
+     * @return
+     */
+    std::string parseResult(const std::vector<std::string> & resv);
 
 private:
     bool started{false};

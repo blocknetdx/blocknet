@@ -21,6 +21,12 @@ namespace xrouter
 static std::set<std::string> acceptableParameterTypes{"string","bool","int","double"};
 static const std::string privatePrefix{"private::"};
 
+static int maxFetchLimit(const int & fl) {
+    if (fl < 0)
+        return std::numeric_limits<int>::max();
+    else return fl;
+};
+
 //******************************************************************************
 //******************************************************************************
 bool IniConfig::read(const boost::filesystem::path & fileName)
@@ -303,9 +309,9 @@ int XRouterSettings::commandFetchLimit(XRouterCommand c, const std::string & ser
     if (c == xrService && hasPlugin(service)) {
         auto ps = getPluginSettings(service);
         if (ps->has("fetchlimit"))
-            return ps->fetchLimit();
+            return maxFetchLimit(ps->fetchLimit());
         else
-            return get<int>("Main.fetchlimit", def);
+            return maxFetchLimit(get<int>("Main.fetchlimit", def));
     }
 
     auto res = get<int>("Main.fetchlimit", def);
@@ -314,7 +320,7 @@ int XRouterSettings::commandFetchLimit(XRouterCommand c, const std::string & ser
         res = get<int>(service + ".fetchlimit", res);
         res = get<int>(service + xrdelimiter + std::string(XRouterCommand_ToString(c)) + ".fetchlimit", res);
     }
-    return res;
+    return maxFetchLimit(res);
 }    
 
 int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string service, int def) {
@@ -532,7 +538,7 @@ int XRouterPluginSettings::clientRequestLimit() {
 
 int XRouterPluginSettings::fetchLimit() {
     int res = get<int>("fetchlimit", -1);
-    return res;
+    return maxFetchLimit(res);
 }
 
 int XRouterPluginSettings::commandTimeout() {

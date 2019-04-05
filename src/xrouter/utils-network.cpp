@@ -1,10 +1,20 @@
 //******************************************************************************
 //******************************************************************************
 #include "xrouterutils.h"
-#include "xrouterlogger.h"
 #include "xrouterdef.h"
 #include "xroutererror.h"
+#include "xrouterlogger.h"
 
+#include "rpcserver.h"
+#include "rpcprotocol.h"
+#include "rpcclient.h"
+#include "base58.h"
+#include "wallet.h"
+#include "init.h"
+#include "key.h"
+#include "core_io.h"
+
+#include <stdio.h>
 #include <cstdio>
 #include <iostream>
 #include <memory>
@@ -24,17 +34,6 @@
 #include <boost/archive/iterators/insert_linebreaks.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
-
-#include <stdio.h>
-
-#include "rpcserver.h"
-#include "rpcprotocol.h"
-#include "rpcclient.h"
-#include "base58.h"
-#include "wallet.h"
-#include "init.h"
-#include "key.h"
-#include "core_io.h"
 
 using namespace std;
 using namespace boost;
@@ -100,7 +99,7 @@ std::string base64_encode(const std::string& s)
     return os.str();
 }
 
-Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
+std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
 {
@@ -143,15 +142,7 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     else if (strReply.empty())
         throw runtime_error("no response from server");
 
-    // Parse reply
-    Value valReply;
-    if (!read_string(strReply, valReply))
-        throw runtime_error("couldn't parse reply from server");
-    const Object& reply = valReply.get_obj();
-    if (reply.empty())
-        throw runtime_error("expected reply to have result, error and id properties");
-
-    return reply;
+    return strReply;
 }
 
 std::string CallURL(const std::string & ip, const std::string & port, const std::string & url)

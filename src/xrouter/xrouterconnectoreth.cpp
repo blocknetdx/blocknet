@@ -1,25 +1,32 @@
 #include "xrouterconnectoreth.h"
+#include "xroutererror.h"
+
 #include "uint256.h"
+#include "tinyformat.h"
 #include "rpcserver.h"
 #include "rpcprotocol.h"
 #include "rpcclient.h"
-#include "tinyformat.h"
+
+#include "json/json_spirit.h"
+#include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_writer_template.h"
+
+#include <stdio.h>
+#include <cstdint>
+
 #include <boost/asio.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/asio/ssl.hpp>
-#include <stdio.h>
-#include <cstdint>
-#include "xroutererror.h"
-
-namespace rpc
-{
 
 using namespace json_spirit;
 using namespace std;
 using namespace boost;
 using namespace boost::asio;
+
+namespace rpc
+{
 
 int readHTTP(std::basic_istream<char>& stream, map<string, string>& mapHeadersRet, string& strMessageRet)
 {
@@ -56,7 +63,7 @@ int readHTTP(std::basic_istream<char>& stream, map<string, string>& mapHeadersRe
     return nStatus;
 }
 
-Object CallRPC(const std::string & rpcip, const std::string & rpcport,
+std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
 {
     boost::asio::ip::tcp::iostream stream;
@@ -87,15 +94,7 @@ Object CallRPC(const std::string & rpcip, const std::string & rpcport,
     else if (strReply.empty())
         throw runtime_error("no response from server");
 
-    // Parse reply
-    Value valReply;
-    if (!read_string(strReply, valReply))
-        throw runtime_error("couldn't parse reply from server");
-    const Object& reply = valReply.get_obj();
-    if (reply.empty())
-        throw runtime_error("expected reply to have result, error and id properties");
-
-    return reply;
+    return strReply;
 }
 
 }
@@ -103,13 +102,15 @@ Object CallRPC(const std::string & rpcip, const std::string & rpcport,
 namespace xrouter
 {
 
-static Value getResult(Object obj) {
-    for (Object::size_type i = 0; i != obj.size(); i++ ) {
-        if (obj[i].name_ == "result") {
-            return obj[i].value_;
-        }
-    }
-    return Value();
+static Value getResult(const std::string & obj)
+{
+    Value obj_val; read_string(obj, obj_val);
+    if (obj_val.type() == null_type)
+        return Value(obj);
+    const Value & r = find_value(obj_val.get_obj(), "result");
+    if (r.type() == null_type)
+        return Value(obj);
+    return r;
 }
 
 static std::string dec2hex(const int & s) {
@@ -132,105 +133,72 @@ static int hex2dec(std::string s) {
 
 std::string EthWalletConnectorXRouter::getBlockCount() const
 {
-    std::string command("eth_blockNumber");
-
-    Object blockNumberObj = rpc::CallRPC(m_ip, m_port, command, Array());
-
-    Value blockNumberVal = getResult(blockNumberObj);
-
-    if(!blockNumberVal.is_null())
-    {
-        return std::to_string(hex2dec(blockNumberVal.get_str()));
-    }
-
-    return std::string();
+    static const std::string command("eth_blockNumber");
+    return rpc::CallRPC(m_ip, m_port, command, Array());
 }
 
-Object EthWalletConnectorXRouter::getBlockHash(const int & block) const
+std::string EthWalletConnectorXRouter::getBlockHash(const int & block) const
 {
-    std::string command("eth_getBlockByNumber");
-      
-    Array params { dec2hex(block), false };
-
-    Object resp = rpc::CallRPC(m_ip, m_port, command, params);
-
-    Object blockResult = getResult(resp).get_obj();
-    std::string hash = find_value(blockResult, "hash").get_str();
-
-    Object result;
-    result.emplace_back(Pair("result", hash));
-    return result;
+    static const std::string command("eth_getBlockByNumber");
+    return rpc::CallRPC(m_ip, m_port, command, { dec2hex(block), false });
 }
 
-Object EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
+std::string EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
 {
-    std::string command("eth_getBlockByHash");
-    Array params { blockHash, true };
-
-    Object resp = rpc::CallRPC(m_ip, m_port, command, params);
-
-    return getResult(resp).get_obj();
+    static const std::string command("eth_getBlockByHash");
+    return rpc::CallRPC(m_ip, m_port, command, { blockHash, true });
 }
 
-Array EthWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const
+std::vector<std::string> EthWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const
 {
-    static const std::string commandBN("eth_getBlockByHash");
-
-    Array result;
-    for (const auto & hash : blockHashes) {
-        Array params { hash, true };
-        Object resp = rpc::CallRPC(m_ip, m_port, commandBN, params);
-        result.push_back(getResult(resp));
-    }
-    return result;
+    std::vector<std::string> results;
+    for (const auto & hash : blockHashes)
+        results.push_back(getBlock(hash));
+    return results;
 }
 
-Object EthWalletConnectorXRouter::getTransaction(const std::string & trHash) const
+std::string EthWalletConnectorXRouter::getTransaction(const std::string & trHash) const
 {
-    std::string command("eth_getTransactionByHash");
-    Array params { trHash };
-
-    Object resp = rpc::CallRPC(m_ip, m_port, command, params);
-
-    return getResult(resp).get_obj();
+    static const std::string command("eth_getTransactionByHash");
+    return rpc::CallRPC(m_ip, m_port, command, { trHash });
 }
 
-Object EthWalletConnectorXRouter::decodeRawTransaction(const std::string & trHash) const
+std::string EthWalletConnectorXRouter::decodeRawTransaction(const std::string & trHash) const
 {
     Object unsupported; unsupported.emplace_back("error", "Unsupported");
-    return unsupported;
+    return write_string(Value(unsupported), pretty_print);
 }
 
-Array EthWalletConnectorXRouter::getTransactions(const std::vector<std::string> & txHashes) const
+std::vector<std::string> EthWalletConnectorXRouter::getTransactions(const std::vector<std::string> & txHashes) const
 {
-    Array result;
-    for (const auto & hash : txHashes) {
-        result.push_back(getTransaction(hash));
-    }
-    return result;
+    std::vector<std::string> results;
+    for (const auto & hash : txHashes)
+        results.push_back(getTransaction(hash));
+    return results;
 }
 
-Array EthWalletConnectorXRouter::getTransactionsBloomFilter(const int &, CDataStream &, const int &) const
+std::vector<std::string> EthWalletConnectorXRouter::getTransactionsBloomFilter(const int &, CDataStream &, const int &) const
 {
-    // TODO Implement
-    return Array();
+    Object unsupported; unsupported.emplace_back("error", "Unsupported");
+    return std::vector<std::string>{write_string(Value(unsupported), pretty_print)};
 }
 
-Object EthWalletConnectorXRouter::sendTransaction(const std::string &) const
+std::string EthWalletConnectorXRouter::sendTransaction(const std::string & rawtx) const
 {
-    // TODO: implement
-    return Object();
+    static const std::string command("eth_sendRawTransaction");
+    return rpc::CallRPC(m_ip, m_port, command, { rawtx });
 }
 
 std::string EthWalletConnectorXRouter::convertTimeToBlockCount(const std::string & timestamp) const
 {
-    // TODO: implement
-    return "";
+    Object unsupported; unsupported.emplace_back("error", "Unsupported");
+    return write_string(Value(unsupported), pretty_print);
 }
 
 std::string EthWalletConnectorXRouter::getBalance(const std::string & address) const
 {
-    return "0";
+    Object unsupported; unsupported.emplace_back("error", "Unsupported");
+    return write_string(Value(unsupported), pretty_print);
 }
 
 } // namespace xrouter
