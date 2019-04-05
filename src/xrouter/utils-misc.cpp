@@ -210,11 +210,25 @@ Object form_reply(const std::string & uuid, const Value & reply) {
     }
 
     ret = reply.get_obj();
-    const Value rply = find_value(ret, "reply");
-    const Value result = find_value(ret, "result");
-    const Value error = find_value(ret, "error");
-    const Value code = find_value(ret, "code");
+
+    Value rply = find_value(ret, "reply");
+    Value result = find_value(ret, "result");
+    const Value error_val = find_value(ret, "error");
+    const Value code_val = find_value(ret, "code");
     const Value uuid_val = find_value(ret, "uuid");
+
+    if (rply.type() == null_type && result.type() == null_type && error_val.type() == null_type) {
+        ret = Object();
+        ret.emplace_back("reply", reply.get_obj());
+        if (error_val.type() != null_type)
+            ret.emplace_back("error", "Bad request");
+        if (code_val.type() != null_type)
+            ret.emplace_back("code", code_val);
+        if (uuid_val.type() != null_type)
+            ret.emplace_back("uuid", uuid_val);
+        rply = find_value(ret, "reply");
+        result = Value();
+    }
 
     // Display result/reply
     if (result.type() != null_type && rply.type() == null_type) {
@@ -229,8 +243,8 @@ Object form_reply(const std::string & uuid, const Value & reply) {
     }
 
     // Display errors
-    if (error.type() != null_type) {
-        if (code.type() == null_type) {
+    if (error_val.type() != null_type) {
+        if (code_val.type() == null_type) {
             // insert after error
             for (int i = 0; i < ret.size(); ++i) {
                 const auto & item = ret[i];
