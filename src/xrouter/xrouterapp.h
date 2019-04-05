@@ -374,13 +374,12 @@ public:
      * @brief get all nodes that support the command for a given chain
      * @param command XRouter command
      * @param service Wallet or currency name
+     * @param parameterCount Number of parameters in request
      * @param count Number of nodes to fetch (default 1 node)
-     * @param nodes Currently connected nodes
-     * @param nodec Nodes mapped by node address
-     * @param snodes Servicenodes mapped by node address
      * @return
      */
-    std::vector<CNode*> availableNodesRetained(enum XRouterCommand command, const std::string & service, const int & count = 1);
+    std::vector<CNode*> availableNodesRetained(enum XRouterCommand command, const std::string & service,
+                                               const int & parameterCount, const int & count = 1);
     
     /**
      * @brief find the node that supports a given plugin 

@@ -537,7 +537,7 @@ int XRouterPluginSettings::clientRequestLimit() {
 }
 
 int XRouterPluginSettings::fetchLimit() {
-    int res = get<int>("fetchlimit", -1);
+    int res = get<int>("fetchlimit", XROUTER_DEFAULT_FETCHLIMIT);
     return maxFetchLimit(res);
 }
 

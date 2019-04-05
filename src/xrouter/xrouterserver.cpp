@@ -259,9 +259,10 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
         // Params count
         const auto paramsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
         offset += sizeof(uint32_t);
-        if (paramsCount > XROUTER_MAX_PARAMETERS)
+        const auto & fetchLimit = app.xrSettings()->commandFetchLimit(command, service);
+        if (paramsCount > fetchLimit)
             throw XRouterError("Too many parameters from client, max is " +
-                               std::to_string(XROUTER_MAX_PARAMETERS) + ": " + fqService, xrouter::BAD_REQUEST);
+                               std::to_string(fetchLimit) + ": " + fqService, xrouter::BAD_REQUEST);
 
         // Handle calls to XRouter plugins
         if (command == xrService) {

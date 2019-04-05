@@ -302,7 +302,7 @@ Value xrGetBlocks(const Array & params, bool fHelp)
                                  "xrGetBlocks BLOCK 39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c 2\n");
     }
 
-    if (params.size() < 1) {
+    if (params.size() < 1 || boost::algorithm::contains(params[0].get_str(), ",")) {
         Object error;
         error.emplace_back("error", "Currency not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);

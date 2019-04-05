@@ -293,13 +293,23 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     {
         if (maxfee > 0) {
             auto fee = settings->commandFee(command, service);
-            if (fee > maxfee)
+            if (fee > maxfee) {
+                LOG() << "Skipping node " << nodeAddr << " because its fee " << fee << " is higher than maxfee " << maxfee;
                 return true;
+            }
         }
-        if (parameterCount > 0 && settings->commandFetchLimit(command, service) < parameterCount)
+        const int & fetchLimit = settings->commandFetchLimit(command, service);
+        if (parameterCount > fetchLimit) {
+            LOG() << "Skipping node " << nodeAddr << " because its fetch limit " << fetchLimit << " is lower than "
+                  << parameterCount;
             return true; // fetch limit exceeded
+        }
         auto rateLimit = settings->clientRequestLimit(command, service);
-        return rateLimitExceeded(nodeAddr, fqService, getLastRequest(nodeAddr, fqService), rateLimit);
+        if (rateLimitExceeded(nodeAddr, fqService, getLastRequest(nodeAddr, fqService), rateLimit)) {
+            LOG() << "Skipping node " << nodeAddr << " because not enough time passed since the last call";
+            return true;
+        }
+        return false;
     };
 
     auto addSelected = [this,&connected,&connectedSnodes,&lu,&failedChecks](const std::string & snodeAddr) -> bool {
@@ -637,7 +647,7 @@ bool App::stop()
     timerIo.stop();
     timerThread.join();
 
-    if (!isEnabled())
+    if (!isEnabled() || !isReady())
         return false;
 
     // shutdown threads
@@ -652,7 +662,8 @@ bool App::stop()
  
 //*****************************************************************************
 //*****************************************************************************
-std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, const std::string & service, const int & count)
+std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, const std::string & service,
+                                                const int & parameterCount, const int & count)
 {
     std::vector<CNode*> selectedNodes;
 
@@ -702,9 +713,18 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
             auto fee = settings->commandFee(command, service);
             if (fee > maxfee) {
                 const auto & snodeAddr = CBitcoinAddress(snodec[nodeAddr].pubKeyCollateralAddress.GetID()).ToString();
-                LOG() << "Skipping node " << snodeAddr << " because its fee=" << fee << " is higher than maxfee=" << maxfee;
+                LOG() << "Skipping node " << snodeAddr << " because its fee " << fee << " is higher than maxfee " << maxfee;
                 continue;
             }
+        }
+
+        // Only select nodes who's fetch limit is acceptable
+        const auto & fetchLimit = settings->commandFetchLimit(command, service);
+        if (parameterCount > fetchLimit) {
+            const auto & snodeAddr = CBitcoinAddress(snodec[nodeAddr].pubKeyCollateralAddress.GetID()).ToString();
+            LOG() << "Skipping node " << snodeAddr << " because its fetch limit " << fetchLimit << " is lower than "
+                  << parameterCount;
+            continue;
         }
 
         auto rateLimit = settings->clientRequestLimit(command, service);
@@ -1202,7 +1222,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                                                         : walletCommandKey(service, commandStr); // spv wallet
 
         // Select available nodes
-        selectedNodes = availableNodesRetained(command, service, confs);
+        selectedNodes = availableNodesRetained(command, service, params.size(), confs);
         auto selected = static_cast<int>(selectedNodes.size());
 
         // If we don't have enough open connections...
@@ -1212,20 +1232,20 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             const auto remaining = static_cast<uint32_t>(confs - selected);
             if (!openConnections(command, service, remaining, params.size(), selectedNodes, found)) {
                 std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService +
-                                " found " + std::to_string(found > selected ? found : selected));
+                                " with config limits, found " + std::to_string(found > selected ? found : selected));
                 throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
             }
 
             // Reselect available nodes
             releaseNodes(selectedNodes);
-            selectedNodes = availableNodesRetained(command, service, confs);
+            selectedNodes = availableNodesRetained(command, service, params.size(), confs);
             selected = static_cast<int>(selectedNodes.size());
         }
 
         // Check if we have enough nodes
         if (selected < confs)
             throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
-                               fqService + " found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
+                               fqService + " with config limits, found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
 
         int snodeCount = 0;
         std::string fundErr{"Could not create payments to service nodes. Please check that your wallet "
