@@ -150,40 +150,29 @@ void XRouterServer::sendPacketToClient(const std::string & uuid, const std::stri
     pnode->PushMessage("xrouter", rpacket.body());
 }
 
-bool XRouterServer::processPayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,
-        const std::string & feetx, const CAmount & requiredFee)
+bool XRouterServer::processPayment(const std::string & feetx)
 {
-    if (feetx.empty() && requiredFee > 0) {
-        ERR() << "Client sent a bad feetx: " << nodeAddr;
-        return false; // do not process bad fees
-    }
-    else if (feetx.empty())
-        return true; // do not process empty fees if we're not expecting any payment
-
-    // Direct payment, no CLTV channel
-    const auto & addr = getMyPaymentAddress();
-    if (addr.empty())
-        throw XRouterError("Bad payment address", xrouter::BAD_ADDRESS);
-
-    CAmount paid = to_amount(checkPayment(feetx, addr));
-    if (paid < requiredFee) {
-        auto requiredDbl = static_cast<double>(requiredFee) / static_cast<double>(COIN);
-        auto paidDbl = static_cast<double>(paid) / static_cast<double>(COIN);
-        ERR() << "Client failed to send enough fees, required " << std::to_string(requiredDbl)
-              << " received: " << std::to_string(paidDbl) << " "
-              << nodeAddr;
-        return false;
-    }
-
     std::string txid;
     bool res = sendTransactionBlockchain(feetx, txid);
     if (!res) {
-        ERR() << "Failed to spend client fee: Could not send transaction " + feetx + " " << nodeAddr;
+        ERR() << "Failed to spend client fee:\n" + feetx;
         return false;
     }
+    return true;
+}
 
-    LOG() << "Received direct payment: value = " << static_cast<double>(paid)/static_cast<double>(COIN) << " tx = "
-          << feetx + " " << nodeAddr;
+bool XRouterServer::checkFeePayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,
+        const std::string & feetx, const CAmount & requiredFee)
+{
+    if (feetx.empty()) {
+        ERR() << "Client sent a bad feetx: " << nodeAddr;
+        return false; // do not process bad fees
+    }
+
+    if (paymentAddress.empty()) // check payment address
+        return false;
+
+    checkPayment(feetx, paymentAddress, requiredFee);
     return true;
 }
 
@@ -252,8 +241,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             throw XRouterError("Unsupported xrouter command: " + fqService, xrouter::UNSUPPORTED_SERVICE);
 
         // Store fee tx
-        CAmount fee = 0;
-        std::string feetx((const char *)packet->data()+offset);
+        const std::string feetx((const char *)packet->data()+offset);
         offset += feetx.size() + 1;
 
         // Params count
@@ -263,6 +251,27 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
         if (paramsCount > fetchLimit)
             throw XRouterError("Too many parameters from client, max is " +
                                std::to_string(fetchLimit) + ": " + fqService, xrouter::BAD_REQUEST);
+
+        auto handlePayment = [this](const bool & expectingPayment, const std::string & feeTransaction,
+                const std::string & fqService, CValidationState & state, const NodeAddr & nodeAddr)
+        {
+            if (!expectingPayment)
+                return;
+            try {
+                if (!processPayment(feeTransaction)) {
+                    const std::string err_msg = strprintf("Bad fee payment from client %s service %s", nodeAddr, fqService);
+                    state.DoS(50, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                    throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
+                }
+                LOG() << "Received payment for service " << fqService << " from node " << nodeAddr << "\n" << feeTransaction;
+            } catch (XRouterError & e) {
+                state.DoS(1, error("XRouter: bad request"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                throw e;
+            } catch (std::exception & e) {
+                state.DoS(1, error("XRouter: server error"), REJECT_INVALID, "xrouter-error"); // prevent abuse
+                throw XRouterError(e.what(), xrouter::INTERNAL_SERVER_ERROR);
+            }
+        };
 
         // Handle calls to XRouter plugins
         if (command == xrService) {
@@ -289,6 +298,19 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                                    " from node " + nodeAddr, xrouter::BAD_REQUEST);
             }
 
+            // Check payment
+            const auto dfee = psettings->fee();
+            const auto fee = to_amount(dfee);
+            bool expectingPayment = fee > 0;
+            if (expectingPayment) {
+                if (!checkFeePayment(nodeAddr, app.xrSettings()->paymentAddress(command, service), feetx, fee)) {
+                    const std::string err_msg = strprintf("Bad fee payment from client %s service %s", nodeAddr, fqService);
+                    state.DoS(25, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                    throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
+                }
+                LOG() << "XRouter command: " << fqService << " expecting fee " << dfee << " for query " << uuid;
+            }
+
             try {
                 reply = processServiceCall(service, params);
             } catch (XRouterError & e) {
@@ -299,25 +321,14 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                 throw XRouterError(e.what(), xrouter::INTERNAL_SERVER_ERROR);
             }
 
-            // Spend client payment after processing reply to avoid charging client on errors
-            fee = to_amount(psettings->fee());
-            LOG() << "XRouter command: " << fqService << " expecting fee = " << fee << " for query " << uuid;
-            if (!processPayment(nodeAddr, app.xrSettings()->paymentAddress(command, service), feetx, fee)) {
-                const std::string err_msg = strprintf("Bad fee payment from client %s service %s", nodeAddr, fqService);
-                state.DoS(25, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
-                throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
-            }
+            // Spend client payment
+            handlePayment(expectingPayment, feetx, fqService, state, nodeAddr);
 
         } else { // Handle default XRouter calls
             const auto dfee = app.xrSettings()->commandFee(command, service);
-            LOG() << "XRouter command: " << fqService << " expecting fee = " << dfee << " for query " << uuid;
+            const auto fee = to_amount(dfee); // convert to satoshi
 
-            // convert to satoshi
-            fee = to_amount(dfee);
-            CAmount cmdFee = fee;
-            if (command == xrGetReply)
-                cmdFee = getQueryFee(uuid);
-
+            // Rate limit check
             int rateLimit = app.xrSettings()->clientRequestLimit(command, service);
             if (rateLimit >= 0 && rateLimitExceeded(nodeAddr, fqService, rateLimit)) {
                 std::string err_msg = "Rate limit exceeded: " + fqService;
@@ -333,6 +344,17 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                 state.DoS(1, error("XRouter: too many parameters in query"), REJECT_INVALID, "xrouter-error"); // prevent abuse
                 throw XRouterError("XRouter: too many parameters in call " + fqService + " query " + uuid +
                                    " from node " + nodeAddr, xrouter::BAD_REQUEST);
+            }
+
+            // Check payment
+            bool expectingPayment = fee > 0;
+            if (expectingPayment) {
+                if (!checkFeePayment(nodeAddr, app.xrSettings()->paymentAddress(command, service), feetx, fee)) {
+                    const std::string err_msg = strprintf("Bad fee payment from client %s service %s", nodeAddr, fqService);
+                    state.DoS(25, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
+                    throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
+                }
+                LOG() << "XRouter command: " << fqService << " expecting fee " << dfee << " for query " << uuid;
             }
 
             try {
@@ -393,28 +415,8 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                 throw XRouterError("Internal Server Error: Bad connector for " + fqService, xrouter::BAD_CONNECTOR);
             }
 
-            // Spend client payment if supported command
-            try {
-                switch (command) {
-                    case xrGetBalance:
-                    case xrGetBlockAtTime:
-                    case xrGenerateBloomFilter:
-                        break; // commands not supported, do not charge client
-                    default: {
-                        if (!processPayment(nodeAddr, app.xrSettings()->paymentAddress(command, service), feetx, cmdFee)) {
-                            const std::string err_msg = strprintf("Bad fee payment from client %s service %s", nodeAddr, fqService);
-                            state.DoS(25, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
-                            throw XRouterError(err_msg, xrouter::INSUFFICIENT_FEE);
-                        }
-                    }
-                }
-            } catch (XRouterError & e) {
-                state.DoS(1, error("XRouter: bad request"), REJECT_INVALID, "xrouter-error"); // prevent abuse
-                throw e;
-            } catch (std::exception & e) {
-                state.DoS(1, error("XRouter: server error"), REJECT_INVALID, "xrouter-error"); // prevent abuse
-                throw XRouterError(e.what(), xrouter::INTERNAL_SERVER_ERROR);
-            }
+            // Spend client payment
+            handlePayment(expectingPayment, feetx, fqService, state, nodeAddr);
         }
 
     } catch (XRouterError & e) {

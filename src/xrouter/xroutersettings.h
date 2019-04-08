@@ -181,11 +181,11 @@ public:
     }
 
     bool isAvailableCommand(XRouterCommand c, const std::string & service);
-    double commandFee(XRouterCommand c, std::string service="", double def=0.0);
-    int commandTimeout(XRouterCommand c, std::string service="", int def=XROUTER_DEFAULT_TIMEOUT);
+    double commandFee(XRouterCommand c, const std::string & service, double def=0.0);
+    int commandTimeout(XRouterCommand c, const std::string & service, int def=XROUTER_DEFAULT_TIMEOUT);
     int commandFetchLimit(XRouterCommand c, const std::string & service, int def=XROUTER_DEFAULT_FETCHLIMIT);
     double maxFee(XRouterCommand c, std::string currency="", double def=0.0);
-    int clientRequestLimit(XRouterCommand c, std::string service="", int def=-1); // -1 is no limit
+    int clientRequestLimit(XRouterCommand c, const std::string & service, int def=-1); // -1 is no limit
     int confirmations(XRouterCommand c, std::string currency="", int def=XROUTER_DEFAULT_CONFIRMATIONS); // 1 confirmation default
     std::string paymentAddress(XRouterCommand c, const std::string & service="");
     int configSyncTimeout();

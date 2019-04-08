@@ -236,7 +236,7 @@ bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
 
     const static std::string sendCommand("sendrawtransaction");
 
-    int         errCode = 0;
+    int errCode = 0;
     std::string errMessage;
     Value result;
     
@@ -257,7 +257,6 @@ bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
     }
     catch (json_spirit::Object & obj)
     {
-        //
         errCode = find_value(obj, "code").get_int();
         errMessage = find_value(obj, "message").get_str();
     }
@@ -275,49 +274,81 @@ bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
 
     if (errCode != 0)
     {
-        LOG() << "xdata sendrawtransaction " << raw_tx;
-        LOG() << "error send xdata transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
+        LOG() << "Failed to sendrawtransaction: " << errCode << " " << errMessage << "\n" << raw_tx;
         return false;
     }
 
     return true;
 }
 
-double checkPayment(const std::string & rawtx, const std::string & address)
+double checkPayment(const std::string & rawtx, const std::string & address, const CAmount & expectedFee)
 {
-    const static std::string decodeCommand("decoderawtransaction");
-    std::vector<std::string> params;
-    params.push_back(rawtx);
+    CMutableTransaction tx;
+    if (!DecodeHexTx(tx, rawtx) || tx.vin.empty() || tx.vout.empty())
+        throw std::runtime_error("Bad fee payment");
 
-    Value result = tableRPC.execute(decodeCommand, RPCConvertValues(decodeCommand, params));
-    if (result.type() != obj_type)
-        throw std::runtime_error("Check payment failed: Decode transaction command finished with error");
-
-    Object obj = result.get_obj();
-    Array vouts = find_value(obj, "vout").get_array();
-    for (const auto & vout : vouts) {
-        // Validate tx type
-        auto & scriptPubKey = find_value(vout.get_obj(), "scriptPubKey").get_obj();
-        const auto & vouttype = find_value(scriptPubKey, "type").get_str();
-        if (vouttype != "pubkeyhash")
-            throw std::runtime_error("Check payment failed: Only pubkeyhash payments are accepted");
-
-        // Validate payment address
-        const auto & addr_val = find_value(scriptPubKey, "addresses");
-        if (addr_val.type() != array_type)
-            continue;
-
-        auto & addrs = addr_val.get_array();
-        if (addrs.size() <= 0)
-            continue;
-
-        if (addrs[0].get_str() != address) // check address
-            continue;
-
-        return find_value(vout.get_obj(), "value").get_real();
+    for (const auto & input : tx.vin) {
+        CTransaction t;
+        uint256 hashBlock = 0;
+        if (!GetTransaction(input.prevout.hash, t, hashBlock, true))
+            throw std::runtime_error("Bad fee payment, failed to find fee inputs");
     }
 
-    return 0.0;
+    CAmount payment{0};
+    for (const auto & output : tx.vout) {
+        std::vector<CTxDestination> addresses;
+        txnouttype whichType;
+        int nRequired;
+        ExtractDestinations(output.scriptPubKey, whichType, addresses, nRequired);
+        for (const CTxDestination & addr : addresses) {
+            if (CBitcoinAddress(addr).ToString() == address) {
+                payment += output.nValue;
+                break;
+            }
+        }
+    }
+
+    if (payment == 0)
+        throw std::runtime_error("Bad fee payment, payment address is missing");
+
+    if (payment < expectedFee)
+        throw std::runtime_error("Bad fee payment, fee is too low");
+
+    return payment;
+
+//    const static std::string decodeCommand("decoderawtransaction");
+//    std::vector<std::string> params;
+//    params.push_back(rawtx);
+//
+//    Value result = tableRPC.execute(decodeCommand, RPCConvertValues(decodeCommand, params));
+//    if (result.type() != obj_type)
+//        throw std::runtime_error("Check payment failed: Decode transaction command finished with error");
+//
+//    Object obj = result.get_obj();
+//    Array vouts = find_value(obj, "vout").get_array();
+//    for (const auto & vout : vouts) {
+//        // Validate tx type
+//        auto & scriptPubKey = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+//        const auto & vouttype = find_value(scriptPubKey, "type").get_str();
+//        if (vouttype != "pubkeyhash")
+//            throw std::runtime_error("Check payment failed: Only pubkeyhash payments are accepted");
+//
+//        // Validate payment address
+//        const auto & addr_val = find_value(scriptPubKey, "addresses");
+//        if (addr_val.type() != array_type)
+//            continue;
+//
+//        auto & addrs = addr_val.get_array();
+//        if (addrs.size() <= 0)
+//            continue;
+//
+//        if (addrs[0].get_str() != address) // check address
+//            continue;
+//
+//        return find_value(vout.get_obj(), "value").get_real();
+//    }
+//
+//    return 0.0;
 }
     
 } // namespace xrouter

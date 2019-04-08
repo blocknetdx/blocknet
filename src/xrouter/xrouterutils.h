@@ -109,7 +109,7 @@ std::string signTransaction(std::string& raw_tx);
 bool sendTransactionBlockchain(std::string raw_tx, std::string & txid);
 bool sendTransactionBlockchain(std::string address, CAmount amount, std::string & raw_tx);
 CMutableTransaction decodeTransaction(std::string tx);
-double checkPayment(const std::string & rawtx, const std::string & address);
+double checkPayment(const std::string & rawtx, const std::string & address, const CAmount & expectedFee);
 
 
 // Domains

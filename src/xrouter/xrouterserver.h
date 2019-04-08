@@ -172,16 +172,22 @@ public:
     
     /**
      * @brief process payment transaction 
+     * @param feetx hex-encoded payment tx and additional data
+     */
+    bool processPayment(const std::string & feetx);
+
+    /**
+     * @brief Checks the payment
      * @param nodeAddr node address payment is intended for
      * @param paymentAddress the desired payment address
      * @param feetx hex-encoded payment tx and additional data
      * @param requiredFee fee to be paid
-     * @return true if a fee was processed, otherwise return false
+     * @return true if fee payment is valid, otherwise false
      * @throws std::runtime_error in case of incorrect payment
      */
-    bool processPayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,
+    bool checkFeePayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,
             const std::string & feetx, const CAmount & requiredFee);
-    
+
     /**
      * @brief returns own snode pubkey hash
      * @return blocknet address

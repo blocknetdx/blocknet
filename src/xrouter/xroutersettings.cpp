@@ -238,7 +238,7 @@ double XRouterSettings::maxFee(XRouterCommand c, std::string service, double def
     return res;
 }
 
-int XRouterSettings::commandTimeout(XRouterCommand c, std::string service, int def)
+int XRouterSettings::commandTimeout(XRouterCommand c, const std::string & service, int def)
 {
     const std::string cstr{XRouterCommand_ToString(c)};
     auto res = get<int>("Main.timeout", def);
@@ -283,7 +283,7 @@ double XRouterSettings::defaultFee() {
     return get<double>("Main.fee", 0);
 }
 
-double XRouterSettings::commandFee(XRouterCommand c, std::string service, double def)
+double XRouterSettings::commandFee(XRouterCommand c, const std::string & service, double def)
 {
     // Handle plugin
     if (c == xrService && hasPlugin(service)) {
@@ -323,7 +323,7 @@ int XRouterSettings::commandFetchLimit(XRouterCommand c, const std::string & ser
     return maxFetchLimit(res);
 }    
 
-int XRouterSettings::clientRequestLimit(XRouterCommand c, std::string service, int def) {
+int XRouterSettings::clientRequestLimit(XRouterCommand c, const std::string & service, int def) {
     // Handle plugin
     if (c == xrService && hasPlugin(service)) {
         auto ps = getPluginSettings(service);
