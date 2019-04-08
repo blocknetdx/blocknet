@@ -734,7 +734,19 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         // Insert docker command info
         const auto & cmd = strprintf("docker exec -t %s %s %s", container, exe, cmdargs);
 
-        Object o;
+        // parses the container result into Value
+        auto parseR = [](const std::string & res) -> Value {
+            Value cmd_val;
+            try {
+                json_spirit::read_string(res, cmd_val);
+            } catch (...) {} // ignore errors on json parse
+            if (cmd_val.type() != null_type)
+                return cmd_val;
+            else
+                return Value(res); // raw string
+        };
+
+        Value val;
         try {
             LOG() << "Executing " << name << " with command: " << cmd;
             int nexit;
@@ -744,14 +756,16 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
                       << cmd << "\n" << r;
                 if (nexit == 1 || nexit == 2 || (nexit >= 126 && nexit <= 165) || nexit == 255)
                     throw std::runtime_error("");
-                o.emplace_back("error", r);
+                Value r_val = parseR(r);
+                Object o; o.emplace_back("error", r_val);
+                val = Value(o);
+            } else {
+                val = parseR(r);
             }
-            o.emplace_back("result", r);
-
         } catch (...) {
             throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
         }
-        return json_spirit::write_string(Value(o), false);
+        return json_spirit::write_string(val, false);
 
     } else if (callType == "url") {
         throw XRouterError("url calls are unsupported at this time", UNSUPPORTED_SERVICE);
