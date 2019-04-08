@@ -734,7 +734,7 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
                 spos = pos + argv.size();
         }
         // Insert docker command info
-        const auto & cmd = strprintf("docker exec -t %s %s %s", container, exe, cmdargs);
+        const auto & cmd = strprintf("docker exec %s %s %s", container, exe, cmdargs);
 
         // parses the container result into Value
         auto parseR = [](const std::string & res) -> Value {
