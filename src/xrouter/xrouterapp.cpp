@@ -1052,22 +1052,6 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
     if (!isEnabled() || !isReady())
         return;
 
-    auto checkDoS = [](CValidationState & state, CNode *pnode) {
-        int dos = 0;
-        if (state.IsInvalid(dos)) {
-            LogPrint("xrouter", "invalid xrouter packet from peer=%d %s : %s\n",
-                     pnode->id, pnode->cleanSubVer,
-                     state.GetRejectReason());
-            if (dos > 0) {
-                LOCK(cs_main);
-                Misbehaving(pnode->GetId(), dos);
-            }
-        } else if (state.IsError()) {
-            LogPrint("xrouter", "xrouter packet from peer=%d %s processed with error: %s\n",
-                     pnode->id, pnode->cleanSubVer,
-                     state.GetRejectReason());
-        }
-    };
     auto retainNode = [](CNode *pnode) {
         pnode->AddRef();
     };
@@ -1075,7 +1059,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
     retainNode(node); // retain for thread below
 
     // Handle the xrouter request
-    requestHandlers.create_thread([this, node, message, &checkDoS]() {
+    requestHandlers.create_thread([this, node, message]() {
         RenameThread("blocknetdx-xrouter");
         boost::this_thread::interruption_point();
         CValidationState state;
@@ -1132,30 +1116,23 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
 
             if (command == xrInvalid) { // Process invalid packets (protocol error packets)
                 processInvalid(node, packet, state);
-                checkDoS(state, node);
-                releaseNode(node);
             } else if (command == xrReply) { // Process replies
                 processReply(node, packet, state);
-                checkDoS(state, node);
-                releaseNode(node);
             } else if (command == xrConfigReply) { // Process config replies
                 processConfigReply(node, packet, state);
-                checkDoS(state, node);
-                releaseNode(node);
             } else if (canListen() && server->isStarted()) { // Process server requests
                 server->addInFlightQuery(nodeAddr, uuid);
                 try {
                     server->onMessageReceived(node, packet, state);
                     server->removeInFlightQuery(nodeAddr, uuid);
-                    releaseNode(node);
                 } catch (...) { // clean up on error
                     server->removeInFlightQuery(nodeAddr, uuid);
-                    releaseNode(node);
                 }
-                checkDoS(state, node);
-            } else {
-                releaseNode(node);
             }
+
+            // Done with request, process DoS and release node
+            checkDoS(state, node);
+            releaseNode(node);
 
         } catch (...) {
             ERR() << strprintf("xrouter query from %s processed with error: ", node->NodeAddress());
@@ -1965,5 +1942,20 @@ bool App::servicenodePubKey(const NodeAddr & node, std::vector<unsigned char> & 
     }
     return false;
 }
+
+void App::checkDoS(CValidationState & state, CNode *pnode) {
+    int dos = 0;
+    if (state.IsInvalid(dos)) {
+        LogPrint("xrouter", "invalid xrouter packet from peer=%d %s : %s\n", pnode->id, pnode->cleanSubVer,
+                 state.GetRejectReason());
+        if (dos > 0) {
+            LOCK(cs_main);
+            Misbehaving(pnode->GetId(), dos);
+        }
+    } else if (state.IsError()) {
+        LogPrint("xrouter", "xrouter packet from peer=%d %s processed with error: %s\n", pnode->id, pnode->cleanSubVer,
+                 state.GetRejectReason());
+    }
+};
 
 } // namespace xrouter

@@ -669,6 +669,13 @@ private:
             pnode->Release();
     }
 
+    /**
+     * DoS any bad nodes based on specified validation state.
+     * @param state
+     * @param pnode
+     */
+    void checkDoS(CValidationState & state, CNode *pnode);
+
     class PendingConnectionMgr {
     public:
         PendingConnectionMgr() = default;
