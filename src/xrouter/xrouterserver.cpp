@@ -642,7 +642,7 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
     
     XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(name);
     const std::string & callType = psettings->type();
-    LOG() << "Calling plugin " << name << " with type = " << callType;
+    LOG() << "Calling plugin " << name << " with type " << callType;
 
     // Check if parameters matches expected
     const auto & expectedParams = psettings->parameters();
@@ -675,16 +675,12 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         }
 
         std::string result;
-        try {
-            const auto & user     = psettings->stringParam("rpcuser");
-            const auto & passwd   = psettings->stringParam("rpcpassword");
-            const auto & ip       = psettings->stringParam("rpcip", "127.0.0.1");
-            const auto & port     = psettings->stringParam("rpcport");
-            const auto & command  = psettings->stringParam("rpccommand");
-            result = CallRPC(user, passwd, ip, port, command, jsonparams);;
-        } catch (...) {
-            throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
-        }
+        const auto & user     = psettings->stringParam("rpcuser");
+        const auto & passwd   = psettings->stringParam("rpcpassword");
+        const auto & ip       = psettings->stringParam("rpcip", "127.0.0.1");
+        const auto & port     = psettings->stringParam("rpcport");
+        const auto & command  = psettings->stringParam("rpccommand");
+        result = CallRPC(user, passwd, ip, port, command, jsonparams);;
         return result;
 
     } else if (callType == "docker") {
@@ -741,53 +737,48 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
             Value cmd_val;
             try {
                 json_spirit::read_string(res, cmd_val);
-            } catch (...) {} // ignore errors on json parse
+            } catch (...) { // ignore errors on json parse
+                throw XRouterError("Failed to read the plugin response data", INTERNAL_SERVER_ERROR);
+            }
             if (cmd_val.type() != null_type)
                 return cmd_val;
             else
                 return Value(res); // raw string
         };
 
+        LOG() << "Executing docker plugin " << name << " with command: " << cmd;
         Value val;
-        try {
-            LOG() << "Executing " << name << " with command: " << cmd;
-            int nexit;
-            const auto & r = CallCMD(cmd, nexit);
-            if (nexit != 0) {
-                ERR() << "docker command reported non-zero exit status (" << std::to_string(nexit) << ") on command: "
-                      << cmd << "\n" << r;
-                if (nexit == 1 || nexit == 2 || (nexit >= 126 && nexit <= 165) || nexit == 255)
-                    throw std::runtime_error("");
-                Value r_val = parseR(r);
-                Object o; o.emplace_back("error", r_val);
-                val = Value(o);
-            } else {
-                val = parseR(r);
-            }
-        } catch (...) {
-            throw XRouterError("Internal Server Error in command " + name, INTERNAL_SERVER_ERROR);
+        int nexit;
+        const auto & r = CallCMD(cmd, nexit);
+        if (nexit != 0) {
+            ERR() << "docker command reported non-zero exit status (" << std::to_string(nexit) << ") on command: "
+                  << cmd << "\n" << r;
+            if (nexit == 1 || nexit == 2 || (nexit >= 126 && nexit <= 165) || nexit == 255)
+                throw std::runtime_error("");
+            Value r_val = parseR(r);
+            Object o; o.emplace_back("error", r_val);
+            val = Value(o);
+        } else {
+            val = parseR(r);
         }
         return json_spirit::write_string(val, false);
 
     } else if (callType == "url") {
         throw XRouterError("url calls are unsupported at this time", UNSUPPORTED_SERVICE);
-
-        const std::string & ip = psettings->stringParam("ip");
-        const std::string & port = psettings->stringParam("port");
-        std::string cmd = psettings->stringParam("url");
-        // Replace params in command
-        for (const auto & p : params) {
-            cmd = cmd.replace(cmd.find("%s"), 2, p);
-        }
-
-        std::string result;
-        try {
-            LOG() << "Executing url command " << cmd;
-            result = CallURL(ip, port, cmd);
-        } catch (...) {
-            throw XRouterError("Internal Server Error in Url command " + name, INTERNAL_SERVER_ERROR);
-        }
-        return result;
+//
+//        const std::string & ip = psettings->stringParam("ip");
+//        const std::string & port = psettings->stringParam("port");
+//        std::string cmd = psettings->stringParam("url");
+//
+//        // Replace params in command
+//        for (const auto & p : params) {
+//            cmd = cmd.replace(cmd.find("%s"), 2, p);
+//        }
+//
+//        std::string result;
+//        LOG() << "Executing url command " << cmd;
+//        result = CallURL(ip, port, cmd);
+//        return result;
     }
     
     return "";

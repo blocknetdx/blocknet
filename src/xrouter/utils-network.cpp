@@ -185,18 +185,23 @@ std::string CallURL(const std::string & ip, const std::string & port, const std:
 
 std::string CallCMD(const std::string & cmd, int & exit) {
     std::array<char, 128> buffer;
+    FILE *pipe = popen(cmd.c_str(), "r");
+    if (!pipe)
+        throw std::runtime_error("popen() failed!");
+
     std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (!pipe) throw std::runtime_error("popen() failed!");
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
         result += buffer.data();
     }
-    auto n = pclose(pipe.get());
+
+    auto n = pclose(pipe);
+
 #ifdef WIN32
     exit = n & 0xff;
 #else
     exit = WEXITSTATUS(n);
 #endif
+
     return result;
 }
 

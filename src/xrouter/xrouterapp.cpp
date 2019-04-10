@@ -328,9 +328,6 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     // Check if existing snode connections have what we need
     std::map<NodeAddr, CServicenode> snodesNeedConfig;
     for (auto & s : snodes) {
-        if (connected >= count)
-            break; // done, found enough nodes
-
         const auto & snodeAddr = s.addr.ToString();
         if (!nodec.count(snodeAddr)) // skip non-connected nodes
             continue;
@@ -348,12 +345,6 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             addSelected(snodeAddr);
         else
             snodesNeedConfig[snodeAddr] = s;
-    }
-
-    if (connected >= count) {
-        releaseNodes(nodes);
-        foundCount = connected;
-        return true; // done if we have enough existing connections
     }
 
     // Manages fetching the config from specified nodes
@@ -455,9 +446,6 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     std::map<NodeAddr, CServicenode> needConnectionsHaveConfigs;
     auto configs = getConfigs();
     for (const auto & item : configs) {
-        if (connected >= count)
-            break; // done, found enough nodes
-
         const auto & snodeAddr = item.first;
         auto config = item.second;
 
@@ -473,9 +461,6 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     // At this point all remaining snodes are ones we don't have configs for.
     std::map<NodeAddr, CServicenode> needConnectionsNoConfigs;
     for (auto & s : snodes) {
-        if (connected >= count)
-            break; // done, found enough nodes
-
         const auto & snodeAddr = s.addr.ToString();
         if (snodeAddr.empty()) // Sanity check
             continue;
@@ -507,6 +492,21 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             foundCount = all.size();
             return connected >= count;
         }
+
+        // Sort by existing config snodes first
+        std::sort(all.begin(), all.end(), [this,command,service,&needConnectionsHaveConfigs](const NodeAddr & a,
+                                                                                             const NodeAddr & b)
+        {
+            if (!needConnectionsHaveConfigs.count(a))
+                return false;
+            if (!needConnectionsHaveConfigs.count(b))
+                return true;
+            auto sa = getConfig(a);
+            auto sb = getConfig(b);
+            const auto & a_score = getScore(a);
+            return a_score >= 0 && a_score > getScore(b)
+                                && sa->commandFee(command, service) < sb->commandFee(command, service);
+        });
 
         boost::thread_group tg;
 
@@ -737,9 +737,15 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
         selectedNodes.push_back(node);
     }
 
-    // Sort selected nodes descending by score
-    std::sort(selectedNodes.begin(), selectedNodes.end(), [this](const CNode *a, const CNode *b) {
-        return getScore(a->NodeAddress()) > getScore(b->NodeAddress());
+    // Sort selected nodes descending by score and lowest price first
+    std::sort(selectedNodes.begin(), selectedNodes.end(), [this,command,service](const CNode *a, const CNode *b) {
+        const auto & a_addr = a->NodeAddress();
+        const auto & b_addr = b->NodeAddress();
+        auto sa = getConfig(a_addr);
+        auto sb = getConfig(b_addr);
+        const auto & a_score = getScore(a_addr);
+        return a_score >= 0 && a_score > getScore(b_addr)
+               && sa->commandFee(command, service) < sb->commandFee(command, service);
     });
 
     // Retain selected nodes
@@ -1208,38 +1214,32 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         const auto & fqService = (command == xrService) ? pluginCommandKey(service) // plugin
                                                         : walletCommandKey(service, commandStr); // spv wallet
 
-        // Select available nodes
-        selectedNodes = availableNodesRetained(command, service, params.size(), confs);
-        auto selected = static_cast<int>(selectedNodes.size());
-
-        // If we don't have enough open connections...
-        if (selected < confs) {
-            // Open connections (at least number equal to how many confirmations we want)
-            uint32_t found{0};
-            const auto remaining = static_cast<uint32_t>(confs - selected);
-            if (!openConnections(command, service, remaining, params.size(), selectedNodes, found)) {
-                std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService +
-                                " with config limits, found " + std::to_string(found > selected ? found : selected));
-                throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
-            }
-
-            // Reselect available nodes
-            releaseNodes(selectedNodes);
-            selectedNodes = availableNodesRetained(command, service, params.size(), confs);
-            selected = static_cast<int>(selectedNodes.size());
+        // Open connections (at least number equal to how many confirmations we want)
+        uint32_t found{0};
+        if (!openConnections(command, service, confs, params.size(), selectedNodes, found)) {
+            std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService +
+                            " with config limits, found " + std::to_string(found));
+            throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
         }
+
+        // Reselect available nodes
+        releaseNodes(selectedNodes);
+        selectedNodes = availableNodesRetained(command, service, params.size(), confs);
+        const auto & selected = static_cast<int>(selectedNodes.size());
 
         // Check if we have enough nodes
         if (selected < confs)
             throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
                                fqService + " with config limits, found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
 
+        std::vector<CNode*> queryNodes;
         int snodeCount = 0;
         std::string fundErr{"Could not create payments to service nodes. Please check that your wallet "
                             "is fully unlocked and you have at least " + std::to_string(confs) +
                             " available unspent transaction outputs."};
 
-        // Calculate fees for selected nodes
+        // Compose a final list of snodes to request. selectedNodes here should be sorted
+        // ascending best to worst
         for (CNode* pnode : selectedNodes) {
             const auto & addr = pnode->NodeAddress();
             if (!hasConfig(addr))
@@ -1248,36 +1248,39 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             auto config = getConfig(addr);
 
             // Create the fee payment
-            std::string feePayment;
             CAmount fee = to_amount(config->commandFee(command, service));
             if (fee > 0) {
                 try {
                     const auto paymentAddress = config->paymentAddress(command, service);
+                    std::string feePayment;
                     if (!generatePayment(addr, paymentAddress, fee, feePayment))
                         throw XRouterError(fundErr, xrouter::INSUFFICIENT_FUNDS);
+                    if (!feePayment.empty()) // record fee if it's not empty
+                        feePaymentTxs[addr] = feePayment;
                 } catch (XRouterError & e) {
                     ERR() << "Failed to create payment to node " << addr << " " << e.msg;
                     continue;
                 }
             }
-            if (!feePayment.empty()) // record fee if it's not empty
-                feePaymentTxs[addr] = feePayment;
 
-            snodeCount++;
+            queryNodes.push_back(pnode);
+            ++snodeCount;
             if (snodeCount == confs)
                 break;
         }
 
         // Do we have enough snodes? If not unlock utxos
         if (snodeCount < confs) {
-            throw XRouterError("Unable to find " + std::to_string(confs) +
-                               " service node(s) to process request", xrouter::NOT_ENOUGH_NODES);
+            const auto msg = strprintf("Found %u service node(s), however, some failed to meet your config requirements. "
+                                       "%u nodes meet requirements, however, %u service node(s) are required to process "
+                                       "request", selected, snodeCount, confs);
+            throw XRouterError(msg, xrouter::NOT_ENOUGH_NODES);
         }
 
         int timeout = xrsettings->commandTimeout(command, service);
 
         // Send xrouter request to each selected node
-        for (CNode* pnode : selectedNodes) {
+        for (CNode* pnode : queryNodes) {
             const auto & addr = pnode->NodeAddress();
             std::string feetx;
             if (feePaymentTxs.count(addr))
@@ -1364,8 +1367,8 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         std::map<NodeAddr, std::string> replies;
         std::set<NodeAddr> diff;
         std::set<NodeAddr> agree;
-        std::string result;
-        int c = queryMgr.mostCommonReply(uuid, result, replies, agree, diff);
+        std::string rawResult;
+        int c = queryMgr.mostCommonReply(uuid, rawResult, replies, agree, diff);
         for (const auto & addr : diff) // penalize nodes that didn't match consensus
             updateScore(addr, -5);
         if (c > 1) { // only update score if there's consensus
@@ -1379,14 +1382,16 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         if (replies.size() > 1) {
             Object r;
 
-            Value resultVal; read_string(result, resultVal);
+            // By default we parse the {"result": } field of any response. XRouter integrations will
+            // ideally return any json responses in a result field. If not we return the raw response
+            // in json object form if possible, or a raw string.
+            Value resultVal; read_string(rawResult, resultVal);
             if (resultVal.type() == obj_type) {
-                Object resultObj = resultVal.get_obj();
-                const Value & rv = find_value(resultObj, "result");
-                if (rv.type() == str_type)
-                    r.emplace_back("result", rv.get_str());
+                const Value & rv = find_value(resultVal.get_obj(), "result");
+                if (rv.type() == null_type)
+                    r.emplace_back("result", resultVal);
                 else
-                    r.emplace_back("result", resultObj);
+                    r.emplace_back("result", rv);
             } else
                 r.emplace_back("result", resultVal);
 
@@ -1407,7 +1412,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             }
             r.emplace_back("allreplies", allr);
 
-            result = json_spirit::write_string(Value(r));
+            rawResult = json_spirit::write_string(Value(r));
         }
 
         // Unlock any utxos associated with replies that returned an error
@@ -1427,7 +1432,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         }
 
         releaseNodes(selectedNodes);
-        return result;
+        return rawResult;
 
     } catch (XRouterError & e) {
         LOG() << e.msg;
@@ -1644,7 +1649,6 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
 
     uint32_t found{0};
     openConnections(command, service, count, -1, { }, found); // open connections to snodes that have our service
-    foundCount = found;
 
     const auto configs = getNodeConfigs(); // get configs and store matching ones
     for (const auto & item : configs) {
@@ -1658,6 +1662,7 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
             selectedConfigs.insert(item);
     }
 
+    foundCount = static_cast<uint32_t>(selectedConfigs.size());
     return selectedConfigs;
 }
 
