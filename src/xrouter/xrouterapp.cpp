@@ -504,8 +504,8 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             auto sa = getConfig(a);
             auto sb = getConfig(b);
             const auto & a_score = getScore(a);
-            return a_score >= 0 && a_score > getScore(b)
-                                && sa->commandFee(command, service) < sb->commandFee(command, service);
+            return a_score >= 0 && a_score >= getScore(b)
+                                && sa->commandFee(command, service) <= sb->commandFee(command, service);
         });
 
         boost::thread_group tg;
@@ -744,8 +744,8 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
         auto sa = getConfig(a_addr);
         auto sb = getConfig(b_addr);
         const auto & a_score = getScore(a_addr);
-        return a_score >= 0 && a_score > getScore(b_addr)
-               && sa->commandFee(command, service) < sb->commandFee(command, service);
+        return a_score >= 0 && a_score >= getScore(b_addr)
+                            && sa->commandFee(command, service) <= sb->commandFee(command, service);
     });
 
     // Retain selected nodes
