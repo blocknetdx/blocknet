@@ -317,8 +317,9 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                 state.DoS(1, error("XRouter: bad request"), REJECT_INVALID, "xrouter-error"); // prevent abuse
                 throw e;
             } catch (std::exception & e) {
+                ERR() << "Error: " << fqService << " : " << e.what();
                 state.DoS(1, error("XRouter: server error"), REJECT_INVALID, "xrouter-error"); // prevent abuse
-                throw XRouterError(e.what(), xrouter::INTERNAL_SERVER_ERROR);
+                throw XRouterError("Unknown server error in " + fqService, xrouter::INTERNAL_SERVER_ERROR);
             }
 
             // Spend client payment
@@ -754,7 +755,7 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
             ERR() << "docker command reported non-zero exit status (" << std::to_string(nexit) << ") on command: "
                   << cmd << "\n" << r;
             if (nexit == 1 || nexit == 2 || (nexit >= 126 && nexit <= 165) || nexit == 255)
-                throw std::runtime_error("");
+                throw std::runtime_error("Failed to execute command " + name);
             Value r_val = parseR(r);
             Object o; o.emplace_back("error", r_val);
             val = Value(o);

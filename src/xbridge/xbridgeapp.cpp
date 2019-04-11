@@ -2305,6 +2305,30 @@ void App::unlockCoins(const std::string & token, const std::vector<wallet::UtxoE
 
 //******************************************************************************
 //******************************************************************************
+bool App::canAffordFeePayment(const CAmount & fee) {
+    const auto & lockedUtxos = getAllLockedUtxos("BLOCK");
+    std::vector<COutput> coins;
+    pwalletMain->AvailableCoins(coins, false);
+
+    CAmount running{0};
+    for (const auto & out : coins) {
+        if (out.nDepth < 1 || !out.fSpendable) // at least 1-conf
+            continue;
+        wallet::UtxoEntry entry;
+        entry.txId = out.tx->GetHash().ToString();
+        entry.vout = out.i;
+        if (!lockedUtxos.count(entry)) {
+            running += out.Value();
+            if (running >= fee)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+//******************************************************************************
+//******************************************************************************
 std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
     const std::set<std::string>& requested_services,
     const uint32_t version,

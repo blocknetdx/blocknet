@@ -31,6 +31,7 @@
 
 #include <json/json_spirit.h>
 #include <json/json_spirit_reader_template.h>
+#include <json/json_spirit_writer_template.h>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -382,13 +383,6 @@ public:
                                                const int & parameterCount, const int & count = 1);
     
     /**
-     * @brief find the node that supports a given plugin 
-     * @param name plugin name
-     * @return
-     */
-    CNode* getNodeForService(std::string name);
-    
-    /**
      * @brief generates a payment transaction to given service node
      * @param node Service node address
      * @param paymentAddress Payment address to use
@@ -588,6 +582,20 @@ private:
             }
         }
     }
+    bool bestNode(const NodeAddr & a, const NodeAddr & b, const XRouterCommand & command, const std::string & service) {
+        const auto & a_score = getScore(a);
+        const auto & b_score = getScore(b);
+        if (a_score < 0)
+            return a_score > b_score;
+        if (b_score < 0)
+            return true;
+        auto sa = getConfig(a);
+        auto sb = getConfig(b);
+        if (!sa || !sb)
+            return a_score > b_score;
+        return sa->commandFee(command, service) < sb->commandFee(command, service);
+    }
+
     std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
         WaitableLock l(mu);
         return snodeConfigs;
@@ -631,7 +639,9 @@ private:
     }
     XRouterSettingsPtr getConfig(const NodeAddr & node) {
         WaitableLock l(mu);
-        return snodeConfigs[node];
+        if (snodeConfigs.count(node))
+            return snodeConfigs[node];
+        return nullptr;
     }
     void updateConfig(const NodeAddr & node, XRouterSettingsPtr config) {
         WaitableLock l(mu);
@@ -684,7 +694,7 @@ private:
          * Add a pending connection for this node.
          * @param node
          * @param conn Pending connection returned.
-         * @return
+         * @return true if pending connection was created, otherwise if there's already a connection returns false
          */
         bool addPendingConnection(const NodeAddr & node, PendingConnection & conn) {
             if (hasPendingConnection(node))
@@ -728,15 +738,6 @@ private:
         void removePendingConnection(const NodeAddr & node) {
             WaitableLock l(mu);
             pendingConnections.erase(node);
-        }
-        /**
-         * Get the pending connection for this node.
-         * @param node
-         * @return
-         */
-        PendingConnection pendingConnection(const NodeAddr & node) {
-            WaitableLock l(mu);
-            return pendingConnections[node];
         }
         /**
          * Returns the pending connection mutex or null if not found.
@@ -900,7 +901,15 @@ private:
             std::map<uint256, int> counts;
             std::map<uint256, std::set<NodeAddr> > nodes;
             for (auto & item : queries[id]) {
-                auto hash = Hash(item.second.begin(), item.second.end());
+                auto result = item.second;
+                try {
+                    Value j; read_string(result, j);
+                    if (j.type() == obj_type)
+                        result = write_string(j, false);
+                } catch (...) {
+                    result = item.second;
+                }
+                auto hash = Hash(result.begin(), result.end());
                 hashes[hash] = item.second;
                 counts[hash] = counts.count(hash) + 1; // update counts for common replies
                 nodes[hash].insert(item.first);

@@ -543,6 +543,14 @@ public:
     void unlockCoins(const std::string & token, const std::vector<wallet::UtxoEntry> & utxos);
 
     /**
+     * @brief Returns true if xbridge can afford to pay the specified BLOCK fee. i.e. there's
+     * sufficient utxos available to cover the fee.
+     * @param fee
+     * @return true if can afford to pay fee, otherwise false
+     */
+    bool canAffordFeePayment(const CAmount & fee);
+
+    /**
      * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
      * @param addr - currency name
      * @param outputs - available outputs to search
