@@ -1609,7 +1609,7 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
                 plugins.emplace_back(plugin, plg);
             }
         }
-        o.emplace_back("plugins", plugins);
+        o.emplace_back("services", plugins);
 
         data.emplace_back(o);
     }

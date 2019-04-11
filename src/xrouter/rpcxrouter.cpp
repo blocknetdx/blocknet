@@ -866,7 +866,7 @@ Value xrConnectedNodes(const Array& params, bool fHelp)
     if (fHelp)
         throw std::runtime_error("xrConnectedNodes\n"
                                  "Lists all the data about current and previously connected nodes. This information\n"
-                                 "includes supported blockchains, plugins, and fee schedules.");
+                                 "includes supported blockchains, services, and fee schedules.");
 
     if (!params.empty()) {
         Object error;
