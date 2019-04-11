@@ -2,12 +2,15 @@
 #include "xroutererror.h"
 #include "xrouterutils.h"
 
+#include "xbridge/xbridgeapp.h"
+
 #include "uint256.h"
 #include "bloom.h"
 #include "core_io.h"
 
 #include <exception>
 #include <iostream>
+#include <regex>
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
@@ -969,6 +972,57 @@ Value xrConnect(const Array & params, bool fHelp)
         error.emplace_back("code", e.code);
         return error;
     }
+
+    return xrouter::form_reply(uuid, data);
+}
+
+Value xrGetNetworkServices(const Array & params, bool fHelp)
+{
+    if (fHelp)
+        throw std::runtime_error("xrGetNetworkServices\n"
+                                 "Lists all the XRouter services on the network.");
+
+    if (!params.empty()) {
+        Object error;
+        error.emplace_back("error", "This call does not support parameters");
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    const std::string & uuid = xrouter::generateUUID();
+    auto & xapp = xbridge::App::instance();
+
+    std::regex rwallet("^"+xrouter::xr+"::.*?$"); // match spv wallets
+    std::regex rservice("^"+xrouter::xrs+"::.*?$"); // match services
+    std::smatch m;
+
+    std::map<std::string, int> counts;
+    std::set<std::string> spvwallets;
+    std::set<std::string> services;
+    for (const auto & item : xapp.allServices()) {
+        const auto & xwallet = item.second;
+        const auto & xservices = xwallet.services();
+        for (const auto & s : xservices) {
+            if (std::regex_match(s, m, rwallet)) {
+                spvwallets.insert(s);
+                counts[s] += 1;
+            } else if (std::regex_match(s, m, rservice)) {
+                services.insert(s);
+                counts[s] += 1;
+            }
+        }
+    }
+
+    Array jspv{spvwallets.begin(), spvwallets.end()};
+    Array jxr{services.begin(), services.end()};
+    Object jnodes;
+
+    Object data;
+    data.emplace_back("spvwallets", jspv);
+    data.emplace_back("services", jxr);
+    for (const auto & item : counts) // show number of nodes with each service
+        jnodes.emplace_back(item.first, item.second);
+    data.emplace_back("nodecounts", jnodes);
 
     return xrouter::form_reply(uuid, data);
 }
