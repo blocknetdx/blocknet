@@ -1,14 +1,15 @@
 //******************************************************************************
 //******************************************************************************
 
-#include <iostream>
-
 #include "xrouterlogger.h"
 #include "xrouterpacket.h"
+
 #include "secp256k1.h"
 #include "random.h"
 #include "allocators.h"
 #include "crypto/sha256.h"
+
+#include <iostream>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -28,7 +29,7 @@ public:
         assert(secpContext == nullptr);
 
         secp256k1_context * ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
-        assert(ctx != NULL);
+        assert(ctx != nullptr);
 
         {
             // Pass in a random blinding seed to the secp256k1 context.
@@ -62,12 +63,12 @@ bool XRouterPacket::sign(const std::vector<unsigned char> & pubkey,
 {
     if (pubkey.size() != pubkeySize || privkey.size() != privkeySize)
     {
-        std::clog << "incorrect key size " << __FUNCTION__;
+        ERR() << "incorrect key size " << __FUNCTION__;
         return false;
     }
 
     memcpy(pubkeyField(), &pubkey[0], pubkeySize);
-    memset(signatureField(), 0, rawSignatureSize);
+    memset(signatureField(), 0, rawSignatureSize); // unset
 
     unsigned char hash[CSHA256::OUTPUT_SIZE];
 
@@ -85,19 +86,7 @@ bool XRouterPacket::sign(const std::vector<unsigned char> & pubkey,
 
     secp256k1_ecdsa_signature_serialize_compact(secpContext, signatureField(), &sig);
 
-    // TODO verify signature
     return verify();
-}
-
-bool XRouterPacket::sign(CKey key)
-{
-    auto pubKey = key.GetPubKey();
-    std::vector<unsigned char> pubKeyData(pubKey.begin(), pubKey.end());
-
-    auto privKey = key.GetPrivKey_256();
-    std::vector<unsigned char> privKeyData(privKey.begin(), privKey.end());
-
-    return sign(pubKeyData, privKeyData);
 }
 
 //******************************************************************************
@@ -107,7 +96,7 @@ bool XRouterPacket::verify()
 {
     unsigned char signature[rawSignatureSize];
     memcpy(signature, signatureField(), rawSignatureSize);
-    memset(signatureField(), 0, rawSignatureSize);
+    memset(signatureField(), 0, rawSignatureSize); // unset sig before compute hash
 
     unsigned char hash[CSHA256::OUTPUT_SIZE];
 
@@ -123,20 +112,20 @@ bool XRouterPacket::verify()
     secp256k1_ecdsa_signature sig;
     if (secp256k1_ecdsa_signature_parse_compact(secpContext, &sig, signatureField()) == 0)
     {
-        std::clog << "incorrect or unparseable signature " << __FUNCTION__;
+        ERR() << "incorrect or unparseable signature " << __FUNCTION__;
         return false;
     }
 
     secp256k1_pubkey scpubkey;
     if (secp256k1_ec_pubkey_parse(secpContext, &scpubkey, pubkeyField(), pubkeySize) == 0)
     {
-        std::clog << "the public key could not be parsed or is invalid " << __FUNCTION__;
+        ERR() << "the public key could not be parsed or is invalid " << __FUNCTION__;
         return false;
     }
 
     if (secp256k1_ecdsa_verify(secpContext, &sig, hash, &scpubkey) != 1)
     {
-        std::clog << "bad signature " << __FUNCTION__;
+        ERR() << "bad signature " << __FUNCTION__;
         return false;
     }
 
@@ -145,14 +134,15 @@ bool XRouterPacket::verify()
     size_t len = pubkeySize;
     secp256k1_ec_pubkey_serialize(secpContext, pub, &len, &scpubkey, SECP256K1_EC_COMPRESSED);
 
-    if (memcmp(pub, pubkeyField(), pubkeySize))
-    {
-        std::clog << "signature correct, but different pubkeys " << __FUNCTION__;
-        return false;
-    }
     if (len != pubkeySize)
     {
-        std::clog << "incorrect pubkey lengtn returned " << __FUNCTION__;
+        ERR() << "incorrect pubkey length returned " << __FUNCTION__;
+        return false;
+    }
+
+    if (memcmp(pub, pubkeyField(), pubkeySize) != 0)
+    {
+        ERR() << "signature correct, but different pubkeys " << __FUNCTION__;
         return false;
     }
 
@@ -165,7 +155,7 @@ bool XRouterPacket::verify()
 //******************************************************************************
 bool XRouterPacket::verify(const std::vector<unsigned char> & pubkey)
 {
-    if (pubkey.size() != pubkeySize || memcmp(pubkeyField(), &pubkey[0], pubkeySize))
+    if (pubkey.size() != pubkeySize || memcmp(pubkeyField(), &pubkey[0], pubkeySize) != 0)
     {
         return false;
     }
@@ -177,20 +167,18 @@ bool XRouterPacket::copyFrom(const std::vector<unsigned char> & data)
 {
     if (data.size() < headerSize)
     {
-        LOG() << "received data size less than packet header size " << __FUNCTION__;
+        ERR() << "received data size less than packet header size " << __FUNCTION__;
         return false;
     }
 
     m_body = data;
 
-    //std::cout << sizeField() << " " << data.size() << " " << static_cast<uint32_t>(data.size()) << " " << headerSize << std::endl << std::flush;
     if (sizeField() != static_cast<uint32_t>(data.size())-headerSize)
     {
-        LOG() << "incorrect data size " << __FUNCTION__;
+        ERR() << "incorrect data size " << __FUNCTION__;
         return false;
     }
 
-    // TODO check packet crc
     return true;
 }
 } // namespace xrouter

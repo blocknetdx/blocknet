@@ -453,5 +453,13 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
 
     LogPrintf("CActiveServicenode::EnableHotColdServiceNode() - Enabled! You may shut down the cold daemon.\n");
 
+    // Notify xrouter this snode is activated
+    auto pmn = mnodeman.Find(vin);
+    auto & xr = xrouter::App::instance();
+    if (pmn && xr.isReady()) {
+        xr.updatePaymentAddress(pmn->pubKeyCollateralAddress);
+        xr.xrSettings()->assignNode(pmn->addr.ToString());
+    }
+
     return true;
 }

@@ -1,10 +1,20 @@
 //******************************************************************************
 //******************************************************************************
 #include "xrouterutils.h"
-#include "xrouterlogger.h"
 #include "xrouterdef.h"
 #include "xroutererror.h"
+#include "xrouterlogger.h"
 
+#include "rpcserver.h"
+#include "rpcprotocol.h"
+#include "rpcclient.h"
+#include "base58.h"
+#include "wallet.h"
+#include "init.h"
+#include "key.h"
+#include "core_io.h"
+
+#include <stdio.h>
 #include <cstdio>
 #include <iostream>
 #include <memory>
@@ -24,17 +34,6 @@
 #include <boost/archive/iterators/insert_linebreaks.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
-
-#include <stdio.h>
-
-#include "rpcserver.h"
-#include "rpcprotocol.h"
-#include "rpcclient.h"
-#include "base58.h"
-#include "wallet.h"
-#include "init.h"
-#include "key.h"
-#include "core_io.h"
 
 using namespace std;
 using namespace boost;
@@ -100,15 +99,16 @@ std::string base64_encode(const std::string& s)
     return os.str();
 }
 
-Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
+std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
                const std::string & strMethod, const Array & params)
 {
     boost::asio::ip::tcp::iostream stream;
-    stream.expires_from_now(boost::posix_time::seconds(60));
+    stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
     stream.connect(rpcip, rpcport);
     if (stream.error() != boost::system::errc::success) {
-        LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());
+        LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport,
+                stream.error(), stream.error().message());
         throw runtime_error(strprintf("no response from server %s:%s - %s", rpcip.c_str(), rpcport.c_str(),
                                       stream.error().message().c_str()));
     }
@@ -121,7 +121,8 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     // Send request
     string strRequest = JSONRPCRequest(strMethod, params, 1);
 
-    DEBUGLOG() << "HTTP: req  " << strMethod << " " << strRequest;
+    if (fDebug)
+        LOG() << "HTTP: req  " << strMethod << " " << strRequest;
 
     string strPost = HTTPPost(strRequest, mapRequestHeaders);
     stream << strPost << std::flush;
@@ -131,47 +132,40 @@ Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     string strReply;
     int nStatus = readHTTP(stream, mapHeaders, strReply);
 
-    DEBUGLOG() << "HTTP: resp " << nStatus << " " << strReply;
+    if (fDebug)
+        LOG() << "HTTP: resp " << nStatus << " " << strReply;
 
     if (nStatus == HTTP_UNAUTHORIZED)
         throw runtime_error("incorrect rpcuser or rpcpassword (authorization failed)");
     else if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-        throw runtime_error("server returned HTTP error " + nStatus);
+        throw XRouterError("server returned HTTP error " + std::to_string(nStatus), BAD_REQUEST);
     else if (strReply.empty())
         throw runtime_error("no response from server");
 
-    // Parse reply
-    Value valReply;
-    if (!read_string(strReply, valReply))
-        throw runtime_error("couldn't parse reply from server");
-    const Object& reply = valReply.get_obj();
-    if (reply.empty())
-        throw runtime_error("expected reply to have result, error and id properties");
-
-    return reply;
+    return strReply;
 }
 
-std::string CallURL(std::string ip, std::string port, std::string url)
+std::string CallURL(const std::string & ip, const std::string & port, const std::string & url)
 {
     // Connect to localhost
-    bool fUseSSL = false;//GetBoolArg("-rpcssl");
-    asio::io_service io_service;
-    ssl::context context(io_service, ssl::context::sslv23);
-    context.set_options(ssl::context::no_sslv2);
-    asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
-    SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
-    iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
-    if (!d.connect(ip, port))
-        throw runtime_error("couldn't connect to server");
+    boost::asio::ip::tcp::iostream stream;
+    stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
+    stream.connect(ip, port);
+    if (stream.error() != boost::system::errc::success) {
+        LogPrint("net", "Failed to make connection to %s:%s error %d: %s", ip, port,
+                stream.error(), stream.error().message());
+        throw runtime_error(strprintf("no response from server %s:%s - %s", ip.c_str(), port.c_str(),
+                                      stream.error().message().c_str()));
+    }
 
     // Send request
     ostringstream s;
     s << "GET " << url << "\r\n" << "Host: 127.0.0.1\r\n";
     string strRequest = s.str();
 
-    LOG() << "HTTP: req  " << strRequest;
+    if (fDebug)
+        LOG() << "HTTP: req  " << strRequest;
 
-    map<string, string> mapRequestHeaders;
     stream << strRequest << std::flush;
 
     // Receive reply
@@ -182,22 +176,32 @@ std::string CallURL(std::string ip, std::string port, std::string url)
     LOG() << "HTTP: resp " << nStatus << " " << strReply;
 
     if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-        throw runtime_error("server returned HTTP error " + nStatus);
+        throw runtime_error("server returned HTTP error " + std::to_string(nStatus));
     else if (strReply.empty())
         throw runtime_error("no response from server");
 
     return strReply;
 }
 
-std::string CallCMD(std::string cmd) {
+std::string CallCMD(const std::string & cmd, int & exit) {
     std::array<char, 128> buffer;
+    FILE *pipe = popen(std::string(cmd + " 2>&1").c_str(), "r");
+    if (!pipe)
+        throw std::runtime_error("popen() failed!");
+
     std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (!pipe) throw std::runtime_error("popen() failed!");
-    while (!feof(pipe.get())) {
-        if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-            result += buffer.data();
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+        result += buffer.data();
     }
+
+    auto n = pclose(pipe);
+
+#ifdef WIN32
+    exit = n & 0xff;
+#else
+    exit = WEXITSTATUS(n);
+#endif
+
     return result;
 }
 

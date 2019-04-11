@@ -104,6 +104,9 @@ typedef AnnotatedMixin<boost::mutex> CWaitableCriticalSection;
 /** Just a typedef for boost::condition_variable, can be wrapped later if desired */
 typedef boost::condition_variable CConditionVariable;
 
+/** Just a typedef for std::unique_lock, can be wrapped later if desired */
+typedef boost::unique_lock<boost::mutex> WaitableLock;
+
 #ifdef DEBUG_LOCKCONTENTION
 void PrintLockContention(const char* pszName, const char* pszFile, int nLine);
 #endif

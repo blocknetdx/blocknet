@@ -446,7 +446,7 @@ Value disconnectpeer(const Array& params, bool fHelp) {
     LOCK(cs_vNodes);
     for (auto *pnode : vNodes) {
         if (pnode->id == nodeID) {
-            pnode->fDisconnect = true;
+            pnode->Disconnect();
             return true;
         }
     }

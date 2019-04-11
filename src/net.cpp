@@ -20,6 +20,7 @@
 #include "primitives/transaction.h"
 #include "ui_interface.h"
 #include "wallet.h"
+#include "xrouter/xrouterapp.h"
 
 #ifdef WIN32
 #include <string.h>
@@ -60,8 +61,6 @@ using namespace std;
 
 namespace
 {
-const int MAX_OUTBOUND_CONNECTIONS = 16;
-
 struct ListenSocket {
     SOCKET socket;
     bool whitelisted;
@@ -84,7 +83,6 @@ static CNode* pnodeLocalHost = NULL;
 uint64_t nLocalHostNonce = 0;
 static std::vector<ListenSocket> vhListenSocket;
 CAddrMan addrman;
-int nMaxConnections = 125;
 bool fAddressesInitialized = false;
 
 vector<CNode*> vNodes;
@@ -222,7 +220,7 @@ bool IsPeerAddrLocalGood(CNode* pnode)
 // pushes our own address to a peer
 void AdvertizeLocal(CNode* pnode)
 {
-    if (fListen && pnode->fSuccessfullyConnected) {
+    if (fListen && pnode->SuccessfullyConnected()) {
         CAddress addrLocal = GetLocalAddress(&pnode->addr);
         // If discovery is enabled, sometimes give our peer the address it
         // tells us that it sees us as in case it has a better idea of our
@@ -437,7 +435,10 @@ CNode* ConnectNode(CAddress addrConnect, const char* pszDest, bool obfuScationMa
 
 void CNode::CloseSocketDisconnect()
 {
+    {
+        LOCK(cs);
     fDisconnect = true;
+    }
     if (hSocket != INVALID_SOCKET) {
         LogPrint("net", "disconnecting peer=%d\n", id);
         CloseSocket(hSocket);
@@ -451,29 +452,45 @@ void CNode::CloseSocketDisconnect()
 
 bool CNode::DisconnectOldProtocol(int nVersionRequired, string strLastCommand)
 {
+    bool flag{false};
+    {
+        LOCK(cs);
     fDisconnect = false;
-    if (nVersion < nVersionRequired) {
+        flag = nVersion < nVersionRequired;
+    }
+    if (flag) {
         LogPrintf("%s : peer=%d using obsolete version %i; disconnecting\n", __func__, id, nVersion);
         PushMessage("reject", strLastCommand, REJECT_OBSOLETE, strprintf("Version must be %d or greater", ActiveProtocol()));
+        LOCK(cs);
         fDisconnect = true;
     }
 
+    LOCK(cs);
     return fDisconnect;
 }
 
 void CNode::PushVersion()
 {
-    int nBestHeight = g_signals.GetHeight().get_value_or(0);
+    int nBestHeight;
+    {
+        LOCK(cs);
+        nBestHeight = g_signals.GetHeight().get_value_or(0);
+    }
 
     /// when NTP implemented, change to just nTime = GetAdjustedTime()
     int64_t nTime = (fInbound ? GetAdjustedTime() : GetTime());
-    CAddress addrYou = (addr.IsRoutable() && !IsProxy(addr) ? addr : CAddress(CService("0.0.0.0", 0)));
-    CAddress addrMe = GetLocalAddress(&addr);
-    GetRandBytes((unsigned char*)&nLocalHostNonce, sizeof(nLocalHostNonce));
+    CAddress addrYou;
+    CAddress addrMe;
+    {
+        LOCK(cs);
+        addrYou = (addr.IsRoutable() && !IsProxy(addr) ? addr : CAddress(CService("0.0.0.0", 0)));
+        addrMe = GetLocalAddress(&addr);
+        GetRandBytes((unsigned char*)&nLocalHostNonce, sizeof(nLocalHostNonce));
     if (fLogIPs)
         LogPrint("net", "send version message: version %d, blocks=%d, us=%s, them=%s, peer=%d\n", PROTOCOL_VERSION, nBestHeight, addrMe.ToString(), addrYou.ToString(), id);
     else
         LogPrint("net", "send version message: version %d, blocks=%d, us=%s, peer=%d\n", PROTOCOL_VERSION, nBestHeight, addrMe.ToString(), id);
+    }
     PushMessage("version", PROTOCOL_VERSION, nLocalServices, nTime, addrYou, addrMe,
         nLocalHostNonce, FormatSubVersion(CLIENT_NAME, CLIENT_VERSION, std::vector<string>()), nBestHeight, true);
 }
@@ -500,6 +517,12 @@ bool CNode::IsBanned(CNetAddr ip)
         }
     }
     return fResult;
+}
+
+bool CNode::IsBanned(const std::string & ipPort)
+{
+    CService s(ipPort);
+    return CNode::IsBanned(CNetAddr(s.ToStringIP(), false));
 }
 
 bool CNode::Ban(const CNetAddr& addr)
@@ -538,6 +561,8 @@ void CNode::AddWhitelistedRange(const CSubNet& subnet)
 void CNode::copyStats(CNodeStats& stats)
 {
     stats.nodeid = this->GetId();
+
+    LOCK(cs);
     X(nServices);
     X(nLastSend);
     X(nLastRecv);
@@ -869,7 +894,7 @@ void ThreadSocketHandler()
                 } else if (!IsSelectableSocket(hSocket)) {
                     LogPrintf("connection from %s dropped: non-selectable socket\n", addr.ToString());
                     CloseSocket(hSocket);
-                } else if (nInbound >= nMaxConnections - MAX_OUTBOUND_CONNECTIONS) {
+                } else if (nInbound >= CNode::MaxConnections() - CNode::MaxOutboundConnections()) {
                     LogPrint("net", "connection from %s dropped (full)\n", addr.ToString());
                     CloseSocket(hSocket);
                 } else if (CNode::IsBanned(addr) && !whitelisted) {
@@ -949,7 +974,7 @@ void ThreadSocketHandler()
             }
 
             //
-            // Inactivity checking
+            // Inactivity checking (xrouter clients should timeout after 15 seconds)
             //
             int64_t nTime = GetTime();
             if (nTime - pnode->nTimeConnected > 60) {
@@ -966,6 +991,14 @@ void ThreadSocketHandler()
                     LogPrintf("ping timeout: %fs\n", 0.000001 * (GetTimeMicros() - pnode->nPingUsecStart));
                     pnode->fDisconnect = true;
                 }
+            }
+
+            // Disconnect xrouter client if there's no pending queries
+            if (pnode->isXRouter() && !xrouter::App::instance().hasPendingQuery(pnode->addr.ToString())
+                && fServiceNode && nTime - pnode->nLastSend >= 15)
+            {
+                LogPrintf("disconnecting xrouter client: %s\n", pnode->addr.ToString());
+                pnode->fDisconnect = true;
             }
         }
         {
@@ -1206,12 +1239,16 @@ void ThreadOpenConnections()
         {
             LOCK(cs_vNodes);
             BOOST_FOREACH (CNode* pnode, vNodes) {
-                if (!pnode->fInbound) {
+                if (!pnode->fInbound && !pnode->isXRouter()) { // do not connect to xrouter nodes
                     setConnected.insert(pnode->addr.GetGroup());
                     nOutbound++;
                 }
             }
         }
+
+        // Do not open connections beyond native
+        if (nOutbound >= CNode::MaxOutboundNativeConnections())
+            continue;
 
         int64_t nANow = GetAdjustedTime();
 
@@ -1317,8 +1354,22 @@ void ThreadOpenAddedConnections()
     }
 }
 
+/**
+ * Opens an xrouter connection.
+ * @param addrConnect
+ * @param pszDest
+ * @return
+ */
+CNode* OpenXRouterConnection(const CAddress& addrConnect, const char* pszDest) {
+    if (CNode::IsBanned(std::string{pszDest}))
+        return nullptr;
+    CSemaphoreGrant grant(*semOutbound);
+    return OpenNetworkConnection(addrConnect, &grant, pszDest, false, true);
+}
+
 // if successful, this moves the passed grant to the constructed node
-bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound, const char* pszDest, bool fOneShot)
+CNode* OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound, const char* pszDest,
+                           bool fOneShot, bool xrouter)
 {
     //
     // Initiate outbound network connection
@@ -1328,22 +1379,25 @@ bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOu
         if (IsLocal(addrConnect) ||
             FindNode((CNetAddr)addrConnect) || CNode::IsBanned(addrConnect) ||
             FindNode(addrConnect.ToStringIPPort()))
-            return false;
+            return nullptr;
     } else if (FindNode(pszDest))
-        return false;
+        return nullptr;
 
     CNode* pnode = ConnectNode(addrConnect, pszDest);
     boost::this_thread::interruption_point();
 
     if (!pnode)
-        return false;
+        return nullptr;
     if (grantOutbound)
         grantOutbound->MoveTo(pnode->grantOutbound);
     pnode->fNetworkNode = true;
     if (fOneShot)
         pnode->fOneShot = true;
 
-    return true;
+    if (xrouter) // set xrouter node
+        pnode->setXRouter();
+
+    return pnode;
 }
 
 
@@ -1575,7 +1629,7 @@ void StartNode(boost::thread_group& threadGroup)
 
     if (semOutbound == NULL) {
         // initialize semaphore
-        int nMaxOutbound = min(MAX_OUTBOUND_CONNECTIONS, nMaxConnections);
+        int nMaxOutbound = CNode::MaxOutboundConnections();
         semOutbound = new CSemaphore(nMaxOutbound);
     }
 
@@ -1621,7 +1675,7 @@ bool StopNode()
     LogPrintf("StopNode()\n");
     MapPort(false);
     if (semOutbound)
-        for (int i = 0; i < MAX_OUTBOUND_CONNECTIONS; i++)
+        for (int i = 0; i < CNode::MaxOutboundConnections(); i++)
             semOutbound->post();
 
     if (fAddressesInitialized) {
@@ -1760,6 +1814,8 @@ uint64_t CNode::GetTotalBytesSent()
 
 void CNode::Fuzz(int nChance)
 {
+    {
+    LOCK(cs);
     if (!fSuccessfullyConnected) return; // Don't fuzz initial handshake
     if (GetRand(nChance) != 0) return;   // Fuzz 1 of every nChance messages
 
@@ -1786,6 +1842,7 @@ void CNode::Fuzz(int nChance)
             ssSend.insert(ssSend.begin() + pos, ch);
         }
         break;
+    }
     }
     // Chance of more than one change half the time:
     // (more changes exponentially less likely):
@@ -1924,6 +1981,7 @@ CNode::CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn, bool fIn
     nPingUsecTime = 0;
     fPingQueued = false;
     fObfuScationMaster = false;
+    fXRouter = false;
 
     {
         LOCK(cs_nLastNodeId);
@@ -1954,6 +2012,7 @@ CNode::~CNode()
 
 void CNode::AskFor(const CInv& inv)
 {
+    LOCK(cs);
     if (mapAskFor.size() > MAPASKFOR_MAX_SZ)
         return;
     // We're using mapAskFor as a priority queue,

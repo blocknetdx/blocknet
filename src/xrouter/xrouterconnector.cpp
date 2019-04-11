@@ -3,9 +3,6 @@
 namespace xrouter
 {
 
-WalletConnectorXRouter::WalletConnectorXRouter()
-{
-
-}
+WalletConnectorXRouter::WalletConnectorXRouter() = default;
 
 } // namespace xrouter

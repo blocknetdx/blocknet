@@ -460,6 +460,11 @@ public:
      */
     std::map<CPubKey, XWallets> allServices();
     /**
+     * @brief Returns the wallet specific services (non-xrouter services).
+     * @return
+     */
+    std::map<CPubKey, XWallets> walletServices();
+    /**
      * @brief Returns the node services supported by the specified node.
      * @return
      */
@@ -537,6 +542,34 @@ public:
      */
     void unlockCoins(const std::string & token, const std::vector<wallet::UtxoEntry> & utxos);
 
+    /**
+     * @brief Returns true if xbridge can afford to pay the specified BLOCK fee. i.e. there's
+     * sufficient utxos available to cover the fee.
+     * @param fee
+     * @return true if can afford to pay fee, otherwise false
+     */
+    bool canAffordFeePayment(const CAmount & fee);
+
+    /**
+     * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
+     * @param addr - currency name
+     * @param outputs - available outputs to search
+     * @param minTxFee1 - function calculating fee1
+     * @param minTxFee2 - function calculating fee2
+     * @param requiredAmount - amount of required coins
+     * @param coinDenomination - int64_t coin denomination
+     * @param outputsForUse - selected outputs for use
+     * @param utxoAmount - total utxoAmount of selected outputs
+     * @param fee1 - min tx fee for outputs
+     * @param fee2
+     */
+    bool selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
+            const std::function<double(uint32_t, uint32_t)> &minTxFee1,
+            const std::function<double(uint32_t, uint32_t)> &minTxFee2,
+            const uint64_t &requiredAmount, const int64_t &coinDenomination,
+            std::vector<wallet::UtxoEntry> &outputsForUse,
+            uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
+
 protected:
     void clearMempool();
 
@@ -552,21 +585,6 @@ private:
     std::map<std::string, std::set<xbridge::wallet::UtxoEntry> > m_utxosDict;
     CCriticalSection m_utxosLock;
     CCriticalSection m_utxosOrderLock;
-
-    /**
-     * @brief selectUtxos - Selects available utxos and writes to param outputsForUse.
-     * @param addr - currency name
-     * @param outputs - available outputs to search
-     * @param connFrom - connector
-     * @param requiredAmount - amount of required coins
-     * @param outputsForUse - selected outputs for use
-     * @param utxoAmount - total utxoAmount of selected outputs
-     * @param fee1 - min tx fee for outputs
-     * @param fee2
-     */
-    bool selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs, const WalletConnectorPtr &connFrom,
-                     const uint64_t &requiredAmount, std::vector<wallet::UtxoEntry> &outputsForUse,
-                     uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
 };
 
 } // namespace xbridge

@@ -24,8 +24,8 @@ class LOG : public std::basic_stringstream<char, std::char_traits<char>,
                                         boost::pool_allocator<char> > // std::stringstream
 {
 public:
-    LOG(const char reason = 'I', std::string filename="");
-    virtual ~LOG();
+    explicit LOG(const char reason = 'I', std::string filename="");
+    ~LOG() override;
 
     static std::string logFileName();
 

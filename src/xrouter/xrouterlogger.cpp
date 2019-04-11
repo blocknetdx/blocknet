@@ -40,7 +40,7 @@ LOG::LOG(const char reason, std::string filename)
     *this << "\n" << "[" << (char)std::toupper(m_r) << "] "
           << boost::posix_time::second_clock::local_time()
           << " [0x" << boost::this_thread::get_id() << "] ";
-    if (filename != "")
+    if (!filename.empty())
         filenameOverride = filename;
 }
 
@@ -71,11 +71,11 @@ LOG::~LOG()
 
     try
     {
-        if (filenameOverride != "") {
+        if (!filenameOverride.empty()) {
             boost::filesystem::path directory = GetDataDir(false) / "log";
             boost::filesystem::create_directory(directory);
 
-            std::ofstream file(directory.string() + "/" + filenameOverride.c_str(), std::ios_base::app);
+            std::ofstream file(directory.string() + "/" + filenameOverride, std::ios_base::app);
             file << str().c_str();
             return;
         }
