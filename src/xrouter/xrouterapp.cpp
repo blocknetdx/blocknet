@@ -1006,6 +1006,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
     uuidRet = uuid; // set uuid
     std::map<std::string, std::string> feePaymentTxs;
     std::vector<CNode*> selectedNodes;
+    std::vector<std::pair<std::string, int> > nodeErrors;
 
     try {
         if (!isEnabled() || !isReady())
@@ -1082,9 +1083,9 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         std::vector<CNode*> queryNodes;
         int snodeCount = 0;
-        std::string fundErr{"Could not create payments to service nodes. Please check that your wallet "
+        std::string fundErr{"Could not create payments. Please check that your wallet "
                             "is fully unlocked and you have at least " + std::to_string(confs) +
-                            " available unspent transaction outputs."};
+                            " available unspent transaction."};
 
         // Compose a final list of snodes to request. selectedNodes here should be sorted
         // ascending best to worst
@@ -1107,6 +1108,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                         feePaymentTxs[addr] = feePayment;
                 } catch (XRouterError & e) {
                     ERR() << "Failed to create payment to node " << addr << " " << e.msg;
+                    nodeErrors.emplace_back(e.msg, e.code);
                     continue;
                 }
             }
@@ -1119,9 +1121,8 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Do we have enough snodes? If not unlock utxos
         if (snodeCount < confs) {
-            const auto msg = strprintf("Found %u service node(s), however, some failed to meet your config requirements. "
-                                       "%u nodes meet requirements, however, %u service node(s) are required to process "
-                                       "request", selected, snodeCount, confs);
+            const auto msg = strprintf("Found %u service node(s), however, %u meet your requirements. %u service "
+                                       "node(s) are required to process the request", selected, snodeCount, confs);
             throw XRouterError(msg, xrouter::NOT_ENOUGH_NODES);
         }
 
@@ -1308,8 +1309,16 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             unlockOutputs(tx);
         }
 
+        std::string errmsg = e.msg;
+        if (!nodeErrors.empty()) {
+            for (int i = 0; i < nodeErrors.size(); ++i) {
+                const auto & em = nodeErrors[i];
+                errmsg += strprintf(" | %s code %u", em.first, em.second);
+            }
+        }
+
         Object error;
-        error.emplace_back(Pair("error", e.msg));
+        error.emplace_back(Pair("error", errmsg));
         error.emplace_back(Pair("code", e.code));
         error.emplace_back(Pair("uuid", uuid));
 
