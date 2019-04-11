@@ -630,10 +630,7 @@ Value xrService(const Array & params, bool fHelp)
                                  "with the plugin, then use xrConnectedNodes to review plugin information.\n"
                                  "\n"
                                  "Example:\n"
-                                 "xrService GetBestBlockHashBTC\n"
-                                 "\n"
-                                 "With consensus parameter:\n"
-                                 "xrService GetBestBlockHashBTC 2\n");
+                                 "xrService xrs::GetBestBlockHashBTC\n");
     }
 
     if (params.size() < 1)
@@ -664,10 +661,10 @@ Value xrServiceConsensus(const Array & params, bool fHelp)
                                  "custom XRouter services or plugins and provide access to them for free or for\n"
                                  "a fee. This is a great way to earn fees for your custom plugin.\n"
                                  "\n"
-                                 "[node_count] (int) Optional, number of XRouter nodes to query.\n"
-                                 "                         The most common reply will be returned (i.e. the reply\n"
-                                 "                         with the most consensus. To see all reply results use\n"
-                                 "                         xrGetReply uuid."
+                                 "node_count (int) Number of XRouter nodes to query.\n"
+                                 "                 The most common reply will be returned (i.e. the reply\n"
+                                 "                 with the most consensus. To see all reply results use\n"
+                                 "                 xrGetReply uuid."
                                  "service_name (string) Name of the custom service or plugin\n"
                                  "[param1 param2 param3 ... paramN] (string) Optional, refer to the service's\n"
                                  "documentation for parameter requirements. Information about a custom XRouter\n"
@@ -675,10 +672,7 @@ Value xrServiceConsensus(const Array & params, bool fHelp)
                                  "with the service, then use xrConnectedNodes to review plugin information.\n"
                                  "\n"
                                  "Example:\n"
-                                 "xrService GetBestBlockHashBTC\n"
-                                 "\n"
-                                 "With consensus parameter:\n"
-                                 "xrService GetBestBlockHashBTC 2\n");
+                                 "xrServiceConsensus 2 xrs::GetBestBlockHashBTC\n");
     }
 
     if (params.size() < 1)
