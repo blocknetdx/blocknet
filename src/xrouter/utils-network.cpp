@@ -138,7 +138,7 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     if (nStatus == HTTP_UNAUTHORIZED)
         throw runtime_error("incorrect rpcuser or rpcpassword (authorization failed)");
     else if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-        throw runtime_error("server returned HTTP error " + std::to_string(nStatus));
+        throw XRouterError("server returned HTTP error " + std::to_string(nStatus), BAD_REQUEST);
     else if (strReply.empty())
         throw runtime_error("no response from server");
 

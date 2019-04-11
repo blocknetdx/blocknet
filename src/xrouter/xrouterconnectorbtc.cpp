@@ -3,6 +3,7 @@
 
 #include "json/json_spirit.h"
 #include "json/json_spirit_reader_template.h"
+#include "json/json_spirit_writer_template.h"
 
 using namespace json_spirit;
 
@@ -29,6 +30,23 @@ static bool hasError(const std::string & data)
     const auto & o = val.get_obj();
     const Value & error = find_value(o, "error");
     return error.type() != null_type;
+}
+
+static std::string checkError(const std::string & data, int code)
+{
+    Value val; read_string(data, val);
+    if (val.type() != obj_type)
+        return data;
+
+    const Value & error = find_value(val.get_obj(), "error");
+    if (error.type() == null_type)
+        return data;
+
+    auto o = val.get_obj();
+    const Value & code_val = find_value(o, "code");
+    if (code_val.type() == null_type)
+        o.emplace_back("code", code);
+    return write_string(Value(o), false);
 }
 
 static double parseVout(Value vout, std::string account)
@@ -180,7 +198,7 @@ std::vector<std::string> BtcWalletConnectorXRouter::getTransactionsBloomFilter(c
 std::string BtcWalletConnectorXRouter::sendTransaction(const std::string & transaction) const
 {
     static const std::string command("sendrawtransaction");
-    return CallRPC(m_user, m_passwd, m_ip, m_port, command, { transaction });
+    return checkError(CallRPC(m_user, m_passwd, m_ip, m_port, command, { transaction }), BAD_REQUEST);
 }
 
 std::string BtcWalletConnectorXRouter::convertTimeToBlockCount(const std::string & timestamp) const
