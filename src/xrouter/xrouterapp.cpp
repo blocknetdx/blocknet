@@ -1348,7 +1348,7 @@ std::string App::getBlockCount(std::string & uuidRet, const std::string & curren
     return this->xrouterCall(xrGetBlockCount, uuidRet, currency, confirmations, {});
 }
 
-std::string App::getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const int & block)
+std::string App::getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const unsigned int & block)
 {
     return this->xrouterCall(xrGetBlockHash, uuidRet, currency, confirmations, { std::to_string(block) });
 }

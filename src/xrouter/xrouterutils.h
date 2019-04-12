@@ -127,6 +127,7 @@ bool is_number(std::string s);
 bool is_hash(const std::string & hash);
 bool is_hex(const std::string & hex);
 bool is_address(std::string s);
+bool hextodec(const std::string & hex, unsigned int & n);
 std::string generateUUID();
 Object form_reply(const std::string & uuid, const Value & reply);
 Object form_reply(const std::string & uuid, const std::string & reply);

@@ -455,7 +455,21 @@ std::string XRouterServer::processGetBlockHash(const std::string & currency, con
     xrouter::WalletConnectorXRouterPtr conn = connectorByCurrency(currency);
     if (conn && hasConnectorLock(currency)) {
         boost::mutex::scoped_lock l(*getConnectorLock(currency));
-        return conn->getBlockHash(std::stoi(blockId));
+        uint32_t block_n{0};
+        if (boost::algorithm::starts_with(blockId, "0x")) { // handle hex values (specifically for eth)
+            try {
+                block_n = boost::lexical_cast<uint32_t>(blockId);
+            } catch(...) {
+                throw XRouterError("Failed to parse hex into block number", xrouter::INVALID_PARAMETERS);
+            }
+        } else { // handle integer values
+            try {
+                block_n = static_cast<uint32_t>(std::stoi(blockId));
+            } catch (...) {
+                throw XRouterError("Problem with the specified block number, is it a number?", xrouter::INVALID_PARAMETERS);
+            }
+        }
+        return conn->getBlockHash(block_n);
     }
 
     throw XRouterError("Internal Server Error: No connector for " + currency, xrouter::BAD_CONNECTOR);

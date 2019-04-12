@@ -171,7 +171,7 @@ public:
      * @param block block number
      * @return json reply of getblockhash
      */
-    std::string getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const int & block);
+    std::string getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const unsigned int & block);
 
     /**
      * @brief returns block data by hash

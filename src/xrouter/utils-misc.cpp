@@ -180,6 +180,23 @@ bool is_address(std::string s)
     return true;
 }
 
+bool hextodec(const std::string & hex, unsigned int & n) {
+    if (boost::algorithm::starts_with(hex, "0x")) {
+        try {
+            n = std::stoul(hex, nullptr, 16);
+        } catch(...) {
+            return false;
+        }
+    } else { // handle integer values
+        try {
+            n = static_cast<unsigned int>(std::stoi(hex));
+        } catch (...) {
+            return false;
+        }
+    }
+    return true;
+}
+
 // We need this to allow zero CAmount in xrouter
 CAmount to_amount(double val)
 {
