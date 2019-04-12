@@ -118,6 +118,7 @@ public:
     CServicenode* Find(const CScript& payee);
     CServicenode* Find(const CTxIn& vin);
     CServicenode* Find(const CPubKey& pubKeyServicenode);
+    CServicenode* Find(const std::string & nodeAddr);
 
     /// Find an entry in the servicenode list that is next to be paid
     CServicenode* GetNextServicenodeInQueueForPayment(int nBlockHeight, bool fFilterSigTime, int& nCount);
@@ -131,6 +132,10 @@ public:
     std::vector<CServicenode> GetFullServicenodeVector()
     {
         Check();
+        return vServicenodes;
+    }
+
+    std::vector<CServicenode> GetCurrentList() {
         return vServicenodes;
     }
 

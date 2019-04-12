@@ -12,8 +12,12 @@
 #include "ui_interface.h"
 #include "util.h"
 
+#include "xrouter/xrouterutils.h"
+
 #include <set>
 #include <stdint.h>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace std;
 using namespace json_spirit;
@@ -121,6 +125,23 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"dxFlushCancelledOrders",1},
         {"gettradingdata",0},
         {"gettradingdata",1},
+        {"xrGetBlockCount",1},
+        {"xrGetBlockHash",1},
+        {"xrGetBlockHash",2},
+        {"xrGetBlock",2},
+        {"xrGetBlocks",2},
+        {"xrGetTransaction",2},
+        {"xrGetTransactions",2},
+        {"xrDecodeRawTransaction",2},
+        {"xrSendTransaction",2},
+        {"xrServiceConsensus",0},
+        {"xrUpdateConfigs",0},
+        {"xrGetBalance",2},
+        {"xrGetTxBloomFilter",2},
+        {"xrGetTxBloomFilter",3},
+        {"xrGetBlockAtTime",1},
+        {"xrGetBlockAtTime",2},
+        {"xrConnect",1},
     };
 
 class CRPCConvertTable
@@ -166,8 +187,16 @@ Array RPCConvertValues(const std::string& strMethod, const std::vector<std::stri
         // parse string as JSON, insert bool/number/object/etc. value
         else {
             Value jVal;
-            if (!read_string(strVal, jVal))
-                throw runtime_error(string("Error parsing JSON:") + strVal);
+            if (!read_string(strVal, jVal)) {
+                auto errmsg = strprintf("Failed to parse input parameters: %s, check the docs: help %s", strVal, strMethod);
+                if (boost::algorithm::starts_with(strMethod, xrouter::xr)) { // if xrouter call
+                    Object error;
+                    error.emplace_back("error", errmsg);
+                    error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+                    throw runtime_error(write_string(Value(error), json_spirit::pretty_print));
+                } else
+                    throw runtime_error(errmsg);
+            }
             params.push_back(jVal);
         }
     }

@@ -35,6 +35,7 @@
 #include "ui_interface.h"
 #include "util.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 
 #ifdef ENABLE_WALLET
 #include "wallet.h"
@@ -176,7 +177,7 @@ class BitcoinCore : public QObject
 {
     Q_OBJECT
 public:
-    explicit BitcoinCore();
+    explicit BitcoinCore(int argc, char* argv[]);
 
 public slots:
     void initialize();
@@ -196,6 +197,10 @@ private:
 
     /// Pass fatal exception message to UI thread
     void handleRunawayException(std::exception* e);
+
+    // args
+    int m_argc;
+    char** m_argv;
 };
 
 /** Main BlocknetDX application object */
@@ -253,12 +258,15 @@ private:
 #endif
     int returnValue;
 
+    int m_argc;
+    char** m_argv;
+
     void startThread();
 };
 
 #include "blocknetdx.moc"
 
-BitcoinCore::BitcoinCore() : QObject()
+BitcoinCore::BitcoinCore(int argc, char** argv) : QObject(), m_argc(argc), m_argv(argv)
 {
 }
 
@@ -274,7 +282,7 @@ void BitcoinCore::initialize()
 
     try {
         qDebug() << __func__ << ": Running AppInit2 in thread";
-        int rv = AppInit2(threadGroup);
+        int rv = AppInit2(m_argc, m_argv, threadGroup);
         if (rv) {
             /* Start a dummy RPC thread if no RPC thread is active yet
              * to handle timeouts.
@@ -338,7 +346,8 @@ BitcoinApplication::BitcoinApplication(int& argc, char** argv) : QApplication(ar
                                                                  paymentServer(0),
                                                                  walletModel(0),
 #endif
-                                                                 returnValue(0)
+                                                                 returnValue(0),
+                                                                 m_argc(argc), m_argv(argv)
 {
     setQuitOnLastWindowClosed(false);
 }
@@ -404,7 +413,7 @@ void BitcoinApplication::startThread()
     if (coreThread)
         return;
     coreThread = new QThread(this);
-    BitcoinCore* executor = new BitcoinCore();
+    BitcoinCore* executor = new BitcoinCore(m_argc, m_argv);
     executor->moveToThread(coreThread);
 
     /*  communication to and from thread */
@@ -672,14 +681,7 @@ int main(int argc, char* argv[])
     if (GetBoolArg("-splash", true) && !GetBoolArg("-min", false))
         app.createSplashScreen(networkStyle.data());
 
-    xbridge::App & xapp = xbridge::App::instance();
-
     try {
-        RandomInit();
-
-        // init xbridge
-        xapp.init(argc, argv);
-
         app.createWindow(networkStyle.data());
         app.requestInitialize();
 #if defined(Q_OS_WIN) && QT_VERSION >= 0x050000

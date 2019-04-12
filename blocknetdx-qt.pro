@@ -4,8 +4,7 @@ VERSION = 1.0.0
 
 DEFINES += \
     QT_GUI \
-    BOOST_THREAD_USE_LIB \
-    BOOST_SPIRIT_THREADSAFE
+    BOOST_THREAD_USE_LIB
 
 QT += core gui network
 greaterThan(QT_MAJOR_VERSION, 4) {
@@ -299,6 +298,14 @@ SOURCES += \
     src/xbridge/xbridgecryptoproviderbtc.cpp \
     src/xbridge/xbridgepacket.cpp \
     src/xbridge/util/xseries.cpp
+    src/xrouter/rpcxrouter.cpp \
+    src/xrouter/xrouterapp.cpp \
+    src/xrouter/xrouterconnector.cpp \
+    src/xrouter/xrouterconnectorbtc.cpp \
+    src/xrouter/xrouterconnectoreth.cpp \
+    src/xrouter/xrouterlogger.cpp \
+    src/xrouter/xroutersettings.cpp \
+    src/xrouter/xrouterpacket.cpp
 
 #protobuf generated
 SOURCES += \
@@ -590,7 +597,17 @@ HEADERS += \
     src/xbridge/xbridgedef.h \
     src/xbridge/xbridgecryptoproviderbtc.h \
     src/xbridge/util/xseries.h \
-    src/xbridge/util/xassert.h
+    src/xbridge/util/xassert.h \
+    src/xrouter/version.h \
+    src/xrouter/xrouterapp.h \
+    src/xrouter/xrouterconnector.h \
+    src/xrouter/xrouterconnectorbtc.h \
+    src/xrouter/xrouterconnectoreth.h \
+    src/xrouter/xrouterpacket.h \
+    src/xrouter/xrouterdef.h \
+    src/xrouter/xrouterlogger.h \
+    src/xrouter/xroutersettings.h \
+    src/xrouter/xroutererror.h
 
 #ENABLE_ZMQ
 #    src/zmq/zmqabstractnotifier.h \

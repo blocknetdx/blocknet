@@ -17,6 +17,8 @@
 #include "wallet.h"
 #endif
 
+#include "xrouter/xrouterapp.h"
+
 #include "json/json_spirit_writer_template.h"
 #include <boost/algorithm/string.hpp>
 #include <boost/asio.hpp>
@@ -186,9 +188,15 @@ string CRPCTable::help(string strCommand) const
                     if (!category.empty())
                         strRet += "\n";
                     category = pcmd->category;
-                    string firstLetter = category.substr(0, 1);
-                    boost::to_upper(firstLetter);
-                    strRet += "== " + firstLetter + category.substr(1) + " ==\n";
+                    if (category == "xbridge" || category == "xrouter") { // uppercase first two letters
+                        string firstLetter = category.substr(0, 2);
+                        boost::to_upper(firstLetter);
+                        strRet += "== " + firstLetter + category.substr(2) + " ==\n";
+                    } else {
+                        string firstLetter = category.substr(0, 1);
+                        boost::to_upper(firstLetter);
+                        strRet += "== " + firstLetter + category.substr(1) + " ==\n";
+                    }
                 }
             }
             strRet += strHelp + "\n";
@@ -384,6 +392,31 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxGetLockedUtxos",                     &dxGetLockedUtxos,           false, true, true},
         {"xbridge", "dxFlushCancelledOrders",               &dxFlushCancelledOrders,     false, true, true},
         {"xbridge", "gettradingdata",                       &gettradingdata,             false, true, true},
+        
+        {"xrouter", "xrGetBlockCount",                      &xrGetBlockCount,            true, true, true},
+        {"xrouter", "xrGetBlockHash",                       &xrGetBlockHash,             true, true, true},
+        {"xrouter", "xrGetBlock",                           &xrGetBlock,                 true, true, true},
+        {"xrouter", "xrGetBlocks",                          &xrGetBlocks,                true, true, true},
+        {"xrouter", "xrGetTransaction",                     &xrGetTransaction,           true, true, true},
+        {"xrouter", "xrGetTransactions",                    &xrGetTransactions,          true, true, true},
+        {"xrouter", "xrDecodeRawTransaction",               &xrDecodeRawTransaction,     true, true, true},
+//        {"xrouter", "xrGetTxBloomFilter",                   &xrGetTxBloomFilter,         true, true, true},
+//        {"xrouter", "xrGenerateBloomFilter",                &xrGenerateBloomFilter,      true, true, true},
+//        {"xrouter", "xrGetBlockAtTime",                     &xrGetBlockAtTime,           true, true, true},
+        {"xrouter", "xrSendTransaction",                    &xrSendTransaction,          true, true, true},
+        {"xrouter", "xrService",                            &xrService,                  true, true, true},
+        {"xrouter", "xrServiceConsensus",                   &xrServiceConsensus,         true, true, true},
+
+        {"xrouter", "xrGetReply",                           &xrGetReply,                 true, true, true},
+        {"xrouter", "xrConnect",                            &xrConnect,                  true, true, true},
+        {"xrouter", "xrConnectedNodes",                     &xrConnectedNodes,           true, true, true},
+        {"xrouter", "xrUpdateConfigs",                      &xrUpdateConfigs,            true, true, true},
+        {"xrouter", "xrShowConfigs",                        &xrShowConfigs,              true, true, true},
+        {"xrouter", "xrReloadConfigs",                      &xrReloadConfigs,            true, true, true},
+        {"xrouter", "xrStatus",                             &xrStatus,                   true, true, true},
+        {"xrouter", "xrGetNetworkServices",                 &xrGetNetworkServices,       true, true, true},
+//        {"xrouter", "xrTest",                               &xrTest,                     true, true, true},
+
     #endif // ENABLE_WALLET
 };
 
@@ -474,7 +507,8 @@ public:
     }
 
     virtual void start() {
-        _stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpctimeout", 30)));
+        _stream.expires_from_now(boost::posix_time::seconds(xrouter::App::isEnabled() ? GetArg("-rpcxroutertimeout", 60)
+                                                                                      : GetArg("-rpctimeout", 30)));
     }
 
     virtual void close() {
@@ -1006,6 +1040,17 @@ json_spirit::Value CRPCTable::execute(const std::string& strMethod, const json_s
     if (pcmd->reqWallet && !pwalletMain)
         throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found (disabled)");
 #endif
+
+    // Do not process xrouter calls if it's disabled or not ready
+    if (pcmd->category == "xrouter" && (!xrouter::App::isEnabled() || !xrouter::App::instance().isReady())) {
+        Object error;
+        if (!xrouter::App::isEnabled())
+            error.emplace_back("error", "XRouter is disabled, add xrouter=1 to blocknetdx.conf");
+        else
+            error.emplace_back("error", "XRouter is not ready yet, please wait");
+        error.emplace_back("code", xrouter::UNSUPPORTED_SERVICE);
+        return error;
+    }
 
     // Observe safe mode
     string strWarning = GetWarnings("rpc");

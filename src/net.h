@@ -70,7 +70,9 @@ CNode* FindNode(const CNetAddr& ip);
 CNode* FindNode(const std::string& addrName);
 CNode* FindNode(const CService& ip);
 CNode* ConnectNode(CAddress addrConnect, const char* pszDest = NULL, bool obfuScationMaster = false);
-bool OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound = NULL, const char* strDest = NULL, bool fOneShot = false);
+CNode* OpenNetworkConnection(const CAddress& addrConnect, CSemaphoreGrant* grantOutbound = NULL,
+        const char* strDest = NULL, bool fOneShot = false, bool xrouter = false);
+CNode* OpenXRouterConnection(const CAddress& addrConnect, const char* strDest = nullptr);
 void MapPort(bool fUseUPnP);
 unsigned short GetListenPort();
 bool BindListenPort(const CService& bindAddr, std::string& strError, bool fWhitelisted = false);
@@ -124,7 +126,9 @@ extern bool fListen;
 extern uint64_t nLocalServices;
 extern uint64_t nLocalHostNonce;
 extern CAddrMan addrman;
-extern int nMaxConnections;
+static int nMaxConnections{125};
+static int nMaxOutboundNavtiveConnections{16}; // max non-xrouter connections
+static int nMaxOutboundConnections{nMaxOutboundNavtiveConnections};
 
 extern std::vector<CNode*> vNodes;
 extern CCriticalSection cs_vNodes;
@@ -282,6 +286,10 @@ protected:
     // Basic fuzz-testing
     void Fuzz(int nChance); // modifies ssSend
 
+    // XRouter flag
+    mutable CCriticalSection cs;
+    bool fXRouter{false};
+
 public:
     uint256 hashContinue;
     int nStartingHeight;
@@ -368,11 +376,13 @@ public:
 
     void AddAddressKnown(const CAddress& addr)
     {
+        LOCK(cs);
         setAddrKnown.insert(addr);
     }
 
     void PushAddress(const CAddress& addr)
     {
+        LOCK(cs);
         // Known checking here is only to save space from duplicates.
         // SendMessages will filter it again for knowns that were added
         // after addresses were pushed.
@@ -586,6 +596,7 @@ public:
 
     bool HasFulfilledRequest(std::string strRequest)
     {
+        LOCK(cs);
         BOOST_FOREACH (std::string& type, vecRequestsFulfilled) {
             if (type == strRequest) return true;
         }
@@ -594,6 +605,7 @@ public:
 
     void ClearFulfilledRequest(std::string strRequest)
     {
+        LOCK(cs);
         std::vector<std::string>::iterator it = vecRequestsFulfilled.begin();
         while (it != vecRequestsFulfilled.end()) {
             if ((*it) == strRequest) {
@@ -607,6 +619,7 @@ public:
     void FulfilledRequest(std::string strRequest)
     {
         if (HasFulfilledRequest(strRequest)) return;
+        LOCK(cs);
         vecRequestsFulfilled.push_back(strRequest);
     }
 
@@ -615,6 +628,39 @@ public:
     void CancelSubscribe(unsigned int nChannel);
     void CloseSocketDisconnect();
     bool DisconnectOldProtocol(int nVersionRequired, std::string strLastCommand = "");
+
+    // XRouter state
+    void setXRouter() {
+        LOCK(cs);
+        fXRouter = true;
+    }
+    bool isXRouter() {
+        LOCK(cs);
+        return fXRouter;
+    }
+
+    const std::string NodeAddress() const {
+        LOCK(cs);
+        return addr.ToString();
+    }
+
+    void Disconnect() {
+        LOCK(cs);
+        fDisconnect = true;
+    }
+    bool Disconnecting() {
+        LOCK(cs);
+        return fDisconnect;
+    }
+
+    void SuccessfullyConnect() {
+        LOCK(cs);
+        fSuccessfullyConnected = true;
+    }
+    bool SuccessfullyConnected() {
+        LOCK(cs);
+        return fSuccessfullyConnected;
+    }
 
     // Denial-of-service detection/prevention
     // The idea is to detect peers that are behaving
@@ -632,6 +678,7 @@ public:
     // new code.
     static void ClearBanned(); // needed for unit testing
     static bool IsBanned(CNetAddr ip);
+    static bool IsBanned(const std::string & ipPort);
     static bool Ban(const CNetAddr& ip);
     void copyStats(CNodeStats& stats);
 
@@ -644,6 +691,97 @@ public:
 
     static uint64_t GetTotalBytesRecv();
     static uint64_t GetTotalBytesSent();
+
+    /**
+     * Max outbound connections. If xrouter enabled node, uses -xroutermaxconnections flag.
+     * @return
+     */
+    static int MaxOutboundConnections() {
+        return nMaxOutboundConnections;
+    }
+
+    /**
+     * Max outbound connections. If xrouter enabled node, uses -xroutermaxconnections flag.
+     * @return
+     */
+    static int MaxOutboundNativeConnections() {
+        return nMaxOutboundNavtiveConnections;
+    }
+
+    /**
+     * Return maximum connections this node can handle.
+     * @return
+     */
+    static int MaxConnections() {
+        return nMaxConnections;
+    }
+
+    /**
+     * Set the maximum connections that this node can handle. XRouter outgoing connections takes
+     * precedence over the default outbound connection max. XRouter outgoing connections defaults
+     * to half of the -xroutermaxconnections flag.
+     * @param fileDescriptors Total file descriptors available
+     * @param minFileDescriptors Minimum file descriptors required
+     * @param reserveBind Number of nodes that are binded via config
+     * @param usingFileDescriptors Return the final file descriptor count
+     * @return
+     */
+    static bool SetMaxConnections(const int & fileDescriptors, const int & minFileDescriptors,
+                                  const int & reserveBind, int & usingFileDescriptors) {
+        auto maxConns = static_cast<int>(GetArg("-maxconnections", 125));
+        nMaxOutboundConnections = std::min(nMaxOutboundConnections, static_cast<int>(GetArg("-maxconnections", 125)));
+        nMaxOutboundNavtiveConnections = nMaxOutboundConnections;
+
+        if (IsXRouterNode()) { // xrouter uses half of specified connections for outbound connections
+            auto xrouterMaxConns = static_cast<int>(GetArg("-xroutermaxconnections", 250));
+            nMaxOutboundConnections = std::max(nMaxOutboundConnections, xrouterMaxConns / 2);
+            maxConns = std::max(maxConns, xrouterMaxConns);
+        }
+
+        // Max connections should not exceed available file descriptors
+        nMaxConnections = std::max(std::min(maxConns, fileDescriptors - reserveBind - minFileDescriptors), 0);
+
+        usingFileDescriptors = RaiseFileDescriptorLimit(nMaxConnections + minFileDescriptors);
+        if (usingFileDescriptors < minFileDescriptors)
+            return false;
+
+        if (usingFileDescriptors - minFileDescriptors < nMaxConnections)
+            nMaxConnections = usingFileDescriptors - minFileDescriptors;
+
+        return true;
+    }
+
+    /**
+     * Returns true if this node is an xrouter server.
+     * @return
+     */
+    static bool IsXRouterServer() {
+        return CNode::IsXRouterNode() && GetBoolArg("-servicenode", false);
+    }
+
+    /**
+     * Returns true if this is an xrouter node.
+     * @return
+     */
+    static bool IsXRouterNode() {
+        return GetBoolArg("-xrouter", false);
+    }
+
+    /**
+     * Return a copy of nodes, with incremented reference count.
+     * @return
+     */
+    static std::vector<CNode*> CopyNodes() {
+        LOCK(cs_vNodes);
+        std::vector<CNode*> nodes;
+        for (auto & pnode : vNodes) {
+            if (!pnode->Disconnecting()) {
+                pnode->AddRef();
+                nodes.push_back(pnode);
+            }
+        }
+        return nodes;
+    }
 };
 
 class CExplicitNetCleanup

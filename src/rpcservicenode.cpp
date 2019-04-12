@@ -18,6 +18,9 @@
 #include "tinyformat.h"
 #include "primitives/transaction.h"
 
+#include "xbridge/version.h"
+#include "xrouter/version.h"
+
 #include <boost/tokenizer.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -656,6 +659,8 @@ Value servicenodelist(const Array& params, bool fHelp)
             "    \"status\": s,              (string) Status (ENABLED/EXPIRED/REMOVE/etc)\n"
             "    \"addr\": \"addr\",         (string) Servicenode Blocknet address\n"
             "    \"version\": v,             (numeric) Servicenode protocol version\n"
+            "    \"xbridgeversion\": v,      (numeric) XBridge protocol version\n"
+            "    \"xrouterversion\": v,      (numeric) XRouter protocol version\n"
             "    \"lastseen\": ttt,          (numeric) The time in seconds since epoch (Jan 1 1970 GMT) of the last seen\n"
             "    \"activetime\": ttt,        (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode has been active\n"
             "    \"lastpaid\": ttt,          (numeric) The time in seconds since epoch (Jan 1 1970 GMT) servicenode was last paid\n"
@@ -691,11 +696,18 @@ Value servicenodelist(const Array& params, bool fHelp)
         std::string strStatus = mn->Status();
 
         obj.push_back(Pair("rank", (strStatus == "ENABLED" ? s.first : 0)));
+        auto key = mn->pubKeyServicenode;
+        if (!key.IsCompressed())
+            key.Compress();
+        std::vector<unsigned char> pubkey{key.begin(), key.end()};
+        obj.push_back(Pair("nodepubkey", HexStr(std::string(pubkey.begin(), pubkey.end()))));
         obj.push_back(Pair("txhash", strTxHash));
         obj.push_back(Pair("outidx", (uint64_t)oIdx));
         obj.push_back(Pair("status", strStatus));
         obj.push_back(Pair("addr", CBitcoinAddress(mn->pubKeyCollateralAddress.GetID()).ToString()));
         obj.push_back(Pair("version", mn->protocolVersion));
+        obj.emplace_back("xbridgeversion", static_cast<int64_t>(XBRIDGE_PROTOCOL_VERSION));
+        obj.emplace_back("xrouterversion", static_cast<int64_t>(XROUTER_PROTOCOL_VERSION));
         obj.push_back(Pair("lastseen", (int64_t)mn->lastPing.sigTime));
         obj.push_back(Pair("activetime", (int64_t)(mn->lastPing.sigTime - mn->sigTime)));
         obj.push_back(Pair("lastpaid", (int64_t)mn->GetLastPaid()));
