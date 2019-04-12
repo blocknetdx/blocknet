@@ -1699,8 +1699,11 @@ void App::getLatestNodeContainers(std::vector<CServicenode> & snodes, std::vecto
 
     // Build snode cache
     for (CServicenode & s : snodes) {
-        if (!s.addr.ToString().empty() && !CNode::IsBanned(s.addr.ToString())) // skip banned snodes
-            snodec[s.addr.ToString()] = s;
+        const auto & snodeAddr = s.addr.ToString();
+        if (!snodeAddr.empty() && !CNode::IsBanned(snodeAddr)
+            && !(fServiceNode && activeServicenode.status == ACTIVE_SERVICENODE_STARTED
+                 && activeServicenode.service.ToStringIPPort() == snodeAddr)) // skip banned snodes and self
+            snodec[snodeAddr] = s;
     }
 
     // Build node cache
