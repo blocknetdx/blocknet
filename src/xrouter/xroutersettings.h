@@ -35,6 +35,10 @@ public:
         WaitableLock l(mu);
         return rawtext;
     }
+    virtual std::string publicText() const {
+        WaitableLock l(mu);
+        return pubtext;
+    }
     
     template <typename _T>
     _T get(const std::string & param, _T def = _T())
@@ -45,17 +49,14 @@ public:
     template <typename _T>
     _T get(const char * param, _T def = _T())
     {
-        WaitableLock l(mu);
         _T tmp = def;
         try
         {
+            WaitableLock l(mu);
             tmp = m_pt.get<_T>(param);
             return tmp;
         }
-        catch (std::exception & e)
-        {
-            //LOG() << e.what();
-        }
+        catch (std::exception & e) { }
 
         return tmp;
     }
@@ -77,8 +78,9 @@ public:
 
                 std::ostringstream oss;
                 boost::property_tree::ini_parser::write_ini(oss, m_pt);
-                this->rawtext = oss.str();
+                rawtext = oss.str();
             }
+            genPublic();
         }
         catch (std::exception & e) {
             return false;
@@ -86,11 +88,15 @@ public:
 
         return true;
     }
-    
+
+protected:
+    virtual void genPublic() = 0;
+
 protected:
     std::string m_fileName;
     boost::property_tree::ptree m_pt;
     std::string rawtext;
+    std::string pubtext;
     mutable CWaitableCriticalSection mu;
 };
 
@@ -115,11 +121,6 @@ public:
     std::string command();
     std::string commandArgs();
 
-    std::string rawText() const override {
-        WaitableLock l(mu);
-        return publictext;
-    }
-
     bool read(const boost::filesystem::path & fileName) override;
     bool read(const std::string & config) override;
 
@@ -129,9 +130,10 @@ public:
         return m_pt.count(key) > 0;
     }
 
+protected:
+    void genPublic() override;
+
 private:
-    void formPublicText();
-    std::string publictext;
     bool ismine{true};
 };
 
@@ -192,6 +194,9 @@ public:
 
     double defaultFee();
     std::map<std::string, double> feeSchedule();
+
+protected:
+    void genPublic() override;
 
 private:
     boost::filesystem::path pluginPath() const;
