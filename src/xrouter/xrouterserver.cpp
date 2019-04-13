@@ -280,7 +280,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
 
             // Check rate limit
             XRouterPluginSettingsPtr psettings = app.xrSettings()->getPluginSettings(service);
-            auto rateLimit = psettings->clientRequestLimit();
+            auto rateLimit = app.xrSettings()->clientRequestLimit(command, service);
             if (rateLimit >= 0 && rateLimitExceeded(nodeAddr, fqService, rateLimit)) {
                 std::string err_msg = "Rate limit exceeded: " + fqService;
                 state.DoS(20, error(err_msg.c_str()), REJECT_INVALID, "xrouter-error");
@@ -299,7 +299,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             }
 
             // Check payment
-            const auto dfee = psettings->fee();
+            const auto dfee = app.xrSettings()->commandFee(command, service);
             const auto fee = to_amount(dfee);
             bool expectingPayment = fee > 0;
             if (expectingPayment) {

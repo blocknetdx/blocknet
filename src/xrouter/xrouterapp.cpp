@@ -1700,9 +1700,12 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
             if (pls) {
                 Object plg;
                 plg.emplace_back("parameters", boost::algorithm::join(pls->parameters(), ","));
-                plg.emplace_back("fee", pls->fee());
-                plg.emplace_back("requestlimit", pls->clientRequestLimit());
+                plg.emplace_back("fee", item.second->commandFee(xrService, plugin));
                 plg.emplace_back("paymentaddress", item.second->paymentAddress(xrService, plugin));
+                plg.emplace_back("requestlimit", item.second->clientRequestLimit(xrService, plugin));
+                plg.emplace_back("fetchlimit", item.second->commandFetchLimit(xrService, plugin));
+                plg.emplace_back("timeout", item.second->commandTimeout(xrService, plugin));
+                plg.emplace_back("disabled", !item.second->isAvailableCommand(xrService, plugin));
                 plugins.emplace_back(plugin, plg);
             }
         }
