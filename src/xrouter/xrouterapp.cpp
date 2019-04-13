@@ -79,40 +79,127 @@ bool App::isEnabled()
 // static
 bool App::createConf()
 {
-    auto p = GetDataDir(false) / "xrouter.conf";
-    if (!boost::filesystem::exists(p)) {
+    try {
         std::string eol = "\n";
 #ifdef WIN32
         eol = "\r\n";
 #endif
-        boost::filesystem::save_string_file(p,
-                "[Main]"                                                                                        + eol +
-                "# maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"         + eol +
-                "# 0 means you only want free calls"                                                            + eol +
-                "maxfee=0"                                                                                      + eol +
-                ""                                                                                              + eol +
-                "# consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)"   + eol +
-                "# Paid calls will send a payment to each selected service node."                               + eol +
-                "consensus=1"                                                                                   + eol +
-                ""                                                                                              + eol +
-                "# timeout is the maximum time in seconds you're willing to wait for an XRouter response"       + eol +
-                "timeout=30"                                                                                    + eol +
-                ""                                                                                              + eol +
-                "# Optionally set per-call config options:"                                                     + eol +
-                "# [xrGetBlockCount]"                                                                           + eol +
-                "# maxfee=0.01"                                                                                 + eol +
-                ""                                                                                              + eol +
-                "# [BLOCK::xrGetBlockCount]"                                                                    + eol +
-                "# maxfee=0.01"                                                                                 + eol +
-                ""                                                                                              + eol +
-                "# [SYS::xrGetBlockCount]"                                                                      + eol +
-                "# maxfee=0.01"                                                                                 + eol +
-                ""                                                                                              + eol +
-                "# It's possible to set config options for Custom XRouter services"                             + eol +
-                "# [xrs::GetBestBlockHashBTC]"                                                                  + eol +
-                "# maxfee=0.1"                                                                                  + eol
-        );
+        auto p = GetDataDir(false) / "xrouter.conf";
+        if (!boost::filesystem::exists(p)) {
+            boost::filesystem::save_string_file(p,
+                    "[Main]"                                                                                        + eol +
+                    "#! maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"        + eol +
+                    "#! 0 means you only want free calls"                                                           + eol +
+                    "maxfee=0"                                                                                      + eol +
+                    ""                                                                                              + eol +
+                    "#! consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)"  + eol +
+                    "#! Paid calls will send a payment to each selected service node."                              + eol +
+                    "consensus=1"                                                                                   + eol +
+                    ""                                                                                              + eol +
+                    "#! timeout is the maximum time in seconds you're willing to wait for an XRouter response"      + eol +
+                    "timeout=30"                                                                                    + eol +
+                    ""                                                                                              + eol +
+                    "#! Optionally set per-call config options:"                                                    + eol +
+                    "#! [xrGetBlockCount]"                                                                          + eol +
+                    "#! maxfee=0.01"                                                                                + eol +
+                    ""                                                                                              + eol +
+                    "#! [BLOCK::xrGetBlockCount]"                                                                   + eol +
+                    "#! maxfee=0.01"                                                                                + eol +
+                    ""                                                                                              + eol +
+                    "#! [SYS::xrGetBlockCount]"                                                                     + eol +
+                    "#! maxfee=0.01"                                                                                + eol +
+                    ""                                                                                              + eol +
+                    "#! It's possible to set config options for Custom XRouter services"                            + eol +
+                    "#! [xrs::GetBestBlockHashBTC]"                                                                 + eol +
+                    "#! maxfee=0.1"                                                                                 + eol
+            );
+        }
+
+        // Create the plugins directory if it doesn't exist
+        auto plugins = GetDataDir(false) / "plugins";
+        if (!boost::filesystem::exists(plugins)) {
+            boost::filesystem::create_directory(plugins);
+            auto samplerpc = plugins / "ExampleRPC.conf";
+            boost::filesystem::save_string_file(samplerpc,
+                "#! ExampleRPC is a sample rpc plugin. This entire plugin configuration is sent to the client."     + eol +
+                "#! Any lines beginning with #! will not be sent to the client."                                    + eol +
+                "#! Any config parameters beginning with private:: will not be sent to the client."                 + eol +
+                "#! The name of the plugin file ExampleRPC will be the service name broadcasted to the XRouter"     + eol +
+                "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                     + eol +
+                ""                                                                                                  + eol +
+                "#! parameters that you need from the user, acceptable types: string,bool,int,double"               + eol +
+                "#! Example parameters=string,bool if you want to accept a string parameter and boolean"            + eol +
+                "#! parameter from an XRouter client."                                                              + eol +
+                "parameters="                                                                                       + eol +
+                ""                                                                                                  + eol +
+                "#! Set the fee in BLOCK to how much you want to charge for requests to this custom plugin."        + eol +
+                "#! Example fee=0.1 if you want to accept 0.1 BLOCK or 0 if you want the plugin to be free."        + eol +
+                "fee=0"                                                                                             + eol +
+                ""                                                                                                  + eol +
+                "#! Set the client request limit in milliseconds. -1 means unlimited. 50 means that a client"       + eol +
+                "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"        + eol +
+                "#! requests exceed this value they will be penalized and eventually banned by your node."          + eol +
+                "clientrequestlimit=-1"                                                                             + eol +
+                ""                                                                                                  + eol +
+                "#! This is a sample configuration for the RPC plugin type for a syscoin plugin."                   + eol +
+                "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"            + eol +
+                "#! plugin for syscoin running on 127.0.0.1:8370. This plugin accepts 0 parameters, as"             + eol +
+                "#! indicated by \"parameters=\" config above, and it will call the syscoin \"getblockcount\""      + eol +
+                "#! rpc command. The result will be forwarded onto the client."                                     + eol +
+                "private::type=rpc"                                                                                 + eol +
+                "private::rpcip=127.0.0.1"                                                                          + eol +
+                "private::rpcport=8370"                                                                             + eol +
+                "private::rpcuser=sysuser"                                                                          + eol +
+                "private::rpcpassword=sysuser_pass"                                                                 + eol +
+                ""                                                                                                  + eol +
+                "#! Disable this sample plugin"                                                                     + eol +
+                "disabled=1"                                                                                        + eol
+            );
+            auto sampledocker = plugins / "ExampleDocker.conf";
+            boost::filesystem::save_string_file(sampledocker,
+                "#! ExampleDocker is a sample docker plugin. This entire plugin configuration is sent to the client." + eol +
+                "#! Any lines beginning with #! will not be sent to the client."                                      + eol +
+                "#! Any config parameters beginning with private:: will not be sent to the client."                   + eol +
+                "#! The name of the plugin file ExampleDocker will be the service name broadcasted to the XRouter"    + eol +
+                "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                       + eol +
+                ""                                                                                                    + eol +
+                "#! parameters that you need from the user, acceptable types: string,bool,int,double"                 + eol +
+                "#! Example parameters=string,bool if you want to accept a string parameter and boolean"              + eol +
+                "#! parameter from an XRouter client."                                                                + eol +
+                "parameters=string"                                                                                   + eol +
+                ""                                                                                                    + eol +
+                "#! Set the fee in BLOCK to how much you want to charge for requests to this custom plugin."          + eol +
+                "#! Example fee=0.1 if you want to accept 0.1 BLOCK or 0 if you want the plugin to be free."          + eol +
+                "fee=0"                                                                                               + eol +
+                ""                                                                                                    + eol +
+                "#! Set the client request limit in milliseconds. -1 means unlimited. 50 means that a client"         + eol +
+                "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"          + eol +
+                "#! requests exceed this value they will be penalized and eventually banned by your node."            + eol +
+                "clientrequestlimit=-1"                                                                               + eol +
+                ""                                                                                                    + eol +
+                "#! This is a sample configuration of a docker plugin running a syscoin container."                   + eol +
+                "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"              + eol +
+                "#! plugin for syscoin running in docker container \"syscoin\". This plugin accepts 1 parameter"      + eol +
+                "#! indicated by \"parameters=\" config above, and it will call the syscoin \"getblock\" rpc"         + eol +
+                "#! command. The result will be forwarded onto the client. \"quoteargs\" puts \"$1\" around"          + eol +
+                "#! user supplied arguments. \"command\" executed within the docker container. \"args\" can"          + eol +
+                "#! include both user supplied arguments ($1, $2, $3 etc.) and explicit arguments. For example,"      + eol +
+                "#! you can mix both user supplied and custom arguments:  private::args=some_api_key $1 $2"           + eol +
+                "private::type=docker"                                                                                + eol +
+                "private::containername=syscoin"                                                                      + eol +
+                "private::quoteargs=1"                                                                                + eol +
+                "private::command=syscoin-cli getblock"                                                               + eol +
+                "private::args=$1"                                                                                    + eol +
+                ""                                                                                                    + eol +
+                "#! Disable this sample plugin"                                                                       + eol +
+                "disabled=1"                                                                                          + eol
+            );
+        }
+
         return true;
+
+    } catch (...) {
+        ERR() << "XRouter failed to create default xrouter.conf and plugins directory";
     }
     return false;
 }
@@ -631,10 +718,20 @@ std::string App::printConfigs()
     WaitableLock l(mu);
     Array result;
 
-    for (const auto& it : this->snodeConfigs) {
+    for (const auto & it : snodeConfigs) {
         Object val;
-        val.emplace_back("config", it.second->rawText());
-        result.push_back(Value(val));
+        std::vector<unsigned char> spubkey; servicenodePubKey(it.second->getNode(), spubkey);
+        val.emplace_back("nodepubkey", HexStr(spubkey));
+        val.emplace_back("paymentaddress", it.second->paymentAddress(xrGetConfig));
+        val.emplace_back("config", it.second->publicText());
+        Object p_val;
+        for (const auto & p : it.second->getPlugins()) {
+            auto pp = it.second->getPluginSettings(p);
+            if (pp)
+                p_val.emplace_back(p, pp->publicText());
+        }
+        val.emplace_back("plugins", p_val);
+        result.push_back(val);
     }
     
     return json_spirit::write_string(Value(result), true);
@@ -763,10 +860,10 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
 std::string App::parseConfig(XRouterSettingsPtr cfg)
 {
     Object result;
-    result.emplace_back("config", cfg->rawText());
+    result.emplace_back("config", cfg->publicText());
     Object plugins;
     for (const std::string & s : cfg->getPlugins())
-        plugins.emplace_back(s, cfg->getPluginSettings(s)->rawText());
+        plugins.emplace_back(s, cfg->getPluginSettings(s)->publicText());
     result.emplace_back("plugins", plugins);
     return json_spirit::write_string(Value(result), true);
 }
@@ -1685,6 +1782,14 @@ std::string App::getStatus() {
     result.emplace_back("xrouter", isEnabled());
     result.emplace_back("servicenode", snode != nullptr);
     result.emplace_back("config", xrsettings->rawText());
+
+    Object plugins;
+    for (const auto & p : xrsettings->getPlugins()) {
+        auto pp = xrsettings->getPluginSettings(p);
+        if (pp)
+            plugins.emplace_back(p, pp->rawText());
+    }
+    result.emplace_back("plugins", plugins);
 
     return json_spirit::write_string(Value(result), json_spirit::pretty_print, 8);
 }

@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <regex>
 
 #include <boost/program_options.hpp>
 #include <boost/algorithm/string.hpp>
@@ -20,6 +21,7 @@ namespace xrouter
 
 static std::set<std::string> acceptableParameterTypes{"string","bool","int","double"};
 static const std::string privatePrefix{"private::"};
+static const std::string privateComment{"#!"};
 
 static int maxFetchLimit(const int & fl) {
     if (fl < 0)
@@ -31,30 +33,25 @@ static int maxFetchLimit(const int & fl) {
 //******************************************************************************
 bool IniConfig::read(const boost::filesystem::path & fileName)
 {
-    WaitableLock l(mu);
     try
     {
         if (!fileName.string().empty())
-        {
             m_fileName = fileName.string();
-        }
 
         if (m_fileName.empty())
-        {
             return false;
+
+        {
+            WaitableLock l(mu);
+            boost::property_tree::ini_parser::read_ini(m_fileName, m_pt);
+            ifstream ifs(m_fileName.c_str(), ios::in | ios::binary | ios::ate);
+            ifstream::pos_type fileSize = ifs.tellg();
+            ifs.seekg(0, ios::beg);
+            vector<char> bytes(fileSize);
+            ifs.read(bytes.data(), fileSize);
+            rawtext = string(bytes.data(), fileSize);
         }
-
-        boost::property_tree::ini_parser::read_ini(m_fileName, m_pt);
-        
-        ifstream ifs(m_fileName.c_str(), ios::in | ios::binary | ios::ate);
-
-        ifstream::pos_type fileSize = ifs.tellg();
-        ifs.seekg(0, ios::beg);
-
-        vector<char> bytes(fileSize);
-        ifs.read(bytes.data(), fileSize);
-
-        this->rawtext = string(bytes.data(), fileSize);
+        genPublic();
     }
     catch (std::exception & e)
     {
@@ -67,12 +64,15 @@ bool IniConfig::read(const boost::filesystem::path & fileName)
 
 bool IniConfig::read(const std::string & config)
 {
-    WaitableLock l(mu);
     try
     {
-        istringstream istr(config.c_str());
-        boost::property_tree::ini_parser::read_ini(istr, m_pt);
-        this->rawtext = config;
+        {
+            WaitableLock l(mu);
+            istringstream istr(config.c_str());
+            boost::property_tree::ini_parser::read_ini(istr, m_pt);
+            rawtext = config;
+        }
+        genPublic();
     }
     catch (std::exception & e)
     {
@@ -85,24 +85,23 @@ bool IniConfig::read(const std::string & config)
 
 bool IniConfig::write(const char * fileName)
 {
-    WaitableLock l(mu);
-    std::string fname = m_fileName;
     try
     {
+        std::string fname = m_fileName;
         if (fileName)
-        {
             fname = std::string(fileName);
-        }
 
         if (fname.empty())
-        {
             return false;
-        }
 
-        boost::property_tree::ini_parser::write_ini(fname, m_pt);
-        std::ostringstream oss;
-        boost::property_tree::ini_parser::write_ini(oss, m_pt);
-        this->rawtext = oss.str();
+        {
+            WaitableLock l(mu);
+            boost::property_tree::ini_parser::write_ini(fname, m_pt);
+            std::ostringstream oss;
+            boost::property_tree::ini_parser::write_ini(oss, m_pt);
+            rawtext = oss.str();
+        }
+        genPublic();
     }
     catch (std::exception & e)
     {
@@ -440,6 +439,25 @@ boost::filesystem::path XRouterSettings::pluginPath() const
     return GetDataDir(false) / "plugins";
 }
 
+void XRouterSettings::genPublic()
+{
+    WaitableLock l(mu);
+    std::string publictext;
+    std::vector<string> lines;
+    boost::split(lines, rawtext, boost::is_any_of("\n"));
+
+    // Exclude commands with the private prefixes
+    std::regex rprivateComment("^\\s*"+privateComment+".*$");
+    std::smatch m;
+    for (const std::string & line : lines) {
+        if (line.find(privatePrefix) != std::string::npos || std::regex_match(line, m, rprivateComment))
+            continue;
+        publictext += line + "\n";
+    }
+
+    pubtext = publictext;
+}
+
 ///////////////////////////////////
 ///////////////////////////////////
 ///////////////////////////////////
@@ -451,7 +469,6 @@ bool XRouterPluginSettings::read(const boost::filesystem::path & fileName)
     if (!verify(fileName.string()))
         return false;
     
-    formPublicText();
     return true;
 }
 
@@ -462,7 +479,6 @@ bool XRouterPluginSettings::read(const std::string & config)
     if (!verify(config))
         return false;
     
-    formPublicText();
     return true;
 }
 
@@ -487,19 +503,23 @@ bool XRouterPluginSettings::verify(const std::string & name)
     return result;
 }
 
-void XRouterPluginSettings::formPublicText()
+void XRouterPluginSettings::genPublic()
 {
     WaitableLock l(mu);
-
-    publictext.clear(); // reset
+    std::string publictext;
     std::vector<string> lines;
     boost::split(lines, rawtext, boost::is_any_of("\n"));
 
-    // Exclude commands with the private prefix
+    // Exclude commands with the private prefixes
+    std::regex rprivateComment("^\\s*"+privateComment+".*$");
+    std::smatch m;
     for (const std::string & line : lines) {
-        if (line.find(privatePrefix) == std::string::npos)
-            publictext += line + "\n";
+        if (line.find(privatePrefix) != std::string::npos || std::regex_match(line, m, rprivateComment))
+            continue;
+        publictext += line + "\n";
     }
+
+    pubtext = publictext;
 }
 
 std::string XRouterPluginSettings::stringParam(const std::string & param, const std::string def) {
