@@ -71,7 +71,7 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
                                  "Hash of block with the specified block number.\n"
                                  "\n"
                                  "currency (string) Blockchain to query\n"
-                                 "block_number (int) Block number\n"
+                                 "block_number (string) Block number or hex\n"
                                  "[node_count] (int) Optional, number of XRouter nodes to query (default=1)\n"
                                  "                         The most common reply will be returned (i.e. the reply\n"
                                  "                         with the most consensus. To see all reply results use\n"
@@ -112,7 +112,13 @@ Value xrGetBlockHash(const Array & params, bool fHelp)
     }
 
     std::string currency = params[0].get_str();
-    int block = params[1].get_int();
+    unsigned int block;
+    if (!xrouter::hextodec(params[1].get_str(), block)) {
+        Object error;
+        error.emplace_back("error", "Bad block number " + params[1].get_str());
+        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
     std::string uuid;
     std::string reply = xrouter::App::instance().getBlockHash(uuid, currency, consensus, block);
     return xrouter::form_reply(uuid, reply);

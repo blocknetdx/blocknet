@@ -126,7 +126,6 @@ static const CRPCConvertParam vRPCConvertParams[] =
         {"gettradingdata",0},
         {"gettradingdata",1},
         {"xrGetBlockCount",1},
-        {"xrGetBlockHash",1},
         {"xrGetBlockHash",2},
         {"xrGetBlock",2},
         {"xrGetBlocks",2},

@@ -134,7 +134,29 @@ static int hex2dec(std::string s) {
 std::string EthWalletConnectorXRouter::getBlockCount() const
 {
     static const std::string command("eth_blockNumber");
-    return rpc::CallRPC(m_ip, m_port, command, Array());
+    const auto & data = rpc::CallRPC(m_ip, m_port, command, Array());
+
+    Value data_val; read_string(data, data_val);
+    if (data_val.type() != obj_type)
+        return data;
+
+    const auto & result_val = getResult(data);
+    if (result_val.type() != str_type)
+        return data;
+
+    auto blockCount = hex2dec(result_val.get_str());
+
+    auto o = data_val.get_obj();
+    for (int i = 0; i < o.size(); ++i) {
+        const auto & item = o[i];
+        if (item.name_ == "result") {
+            o.erase(o.begin()+i);
+            o.insert(o.begin()+i, Pair("result", blockCount));
+            return write_string(Value(o));
+        }
+    }
+
+    return data;
 }
 
 std::string EthWalletConnectorXRouter::getBlockHash(const int & block) const
