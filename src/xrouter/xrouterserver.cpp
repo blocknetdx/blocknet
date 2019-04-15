@@ -695,8 +695,12 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         const auto & ip       = psettings->stringParam("rpcip", "127.0.0.1");
         const auto & port     = psettings->stringParam("rpcport");
         const auto & command  = psettings->stringParam("rpccommand");
-        result = CallRPC(user, passwd, ip, port, command, jsonparams);;
-        return result;
+        result = CallRPC(user, passwd, ip, port, command, jsonparams);
+
+        if (psettings->hasCustomResponse())
+            return psettings->customResponse();
+        else
+            return result;
 
     } else if (callType == "docker") {
         auto replace = [](std::string & s, size_t pos, const size_t & spos, const std::string & from, const std::string & to) -> bool {
@@ -776,7 +780,11 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         } else {
             val = parseR(r);
         }
-        return json_spirit::write_string(val, false);
+
+        if (psettings->hasCustomResponse())
+            return psettings->customResponse();
+        else
+            return json_spirit::write_string(val, false);
 
     } else if (callType == "url") {
         throw XRouterError("url calls are unsupported at this time", UNSUPPORTED_SERVICE);
