@@ -291,7 +291,13 @@ Object form_reply(const std::string & uuid, const Value & reply) {
 Object form_reply(const std::string & uuid, const std::string & reply)
 {
     Value reply_val;
-    read_string(reply, reply_val);
+    try {
+        read_string(reply, reply_val);
+    } catch (...) {
+        reply_val = Value(reply);
+    }
+    if (reply_val.type() == null_type)
+        reply_val = Value(reply);
     return form_reply(uuid, reply_val);
 }
 

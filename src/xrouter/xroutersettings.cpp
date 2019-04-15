@@ -600,4 +600,14 @@ std::string XRouterPluginSettings::commandArgs() {
     return t;
 }
 
+bool XRouterPluginSettings::hasCustomResponse() {
+    return has("response") || has(privatePrefix + "response");
+}
+
+std::string XRouterPluginSettings::customResponse() {
+    auto t = get<std::string>("response", "");
+    t = get<std::string>(privatePrefix + "response", t);
+    return t;
+}
+
 } // namespace xrouter

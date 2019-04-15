@@ -120,6 +120,8 @@ public:
     std::string container();
     std::string command();
     std::string commandArgs();
+    bool hasCustomResponse();
+    std::string customResponse();
 
     bool read(const boost::filesystem::path & fileName) override;
     bool read(const std::string & config) override;
