@@ -1111,7 +1111,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     bidSize += bidsVector[i]->toAmount;
                 }
                 bid.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
-                bid.emplace_back(util::xBridgeStringValueFromPrice(bidSize));
+                bid.emplace_back(util::xBridgeStringValueFromAmount(bidSize));
                 bid.emplace_back(static_cast<int64_t>(bidsCount));
                 bids.emplace_back(bid);
             }
@@ -1146,7 +1146,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     askSize += asksVector[i]->fromAmount;
                 }
                 ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
-                ask.emplace_back(util::xBridgeStringValueFromPrice(askSize));
+                ask.emplace_back(util::xBridgeStringValueFromAmount(askSize));
                 ask.emplace_back(static_cast<int64_t>(asksCount));
                 asks.emplace_back(ask);
             }
