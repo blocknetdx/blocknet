@@ -120,7 +120,7 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
     }
 
     std::set<std::string> services;
-    auto nodeServices = xbridge::App::instance().allServices();
+    auto nodeServices = xbridge::App::instance().walletServices();
     for (auto & serviceItem : nodeServices) {
         auto s = serviceItem.second.services();
         services.insert(s.begin(), s.end());
@@ -866,7 +866,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
         std::size_t maxOrders = 50;
 
-        if (detailLevel == 2 && params.size() == 4)
+        if (params.size() == 4)
             maxOrders = params[3].get_int();
 
         if (maxOrders < 1)
@@ -1083,9 +1083,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             /**
              * @brief bound - calculate upper bound
              */
-            auto bound = std::min(maxOrders, bidsVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            auto bound = std::min<int32_t>(maxOrders, bidsVector.size());
+            for (size_t i = 0; i < bound; ++i) // Best bids are at the beginning of the stack (sorted descending, highest price better)
             {
                 if(bidsVector[i] == nullptr)
                     continue;
@@ -1112,14 +1111,14 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     bidSize += bidsVector[i]->toAmount;
                 }
                 bid.emplace_back(util::xBridgeStringValueFromPrice(bidPrice));
-                bid.emplace_back(util::xBridgeStringValueFromPrice(bidSize));
+                bid.emplace_back(util::xBridgeStringValueFromAmount(bidSize));
                 bid.emplace_back(static_cast<int64_t>(bidsCount));
                 bids.emplace_back(bid);
             }
 
-            bound = std::min(maxOrders, asksVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            bound = std::min<int32_t>(maxOrders, asksVector.size());
+            const auto asks_len = static_cast<int32_t>(asksVector.size());
+            for (int32_t i = asks_len - bound; i < asks_len; ++i) // Best asks are at the back of the stack (sorted descending, lowest price better)
             {
                 if(asksVector[i] == nullptr)
                     continue;
@@ -1147,7 +1146,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                     askSize += asksVector[i]->fromAmount;
                 }
                 ask.emplace_back(util::xBridgeStringValueFromPrice(askPrice));
-                ask.emplace_back(util::xBridgeStringValueFromPrice(askSize));
+                ask.emplace_back(util::xBridgeStringValueFromAmount(askSize));
                 ask.emplace_back(static_cast<int64_t>(asksCount));
                 asks.emplace_back(ask);
             }
@@ -1159,9 +1158,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
         case 3:
         {
             //Full order book (non aggregated)
-            auto bound = std::min(maxOrders, bidsVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            auto bound = std::min<int32_t>(maxOrders, bidsVector.size());
+            for (size_t i = 0; i < bound; ++i) // Best bids are at the beginning of the stack (sorted descending, highest price better)
             {
                 if(bidsVector[i] == nullptr)
                     continue;
@@ -1176,9 +1174,9 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
                 bids.emplace_back(bid);
             }
 
-            bound = std::min(maxOrders, asksVector.size());
-
-            for (size_t i = 0; i < bound; i++)
+            bound = std::min<int32_t>(maxOrders, asksVector.size());
+            const auto asks_len = static_cast<int32_t>(asksVector.size());
+            for (int32_t i = asks_len - bound; i < asks_len; ++i) // Best asks are at the back of the stack (sorted descending, lowest price better)
             {
                 if(asksVector[i] == nullptr)
                     continue;

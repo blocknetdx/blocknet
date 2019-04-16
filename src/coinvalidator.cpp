@@ -6,7 +6,6 @@
 #include "coinvalidator.h"
 
 #include <fstream>
-#include "s3downloader.h"
 #include "util.h"
 
 /**
@@ -333,7 +332,7 @@ bool CoinValidator::downloadList(std::list<std::string> &lst, std::string &err) 
     };
 
     // Wait for response
-    S3Downloader::create(cb)->downloadList(boost::posix_time::seconds(downloadErr ? 45 : 30));
+//    S3Downloader::create(cb)->downloadList(boost::posix_time::seconds(downloadErr ? 45 : 30));
 
     // Report error
     downloadErr = !err.empty();

@@ -3,6 +3,13 @@
 
 #include "xbridgeapp.h"
 #include "xbridgeexchange.h"
+#include "xbridgewalletconnector.h"
+#include "xbridgewalletconnectorbtc.h"
+#include "xbridgecryptoproviderbtc.h"
+#include "xbridgewalletconnectorbch.h"
+#include "xbridgewalletconnectordgb.h"
+#include "xrouter/xrouterapp.h"
+
 #include "util/xutil.h"
 #include "util/logger.h"
 #include "util/settings.h"
@@ -20,11 +27,6 @@
 #include "wallet.h"
 #include "servicenodeman.h"
 #include "activeservicenode.h"
-#include "xbridgewalletconnector.h"
-#include "xbridgewalletconnectorbtc.h"
-#include "xbridgecryptoproviderbtc.h"
-#include "xbridgewalletconnectorbch.h"
-#include "xbridgewalletconnectordgb.h"
 #include "sync.h"
 #include "spork.h"
 
@@ -33,6 +35,7 @@
 #include <numeric>
 #include <random>
 #include <string.h>
+#include <regex>
 
 #include <boost/chrono/chrono.hpp>
 #include <boost/thread/thread.hpp>
@@ -258,11 +261,6 @@ App::App()
 //*****************************************************************************
 App::~App()
 {
-    stop();
-
-#ifdef WIN32
-    WSACleanup();
-#endif
 }
 
 //*****************************************************************************
@@ -379,7 +377,6 @@ bool App::init(int argc, char *argv[])
 bool App::stop()
 {
     bool s = m_p->stop();
-    disconnectWallets();
     return s;
 }
 
@@ -407,7 +404,8 @@ bool App::disconnectWallets()
 
     std::set<std::string> noWallets;
     xbridge::Exchange::instance().loadWallets(noWallets);
-    sendServicePing();
+    std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
+    sendServicePing(nonWalletServices);
 
     return true;
 }
@@ -492,7 +490,7 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
     {
         LOCK(cs_vNodes);
         for (CNode * pnode : vNodes) {
-            if (pnode->fSuccessfullyConnected && !pnode->fDisconnect)
+            if (pnode->SuccessfullyConnected() && !pnode->Disconnecting())
                 pnode->PushMessage("xbridge", msg);
         }
     }
@@ -1346,8 +1344,17 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         uint64_t fee1 = 0;
         uint64_t fee2 = 0;
 
+        auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee1(inputs, outputs);
+        };
+        auto minTxFee2 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee2(inputs, outputs);
+        };
+
         // Select utxos
-        if (!selectUtxos(from, outputs, connFrom, fromAmount, outputsForUse, utxoAmount, fee1, fee2)) {
+        if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, fromAmount,
+                         TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
+        {
             WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
@@ -1702,9 +1709,17 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         uint64_t fee1       = 0;
         uint64_t fee2       = 0;
 
+        auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee1(inputs, outputs);
+        };
+        auto minTxFee2 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee2(inputs, outputs);
+        };
+
         // Select utxos
         std::vector<wallet::UtxoEntry> outputsForUse;
-        if (!selectUtxos(from, outputs, connFrom, ptr->fromAmount, outputsForUse, utxoAmount, fee1, fee2))
+        if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, ptr->fromAmount,
+                         TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
         {
             WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
             unlockFeeUtxos(ptr->feeUtxos);
@@ -2032,7 +2047,7 @@ void App::unwatchTraderDeposit(TransactionPtr tr) {
  * @return
  */
 //******************************************************************************
-bool App::sendServicePing()
+bool App::sendServicePing(std::vector<std::string> &nonWalletServices)
 {
     CServicenode *pmn = nullptr;
     {
@@ -2054,8 +2069,6 @@ bool App::sendServicePing()
     Exchange & e = Exchange::instance();
     std::map<std::string, bool> nodup;
 
-    // TODO Add xrouter services
-    std::vector<std::string> nonWalletServices;// = xrouter.services() {"xrSendTransaction","xrGetBlock","xrGetTransaction"};
     for (const auto &s : nonWalletServices)
     {
         nodup[s] = true;
@@ -2142,6 +2155,36 @@ std::map<::CPubKey, App::XWallets> App::allServices()
 {
     LOCK(m_p->m_xwalletsLocker);
     return m_p->m_xwallets;
+}
+
+//******************************************************************************
+/**
+ * @brief Returns all wallets supported by the network.
+ * @return
+ */
+//******************************************************************************
+std::map<::CPubKey, App::XWallets> App::walletServices()
+{
+    LOCK(m_p->m_xwalletsLocker);
+
+    std::regex rwallet("^[^:]+$"); // match wallets
+    std::smatch m;
+    std::map<::CPubKey, App::XWallets> ws;
+
+    for (const auto & item : m_p->m_xwallets) {
+        const auto & services = item.second.services();
+        std::vector<std::string> tmp{services.begin(), services.end()};
+        std::set<std::string> xwallets;
+        for (const auto & s : tmp) {
+            if (!std::regex_match(s, m, rwallet) || s == xrouter::xr || s == xrouter::xrs)
+                continue;
+            xwallets.insert(s);
+        }
+        App::XWallets & x = ws[item.first];
+        ws[item.first] = XWallets{x.version(), x.nodePubKey(), xwallets};
+    }
+
+    return ws;
 }
 
 //******************************************************************************
@@ -2262,6 +2305,30 @@ void App::unlockCoins(const std::string & token, const std::vector<wallet::UtxoE
 
 //******************************************************************************
 //******************************************************************************
+bool App::canAffordFeePayment(const CAmount & fee) {
+    const auto & lockedUtxos = getAllLockedUtxos("BLOCK");
+    std::vector<COutput> coins;
+    pwalletMain->AvailableCoins(coins, false);
+
+    CAmount running{0};
+    for (const auto & out : coins) {
+        if (out.nDepth < 1 || !out.fSpendable) // at least 1-conf
+            continue;
+        wallet::UtxoEntry entry;
+        entry.txId = out.tx->GetHash().ToString();
+        entry.vout = out.i;
+        if (!lockedUtxos.count(entry)) {
+            running += out.Value();
+            if (running >= fee)
+                return true;
+        }
+    }
+
+    return false;
+}
+
+//******************************************************************************
+//******************************************************************************
 std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
     const std::set<std::string>& requested_services,
     const uint32_t version,
@@ -2314,7 +2381,16 @@ bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
                                 const uint32_t version)
 {
     LOCK(m_xwalletsLocker);
-    m_xwallets[nodePubKey] = XWallets{version, nodePubKey, std::set<std::string>{services.begin(), services.end()}};
+
+    std::set<std::string> validServices;
+    std::regex r("^[a-zA-Z0-9\\-:\\$]+$");
+    std::smatch m;
+    for (const auto & s : services) { // validate service names
+        if (std::regex_match(s, m, r))
+            validServices.insert(s);
+    }
+
+    m_xwallets[nodePubKey] = XWallets{version, nodePubKey, validServices};
     return true;
 }
 
@@ -2356,16 +2432,18 @@ T random_element(T begin, T end)
 //******************************************************************************
 //******************************************************************************
 bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
-                      const WalletConnectorPtr &connFrom, const uint64_t &requiredAmount,
-                      std::vector<wallet::UtxoEntry> &outputsForUse, uint64_t &utxoAmount,
-                      uint64_t &fee1, uint64_t &fee2) const
+                      const std::function<double(uint32_t, uint32_t)> &minTxFee1,
+                      const std::function<double(uint32_t, uint32_t)> &minTxFee2,
+                      const uint64_t &requiredAmount, const int64_t &coinDenomination,
+                      std::vector<wallet::UtxoEntry> &outputsForUse,
+                      uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const
 {
-    auto feeAmount = [&connFrom](const double amt, const uint32_t inputs, const uint32_t outputs) -> double {
-        return amt + connFrom->minTxFee1(inputs, outputs) + connFrom->minTxFee2(1, 1);
+    auto feeAmount = [&minTxFee1,&minTxFee2](const double amt, const uint32_t inputs, const uint32_t outputs) -> double {
+        return amt + minTxFee1(inputs, outputs) + minTxFee2(1, 1);
     };
 
     // Fee utxo selector
-    auto selUtxos = [&connFrom, &addr, &feeAmount](std::vector<xbridge::wallet::UtxoEntry> & a,
+    auto selUtxos = [&minTxFee1,&minTxFee2, &addr, &feeAmount](std::vector<xbridge::wallet::UtxoEntry> & a,
                         std::vector<xbridge::wallet::UtxoEntry> & o,
                         const double amt) -> void
     {
@@ -2377,7 +2455,7 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
         double minAmount{feeAmount(amt, 1, 3)};
         for (const auto & utxo : a) {
             if (utxo.amount >= minAmount
-               && utxo.amount < minAmount + (connFrom->minTxFee1(1, 3) + connFrom->minTxFee2(1, 1)) * 1000
+               && utxo.amount < minAmount + (minTxFee1(1, 3) + minTxFee2(1, 1)) * 1000
                && (utxo.address == addr || addr.empty()))
             {
                 o.push_back(utxo);
@@ -2421,8 +2499,8 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
                 sel.push_back(utxo);
 
                 // Add amount and incorporate fee calc
-                double fee1 = connFrom->minTxFee1(sel.size(), 3);
-                double fee2 = connFrom->minTxFee2(1, 1);
+                double fee1 = minTxFee1(sel.size(), 3);
+                double fee2 = minTxFee2(1, 1);
                 double runningAmount{(fee1 + fee2) * -1}; // subtract the fees
 
                 for (auto & u : sel)
@@ -2445,17 +2523,17 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
              return a.amount > b.amount;
          });
 
-    selUtxos(utxos, outputsForUse, static_cast<double>(requiredAmount)/static_cast<double>(TransactionDescr::COIN));
+    selUtxos(utxos, outputsForUse, static_cast<double>(requiredAmount)/static_cast<double>(coinDenomination));
     if (outputsForUse.empty())
         return false;
 
-    // Add up all selected utxos in TransactionDescr::COIN denomination
+    // Add up all selected utxos in COIN denomination
     for (const auto & utxo : outputsForUse)
-        utxoAmount += utxo.amount * TransactionDescr::COIN;
+        utxoAmount += utxo.amount * coinDenomination;
 
-    // Fees in TransactionDescr::COIN denomination
-    fee1 = connFrom->minTxFee1(outputsForUse.size(), 3) * TransactionDescr::COIN;
-    fee2 = connFrom->minTxFee2(1, 1) * TransactionDescr::COIN;
+    // Fees in COIN denomination
+    fee1 = minTxFee1(outputsForUse.size(), 3) * coinDenomination;
+    fee2 = minTxFee2(1, 1) * coinDenomination;
 
     return true;
 }

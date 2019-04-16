@@ -2,14 +2,14 @@
 
 Blocknet version *version* is now available from:
 
-  <https://github.com/BlocknetDX/BlockDX/releases>
+  <https://github.com/BlocknetDX/blocknet/releases>
 
 This is a new major version release, including various bug fixes and
 performance improvements, as well as updated translations.
 
 Please report bugs using the issue tracker at github:
 
-  <https://github.com/BlocknetDX/BlockDX/issues>
+  <https://github.com/BlocknetDX/blocknet/issues>
 
 Compatibility
 ==============

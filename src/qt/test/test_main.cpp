@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     // Don't remove this, it's needed to access
     // QCoreApplication:: in the tests
     QCoreApplication app(argc, argv);
-    app.setApplicationName("Blocknetdx-Qt-test");
+    app.setApplicationName("Blocknet-test");
 
     URITests test1;
     if (QTest::qExec(&test1) != 0)

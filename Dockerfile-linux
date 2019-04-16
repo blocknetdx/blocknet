@@ -37,7 +37,7 @@ RUN mkdir -p $PROJECTDIR \
 
 # Copy source files
 #RUN cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch 3.11.1 https://github.com/BlocknetDX/BlockDX.git tmp \
+#  && git clone --depth 1 --branch 3.12.1 https://github.com/BlocknetDX/blocknet.git tmp \
 #  && mv tmp/* BlockDX/
 COPY . $PROJECTDIR/
 
@@ -48,7 +48,7 @@ RUN mkdir -p $DISTDIR \
   && tar xzvf depends-3.11.1-dev-bionic.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
-  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CC=gcc-8 CXX=g++-8 --with-gui=qt5 --enable-debug --prefix=/ \
+  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CC=gcc-8 CXX=g++-8 CFLAGS="-g -O0" CXXFLAGS="-g -O0" --with-gui=qt5 --enable-debug --prefix=/ \
   && make clean \
   && echo "Building with cores: $ecores" \
   && make CC=gcc-8 CXX=g++-8 -j$ecores \

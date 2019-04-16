@@ -517,7 +517,7 @@ bool CServicenodeBlockPayees::IsTransactionValid(const CTransaction& txNew)
     //account for the fact that all peers do not see the same servicenode count. A allowance of being off our servicenode count is given
     //we only need to look at an increased servicenode count because as count increases, the reward decreases. This code only checks
     //for mnPayment >= required, so it only makes sense to check the max node count allowed.
-    CAmount requiredServicenodePayment = GetServicenodePayment(nBlockHeight, nReward, mnodeman.size() + Params().ServicenodeCountDrift());
+    CAmount requiredServicenodePayment = GetServicenodePayment(nBlockHeight, nReward);
 
     //require at least 6 signatures
     BOOST_FOREACH (CServicenodePayee& payee, vecPayments)
@@ -591,6 +591,25 @@ std::string CServicenodePayments::GetRequiredPaymentsString(int nBlockHeight)
 
 bool CServicenodePayments::IsTransactionValid(const CTransaction& txNew, int nBlockHeight)
 {
+    if (IsSporkActive(SPORK_21_SNODE_PAYMENT)) { // enforce snode payments
+        std::set<std::string> eligibleSnodes;
+        auto snodes = mnodeman.GetFullServicenodeVector();
+        EligibleServicenodes(true, nBlockHeight, snodes, eligibleSnodes); // find all eligible snodes
+
+        CAmount nReward = GetBlockValue(nBlockHeight);
+        CAmount requiredServicenodePayment = GetServicenodePayment(nBlockHeight, nReward);
+        for (const auto & out : txNew.vout) {
+            CTxDestination txAddr;
+            if (!ExtractDestination(out.scriptPubKey, txAddr))
+                continue;
+            const auto & addr = CBitcoinAddress(txAddr).ToString();
+            if (eligibleSnodes.count(addr) && out.nValue >= requiredServicenodePayment)
+                return true;
+        }
+
+        return false;
+    }
+
     LOCK(cs_mapServicenodeBlocks);
 
     if (mapServicenodeBlocks.count(nBlockHeight)) {
@@ -598,6 +617,51 @@ bool CServicenodePayments::IsTransactionValid(const CTransaction& txNew, int nBl
     }
 
     return true;
+}
+
+bool CServicenodePayments::ValidNode(CServicenode & mn, const bool & fFilterSigTime, const int & nMnCount)
+{
+    mn.Check();
+
+    if (!mn.IsEnabled())
+        return false;
+
+    // //check protocol version
+    if (mn.protocolVersion < GetMinServicenodePaymentsProto())
+        return false;
+
+    if (fFilterSigTime && mn.sigTime + SERVICENODE_DELAY_SECONDS > GetAdjustedTime())
+        return false;
+
+    // make sure it has as many confirmations as there are servicenodes
+    if (mn.GetServicenodeInputAge() < nMnCount)
+        return false;
+
+    return true;
+}
+
+void CServicenodePayments::EligibleServicenodes(const bool fFilterSigTime, const int & nBlockHeight,
+                                                std::vector<CServicenode> & snodes,
+                                                std::set<std::string> & eligibleSnodes)
+{
+    int nMnCount = mnodeman.CountEnabled();
+
+    for (auto & mn : snodes) {
+        if (!ValidNode(mn, fFilterSigTime, nMnCount))
+            continue;
+
+        const auto & mnaddr = CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString();
+        if (!mnaddr.empty())
+            eligibleSnodes.insert(mnaddr);
+    }
+
+    int nCount = static_cast<int>(eligibleSnodes.size());
+
+    //when the network is in the process of upgrading, don't penalize nodes that recently restarted
+    if (fFilterSigTime && nCount < nMnCount / 3) {
+        eligibleSnodes.clear();
+        EligibleServicenodes(false, nBlockHeight, snodes, eligibleSnodes);
+    }
 }
 
 void CServicenodePayments::CleanPaymentList()
@@ -653,8 +717,8 @@ bool CServicenodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
         // We don't want to print all of these messages, or punish them unless they're way off
         if (n > MNPAYMENTS_SIGNATURES_TOTAL * 2) {
             strError = strprintf("Servicenode not in the top %d (%d)", MNPAYMENTS_SIGNATURES_TOTAL * 2, n);
-            LogPrintf("CServicenodePaymentWinner::IsValid - %s\n", strError);
-            if (servicenodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);
+            LogPrint("mnpayments", "CServicenodePaymentWinner::IsValid - %s\n", strError);
+//            if (servicenodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);
         }
         return false;
     }

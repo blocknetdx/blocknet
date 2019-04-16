@@ -27,6 +27,7 @@ CServicenodeSync::CServicenodeSync()
 
 bool CServicenodeSync::IsSynced()
 {
+    LOCK(cs);
     return RequestedServicenodeAssets == SERVICENODE_SYNC_FINISHED;
 }
 
@@ -63,6 +64,7 @@ bool CServicenodeSync::IsBlockchainSynced()
 
 void CServicenodeSync::Reset()
 {
+    LOCK(cs);
     lastServicenodeList = 0;
     lastServicenodeWinner = 0;
     lastBudgetItem = 0;
@@ -136,24 +138,24 @@ bool CServicenodeSync::IsBudgetFinEmpty()
 
 void CServicenodeSync::GetNextAsset()
 {
-    switch (RequestedServicenodeAssets) {
+    switch (RequestedServicenodeAssetsLocked()) {
     case (SERVICENODE_SYNC_INITIAL):
     case (SERVICENODE_SYNC_FAILED): // should never be used here actually, use Reset() instead
         ClearFulfilledRequest();
-        RequestedServicenodeAssets = SERVICENODE_SYNC_SPORKS;
+        SetServicenodeAssets(SERVICENODE_SYNC_SPORKS);
         break;
     case (SERVICENODE_SYNC_SPORKS):
-        RequestedServicenodeAssets = SERVICENODE_SYNC_LIST;
+        SetServicenodeAssets(SERVICENODE_SYNC_LIST);
         break;
     case (SERVICENODE_SYNC_LIST):
-        RequestedServicenodeAssets = SERVICENODE_SYNC_MNW;
+        SetServicenodeAssets(SERVICENODE_SYNC_MNW);
         break;
     case (SERVICENODE_SYNC_MNW):
-        RequestedServicenodeAssets = SERVICENODE_SYNC_BUDGET;
+        SetServicenodeAssets(SERVICENODE_SYNC_BUDGET);
         break;
     case (SERVICENODE_SYNC_BUDGET):
         LogPrintf("CServicenodeSync::GetNextAsset - Sync has finished\n");
-        RequestedServicenodeAssets = SERVICENODE_SYNC_FINISHED;
+        SetServicenodeAssets(SERVICENODE_SYNC_FINISHED);
         break;
     }
     RequestedServicenodeAttempt = 0;
@@ -162,7 +164,7 @@ void CServicenodeSync::GetNextAsset()
 
 std::string CServicenodeSync::GetSyncStatus()
 {
-    switch (servicenodeSync.RequestedServicenodeAssets) {
+    switch (RequestedServicenodeAssetsLocked()) {
     case SERVICENODE_SYNC_INITIAL:
         return _("Synchronization pending...");
     case SERVICENODE_SYNC_SPORKS:
@@ -188,27 +190,28 @@ void CServicenodeSync::ProcessMessage(CNode* /*pfrom*/, std::string& strCommand,
         int nCount;
         vRecv >> nItemID >> nCount;
 
-        if (RequestedServicenodeAssets >= SERVICENODE_SYNC_FINISHED) return;
+        int syncState = RequestedServicenodeAssetsLocked();
+        if (syncState >= SERVICENODE_SYNC_FINISHED) return;
 
         //this means we will receive no further communication
         switch (nItemID) {
         case (SERVICENODE_SYNC_LIST):
-            if (nItemID != RequestedServicenodeAssets) return;
+            if (nItemID != syncState) return;
             sumServicenodeList += nCount;
             countServicenodeList++;
             break;
         case (SERVICENODE_SYNC_MNW):
-            if (nItemID != RequestedServicenodeAssets) return;
+            if (nItemID != syncState) return;
             sumServicenodeWinner += nCount;
             countServicenodeWinner++;
             break;
         case (SERVICENODE_SYNC_BUDGET_PROP):
-            if (RequestedServicenodeAssets != SERVICENODE_SYNC_BUDGET) return;
+            if (syncState != SERVICENODE_SYNC_BUDGET) return;
             sumBudgetItemProp += nCount;
             countBudgetItemProp++;
             break;
         case (SERVICENODE_SYNC_BUDGET_FIN):
-            if (RequestedServicenodeAssets != SERVICENODE_SYNC_BUDGET) return;
+            if (syncState != SERVICENODE_SYNC_BUDGET) return;
             sumBudgetItemFin += nCount;
             countBudgetItemFin++;
             break;
@@ -248,19 +251,19 @@ void CServicenodeSync::Process()
     }
 
     //try syncing again
-    if (RequestedServicenodeAssets == SERVICENODE_SYNC_FAILED && lastFailure + (1 * 60) < GetTime()) {
+    if (RequestedServicenodeAssetsLocked() == SERVICENODE_SYNC_FAILED && lastFailure + (1 * 60) < GetTime()) {
         Reset();
-    } else if (RequestedServicenodeAssets == SERVICENODE_SYNC_FAILED) {
+    } else if (RequestedServicenodeAssetsLocked() == SERVICENODE_SYNC_FAILED) {
         return;
     }
 
-    LogPrint("servicenode", "CServicenodeSync::Process() - tick %d RequestedServicenodeAssets %d\n", tick, RequestedServicenodeAssets);
+    LogPrint("servicenode", "CServicenodeSync::Process() - tick %d RequestedServicenodeAssets %d\n", tick, RequestedServicenodeAssetsLocked());
 
-    if (RequestedServicenodeAssets == SERVICENODE_SYNC_INITIAL) GetNextAsset();
+    if (RequestedServicenodeAssetsLocked() == SERVICENODE_SYNC_INITIAL) GetNextAsset();
 
     // sporks synced but blockchain is not, wait until we're almost at a recent block to continue
     if (Params().NetworkID() != CBaseChainParams::REGTEST &&
-        !IsBlockchainSynced() && RequestedServicenodeAssets > SERVICENODE_SYNC_SPORKS) return;
+        !IsBlockchainSynced() && RequestedServicenodeAssetsLocked() > SERVICENODE_SYNC_SPORKS) return;
 
     TRY_LOCK(cs_vNodes, lockRecv);
     if (!lockRecv) return;
@@ -277,14 +280,14 @@ void CServicenodeSync::Process()
                 uint256 n = 0;
                 pnode->PushMessage("mnvs", n); //sync servicenode votes
             } else {
-                RequestedServicenodeAssets = SERVICENODE_SYNC_FINISHED;
+                SetServicenodeAssets(SERVICENODE_SYNC_FINISHED);
             }
             RequestedServicenodeAttempt++;
             return;
         }
 
         //set to synced
-        if (RequestedServicenodeAssets == SERVICENODE_SYNC_SPORKS) {
+        if (RequestedServicenodeAssetsLocked() == SERVICENODE_SYNC_SPORKS) {
             if (pnode->HasFulfilledRequest("getspork")) continue;
             pnode->FulfilledRequest("getspork");
 
@@ -296,7 +299,7 @@ void CServicenodeSync::Process()
         }
 
         if (pnode->nVersion >= servicenodePayments.GetMinServicenodePaymentsProto()) {
-            if (RequestedServicenodeAssets == SERVICENODE_SYNC_LIST) {
+            if (RequestedServicenodeAssetsLocked() == SERVICENODE_SYNC_LIST) {
                 LogPrint("servicenode", "CServicenodeSync::Process() - lastServicenodeList %lld (GetTime() - SERVICENODE_SYNC_TIMEOUT) %lld\n", lastServicenodeList, GetTime() - SERVICENODE_SYNC_TIMEOUT);
                 if (lastServicenodeList > 0 && lastServicenodeList < GetTime() - SERVICENODE_SYNC_TIMEOUT * 2 && RequestedServicenodeAttempt >= SERVICENODE_SYNC_THRESHOLD) { //hasn't received a new item in the last five seconds, so we'll move to the
                     GetNextAsset();
@@ -311,7 +314,7 @@ void CServicenodeSync::Process()
                     (RequestedServicenodeAttempt >= SERVICENODE_SYNC_THRESHOLD * 3 || GetTime() - nAssetSyncStarted > SERVICENODE_SYNC_TIMEOUT * 5)) {
                     if (IsSporkActive(SPORK_8_SERVICENODE_PAYMENT_ENFORCEMENT)) {
                         LogPrintf("CServicenodeSync::Process - ERROR - Sync has failed, will retry later\n");
-                        RequestedServicenodeAssets = SERVICENODE_SYNC_FAILED;
+                        SetServicenodeAssets(SERVICENODE_SYNC_FAILED);
                         RequestedServicenodeAttempt = 0;
                         lastFailure = GetTime();
                         nCountFailures++;
@@ -328,7 +331,7 @@ void CServicenodeSync::Process()
                 return;
             }
 
-            if (RequestedServicenodeAssets == SERVICENODE_SYNC_MNW) {
+            if (RequestedServicenodeAssetsLocked() == SERVICENODE_SYNC_MNW) {
                 if (lastServicenodeWinner > 0 && lastServicenodeWinner < GetTime() - SERVICENODE_SYNC_TIMEOUT * 2 && RequestedServicenodeAttempt >= SERVICENODE_SYNC_THRESHOLD) { //hasn't received a new item in the last five seconds, so we'll move to the
                     GetNextAsset();
                     return;
@@ -342,7 +345,7 @@ void CServicenodeSync::Process()
                     (RequestedServicenodeAttempt >= SERVICENODE_SYNC_THRESHOLD * 3 || GetTime() - nAssetSyncStarted > SERVICENODE_SYNC_TIMEOUT * 5)) {
                     if (IsSporkActive(SPORK_8_SERVICENODE_PAYMENT_ENFORCEMENT)) {
                         LogPrintf("CServicenodeSync::Process - ERROR - Sync has failed, will retry later\n");
-                        RequestedServicenodeAssets = SERVICENODE_SYNC_FAILED;
+                        SetServicenodeAssets(SERVICENODE_SYNC_FAILED);
                         RequestedServicenodeAttempt = 0;
                         lastFailure = GetTime();
                         nCountFailures++;
@@ -366,7 +369,7 @@ void CServicenodeSync::Process()
         }
 
         if (pnode->nVersion >= ActiveProtocol()) {
-            if (RequestedServicenodeAssets == SERVICENODE_SYNC_BUDGET) {
+            if (RequestedServicenodeAssetsLocked() == SERVICENODE_SYNC_BUDGET) {
                 //we'll start rejecting votes if we accidentally get set as synced too soon
                 if (lastBudgetItem > 0 && lastBudgetItem < GetTime() - SERVICENODE_SYNC_TIMEOUT * 2 && RequestedServicenodeAttempt >= SERVICENODE_SYNC_THRESHOLD) { //hasn't received a new item in the last five seconds, so we'll move to the
                     GetNextAsset();

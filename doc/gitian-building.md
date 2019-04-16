@@ -1,9 +1,9 @@
 Gitian building
 ================
 
-*Setup instructions for a gitian build of BlocknetDX using a Debian VM or physical system.*
+*Setup instructions for a gitian build of Blocknet using a Debian VM or physical system.*
 
-Gitian is the deterministic build process that is used to build the BlocknetDX
+Gitian is the deterministic build process that is used to build the Blocknet
 Core executables. It provides a way to be reasonably sure that the
 executables are really built from source on GitHub. It also makes sure that
 the same, tested dependencies are used and statically built into the executable.
@@ -26,7 +26,7 @@ Table of Contents
 - [Installing gitian](#installing-gitian)
 - [Setting up gitian images](#setting-up-gitian-images)
 - [Getting and building the inputs](#getting-and-building-the-inputs)
-- [Building BlocknetDX](#building-blocknetdx)
+- [Building Blocknet](#building-blocknet)
 - [Building an alternative repository](#building-an-alternative-repository)
 - [Signing externally](#signing-externally)
 - [Uploading signatures](#uploading-signatures)
@@ -326,10 +326,10 @@ under 'Fetch and build inputs' to install sources which require manual intervent
 the next step: 'Seed the Gitian sources cache', which will fetch all necessary source files allowing
 for gitian to work offline.
 
-Building BlocknetDX
+Building Blocknet
 ----------------
 
-To build BlocknetDX (for Linux, OSX and Windows) just follow the steps under 'perform
+To build Blocknet (for Linux, OSX and Windows) just follow the steps under 'perform
 gitian builds' in [doc/release-process.md](release-process.md) in the blocknetdx repository.
 
 This may take a long time as it also builds the dependencies needed for each descriptor.

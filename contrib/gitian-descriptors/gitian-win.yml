@@ -23,7 +23,7 @@ packages:
 - "python"
 - "rename"
 remotes:
-- "url": "https://github.com/BlocknetDX/BlockDX.git"
+- "url": "https://github.com/BlocknetDX/blocknet.git"
   "dir": "blocknetdx"
 files: []
 script: |

@@ -34,9 +34,12 @@
 #include "utilmoneystr.h"
 #include "validationinterface.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 #include "coinvalidator.h"
 
 #ifdef ENABLE_WALLET
+#include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 #include "db.h"
 #include "wallet.h"
 #include "walletdb.h"
@@ -164,8 +167,13 @@ static std::unique_ptr<ECCVerifyHandle> globalVerifyHandle;
 /** Preparing steps before shutting down or restarting the wallet */
 void PrepareShutdown()
 {
+    // Shutdown xbridge
     xbridge::App::instance().cancelMyXBridgeTransactions();
     xbridge::App::instance().disconnectWallets();
+    xbridge::App::instance().stop();
+
+    // Shutdown xrouter
+    xrouter::App::instance().stop();
 
     fRequestShutdown = true;  // Needed when we shutdown the wallet
     fRestartRequested = true; // Needed when we restart the wallet
@@ -460,7 +468,7 @@ std::string HelpMessage(HelpMessageMode mode)
     }
     strUsage += HelpMessageOpt("-shrinkdebugfile", _("Shrink debug.log file on client startup (default: 1 when no -debug)"));
     strUsage += HelpMessageOpt("-testnet", _("Use the test network"));
-    strUsage += HelpMessageOpt("-litemode=<n>", strprintf(_("Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0));
+    strUsage += HelpMessageOpt("-litemode=<n>", strprintf(_("Disable all Blocknet specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)"), 0));
 
 #ifdef ENABLE_WALLET
     strUsage += HelpMessageGroup(_("Staking options:"));
@@ -644,7 +652,7 @@ bool InitSanityCheck(void)
 /** Initialize blocknetdx.
  *  @pre Parameters should be parsed and config file should be read.
  */
-bool AppInit2(boost::thread_group& threadGroup)
+bool AppInit2(int argc, char* argv[], boost::thread_group& threadGroup)
 {
 // ********************************************************* Step 1: setup
 #ifdef _MSC_VER
@@ -788,14 +796,10 @@ bool AppInit2(boost::thread_group& threadGroup)
     }
 
     // Make sure enough file descriptors are available
+    int nFD{0};
     int nBind = std::max((int)mapArgs.count("-bind") + (int)mapArgs.count("-whitebind"), 1);
-    nMaxConnections = GetArg("-maxconnections", 125);
-    nMaxConnections = std::max(std::min(nMaxConnections, (int)(FD_SETSIZE - nBind - MIN_CORE_FILEDESCRIPTORS)), 0);
-    int nFD = RaiseFileDescriptorLimit(nMaxConnections + MIN_CORE_FILEDESCRIPTORS);
-    if (nFD < MIN_CORE_FILEDESCRIPTORS)
+    if (!CNode::SetMaxConnections(FD_SETSIZE, MIN_CORE_FILEDESCRIPTORS, nBind, nFD))
         return InitError(_("Not enough file descriptors available."));
-    if (nFD - MIN_CORE_FILEDESCRIPTORS < nMaxConnections)
-        nMaxConnections = nFD - MIN_CORE_FILEDESCRIPTORS;
 
     // ********************************************************* Step 3: parameter-to-internal-flags
 
@@ -918,6 +922,8 @@ bool AppInit2(boost::thread_group& threadGroup)
     // std::string sha256_algo = SHA256AutoDetect();
     // LogPrintf("Using the '%s' SHA256 implementation\n", sha256_algo);
 
+    RandomInit();
+
     globalVerifyHandle.reset(new ECCVerifyHandle());
 
     // Sanity check
@@ -946,7 +952,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     if (GetBoolArg("-shrinkdebugfile", !fDebug))
         ShrinkDebugFile();
     LogPrintf("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-    LogPrintf("BlocknetDX version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
+    LogPrintf("Blocknet version %s (%s)\n", FormatFullVersion(), CLIENT_DATE);
     LogPrintf("Using OpenSSL version %s\n", SSLeay_version(SSLEAY_VERSION));
 #ifdef ENABLE_WALLET
     LogPrintf("Using BerkeleyDB version %s\n", DbEnv::version(0, 0, 0));
@@ -956,7 +962,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("Default data directory %s\n", GetDefaultDataDir().string());
     LogPrintf("Using data directory %s\n", strDataDir);
     LogPrintf("Using config file %s\n", GetConfigFile().string());
-    LogPrintf("Using at most %i connections (%i file descriptors available)\n", nMaxConnections, nFD);
+    LogPrintf("Using at most %i connections (%i file descriptors available)\n", CNode::MaxConnections(), nFD);
     std::ostringstream strErrors;
 
     LogPrintf("Using %u threads for script verification\n", nScriptCheckThreads);
@@ -1626,7 +1632,7 @@ bool AppInit2(boost::thread_group& threadGroup)
     LogPrintf("fLiteMode %d\n", fLiteMode);
     LogPrintf("nSwiftTXDepth %d\n", nSwiftTXDepth);
     LogPrintf("Obfuscation rounds %d\n", nObfuscationRounds);
-    LogPrintf("Anonymize BlocknetDX Amount %d\n", nAnonymizeBlocknetdxAmount);
+    LogPrintf("Anonymize Blocknet Amount %d\n", nAnonymizeBlocknetdxAmount);
     LogPrintf("Budget Mode %s\n", strBudgetMode.c_str());
 
     /* Denominations
@@ -1683,6 +1689,31 @@ bool AppInit2(boost::thread_group& threadGroup)
     // ********************************************************* Step 12: finished
 
     SetRPCWarmupFinished();
+
+    // ********************************************************* Initialize XBridge & XRouter
+#ifdef ENABLE_WALLET
+    if (!fRequestShutdown)
+    {
+        // init xbridge
+        xbridge::App & xapp = xbridge::App::instance();
+        xapp.init(argc, argv);
+
+        // start xbridge
+        uiInterface.InitMessage(_("Start xbridge service"));
+        xapp.start();
+
+        // init xrouter if enabled
+        xrouter::App & xrapp = xrouter::App::instance();
+        xrouter::App::createConf(); // create config if it doesn't exist
+        if (xrouter::App::isEnabled()) {
+            if (xrapp.init(argc, argv)) {
+                uiInterface.InitMessage(_("Start xrouter service"));
+                xrapp.start();
+            } else uiInterface.InitMessage(_("Failed to start xrouter service"));
+        } else uiInterface.InitMessage(_("xrouter is disabled"));
+    }
+#endif
+
     uiInterface.InitMessage(_("Done loading"));
 
 #ifdef ENABLE_WALLET
@@ -1694,14 +1725,6 @@ bool AppInit2(boost::thread_group& threadGroup)
         threadGroup.create_thread(boost::bind(&ThreadFlushWalletDB, boost::ref(pwalletMain->strWalletFile)));
     }
 #endif
-
-    // start xbridge
-    if (!fRequestShutdown)
-    {
-        uiInterface.InitMessage(_("Init xbridge service"));
-        xbridge::App & xapp = xbridge::App::instance();
-        xapp.start();
-    }
 
     return !fRequestShutdown;
 }

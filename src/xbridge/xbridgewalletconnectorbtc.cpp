@@ -677,6 +677,11 @@ bool gettxout(const std::string & rpcuser,
 
         Object o = result.get_obj();
         txout.amount = find_value(o, "value").get_real();
+
+        // Assign confirmations
+        const auto & rconfs = find_value(o, "confirmations");
+        if (rconfs.type() == int_type)
+            txout.setConfirmations(rconfs.get_int());
     }
     catch (std::exception & e)
     {
@@ -1984,18 +1989,29 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
 
     if (requiredConfirmations > 0)
     {
+        uint32_t confs{0};
+
+        // Check for confirmations in raw transaction output
         json_spirit::Value txvConfCount = json_spirit::find_value(txo, "confirmations");
-        if (txvConfCount.type() != json_spirit::int_type)
-        {
-            // not found confirmations field, wait
-            LOG() << "confirmations not found in " << rawtx << " ...waiting " << __FUNCTION__;
-            return false;
+        if (txvConfCount.type() != json_spirit::int_type) { // If not found check gettxout for confirmations
+            wallet::UtxoEntry utxo;
+            utxo.txId = depositTxId;
+            utxo.vout = depositTxVout;
+            if (rpc::gettxout(m_user, m_passwd, m_ip, m_port, utxo) && utxo.hasConfirmations) {
+                confs = utxo.confirmations;
+            } else { // confirmation field not found, fail
+                LOG() << "confirmations data not found in gettxout for " << depositTxId
+                      << " this order may be stuck and may need to be canceled " << __FUNCTION__;
+                return false;
+            }
+        } else {
+            confs = static_cast<uint32_t>(txvConfCount.get_int());
         }
 
-        if (requiredConfirmations > static_cast<uint32_t>(txvConfCount.get_int()))
+        if (confs < requiredConfirmations)
         {
             // wait more
-            LOG() << "tx " << depositTxId << " unconfirmed, need " << requiredConfirmations << " ...waiting " << __FUNCTION__;
+            LOG() << currency << " counterparty deposit " << depositTxId << " confirmations " << confs << " of " << requiredConfirmations << " ...waiting " << __FUNCTION__;
             return false;
         }
     }

@@ -30,11 +30,13 @@ struct UtxoEntry
     double      amount{0};
     std::string address;
     std::string scriptPubKey;
+    uint32_t    confirmations{0};
 
     std::vector<unsigned char> rawAddress;
     std::vector<unsigned char> signature;
 
     std::string toString() const;
+    bool hasConfirmations{false};
 
     bool operator < (const UtxoEntry & r) const
     {
@@ -44,6 +46,11 @@ struct UtxoEntry
     bool operator == (const UtxoEntry & r) const
     {
         return (txId == r.txId) && (vout ==r.vout);
+    }
+
+    void setConfirmations(const uint32_t confs) {
+        confirmations = confs;
+        hasConfirmations = true;
     }
 };
 

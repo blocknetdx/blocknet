@@ -15,7 +15,7 @@
 - (NSString *)__bundleIdentifier
 {
     if (self == [NSBundle mainBundle]) {
-        return @"io.blocknetdx.Blocknetdx-Qt";
+        return @"co.blocknet.Blocknet";
     } else {
         return [self __bundleIdentifier];
     }

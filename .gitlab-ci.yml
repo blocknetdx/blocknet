@@ -72,6 +72,7 @@ test_mac:
   - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdx-cli\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdxd\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdx-qt\" ];"
+  - "[ -d \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdx-qt.dSYM\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetdx-tx\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknetdx\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknetdx-qt\" ];"

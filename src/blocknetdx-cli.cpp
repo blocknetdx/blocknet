@@ -13,7 +13,10 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
+#include "xrouter/xrouterutils.h"
+
 #include <boost/filesystem/operations.hpp>
+#include <boost/algorithm/string.hpp>
 
 #define _(x) std::string(x) /* Keep the _() around in case gettext or such will be used later to translate non-UI */
 
@@ -68,10 +71,10 @@ static bool AppInitRPC(int argc, char* argv[])
     //
     ParseParameters(argc, argv);
     if (argc < 2 || mapArgs.count("-?") || mapArgs.count("-help") || mapArgs.count("-version")) {
-        std::string strUsage = _("Blocknet Core RPC client version") + " " + FormatFullVersion() + "\n";
+        std::string strUsage = _("Blocknet RPC client version") + " " + FormatFullVersion() + "\n";
         if (!mapArgs.count("-version")) {
             strUsage += "\n" + _("Usage:") + "\n" +
-                        "  blocknetdx-cli [options] <command> [params]  " + _("Send command to Blocknet Core") + "\n" +
+                        "  blocknetdx-cli [options] <command> [params]  " + _("Send command to Blocknet") + "\n" +
                         "  blocknetdx-cli [options] help                " + _("List commands") + "\n" +
                         "  blocknetdx-cli [options] help <command>      " + _("Get help for a command") + "\n";
 
@@ -111,7 +114,8 @@ Object CallRPC(const string& strMethod, const Array& params)
     std::string rpcport(GetArg("-rpcport", itostr(BaseParams().RPCPort())));
 
     boost::asio::ip::tcp::iostream stream;
-    stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcclienttimeout", 15)));
+    stream.expires_from_now(boost::posix_time::seconds(GetBoolArg("-xrouter", false) ? GetArg("-rpcxroutertimeout", 60)
+                                                                                     : GetArg("-rpcclienttimeout", 15)));
     stream.connect(rpcip, rpcport);
     if (stream.error() != boost::system::errc::success) {
         LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());
@@ -160,6 +164,7 @@ int CommandLineRPC(int argc, char* argv[])
 {
     string strPrint;
     int nRet = 0;
+    string strMethod;
     try {
         // Skip switches
         while (argc > 1 && IsSwitchChar(argv[1][0])) {
@@ -170,7 +175,7 @@ int CommandLineRPC(int argc, char* argv[])
         // Method
         if (argc < 2)
             throw runtime_error("too few parameters");
-        string strMethod = argv[1];
+        strMethod = argv[1];
 
         // Parameters default to strings
         std::vector<std::string> strParams(&argv[2], &argv[argc]);
@@ -191,7 +196,7 @@ int CommandLineRPC(int argc, char* argv[])
                     const int code = find_value(error.get_obj(), "code").get_int();
                     if (fWait && code == RPC_IN_WARMUP)
                         throw CConnectionFailed("server in warmup");
-                    strPrint = "error: " + write_string(error, false);
+                    strPrint = "error: " + write_string(error, json_spirit::pretty_print, 8);
                     nRet = abs(code);
                 } else {
                     // Result
@@ -200,7 +205,7 @@ int CommandLineRPC(int argc, char* argv[])
                     else if (result.type() == str_type)
                         strPrint = result.get_str();
                     else
-                        strPrint = write_string(result, true);
+                        strPrint = write_string(result, json_spirit::pretty_print, 8);
                 }
 
                 // Connection succeeded, no need to retry.
@@ -215,7 +220,10 @@ int CommandLineRPC(int argc, char* argv[])
     } catch (boost::thread_interrupted) {
         throw;
     } catch (std::exception& e) {
-        strPrint = string("error: ") + e.what();
+        if (!strMethod.empty() && boost::algorithm::starts_with(strMethod, xrouter::xr)) // if xrouter call
+            strPrint = e.what();
+        else
+            strPrint = string("error: ") + e.what();
         nRet = EXIT_FAILURE;
     } catch (...) {
         PrintExceptionContinue(NULL, "CommandLineRPC()");

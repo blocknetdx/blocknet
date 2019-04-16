@@ -1,7 +1,7 @@
-TOR SUPPORT IN BlocknetDX
+TOR SUPPORT IN Blocknet
 =======================
 
-It is possible to run BlocknetDX as a Tor hidden service, and connect to such services.
+It is possible to run Blocknet as a Tor hidden service, and connect to such services.
 
 The following directions assume you have a Tor proxy running on port 9050. Many
 distributions default to having a SOCKS proxy listening on port 9050, but others
@@ -10,10 +10,10 @@ port. See [Tor Project FAQ:TBBSocksPort](https://www.torproject.org/docs/faq.htm
 for how to properly configure Tor.
 
 
-Run BlocknetDX behind a Tor proxy
+Run Blocknet behind a Tor proxy
 ----------------------------------
 
-The first step is running BlocknetDX behind a Tor proxy. This will already make all
+The first step is running Blocknet behind a Tor proxy. This will already make all
 outgoing connections be anonymized, but more is possible.
 ```
 -proxy=ip:port  Set the proxy server. If SOCKS5 is selected (default), this proxy
@@ -46,7 +46,7 @@ In a typical situation, this suffices to run behind a Tor proxy:
 ./blocknetdxd -proxy=127.0.0.1:9050
 ```
 
-Run a BlocknetDX hidden server
+Run a Blocknet hidden server
 -------------------------------
 
 If you configure your Tor system accordingly, it is possible to make your node also
@@ -110,6 +110,6 @@ for normal IPv4/IPv6 communication, use:
 ./blocknetdxd -onion=127.0.0.1:9050 -externalip=dnetzj6l4cvo2fxy.onion:989 -discover
 ```
 
-List of known BlocknetDX Tor relays
+List of known Blocknet Tor relays
 ------------------------------------
 ***TODO***

@@ -654,6 +654,61 @@ extern json_spirit::Value dxFlushCancelledOrders(const json_spirit::Array& param
  */
 extern json_spirit::Value gettradingdata(const json_spirit::Array & params, bool fHelp);
 
+/** @} */
+
+
+/** \defgroup xRouterAPI xRouter API
+ * @brief XBridge functions exposed to RPC
+ *  @{
+ */
+
+/** @brief Look up a block in the specified blockchain.
+  * @param params The list of input params - should be empty
+  * @param fHelp If is true then an exception with parameter description message will be thrown
+  * @return The list of open and pending transactions as JSON value. Open transactions go first.
+  * * Example:<br>
+  * \verbatim
+    xrGetBlock
+￼
+    [
+        {
+        },
+        {
+        }
+    ]
+  * \endverbatim
+  */
+
+extern json_spirit::Value xrGetBlockCount(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBlockHash(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBlock(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBlocks(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetTransactions(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrDecodeRawTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetTxBloomFilter(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGenerateBloomFilter(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrSendTransaction(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrService(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrServiceConsensus(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value xrGetReply(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrConnect(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrConnectedNodes(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrUpdateConfigs(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrShowConfigs(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrReloadConfigs(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrStatus(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetNetworkServices(const json_spirit::Array& params, bool fHelp);
+
+extern json_spirit::Value xrGetBlockAtTime(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrRegisterDomain(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrQueryDomain(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrGetBalance(const json_spirit::Array& params, bool fHelp);
+extern json_spirit::Value xrTest(const json_spirit::Array& params, bool fHelp);
+
+/** @} */
+
 // in rest.cpp
 extern bool HTTPReq_REST(AcceptedConnection* conn,
     std::string& strURI,
