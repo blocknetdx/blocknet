@@ -61,7 +61,7 @@ bool XRouterServer::stop()
 bool XRouterServer::createConnectors() {
     try {
         Settings & s = settings();
-        std::vector<std::string> wallets = s.exchangeWallets();
+        std::vector<std::string> wallets = App::instance().xrSettings()->getWallets();
         for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
         {
             xbridge::WalletParam wp;
