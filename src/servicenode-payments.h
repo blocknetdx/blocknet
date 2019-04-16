@@ -289,7 +289,7 @@ public:
     int GetNewestBlock();
 
     void EligibleServicenodes(const bool fFilterSigTime, const int & nBlockHeight,
-            std::vector<CServicenode> & snodes, std::map<CScript, bool> & eligibleSnodes);
+            std::vector<CServicenode> & snodes, std::set<std::string> & eligibleSnodes);
     bool ValidNode(CServicenode & mn, const bool & fFilterSigTime, const int & nMnCount);
 
     ADD_SERIALIZE_METHODS;

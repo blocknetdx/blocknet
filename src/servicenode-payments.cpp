@@ -592,14 +592,18 @@ std::string CServicenodePayments::GetRequiredPaymentsString(int nBlockHeight)
 bool CServicenodePayments::IsTransactionValid(const CTransaction& txNew, int nBlockHeight)
 {
     if (IsSporkActive(SPORK_21_SNODE_PAYMENT)) { // enforce snode payments
-        std::map<CScript, bool> eligibleSnodes;
+        std::set<std::string> eligibleSnodes;
         auto snodes = mnodeman.GetFullServicenodeVector();
         EligibleServicenodes(true, nBlockHeight, snodes, eligibleSnodes); // find all eligible snodes
 
         CAmount nReward = GetBlockValue(nBlockHeight);
         CAmount requiredServicenodePayment = GetServicenodePayment(nBlockHeight, nReward);
         for (const auto & out : txNew.vout) {
-            if (eligibleSnodes.count(out.scriptPubKey) && out.nValue >= requiredServicenodePayment)
+            CTxDestination txAddr;
+            if (!ExtractDestination(out.scriptPubKey, txAddr))
+                continue;
+            const auto & addr = CBitcoinAddress(txAddr).ToString();
+            if (eligibleSnodes.count(addr) && out.nValue >= requiredServicenodePayment)
                 return true;
         }
 
@@ -638,7 +642,7 @@ bool CServicenodePayments::ValidNode(CServicenode & mn, const bool & fFilterSigT
 
 void CServicenodePayments::EligibleServicenodes(const bool fFilterSigTime, const int & nBlockHeight,
                                                 std::vector<CServicenode> & snodes,
-                                                std::map<CScript, bool> & eligibleSnodes)
+                                                std::set<std::string> & eligibleSnodes)
 {
     int nMnCount = mnodeman.CountEnabled();
 
@@ -646,7 +650,9 @@ void CServicenodePayments::EligibleServicenodes(const bool fFilterSigTime, const
         if (!ValidNode(mn, fFilterSigTime, nMnCount))
             continue;
 
-        eligibleSnodes[GetScriptForDestination(mn.pubKeyCollateralAddress.GetID())] = true;
+        const auto & mnaddr = CBitcoinAddress(mn.pubKeyCollateralAddress.GetID()).ToString();
+        if (!mnaddr.empty())
+            eligibleSnodes.insert(mnaddr);
     }
 
     int nCount = static_cast<int>(eligibleSnodes.size());
