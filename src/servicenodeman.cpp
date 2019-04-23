@@ -418,6 +418,17 @@ CServicenode* CServicenodeMan::Find(const CPubKey& pubKeyServicenode)
     return NULL;
 }
 
+CServicenode* CServicenodeMan::Find(const std::string & nodeAddr)
+{
+    LOCK(cs);
+
+    for (CServicenode & mn : vServicenodes) {
+        if (mn.addr.ToString() == nodeAddr)
+            return &mn;
+    }
+    return nullptr;
+}
+
 //
 // Deterministically select the oldest/best servicenode to pay on the network
 //
@@ -434,24 +445,11 @@ CServicenode* CServicenodeMan::GetNextServicenodeInQueueForPayment(int nBlockHei
 
     int nMnCount = CountEnabled();
     BOOST_FOREACH (CServicenode& mn, vServicenodes) {
-        mn.Check();
-        if (!mn.IsEnabled()) continue;
-
-        // //check protocol version
-        if (mn.protocolVersion < servicenodePayments.GetMinServicenodePaymentsProto()) continue;
+        if (!servicenodePayments.ValidNode(mn, fFilterSigTime, nMnCount))
+            continue;
 
         //it's in the list (up to 8 entries ahead of current block to allow propagation) -- so let's skip it
         if (servicenodePayments.IsScheduled(mn, nBlockHeight)) continue;
-
-        if (IsSporkActive(SPORK_19_SNODE_LIST)) { // new snode delay
-            if (fFilterSigTime && mn.sigTime + SERVICENODE_DELAY_SECONDS > GetAdjustedTime()) continue;
-        } else {
-            //it's too new, wait for a cycle
-            if (fFilterSigTime && mn.sigTime + (nMnCount * 2.6 * 60) > GetAdjustedTime()) continue;
-        }
-
-        //make sure it has as many confirmations as there are servicenodes
-        if (mn.GetServicenodeInputAge() < nMnCount) continue;
 
         vecServicenodeLastPaid.push_back(make_pair(mn.SecondsSincePayment(), mn.vin));
     }
@@ -559,16 +557,17 @@ int CServicenodeMan::GetServicenodeRank(const CTxIn& vin, int64_t nBlockHeight, 
         }
         if (fOnlyActive) {
             mn.Check();
-            if (IsSporkActive(SPORK_19_SNODE_LIST)) {
-                if (mn.GetServicenodeInputAge() < vServicenodes.size())
-                    continue;
-                auto snodeAge = GetAdjustedTime() - mn.sigTime;
-                if (snodeAge < SERVICENODE_DELAY_SECONDS) {
-                    if (fDebug)
-                        LogPrintf("Skipping recently activated Servicenode %s with age: %ld\n", mn.vin.prevout.hash.ToString(), snodeAge);
-                    continue;
-                }
+
+            if (mn.GetServicenodeInputAge() < vServicenodes.size())
+                continue;
+
+            auto snodeAge = GetAdjustedTime() - mn.sigTime;
+            if (snodeAge < SERVICENODE_DELAY_SECONDS) {
+                if (fDebug)
+                    LogPrintf("Skipping recently activated Servicenode %s with age: %ld\n", mn.vin.prevout.hash.ToString(), snodeAge);
+                continue;
             }
+
             if (!mn.IsEnabled()) continue;
         }
         uint256 n = mn.CalculateScore(1, nBlockHeight);

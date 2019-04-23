@@ -37,7 +37,7 @@ RUN mkdir -p $PROJECTDIR \
 
 # Copy source files
 #RUN cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch 3.11.1 https://github.com/BlocknetDX/BlockDX.git tmp \
+#  && git clone --depth 1 --branch 3.12.1 https://github.com/BlocknetDX/blocknet.git tmp \
 #  && mv tmp/* BlockDX/
 COPY . $PROJECTDIR/
 

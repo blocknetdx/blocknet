@@ -8,6 +8,7 @@
 #include "spork.h"
 #include "xbridge/xbridgeexchange.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 
 //
 // Bootup the Servicenode, look for a 5000 BLOCK input and register on the network
@@ -205,7 +206,8 @@ bool CActiveServicenode::SendServicenodePing(std::string& errorMessage, bool for
         mnp.Relay();
 
         // Send the services ping
-        xbridge::App::instance().sendServicePing();
+        std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
+        xbridge::App::instance().sendServicePing(nonWalletServices);
 
         return true;
     } else {
@@ -306,7 +308,8 @@ bool CActiveServicenode::Register(CTxIn vin, CService service, CKey keyCollatera
     mnb.Relay();
 
     // Send the services ping
-    xbridge::App::instance().sendServicePing();
+    std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
+    xbridge::App::instance().sendServicePing(nonWalletServices);
 
     return true;
 }
@@ -449,6 +452,14 @@ bool CActiveServicenode::EnableHotColdServiceNode(CTxIn& newVin, CService& newSe
     service = newService;
 
     LogPrintf("CActiveServicenode::EnableHotColdServiceNode() - Enabled! You may shut down the cold daemon.\n");
+
+    // Notify xrouter this snode is activated
+    auto pmn = mnodeman.Find(vin);
+    auto & xr = xrouter::App::instance();
+    if (pmn && xr.isReady()) {
+        xr.updatePaymentAddress(pmn->pubKeyCollateralAddress);
+        xr.xrSettings()->assignNode(pmn->addr.ToString());
+    }
 
     return true;
 }

@@ -7,15 +7,16 @@
 #define BITCOIN_TXDB_H
 
 #include "leveldbwrapper.h"
-#include "main.h"
+#include "coins.h"
+#include "chain.h"
 
 #include <map>
 #include <string>
 #include <utility>
 #include <vector>
 
-class CCoins;
-class uint256;
+class CBlockFileInfo;
+class CDiskTxPos;
 
 //! -dbcache default (MiB)
 static const int64_t nDefaultDbCache = 100;

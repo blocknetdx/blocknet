@@ -17,6 +17,11 @@
 #include "spork.h"
 #include "timedata.h"
 #include "util.h"
+
+#include "xbridge/version.h"
+#include "xrouter/version.h"
+#include "xrouter/xrouterapp.h"
+
 #ifdef ENABLE_WALLET
 #include "currencypair.h"
 #include "wallet.h"
@@ -73,6 +78,7 @@ Value getinfo(const Array& params, bool fHelp)
             "  \"unlocked_until\": ttt,      (numeric) the timestamp in seconds since epoch (midnight Jan 1 1970 GMT) that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
             "  \"paytxfee\": x.xxxx,         (numeric) the transaction fee set in blocknetdx/kb\n"
             "  \"relayfee\": x.xxxx,         (numeric) minimum relay fee for non-free transactions in blocknetdx/kb\n"
+            "  \"xrouter\": true|false,      (boolean) true if xrouter is enabled\n"
             "  \"staking status\": true|false,  (boolean) if the wallet is staking or not\n"
             "  \"errors\": \"...\"           (string) any error messages\n"
             "}\n"
@@ -85,6 +91,8 @@ Value getinfo(const Array& params, bool fHelp)
     Object obj;
     obj.push_back(Pair("version", CLIENT_VERSION));
     obj.push_back(Pair("protocolversion", PROTOCOL_VERSION));
+    obj.emplace_back("xbridgeprotocolversion", static_cast<int64_t>(XBRIDGE_PROTOCOL_VERSION));
+    obj.emplace_back("xrouterprotocolversion", static_cast<int64_t>(XROUTER_PROTOCOL_VERSION));
 
     LOCK(cs_main);
 
@@ -118,6 +126,8 @@ Value getinfo(const Array& params, bool fHelp)
     obj.push_back(Pair("paytxfee", ValueFromAmount(payTxFee.GetFeePerK())));
 #endif
     obj.push_back(Pair("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK())));
+    // Is xrouter enabled
+    obj.push_back(Pair("xrouter", xrouter::App::isEnabled()));
     bool nStaking = false;
     if (mapHashedBlocks.count(chainActive.Tip()->nHeight))
         nStaking = true;
@@ -265,14 +275,14 @@ Value validateaddress(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
         throw runtime_error(
-            "validateaddress \"blocknetdxaddress\"\n"
+            "validateaddress \"blocknetaddress\"\n"
             "\nReturn information about the given blocknetdx address.\n"
             "\nArguments:\n"
-            "1. \"blocknetdxaddress\"     (string, required) The blocknetdx address to validate\n"
+            "1. \"blocknetaddress\"     (string, required) The blocknetdx address to validate\n"
             "\nResult:\n"
             "{\n"
             "  \"isvalid\" : true|false,         (boolean) If the address is valid or not. If not, this is the only property returned.\n"
-            "  \"address\" : \"blocknetdxaddress\", (string) The blocknetdx address validated\n"
+            "  \"address\" : \"blocknetaddress\", (string) The blocknetdx address validated\n"
             "  \"ismine\" : true|false,          (boolean) If the address is yours or not\n"
             "  \"isscript\" : true|false,        (boolean) If the key is a script\n"
             "  \"pubkey\" : \"publickeyhex\",    (string) The hex value of the raw public key\n"
@@ -416,10 +426,10 @@ Value verifymessage(const Array& params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
         throw runtime_error(
-            "verifymessage \"blocknetdxaddress\" \"signature\" \"message\"\n"
+            "verifymessage \"blocknetaddress\" \"signature\" \"message\"\n"
             "\nVerify a signed message\n"
             "\nArguments:\n"
-            "1. \"blocknetdxaddress\"  (string, required) The blocknetdx address to use for the signature.\n"
+            "1. \"blocknetaddress\"  (string, required) The blocknetdx address to use for the signature.\n"
             "2. \"signature\"       (string, required) The signature provided by the signer in base 64 encoding (see signmessage).\n"
             "3. \"message\"         (string, required) The message that was signed.\n"
             "\nResult:\n"

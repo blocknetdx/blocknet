@@ -58,9 +58,9 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
 
     amountTi = new BlocknetLineEditWithTitle(tr("Amount (10 minimum)"), tr("Enter amount..."));
     amountTi->setObjectName("amount");
-    amountTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9]{2,4}"), this));
+    amountTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9]+"), this));
     amountTi->lineEdit->setMaxLength(
-            static_cast<int>(boost::lexical_cast<std::string>(CBudgetManager::GetTotalBudget(0) / COIN).length()));
+            static_cast<int>(boost::lexical_cast<std::string>(CBudgetManager::GetTotalBudget(nextSuperblock()) / COIN).length()));
 
     paymentAddrTi = new BlocknetLineEditWithTitle(tr("Payment address"), tr("Enter payment address..."));
     paymentAddrTi->setObjectName("address");
@@ -166,8 +166,9 @@ bool BlocknetCreateProposal1::validated() {
         return false;
     }
 
+    auto nextSB = nextSuperblock();
     auto superblock = boost::lexical_cast<int>(superBlockTi->lineEdit->text().toStdString());
-    if (superblock < nextSuperblock()) {
+    if (superblock < nextSB) {
         QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad Superblock, please enter a future Superblock"));
         return false;
     }
@@ -181,8 +182,9 @@ bool BlocknetCreateProposal1::validated() {
         QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Amount is too small, please specify an amount of 10 or more"));
         return false;
     }
-    if (amount > CBudgetManager::GetTotalBudget(0)/COIN) { // amount is too large
-        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Amount is too large, maximum amount is %1").arg(CBudgetManager::GetTotalBudget(0)/COIN));
+    if (amount > CBudgetManager::GetTotalBudget(nextSB)/COIN) { // amount is too large
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Amount is too large, maximum amount is %1")
+                .arg(CBudgetManager::GetTotalBudget(nextSB)/COIN));
         return false;
     }
 

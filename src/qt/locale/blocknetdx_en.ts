@@ -80,12 +80,12 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>These are your BlocknetDX addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your Blocknet addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+4"/>
-        <source>These are your BlocknetDX addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your Blocknet addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -221,7 +221,7 @@
     </message>
     <message>
         <location line="+12"/>
-        <source>BlocknetDX will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your BLOCKs from being stolen by malware infecting your computer.</source>
+        <source>Blocknet will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your BLOCKs from being stolen by malware infecting your computer.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -307,7 +307,7 @@
     </message>
     <message>
         <location line="+6"/>
-        <source>Enter a Blocknetdx Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
+        <source>Enter a Blocknet Address that you would like to encrypt using BIP 38. Enter a passphrase in the middle box. Press encrypt to compute the encrypted private key.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -318,7 +318,7 @@
     </message>
     <message>
         <location line="-355"/>
-        <source>The BlocknetDX address to sign the message with</source>
+        <source>The Blocknet address to sign the message with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -360,7 +360,7 @@
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this BlocknetDX address</source>
+        <source>Sign the message to prove you own this Blocknet address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -391,12 +391,12 @@
     </message>
     <message>
         <location line="+25"/>
-        <source>The BlocknetDX address the message was signed with</source>
+        <source>The Blocknet address the message was signed with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+29"/>
-        <source>Verify the message to ensure it was signed with the specified BlocknetDX address</source>
+        <source>Verify the message to ensure it was signed with the specified Blocknet address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -776,12 +776,12 @@
     <message>
         <location line="-413"/>
         <location line="+853"/>
-        <source>BlocknetDX Core</source>
+        <source>Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="-665"/>
-        <source>Send coins to a BlocknetDX address</source>
+        <source>Send coins to a Blocknet address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -801,27 +801,27 @@
     </message>
     <message>
         <location line="+29"/>
-        <source>&amp;About BlocknetDX Core</source>
+        <source>&amp;About Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+1"/>
-        <source>Show information about BlocknetDX Core</source>
+        <source>Show information about Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>Modify configuration options for BlocknetDX</source>
+        <source>Modify configuration options for Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+16"/>
-        <source>Sign messages with your BlocknetDX addresses to prove you own them</source>
+        <source>Sign messages with your Blocknet addresses to prove you own them</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Verify messages to ensure they were signed with specified BlocknetDX addresses</source>
+        <source>Verify messages to ensure they were signed with specified Blocknet addresses</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -846,7 +846,7 @@
     </message>
     <message>
         <location line="+24"/>
-        <source>Open a BlocknetDX: URI or payment request</source>
+        <source>Open a Blocknet: URI or payment request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -871,7 +871,7 @@
     </message>
     <message>
         <location line="+4"/>
-        <source>Show the BlocknetDX Core help message to get a list with possible BlocknetDX command-line options</source>
+        <source>Show the Blocknet help message to get a list with possible Blocknet command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -881,12 +881,12 @@
     </message>
     <message>
         <location line="+147"/>
-        <source>BlocknetDX Core client</source>
+        <source>Blocknet client</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <location line="+182"/>
-        <source>%n active connection(s) to BlocknetDX network</source>
+        <source>%n active connection(s) to Blocknet network</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
@@ -1461,7 +1461,7 @@ Address: %4
     </message>
     <message>
         <location line="+71"/>
-        <source>The entered address &quot;%1&quot; is not a valid BlocknetDX address.</source>
+        <source>The entered address &quot;%1&quot; is not a valid Blocknet address.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1517,7 +1517,7 @@ Address: %4
     </message>
     <message>
         <location line="+0"/>
-        <source>BlocknetDX Core</source>
+        <source>Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1528,7 +1528,7 @@ Address: %4
     </message>
     <message>
         <location line="+5"/>
-        <source>About BlocknetDX Core</source>
+        <source>About Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1586,17 +1586,17 @@ Address: %4
     </message>
     <message>
         <location line="+9"/>
-        <source>Welcome to BlocknetDX Core.</source>
+        <source>Welcome to Blocknet.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+26"/>
-        <source>As this is the first time the program is launched, you can choose where BlocknetDX Core will store its data.</source>
+        <source>As this is the first time the program is launched, you can choose where Blocknet will store its data.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>BlocknetDX Core will download and store a copy of the BlocknetDX block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <source>Blocknet will download and store a copy of the Blocknet block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1611,7 +1611,7 @@ Address: %4
     </message>
     <message>
         <location filename="../intro.cpp" line="+82"/>
-        <source>BlocknetDX Core</source>
+        <source>Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1814,8 +1814,8 @@ Address: %4
     </message>
     <message>
         <location line="+16"/>
-        <source>MultiSend allows you to automatically send up to 100% of your stake or servicenode reward to a list of other BlocknetDX addresses after it matures.
-To Add: enter percentage to give and BlocknetDX address to add to the MultiSend vector.
+        <source>MultiSend allows you to automatically send up to 100% of your stake or servicenode reward to a list of other Blocknet addresses after it matures.
+To Add: enter percentage to give and Blocknet address to add to the MultiSend vector.
 To Delete: Enter address to delete and press delete.
 MultiSend will not be activated unless you have clicked Activate</source>
         <translation type="unfinished"></translation>
@@ -2022,17 +2022,17 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="-29"/>
-        <source>Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening BlocknetDX&apos;s configuration screen.</source>
+        <source>Obfuscation was successfully set to basic (%1 and 2 rounds). You can change this at any time by opening Blocknet&apos;s configuration screen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening BlocknetDX&apos;s configuration screen.</source>
+        <source>Obfuscation was successfully set to high (%1 and 8 rounds). You can change this at any time by opening Blocknet&apos;s configuration screen.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+15"/>
-        <source>Obfuscation was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening BlocknetDX&apos;s configuration screen.</source>
+        <source>Obfuscation was successfully set to maximum (%1 and 16 rounds). You can change this at any time by opening Blocknet&apos;s configuration screen.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -2108,7 +2108,7 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+33"/>
-        <source>Automatically open the BlocknetDX client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the Blocknet client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2133,12 +2133,12 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="-179"/>
-        <source>Automatically start BlocknetDX after logging in to the system.</source>
+        <source>Automatically start Blocknet after logging in to the system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>&amp;Start BlocknetDX on system login</source>
+        <source>&amp;Start Blocknet on system login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2158,7 +2158,7 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+15"/>
-        <source>Amount of BlocknetDX to keep anonymized</source>
+        <source>Amount of Blocknet to keep anonymized</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2193,7 +2193,7 @@ Please check the address and try again.</source>
     </message>
     <message>
         <location line="+192"/>
-        <source>The user interface language can be set here. This setting will take effect after restarting BlocknetDX.</source>
+        <source>The user interface language can be set here. This setting will take effect after restarting Blocknet.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2209,7 +2209,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+17"/>
-        <source>Connect to the BlocknetDX network through a SOCKS5 proxy.</source>
+        <source>Connect to the Blocknet network through a SOCKS5 proxy.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2406,7 +2406,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
         <location line="+10"/>
         <location line="+1015"/>
         <location line="+93"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the BlocknetDX network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Blocknet network after a connection is established, but this process has not completed yet.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2698,7 +2698,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+126"/>
-        <source>URI cannot be parsed! This can be caused by an invalid BlocknetDX address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid Blocknet address or malformed URI parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2806,7 +2806,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+113"/>
-        <source>Enter a BlocknetDX address (e.g. %1)</source>
+        <source>Enter a Blocknet address (e.g. %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2995,7 +2995,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+149"/>
-        <source>Open the BlocknetDX debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <source>Open the Blocknet debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3293,12 +3293,12 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="-37"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the BlocknetDX network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Blocknet network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+23"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the BlocknetDX network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened.&lt;br&gt;Note: The message will not be sent with the payment over the Blocknet network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3663,7 +3663,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     <message>
         <location line="+33"/>
         <location line="+13"/>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for BlocknetDX transactions than the network can process.</source>
+        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks.&lt;br /&gt;But be aware that this can end up in a never confirming transaction once there is more demand for Blocknet transactions than the network can process.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3796,7 +3796,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+651"/>
-        <source>Warning: Invalid BlocknetDX address</source>
+        <source>Warning: Invalid Blocknet address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3935,7 +3935,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+18"/>
-        <source>The BlocknetDX address to send the payment to</source>
+        <source>The Blocknet address to send the payment to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3989,7 +3989,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+10"/>
-        <source>A message that was attached to the BlocknetDX: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the BlocknetDX network.</source>
+        <source>A message that was attached to the Blocknet: URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Blocknet network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4024,7 +4024,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     <name>ShutdownWindow</name>
     <message>
         <location filename="../utilitydialog.cpp" line="+43"/>
-        <source>BlocknetDX Core is shutting down...</source>
+        <source>Blocknet is shutting down...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4052,7 +4052,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+18"/>
-        <source>The BlocknetDX address to sign the message with</source>
+        <source>The Blocknet address to sign the message with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4094,17 +4094,17 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this BlocknetDX address</source>
+        <source>Sign the message to prove you own this Blocknet address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+106"/>
-        <source>The BlocknetDX address the message was signed with</source>
+        <source>The Blocknet address the message was signed with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+37"/>
-        <source>Verify the message to ensure it was signed with the specified BlocknetDX address</source>
+        <source>Verify the message to ensure it was signed with the specified Blocknet address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4219,7 +4219,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     <name>SplashScreen</name>
     <message>
         <location filename="../splashscreen.cpp" line="+37"/>
-        <source>BlocknetDX Core</source>
+        <source>Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4239,7 +4239,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+1"/>
-        <source>The BlocknetDX Core developers</source>
+        <source>The Blocknet developers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5033,7 +5033,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+4"/>
-        <source>Cannot obtain a lock on data directory %s. BlocknetDX Core is probably already running.</source>
+        <source>Cannot obtain a lock on data directory %s. Blocknet is probably already running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5058,7 +5058,7 @@ https://www.transifex.com/blocknetdx-project/blocknetdx-project-translations</so
     </message>
     <message>
         <location line="+3"/>
-        <source>Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
+        <source>Disable all Blocknet specific functionality (Servicenodes, Obfuscation, SwiftTX, Budgeting) (0-1, default: %u)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5252,13 +5252,13 @@ rpcpassword=%s
 The username and password MUST NOT be the same.
 If the file does not exist, create it with owner-readable-only file permissions.
 It is also recommended to set alertnotify so you are notified of problems;
-for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@foo.com
+for example: alertnotify=echo %%s | mail -s &quot;Blocknet Alert&quot; admin@foo.com
 </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+13"/>
-        <source>Unable to bind to %s on this computer. BlocknetDX Core is probably already running.</source>
+        <source>Unable to bind to %s on this computer. Blocknet is probably already running.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5293,7 +5293,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+3"/>
-        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong BlocknetDX Core will not work properly.</source>
+        <source>Warning: Please check that your computer&apos;s date and time are correct! If your clock is wrong Blocknet will not work properly.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5490,7 +5490,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+1"/>
-        <source>Copyright (C) 2015-%i The BlocknetDX Core Developers</source>
+        <source>Copyright (C) 2015-%i The Blocknet Developers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5580,7 +5580,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+1"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of BlocknetDX Core</source>
+        <source>Error loading wallet.dat: Wallet requires newer version of Blocknet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5720,7 +5720,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+1"/>
-        <source>Initialization sanity check failed. BlocknetDX Core is shutting down.</source>
+        <source>Initialization sanity check failed. Blocknet is shutting down.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6440,7 +6440,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+1"/>
-        <source>Wallet needed to be rewritten: restart BlocknetDX Core to complete</source>
+        <source>Wallet needed to be rewritten: restart Blocknet to complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6706,7 +6706,7 @@ for example: alertnotify=echo %%s | mail -s &quot;BlocknetDX Alert&quot; admin@f
     </message>
     <message>
         <location line="+13"/>
-        <source>Generate Blocknetdx Deposit Address</source>
+        <source>Generate Blocknet Deposit Address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

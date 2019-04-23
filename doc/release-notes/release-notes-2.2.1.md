@@ -1,13 +1,13 @@
 Blocknet version 2.2.1 is now available from:
 
-  <https://github.com/BlocknetDX/BlockDX/releases>
+  <https://github.com/BlocknetDX/blocknet/releases>
 
 This is a new minor version release, including various bug fixes and
 performance improvements, as well as updated translations.
 
 Please report bugs using the issue tracker at github:
 
-  <https://github.com/BlocknetDX/BlockDX/issues>
+  <https://github.com/BlocknetDX/blocknet/issues>
 
 Compatibility
 ==============
@@ -45,7 +45,7 @@ blockchain.
 Additional progress has been made to prevent the wallet crashes that are causing
 the corrupted databases, for example removing the Trading Window (explained below)
 and fixing several other minor memory leaks that were inherited from the version
-of Bitcoin that BlocknetDX was forked from.
+of Bitcoin that Blocknet was forked from.
 
 RPC Changes
 -----------

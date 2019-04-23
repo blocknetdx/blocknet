@@ -45,7 +45,7 @@ static const char UNUSED* blocknetdx_strings[] = {
                                    "Delete all wallet transactions and only recover those parts of the "
                                    "blockchain through -rescan on startup"),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
-                                   "Disable all BlocknetDX specific functionality (Servicenodes, Obfuscation, SwiftTX, "
+                                   "Disable all Blocknet specific functionality (Servicenodes, Obfuscation, SwiftTX, "
                                    "Budgeting) (0-1, default: %u)"),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
                                    "Distributed under the MIT software license, see the accompanying file "
@@ -160,7 +160,7 @@ static const char UNUSED* blocknetdx_strings[] = {
                                    "If the file does not exist, create it with owner-readable-only file "
                                    "permissions.\n"
                                    "It is also recommended to set alertnotify so you are notified of problems;\n"
-                                   "for example: alertnotify=echo %%s | mail -s \"BlocknetDX Alert\" admin@foo.com\n"),
+                                   "for example: alertnotify=echo %%s | mail -s \"Blocknet Alert\" admin@foo.com\n"),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""
                                    "Unable to bind to %s on this computer. Blocknet is probably already running."),
     QT_TRANSLATE_NOOP("blocknetdx-core", ""

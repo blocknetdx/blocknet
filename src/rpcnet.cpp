@@ -18,6 +18,7 @@
 #include "version.h"
 #include "activeservicenode.h"
 #include "xbridge/xbridgeapp.h"
+#include "xrouter/xrouterapp.h"
 
 #include <boost/foreach.hpp>
 
@@ -76,7 +77,8 @@ Value sendserviceping(const Array& params, bool fHelp)
             throw runtime_error("Service ping not sent: This is not a Servicenode or it hasn't started yet");
     }
 
-    xbridge::App::instance().sendServicePing();
+    std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
+    xbridge::App::instance().sendServicePing(nonWalletServices);
 
     return Value::null;
 }
@@ -115,7 +117,7 @@ Value getpeerinfo(const Array& params, bool fHelp)
             "    \"pingtime\": n,             (numeric) ping time\n"
             "    \"pingwait\": n,             (numeric) ping wait\n"
             "    \"version\": v,              (numeric) The peer version, such as 7001\n"
-            "    \"subver\": \"/Blocknetdx Core:x.x.x.x/\",  (string) The string version\n"
+            "    \"subver\": \"/Blocknet:x.x.x.x/\",  (string) The string version\n"
             "    \"inbound\": true|false,     (boolean) Inbound (true) or Outbound (false)\n"
             "    \"startingheight\": n,       (numeric) The starting height (block) of the peer\n"
             "    \"banscore\": n,             (numeric) The ban score\n"
@@ -241,7 +243,7 @@ Value getaddednodeinfo(const Array& params, bool fHelp)
             "    \"connected\" : true|false,          (boolean) If connected\n"
             "    \"addresses\" : [\n"
             "       {\n"
-            "         \"address\" : \"192.168.0.201:41412\",  (string) The blocknetdx server host and port\n"
+            "         \"address\" : \"192.168.0.201:41412\",  (string) The blocknet server host and port\n"
             "         \"connected\" : \"outbound\"           (string) connection, inbound or outbound\n"
             "       }\n"
             "       ,...\n"
@@ -376,7 +378,7 @@ Value getnetworkinfo(const Array& params, bool fHelp)
             "\nResult:\n"
             "{\n"
             "  \"version\": xxxxx,                      (numeric) the server version\n"
-            "  \"subversion\": \"/Blocknetdx Core:x.x.x.x/\",     (string) the server subversion string\n"
+            "  \"subversion\": \"/Blocknet:x.x.x.x/\",     (string) the server subversion string\n"
             "  \"protocolversion\": xxxxx,              (numeric) the protocol version\n"
             "  \"localservices\": \"xxxxxxxxxxxxxxxx\", (string) the services we offer to the network\n"
             "  \"timeoffset\": xxxxx,                   (numeric) the time offset\n"
@@ -390,7 +392,7 @@ Value getnetworkinfo(const Array& params, bool fHelp)
             "  }\n"
             "  ,...\n"
             "  ],\n"
-            "  \"relayfee\": x.xxxxxxxx,                (numeric) minimum relay fee for non-free transactions in blocknetdx/kb\n"
+            "  \"relayfee\": x.xxxxxxxx,                (numeric) minimum relay fee for non-free transactions in blocknet/kb\n"
             "  \"localaddresses\": [                    (array) list of local addresses\n"
             "  {\n"
             "    \"address\": \"xxxx\",                 (string) network address\n"
@@ -444,7 +446,7 @@ Value disconnectpeer(const Array& params, bool fHelp) {
     LOCK(cs_vNodes);
     for (auto *pnode : vNodes) {
         if (pnode->id == nodeID) {
-            pnode->fDisconnect = true;
+            pnode->Disconnect();
             return true;
         }
     }

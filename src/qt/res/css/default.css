@@ -818,12 +818,12 @@ border:0;
 background-color: #8c9dac;
 }
 
-/* About Blocknetdx Dialog */
-QDialog#AboutDialog QLabel#label, QDialog#AboutDialog QLabel#copyrightLabel, QDialog#AboutDialog QLabel#label_2 { /* About Blocknetdx Contents */
+/* About Blocknet Dialog */
+QDialog#AboutDialog QLabel#label, QDialog#AboutDialog QLabel#copyrightLabel, QDialog#AboutDialog QLabel#label_2 { /* About Blocknet Contents */
 margin-left:10px;
 }
 
-QDialog#AboutDialog QLabel#label_2 { /* Margin for About Blocknetdx text */
+QDialog#AboutDialog QLabel#label_2 { /* Margin for About Blocknet text */
 margin-right:10px;
 }
 

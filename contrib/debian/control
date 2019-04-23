@@ -23,8 +23,8 @@ Build-Depends: debhelper,
  libprotobuf-dev, protobuf-compiler
 Standards-Version: 3.9.2
 Homepage: https://www.blocknet.co
-Vcs-Git: git://github.com/BlocknetDX/BlockDX.git
-Vcs-Browser: http://github.com/BlocknetDX/BlockDX
+Vcs-Git: git://github.com/BlocknetDX/blocknet.git
+Vcs-Browser: https://github.com/BlocknetDX/blocknet
 
 Package: blocknetdxd
 Architecture: any
@@ -59,4 +59,4 @@ Description: peer-to-peer network based digital currency - Qt GUI
  Full transaction history is stored locally at each client.  This
  requires 1+ GB of space, slowly growing.
  .
- This package provides Blocknetdx-Qt, a GUI for Blocknetdx based on Qt.
+ This package provides Blocknet, a GUI for Blocknet based on Qt.

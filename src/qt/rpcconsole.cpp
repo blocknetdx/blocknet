@@ -18,9 +18,12 @@
 #include "rpcserver.h"
 #include "util.h"
 
+#include "xrouter/xrouterutils.h"
+
 #include "json/json_spirit_value.h"
 
 #include <openssl/crypto.h>
+#include <boost/algorithm/string.hpp>
 
 #ifdef ENABLE_WALLET
 #include <db_cxx.h>
@@ -214,7 +217,10 @@ void RPCExecutor::request(const QString& command)
             emit reply(RPCConsole::CMD_ERROR, QString::fromStdString(write_string(json_spirit::Value(objError), false)));
         }
     } catch (std::exception& e) {
-        emit reply(RPCConsole::CMD_ERROR, QString("Error: ") + QString::fromStdString(e.what()));
+        if (boost::algorithm::starts_with(args[0], xrouter::xr)) // if xrouter command
+            emit reply(RPCConsole::CMD_ERROR, QString::fromStdString(e.what()));
+        else
+            emit reply(RPCConsole::CMD_ERROR, QString("Error: ") + QString::fromStdString(e.what()));
     }
 }
 
@@ -457,7 +463,7 @@ void RPCConsole::clear()
         "td.cmd-error { color: red; } "
         "b { color: #006060; } ");
 
-    message(CMD_REPLY, (tr("Welcome to the BlocknetDX RPC console.") + "<br>" +
+    message(CMD_REPLY, (tr("Welcome to the Blocknet RPC console.") + "<br>" +
                            tr("Use up and down arrows to navigate history, and <b>Ctrl-L</b> to clear screen.") + "<br>" +
                            tr("Type <b>help</b> for an overview of available commands.")),
         true);
