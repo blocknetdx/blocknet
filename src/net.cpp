@@ -1363,8 +1363,7 @@ void ThreadOpenAddedConnections()
 CNode* OpenXRouterConnection(const CAddress& addrConnect, const char* pszDest) {
     if (CNode::IsBanned(std::string{pszDest}))
         return nullptr;
-    CSemaphoreGrant grant(*semOutbound);
-    return OpenNetworkConnection(addrConnect, &grant, pszDest, false, true);
+    return OpenNetworkConnection(addrConnect, nullptr, pszDest, false, true);
 }
 
 // if successful, this moves the passed grant to the constructed node
