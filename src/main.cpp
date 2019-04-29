@@ -5512,7 +5512,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
                 {
                     LOCK(cs_vNodes);
                     for  (CNode * pnode : vNodes) {
-                        if (pnode->SuccessfullyConnected() && !pnode->Disconnecting())
+                        if (pnode->SuccessfullyConnected() && !pnode->Disconnecting() && !pnode->isXRouter()) // do not relay to xrouter nodes
                             pnode->PushMessage("xbridge", raw);
                     }
                 }
