@@ -1045,7 +1045,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
                         XRouterPacket packet(xrInvalid, "protocol_error");
                         packet.append(reply);
                         packet.sign(server->pubKey(), server->privKey());
-                        node->PushMessage("xrouter", packet.body());
+                        node->PushXRouter(packet.body());
                     } catch (std::exception & e) { // catch json errors
                         ERR() << "Failed to send error reply to client " << node->NodeAddress() << " error: "
                               << e.what();
@@ -1251,7 +1251,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             for (const std::string & p : params)
                 packet.append(p);
             packet.sign(cpubkey, cprivkey);
-            pnode->PushMessage("xrouter", packet.body());
+            pnode->PushXRouter(packet.body());
 
             updateSentRequest(addr, fqService);
             LOG() << "Sent command " << fqService << " query " << uuid << " to node " << pnode->addrName;
@@ -1736,7 +1736,7 @@ std::string App::sendXRouterConfigRequest(CNode* node, std::string addr) {
     XRouterPacket packet(xrGetConfig, uuid);
     packet.append(addr);
     packet.sign(cpubkey, cprivkey);
-    node->PushMessage("xrouter", packet.body());
+    node->PushXRouter(packet.body());
 
     return uuid;
 }
@@ -1749,7 +1749,7 @@ std::string App::sendXRouterConfigRequestSync(CNode* node) {
 
     XRouterPacket packet(xrGetConfig, uuid);
     packet.sign(cpubkey, cprivkey);
-    node->PushMessage("xrouter", packet.body());
+    node->PushXRouter(packet.body());
 
     // Wait for response
     auto qcond = queryMgr.queryCond(uuid, nodeAddr);

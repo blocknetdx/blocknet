@@ -147,7 +147,7 @@ void XRouterServer::sendPacketToClient(const std::string & uuid, const std::stri
     XRouterPacket rpacket(xrReply, uuid);
     rpacket.append(reply);
     rpacket.sign(spubkey, sprivkey);
-    pnode->PushMessage("xrouter", rpacket.body());
+    pnode->PushXRouter(rpacket.body());
 }
 
 bool XRouterServer::processPayment(const std::string & feetx)
@@ -224,7 +224,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
             XRouterPacket rpacket(xrConfigReply, uuid);
             rpacket.append(reply);
             rpacket.sign(spubkey, sprivkey);
-            node->PushMessage("xrouter", rpacket.body());
+            node->PushXRouter(rpacket.body());
             return;
         }
 
