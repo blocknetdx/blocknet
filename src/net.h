@@ -235,6 +235,7 @@ public:
     int nRecvVersion;
 
     int64_t nLastSend;
+    int64_t nXRouterLastSend;
     int64_t nLastRecv;
     int64_t nTimeConnected;
     CAddress addr;
@@ -592,6 +593,30 @@ public:
             AbortMessage();
             throw;
         }
+    }
+
+    template <typename T>
+    void PushXRouter(const T & msg)
+    {
+        static const auto cmd = "xrouter";
+        try {
+            BeginMessage(cmd);
+            ssSend << msg;
+            EndMessage();
+            setXRouterLastSend();
+        } catch (...) {
+            AbortMessage();
+            throw;
+        }
+    }
+
+    void setXRouterLastSend() {
+        LOCK(cs);
+        nXRouterLastSend = GetTime();
+    }
+    int64_t lastXRouterMsg() {
+        LOCK(cs);
+        return nXRouterLastSend;
     }
 
     bool HasFulfilledRequest(std::string strRequest)
