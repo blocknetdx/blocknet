@@ -995,7 +995,7 @@ void ThreadSocketHandler()
 
             // Disconnect xrouter client if there's no pending queries
             if (pnode->isXRouter() && !xrouter::App::instance().hasPendingQuery(pnode->addr.ToString())
-                && fServiceNode && nTime - pnode->nLastSend >= 15)
+                && fServiceNode && nTime - pnode->lastXRouterMsg() >= 15)
             {
                 LogPrintf("disconnecting xrouter client: %s\n", pnode->addr.ToString());
                 pnode->fDisconnect = true;
@@ -1363,8 +1363,7 @@ void ThreadOpenAddedConnections()
 CNode* OpenXRouterConnection(const CAddress& addrConnect, const char* pszDest) {
     if (CNode::IsBanned(std::string{pszDest}))
         return nullptr;
-    CSemaphoreGrant grant(*semOutbound);
-    return OpenNetworkConnection(addrConnect, &grant, pszDest, false, true);
+    return OpenNetworkConnection(addrConnect, nullptr, pszDest, false, true);
 }
 
 // if successful, this moves the passed grant to the constructed node
@@ -1982,6 +1981,7 @@ CNode::CNode(SOCKET hSocketIn, CAddress addrIn, std::string addrNameIn, bool fIn
     fPingQueued = false;
     fObfuScationMaster = false;
     fXRouter = false;
+    nXRouterLastSend = std::numeric_limits<int64_t>::max();
 
     {
         LOCK(cs_nLastNodeId);

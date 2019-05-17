@@ -501,8 +501,10 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                 fetchConfig(node, snode);
             else
                 addSelected(snodeAddr);
-        } else
+        } else {
             LOG() << "Failed to connect to servicenode " << CBitcoinAddress(snode.pubKeyCollateralAddress.GetID()).ToString();
+            updateScore(snodeAddr, -10);
+        }
 
         pendingConnMgr.notify(snodeAddr);
     };
@@ -588,13 +590,14 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 
         boost::thread_group tg;
         std::set<NodeAddr> conns;
+        const auto timeout = xrsettings->commandTimeout(command, service);
+        const auto startTime = GetAdjustedTime();
+        bool timedOut{false};
 
         // Make connections via threads (max 2 per cpu core)
         for (const auto & snodeAddr : all) {
-            if (snodesConnected.count(snodeAddr)) { // record already connected nodes
-                addSelected(snodeAddr);
+            if (snodesConnected.count(snodeAddr) && addSelected(snodeAddr)) // record already connected nodes
                 continue;
-            }
 
             if (count - connectedCount() <= 0)
                 break; // done, all connected!
@@ -643,7 +646,12 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                     foundCount = connectedCount();
                     return false;
                 }
-                if (GetAdjustedTime() - waitTime > std::max(connwait, 1) * tg.size()) { // stop waiting after n seconds
+                const auto t = GetAdjustedTime();
+                if (t - waitTime > std::max(connwait, 1) * tg.size() // stop waiting after config sync timeouts
+                    || t - startTime > timeout) // stop waiting after timeout seconds
+                {
+                    if (t - startTime > timeout)
+                        timedOut = true;
                     tg.interrupt_all();
                     break;
                 }
@@ -651,11 +659,11 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                 boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
             }
 
-            if (ShutdownRequested())
+            if (timedOut || ShutdownRequested())
                 break;
         }
 
-        if (count - connectedCount() <= 0)
+        if (count - connectedCount() <= 0 || timedOut)
             tg.interrupt_all();
         tg.join_all();
 
@@ -1037,7 +1045,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
                         XRouterPacket packet(xrInvalid, "protocol_error");
                         packet.append(reply);
                         packet.sign(server->pubKey(), server->privKey());
-                        node->PushMessage("xrouter", packet.body());
+                        node->PushXRouter(packet.body());
                     } catch (std::exception & e) { // catch json errors
                         ERR() << "Failed to send error reply to client " << node->NodeAddress() << " error: "
                               << e.what();
@@ -1243,7 +1251,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             for (const std::string & p : params)
                 packet.append(p);
             packet.sign(cpubkey, cprivkey);
-            pnode->PushMessage("xrouter", packet.body());
+            pnode->PushXRouter(packet.body());
 
             updateSentRequest(addr, fqService);
             LOG() << "Sent command " << fqService << " query " << uuid << " to node " << pnode->addrName;
@@ -1499,14 +1507,12 @@ std::string App::getReply(const std::string & id)
 {
     auto replies = queryMgr.allReplies(id);
     std::vector<CServicenode> snodes = getServiceNodes();
-    std::map<NodeAddr, std::tuple<std::string, int64_t, std::string> > snodec;
+    std::map<NodeAddr, CServicenode*> snodec;
     for (auto & s : snodes) {
-        if (!s.addr.ToString().empty()) {
-            const auto & snodeAddr = s.addr.ToString();
-            std::vector<unsigned char> spubkey; // pubkey
-            servicenodePubKey(snodeAddr, spubkey);
-            snodec[snodeAddr] = { HexStr(spubkey), getScore(snodeAddr), CBitcoinAddress(s.pubKeyCollateralAddress.GetID()).ToString() };
-        }
+        if (s.addr.ToString().empty())
+            continue;
+        const auto & snodeAddr = s.addr.ToString();
+        snodec[snodeAddr] = &s;
     }
 
     if (replies.empty()) {
@@ -1522,7 +1528,9 @@ std::string App::getReply(const std::string & id)
         Array arr;
         for (const auto & it : replies) {
             const auto & reply = it.second;
-            const auto & item = snodec[it.first];
+            const auto & snodeAddr = it.first;
+            const auto & s = snodec[snodeAddr];
+
             Object o;
             try {
                 Value reply_val; read_string(reply, reply_val);
@@ -1534,9 +1542,13 @@ std::string App::getReply(const std::string & id)
                 o = Object();
                 o.emplace_back("result", "");
             }
-            o.emplace_back("nodepubkey", std::get<0>(item));
-            o.emplace_back("score", std::get<1>(item));
-            o.emplace_back("address", std::get<2>(item));
+
+            std::vector<unsigned char> spubkey;
+            servicenodePubKey(snodeAddr, spubkey);
+
+            o.emplace_back("nodepubkey", HexStr(spubkey));
+            o.emplace_back("score", getScore(snodeAddr));
+            o.emplace_back("address", CBitcoinAddress(s->pubKeyCollateralAddress.GetID()).ToString());
             arr.emplace_back(o);
         }
         return json_spirit::write_string(Value(arr), json_spirit::pretty_print);
@@ -1724,7 +1736,7 @@ std::string App::sendXRouterConfigRequest(CNode* node, std::string addr) {
     XRouterPacket packet(xrGetConfig, uuid);
     packet.append(addr);
     packet.sign(cpubkey, cprivkey);
-    node->PushMessage("xrouter", packet.body());
+    node->PushXRouter(packet.body());
 
     return uuid;
 }
@@ -1737,7 +1749,7 @@ std::string App::sendXRouterConfigRequestSync(CNode* node) {
 
     XRouterPacket packet(xrGetConfig, uuid);
     packet.sign(cpubkey, cprivkey);
-    node->PushMessage("xrouter", packet.body());
+    node->PushXRouter(packet.body());
 
     // Wait for response
     auto qcond = queryMgr.queryCond(uuid, nodeAddr);

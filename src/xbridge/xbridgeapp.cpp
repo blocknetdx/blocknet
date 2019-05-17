@@ -490,7 +490,7 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
     {
         LOCK(cs_vNodes);
         for (CNode * pnode : vNodes) {
-            if (pnode->SuccessfullyConnected() && !pnode->Disconnecting())
+            if (pnode->SuccessfullyConnected() && !pnode->Disconnecting() && !pnode->isXRouter()) // do not relay to xrouter nodes
                 pnode->PushMessage("xbridge", msg);
         }
     }

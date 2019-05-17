@@ -3,7 +3,7 @@ Blocknet
 
 Setup
 ---------------------
-[Blocknet](https://github.com/BlocknetDX/blocknet/releases/tag/v3.13.0) is the latest Blocknet client and it builds the backbone of the network. However, it downloads and stores the entire history of Blocknet transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
+[Blocknet](https://github.com/BlocknetDX/blocknet/releases/) is the latest Blocknet client and it builds the backbone of the network. However, it downloads and stores the entire history of Blocknet transactions; depending on the speed of your computer and network connection, the synchronization process can take anywhere from a few hours to a day or more. Thankfully you only have to do this once.
 
 Running
 ---------------------
