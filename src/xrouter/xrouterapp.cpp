@@ -86,7 +86,7 @@ bool App::createConf()
 #endif
         auto p = GetDataDir(false) / "xrouter.conf";
         if (!boost::filesystem::exists(p)) {
-            boost::filesystem::save_string_file(p,
+            saveConf(p,
                     "[Main]"                                                                                        + eol +
                     "#! maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"        + eol +
                     "#! 0 means you only want free calls"                                                           + eol +
@@ -120,7 +120,7 @@ bool App::createConf()
         if (!boost::filesystem::exists(plugins)) {
             boost::filesystem::create_directory(plugins);
             auto samplerpc = plugins / "ExampleRPC.conf";
-            boost::filesystem::save_string_file(samplerpc,
+            saveConf(samplerpc,
                 "#! ExampleRPC is a sample rpc plugin. This entire plugin configuration is sent to the client."     + eol +
                 "#! Any lines beginning with #! will not be sent to the client."                                    + eol +
                 "#! Any config parameters beginning with private:: will not be sent to the client."                 + eol +
@@ -156,7 +156,7 @@ bool App::createConf()
                 "disabled=1"                                                                                        + eol
             );
             auto sampledocker = plugins / "ExampleDocker.conf";
-            boost::filesystem::save_string_file(sampledocker,
+            saveConf(sampledocker,
                 "#! ExampleDocker is a sample docker plugin. This entire plugin configuration is sent to the client." + eol +
                 "#! Any lines beginning with #! will not be sent to the client."                                      + eol +
                 "#! Any config parameters beginning with private:: will not be sent to the client."                   + eol +

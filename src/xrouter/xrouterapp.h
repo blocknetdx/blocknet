@@ -24,6 +24,8 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 #include <boost/thread.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/filesystem/operations.hpp>
 
 #include <memory>
 #include <chrono>
@@ -65,7 +67,17 @@ public:
      * @return true if created otherwise false
      */
     static bool createConf();
-    
+
+    /**
+     * Save configuration files to the specified path.
+     */
+    static void saveConf(const boost::filesystem::path& p, const std::string& str) {
+        boost::filesystem::ofstream file;
+        file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        file.open(p, std::ios_base::binary);
+        file.write(str.c_str(), str.size());
+    }
+
     /**
      * @brief XRouter settings
      * @return local xrouter.conf settings
