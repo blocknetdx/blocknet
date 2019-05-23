@@ -535,6 +535,7 @@ RES_IMAGES = \
   qt/res/redesign/icons/Table/HeaderViewArrowDown.png \
   qt/res/redesign/icons/checkmark-on.png \
   qt/res/redesign/icons/checkmark-off.png \
+  qt/res/redesign/icons/block-icon.png \
   qt/res/redesign/fonts/Roboto/Roboto-Black.ttf \
   qt/res/redesign/fonts/Roboto/Roboto-BlackItalic.ttf \
   qt/res/redesign/fonts/Roboto/Roboto-Bold.ttf \
