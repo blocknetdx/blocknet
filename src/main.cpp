@@ -1621,6 +1621,11 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos)
         if (!CheckProofOfWork(block.GetHash(), block.nBits))
             return error("ReadBlockFromDisk : Errors in block header");
     }
+    
+    if (block.IsProofOfStake()) {
+        block.hashStake = block.vtx[1].vin[0].prevout.hash;
+        block.nStakeIndex = block.vtx[1].vin[0].prevout.n;
+    }
 
     return true;
 }
@@ -2964,6 +2969,7 @@ CBlockIndex* AddToBlockIndex(const CBlock& block)
             if (!mapProofOfStake.count(hash))
                 LogPrintf("AddToBlockIndex() : hashProofOfStake not found in map \n");
             pindexNew->hashProofOfStake = mapProofOfStake[hash];
+            pindexNew->prevoutStake = { block.hashStake, block.nStakeIndex };
         }
 
         // ppcoin: compute stake modifier
@@ -3539,6 +3545,10 @@ bool ProcessNewBlock(CValidationState& state, CNode* pfrom, CBlock* pblock, CDis
     // Duplicate stake allowed only when there is orphan child block
     //if (pblock->IsProofOfStake() && setStakeSeen.count(pblock->GetProofOfStake())/* && !mapOrphanBlocksByPrev.count(hash)*/)
     //    return error("ProcessNewBlock() : duplicate proof-of-stake (%s, %d) for block %s", pblock->GetProofOfStake().first.ToString().c_str(), pblock->GetProofOfStake().second, pblock->GetHash().ToString().c_str());
+    if (pblock->IsProofOfStake()) {
+        pblock->hashStake = pblock->vtx[1].vin[0].prevout.hash;
+        pblock->nStakeIndex = pblock->vtx[1].vin[0].prevout.n;
+    }
 
     // NovaCoin: check proof-of-stake block signature
     if (!pblock->CheckBlockSignature())
@@ -4488,9 +4498,21 @@ void static ProcessGetData(CNode* pfrom)
                     CBlock block;
                     if (!ReadBlockFromDisk(block, (*mi).second))
                         assert(!"cannot load block from disk");
-                    if (inv.type == MSG_BLOCK)
-                        pfrom->PushMessage("block", block);
-                    else // MSG_FILTERED_BLOCK)
+                    if (inv.type == MSG_BLOCK) {
+                        if (pfrom->nVersion >= NEW_CHAIN_VERSION) {
+                            auto blockPoS = CBlockPoS(block);
+                            if (block.IsProofOfStake()) {
+                                CTransaction txPrev; uint256 hashBlockPrev;
+                                if (GetTransaction(blockPoS.hashStake, txPrev, hashBlockPrev, true)) {
+                                    blockPoS.nStakeAmount = txPrev.vout[blockPoS.nStakeIndex].nValue;
+                                    blockPoS.hashStakeBlock = hashBlockPrev;
+                                }
+                            }
+                            pfrom->PushMessage("block", blockPoS);
+                        }
+                        else
+                            pfrom->PushMessage("block", block);
+                    } else // MSG_FILTERED_BLOCK)
                     {
                         LOCK(pfrom->cs_filter);
                         if (pfrom->pfilter) {
@@ -4976,7 +4998,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
-    else if (strCommand == "getheaders" && Params().HeadersFirstSyncingActive()) {
+    else if (strCommand == "getheaders" && pfrom->nVersion >= NEW_CHAIN_VERSION) {
         CBlockLocator locator;
         uint256 hashStop;
         vRecv >> locator >> hashStop;
@@ -5001,12 +5023,18 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
         }
 
         // we must use CBlocks, as CBlockHeaders won't include the 0x00 nTx count at the end
-        vector<CBlock> vHeaders;
+        vector<CBlockHeaderPoS> vHeaders;
         int nLimit = MAX_HEADERS_RESULTS;
         if (fDebug)
             LogPrintf("getheaders %d to %s from peer=%d\n", (pindex ? pindex->nHeight : -1), hashStop.ToString(), pfrom->id);
         for (; pindex; pindex = chainActive.Next(pindex)) {
-            vHeaders.push_back(pindex->GetBlockHeader());
+            auto header = CBlockHeaderPoS(pindex->GetBlockHeader());
+            CTransaction txPrev; uint256 hashBlockPrev;
+            if (GetTransaction(header.hashStake, txPrev, hashBlockPrev, true)) {
+                header.nStakeAmount = txPrev.vout[header.nStakeIndex].nValue;
+                header.hashStakeBlock = hashBlockPrev;
+            }
+            vHeaders.push_back(header);
             if (--nLimit <= 0 || pindex->GetBlockHash() == hashStop)
                 break;
         }
@@ -5164,7 +5192,7 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
     }
 
 
-    else if (strCommand == "headers" && Params().HeadersFirstSyncingActive() && !fImporting && !fReindex) // Ignore headers received while importing
+    else if (strCommand == "headers"/* && Params().HeadersFirstSyncingActive()*/ && !fImporting && !fReindex) // Ignore headers received while importing
     {
         std::vector<CBlockHeader> headers;
 
