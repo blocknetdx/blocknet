@@ -970,7 +970,6 @@ void App::updateActiveWallets()
         uint32_t pendingJobs = 0;
         uint32_t allJobs = static_cast<uint32_t>(conns.size());
 
-        // copy connections
         auto walletCheck = boost::async(boost::launch::async, [&conns, &muJobs, &allJobs, &pendingJobs,
                                                                maxPendingJobs, &validConnections, &badConnections]() {
             while (true) {
@@ -1023,7 +1022,14 @@ void App::updateActiveWallets()
         });
 
         // Synchronize all connection checks
-        walletCheck.get();
+        try {
+            walletCheck.get();
+        } catch (...) { // bail on error (possible thread error etc)
+            LOCK(m_updatingWalletsLock);
+            m_updatingWallets = false;
+            WARN() << "Potential issue with active xbridge wallets checks (unknown threading error). If issue persists please notify the dev team";
+            return;
+        }
 
         // Check for shutdown
         if (!ShutdownRequested()) {
