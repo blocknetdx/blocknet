@@ -15,6 +15,7 @@
 #include <chain.h>
 #include <chainparams.h>
 #include <checkpoints.h>
+#include <coinvalidator.h>
 #include <compat/sanity.h>
 #include <consensus/validation.h>
 #include <fs.h>
@@ -393,9 +394,7 @@ void SetupServerArgs()
         -GetNumCores(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS), false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-persistmempool", strprintf("Whether to save the mempool on shutdown and load on restart (default: %u)", DEFAULT_PERSIST_MEMPOOL), false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-pid=<file>", strprintf("Specify pid file. Relative paths will be prefixed by a net-specific datadir location. (default: %s)", BITCOIN_PID_FILENAME), false, OptionsCategory::OPTIONS);
-    gArgs.AddArg("-prune=<n>", strprintf("Reduce storage requirements by enabling pruning (deleting) of old blocks. This allows the pruneblockchain RPC to be called to delete specific blocks, and enables automatic pruning of old blocks if a target size in MiB is provided. This mode is incompatible with -txindex and -rescan. "
-            "Warning: Reverting this setting requires re-downloading the entire blockchain. "
-            "(default: 0 = disable pruning blocks, 1 = allow manual pruning via RPC, >=%u = automatically prune block files to stay under the specified target size in MiB)", MIN_DISK_SPACE_FOR_BLOCK_FILES / 1024 / 1024), false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-prune=<n>", "Pruning is not supported", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex", "Rebuild chain state and block index from the blk*.dat files on disk", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex-chainstate", "Rebuild chain state from the currently indexed blocks. When in pruning mode or if blocks on disk might be corrupted, use full -reindex instead.", false, OptionsCategory::OPTIONS);
 #ifndef WIN32
@@ -403,7 +402,7 @@ void SetupServerArgs()
 #else
     hidden_args.emplace_back("-sysperms");
 #endif
-    gArgs.AddArg("-txindex", strprintf("Maintain a full transaction index, used by the getrawtransaction rpc call (default: %u)", DEFAULT_TXINDEX), false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-txindex", "Blocknet requires txindex to support the Proof of Stake protocol.", false, OptionsCategory::OPTIONS);
 
     gArgs.AddArg("-addnode=<ip>", "Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info). This option can be specified multiple times to add multiple nodes.", false, OptionsCategory::CONNECTION);
     gArgs.AddArg("-banscore=<n>", strprintf("Threshold for disconnecting misbehaving peers (default: %u)", DEFAULT_BANSCORE_THRESHOLD), false, OptionsCategory::CONNECTION);
@@ -679,6 +678,7 @@ static void ThreadImport(std::vector<fs::path> vImportFiles)
             nFile++;
         }
         pblocktree->WriteReindexing(false);
+        chainActive.SetTip(nullptr); // Blocknet PoS clean chain tip
         fReindex = false;
         LogPrintf("Reindexing finished\n");
         // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
@@ -956,8 +956,9 @@ bool AppInitParameterInteraction()
 
     // if using block pruning, then disallow txindex
     if (gArgs.GetArg("-prune", 0)) {
-        if (gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX))
-            return InitError(_("Prune mode is incompatible with -txindex."));
+//        if (gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX))
+//            return InitError(_("Prune mode is incompatible with -txindex."));
+        return InitError(_("Pruning is not supported at this time")); // Blocknet doesn't support pruning at this time
     }
 
     // -bind and -whitebind can't be set when not listening
@@ -1062,7 +1063,7 @@ bool AppInitParameterInteraction()
         nScriptCheckThreads = MAX_SCRIPTCHECK_THREADS;
 
     // block pruning; get the amount of disk space (in MiB) to allot for block & undo files
-    int64_t nPruneArg = gArgs.GetArg("-prune", 0);
+    int64_t nPruneArg = 0; // Blocknet does not support pruning at this time
     if (nPruneArg < 0) {
         return InitError(_("Prune cannot be configured with a negative value."));
     }
@@ -1437,6 +1438,9 @@ bool AppInitMain(InitInterfaces& interfaces)
 
     // ********************************************************* Step 7: load block chain
 
+    // Load coin validator
+    CoinValidator::instance().LoadStatic();
+
     fReindex = gArgs.GetBoolArg("-reindex", false);
     bool fReindexChainState = gArgs.GetBoolArg("-reindex-chainstate", false);
 
@@ -1446,7 +1450,7 @@ bool AppInitMain(InitInterfaces& interfaces)
     nTotalCache = std::min(nTotalCache, nMaxDbCache << 20); // total cache cannot be greater than nMaxDbcache
     int64_t nBlockTreeDBCache = std::min(nTotalCache / 8, nMaxBlockDBCache << 20);
     nTotalCache -= nBlockTreeDBCache;
-    int64_t nTxIndexCache = std::min(nTotalCache / 8, gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX) ? nMaxTxIndexCache << 20 : 0);
+    int64_t nTxIndexCache = std::min(nTotalCache / 8, nMaxTxIndexCache << 20); // Blocknet PoS requires txindex
     nTotalCache -= nTxIndexCache;
     int64_t nCoinDBCache = std::min(nTotalCache / 2, (nTotalCache / 4) + (1 << 23)); // use 25%-50% of the remainder for disk cache
     nCoinDBCache = std::min(nCoinDBCache, nMaxCoinsDBCache << 20); // cap total coins db cache
@@ -1455,11 +1459,13 @@ bool AppInitMain(InitInterfaces& interfaces)
     int64_t nMempoolSizeMax = gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
     LogPrintf("Cache configuration:\n");
     LogPrintf("* Using %.1f MiB for block index database\n", nBlockTreeDBCache * (1.0 / 1024 / 1024));
-    if (gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX)) {
+    // Blocknet PoS requires txindex
         LogPrintf("* Using %.1f MiB for transaction index database\n", nTxIndexCache * (1.0 / 1024 / 1024));
-    }
     LogPrintf("* Using %.1f MiB for chain state database\n", nCoinDBCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1f MiB for in-memory UTXO set (plus up to %.1f MiB of unused mempool space)\n", nCoinCacheUsage * (1.0 / 1024 / 1024), nMempoolSizeMax * (1.0 / 1024 / 1024));
+
+    // Blocknet PoS requires txindex
+    g_txindex = MakeUnique<TxIndex>(nTxIndexCache, false, fReindex);
 
     bool fLoaded = false;
     while (!fLoaded && !ShutdownRequested()) {
@@ -1571,8 +1577,12 @@ bool AppInitMain(InitInterfaces& interfaces)
             }
 
             try {
-                LOCK(cs_main);
                 if (!is_coinsview_empty) {
+                    // Blocknet PoS requires the txindex to be preloaded prior to VerifyDB check
+                    g_txindex->Start();
+
+                    {
+                    LOCK(cs_main);
                     uiInterface.InitMessage(_("Verifying blocks..."));
                     if (fHavePruned && gArgs.GetArg("-checkblocks", DEFAULT_CHECKBLOCKS) > MIN_BLOCKS_TO_KEEP) {
                         LogPrintf("Prune: pruned datadir may not have more than %d blocks; only checking available blocks\n",
@@ -1592,6 +1602,7 @@ bool AppInitMain(InitInterfaces& interfaces)
                                   gArgs.GetArg("-checkblocks", DEFAULT_CHECKBLOCKS))) {
                         strLoadError = _("Corrupted block database detected");
                         break;
+                    }
                     }
                 }
             } catch (const std::exception& e) {
@@ -1640,10 +1651,11 @@ bool AppInitMain(InitInterfaces& interfaces)
     fFeeEstimatesInitialized = true;
 
     // ********************************************************* Step 8: start indexers
-    if (gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX)) {
-        g_txindex = MakeUnique<TxIndex>(nTxIndexCache, false, fReindex);
+    // Blocknet PoS requires the txindex to be preloaded
+    if (!g_txindex->Started())
         g_txindex->Start();
-    }
+    if (chainActive.Tip() != nullptr)
+        while (!g_txindex->BlockUntilSyncedToCurrentChain());
 
     // ********************************************************* Step 9: load wallet
     for (const auto& client : interfaces.chain_clients) {

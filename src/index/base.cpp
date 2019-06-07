@@ -8,12 +8,11 @@
 #include <tinyformat.h>
 #include <ui_interface.h>
 #include <util/system.h>
-#include <validation.h>
 #include <warnings.h>
 
 constexpr char DB_BEST_BLOCK = 'B';
 
-constexpr int64_t SYNC_LOG_INTERVAL = 30; // seconds
+constexpr int64_t SYNC_LOG_INTERVAL = 10; // seconds
 constexpr int64_t SYNC_LOCATOR_WRITE_INTERVAL = 30; // seconds
 
 template<typename... Args>
@@ -270,6 +269,7 @@ void BaseIndex::Start()
 
     m_thread_sync = std::thread(&TraceThread<std::function<void()>>, GetName(),
                                 std::bind(&BaseIndex::ThreadSync, this));
+    m_started = true;
 }
 
 void BaseIndex::Stop()

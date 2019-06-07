@@ -78,8 +78,8 @@ static void AssembleBlock(benchmark::State& state)
         ::pcoinsdbview.reset(new CCoinsViewDB(1 << 23, true));
         ::pcoinsTip.reset(new CCoinsViewCache(pcoinsdbview.get()));
     }
+    const CChainParams& chainparams = Params();
     {
-        const CChainParams& chainparams = Params();
         thread_group.create_thread(std::bind(&CScheduler::serviceQueue, &scheduler));
         GetMainSignals().RegisterBackgroundSignalScheduler(scheduler);
         LoadGenesisBlock(chainparams);
@@ -92,13 +92,13 @@ static void AssembleBlock(benchmark::State& state)
 
     // Collect some loose transactions that spend the coinbases of our mined blocks
     constexpr size_t NUM_BLOCKS{200};
-    std::array<CTransactionRef, NUM_BLOCKS - COINBASE_MATURITY + 1> txs;
+    std::vector<CTransactionRef> txs; txs.resize(NUM_BLOCKS - chainparams.GetConsensus().coinMaturity + 1);
     for (size_t b{0}; b < NUM_BLOCKS; ++b) {
         CMutableTransaction tx;
         tx.vin.push_back(MineBlock(SCRIPT_PUB));
         tx.vin.back().scriptWitness = witness;
         tx.vout.emplace_back(1337, SCRIPT_PUB);
-        if (NUM_BLOCKS - b >= COINBASE_MATURITY)
+        if (NUM_BLOCKS - b >= chainparams.GetConsensus().coinMaturity)
             txs.at(b) = MakeTransactionRef(tx);
     }
     {

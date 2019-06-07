@@ -1911,6 +1911,14 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::SENDCMPCT, fAnnounceUsingCMPCTBLOCK, nCMPCTBLOCKVersion));
         }
         pfrom->fSuccessfullyConnected = true;
+
+        // Used for logging purposes, update the mean block height across connected nodes
+        double meanHeights; int nodeCount;
+        if (connman->StoreConnectedNodesBlockHeights(chainActive.Height(), meanHeights, nodeCount)) {
+            meanBlockHeightConnectedNodes = meanHeights;
+            estimatedConnectedNodes = nodeCount;
+        }
+
         return true;
     }
 
@@ -2830,6 +2838,12 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // return very quickly.
             connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::PONG, nonce));
         }
+        // Used for logging purposes, update the mean block height across connected nodes
+        double meanHeights; int nodeCount;
+        if (connman->StoreConnectedNodesBlockHeights(chainActive.Height(), meanHeights, nodeCount)) {
+            meanBlockHeightConnectedNodes = meanHeights;
+            estimatedConnectedNodes = nodeCount;
+        }
         return true;
     }
 
@@ -2958,6 +2972,36 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     if (strCommand == NetMsgType::NOTFOUND) {
         // We do not care about the NOTFOUND message, but logging an Unknown Command
         // message would be undesirable as we transmit it ourselves.
+        return true;
+    }
+
+    if (strCommand == "xbridge") {
+        static std::set<uint256> seenXBridgePackets;
+        std::vector<unsigned char> raw;
+        vRecv >> raw;
+
+        // Top-level validation checks
+        if (raw.size() < (20 + sizeof(time_t))) {
+            // bad packet, small penalty (don't relay)
+            LOCK(cs_main);
+            Misbehaving(pfrom->GetId(), 10);
+            return true;
+        }
+
+        uint256 hash = Hash(raw.begin(), raw.end());
+        if (seenXBridgePackets.count(hash))
+            return true; // already seen
+        seenXBridgePackets.insert(hash);
+        if (seenXBridgePackets.size() > 350000)
+            seenXBridgePackets.clear(); // mem mgmt, ~12MB (32bytes * 350k)
+
+        // Relay xbridge packets
+        connman->ForEachNode([&](CNode* pnode) {
+            if (!pnode->fSuccessfullyConnected)
+                return;
+            connman->PushMessage(pnode, msgMaker.Make("xbridge", raw));
+        });
+
         return true;
     }
 

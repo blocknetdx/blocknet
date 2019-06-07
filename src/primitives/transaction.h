@@ -267,7 +267,7 @@ class CTransaction
 {
 public:
     // Default transaction version.
-    static const int32_t CURRENT_VERSION=2;
+    static const int32_t CURRENT_VERSION=1;
 
     // Changing the default transaction version requires a two step process: first
     // adapting relay policy by bumping MAX_STANDARD_VERSION, and then later date
@@ -333,6 +333,13 @@ public:
     bool IsCoinBase() const
     {
         return (vin.size() == 1 && vin[0].prevout.IsNull());
+    }
+
+    // ppcoin: PoS the coin stake transaction is marked with the first output empty
+    bool IsCoinStake() const
+    {
+        return (vin.size() == 1 && !vin[0].prevout.IsNull() && vout.size() >= 2
+                  && vout[0].nValue == 0 && vout[0].scriptPubKey.empty());
     }
 
     friend bool operator==(const CTransaction& a, const CTransaction& b)

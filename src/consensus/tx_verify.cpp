@@ -4,6 +4,7 @@
 
 #include <consensus/tx_verify.h>
 
+#include <coinvalidator.h>
 #include <consensus/consensus.h>
 #include <primitives/transaction.h>
 #include <script/interpreter.h>
@@ -180,19 +181,17 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-txouttotal-toolarge");
     }
 
-    // Check for duplicate inputs - note that this check is slow so we skip it in CheckBlock
-    if (fCheckDuplicateInputs) {
+    // TODO Blocknet Always check for duplicates
         std::set<COutPoint> vInOutPoints;
         for (const auto& txin : tx.vin)
         {
             if (!vInOutPoints.insert(txin.prevout).second)
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-inputs-duplicate");
         }
-    }
 
-    if (tx.IsCoinBase())
+    if (tx.IsCoinBase() || tx.IsCoinStake())
     {
-        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 100)
+        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > (tx.IsCoinBase() ? 100 : 150))
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
     }
     else
@@ -205,7 +204,8 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
     return true;
 }
 
-bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight, CAmount& txfee)
+bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, const CCoinsViewCache& inputs, int nSpendHeight,
+        const Consensus::Params & consensusParams, CAmount& txfee)
 {
     // are the actual inputs available?
     if (!inputs.HaveInputs(tx)) {
@@ -219,8 +219,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         const Coin& coin = inputs.AccessCoin(prevout);
         assert(!coin.IsSpent());
 
-        // If prev is coinbase, check that it's matured
-        if (coin.IsCoinBase() && nSpendHeight - coin.nHeight < COINBASE_MATURITY) {
+        // If prev is coinbase or coinstake, check that it's matured. Note coin.IsCoinBase() also returns true for coinstake
+        if (coin.IsCoinBase() && nSpendHeight - coin.nHeight < consensusParams.coinMaturity) {
             return state.Invalid(false,
                 REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                 strprintf("tried to spend coinbase at depth %d", nSpendHeight - coin.nHeight));
@@ -231,6 +231,26 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         if (!MoneyRange(coin.out.nValue) || !MoneyRange(nValueIn)) {
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-inputvalues-outofrange");
         }
+    }
+
+    // TODO Blocknet review subsidy check here
+    if (tx.IsCoinStake()) { // handle PoS coinstakes
+        const CAmount value_out = tx.GetValueOut();
+        const CAmount subsidy = consensusParams.GetBlockSubsidy(nSpendHeight, consensusParams);
+        const CAmount minted = value_out - nValueIn < 0 ? 0 : value_out - nValueIn;
+        if (minted > subsidy) {
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-reward-high", false,
+                             strprintf("value in (%s) < value out (%s)", FormatMoney(nValueIn), FormatMoney(value_out - subsidy)));
+        }
+
+        // Tally transaction fees
+        const CAmount txfee_aux = nValueIn + subsidy - value_out;
+        if (!MoneyRange(txfee_aux)) {
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-fee-outofrange");
+        }
+
+        txfee = txfee_aux;
+        return true;
     }
 
     const CAmount value_out = tx.GetValueOut();

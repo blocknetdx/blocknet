@@ -17,8 +17,9 @@
 template<unsigned int BITS>
 class base_blob
 {
-protected:
+public:
     static constexpr int WIDTH = BITS / 8;
+protected:
     uint8_t data[WIDTH];
 public:
     base_blob()
@@ -141,6 +142,38 @@ inline uint256 uint256S(const char *str)
 inline uint256 uint256S(const std::string& str)
 {
     uint256 rv;
+    rv.SetHex(str);
+    return rv;
+}
+
+/** 512-bit opaque blob.
+ * @note This type is called uint512 for historical reasons only. It is an
+ * opaque blob of 512 bits and has no integer operations. Use arith_uint512 if
+ * those are required.
+ */
+class uint512 : public base_blob<512> {
+public:
+    uint512() {}
+    explicit uint512(const std::vector<unsigned char>& vch) : base_blob<512>(vch) {}
+};
+
+/* uint512 from const char *.
+ * This is a separate function because the constructor uint512(const char*) can result
+ * in dangerously catching uint512(0).
+ */
+inline uint512 uint512S(const char *str)
+{
+    uint512 rv;
+    rv.SetHex(str);
+    return rv;
+}
+/* uint512 from std::string.
+ * This is a separate function because the constructor uint512(const std::string &str) can result
+ * in dangerously catching uint512(0) via std::string(const char*).
+ */
+inline uint512 uint512S(const std::string& str)
+{
+    uint512 rv;
     rv.SetHex(str);
     return rv;
 }

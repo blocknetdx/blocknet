@@ -227,6 +227,21 @@ public:
     //! (memory only) Maximum nTime in the chain up to and including this block.
     unsigned int nTimeMax;
 
+    // ppcoin: PoS specific fields
+    uint64_t nStakeModifier;             // hash modifier for proof-of-stake
+    COutPoint prevoutStake;
+    uint256 hashProofOfStake;
+    int64_t nMint;
+    int64_t nMoneySupply;
+    unsigned int nFlags;
+    CAmount nStakeAmount;
+    uint256 hashStakeBlock;
+    enum {
+        BLOCK_PROOF_OF_STAKE = (1 << 0), // is proof-of-stake block
+        BLOCK_STAKE_ENTROPY = (1 << 1),  // entropy bit for stake modifier
+        BLOCK_STAKE_MODIFIER = (1 << 2), // regenerated stake modifier
+    };
+
     void SetNull()
     {
         phashBlock = nullptr;
@@ -248,6 +263,16 @@ public:
         nTime          = 0;
         nBits          = 0;
         nNonce         = 0;
+
+        // ppcoin: PoS
+        nMint                  = 0;
+        nMoneySupply           = 0;
+        nFlags                 = 0;
+        nStakeModifier         = 0;
+        prevoutStake.SetNull();
+        hashProofOfStake.SetNull();
+        nStakeAmount           = 0;
+        hashStakeBlock.SetNull();
     }
 
     CBlockIndex()
@@ -264,6 +289,9 @@ public:
         nTime          = block.nTime;
         nBits          = block.nBits;
         nNonce         = block.nNonce;
+        prevoutStake   = { block.hashStake, block.nStakeIndex };
+        nStakeAmount   = block.nStakeAmount;
+        hashStakeBlock = block.hashStakeBlock;
     }
 
     CDiskBlockPos GetBlockPos() const {
@@ -294,6 +322,10 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.hashStake      = prevoutStake.hash;
+        block.nStakeIndex    = prevoutStake.n;
+        block.nStakeAmount   = nStakeAmount;
+        block.hashStakeBlock = hashStakeBlock;
         return block;
     }
 
@@ -374,6 +406,34 @@ public:
     //! Efficiently find an ancestor of this block.
     CBlockIndex* GetAncestor(int height);
     const CBlockIndex* GetAncestor(int height) const;
+
+    // ppcoin: PoS
+    void SetProofOfStake() {
+        nFlags |= BLOCK_PROOF_OF_STAKE;
+    }
+    bool IsProofOfStake() {
+        return nFlags & BLOCK_PROOF_OF_STAKE;
+    }
+    bool SetStakeEntropyBit() {
+        unsigned int ebit = (UintToArith256(GetBlockHash()).Get64()) & 1;
+        if (ebit > 1)
+            return false;
+        nFlags |= (ebit ? BLOCK_STAKE_ENTROPY : 0);
+        return true;
+    }
+    unsigned int GetStakeEntropyBit() const {
+        const auto a = UintToArith256(GetBlockHash());
+        unsigned int ebit = (a.Get64() & 1);
+        return ebit;
+    }
+    void SetStakeModifier(uint64_t modifer, bool didGenStakeModifer) {
+        nStakeModifier = modifer;
+        if (didGenStakeModifer)
+            nFlags |= BLOCK_STAKE_MODIFIER;
+    }
+    bool GeneratedStakeModifier() const {
+        return nFlags & BLOCK_STAKE_MODIFIER;
+    }
 };
 
 arith_uint256 GetBlockProof(const CBlockIndex& block);
@@ -422,6 +482,18 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+
+        // ppcoin: PoS
+        READWRITE(nMint);
+        READWRITE(nMoneySupply);
+        READWRITE(nFlags);
+        READWRITE(nStakeModifier);
+        if (IsProofOfStake()) { // TODO Blocknet PoS do we need to store these PoS fields on the index?
+            READWRITE(prevoutStake);
+            READWRITE(nStakeAmount);
+            READWRITE(hashStakeBlock);
+            READWRITE(hashProofOfStake);
+        }
     }
 
     uint256 GetBlockHash() const

@@ -83,7 +83,7 @@ static const int MAX_SCRIPTCHECK_THREADS = 16;
 /** -par default (number of script-checking threads, 0 = auto) */
 static const int DEFAULT_SCRIPTCHECK_THREADS = 0;
 /** Number of blocks that can be requested at any given time from a single peer. */
-static const int MAX_BLOCKS_IN_TRANSIT_PER_PEER = 16;
+static const int MAX_BLOCKS_IN_TRANSIT_PER_PEER = 2000;
 /** Timeout in seconds during which a peer must stall block download progress before being disconnected. */
 static const unsigned int BLOCK_STALLING_TIMEOUT = 2;
 /** Number of headers sent in one getheaders result. We rely on the assumption that if a peer sends
@@ -117,7 +117,7 @@ static const int64_t MAX_FEE_ESTIMATION_TIP_AGE = 3 * 60 * 60;
 /** Default for -permitbaremultisig */
 static const bool DEFAULT_PERMIT_BAREMULTISIG = true;
 static const bool DEFAULT_CHECKPOINTS_ENABLED = true;
-static const bool DEFAULT_TXINDEX = false;
+static const bool DEFAULT_TXINDEX = true;
 static const unsigned int DEFAULT_BANSCORE_THRESHOLD = 100;
 /** Default for -persistmempool */
 static const bool DEFAULT_PERSIST_MEMPOOL = true;
@@ -152,6 +152,7 @@ extern CTxMemPool mempool;
 extern std::atomic_bool g_is_mempool_loaded;
 typedef std::unordered_map<uint256, CBlockIndex*, BlockHasher> BlockMap;
 extern BlockMap& mapBlockIndex GUARDED_BY(cs_main);
+extern std::map<int, CBlockIndex*> mapHeaderIndex GUARDED_BY(cs_main);
 extern const std::string strMessageMagic;
 extern Mutex g_best_block_mutex;
 extern std::condition_variable g_best_block_cv;
@@ -407,6 +408,9 @@ bool TestBlockValidity(CValidationState& state, const CChainParams& chainparams,
 /** Check whether witness commitments are required for block. */
 bool IsWitnessEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 
+/** Check whether network fees can be spent. */
+bool IsNetworkFeesEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
+
 /** Check whether NULLDUMMY (BIP 147) has activated. */
 bool IsNullDummyEnabled(const CBlockIndex* pindexPrev, const Consensus::Params& params);
 
@@ -501,5 +505,13 @@ inline bool IsBlockPruned(const CBlockIndex* pblockindex)
 {
     return (fHavePruned && !(pblockindex->nStatus & BLOCK_HAVE_DATA) && pblockindex->nTx > 0);
 }
+
+/** Determining the block sync progress */
+double SyncProgress(const int activeChainHeight);
+
+// TODO Blocknet atomic mapProofOfStake
+extern std::map<uint256, uint256> mapProofOfStake;
+extern std::atomic<double> meanBlockHeightConnectedNodes;
+extern std::atomic<int> estimatedConnectedNodes;
 
 #endif // BITCOIN_VALIDATION_H

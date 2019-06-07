@@ -7,6 +7,8 @@
 #define BITCOIN_PRIMITIVES_BLOCK_H
 
 #include <primitives/transaction.h>
+#include <pubkey.h>
+#include <script/standard.h>
 #include <serialize.h>
 #include <uint256.h>
 
@@ -27,6 +29,10 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    uint256 hashStake;
+    uint32_t nStakeIndex;
+    int64_t nStakeAmount;
+    uint256 hashStakeBlock;
 
     CBlockHeader()
     {
@@ -43,6 +49,10 @@ public:
         READWRITE(nTime);
         READWRITE(nBits);
         READWRITE(nNonce);
+        READWRITE(hashStake);
+        READWRITE(nStakeIndex);
+        READWRITE(nStakeAmount);
+        READWRITE(hashStakeBlock);
     }
 
     void SetNull()
@@ -53,6 +63,10 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        hashStake.SetNull();
+        nStakeIndex = 0;
+        nStakeAmount = 0;
+        hashStakeBlock.SetNull();
     }
 
     bool IsNull() const
@@ -74,6 +88,7 @@ class CBlock : public CBlockHeader
 public:
     // network and disk
     std::vector<CTransactionRef> vtx;
+    std::vector<unsigned char> vchBlockSig;
 
     // memory only
     mutable bool fChecked;
@@ -95,12 +110,15 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITEAS(CBlockHeader, *this);
         READWRITE(vtx);
+        if (vtx.size() > 1 && vtx[1]->IsCoinStake())
+            READWRITE(vchBlockSig);
     }
 
     void SetNull()
     {
         CBlockHeader::SetNull();
         vtx.clear();
+        vchBlockSig.clear();
         fChecked = false;
     }
 
@@ -113,10 +131,63 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.hashStake      = hashStake;
+        block.nStakeIndex    = nStakeIndex;
+        block.nStakeAmount   = nStakeAmount;
+        block.hashStakeBlock = hashStakeBlock;
         return block;
     }
 
     std::string ToString() const;
+
+    // ppcoin: PoS
+    bool IsProofOfStake() const {
+        return (vtx.size() > 1 && vtx[1]->IsCoinStake());
+    }
+
+    /**
+     * Pubkey used to sign the stake input must match the block signature.
+     * @param stakeScript
+     * @return
+     */
+    bool VerifySig(const CScript & stakeScript) const {
+        if (vchBlockSig.empty())
+            return false;
+
+        const auto & txin = vtx[1]->vin[0];
+        std::vector<std::vector<unsigned char> > vSolutions;
+        txnouttype type = Solver(stakeScript, vSolutions);
+
+        if (type == TX_PUBKEY) {
+            CPubKey pubkey(vSolutions[0]);
+            if (!pubkey.IsValid())
+                return false;
+            return pubkey.Verify(GetHash(), vchBlockSig);
+        }
+        else if (type == TX_PUBKEYHASH) {
+            // Get pubkey from scriptsig
+            CScript::const_iterator pc = txin.scriptSig.begin();
+            std::vector<unsigned char> data;
+            while (pc < txin.scriptSig.end()) {
+                opcodetype opcode;
+                if (!txin.scriptSig.GetOp(pc, opcode, data))
+                    break;
+                if (data.size() == CPubKey::COMPRESSED_PUBLIC_KEY_SIZE
+                      || data.size() == CPubKey::PUBLIC_KEY_SIZE)
+                    break;
+            }
+            if (data.size() != CPubKey::COMPRESSED_PUBLIC_KEY_SIZE
+                && data.size() != CPubKey::PUBLIC_KEY_SIZE) {
+                return false;
+            }
+            CPubKey pubkey(data);
+            if (!pubkey.IsValid())
+                return false;
+            return pubkey.Verify(GetHash(), vchBlockSig);
+        }
+
+        return false;
+    }
 };
 
 /** Describes a place in the block chain to another node such that if the

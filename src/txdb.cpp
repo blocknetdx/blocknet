@@ -7,6 +7,7 @@
 
 #include <chainparams.h>
 #include <hash.h>
+#include <kernel.h>
 #include <random.h>
 #include <pow.h>
 #include <shutdown.h>
@@ -274,7 +275,21 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
 
-                if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams))
+                // ppcoin: PoS
+                pindexNew->nMint            = diskindex.nMint;
+                pindexNew->nMoneySupply     = diskindex.nMoneySupply;
+                pindexNew->nFlags           = diskindex.nFlags;
+                pindexNew->nStakeModifier   = diskindex.nStakeModifier;
+                pindexNew->prevoutStake     = diskindex.prevoutStake;
+                pindexNew->nStakeAmount     = diskindex.nStakeAmount;
+                pindexNew->hashStakeBlock   = diskindex.hashStakeBlock;
+                pindexNew->hashProofOfStake = diskindex.hashProofOfStake;
+
+                if (IsProofOfStake(pindexNew->nHeight, consensusParams)) { // Blocknet PoS check work
+                    arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(pindexNew->nBits);
+                    if (!stakeTargetHit(pindexNew->hashProofOfStake, pindexNew->nStakeAmount, bnTargetPerCoinDay))
+                        return error("%s: PoS index failed validation: %s", __func__, pindexNew->ToString());
+                } else if (!IsProofOfStake(pindexNew->nHeight, consensusParams) && !CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams))
                     return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
 
                 pcursor->Next();

@@ -5,11 +5,13 @@
 #ifndef BITCOIN_INDEX_BASE_H
 #define BITCOIN_INDEX_BASE_H
 
+#include <chainparams.h>
 #include <dbwrapper.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
 #include <threadinterrupt.h>
 #include <uint256.h>
+#include <validation.h>
 #include <validationinterface.h>
 
 class CBlockIndex;
@@ -40,6 +42,9 @@ private:
     /// from false to true once, after which point this starts processing
     /// ValidationInterface notifications to stay in sync.
     std::atomic<bool> m_synced{false};
+
+    /// Stores the indexer started state
+    std::atomic<bool> m_started{false};
 
     /// The last block in the chain that the index is in sync with.
     std::atomic<const CBlockIndex*> m_best_block_index{nullptr};
@@ -93,6 +98,24 @@ public:
 
     /// Stops the instance from staying in sync with blockchain updates.
     void Stop();
+
+    /// Returns the started state
+    bool Started() {
+        return m_started;
+    }
+
+    /// TODO Blocknet Sync index on-demand
+    bool Sync(CChain & chain, CBlockIndex *pindex = nullptr, const Consensus::Params & chainparams = Params().GetConsensus()) {
+        if (!pindex)
+            return true;
+        CBlock block;
+        if (!ReadBlockFromDisk(block, pindex, chainparams))
+            return false;
+        if (!WriteBlock(block, pindex))
+            return false;
+        chain.SetTip(pindex);
+        return true;
+    }
 };
 
 #endif // BITCOIN_INDEX_BASE_H

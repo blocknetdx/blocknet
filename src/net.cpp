@@ -2766,3 +2766,31 @@ uint64_t CConnman::CalculateKeyedNetGroup(const CAddress& ad) const
 
     return GetDeterministicRandomizer(RANDOMIZER_ID_NETGROUP).Write(vchNetGroup.data(), vchNetGroup.size()).Finalize();
 }
+
+bool CConnman::StoreConnectedNodesBlockHeights(const int latestChainHeight, double & meanBlockHeightConnectedNodes, int & estimatedConnectedNodes) {
+    auto currentTime = GetAdjustedTime();
+
+    // Get estimated elapsed time since last progress update, if previous check more than 120 seconds
+    // ago then proceed.
+    auto elapsedTime = currentTime-lastLookupTimeBlockHeights;
+    if (elapsedTime < 120)
+        return false;
+
+    // Set node time to current time
+    lastLookupTimeBlockHeights = currentTime;
+
+    int nodeBlocks = 0;
+    int nodeCount = 0;
+    ForEachNode([latestChainHeight,&nodeBlocks,&nodeCount](CNode *pnode) {
+        // ignore bad nodes
+        if (!pnode->fSuccessfullyConnected || pnode->nStartingHeight <= 0 || pnode->nStartingHeight < latestChainHeight)
+            return;
+        ++nodeCount;
+        nodeBlocks += pnode->nStartingHeight;
+    });
+
+    meanBlockHeightConnectedNodes = static_cast<double>(nodeBlocks)/static_cast<double>(nodeCount);
+    estimatedConnectedNodes = nodeCount;
+
+    return true;
+}

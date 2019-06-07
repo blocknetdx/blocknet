@@ -56,9 +56,9 @@ static const unsigned int MAX_PROTOCOL_MESSAGE_LENGTH = 4 * 1000 * 1000;
 /** Maximum length of strSubVer in `version` message */
 static const unsigned int MAX_SUBVERSION_LENGTH = 256;
 /** Maximum number of automatic outgoing nodes */
-static const int MAX_OUTBOUND_CONNECTIONS = 8;
+static const int MAX_OUTBOUND_CONNECTIONS = 12;
 /** Maximum number of addnode outgoing nodes */
-static const int MAX_ADDNODE_CONNECTIONS = 8;
+static const int MAX_ADDNODE_CONNECTIONS = 16;
 /** -listen default */
 static const bool DEFAULT_LISTEN = true;
 /** -upnp default */
@@ -316,6 +316,9 @@ public:
     */
     int64_t PoissonNextSendInbound(int64_t now, int average_interval_seconds);
 
+    /** Calculate mean of connected nodes block heights */
+    bool StoreConnectedNodesBlockHeights(const int latestChainHeight, double & meanBlockHeightConnectedNodes, int & estimatedConnectedNodes);
+
 private:
     struct ListenSocket {
         SOCKET socket;
@@ -442,6 +445,9 @@ private:
     std::atomic_bool m_try_another_outbound_peer;
 
     std::atomic<int64_t> m_next_send_inv_to_incoming{0};
+
+    /** Used for info purposes, stores the last lookup time of the mean block height across connected nodes */
+    std::atomic<int64_t> lastLookupTimeBlockHeights{0};
 
     friend struct CConnmanTest;
 };

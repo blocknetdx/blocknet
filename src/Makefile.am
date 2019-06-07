@@ -117,6 +117,7 @@ BITCOIN_CORE_H = \
   checkqueue.h \
   clientversion.h \
   coins.h \
+  coinvalidator.h \
   compat.h \
   compat/assumptions.h \
   compat/byteswap.h \
@@ -162,6 +163,7 @@ BITCOIN_CORE_H = \
   policy/policy.h \
   policy/rbf.h \
   pow.h \
+  kernel.h \
   protocol.h \
   psbt.h \
   random.h \
@@ -267,6 +269,7 @@ libbitcoin_server_a_SOURCES = \
   policy/policy.cpp \
   policy/rbf.cpp \
   pow.cpp \
+  kernel.cpp \
   rest.cpp \
   rpc/blockchain.cpp \
   rpc/mining.cpp \
@@ -351,7 +354,20 @@ crypto_libbitcoin_crypto_base_a_SOURCES = \
   crypto/sha512.cpp \
   crypto/sha512.h \
   crypto/siphash.cpp \
-  crypto/siphash.h
+  crypto/siphash.h \
+  crypto/blake.c \
+  crypto/sph_blake.h \
+  crypto/bmw.c \
+  crypto/sph_bmw.h \
+  crypto/groestl.c \
+  crypto/sph_groestl.h \
+  crypto/jh.c \
+  crypto/sph_jh.h \
+  crypto/keccak.c \
+  crypto/sph_keccak.h \
+  crypto/skein.c \
+  crypto/sph_skein.h \
+  crypto/sph_types.h
 
 if USE_ASM
 crypto_libbitcoin_crypto_base_a_SOURCES += crypto/sha256_sse4.cpp
@@ -448,6 +464,7 @@ libbitcoin_util_a_SOURCES = \
   support/lockedpool.cpp \
   chainparamsbase.cpp \
   clientversion.cpp \
+  coinvalidator.cpp \
   compat/glibc_sanity.cpp \
   compat/glibcxx_sanity.cpp \
   compat/strnlen.cpp \

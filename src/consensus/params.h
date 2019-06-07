@@ -7,9 +7,11 @@
 #define BITCOIN_CONSENSUS_PARAMS_H
 
 #include <uint256.h>
+#include <amount.h>
 #include <limits>
 #include <map>
 #include <string>
+#include <functional>
 
 namespace Consensus {
 
@@ -18,6 +20,7 @@ enum DeploymentPos
     DEPLOYMENT_TESTDUMMY,
     DEPLOYMENT_CSV, // Deployment of BIP68, BIP112, and BIP113.
     DEPLOYMENT_SEGWIT, // Deployment of BIP141, BIP143, and BIP147.
+    DEPLOYMENT_NETWORKFEES, // Deployment of network fees
     // NOTE: Also add new deployments to VersionBitsDeploymentInfo in versionbits.cpp
     MAX_VERSION_BITS_DEPLOYMENTS
 };
@@ -75,6 +78,12 @@ struct Params {
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     uint256 nMinimumChainWork;
     uint256 defaultAssumeValid;
+    int lastPOWBlock;
+    std::function<CAmount(const int&, const Params &)> GetBlockSubsidy;
+    /** Proof of stake parameters */
+    int stakeMinAge;
+    int stakingModiferV2Block;
+    int coinMaturity;
 };
 } // namespace Consensus
 
