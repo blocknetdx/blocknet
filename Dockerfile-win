@@ -1,0 +1,62 @@
+FROM ubuntu:bionic
+
+ARG cores=8
+ENV ecores=$cores
+
+RUN apt update \
+  && apt install -y --no-install-recommends \
+     software-properties-common \
+     ca-certificates \
+     wget curl git python vim \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN add-apt-repository ppa:bitcoin/bitcoin \
+  && apt update \
+  && apt install -y --no-install-recommends \
+     build-essential libtool autotools-dev bsdmainutils \
+     libevent-dev autoconf automake pkg-config libssl-dev \
+     libdb4.8-dev libdb4.8++-dev \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# mingw
+RUN apt update \
+  && apt install -y --no-install-recommends \
+     g++-mingw-w64-x86-64 nsis zip \
+  && update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV PROJECTDIR=/opt/blocknetdx/bitcoin
+ENV BASEPREFIX=$PROJECTDIR/depends
+ENV DISTDIR=/opt/blocknetdx/dist
+ENV HOST=x86_64-w64-mingw32
+
+# Download depends
+RUN mkdir -p $PROJECTDIR \
+  && cd $PROJECTDIR \
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-v18-win-bionic.tar.gz \
+  && [ "$(printf '2541c27c8aabc19dc52582c2ed69864cbace08ba6585722d4b2a6e51632eddef depends-v18-win-bionic.tar.gz' | sha256sum -c)" = "depends-v18-win-bionic.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+
+# Copy source files
+#RUN cd /opt/blocknetdx \
+#  && git clone --depth 1 --branch blocknet https://github.com/blocknetdx/bitcoin.git tmp \
+#  && mv tmp/* bitcoin/
+COPY . $PROJECTDIR/
+
+# Build source
+RUN mkdir -p $DISTDIR \
+  && cd $PROJECTDIR \
+  && rm -r $BASEPREFIX \
+  && tar xzvf depends-v18-win-bionic.tar.gz \
+  && chmod +x ./autogen.sh; sync \
+  && ./autogen.sh \
+  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CFLAGS="-g -O0" CXXFLAGS="-g -O0 -Wno-deprecated -Wa,-mbig-obj" --disable-maintainer-mode --disable-dependency-tracking --enable-debug --prefix=/ \
+  && make clean \
+  && echo "Building with cores: $ecores" \
+  && make -j$ecores \
+  && make install DESTDIR=$DISTDIR \
+  && make clean
+
+WORKDIR /opt/blocknetdx/dist
+
+# Port, RPC, Test Port, Test RPC
+EXPOSE 41412 41414 41474 41419
