@@ -969,9 +969,10 @@ void App::updateActiveWallets()
         const uint32_t maxPendingJobs = static_cast<uint32_t>(rpcThreads);
         uint32_t pendingJobs = 0;
         uint32_t allJobs = static_cast<uint32_t>(conns.size());
+        boost::thread_group tg;
 
-        auto walletCheck = boost::async(boost::launch::async, [&conns, &muJobs, &allJobs, &pendingJobs,
-                                                               maxPendingJobs, &validConnections, &badConnections]() {
+        // Synchronize all connection checks
+        try {
             while (true) {
                 boost::this_thread::interruption_point();
                 if (ShutdownRequested())
@@ -988,8 +989,8 @@ void App::updateActiveWallets()
                     WalletConnectorPtr conn = conns.back();
                     conns.pop_back();
                     // Asynchronously check connection
-                    boost::async(boost::launch::async, [conn, &muJobs, &allJobs, &pendingJobs,
-                                                        &validConnections, &badConnections]() {
+                    tg.create_thread([conn, &muJobs, &allJobs, &pendingJobs, &validConnections, &badConnections]() {
+                        RenameThread("blocknetdx-xbridgewalletcheck");
                         if (ShutdownRequested())
                             return;
                         // Check that wallet is reachable
@@ -1019,12 +1020,10 @@ void App::updateActiveWallets()
 
                 boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
             }
-        });
-
-        // Synchronize all connection checks
-        try {
-            walletCheck.get();
+            tg.join_all();
         } catch (...) { // bail on error (possible thread error etc)
+            tg.interrupt_all();
+            tg.join_all();
             LOCK(m_updatingWalletsLock);
             m_updatingWallets = false;
             WARN() << "Potential issue with active xbridge wallets checks (unknown threading error). If issue persists please notify the dev team";
