@@ -192,7 +192,7 @@ public:
     }
 
     bool SignBlock(const CKeyStore& keystore);
-    bool CheckBlockSignature() const;
+    bool CheckBlockSignature(const std::function<bool(const uint256 & prevoutHash, const int & prevoutN, CScript & prevoutScriptPubKey)> & getTx) const;
 
     std::pair<COutPoint, unsigned int> GetProofOfStake() const
     {

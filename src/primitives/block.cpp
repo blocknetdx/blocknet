@@ -6,11 +6,13 @@
 #include "primitives/block.h"
 
 #include "hash.h"
+#include "pubkey.h"
 #include "script/standard.h"
 #include "script/sign.h"
 #include "tinyformat.h"
 #include "utilstrencodings.h"
 #include "util.h"
+#include "transaction.h"
 
 uint256 CBlockHeader::GetHash() const
 {
@@ -214,7 +216,7 @@ bool CBlock::SignBlock(const CKeyStore& keystore)
     return false;
 }
 
-bool CBlock::CheckBlockSignature() const
+bool CBlock::CheckBlockSignature(const std::function<bool(const uint256 & prevoutHash, const int & prevoutN, CScript & prevoutScriptPubKey)> & getTx) const
 {
     if (IsProofOfWork())
         return vchBlockSig.empty();
@@ -222,38 +224,50 @@ bool CBlock::CheckBlockSignature() const
     std::vector<valtype> vSolutions;
     txnouttype whichType;
 
-    const CTxOut& txout = vtx[1].vout[1];
-
-    if (!Solver(txout.scriptPubKey, whichType, vSolutions))
+    if (!Solver(vtx[1].vout[1].scriptPubKey, whichType, vSolutions))
         return false;
+
+    auto pubkeyVerify = [](valtype solution, uint256 hash, std::vector<unsigned char> sig) -> bool {
+        CPubKey pubkey(solution);
+        if (!pubkey.IsValid())
+            return false;
+        if (sig.empty())
+            return false;
+        return pubkey.Verify(hash, sig);
+    };
 
     if (whichType == TX_PUBKEY)
     {
-        valtype& vchPubKey = vSolutions[0];
-        CPubKey pubkey(vchPubKey);
-        if (!pubkey.IsValid())
-          return false;
-
-        if (vchBlockSig.empty())
-            return false;
-
-        return pubkey.Verify(GetHash(), vchBlockSig);
+        return pubkeyVerify(vSolutions[0], GetHash(), vchBlockSig);
     }
     else if(whichType == TX_PUBKEYHASH)
     {
-        valtype& vchPubKey = vSolutions[0];
-        CKeyID keyID;
-        keyID = CKeyID(uint160(vchPubKey));
-        CPubKey pubkey(vchPubKey);
-
-        if (!pubkey.IsValid())
-          return false;
-
-        if (vchBlockSig.empty())
-            return false;
-
-        return pubkey.Verify(GetHash(), vchBlockSig);
-
+        // Get pubkey from scriptsig
+        const auto & txin = vtx[1].vin[0];
+        CScript::const_iterator pc = txin.scriptSig.begin();
+        std::vector<unsigned char> data;
+        while (pc < txin.scriptSig.end()) {
+            opcodetype opcode;
+            if (!txin.scriptSig.GetOp(pc, opcode, data))
+                break;
+            if (data.size() == 33 || data.size() == 65)
+                break;
+        }
+        if (data.size() == 33 || data.size() == 65) // if vin is p2pkh
+            return pubkeyVerify(data, GetHash(), vchBlockSig);
+        else { // if vin is p2pk
+            CScript prevoutSPK;
+            // If bad transaction or bad prev tx then reject
+            if (!getTx(txin.prevout.hash, txin.prevout.n, prevoutSPK))
+                return false;
+            vSolutions.clear();
+            if (!Solver(prevoutSPK, whichType, vSolutions))
+                return false;
+            if (vSolutions.size() != 1)
+                return false;
+            return pubkeyVerify(vSolutions[0], GetHash(), vchBlockSig);
+        }
+        return false;
     }
 
     return false;
