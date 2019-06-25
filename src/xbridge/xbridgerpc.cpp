@@ -869,17 +869,24 @@ bool signRawTransaction(const std::string & rpcuser,
                                "signrawtransaction", params);
 
         // Parse reply
-        const Value & result = find_value(reply, "result");
-        const Value & error  = find_value(reply, "error");
+        Value result = find_value(reply, "result");
+        const Value & error = find_value(reply, "error");
 
         if (error.type() != null_type)
         {
-            // Error
-            LOG() << "error: " << write_string(error, false);
-            // int code = find_value(error.get_obj(), "code").get_int();
-            return false;
+            // For newer bitcoin clients try signrawtransactionwithwallet
+            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "signrawtransactionwithwallet", params);
+
+            const Value & error2 = find_value(reply, "error");
+            if (error2.type() != null_type) {
+                LOG() << "error: " << write_string(error, false) << " " << write_string(error2, false);
+                return false;
+            }
+
+            result = find_value(reply, "result");
         }
-        else if (result.type() != obj_type)
+
+        if (result.type() != obj_type)
         {
             // Result
             LOG() << "result not an object " <<
