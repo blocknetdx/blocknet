@@ -2783,13 +2783,13 @@ bool CConnman::StoreConnectedNodesBlockHeights(const int latestChainHeight, doub
     int nodeCount = 0;
     ForEachNode([latestChainHeight,&nodeBlocks,&nodeCount](CNode *pnode) {
         // ignore bad nodes
-        if (!pnode->fSuccessfullyConnected || pnode->nStartingHeight <= 0 || pnode->nStartingHeight < latestChainHeight)
+        if (!pnode->fSuccessfullyConnected || pnode->nStartingHeight <= 0)
             return;
         ++nodeCount;
         nodeBlocks += pnode->nStartingHeight;
     });
 
-    meanBlockHeightConnectedNodes = static_cast<double>(nodeBlocks)/static_cast<double>(nodeCount);
+    meanBlockHeightConnectedNodes = nodeCount == 0 ? 0.0 : static_cast<double>(nodeBlocks)/static_cast<double>(nodeCount);
     estimatedConnectedNodes = nodeCount;
 
     return true;

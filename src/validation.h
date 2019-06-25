@@ -14,10 +14,15 @@
 #include <coins.h>
 #include <crypto/common.h> // for ReadLE64
 #include <fs.h>
+#include <keystore.h>
+#include <key_io.h>
 #include <policy/feerate.h>
 #include <protocol.h> // For CMessageHeader::MessageStartChars
+#include <pubkey.h>
 #include <script/script_error.h>
+#include <script/standard.h>
 #include <sync.h>
+#include <util/strencodings.h>
 #include <versionbits.h>
 
 #include <algorithm>
@@ -513,5 +518,21 @@ double SyncProgress(const int activeChainHeight);
 extern std::map<uint256, uint256> mapProofOfStake;
 extern std::atomic<double> meanBlockHeightConnectedNodes;
 extern std::atomic<int> estimatedConnectedNodes;
+
+/**
+ * Pubkey used to sign the stake input must match the block signature.
+ * @param stakeScript
+ * @return
+ */
+bool VerifySig(const CBlock & block, const CScript & stakeScript);
+
+/**
+ * Produce the block signature required by the PoS protocol.
+ * @param block
+ * @param stakeScript
+ * @param keystore
+ * @return
+ */
+bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore);
 
 #endif // BITCOIN_VALIDATION_H

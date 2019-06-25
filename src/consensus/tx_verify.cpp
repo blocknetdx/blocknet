@@ -189,9 +189,9 @@ bool CheckTransaction(const CTransaction& tx, CValidationState &state, bool fChe
                 return state.DoS(100, false, REJECT_INVALID, "bad-txns-inputs-duplicate");
         }
 
-    if (tx.IsCoinBase() || tx.IsCoinStake())
+    if (tx.IsCoinBase())
     {
-        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > (tx.IsCoinBase() ? 100 : 150))
+        if (tx.vin[0].scriptSig.size() < 2 || tx.vin[0].scriptSig.size() > 150)
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
     }
     else

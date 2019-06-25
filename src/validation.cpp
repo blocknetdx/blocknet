@@ -12,6 +12,7 @@
 #include <chainparams.h>
 #include <checkpoints.h>
 #include <checkqueue.h>
+#include <coinvalidator.h>
 #include <consensus/consensus.h>
 #include <consensus/merkle.h>
 #include <consensus/tx_verify.h>
@@ -51,7 +52,6 @@
 
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/thread.hpp>
-#include "coinvalidator.h"
 
 #if defined(NDEBUG)
 # error "Bitcoin cannot be compiled without assertions."
@@ -2083,7 +2083,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                                block.vtx[0]->GetValueOut(), blockReward),
                                REJECT_INVALID, "bad-cb-amount");
     else if (pindex->nHeight > chainparams.GetConsensus().lastPOWBlock) { // PoS burn fees if fee consensus not set, prevent taking superblock leftovers)
-        bool isSuperblock = pindex->nHeight % 43200 == 0;
+        bool isSuperblock = pindex->nHeight % chainparams.GetConsensus().superblock == 0;
         CAmount expectedFees = (IsNetworkFeesEnabled(pindex->pprev, chainparams.GetConsensus()) && !isSuperblock ? nFees : -1*nFees);
         if (pindex->nMint > blockReward + expectedFees)
             return state.DoS(100, error("ConnectBlock(): reward pays too much (actual=%d vs limit=%d)",
@@ -3239,7 +3239,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         if (txStake->vout[txin.prevout.n].nValue != block.nStakeAmount || txStake->vout[txin.prevout.n].nValue <= 0) // check stake amount
             return state.DoS(100, false, REJECT_INVALID, "bad-stake-amount", false, "bad stake amount");
         // TODO Blocknet PoS verify that the stake input sig matches the signer of the block, i.e. staker must be the block signer
-        if (!block.VerifySig(txStake->vout[txin.prevout.n].scriptPubKey) && !block.VerifySig(block.vtx[1]->vout[1].scriptPubKey))
+        if (!VerifySig(block, txStake->vout[txin.prevout.n].scriptPubKey) && !VerifySig(block, block.vtx[1]->vout[1].scriptPubKey))
             return state.DoS(100, false, REJECT_INVALID, "bad-stake-signer", false, "bad block sig staker must be signer");
     }
 
@@ -5094,4 +5094,67 @@ double SyncProgress(const int activeChainHeight) {
     else if (syncPercent < 0)
         syncPercent = 0;
     return syncPercent;
+}
+
+bool VerifySig(const CBlock & block, const CScript & stakeScript) {
+    if (block.vchBlockSig.empty())
+        return false;
+
+    std::vector<std::vector<unsigned char> > vSolutions;
+    txnouttype type = Solver(stakeScript, vSolutions);
+
+    if (type == TX_PUBKEY) {
+        CPubKey pubkey(vSolutions[0]);
+        if (!pubkey.IsValid())
+            return false;
+        return pubkey.Verify(block.GetHash(), block.vchBlockSig);
+    }
+    else if (type == TX_PUBKEYHASH) {
+        // Get pubkey from scriptsig
+        const auto & txin = block.vtx[1]->vin[0];
+        CScript::const_iterator pc = txin.scriptSig.begin();
+        std::vector<unsigned char> data;
+        while (pc < txin.scriptSig.end()) {
+            opcodetype opcode;
+            if (!txin.scriptSig.GetOp(pc, opcode, data))
+                break;
+            if (data.size() == CPubKey::COMPRESSED_PUBLIC_KEY_SIZE
+                || data.size() == CPubKey::PUBLIC_KEY_SIZE)
+                break;
+        }
+        if (data.size() != CPubKey::COMPRESSED_PUBLIC_KEY_SIZE
+            && data.size() != CPubKey::PUBLIC_KEY_SIZE) {
+            return false;
+        }
+        CPubKey pubkey(data);
+        if (!pubkey.IsValid())
+            return false;
+        return pubkey.Verify(block.GetHash(), block.vchBlockSig);
+    }
+
+    return false;
+}
+
+bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore) {
+    // ppcoin: sign block
+    std::vector<std::vector<unsigned char>> vSolutions;
+    txnouttype whichType = Solver(stakeScript, vSolutions);
+
+    CKeyID keyID;
+    if (whichType == TX_PUBKEYHASH) {
+        keyID = CKeyID(uint160(vSolutions[0]));
+    } else if (whichType == TX_PUBKEY) {
+        keyID = CPubKey(vSolutions[0]).GetID();
+    } else {
+        return false; // unsupported type
+    }
+
+    CKey key;
+    if (!keystore.GetKey(keyID, key))
+        return false;
+
+    if (!key.Sign(block.GetHash(), block.vchBlockSig))
+        return false;
+
+    return true;
 }

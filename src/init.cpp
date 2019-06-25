@@ -23,6 +23,7 @@
 #include <httprpc.h>
 #include <interfaces/chain.h>
 #include <index/txindex.h>
+#include <kernel.h>
 #include <key.h>
 #include <validation.h>
 #include <miner.h>
@@ -397,6 +398,7 @@ void SetupServerArgs()
     gArgs.AddArg("-prune=<n>", "Pruning is not supported", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex", "Rebuild chain state and block index from the blk*.dat files on disk", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex-chainstate", "Rebuild chain state from the currently indexed blocks. When in pruning mode or if blocks on disk might be corrupted, use full -reindex instead.", false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-minstakeamount", strprintf("Only stakes UTXOs greater than or equal to this amount (default: %d)", 0), false, OptionsCategory::OPTIONS);
 #ifndef WIN32
     gArgs.AddArg("-sysperms", "Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)", false, OptionsCategory::OPTIONS);
 #else
@@ -1810,6 +1812,10 @@ bool AppInitMain(InitInterfaces& interfaces)
     if (!g_connman->Start(scheduler, connOptions)) {
         return false;
     }
+
+    // Start the staker
+    if (gArgs.GetBoolArg("-staking", true))
+        threadGroup.create_thread(&ThreadStakeMinter);
 
     // ********************************************************* Step 13: finished
 

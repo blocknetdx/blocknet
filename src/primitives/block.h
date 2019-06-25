@@ -7,8 +7,6 @@
 #define BITCOIN_PRIMITIVES_BLOCK_H
 
 #include <primitives/transaction.h>
-#include <pubkey.h>
-#include <script/standard.h>
 #include <serialize.h>
 #include <uint256.h>
 
@@ -144,50 +142,6 @@ public:
     bool IsProofOfStake() const {
         return (vtx.size() > 1 && vtx[1]->IsCoinStake());
     }
-
-    /**
-     * Pubkey used to sign the stake input must match the block signature.
-     * @param stakeScript
-     * @return
-     */
-    bool VerifySig(const CScript & stakeScript) const {
-        if (vchBlockSig.empty())
-            return false;
-
-        const auto & txin = vtx[1]->vin[0];
-        std::vector<std::vector<unsigned char> > vSolutions;
-        txnouttype type = Solver(stakeScript, vSolutions);
-
-        if (type == TX_PUBKEY) {
-            CPubKey pubkey(vSolutions[0]);
-            if (!pubkey.IsValid())
-                return false;
-            return pubkey.Verify(GetHash(), vchBlockSig);
-        }
-        else if (type == TX_PUBKEYHASH) {
-            // Get pubkey from scriptsig
-            CScript::const_iterator pc = txin.scriptSig.begin();
-            std::vector<unsigned char> data;
-            while (pc < txin.scriptSig.end()) {
-                opcodetype opcode;
-                if (!txin.scriptSig.GetOp(pc, opcode, data))
-                    break;
-                if (data.size() == CPubKey::COMPRESSED_PUBLIC_KEY_SIZE
-                      || data.size() == CPubKey::PUBLIC_KEY_SIZE)
-                    break;
-            }
-            if (data.size() != CPubKey::COMPRESSED_PUBLIC_KEY_SIZE
-                && data.size() != CPubKey::PUBLIC_KEY_SIZE) {
-                return false;
-            }
-            CPubKey pubkey(data);
-            if (!pubkey.IsValid())
-                return false;
-            return pubkey.Verify(GetHash(), vchBlockSig);
-        }
-
-        return false;
-    }
 };
 
 /** Describes a place in the block chain to another node such that if the
@@ -220,6 +174,130 @@ struct CBlockLocator
     bool IsNull() const
     {
         return vHave.empty();
+    }
+};
+
+class CBlockHeaderLegacy
+{
+public:
+    // header
+    int32_t nVersion;
+    uint256 hashPrevBlock;
+    uint256 hashMerkleRoot;
+    uint32_t nTime;
+    uint32_t nBits;
+    uint32_t nNonce;
+
+    CBlockHeaderLegacy()
+    {
+        SetNull();
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(this->nVersion);
+        READWRITE(hashPrevBlock);
+        READWRITE(hashMerkleRoot);
+        READWRITE(nTime);
+        READWRITE(nBits);
+        READWRITE(nNonce);
+    }
+
+    void SetNull()
+    {
+        nVersion = 0;
+        hashPrevBlock.SetNull();
+        hashMerkleRoot.SetNull();
+        nTime = 0;
+        nBits = 0;
+        nNonce = 0;
+    }
+
+    bool IsNull() const
+    {
+        return (nBits == 0);
+    }
+
+    uint256 GetHash() const;
+
+    int64_t GetBlockTime() const
+    {
+        return (int64_t)nTime;
+    }
+};
+
+
+class CBlockLegacy : public CBlockHeaderLegacy
+{
+public:
+    // network and disk
+    std::vector<CTransactionRef> vtx;
+    std::vector<unsigned char> vchBlockSig;
+
+    // memory only
+    mutable bool fChecked;
+
+    CBlockLegacy()
+    {
+        SetNull();
+    }
+
+    CBlockLegacy(const CBlockHeaderLegacy & header)
+    {
+        SetNull();
+        *(static_cast<CBlockHeaderLegacy*>(this)) = header;
+    }
+
+    CBlockLegacy(const CBlock & block)
+    {
+        SetNull();
+        this->nVersion       = block.nVersion;
+        this->hashPrevBlock  = block.hashPrevBlock;
+        this->hashMerkleRoot = block.hashMerkleRoot;
+        this->nTime          = block.nTime;
+        this->nBits          = block.nBits;
+        this->nNonce         = block.nNonce;
+        this->vtx            = block.vtx;
+        this->vchBlockSig    = block.vchBlockSig;
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITEAS(CBlockHeaderLegacy, *this);
+        READWRITE(vtx);
+        if (vtx.size() > 1 && vtx[1]->IsCoinStake())
+            READWRITE(vchBlockSig);
+    }
+
+    void SetNull()
+    {
+        CBlockHeaderLegacy::SetNull();
+        vtx.clear();
+        vchBlockSig.clear();
+        fChecked = false;
+    }
+
+    CBlockHeaderLegacy GetBlockHeader() const
+    {
+        CBlockHeaderLegacy block;
+        block.nVersion       = nVersion;
+        block.hashPrevBlock  = hashPrevBlock;
+        block.hashMerkleRoot = hashMerkleRoot;
+        block.nTime          = nTime;
+        block.nBits          = nBits;
+        block.nNonce         = nNonce;
+        return block;
+    }
+
+    std::string ToString() const;
+
+    // ppcoin: PoS
+    bool IsProofOfStake() const {
+        return (vtx.size() > 1 && vtx[1]->IsCoinStake());
     }
 };
 

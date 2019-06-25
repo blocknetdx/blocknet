@@ -22,6 +22,7 @@
 #include <script/standard.h>
 #include <timedata.h>
 #include <util/moneystr.h>
+#include <util/strencodings.h>
 #include <util/system.h>
 #include <validationinterface.h>
 
@@ -173,6 +174,151 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     int64_t nTime2 = GetTimeMicros();
 
     LogPrint(BCLog::BENCH, "CreateNewBlock() packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
+
+    return std::move(pblocktemplate);
+}
+
+std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
+                                                                  const int64_t & stakeTime, const CScript & snodePaymentScript,
+                                                                  CWallet *keystore)
+{
+    int64_t nTimeStart = GetTimeMicros();
+
+    resetBlock();
+
+    pblocktemplate.reset(new CBlockTemplate());
+
+    if(!pblocktemplate.get())
+        return nullptr;
+    pblock = &pblocktemplate->block; // pointer for convenience
+
+    pblock->vtx.emplace_back(); // Add dummy coinbase tx as first transaction
+    pblocktemplate->vTxFees.push_back(-1); // updated at end
+    pblocktemplate->vTxSigOpsCost.push_back(-1); // updated at end
+
+    CBlockIndex* pindexPrev = nullptr;
+    int64_t nMedianTimePast;
+    int nPackagesSelected = 0;
+    int nDescendantsUpdated = 0;
+
+    {
+        LOCK2(cs_main, mempool.cs);
+        pindexPrev = chainActive.Tip();
+        assert(pindexPrev != nullptr);
+        nHeight = pindexPrev->nHeight + 1;
+
+        pblock->nVersion = ComputeBlockVersion(pindexPrev, chainparams.GetConsensus());
+        // -regtest only: allow overriding block.nVersion with
+        // -blockversion=N to test forking scenarios
+        if (chainparams.MineBlocksOnDemand())
+            pblock->nVersion = gArgs.GetArg("-blockversion", pblock->nVersion);
+
+        pblock->nTime = GetAdjustedTime();
+        nMedianTimePast = pindexPrev->GetMedianTimePast();
+
+        nLockTimeCutoff = (STANDARD_LOCKTIME_VERIFY_FLAGS & LOCKTIME_MEDIAN_TIME_PAST)
+                           ? nMedianTimePast
+                           : pblock->GetBlockTime();
+
+        // Decide whether to include witness transactions
+        // This is only needed in case the witness softfork activation is reverted
+        // (which would require a very deep reorganization).
+        // Note that the mempool would accept transactions with witness data before
+        // IsWitnessEnabled, but we would only ever mine blocks after IsWitnessEnabled
+        // unless there is a massive block reorganization with the witness softfork
+        // not activated.
+        // TODO: replace this with a call to main to assess validity of a mempool
+        // transaction (which in most cases can be a no-op).
+        fIncludeWitness = IsWitnessEnabled(pindexPrev, chainparams.GetConsensus());
+
+        addPackageTxs(nPackagesSelected, nDescendantsUpdated);
+    }
+
+    int64_t nTime1 = GetTimeMicros();
+
+    m_last_block_num_txs = nBlockTx;
+    m_last_block_weight = nBlockWeight;
+
+    // Create coinbase transaction.
+    CMutableTransaction coinbaseTx;
+    coinbaseTx.vin.resize(1);
+    coinbaseTx.vin[0].prevout.SetNull();
+    coinbaseTx.vout.resize(1);
+    coinbaseTx.vout[0].SetNull();
+    coinbaseTx.vout[0].nValue = 0;
+    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0; // TODO Blocknet PoS set blockheight on coinbase?
+    pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
+    pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus()); // TODO Blocknet PoS handle coinbase commitment
+    pblocktemplate->vTxFees[0] = -nFees;
+
+    // Create coinstake transaction
+    CMutableTransaction coinstakeTx;
+    coinstakeTx.vin.resize(1);
+    coinstakeTx.vin[0] = CTxIn(stakeInput.outpoint);
+    coinstakeTx.vout.resize(3);
+    coinstakeTx.vout[0].SetNull(); // coinstake
+    coinstakeTx.vout[0].nValue = 0;
+    const bool feesEnabled = IsNetworkFeesEnabled(pindexPrev, chainparams.GetConsensus());
+    const auto stakeSubsidy = GetBlockSubsidy(nHeight, chainparams.GetConsensus());
+    // TODO Blocknet subtract tx fee for coinstake
+    const auto stakeAmount = (feesEnabled ? nFees : 0) + stakeSubsidy*0.3; // TODO Blocknet only if not superblock
+    // Find pubkey of stake input
+    CTxDestination stakeInputDest;
+    if (!ExtractDestination(stakeInput.txout.scriptPubKey, stakeInputDest))
+        throw std::runtime_error(strprintf("%s: Failed to determine staked input address", __func__));
+    const auto keyid = GetKeyForDestination(*keystore, stakeInputDest);
+    if (keyid.IsNull())
+        throw std::runtime_error(strprintf("%s: Failed to obtain pubkey from the staked input", __func__));
+    CScript paymentScript;
+    if (VersionBitsState(pindexPrev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_STAKEP2PKH, versionbitscache) == ThresholdState::ACTIVE) { // Stake to p2pkh
+        paymentScript = GetScriptForDestination(keyid);
+    } else { // stake to p2pk
+        CPubKey paymentPubKey;
+        if (!keystore->GetPubKey(keyid, paymentPubKey))
+            throw std::runtime_error(strprintf("%s: Failed to find staked input pubkey", __func__));
+        paymentScript = CScript() << ToByteVector(paymentPubKey) << OP_CHECKSIG;
+    }
+    coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount, paymentScript); // staker payment
+    coinstakeTx.vout[2] = CTxOut(stakeSubsidy*0.7, snodePaymentScript); // snode payment // TODO Blocknet only if not superblock
+
+    {
+        // Sign stake input w/ keystore
+        auto locked_chain = keystore->chain().lock();
+        LOCK(keystore->cs_wallet);
+        if (!keystore->SignTransaction(coinstakeTx))
+            throw std::runtime_error(strprintf("%s: Failed to sign the staked input", __func__));
+    }
+    pblock->vtx.emplace_back(); // Add dummy coinstake tx as second transaction
+    pblock->vtx[1] = MakeTransactionRef(std::move(coinstakeTx));
+
+    LogPrintf("Staking - block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
+
+    // Fill in header
+    pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
+    pblock->nTime          = stakeTime;
+    pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
+    pblock->nNonce         = 0;
+    pblock->hashStake      = stakeInput.outpoint.hash;
+    pblock->nStakeIndex    = stakeInput.outpoint.n;
+    pblock->nStakeAmount   = stakeInput.txout.nValue;
+    pblock->hashStakeBlock = stakeBlockHash;
+
+    pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
+    pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
+
+    SignBlock(*pblock, stakeInput.txout.scriptPubKey, *keystore); // required to pass PoS checks
+
+    {
+        LOCK(cs_main);
+        if (pindexPrev != chainActive.Tip())
+            return nullptr;
+        CValidationState state;
+        if (!TestBlockValidity(state, chainparams, *pblock, pindexPrev, false, false))
+            throw std::runtime_error(strprintf("%s: TestBlockValidity failed: %s", __func__, FormatStateMessage(state)));
+    }
+    int64_t nTime2 = GetTimeMicros();
+
+    LogPrint(BCLog::BENCH, "Staking - packages: %.2fms (%d packages, %d updated descendants), validity: %.2fms (total %.2fms)\n", 0.001 * (nTime1 - nTimeStart), nPackagesSelected, nDescendantsUpdated, 0.001 * (nTime2 - nTime1), 0.001 * (nTime2 - nTimeStart));
 
     return std::move(pblocktemplate);
 }
