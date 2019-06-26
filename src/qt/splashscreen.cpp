@@ -40,7 +40,7 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     devicePixelRatio = static_cast<QGuiApplication*>(QCoreApplication::instance())->devicePixelRatio();
 
     // define text to place
-    QString titleText       = tr(PACKAGE_NAME);
+    QString titleText       = PACKAGE_NAME;
     QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
     QString copyrightTextBtc = QChar(0xA9) + QString(" 2009-2019 ") + QString(tr("The Bitcoin Core developers"));
     QString copyrightTextBlocknet = QChar(0xA9) + QString(" 2014-2020 ") + QString(tr("The Blocknet developers"));
