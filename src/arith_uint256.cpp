@@ -149,39 +149,13 @@ double base_uint<BITS>::getdouble() const
 template <unsigned int BITS>
 std::string base_uint<BITS>::GetHex() const
 {
-    char psz[sizeof(pn) * 2 + 1];
-    for (unsigned int i = 0; i < sizeof(pn); i++)
-        sprintf(psz + i * 2, "%02x", ((unsigned char*)pn)[sizeof(pn) - i - 1]);
-    return std::string(psz, psz + sizeof(pn) * 2);
+    return ArithToUint256(*this).GetHex();
 }
 
 template <unsigned int BITS>
 void base_uint<BITS>::SetHex(const char* psz)
 {
-    memset(pn, 0, sizeof(pn));
-
-    // skip leading spaces
-    while (IsSpace(*psz))
-        psz++;
-
-    // skip 0x
-    if (psz[0] == '0' && ToLower(psz[1]) == 'x')
-        psz += 2;
-
-    // hex string to uint
-    const char* pbegin = psz;
-    while (::HexDigit(*psz) != -1)
-        psz++;
-    psz--;
-    unsigned char* p1 = (unsigned char*)pn;
-    unsigned char* pend = p1 + WIDTH;
-    while (psz >= pbegin && p1 < pend) {
-        *p1 = ::HexDigit(*psz--);
-        if (psz >= pbegin) {
-            *p1 |= ((unsigned char)::HexDigit(*psz--) << 4);
-            p1++;
-        }
-    }
+    *this = UintToArith256(uint256S(psz));
 }
 
 template <unsigned int BITS>
@@ -221,9 +195,9 @@ template base_uint<256>& base_uint<256>::operator/=(const base_uint<256>& b);
 template int base_uint<256>::CompareTo(const base_uint<256>&) const;
 template bool base_uint<256>::EqualTo(uint64_t) const;
 template double base_uint<256>::getdouble() const;
-template std::string base_uint<256>::GetHex() const;
+template<> std::string base_uint<256>::GetHex() const { return ArithToUint256(*this).GetHex(); }
 template std::string base_uint<256>::ToString() const;
-template void base_uint<256>::SetHex(const char*);
+template<> void base_uint<256>::SetHex(const char* psz) { *this = UintToArith256(uint256S(psz)); }
 template void base_uint<256>::SetHex(const std::string&);
 template unsigned int base_uint<256>::bits() const;
 
@@ -297,9 +271,9 @@ template base_uint<512>& base_uint<512>::operator/=(const base_uint<512>& b);
 template int base_uint<512>::CompareTo(const base_uint<512>&) const;
 template bool base_uint<512>::EqualTo(uint64_t) const;
 template double base_uint<512>::getdouble() const;
-template std::string base_uint<512>::GetHex() const;
+template<> std::string base_uint<512>::GetHex() const { return ArithToUint512(*this).GetHex(); }
 template std::string base_uint<512>::ToString() const;
-template void base_uint<512>::SetHex(const char*);
+template<> void base_uint<512>::SetHex(const char* psz) { *this = UintToArith512(uint512S(psz)); }
 template void base_uint<512>::SetHex(const std::string&);
 template unsigned int base_uint<512>::bits() const;
 
