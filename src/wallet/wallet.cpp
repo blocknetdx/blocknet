@@ -2851,6 +2851,11 @@ bool CWallet::FundTransaction(CMutableTransaction& tx, CAmount& nFeeRet, int& nC
         }
     }
 
+    if (nFeeRet > maxTxFee) {
+        strFailReason = _("Fee exceeds maximum configured by -maxtxfee");
+        return false;
+    }
+
     return true;
 }
 
