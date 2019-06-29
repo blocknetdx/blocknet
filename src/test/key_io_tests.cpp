@@ -7,6 +7,7 @@
 
 #include <key.h>
 #include <key_io.h>
+#include <outputtype.h>
 #include <script/script.h>
 #include <util/strencodings.h>
 #include <test/test_bitcoin.h>

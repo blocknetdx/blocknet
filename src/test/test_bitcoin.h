@@ -19,6 +19,8 @@
 
 #include <boost/thread.hpp>
 
+const int TESTCHAIN_BLOCK_COUNT = 50; // TODO Blocknet uses 50 since quark hash is slow
+
 // Enable BOOST_CHECK_EQUAL for enum class types
 template <typename T>
 std::ostream& operator<<(typename std::enable_if<std::is_enum<T>::value, std::ostream>::type& stream, const T& e)

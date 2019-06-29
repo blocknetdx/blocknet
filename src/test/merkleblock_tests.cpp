@@ -22,10 +22,10 @@ BOOST_AUTO_TEST_CASE(merkleblock_construct_from_txids_found)
     std::set<uint256> txids;
 
     // Last txn in block.
-    uint256 txhash1 = uint256S("0x74d681e0e03bafa802c8aa084379aa98d9fcd632ddc2ed9782b586ec87451f20");
+    uint256 txhash1 = uint256S("0x35dec570275a395a8a297c726ac48ad2674b1683f7e1ad5b93cc96dfe7dab94b");
 
     // Second txn in block.
-    uint256 txhash2 = uint256S("0xf9fc751cb7dc372406a9f8d738d5e6f8f63bab71986a39cf36ee70ee17036d07");
+    uint256 txhash2 = uint256S("0xa41116ecfb466ca1df58c4f8c428d86c20e02ed859e27d40172de8ff810abbb9");
 
     txids.insert(txhash1);
     txids.insert(txhash2);
