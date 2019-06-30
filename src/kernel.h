@@ -80,6 +80,13 @@ public:
         bool IsNull() {
             return coin == nullptr;
         }
+        void SetNull() {
+            coin = nullptr;
+            wallet = nullptr;
+            time = 0;
+            hashBlock.SetNull();
+            hashProofOfStake.SetNull();
+        }
     };
     struct StakeOutput {
         std::shared_ptr<COutput> out;
@@ -181,19 +188,28 @@ public:
         lastBlockHeight = tip->nHeight;
         lastUpdateTime = currentTime;
         LogPrintf("Staker: %u\n", lastBlockHeight); // TODO Blocknet PoS move to debug category
-        return true;
+        return !stakeTimes.empty();
     }
 
-    bool TryStake(std::vector<std::shared_ptr<CWallet>> & wallets, const CBlockIndex *tip, const CChainParams & chainparams) {
+    bool TryStake(const CBlockIndex *tip, const CChainParams & chainparams) {
         if (!tip)
             return false; // make sure tip is valid
 
+        StakeCoin nextStake;
+        if (!NextStake(nextStake, tip, chainparams))
+            return false;
+
+        stakeTimes.clear(); // reset stake selections on success or error
+        return StakeBlock(nextStake, chainparams);
+    }
+
+    bool NextStake(StakeCoin & nextStake, const CBlockIndex *tip, const CChainParams & chainparams) {
         LOCK(mu);
         if (stakeTimes.empty())
             return false;
 
         int block = tip->nHeight + 1; // next block (one being staked)
-        if (block % chainparams.GetConsensus().superblock == 0) // TODO Blocknet PoS handle superblock staking
+        if (block % chainparams.GetConsensus().superblock == 0 && chainparams.GetConsensus().superblock > 144) // TODO Blocknet PoS handle superblock staking
             return false;
 
         auto cutoffTime = tip->nTime; // must find stake input valid for a time newer than cutoff
@@ -205,7 +221,6 @@ public:
             return a.coin->txout.nValue < b.coin->txout.nValue;
         };
 
-        StakeCoin nextStake;
         for (const auto & item : stakeTimes) {
             if (item.first <= cutoffTime) // skip if input stake time doesn't meet the cutoff time
                 continue;
@@ -229,12 +244,7 @@ public:
             }
         }
 
-        stakeTimes.clear(); // reset stake selections on success or error
-
-        if (nextStake.IsNull())
-            return false;
-
-        return StakeBlock(nextStake, chainparams);
+        return !nextStake.IsNull();
     }
 
     bool StakeBlock(const StakeCoin & stakeCoin, const CChainParams & chainparams) {
@@ -295,7 +305,7 @@ void static ThreadStakeMinter() {
             }
             if (pindex && staker.Update(wallets, pindex, Params().GetConsensus())) {
                 boost::this_thread::interruption_point();
-                staker.TryStake(wallets, pindex, Params());
+                staker.TryStake(pindex, Params());
             }
         } catch (std::exception & e) {
             LogPrintf("Staker ran into an exception: %s\n", e.what());

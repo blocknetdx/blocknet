@@ -145,6 +145,7 @@ BITCOIN_TESTS += \
   wallet/test/wallet_tests.cpp \
   wallet/test/wallet_crypto_tests.cpp \
   wallet/test/coinselector_tests.cpp \
+  wallet/test/staking_tests.cpp \
   wallet/test/init_tests.cpp
 
 BITCOIN_TEST_SUITE += \

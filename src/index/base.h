@@ -116,6 +116,10 @@ public:
         chain.SetTip(pindex);
         return true;
     }
+
+    const CBlockIndex* BestBlockIndex() {
+        return m_best_block_index;
+    }
 };
 
 #endif // BITCOIN_INDEX_BASE_H
