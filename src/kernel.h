@@ -74,9 +74,11 @@ public:
         int64_t time;
         uint256 hashBlock;
         uint256 hashProofOfStake;
-        explicit StakeCoin() : coin(nullptr), wallet(nullptr) {}
+        explicit StakeCoin() {
+            SetNull();
+        }
         explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time, uint256 hashBlock, uint256 hashProofOfStake)
-                  : coin(coin), wallet(wallet), time(std::move(time)), hashBlock(std::move(hashBlock)), hashProofOfStake(std::move(hashProofOfStake)) { }
+                  : coin(coin), wallet(wallet), time(time), hashBlock(std::move(hashBlock)), hashProofOfStake(std::move(hashProofOfStake)) { }
         bool IsNull() {
             return coin == nullptr;
         }
@@ -256,12 +258,9 @@ public:
                 return false;
             }
         }
-        // TODO Blocknet PoS snode payment script
-        CTxDestination dest = DecodeDestination("y8zc9PuDJC3XaF7UkQ2CnRDCmXiCs9bDuS");
-        CScript scriptPubKey = GetScriptForDestination(dest);
-        auto pblocktemplate = BlockAssembler(chainparams).CreateNewBlockPoS(*stakeCoin.coin.get(), stakeCoin.hashBlock,
-                stakeCoin.time, scriptPubKey, stakeCoin.wallet.get());
-        if (!pblocktemplate.get())
+        auto pblocktemplate = BlockAssembler(chainparams).CreateNewBlockPoS(*stakeCoin.coin, stakeCoin.hashBlock,
+                stakeCoin.time, stakeCoin.wallet.get());
+        if (!pblocktemplate)
             return false;
         auto pblock = std::make_shared<const CBlock>(pblocktemplate->block);
         bool fNewBlock = false;

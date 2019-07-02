@@ -179,8 +179,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 }
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                                  const int64_t & stakeTime, const CScript & snodePaymentScript,
-                                                                  CWallet *keystore)
+                                                                  const int64_t & stakeTime, CWallet *keystore)
 {
     int64_t nTimeStart = GetTimeMicros();
 
@@ -192,7 +191,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
         return nullptr;
     pblock = &pblocktemplate->block; // pointer for convenience
 
-    pblock->vtx.emplace_back(); // Add dummy coinbase tx as first transaction
+    pblock->vtx.resize(2); // Support coinbase and coinstake txs
     pblocktemplate->vTxFees.push_back(-1); // updated at end
     pblocktemplate->vTxSigOpsCost.push_back(-1); // updated at end
 
@@ -248,20 +247,19 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     coinbaseTx.vout[0].nValue = 0;
     coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0; // TODO Blocknet PoS set blockheight on coinbase?
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
-    pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus()); // TODO Blocknet PoS handle coinbase commitment
-    pblocktemplate->vTxFees[0] = -nFees;
 
     // Create coinstake transaction
     CMutableTransaction coinstakeTx;
     coinstakeTx.vin.resize(1);
     coinstakeTx.vin[0] = CTxIn(stakeInput.outpoint);
-    coinstakeTx.vout.resize(3);
+    coinstakeTx.vout.resize(2); // coinstake + stake payment
     coinstakeTx.vout[0].SetNull(); // coinstake
     coinstakeTx.vout[0].nValue = 0;
+
     const bool feesEnabled = IsNetworkFeesEnabled(pindexPrev, chainparams.GetConsensus());
     const auto stakeSubsidy = GetBlockSubsidy(nHeight, chainparams.GetConsensus());
-    // TODO Blocknet subtract tx fee for coinstake
-    const auto stakeAmount = (feesEnabled ? nFees : 0) + stakeSubsidy*0.3; // TODO Blocknet only if not superblock
+    const auto stakeAmount = (feesEnabled ? nFees : 0) + stakeSubsidy; // TODO Blocknet only if not superblock
+
     // Find pubkey of stake input
     CTxDestination stakeInputDest;
     if (!ExtractDestination(stakeInput.txout.scriptPubKey, stakeInputDest))
@@ -269,6 +267,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     const auto keyid = GetKeyForDestination(*keystore, stakeInputDest);
     if (keyid.IsNull())
         throw std::runtime_error(strprintf("%s: Failed to obtain pubkey from the staked input", __func__));
+
     CScript paymentScript;
     if (VersionBitsState(pindexPrev, chainparams.GetConsensus(), Consensus::DEPLOYMENT_STAKEP2PKH, versionbitscache) == ThresholdState::ACTIVE) { // Stake to p2pkh
         paymentScript = GetScriptForDestination(keyid);
@@ -278,24 +277,43 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
             throw std::runtime_error(strprintf("%s: Failed to find staked input pubkey", __func__));
         paymentScript = CScript() << ToByteVector(paymentPubKey) << OP_CHECKSIG;
     }
-    coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount, paymentScript); // staker payment
-    coinstakeTx.vout[2] = CTxOut(stakeSubsidy*0.7, snodePaymentScript); // snode payment // TODO Blocknet only if not superblock
 
-    {
-        // Sign stake input w/ keystore
+    // stake amount and payment script
+    coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount, paymentScript); // staker payment
+
+    // Sign stake input w/ keystore
+    auto signInput = [](CMutableTransaction & tx, CWallet *keystore) {
+        SignatureData empty; // clean script sig on all inputs
+        for (auto & txin : tx.vin)
+            UpdateInput(txin, empty);
         auto locked_chain = keystore->chain().lock();
         LOCK(keystore->cs_wallet);
-        if (!keystore->SignTransaction(coinstakeTx))
+        if (!keystore->SignTransaction(tx))
             throw std::runtime_error(strprintf("%s: Failed to sign the staked input", __func__));
-    }
-    pblock->vtx.emplace_back(); // Add dummy coinstake tx as second transaction
+    };
+
+    // Calculate network fee for coinbase/coinstake txs
+    signInput(coinstakeTx, keystore); // add signature
+    CDataStream ssCoinbase(SER_NETWORK, PROTOCOL_VERSION);
+    ssCoinbase << coinbaseTx;
+    CDataStream ssCoinstake(SER_NETWORK, PROTOCOL_VERSION);
+    ssCoinstake << coinstakeTx;
+    CAmount estimatedNetworkFee = ::minRelayTxFee.GetFee(ssCoinbase.size()) + ::minRelayTxFee.GetFee(ssCoinstake.size());
+    coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount - estimatedNetworkFee, paymentScript); // staker payment w/ network fee taken out
+    signInput(coinstakeTx, keystore); // resign with correct fee estimation
+
+    // Assign coinstake tx
     pblock->vtx[1] = MakeTransactionRef(std::move(coinstakeTx));
+
+    // Coinbase commitment
+    pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus()); // TODO Blocknet PoS handle coinbase commitment
+    pblocktemplate->vTxFees[0] = -nFees;
 
     LogPrintf("Staking - block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
 
     // Fill in header
     pblock->hashPrevBlock  = pindexPrev->GetBlockHash();
-    pblock->nTime          = stakeTime;
+    pblock->nTime          = static_cast<uint32_t>(stakeTime);
     pblock->nBits          = GetNextWorkRequired(pindexPrev, pblock, chainparams.GetConsensus());
     pblock->nNonce         = 0;
     pblock->hashStake      = stakeInput.outpoint.hash;

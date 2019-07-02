@@ -163,8 +163,7 @@ public:
     std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn);
     /** Construct new PoS block */
     std::unique_ptr<CBlockTemplate> CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                      const int64_t & stakeTime, const CScript & snodePaymentScript,
-                                                      CWallet *keystore);
+                                                      const int64_t & stakeTime, CWallet *keystore);
 
     static Optional<int64_t> m_last_block_num_txs;
     static Optional<int64_t> m_last_block_weight;

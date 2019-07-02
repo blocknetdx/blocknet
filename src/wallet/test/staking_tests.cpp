@@ -226,7 +226,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
         // Create coinstake transaction
         coinstakeTx.vin.resize(1);
         coinstakeTx.vin[0] = CTxIn(nextStake.coin->outpoint);
-        coinstakeTx.vout.resize(3);
+        coinstakeTx.vout.resize(2);
         coinstakeTx.vout[0].SetNull(); // coinstake
         coinstakeTx.vout[0].nValue = 0;
         // Fill in the block txs
@@ -257,10 +257,8 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
     StakeMgr::StakeCoin nextStake;
     BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
 
-    const auto stakeSubsidy = GetBlockSubsidy(chainActive.Height(), Params().GetConsensus());
-    CAmount fees(CENT);
-    const CAmount stakeAmount = static_cast<CAmount>(stakeSubsidy*0.3) - fees; // account for basic fee
-    const CAmount snodePaymentAmount = static_cast<CAmount>(stakeSubsidy*0.7);
+    const CAmount stakeSubsidy = GetBlockSubsidy(chainActive.Height(), Params().GetConsensus());
+    const CAmount stakeAmount = stakeSubsidy - 2000; // account for basic fee in sats
     CTxDestination stakeInputDest;
     BOOST_CHECK(ExtractDestination(nextStake.coin->txout.scriptPubKey, stakeInputDest));
     const auto keyid = GetKeyForDestination(*wallet, stakeInputDest);
@@ -281,7 +279,6 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
     createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
     block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
     coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
-    coinstakeTx.vout[2] = CTxOut(snodePaymentAmount, nextStake.coin->txout.scriptPubKey); // snode payment
     BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
     block.vtx[1] = MakeTransactionRef(coinstakeTx);
     block.hashMerkleRoot = BlockMerkleRoot(block);
@@ -300,7 +297,6 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
     createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
     block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
     coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount*100, paymentScript); // staker payment
-    coinstakeTx.vout[2] = CTxOut(snodePaymentAmount, nextStake.coin->txout.scriptPubKey); // snode payment
     BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
     block.vtx[1] = MakeTransactionRef(coinstakeTx);
     block.hashMerkleRoot = BlockMerkleRoot(block);
@@ -311,30 +307,31 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
     BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex failed to updated on stake");
 
     //
-    // Check invalid snode payment
+    // Check for invalid coinstake (more than 1 vin)
     //
+    {
+        // Make sure wallet is updated with all utxos
+        LOCK(cs_main);
+        auto locked_chain = wallet->chain().lock();
+        WalletRescanReserver reserver(wallet.get());
+        reserver.reserve();
+        wallet->ScanForWalletTransactions(locked_chain->getBlockHash(0), {} /* stop_block */, reserver, true /* update */);
+    }
     nextStake.SetNull();
     BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
     createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
     block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
-    coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
-    coinstakeTx.vout[2] = CTxOut(0, nextStake.coin->txout.scriptPubKey); // snode payment
-    BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
-    block.vtx[1] = MakeTransactionRef(coinstakeTx);
-    block.hashMerkleRoot = BlockMerkleRoot(block);
-    BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
-    blockHash = chainActive.Tip()->GetBlockHash();
-    ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
-    BOOST_CHECK_EQUAL(blockHash, chainActive.Tip()->GetBlockHash()); // block should not be accepted
-    BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex failed to updated on stake");
-
-    //
-    // Check missing snode payment
-    //
-    nextStake.SetNull();
-    BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
-    createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
-    block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+    CTransactionRef anotherInput = nullptr;
+    for (int i = static_cast<int>(m_coinbase_txns.size() - 1); i >= 0; --i) {
+        CTransactionRef tx = m_coinbase_txns[i];
+        if (tx->GetHash() == nextStake.coin->outpoint.hash) // skip staked output
+            continue;
+        anotherInput = tx;
+        break;
+    }
+    BOOST_CHECK_MESSAGE(anotherInput != nullptr, "Failed to find second vin for use with multiple stakes test");
+    coinstakeTx.vin.resize(2);
+    coinstakeTx.vin[1] = CTxIn(COutPoint(anotherInput->GetHash(), 0)); // sample valid input
     coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
     BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
     block.vtx[1] = MakeTransactionRef(coinstakeTx);
@@ -344,7 +341,6 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
     ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
     BOOST_CHECK_EQUAL(blockHash, chainActive.Tip()->GetBlockHash()); // block should not be accepted
     BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex failed to updated on stake");
-
 }
 
 BOOST_AUTO_TEST_SUITE_END()
