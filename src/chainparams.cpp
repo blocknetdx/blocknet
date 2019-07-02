@@ -123,7 +123,7 @@ public:
         pchMessageStart[2] = 0xa2;
         pchMessageStart[3] = 0xa3;
         nDefaultPort = 41412;
-        nPruneAfterHeight = std::numeric_limits<int64_t>::max(); // Pruning not supported
+        nPruneAfterHeight = std::numeric_limits<uint64_t>::max(); // Pruning not supported
         m_assumed_blockchain_size = 1;
         m_assumed_chain_state_size = 1;
 
@@ -271,7 +271,7 @@ public:
         pchMessageStart[2] = 0x65;
         pchMessageStart[3] = 0xba;
         nDefaultPort = 41474;
-        nPruneAfterHeight = std::numeric_limits<int64_t>::max(); // Pruning not supported
+        nPruneAfterHeight = std::numeric_limits<uint64_t>::max(); // Pruning not supported
         m_assumed_blockchain_size = 1;
         m_assumed_chain_state_size = 1;
 
@@ -384,7 +384,7 @@ public:
         pchMessageStart[2] = 0x7e;
         pchMessageStart[3] = 0xac;
         nDefaultPort = 41475;
-        nPruneAfterHeight = std::numeric_limits<int64_t>::max(); // Pruning not supported
+        nPruneAfterHeight = std::numeric_limits<uint64_t>::max(); // Pruning not supported
         m_assumed_blockchain_size = 0;
         m_assumed_chain_state_size = 0;
 
