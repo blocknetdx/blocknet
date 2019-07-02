@@ -105,7 +105,7 @@ public:
         if (IsInitialBlockDownload())
             return false;
         const int stakeSearchPeriodSeconds{60};
-        const bool notExpired = GetAdjustedTime() <= lastUpdateTime + stakeSearchPeriodSeconds;
+        const bool notExpired = GetAdjustedTime() <= lastUpdateTime;
         const bool tipChanged = tip->nHeight != lastBlockHeight;
         const bool staleTip = tip->nTime <= lastUpdateTime || tip->nTime < GetAdjustedTime() - params.stakeMinAge*2; // TODO Blocknet testnet could stall chain?
         if (notExpired && !tipChanged && staleTip)
@@ -149,7 +149,8 @@ public:
         if (lastUpdateTime == 0) // Use chain tip last time on first call
             lastUpdateTime = tip->nTime;
 
-        int64_t currentTime = GetAdjustedTime() + stakeSearchPeriodSeconds; // current time + seconds into future
+        int64_t currentTime = GetAdjustedTime(); // current time + seconds into future
+        int64_t endTime = currentTime + stakeSearchPeriodSeconds; // current time + seconds into future
         arith_uint256 bnTargetPerCoinDay;
         bnTargetPerCoinDay.SetCompact(tip->nBits);
 
@@ -174,7 +175,7 @@ public:
             ss << stakeModifier;
 
             int64_t i = lastUpdateTime + 1;
-            for (; i < currentTime; ++i) {
+            for (; i < endTime; ++i) {
                 const auto hashProofOfStake = stakeHash(i, ss, out->i, out->tx->GetHash(), out->tx->GetTxTime());
                 if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
                     continue;
@@ -188,7 +189,7 @@ public:
         }
 
         lastBlockHeight = tip->nHeight;
-        lastUpdateTime = currentTime;
+        lastUpdateTime = endTime;
         LogPrintf("Staker: %u\n", lastBlockHeight); // TODO Blocknet PoS move to debug category
         return !stakeTimes.empty();
     }
