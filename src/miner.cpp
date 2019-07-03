@@ -20,6 +20,7 @@
 #include <pow.h>
 #include <primitives/transaction.h>
 #include <script/standard.h>
+#include <serialize.h>
 #include <timedata.h>
 #include <util/moneystr.h>
 #include <util/strencodings.h>
@@ -294,11 +295,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
 
     // Calculate network fee for coinbase/coinstake txs
     signInput(coinstakeTx, keystore); // add signature
-    CDataStream ssCoinbase(SER_NETWORK, PROTOCOL_VERSION);
-    ssCoinbase << coinbaseTx;
-    CDataStream ssCoinstake(SER_NETWORK, PROTOCOL_VERSION);
-    ssCoinstake << coinstakeTx;
-    CAmount estimatedNetworkFee = ::minRelayTxFee.GetFee(ssCoinbase.size()) + ::minRelayTxFee.GetFee(ssCoinstake.size());
+    const auto coinbaseBytes = ::GetSerializeSize(coinbaseTx, PROTOCOL_VERSION);
+    const auto coinstakeBytes = ::GetSerializeSize(coinstakeTx, PROTOCOL_VERSION);
+    CAmount estimatedNetworkFee = static_cast<CAmount>(::minRelayTxFee.GetFee(coinbaseBytes) + ::minRelayTxFee.GetFee(coinstakeBytes));
     coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount - estimatedNetworkFee, paymentScript); // staker payment w/ network fee taken out
     signInput(coinstakeTx, keystore); // resign with correct fee estimation
 
