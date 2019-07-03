@@ -222,7 +222,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
         coinbaseTx.vout.resize(1);
         coinbaseTx.vout[0].SetNull();
         coinbaseTx.vout[0].nValue = 0;
-        coinbaseTx.vin[0].scriptSig = CScript() << tip->nHeight << OP_0; // TODO Blocknet PoS set blockheight on coinbase?
+        coinbaseTx.vin[0].scriptSig = CScript() << tip->nHeight+1 << OP_0;
         // Create coinstake transaction
         coinstakeTx.vin.resize(1);
         coinstakeTx.vin[0] = CTxIn(nextStake.coin->outpoint);

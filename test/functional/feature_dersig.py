@@ -4,7 +4,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test BIP66 (DER SIG).
 
-Test that the DERSIG soft-fork activates at (regtest) height 1251.
+Test that the DERSIG soft-fork activates at (regtest) height 51.
 """
 
 from test_framework.blocktools import create_coinbase, create_block, create_transaction
@@ -18,7 +18,7 @@ from test_framework.util import (
     wait_until,
 )
 
-DERSIG_HEIGHT = 1251
+DERSIG_HEIGHT = 75
 
 # Reject codes that we might receive in this test
 REJECT_INVALID = 16

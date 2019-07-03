@@ -5,7 +5,7 @@
 """Test BIP65 (CHECKLOCKTIMEVERIFY).
 
 Test that the CHECKLOCKTIMEVERIFY soft-fork activates at (regtest) block height
-1351.
+51.
 """
 
 from test_framework.blocktools import create_coinbase, create_block, create_transaction
@@ -21,7 +21,7 @@ from test_framework.util import (
 
 from io import BytesIO
 
-CLTV_HEIGHT = 1351
+CLTV_HEIGHT = 0
 
 # Reject codes that we might receive in this test
 REJECT_INVALID = 16

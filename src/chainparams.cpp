@@ -342,10 +342,10 @@ public:
         strNetworkID = "regtest";
         consensus.nSubsidyHalvingInterval = 150;
         consensus.BIP16Exception = uint256();
-        consensus.BIP34Height = 500; // BIP34 activated on regtest (Used in functional tests)
+        consensus.BIP34Height = 0; // BIP34 activated on regtest (Used in functional tests)
         consensus.BIP34Hash = uint256();
-        consensus.BIP65Height = 1351; // BIP65 activated on regtest (Used in functional tests)
-        consensus.BIP66Height = 1251; // BIP66 activated on regtest (Used in functional tests)
+        consensus.BIP65Height = 0; // BIP65 activated on regtest (Used in functional tests)
+        consensus.BIP66Height = 75; // BIP66 activated on regtest (Used in functional tests)
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
         consensus.nPowTargetTimespan = 60;
         consensus.nPowTargetSpacing = 60;
@@ -383,7 +383,7 @@ public:
         pchMessageStart[1] = 0xcf;
         pchMessageStart[2] = 0x7e;
         pchMessageStart[3] = 0xac;
-        nDefaultPort = 41475;
+        nDefaultPort = 41489;
         nPruneAfterHeight = std::numeric_limits<uint64_t>::max(); // Pruning not supported
         m_assumed_blockchain_size = 0;
         m_assumed_chain_state_size = 0;

@@ -245,7 +245,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     coinbaseTx.vout.resize(1);
     coinbaseTx.vout[0].SetNull();
     coinbaseTx.vout[0].nValue = 0;
-    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0; // TODO Blocknet PoS set blockheight on coinbase?
+    coinbaseTx.vin[0].scriptSig = CScript() << nHeight << OP_0;
     pblock->vtx[0] = MakeTransactionRef(std::move(coinbaseTx));
 
     // Create coinstake transaction

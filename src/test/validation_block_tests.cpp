@@ -4,7 +4,9 @@
 
 #include <boost/test/unit_test.hpp>
 
+#define protected public // for overridding protected fields in CChainParams
 #include <chainparams.h>
+#undef protected
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
 #include <miner.h>
@@ -149,23 +151,26 @@ BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
     TestSubscriber sub(initial_tip->GetBlockHash());
     RegisterValidationInterface(&sub);
 
+    CChainParams params = Params();
+    params.consensus.BIP34Height = 500; // disable bip34 for the forking tests below
+
     // create a bunch of threads that repeatedly process a block generated above at random
     // this will create parallelism and randomness inside validation - the ValidationInterface
     // will subscribe to events generated during block validation and assert on ordering invariance
     std::vector<std::thread> threads;
     for (int i = 0; i < 10; i++) {
-        threads.emplace_back([&blocks]() {
+        threads.emplace_back([&blocks,&params]() {
             bool ignored;
             FastRandomContext insecure;
             for (int i = 0; i < 1000; i++) {
                 auto block = blocks[insecure.randrange(blocks.size() - 1)];
-                ProcessNewBlock(Params(), block, true, &ignored);
+                ProcessNewBlock(params, block, true, &ignored);
             }
 
             // to make sure that eventually we process the full chain - do it here
-            for (auto block : blocks) {
+            for (auto & block : blocks) {
                 if (block->vtx.size() == 1) {
-                    bool processed = ProcessNewBlock(Params(), block, true, &ignored);
+                    bool processed = ProcessNewBlock(params, block, true, &ignored);
                     assert(processed);
                 }
             }
