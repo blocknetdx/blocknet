@@ -93,7 +93,8 @@ static void ReleaseWallet(CWallet* wallet)
     // Unregister and delete the wallet right after BlockUntilSyncedToCurrentChain
     // so that it's in sync with the current chainstate.
     wallet->WalletLogPrintf("Releasing wallet\n");
-    wallet->BlockUntilSyncedToCurrentChain();
+    if (!ShutdownRequested()) // TODO Blocknet needs review (this can hang when syncing many headers prior to block download)
+        wallet->BlockUntilSyncedToCurrentChain();
     wallet->Flush();
     UnregisterValidationInterface(wallet);
     delete wallet;

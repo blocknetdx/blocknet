@@ -79,6 +79,11 @@ protected:
     /// Get the name of the index for display in logs.
     virtual const char* GetName() const = 0;
 
+    /// Sets the synced state to true (useful for reindex)
+    void Synced() {
+        m_synced = true;
+    }
+
 public:
     /// Destructor interrupts sync thread if running and blocks until it exits.
     virtual ~BaseIndex();
@@ -115,6 +120,15 @@ public:
             return false;
         chain.SetTip(pindex);
         return true;
+    }
+
+    void BlockConnectedSync(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
+                        const std::vector<CTransactionRef>& txn_conflicted) {
+        BlockConnected(block, pindex, txn_conflicted);
+    }
+
+    void ChainStateFlushedSync(const CBlockLocator& locator) {
+        ChainStateFlushed(locator);
     }
 
     const CBlockIndex* BestBlockIndex() {

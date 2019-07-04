@@ -1848,6 +1848,22 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         return error("%s: Consensus::CheckBlock: %s", __func__, FormatStateMessage(state));
     }
 
+    // PoS verification checks
+    if (IsProofOfStake(pindex->nHeight) || block.IsProofOfStake()) {
+        const auto & txin = block.vtx[1]->vin[0];
+        uint256 hashStakeInputBlock;
+        CTransactionRef txStake;
+        if (!GetTransaction(txin.prevout.hash, txStake, chainparams.GetConsensus(), hashStakeInputBlock))
+            return error("Failed to validate block %s, couldn't find stake transaction %s", block.GetHash().ToString(), txin.prevout.hash.ToString().c_str());
+        if (txStake->vout.size() <= txin.prevout.n) // check bounds
+            return state.DoS(100, false, REJECT_INVALID, "bad-stake-pos", false, "out-of-bounds coinstake");
+        if (txStake->vout[txin.prevout.n].nValue != block.nStakeAmount || txStake->vout[txin.prevout.n].nValue <= 0) // check stake amount
+            return state.DoS(100, false, REJECT_INVALID, "bad-stake-amount", false, "bad stake amount");
+        // TODO Blocknet PoS verify that the stake input sig matches the signer of the block, i.e. staker must be the block signer
+        if (!VerifySig(block, txStake->vout[txin.prevout.n].scriptPubKey) && !VerifySig(block, block.vtx[1]->vout[1].scriptPubKey))
+            return state.DoS(100, false, REJECT_INVALID, "bad-stake-signer", false, "bad block sig staker must be signer");
+    }
+
     // PoS check that only PoW are allowed
     if (pindex->nHeight <= chainparams.GetConsensus().lastPOWBlock && block.IsProofOfStake())
         return state.DoS(100, false, REJECT_INVALID, "PoS-early");
@@ -2225,7 +2241,10 @@ bool static FlushStateToDisk(const CChainParams& chainparams, CValidationState &
     }
     if (full_flush_completed) {
         // Update best block in wallet (so we can detect restored wallets).
-        GetMainSignals().ChainStateFlushed(chainActive.GetLocator());
+        auto locator = chainActive.GetLocator();
+        if (g_txindex)
+            g_txindex->ChainStateFlushedSync(locator);
+        GetMainSignals().ChainStateFlushed(locator);
     }
     } catch (const std::runtime_error& e) {
         return AbortNode(state, std::string("System error while flushing: ") + e.what());
@@ -2756,6 +2775,7 @@ bool CChainState::ActivateBestChain(CValidationState &state, const CChainParams&
 
                 for (const PerBlockConnectTrace& trace : connectTrace.GetBlocksConnected()) {
                     assert(trace.pblock && trace.pindex);
+                    g_txindex->BlockConnectedSync(trace.pblock, trace.pindex, *trace.conflictedTxs);
                     GetMainSignals().BlockConnected(trace.pblock, trace.pindex, trace.conflictedTxs);
                 }
             } while (!chainActive.Tip() || (starting_tip && CBlockIndexWorkComparator()(chainActive.Tip(), starting_tip)));
@@ -3008,6 +3028,8 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
 
     // Store in header index
     mapHeaderIndex[pindexNew->nHeight] = pindexNew;
+    if (pindexNew->nHeight % 10000 == 0)
+        LogPrintf("Processing headers at %u %s\n", pindexNew->nHeight, pindexNew->GetBlockHash().ToString());
 
     return pindexNew;
 }
@@ -3210,8 +3232,12 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     for (unsigned int i = block.IsProofOfStake() ? 2 : 1; i < block.vtx.size(); i++) // Start at idx 2 if PoS
         if (block.vtx[i]->IsCoinBase() || block.vtx[i]->IsCoinStake())
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-multiple", false, "more than one coinbase");
-    if (block.IsProofOfStake() && block.vtx[0]->GetValueOut() != 0)
-        return state.DoS(100, false, REJECT_INVALID, "bad-cb-pos", false, "PoS coinbase must be 0");
+    if (block.IsProofOfStake()) {
+        if (block.vtx[0]->GetValueOut() != 0)
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-pos", false, "PoS coinbase must be 0");
+        if (block.vtx[0]->vout.size() != 1 || !block.vtx[0]->vout[0].scriptPubKey.empty())
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-vout", false, "PoS coinbase must have one empty vout");
+    }
 
     // Check transactions
     for (const auto& tx : block.vtx)
@@ -3226,22 +3252,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     }
     if (nSigOps * WITNESS_SCALE_FACTOR > MAX_BLOCK_SIGOPS_COST)
         return state.DoS(100, false, REJECT_INVALID, "bad-blk-sigops", false, "out-of-bounds SigOpCount");
-
-    // PoS verification checks
-    if (block.IsProofOfStake()) {
-        const auto & txin = block.vtx[1]->vin[0];
-        uint256 hashStakeInputBlock;
-        CTransactionRef txStake;
-        if (!GetTransaction(txin.prevout.hash, txStake, consensusParams, hashStakeInputBlock))
-            return error("%s couldn't find stake transaction", txin.prevout.hash.ToString().c_str());
-        if (txStake->vout.size() <= txin.prevout.n) // check bounds
-            return state.DoS(100, false, REJECT_INVALID, "bad-stake-pos", false, "out-of-bounds coinstake");
-        if (txStake->vout[txin.prevout.n].nValue != block.nStakeAmount || txStake->vout[txin.prevout.n].nValue <= 0) // check stake amount
-            return state.DoS(100, false, REJECT_INVALID, "bad-stake-amount", false, "bad stake amount");
-        // TODO Blocknet PoS verify that the stake input sig matches the signer of the block, i.e. staker must be the block signer
-        if (!VerifySig(block, txStake->vout[txin.prevout.n].scriptPubKey) && !VerifySig(block, block.vtx[1]->vout[1].scriptPubKey))
-            return state.DoS(100, false, REJECT_INVALID, "bad-stake-signer", false, "bad block sig staker must be signer");
-    }
 
     if (fCheckPOW && fCheckMerkleRoot)
         block.fChecked = true;
@@ -3416,20 +3426,18 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
                     if (!txout.IsNull()) // Track all valid recipients
                         recipients.emplace_back(tx->GetHash().ToString(), txout.scriptPubKey, txout.nValue);
                 }
-                if (!CoinValidator::instance().RedeemAddressVerified(expl, recipients)) {
+                if (!CoinValidator::instance().RedeemAddressVerified(expl, recipients))
                     return state.DoS(100, error("CheckTransaction() : bad inputs"),
                             REJECT_INVALID, "bad-txns-inputs-stake");
-                } else {
-                    for (const auto & r : expl) // TODO Blocknet DEBUG
-                        std::cout << "REDEEM " << nHeight << " " << r.txid << " " << r.amount/COIN << std::endl;
-                }
             }
         }
     }
 
     // PoS: Second transaction must be coinstake
-    if (IsProofOfStake(nHeight) && !block.vtx[1]->IsCoinStake())
-        return state.DoS(100, false, REJECT_INVALID, "bad-cs-missing", false, "second tx must be coinstake");
+    if (IsProofOfStake(nHeight) || block.IsProofOfStake()) {
+        if (!block.vtx[1]->IsCoinStake())
+            return state.DoS(100, false, REJECT_INVALID, "bad-cs-missing", false, "second tx must be coinstake");
+    }
 
     // Enforce rule that the coinbase starts with serialized block height
     if (nHeight >= consensusParams.BIP34Height)
@@ -3689,7 +3697,7 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     }
 
     if (fReindex) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
-        g_txindex->Sync(chainActive, pindex, chainparams.GetConsensus());
+        g_txindex->BlockConnectedSync(pblock, pindex, std::vector<CTransactionRef>());
 
     FlushStateToDisk(chainparams, state, FlushStateMode::NONE);
 
