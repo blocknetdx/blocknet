@@ -253,6 +253,8 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 
     pcursor->Seek(std::make_pair(DB_BLOCK_INDEX, uint256()));
 
+    std::vector<std::shared_ptr<CDiskBlockIndex>> blocks;
+
     // Load mapBlockIndex
     while (pcursor->Valid()) {
         boost::this_thread::interruption_point();
@@ -260,38 +262,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
         if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX) {
             CDiskBlockIndex diskindex;
             if (pcursor->GetValue(diskindex)) {
-                // Construct block index object
-                CBlockIndex* pindexNew = insertBlockIndex(diskindex.GetBlockHash());
-                pindexNew->pprev          = insertBlockIndex(diskindex.hashPrev);
-                pindexNew->nHeight        = diskindex.nHeight;
-                pindexNew->nFile          = diskindex.nFile;
-                pindexNew->nDataPos       = diskindex.nDataPos;
-                pindexNew->nUndoPos       = diskindex.nUndoPos;
-                pindexNew->nVersion       = diskindex.nVersion;
-                pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
-                pindexNew->nTime          = diskindex.nTime;
-                pindexNew->nBits          = diskindex.nBits;
-                pindexNew->nNonce         = diskindex.nNonce;
-                pindexNew->nStatus        = diskindex.nStatus;
-                pindexNew->nTx            = diskindex.nTx;
-
-                // ppcoin: PoS
-                pindexNew->nMint            = diskindex.nMint;
-                pindexNew->nMoneySupply     = diskindex.nMoneySupply;
-                pindexNew->nFlags           = diskindex.nFlags;
-                pindexNew->nStakeModifier   = diskindex.nStakeModifier;
-                pindexNew->prevoutStake     = diskindex.prevoutStake;
-                pindexNew->nStakeAmount     = diskindex.nStakeAmount;
-                pindexNew->hashStakeBlock   = diskindex.hashStakeBlock;
-                pindexNew->hashProofOfStake = diskindex.hashProofOfStake;
-
-                if (IsProofOfStake(pindexNew->nHeight, consensusParams)) { // Blocknet PoS check work
-                    arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(pindexNew->nBits);
-                    if (!stakeTargetHit(pindexNew->hashProofOfStake, pindexNew->nStakeAmount, bnTargetPerCoinDay))
-                        return error("%s: PoS index failed validation: %s", __func__, pindexNew->ToString());
-                } else if (!IsProofOfStake(pindexNew->nHeight, consensusParams) && !CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams))
-                    return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
-
+                blocks.push_back(std::make_shared<CDiskBlockIndex>(diskindex));
                 pcursor->Next();
             } else {
                 return error("%s: failed to read value", __func__);
@@ -300,6 +271,88 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             break;
         }
     }
+
+    // Shard the block indices into 1 per core
+    std::vector<std::vector<std::shared_ptr<CDiskBlockIndex>>> slices;
+    auto allIndices = static_cast<const int>(blocks.size());
+    const auto cores = GetNumCores();
+    slices.resize(cores);
+    for (int i = 0; i < blocks.size(); ++i) {
+        const int idx = i % cores;
+        slices[idx].push_back(blocks[i]);
+    }
+
+    LogPrintf("Loading txindex with %u thread%s\n", cores, cores > 1 ? "s" : "");
+    LogPrintf("[0%%]...");
+
+    // Calculate hashes using thread group
+    std::map<std::shared_ptr<CDiskBlockIndex>, uint256> hashes;
+    boost::thread_group tg;
+    unsigned int counter{0};
+    Mutex mu;
+    for (const auto & shard : slices) {
+        tg.create_thread([&shard,&hashes,&mu,&allIndices,&counter,consensusParams] {
+            RenameThread("bitcoin-txindex");
+            for (auto & diskindex : shard) {
+                if (ShutdownRequested())
+                    break;
+
+                const auto & hash = diskindex->GetBlockHash();
+
+                if (IsProofOfStake(diskindex->nHeight, consensusParams)) { // Blocknet PoS check work
+                    arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(diskindex->nBits);
+                    if (!stakeTargetHit(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay))
+                        continue;
+                } else if (!IsProofOfStake(diskindex->nHeight, consensusParams) && !CheckProofOfWork(hash, diskindex->nBits, consensusParams))
+                    continue;
+
+                {
+                    LOCK(mu);
+                    hashes[diskindex] = hash;
+                    ++counter;
+                    if (counter % (allIndices/10) == 0) {
+                        int p = static_cast<int>((double)counter/(double)allIndices*80.0);
+                        LogPrintf("[%u%%]...", p);
+                    }
+                }
+
+            }
+        });
+    }
+    tg.join_all();
+
+    for (auto & diskindex : blocks) {
+        const auto & hash = hashes[diskindex];
+        if (hash.IsNull())
+            continue;
+
+        // Construct block index object
+        CBlockIndex *pindexNew      = insertBlockIndex(hash);
+        pindexNew->pprev            = insertBlockIndex(diskindex->hashPrev);
+        pindexNew->nHeight          = diskindex->nHeight;
+        pindexNew->nFile            = diskindex->nFile;
+        pindexNew->nDataPos         = diskindex->nDataPos;
+        pindexNew->nUndoPos         = diskindex->nUndoPos;
+        pindexNew->nVersion         = diskindex->nVersion;
+        pindexNew->hashMerkleRoot   = diskindex->hashMerkleRoot;
+        pindexNew->nTime            = diskindex->nTime;
+        pindexNew->nBits            = diskindex->nBits;
+        pindexNew->nNonce           = diskindex->nNonce;
+        pindexNew->nStatus          = diskindex->nStatus;
+        pindexNew->nTx              = diskindex->nTx;
+
+        // ppcoin: PoS
+        pindexNew->nMint            = diskindex->nMint;
+        pindexNew->nMoneySupply     = diskindex->nMoneySupply;
+        pindexNew->nFlags           = diskindex->nFlags;
+        pindexNew->nStakeModifier   = diskindex->nStakeModifier;
+        pindexNew->prevoutStake     = diskindex->prevoutStake;
+        pindexNew->nStakeAmount     = diskindex->nStakeAmount;
+        pindexNew->hashStakeBlock   = diskindex->hashStakeBlock;
+        pindexNew->hashProofOfStake = diskindex->hashProofOfStake;
+    }
+
+    LogPrintf("[DONE].\n");
 
     return true;
 }
