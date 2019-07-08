@@ -2307,7 +2307,7 @@ bool BtcWalletConnector<CryptoProvider>::acceptableLockTimeDrift(const char role
     auto lt = lockTime(role);
     if (lt == 0 || lt >= LOCKTIME_THRESHOLD || lckTime >= LOCKTIME_THRESHOLD)
         return false;
-    return (lt - lckTime) * blockTime <= 600; // if locktime drift is greater than 10 minutes 
+    return (static_cast<int64_t>(lt) - static_cast<int64_t>(lckTime)) * static_cast<int64_t>(blockTime) <= 600; // if locktime drift is greater than 10 minutes
 }
 
 //******************************************************************************
