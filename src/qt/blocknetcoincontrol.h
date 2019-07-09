@@ -6,6 +6,7 @@
 #define BLOCKNETCOINCONTROL_H
 
 #include "blocknetformbtn.h"
+#include "blocknetsendfundsutil.h"
 
 #include "walletmodel.h"
 #include <memory>
@@ -139,7 +140,7 @@ private:
 class BlocknetCoinControlDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit BlocknetCoinControlDialog(WalletModel *w, QWidget *parent = nullptr, Qt::WindowFlags f = 0);
+    explicit BlocknetCoinControlDialog(WalletModel *w, QWidget *parent = nullptr, Qt::WindowFlags f = 0, bool standaloneMode = false);
     void resizeEvent(QResizeEvent *evt) override;
     void clear() {
         payAmount = 0;
@@ -150,6 +151,11 @@ public:
     void setPayAmount(CAmount payAmount) {
         this->payAmount = payAmount;
     }
+
+    void populateUnspentTransactions(const QVector<BlocknetSimpleUTXO> & txSelectedUtxos);
+    
+public slots:
+    void updateUTXOState();
 
 protected:
     void showEvent(QShowEvent *event) override;
@@ -179,6 +185,7 @@ private:
     QLabel *changeLbl;
     QLabel *changeVal;
     CAmount payAmount;
+    bool standaloneMode;
     void updateLabels();
 };
 
