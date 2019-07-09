@@ -10,6 +10,7 @@
 #include "keystore.h"
 #include "serialize.h"
 #include "uint256.h"
+#include "utilstrencodings.h"
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
 static const unsigned int MAX_BLOCK_SIZE = 1000000;
@@ -32,6 +33,10 @@ public:
     uint32_t nTime;
     uint32_t nBits;
     uint32_t nNonce;
+    uint256 hashStake;
+    uint32_t nStakeIndex;
+    int64_t nStakeAmount;
+    uint256 hashStakeBlock;
 
     CBlockHeader()
     {
@@ -59,6 +64,10 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        hashStake.SetNull();
+        nStakeIndex = 0;
+        nStakeAmount = 0;
+        hashStakeBlock.SetNull();
     }
 
     bool IsNull() const
@@ -74,6 +83,38 @@ public:
     }
 };
 
+class CBlockHeaderPoS : public CBlockHeader {
+
+public:
+    std::vector<unsigned char> reserved;
+    
+    CBlockHeaderPoS() {
+        SetNull();
+    }
+    
+    CBlockHeaderPoS(const CBlockHeader & header) {
+        SetNull();
+        *((CBlockHeader*)this) = header;
+    }
+
+    uint256 GetHash() const {
+        auto header = static_cast<CBlockHeader>(*this);
+        auto hash = HashQuark(BEGIN(header.nVersion), END(header.nNonce));
+        return hash;
+    }
+    
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(*(CBlockHeader*)this);
+        READWRITE(hashStake);
+        READWRITE(nStakeIndex);
+        READWRITE(nStakeAmount);
+        READWRITE(hashStakeBlock);
+        READWRITE(reserved); // null tx count
+    }
+};
 
 class CBlock : public CBlockHeader
 {
@@ -105,8 +146,13 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
         READWRITE(*(CBlockHeader*)this);
         READWRITE(vtx);
-	if(vtx.size() > 1 && vtx[1].IsCoinStake())
-		READWRITE(vchBlockSig);
+	    if(vtx.size() > 1 && vtx[1].IsCoinStake()) {
+            READWRITE(vchBlockSig);
+            if (hashStake.IsNull()) {
+                hashStake = vtx[1].vin[0].prevout.hash;
+                nStakeIndex = vtx[1].vin[0].prevout.n;
+            }
+	    }
     }
 
     void SetNull()
@@ -127,6 +173,10 @@ public:
         block.nTime          = nTime;
         block.nBits          = nBits;
         block.nNonce         = nNonce;
+        block.hashStake      = hashStake;
+        block.nStakeIndex    = nStakeIndex;
+        block.nStakeAmount   = nStakeAmount;
+        block.hashStakeBlock = hashStakeBlock;
         return block;
     }
 
@@ -142,7 +192,7 @@ public:
     }
 
     bool SignBlock(const CKeyStore& keystore);
-    bool CheckBlockSignature() const;
+    bool CheckBlockSignature(const std::function<bool(const uint256 & prevoutHash, const int & prevoutN, CScript & prevoutScriptPubKey)> & getTx) const;
 
     std::pair<COutPoint, unsigned int> GetProofOfStake() const
     {
@@ -159,6 +209,30 @@ public:
     static uint256 CheckMerkleBranch(uint256 hash, const std::vector<uint256>& vMerkleBranch, int nIndex);
     std::string ToString() const;
     void print() const;
+};
+
+class CBlockPoS : public CBlock {
+
+public:
+
+    CBlockPoS(const CBlock & block) {
+        SetNull();
+        *((CBlock*)this) = block;
+    }
+    
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(*(CBlockHeader*)this);
+        READWRITE(hashStake);
+        READWRITE(nStakeIndex);
+        READWRITE(nStakeAmount);
+        READWRITE(hashStakeBlock);
+        READWRITE(vtx);
+        if (vtx.size() > 1 && vtx[1].IsCoinStake())
+            READWRITE(vchBlockSig);
+    }
 };
 
 
