@@ -3213,8 +3213,6 @@ bool CheckBlock(const CBlock& block, CValidationState& state, bool /*fCheckPOW*/
                 }
             }
         }
-    } else {
-        LogPrintf("CheckBlock() : skipping transaction locking checks\n");
     }
 
 
