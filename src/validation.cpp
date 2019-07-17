@@ -3029,7 +3029,7 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
     // Store in header index
     mapHeaderIndex[pindexNew->nHeight] = pindexNew;
     if (pindexNew->nHeight % 10000 == 0)
-        LogPrintf("Processing headers at %u %s\n", pindexNew->nHeight, pindexNew->GetBlockHash().ToString());
+        LogPrintf("Processing block indices at %u %s\n", pindexNew->nHeight, pindexNew->GetBlockHash().ToString());
 
     return pindexNew;
 }
@@ -4652,6 +4652,12 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
 
                 // Activate the genesis block so normal node progress can continue
                 if (hash == chainparams.GetConsensus().hashGenesisBlock) {
+                    // If we're reindexing, we need to ensure the genesis block is added to the index
+                    if (fReindex) {
+                        LOCK(cs_main);
+                        g_chainstate.AddGenesisBlockIndex(chainparams.GenesisBlock());
+                        g_txindex->BlockConnectedSync(std::make_shared<CBlock>(chainparams.GenesisBlock()), mapBlockIndex[chainparams.GenesisBlock().GetHash()], std::vector<CTransactionRef>());
+                    }
                     CValidationState state;
                     if (!ActivateBestChain(state, chainparams)) {
                         break;
