@@ -398,6 +398,7 @@ void SetupServerArgs()
     gArgs.AddArg("-prune=<n>", "Pruning is not supported", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex", "Rebuild chain state and block index from the blk*.dat files on disk", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex-chainstate", "Rebuild chain state from the currently indexed blocks. When in pruning mode or if blocks on disk might be corrupted, use full -reindex instead.", false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-staking", "Mine blocks on this node (default: 1)", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-minstakeamount", strprintf("Only stakes UTXOs greater than or equal to this amount (default: %d)", 0), false, OptionsCategory::OPTIONS);
 #ifndef WIN32
     gArgs.AddArg("-sysperms", "Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)", false, OptionsCategory::OPTIONS);
@@ -589,6 +590,9 @@ static void BlockNotifyCallback(bool initialSync, const CBlockIndex *pBlockIndex
 static bool fHaveGenesis = false;
 static Mutex g_genesis_wait_mutex;
 static std::condition_variable g_genesis_wait_cv;
+static bool fTxIndexReady = true;
+static Mutex g_wait_index_mutex;
+static std::condition_variable g_wait_index_cv;
 
 static void BlockNotifyGenesisWait(bool, const CBlockIndex *pBlockIndex)
 {
@@ -680,7 +684,6 @@ static void ThreadImport(std::vector<fs::path> vImportFiles)
             nFile++;
         }
         pblocktree->WriteReindexing(false);
-        chainActive.SetTip(nullptr); // Blocknet PoS clean chain tip
         fReindex = false;
         LogPrintf("Reindexing finished\n");
         // To avoid ending up in a situation without genesis block, re-try initializing (no-op if reindexing worked):
@@ -712,6 +715,9 @@ static void ThreadImport(std::vector<fs::path> vImportFiles)
         }
     }
 
+    // Blocknet PoS sync txindex
+    g_txindex->Sync();
+
     // scan for better chains in the block chain database, that are not yet connected in the active best chain
     CValidationState state;
     if (!ActivateBestChain(state, chainparams)) {
@@ -725,6 +731,14 @@ static void ThreadImport(std::vector<fs::path> vImportFiles)
         StartShutdown();
         return;
     }
+
+    // Notify txindex sync listeners that it's ready
+    {
+        LOCK(g_wait_index_mutex);
+        fTxIndexReady = true;
+    }
+    g_wait_index_cv.notify_all();
+
     } // End scope of CImportingNow
     if (gArgs.GetArg("-persistmempool", DEFAULT_PERSIST_MEMPOOL)) {
         LoadMempool();
@@ -1467,6 +1481,7 @@ bool AppInitMain(InitInterfaces& interfaces)
     LogPrintf("* Using %.1f MiB for in-memory UTXO set (plus up to %.1f MiB of unused mempool space)\n", nCoinCacheUsage * (1.0 / 1024 / 1024), nMempoolSizeMax * (1.0 / 1024 / 1024));
 
     // Blocknet PoS requires txindex
+    fTxIndexReady = !fReindex;
     g_txindex = MakeUnique<TxIndex>(nTxIndexCache, false, fReindex);
 
     bool fLoaded = false;
@@ -1567,6 +1582,9 @@ bool AppInitMain(InitInterfaces& interfaces)
                 break;
             }
 
+            // Blocknet PoS load indexer
+            g_txindex->Start();
+
             if (!fReset) {
                 // Note that RewindBlockIndex MUST run even if we're about to -reindex-chainstate.
                 // It both disconnects blocks based on chainActive, and drops block data in
@@ -1579,12 +1597,8 @@ bool AppInitMain(InitInterfaces& interfaces)
             }
 
             try {
+                LOCK(cs_main);
                 if (!is_coinsview_empty) {
-                    // Blocknet PoS requires the txindex to be preloaded prior to VerifyDB check
-                    g_txindex->Start();
-
-                    {
-                    LOCK(cs_main);
                     uiInterface.InitMessage(_("Verifying blocks..."));
                     if (fHavePruned && gArgs.GetArg("-checkblocks", DEFAULT_CHECKBLOCKS) > MIN_BLOCKS_TO_KEEP) {
                         LogPrintf("Prune: pruned datadir may not have more than %d blocks; only checking available blocks\n",
@@ -1604,7 +1618,6 @@ bool AppInitMain(InitInterfaces& interfaces)
                                   gArgs.GetArg("-checkblocks", DEFAULT_CHECKBLOCKS))) {
                         strLoadError = _("Corrupted block database detected");
                         break;
-                    }
                     }
                 }
             } catch (const std::exception& e) {
@@ -1653,11 +1666,7 @@ bool AppInitMain(InitInterfaces& interfaces)
     fFeeEstimatesInitialized = true;
 
     // ********************************************************* Step 8: start indexers
-    // Blocknet PoS requires the txindex to be preloaded
-    if (!g_txindex->Started())
-        g_txindex->Start();
-    if (chainActive.Tip() != nullptr)
-        while (!g_txindex->BlockUntilSyncedToCurrentChain());
+    // Blocknet PoS requires indexer to be started before chain load
 
     // ********************************************************* Step 9: load wallet
     for (const auto& client : interfaces.chain_clients) {
@@ -1716,6 +1725,14 @@ bool AppInitMain(InitInterfaces& interfaces)
     }
 
     threadGroup.create_thread(std::bind(&ThreadImport, vImportFiles));
+
+    // Wait for txindex
+    {
+        WAIT_LOCK(g_wait_index_mutex, lock);
+        while (!fTxIndexReady && !ShutdownRequested()) {
+            g_wait_index_cv.wait_for(lock, std::chrono::milliseconds(500));
+        }
+    }
 
     // Wait for genesis block to be processed
     {

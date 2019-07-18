@@ -265,9 +265,9 @@ void BaseIndex::Start()
         return;
     }
 
-    m_thread_sync = std::thread(&TraceThread<std::function<void()>>, GetName(),
-                                std::bind(&BaseIndex::ThreadSync, this));
-    m_started = true;
+    // Blocknet PoS syncs index in real-time, as a result this background thread is not required
+//    m_thread_sync = std::thread(&TraceThread<std::function<void()>>, GetName(),
+//                                std::bind(&BaseIndex::ThreadSync, this));
 }
 
 void BaseIndex::Stop()

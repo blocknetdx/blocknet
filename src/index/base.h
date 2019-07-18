@@ -43,9 +43,6 @@ private:
     /// ValidationInterface notifications to stay in sync.
     std::atomic<bool> m_synced{false};
 
-    /// Stores the indexer started state
-    std::atomic<bool> m_started{false};
-
     /// The last block in the chain that the index is in sync with.
     std::atomic<const CBlockIndex*> m_best_block_index{nullptr};
 
@@ -79,11 +76,6 @@ protected:
     /// Get the name of the index for display in logs.
     virtual const char* GetName() const = 0;
 
-    /// Sets the synced state to true (useful for reindex)
-    void Synced() {
-        m_synced = true;
-    }
-
 public:
     /// Destructor interrupts sync thread if running and blocks until it exits.
     virtual ~BaseIndex();
@@ -104,33 +96,38 @@ public:
     /// Stops the instance from staying in sync with blockchain updates.
     void Stop();
 
-    /// Returns the started state
-    bool Started() {
-        return m_started;
+    /// Sync up to the current tip.
+    void Sync() {
+        CBlockLocator locator;
+        if (!GetDB().ReadBestBlock(locator)) {
+            locator.SetNull();
+        }
+
+        {
+            LOCK(cs_main);
+            if (locator.IsNull()) {
+                m_best_block_index = nullptr;
+            } else {
+                m_best_block_index = FindForkInGlobalIndex(chainActive, locator);
+            }
+            m_synced = m_best_block_index.load() == chainActive.Tip();
+        }
+
+        ThreadSync();
     }
 
-    /// TODO Blocknet Sync index on-demand
-    bool Sync(CChain & chain, CBlockIndex *pindex = nullptr, const Consensus::Params & chainparams = Params().GetConsensus()) {
-        if (!pindex)
-            return true;
-        CBlock block;
-        if (!ReadBlockFromDisk(block, pindex, chainparams))
-            return false;
-        if (!WriteBlock(block, pindex))
-            return false;
-        chain.SetTip(pindex);
-        return true;
-    }
-
+    /// Connect block to the index
     void BlockConnectedSync(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) {
         BlockConnected(block, pindex, txn_conflicted);
     }
 
+    /// Write block index
     void ChainStateFlushedSync(const CBlockLocator& locator) {
         ChainStateFlushed(locator);
     }
 
+    /// Returns txindex best block index
     const CBlockIndex* BestBlockIndex() {
         return m_best_block_index;
     }
