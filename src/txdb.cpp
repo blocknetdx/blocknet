@@ -310,7 +310,9 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                     LOCK(mu);
                     hashes[diskindex] = hash;
                     ++counter;
-                    if (counter % (allIndices/10) == 0) {
+                    const int perticks = 10;
+                    const int shardpos = allIndices < perticks ? 1 : static_cast<int>((double)allIndices/(double)perticks);
+                    if (counter % shardpos == 0) {
                         int p = static_cast<int>((double)counter/(double)allIndices*80.0);
                         LogPrintf("[%u%%]...", p);
                     }
