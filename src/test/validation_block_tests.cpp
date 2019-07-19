@@ -106,8 +106,8 @@ void BuildChain(const uint256& root, int height, const unsigned int invalid_rate
 {
     if (height <= 0 || blocks.size() >= max_size) return;
 
-    bool gen_invalid = InsecureRandRange(height) < invalid_rate;
-    bool gen_fork = InsecureRandRange(height) < branch_rate;
+    bool gen_invalid = InsecureRandRange(100) < invalid_rate;
+    bool gen_fork = InsecureRandRange(100) < branch_rate;
 
     const std::shared_ptr<const CBlock> pblock = gen_invalid ? BadBlock(root) : GoodBlock(root);
     blocks.push_back(pblock);
@@ -123,11 +123,22 @@ void BuildChain(const uint256& root, int height, const unsigned int invalid_rate
 
 BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
 {
+    CChainParams params = Params();
+    auto Params = [&params]() {
+        return params;
+    };
+    params.consensus.BIP34Height = 500; // disable bip34 for the forking tests below
+
     // build a large-ish chain that's likely to have some forks
     std::vector<std::shared_ptr<const CBlock>> blocks;
     while (blocks.size() < 50) {
         blocks.clear();
-        BuildChain(Params().GenesisBlock().GetHash(), 50, 15, 10, 500, blocks);
+        BuildChain(Params().GenesisBlock().GetHash(), 100, 15, 10, 500, blocks);
+        std::vector<CBlockHeader> headers;
+        std::transform(blocks.begin(), blocks.end(), std::back_inserter(headers), [](std::shared_ptr<const CBlock> b) { return b->GetBlockHeader(); });
+        CValidationState state;
+        if (!ProcessNewBlockHeaders(headers, state, Params()))
+            blocks.clear(); // try a better chain
     }
 
     bool ignored;
@@ -151,27 +162,24 @@ BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
     TestSubscriber sub(initial_tip->GetBlockHash());
     RegisterValidationInterface(&sub);
 
-    CChainParams params = Params();
-    params.consensus.BIP34Height = 500; // disable bip34 for the forking tests below
-
     // create a bunch of threads that repeatedly process a block generated above at random
     // this will create parallelism and randomness inside validation - the ValidationInterface
     // will subscribe to events generated during block validation and assert on ordering invariance
     std::vector<std::thread> threads;
     for (int i = 0; i < 10; i++) {
-        threads.emplace_back([&blocks,&params]() {
+        threads.emplace_back([&blocks,&Params]() {
             bool ignored;
             FastRandomContext insecure;
             for (int i = 0; i < 1000; i++) {
                 auto block = blocks[insecure.randrange(blocks.size() - 1)];
-                ProcessNewBlock(params, block, true, &ignored);
+                ProcessNewBlock(Params(), block, true, &ignored);
             }
 
             // to make sure that eventually we process the full chain - do it here
             for (auto & block : blocks) {
                 if (block->vtx.size() == 1) {
-                    bool processed = ProcessNewBlock(params, block, true, &ignored);
-                    assert(processed);
+                    bool processed = ProcessNewBlock(Params(), block, true, &ignored);
+                    BOOST_CHECK(processed);
                 }
             }
         });

@@ -259,16 +259,20 @@ public:
                 return false;
             }
         }
-        auto pblocktemplate = BlockAssembler(chainparams).CreateNewBlockPoS(*stakeCoin.coin, stakeCoin.hashBlock,
-                stakeCoin.time, stakeCoin.wallet.get());
-        if (!pblocktemplate)
-            return false;
-        auto pblock = std::make_shared<const CBlock>(pblocktemplate->block);
         bool fNewBlock = false;
-        if (!ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock))
-            return false;
-        LogPrintf("Stake found! %s %d %f\n", stakeCoin.coin->outpoint.hash.ToString(), stakeCoin.coin->outpoint.n,
-                (double)stakeCoin.coin->txout.nValue/(double)COIN);
+        try {
+            auto pblocktemplate = BlockAssembler(chainparams).CreateNewBlockPoS(*stakeCoin.coin, stakeCoin.hashBlock,
+                    stakeCoin.time, stakeCoin.wallet.get());
+            if (!pblocktemplate)
+                return false;
+            auto pblock = std::make_shared<const CBlock>(pblocktemplate->block);
+            if (!ProcessNewBlock(chainparams, pblock, /*fForceProcessing=*/true, &fNewBlock))
+                return false;
+            LogPrintf("Stake found! %s %d %f\n", stakeCoin.coin->outpoint.hash.ToString(), stakeCoin.coin->outpoint.n,
+                    (double)stakeCoin.coin->txout.nValue/(double)COIN);
+        } catch (std::exception & e) {
+            LogPrintf("Error: Staking %s\n", e.what());
+        }
         return fNewBlock;
     }
 

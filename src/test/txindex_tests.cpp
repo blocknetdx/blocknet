@@ -16,25 +16,26 @@ BOOST_AUTO_TEST_SUITE(txindex_tests)
 
 BOOST_FIXTURE_TEST_CASE(txindex_initial_sync, TestChain100Setup)
 {
-    TxIndex txindex(1 << 20, true);
+    g_txindex = MakeUnique<TxIndex>(1 << 20, true);
 
     CTransactionRef tx_disk;
     uint256 block_hash;
 
     // Transaction should not be found in the index before it is started.
     for (const auto& txn : m_coinbase_txns) {
-        BOOST_CHECK(!txindex.FindTx(txn->GetHash(), block_hash, tx_disk));
+        BOOST_CHECK(!g_txindex->FindTx(txn->GetHash(), block_hash, tx_disk));
     }
 
-    // BlockUntilSyncedToCurrentChain should return false before txindex is started.
-    BOOST_CHECK(!txindex.BlockUntilSyncedToCurrentChain());
+    // BlockUntilSyncedToCurrentChain should return false before g_txindex is started.
+    BOOST_CHECK(!g_txindex->BlockUntilSyncedToCurrentChain());
 
-    txindex.Start();
+    g_txindex->Start();
+    g_txindex->Sync();
 
     // Allow tx index to catch up with the block index.
     constexpr int64_t timeout_ms = 10 * 1000;
     int64_t time_start = GetTimeMillis();
-    while (!txindex.BlockUntilSyncedToCurrentChain()) {
+    while (!g_txindex->BlockUntilSyncedToCurrentChain()) {
         BOOST_REQUIRE(time_start + timeout_ms > GetTimeMillis());
         MilliSleep(100);
     }
@@ -42,12 +43,12 @@ BOOST_FIXTURE_TEST_CASE(txindex_initial_sync, TestChain100Setup)
     // Check that txindex excludes genesis block transactions.
     const CBlock& genesis_block = Params().GenesisBlock();
     for (const auto& txn : genesis_block.vtx) {
-        BOOST_CHECK(!txindex.FindTx(txn->GetHash(), block_hash, tx_disk));
+        BOOST_CHECK(!g_txindex->FindTx(txn->GetHash(), block_hash, tx_disk));
     }
 
-    // Check that txindex has all txs that were in the chain before it started.
+    // Check that g_txindex has all txs that were in the chain before it started.
     for (const auto& txn : m_coinbase_txns) {
-        if (!txindex.FindTx(txn->GetHash(), block_hash, tx_disk)) {
+        if (!g_txindex->FindTx(txn->GetHash(), block_hash, tx_disk)) {
             BOOST_ERROR("FindTx failed");
         } else if (tx_disk->GetHash() != txn->GetHash()) {
             BOOST_ERROR("Read incorrect tx");
@@ -61,8 +62,8 @@ BOOST_FIXTURE_TEST_CASE(txindex_initial_sync, TestChain100Setup)
         const CBlock& block = CreateAndProcessBlock(no_txns, coinbase_script_pub_key);
         const CTransaction& txn = *block.vtx[0];
 
-        BOOST_CHECK(txindex.BlockUntilSyncedToCurrentChain());
-        if (!txindex.FindTx(txn.GetHash(), block_hash, tx_disk)) {
+        BOOST_CHECK(g_txindex->BlockUntilSyncedToCurrentChain());
+        if (!g_txindex->FindTx(txn.GetHash(), block_hash, tx_disk)) {
             BOOST_ERROR("FindTx failed");
         } else if (tx_disk->GetHash() != txn.GetHash()) {
             BOOST_ERROR("Read incorrect tx");
@@ -70,7 +71,7 @@ BOOST_FIXTURE_TEST_CASE(txindex_initial_sync, TestChain100Setup)
     }
 
     // shutdown sequence (c.f. Shutdown() in init.cpp)
-    txindex.Stop();
+    g_txindex->Stop();
 
     threadGroup.interrupt_all();
     threadGroup.join_all();

@@ -91,7 +91,7 @@ static void AssembleBlock(benchmark::State& state)
     }
 
     // Collect some loose transactions that spend the coinbases of our mined blocks
-    constexpr size_t NUM_BLOCKS{200};
+    constexpr size_t NUM_BLOCKS{50}; // Blocknet uses Quark hash, keep this smaller b/c it's much more cpu intensive
     std::vector<CTransactionRef> txs; txs.resize(NUM_BLOCKS - chainparams.GetConsensus().coinMaturity + 1);
     for (size_t b{0}; b < NUM_BLOCKS; ++b) {
         CMutableTransaction tx;

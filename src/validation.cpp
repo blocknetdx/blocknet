@@ -2775,7 +2775,8 @@ bool CChainState::ActivateBestChain(CValidationState &state, const CChainParams&
 
                 for (const PerBlockConnectTrace& trace : connectTrace.GetBlocksConnected()) {
                     assert(trace.pblock && trace.pindex);
-                    g_txindex->BlockConnectedSync(trace.pblock, trace.pindex, *trace.conflictedTxs);
+                    if (g_txindex)
+                        g_txindex->BlockConnectedSync(trace.pblock, trace.pindex, *trace.conflictedTxs);
                     GetMainSignals().BlockConnected(trace.pblock, trace.pindex, trace.conflictedTxs);
                 }
             } while (!chainActive.Tip() || (starting_tip && CBlockIndexWorkComparator()(chainActive.Tip(), starting_tip)));
@@ -3235,8 +3236,8 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
     if (block.IsProofOfStake()) {
         if (block.vtx[0]->GetValueOut() != 0)
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-pos", false, "PoS coinbase must be 0");
-        if (block.vtx[0]->vout.size() != 1 || !block.vtx[0]->vout[0].scriptPubKey.empty())
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-vout", false, "PoS coinbase must have one empty vout");
+        if (block.vtx[0]->vout.size() > 2 || !block.vtx[0]->vout[0].scriptPubKey.empty()) // supports witness commitment
+            return state.DoS(100, false, REJECT_INVALID, "bad-cb-vout", false, "PoS coinbase has too many vouts");
     }
 
     // Check transactions
@@ -4634,7 +4635,7 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                     if (!pindex || (pindex->nStatus & BLOCK_HAVE_DATA) == 0) {
                       CValidationState state;
                       if (g_chainstate.AcceptBlock(pblock, state, chainparams, nullptr, true, dbp, nullptr)) {
-                          if (fReindex) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
+                          if (fReindex && g_txindex) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
                               g_txindex->BlockConnectedSync(pblock, mapBlockIndex[pblock->GetHash()], std::vector<CTransactionRef>());
                           nLoaded++;
                       }
@@ -4649,7 +4650,7 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                 // Activate the genesis block so normal node progress can continue
                 if (hash == chainparams.GetConsensus().hashGenesisBlock) {
                     // If we're reindexing, we need to ensure the genesis block is added to the index
-                    if (fReindex) {
+                    if (fReindex && g_txindex) {
                         LOCK(cs_main);
                         g_chainstate.ReindexAddToBlockIndex(chainparams.GenesisBlock());
                         g_txindex->BlockConnectedSync(std::make_shared<CBlock>(chainparams.GenesisBlock()), mapBlockIndex[chainparams.GenesisBlock().GetHash()], std::vector<CTransactionRef>());
@@ -4680,7 +4681,7 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                             CValidationState dummy;
                             if (g_chainstate.AcceptBlock(pblockrecursive, dummy, chainparams, nullptr, true, &it->second, nullptr))
                             {
-                                if (fReindex) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
+                                if (fReindex && g_txindex) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
                                     g_txindex->BlockConnectedSync(pblock, mapBlockIndex[pblock->GetHash()], std::vector<CTransactionRef>());
                                 nLoaded++;
                                 queue.push_back(pblockrecursive->GetHash());

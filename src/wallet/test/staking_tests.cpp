@@ -77,7 +77,7 @@ struct TestChainPoS : public TestingSetup {
         // Turn on index for staking
         g_txindex = MakeUnique<TxIndex>(1 << 20, true);
         g_txindex->Start();
-        while (!g_txindex->BlockUntilSyncedToCurrentChain());
+        g_txindex->Sync();
 
         // Stake some blocks
         StakeBlocks(5);
@@ -125,7 +125,6 @@ struct TestChainPoS : public TestingSetup {
                     reserver.reserve();
                     wallet->ScanForWalletTransactions(locked_chain->getBlockHash(chainActive.Height()), {} /* stop_block */, reserver, true /* update */);
                 }
-                while (!g_txindex->BlockUntilSyncedToCurrentChain());
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
             } catch (...) { }
