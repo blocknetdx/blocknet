@@ -5171,3 +5171,18 @@ bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & ke
 
     return true;
 }
+
+CTransactionRef GetTxFunc(const COutPoint & out) {
+    CTransactionRef tx;
+    uint256 hashBlock;
+    if (!GetTransaction(out.hash, tx, Params().GetConsensus(), hashBlock))
+        return nullptr;
+    {
+        LOCK2(cs_main, mempool.cs);
+        CCoinsViewMemPool view(pcoinsTip.get(), mempool);
+        Coin coin;
+        if (!view.GetCoin(out, coin) || mempool.isSpent(out))
+            return nullptr;
+    }
+    return tx;
+}
