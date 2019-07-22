@@ -34,7 +34,7 @@ struct ServicenodeChainSetup : public TestingSetup {
         coinbaseKey.MakeNewKey(true); // default privkey for coinbase spends
 
         CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
-        for (int i = 0; i <= Params().GetConsensus().coinMaturity; ++i) { // we'll need to spend coinbases, make sure we have enough blocks
+        for (int i = 0; i <= Params().GetConsensus().coinMaturity + 5; ++i) { // we'll need to spend coinbases, make sure we have enough blocks
             SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing*20); // prevent difficulty from increasing too rapidly
             CBlock b = CreateAndProcessBlock(std::vector<CMutableTransaction>(), scriptPubKey);
             m_coinbase_txns.push_back(b.vtx[0]);
@@ -208,10 +208,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
     const auto snodePubKey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
     const auto tier = ServiceNode::Tier::SPV;
 
+    CBasicKeyStore keystore; // temp used to spend inputs
+    keystore.AddKey(coinbaseKey);
+
     // Spend inputs that would be used in snode collateral
     {
-        CBasicKeyStore keystore; // temp used to spend inputs
-        keystore.AddKey(coinbaseKey);
         // Spend inputs somewhere
         CScript scriptPubKey = CScript() << ToByteVector(key.GetPubKey()) << OP_CHECKSIG;
         CTransactionRef tx = m_coinbase_txns[0];
@@ -228,28 +229,69 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing*3); // add some time to make it easier to mine
         CBlock block = CreateAndProcessBlock(std::vector<CMutableTransaction>({mtx}), scriptPubKey); // spend inputs
         BOOST_CHECK(chainActive.Tip()->GetBlockHash() == block.GetHash()); // make sure block was added to the chaintip
+
+        Coin coin;
+        BOOST_CHECK_MESSAGE(!pcoinsTip->GetCoin(COutPoint(m_coinbase_txns[0]->GetHash(), 0), coin), "Coin should be spent here"); // should be spent
+
+        CAmount totalAmount{0};
+        std::vector<COutPoint> collateral;
+        for (const auto & txn : m_coinbase_txns) {
+            if (totalAmount >= ServiceNode::COLLATERAL_SPV)
+                break;
+            totalAmount += txn->GetValueOut();
+            collateral.emplace_back(txn->GetHash(), 0);
+        }
+
+        // Generate the signature from sig hash
+        const auto & sighash = ServiceNode::CreateSigHash(snodePubKey, tier, collateral);
+        std::vector<unsigned char> sig;
+        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        // Deserialize servicenode obj from network stream
+        ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, sig);
+        BOOST_CHECK_MESSAGE(!snode.IsValid(GetTxFunc), "Should fail on spent collateral");
     }
 
-    Coin coin;
-    BOOST_CHECK_MESSAGE(!pcoinsTip->GetCoin(COutPoint(m_coinbase_txns[0]->GetHash(), 0), coin), "Coin should be spent here"); // should be spent
+    // Check case where spent collateral is in mempool
+    {
+        // Spend one of the collateral inputs (spend the 2nd coinbase input, b/c first was spent above)
+        CScript scriptPubKey = CScript() << ToByteVector(key.GetPubKey()) << OP_CHECKSIG;
+        CTransactionRef tx = m_coinbase_txns[1];
+        CMutableTransaction mtx;
+        mtx.vin.resize(1);
+        mtx.vin[0] = CTxIn(COutPoint(tx->GetHash(), 0));
+        mtx.vout.resize(1);
+        mtx.vout[0].scriptPubKey = scriptPubKey;
+        mtx.vout[0].nValue = tx->GetValueOut() - CENT;
+        const CTransaction txConst(mtx);
+        SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[0]);
+        ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, mtx.vout[0].nValue, SIGHASH_ALL), tx->vout[0].scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[0], sigdata);
 
-    CAmount totalAmount{0};
-    std::vector<COutPoint> collateral;
-    for (const auto & tx : m_coinbase_txns) {
-        if (totalAmount >= ServiceNode::COLLATERAL_SPV)
-            break;
-        totalAmount += tx->GetValueOut();
-        collateral.emplace_back(tx->GetHash(), 0);
+        CValidationState state;
+        LOCK(cs_main);
+        BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx),
+                                                    nullptr /* pfMissingInputs */,
+                                                    nullptr /* plTxnReplaced */,
+                                                    false /* bypass_limits */,
+                                                    0 /* nAbsurdFee */));
+        CAmount totalAmount{0};
+        std::vector<COutPoint> collateral;
+        for (int i = 1; i < m_coinbase_txns.size(); ++i) { // start at 1 (ignore first spent coinbase)
+            const auto & txn = m_coinbase_txns[i];
+            if (totalAmount >= ServiceNode::COLLATERAL_SPV)
+                break;
+            totalAmount += txn->GetValueOut();
+            collateral.emplace_back(txn->GetHash(), 0);
+        }
+
+        // Generate the signature from sig hash
+        const auto & sighash = ServiceNode::CreateSigHash(snodePubKey, tier, collateral);
+        std::vector<unsigned char> sig;
+        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        // Deserialize servicenode obj from network stream
+        ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, sig);
+        BOOST_CHECK_MESSAGE(!snode.IsValid(GetTxFunc), "Should fail on spent collateral in mempool");
     }
-
-    // Generate the signature from sig hash
-    const auto & sighash = ServiceNode::CreateSigHash(snodePubKey, tier, collateral);
-    std::vector<unsigned char> sig;
-    BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
-
-    // Deserialize servicenode obj from network stream
-    ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, sig);
-    BOOST_CHECK_MESSAGE(!snode.IsValid(GetTxFunc), "Should fail on spent collateral");
 }
 
 // Check misc cases
