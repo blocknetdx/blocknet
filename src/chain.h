@@ -171,6 +171,7 @@ public:
     unsigned int nTime;
     unsigned int nBits;
     unsigned int nNonce;
+    std::vector<unsigned char> vchBlockSig;
 
     //! (memory only) Sequential id assigned to distinguish order in which blocks are received.
     uint32_t nSequenceId;
@@ -203,6 +204,7 @@ public:
         nTime = 0;
         nBits = 0;
         nNonce = 0;
+        vchBlockSig.clear();
     }
 
     CBlockIndex()
@@ -233,7 +235,9 @@ public:
             SetProofOfStake();
             prevoutStake = block.vtx[1].vin[0].prevout;
             nStakeTime = block.nTime;
+            vchBlockSig = block.vchBlockSig;
         } else {
+            vchBlockSig.clear();
             prevoutStake.SetNull();
             nStakeTime = 0;
         }
@@ -269,6 +273,8 @@ public:
         block.nTime = nTime;
         block.nBits = nBits;
         block.nNonce = nNonce;
+        block.hashStake = prevoutStake.hash;
+        block.nStakeIndex = prevoutStake.n;
         return block;
     }
 
