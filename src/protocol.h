@@ -238,6 +238,11 @@ extern const char *GETBLOCKTXN;
  * @since protocol version 70014 as described by BIP 152
  */
 extern const char *BLOCKTXN;
+/**
+ * Contains an XBridge message.
+ * @since protocol version 70712
+ */
+extern const char *XBRIDGE;
 };
 
 /* Get a vector of all valid message types (see above) */

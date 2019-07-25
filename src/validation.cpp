@@ -5186,3 +5186,13 @@ CTransactionRef GetTxFunc(const COutPoint & out) {
     }
     return tx;
 }
+
+bool IsBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash) {
+    LOCK(cs_main);
+    if (blockNumber < chainActive.Height() - 15) // increasing from 15 is a protocol change
+        return false; // only accept blocks that meet the threshold
+    const auto block = chainActive.Tip()->GetAncestor(blockNumber);
+    if (!block) // fail if block wasn't found
+        return false;
+    return block->GetBlockHash() == blockHash;
+}

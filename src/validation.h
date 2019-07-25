@@ -543,4 +543,12 @@ bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & ke
  */
 CTransactionRef GetTxFunc(const COutPoint & out);
 
+/**
+ * Returns true if the specified block is found in the chain tip.
+ * @param blockNumber
+ * @param blockHash
+ * @return bool
+ */
+bool IsBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash);
+
 #endif // BITCOIN_VALIDATION_H

@@ -23,6 +23,7 @@
 #include <random.h>
 #include <reverse_iterator.h>
 #include <scheduler.h>
+#include <servicenode/servicenodemgr.h>
 #include <tinyformat.h>
 #include <txmempool.h>
 #include <ui_interface.h>
@@ -2979,8 +2980,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         return true;
     }
 
-    if (strCommand == "xbridge") {
-        static std::set<uint256> seenXBridgePackets;
+    // Servicenode related packet handling
+    auto & smgr = sn::ServiceNodeMgr::instance();
+
+    if (strCommand == NetMsgType::XBRIDGE) { // handle xbridge packets
         std::vector<unsigned char> raw;
         vRecv >> raw;
 
@@ -2992,18 +2995,47 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             return true;
         }
 
-        uint256 hash = Hash(raw.begin(), raw.end());
-        if (seenXBridgePackets.count(hash))
-            return true; // already seen
-        seenXBridgePackets.insert(hash);
-        if (seenXBridgePackets.size() > 350000)
-            seenXBridgePackets.clear(); // mem mgmt, ~12MB (32bytes * 350k)
+        // Process xbridge packet
+        if (!smgr.processXBridge(raw))
+            return true;
 
         // Relay xbridge packets
         connman->ForEachNode([&](CNode* pnode) {
             if (!pnode->fSuccessfullyConnected)
                 return;
-            connman->PushMessage(pnode, msgMaker.Make("xbridge", raw));
+            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::XBRIDGE, raw));
+        });
+
+        return true;
+    }
+
+    if (strCommand == sn::REGISTER) { // handle snode registrations
+        ServiceNodePtr snode;
+        if (!smgr.processRegistration(vRecv, snode))
+            return true;
+
+        // Relay packets
+        connman->ForEachNode([&](CNode* pnode) {
+            if (!pnode->fSuccessfullyConnected)
+                return;
+            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, *snode));
+        });
+
+        return true;
+    }
+
+    if (strCommand == sn::PING) { // handle snode pings
+        ServiceNodePing ping;
+        if (!smgr.processPing(vRecv, ping))
+            return true;
+
+        smgr.updatePing(ping.getSnodePubKey());
+
+        // Relay packets
+        connman->ForEachNode([&](CNode* pnode) {
+            if (!pnode->fSuccessfullyConnected)
+                return;
+            connman->PushMessage(pnode, msgMaker.Make(sn::PING, ping));
         });
 
         return true;
