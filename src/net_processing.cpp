@@ -3010,7 +3010,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     }
 
     if (strCommand == sn::REGISTER) { // handle snode registrations
-        ServiceNodePtr snode;
+        sn::ServiceNodePtr snode;
         if (!smgr.processRegistration(vRecv, snode))
             return true;
 
@@ -3025,11 +3025,9 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     }
 
     if (strCommand == sn::PING) { // handle snode pings
-        ServiceNodePing ping;
+        sn::ServiceNodePing ping;
         if (!smgr.processPing(vRecv, ping))
             return true;
-
-        smgr.updatePing(ping.getSnodePubKey());
 
         // Relay packets
         connman->ForEachNode([&](CNode* pnode) {

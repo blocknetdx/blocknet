@@ -547,8 +547,10 @@ CTransactionRef GetTxFunc(const COutPoint & out);
  * Returns true if the specified block is found in the chain tip.
  * @param blockNumber
  * @param blockHash
+ * @param checkStale
  * @return bool
  */
-bool IsBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash);
+static const int SNODE_STALE_BLOCKS = 5; // number of blocks to allow before a snode is marked "stale"
+bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale=true);
 
 #endif // BITCOIN_VALIDATION_H

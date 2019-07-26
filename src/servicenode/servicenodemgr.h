@@ -66,7 +66,8 @@ public:
         }
         if (seenPacket(ping.getHash()))
             return false;
-        // TODO Handle ping
+
+        addSn(ping.getSnode()); // add or replace existing snode
         return true;
     }
 
@@ -81,14 +82,6 @@ public:
         return getSn(std::vector<unsigned char>{snodePubKey.begin(), snodePubKey.end()});
     }
 
-    void updatePing(const CPubKey & snodePubKey) {
-        auto snode = findSn(snodePubKey);
-        if (snode) {
-            LOCK(mu);
-            snode->updatePing();
-        }
-    }
-
 protected:
     ServiceNodePtr addSn(const ServiceNodePtr & snode) {
         if (!snode)
@@ -99,7 +92,7 @@ protected:
     }
 
     ServiceNodePtr addSn(const ServiceNode & snode) {
-        if (!snode.isValid(GetTxFunc, IsBlockValidFunc))
+        if (!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
             return nullptr;
         auto ptr = std::make_shared<ServiceNode>(snode);
         return addSn(ptr);

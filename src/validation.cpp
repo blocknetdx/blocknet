@@ -5187,12 +5187,12 @@ CTransactionRef GetTxFunc(const COutPoint & out) {
     return tx;
 }
 
-bool IsBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash) {
+bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale) {
     LOCK(cs_main);
-    if (blockNumber < chainActive.Height() - 15) // increasing from 15 is a protocol change
+    if (checkStale && blockNumber < chainActive.Height() - SNODE_STALE_BLOCKS) // check if stale
         return false; // only accept blocks that meet the threshold
     const auto block = chainActive.Tip()->GetAncestor(blockNumber);
-    if (!block) // fail if block wasn't found
-        return false;
+    if (!block)
+        return false; // fail if block wasn't found
     return block->GetBlockHash() == blockHash;
 }

@@ -17,7 +17,13 @@
 #include <timedata.h>
 
 #include <set>
+#include <utility>
 #include <vector>
+
+namespace sn {
+
+typedef std::function<CTransactionRef(const COutPoint & out)> TxFunc;
+typedef std::function<bool(const uint32_t & blockNumber, const uint256 & blockHash, const bool & checkStale)> BlockValidFunc;
 
 class LegacyXBridgePacket {
 public:
@@ -50,16 +56,29 @@ public:
         SPV = 50,
     };
 
+    static uint256 CreateSigHash(const std::vector<unsigned char> & snodePubKey, const Tier & tier,
+                                 const std::vector<COutPoint> & collateral,
+                                 const uint32_t & bestBlock=0, const uint256 & bestBlockHash=uint256(),
+                                 const std::string & config="")
+    {
+        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        ss << snodePubKey << static_cast<uint32_t>(tier) << collateral << bestBlock << bestBlockHash << config;
+        return ss.GetHash();
+    }
+
 public:
-    explicit ServiceNode() : snodePubKey(std::vector<unsigned char>()),
-                    tier(Tier::OPEN),
-                    collateral(std::vector<COutPoint>()),
-                    bestBlock(0),
-                    bestBlockHash(uint256()),
-                    signature(std::vector<unsigned char>()),
-                    regtime(GetAdjustedTime()),
-                    pingtime(0)
-                    {}
+    explicit ServiceNode() : snodePubKey(std::vector<unsigned char>()), tier(Tier::OPEN),
+                             collateral(std::vector<COutPoint>()), bestBlock(0), bestBlockHash(uint256()),
+                             signature(std::vector<unsigned char>()), regtime(GetAdjustedTime()), pingtime(0) {}
+    explicit ServiceNode(std::vector<unsigned char> snodePubKey,
+                         Tier tier,
+                         std::vector<COutPoint> collateral,
+                         uint32_t bestBlock,
+                         uint256 bestBlockHash,
+                         std::vector<unsigned char> signature) : snodePubKey(std::move(snodePubKey)), tier(tier),
+                                                     collateral(std::move(collateral)), bestBlock(bestBlock),
+                                                     bestBlockHash(bestBlockHash), signature(std::move(signature)),
+                                                     regtime(GetAdjustedTime()), pingtime(0) {}
 
     friend inline bool operator==(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey == b.snodePubKey; }
     friend inline bool operator!=(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey != b.snodePubKey; }
@@ -81,16 +100,29 @@ public:
         return collateral;
     }
 
+    const uint32_t& getBestBlock() const {
+        return bestBlock;
+    }
+
+    const uint256& getBestBlockHash() const {
+        return bestBlockHash;
+    }
+
     const std::vector<unsigned char>& getSignature() const {
         return signature;
     }
 
-    int64_t getRegTime() const {
+    const int64_t& getRegTime() const {
         return regtime;
     }
 
     void updatePing() {
         pingtime = GetAdjustedTime();
+    }
+
+    void setBestBlock(const uint32_t & blockNumber, const uint256 & blockHash) {
+        pingBestBlock = blockNumber;
+        pingBestBlockHash = blockHash;
     }
 
     ADD_SERIALIZE_METHODS;
@@ -102,33 +134,39 @@ public:
         READWRITE(collateral);
         READWRITE(bestBlock);
         READWRITE(bestBlockHash);
+        READWRITE(config);
         READWRITE(signature);
-    }
-
-    static uint256 CreateSigHash(const std::vector<unsigned char> & snodePubKey, const Tier & tier,
-            const std::vector<COutPoint> & collateral, const uint32_t & bestBlock=0, const uint256 & bestBlockHash=uint256())
-    {
-        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << static_cast<uint32_t>(tier) << collateral << bestBlock << bestBlockHash;
-        return ss.GetHash();
+        if (ser_action.ForRead()) {
+            pingBestBlock = bestBlock;
+            pingBestBlockHash = bestBlockHash;
+        }
     }
 
     uint256 sigHash() const {
-        return CreateSigHash(snodePubKey, static_cast<Tier>(tier), collateral, bestBlock, bestBlockHash);
+        return CreateSigHash(snodePubKey, static_cast<Tier>(tier), collateral, bestBlock, bestBlockHash, config);
     }
 
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
         ss << snodePubKey << static_cast<uint32_t>(tier) << collateral << bestBlock << bestBlockHash
-           << signature << regtime;
+           << config << signature << regtime;
         return ss.GetHash();
     }
 
-    bool isValid(const std::function<CTransactionRef(const COutPoint & out)> & getTxFunc,
-                 const std::function<bool(const uint32_t & blockNumber, const uint256 & blockHash)> & isBlockValid) const
+    /**
+     * Returns true if the Servicenode is valid. The stale check defaults to true, by default this adds additional
+     * measures to verify a Servicenode. The Servicenode ping will change this state periodically, therefore it may
+     * be necessary to specifically disable the stale check if initial validation checks passed at the time of the
+     * initial Servicenode ping.
+     * @param getTxFunc
+     * @param isBlockValid
+     * @param checkStale
+     * @return
+     */
+    bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid, const bool & checkStale=true) const
     {
         // Block reported by snode must be ancestor of our chain tip
-        if (!isBlockValid(bestBlock, bestBlockHash))
+        if (!isBlockValid(pingBestBlock, pingBestBlockHash, checkStale))
             return false;
 
         // Validate the snode pubkey
@@ -182,6 +220,8 @@ public:
         if (tier == Tier::SPV && total >= COLLATERAL_SPV)
             return true;
 
+        // Other Tiers here
+
         return false;
     }
 
@@ -191,46 +231,88 @@ protected: // included in network serialization
     std::vector<COutPoint> collateral;
     uint32_t bestBlock;
     uint256 bestBlockHash;
+    std::string config;
     std::vector<unsigned char> signature;
 
 protected: // in-memory only
     int64_t regtime;
     int64_t pingtime;
+    uint32_t pingBestBlock;
+    uint256 pingBestBlockHash;
 };
 
 typedef std::shared_ptr<ServiceNode> ServiceNodePtr;
 
 class ServiceNodePing {
 public:
-    ServiceNodePing() : snodePubKey(std::vector<unsigned char>()),
-                        signature(std::vector<unsigned char>()) {}
+    ServiceNodePing() : snodePubKey(std::vector<unsigned char>()), bestBlock(0), bestBlockHash(uint256()),
+                        snode(ServiceNode()), signature(std::vector<unsigned char>()) {}
 
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(snodePubKey);
+        READWRITE(bestBlock);
+        READWRITE(bestBlockHash);
+        READWRITE(snode);
         READWRITE(signature);
+        if (!ser_action.ForRead()) { // on write, set the snode best block and ping
+            snode.setBestBlock(bestBlock, bestBlockHash);
+            snode.updatePing();
+        }
     }
 
     CPubKey getSnodePubKey() const {
         return CPubKey(snodePubKey);
     }
 
+    const ServiceNode& getSnode() const {
+        return snode;
+    }
+
     const std::vector<unsigned char>& getSignature() const {
         return signature;
     }
 
+    uint256 sigHash() const {
+        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        ss << snodePubKey << bestBlock << bestBlockHash << snode;
+        return ss.GetHash();
+    }
+
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << signature;
+        ss << snodePubKey << bestBlock << bestBlockHash << snode << signature;
         return ss.GetHash();
+    }
+
+    bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid) const {
+        if (!isBlockValid(bestBlock, bestBlockHash, true))
+            return false; // fail if ping is stale
+
+        CPubKey spubkey(snodePubKey);
+        if (!spubkey.IsFullyValid())
+            return false; // not valid if bad snode pubkey
+
+        CPubKey pubkey;
+        if (!pubkey.RecoverCompact(sigHash(), signature))
+            return false; // not valid if bad sig
+
+        if (pubkey.GetID() != spubkey.GetID())
+            return false; // fail if pubkeys don't match
+
+        return snode.isValid(getTxFunc, isBlockValid, false); // stale check not required here, it happens above
     }
 
 protected:
     std::vector<unsigned char> snodePubKey;
+    uint32_t bestBlock;
+    uint256 bestBlockHash;
+    ServiceNode snode;
     std::vector<unsigned char> signature;
 };
 
+}
 
 #endif //BLOCKNET_SERVICENODE_H
