@@ -13,8 +13,10 @@
 #include <policy/policy.h>
 #include <pow.h>
 #include <servicenode/servicenode.h>
+#include <servicenode/servicenodemgr.h>
 #include <timedata.h>
 #include <validation.h>
+#include <wallet/wallet.h>
 
 #include <boost/test/unit_test.hpp>
 
@@ -78,13 +80,12 @@ struct ServicenodeChainSetup : public TestingSetup {
     std::vector<CTransactionRef> m_coinbase_txns; // For convenience, coinbase transactions
 };
 
-sn::ServiceNode snodeNetwork(const std::vector<unsigned char> & snodePubKey, const uint32_t & tier,
+sn::ServiceNode snodeNetwork(const CPubKey & snodePubKey, const uint8_t & tier,
                          const std::vector<COutPoint> & collateral, const uint32_t & blockNumber,
                          const uint256 & blockHash, const std::vector<unsigned char> & sig)
 {
     auto ss = CDataStream(SER_NETWORK, PROTOCOL_VERSION);
-    auto config = std::string();
-    ss << snodePubKey << tier << collateral << blockNumber << blockHash << config << sig;
+    ss << snodePubKey << tier << collateral << blockNumber << blockHash << sig;
     sn::ServiceNode snode; ss >> snode;
     return snode;
 }
@@ -95,8 +96,7 @@ BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServicenodeChainSetup)
 BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
 {
     CKey key; key.MakeNewKey(true);
-    const auto & pubkey = key.GetPubKey();
-    const auto snodePubKey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    const auto snodePubKey = key.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
 
     CAmount totalAmount{0};
@@ -122,8 +122,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
 BOOST_AUTO_TEST_CASE(servicenode_tests_opentier)
 {
     CKey key; key.MakeNewKey(true);
-    const auto & pubkey = key.GetPubKey();
-    const auto snodePubKey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    const auto snodePubKey = key.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::OPEN;
     const auto collateral = std::vector<COutPoint>();
 
@@ -155,8 +154,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_opentier)
 BOOST_AUTO_TEST_CASE(servicenode_tests_duplicate_collateral)
 {
     CKey key; key.MakeNewKey(true);
-    const auto & pubkey = key.GetPubKey();
-    const auto snodePubKey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    const auto snodePubKey = key.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
 
     // Assumes total input amounts below adds up to ServiceNode::COLLATERAL_SPV
@@ -181,8 +179,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_duplicate_collateral)
 BOOST_AUTO_TEST_CASE(servicenode_tests_insufficient_collateral)
 {
     CKey key; key.MakeNewKey(true);
-    const auto & pubkey = key.GetPubKey();
-    const auto snodePubKey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    const auto snodePubKey = key.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
 
     // Assumes total input amounts below adds up to ServiceNode::COLLATERAL_SPV
@@ -204,8 +201,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_insufficient_collateral)
 BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 {
     CKey key; key.MakeNewKey(true);
-    const auto & pubkey = key.GetPubKey();
-    const auto snodePubKey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    const auto snodePubKey = key.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
 
     CBasicKeyStore keystore; // temp used to spend inputs
@@ -270,10 +266,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         CValidationState state;
         LOCK(cs_main);
         BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx),
-                                                    nullptr /* pfMissingInputs */,
-                                                    nullptr /* plTxnReplaced */,
-                                                    false /* bypass_limits */,
-                                                    0 /* nAbsurdFee */));
+                                                    nullptr, // pfMissingInputs
+                                                    nullptr, // plTxnReplaced
+                                                    false,   // bypass_limits
+                                                    0));     // nAbsurdFee
         CAmount totalAmount{0};
         std::vector<COutPoint> collateral;
         for (int i = 1; i < m_coinbase_txns.size(); ++i) { // start at 1 (ignore first spent coinbase)
@@ -298,8 +294,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 {
     CKey key; key.MakeNewKey(true);
-    const auto & pubkey = key.GetPubKey();
-    const auto snodePubKey = std::vector<unsigned char>(pubkey.begin(), pubkey.end());
+    const auto snodePubKey = key.GetPubKey();
 
     CAmount totalAmount{0};
     std::vector<COutPoint> collateral;
@@ -310,9 +305,12 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         collateral.emplace_back(tx->GetHash(), 0);
     }
 
+    // NOTE** This test must be first!
+    BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().list().size() == 0, "Fail on non-empty snode list");
+
     // Fail on bad tier
     {
-        const uint32_t tier = 999;
+        const uint8_t tier = 0xff;
         // Generate the signature from sig hash
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
         ss << snodePubKey << tier << collateral;
@@ -326,7 +324,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 
     // Fail on empty collateral
     {
-        const uint32_t tier = sn::ServiceNode::Tier::SPV;
+        const uint8_t tier = sn::ServiceNode::Tier::SPV;
         std::vector<COutPoint> collateral2;
         // Generate the signature from sig hash
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
@@ -345,7 +343,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
-        sn::ServiceNode snode = snodeNetwork(std::vector<unsigned char>(), tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        sn::ServiceNode snode = snodeNetwork(CPubKey(), tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on empty snode pubkey");
     }
 
@@ -403,5 +401,52 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     }
 }
 
+// Servicenode registration and ping tests
+BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
+{
+    auto chain = interfaces::MakeChain();
+    auto locked_chain = chain->assumeLocked();
+    auto wallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+    bool firstRun; wallet->LoadWallet(firstRun);
+    {
+        LOCK(wallet->cs_wallet);
+        wallet->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
+    }
+    WalletRescanReserver reserver(wallet.get());
+    reserver.reserve();
+    wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {} /* stop_block */, reserver, false /* update */);
+    BOOST_CHECK(AddWallet(wallet));
+
+    // Turn on index for staking
+    g_txindex = MakeUnique<TxIndex>(1 << 20, true);
+    g_txindex->Start();
+    g_txindex->Sync();
+
+    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
+    int addedSnodes{0};
+
+    // Snode registration and ping w/ uncompressed key
+    {
+        CKey key; key.MakeNewKey(false);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ uncompressed key");
+        // Snode ping w/ uncompressed key
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ uncompressed key");
+        ++addedSnodes;
+    }
+
+    // Snode registration and ping w/ compressed key
+    {
+        CKey key; key.MakeNewKey(true);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ compressed key");
+        // Snode ping w/ compressed key
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ compressed key");
+        ++addedSnodes;
+    }
+
+    // Check snode count matches number added above
+    BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == addedSnodes);
+
+    RemoveWallet(wallet);
+}
 
 BOOST_AUTO_TEST_SUITE_END()

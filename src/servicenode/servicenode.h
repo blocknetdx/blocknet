@@ -9,6 +9,7 @@
 #include <base58.h>
 #include <chainparams.h>
 #include <hash.h>
+#include <key.h>
 #include <primitives/transaction.h>
 #include <pubkey.h>
 #include <script/standard.h>
@@ -20,13 +21,23 @@
 #include <utility>
 #include <vector>
 
+/**
+ * Servicenode namepsace
+ */
 namespace sn {
 
 typedef std::function<CTransactionRef(const COutPoint & out)> TxFunc;
 typedef std::function<bool(const uint32_t & blockNumber, const uint256 & blockHash, const bool & checkStale)> BlockValidFunc;
 
+/**
+ * Represents a legacy XBridge packet.
+ */
 class LegacyXBridgePacket {
 public:
+    /**
+     * Deserializees the network packet.
+     * @param packet
+     */
     void CopyFrom(std::vector<unsigned char> packet) {
         unsigned int offset{20+8}; // ignore packet address (uint160) & timestamp (uint64_t)
         version   = *static_cast<uint32_t*>(static_cast<void*>(&packet[0]+offset)); offset += sizeof(uint32_t);
@@ -48,81 +59,161 @@ public:
     std::vector<unsigned char> body;
 };
 
+/**
+ * Servicenodes are responsible for providing services to the network.
+ */
 class ServiceNode {
 public:
+    /**
+     * Default collateral for SPV servicenodes.
+     */
     static const CAmount COLLATERAL_SPV = 5000 * COIN;
-    enum Tier : uint32_t {
+
+    /**
+     * Supported Servicenode Tiers
+     */
+    enum Tier : uint8_t {
         OPEN = 0,
         SPV = 50,
     };
 
-    static uint256 CreateSigHash(const std::vector<unsigned char> & snodePubKey, const Tier & tier,
+    /**
+     * Create a valid servicenode hash for use with signing.
+     * @param snodePubKey
+     * @param tier
+     * @param collateral
+     * @param bestBlock
+     * @param bestBlockHash
+     */
+    static uint256 CreateSigHash(const CPubKey & snodePubKey, const Tier & tier,
                                  const std::vector<COutPoint> & collateral,
-                                 const uint32_t & bestBlock=0, const uint256 & bestBlockHash=uint256(),
-                                 const std::string & config="")
+                                 const uint32_t & bestBlock=0, const uint256 & bestBlockHash=uint256())
     {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << static_cast<uint32_t>(tier) << collateral << bestBlock << bestBlockHash << config;
+        ss << snodePubKey << static_cast<uint8_t>(tier) << collateral << bestBlock << bestBlockHash;
         return ss.GetHash();
     }
 
 public:
-    explicit ServiceNode() : snodePubKey(std::vector<unsigned char>()), tier(Tier::OPEN),
-                             collateral(std::vector<COutPoint>()), bestBlock(0), bestBlockHash(uint256()),
-                             signature(std::vector<unsigned char>()), regtime(GetAdjustedTime()), pingtime(0) {}
-    explicit ServiceNode(std::vector<unsigned char> snodePubKey,
+    /**
+     * Constructor
+     */
+    explicit ServiceNode() : snodePubKey(CPubKey()), tier(Tier::OPEN), collateral(std::vector<COutPoint>()),
+                             bestBlock(0), bestBlockHash(uint256()), signature(std::vector<unsigned char>()),
+                             regtime(GetAdjustedTime()), pingtime(0), config(std::string()), pingBestBlock(0),
+                             pingBestBlockHash(uint256()) {}
+
+    /**
+     * Constructor
+     * @param snodePubKey
+     * @param tier
+     * @param collateral
+     * @param bestBlock
+     * @param bestBlockHash
+     * @param signature
+     */
+    explicit ServiceNode(CPubKey snodePubKey,
                          Tier tier,
                          std::vector<COutPoint> collateral,
                          uint32_t bestBlock,
                          uint256 bestBlockHash,
-                         std::vector<unsigned char> signature) : snodePubKey(std::move(snodePubKey)), tier(tier),
-                                                     collateral(std::move(collateral)), bestBlock(bestBlock),
-                                                     bestBlockHash(bestBlockHash), signature(std::move(signature)),
-                                                     regtime(GetAdjustedTime()), pingtime(0) {}
+                         std::vector<unsigned char> signature) : snodePubKey(snodePubKey), tier(tier),
+                                           collateral(std::move(collateral)), bestBlock(bestBlock),
+                                           bestBlockHash(bestBlockHash), signature(std::move(signature)),
+                                           regtime(GetAdjustedTime()), pingBestBlock(bestBlock),
+                                           pingBestBlockHash(bestBlockHash), pingtime(0), config(std::string()) {}
 
     friend inline bool operator==(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey == b.snodePubKey; }
     friend inline bool operator!=(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey != b.snodePubKey; }
     friend inline bool operator<(const ServiceNode & a, const ServiceNode & b) { return a.regtime < b.regtime; }
 
+    /**
+     * Returns true if the servicenode is uninitialized (e.g. via empty constructor).
+     */
     bool isNull() const {
-        return snodePubKey.empty();
+        return !snodePubKey.IsValid();
     }
 
+    /**
+     * Returns the servicenode's public key.
+     * @return
+     */
     CPubKey getSnodePubKey() const {
-        return CPubKey(snodePubKey);
+        return snodePubKey;
     }
 
+    /**
+     * Returns the servicenode tier.
+     * @return
+     */
     Tier getTier() const {
         return static_cast<Tier>(tier);
     }
 
+    /**
+     * Returns the servicenode collateral.
+     * @return
+     */
     const std::vector<COutPoint>& getCollateral() const {
         return collateral;
     }
 
+    /**
+     * Returns the servicenode best block.
+     * @return
+     */
     const uint32_t& getBestBlock() const {
         return bestBlock;
     }
 
+    /**
+     * Returns the servicenode best block hash.
+     * @return
+     */
     const uint256& getBestBlockHash() const {
         return bestBlockHash;
     }
 
+    /**
+     * Returns the servicenode signature.
+     * @return
+     */
     const std::vector<unsigned char>& getSignature() const {
         return signature;
     }
 
+    /**
+     * Returns the servicenode registration time in unix time.
+     * @return
+     */
     const int64_t& getRegTime() const {
         return regtime;
     }
 
+    /**
+     * Returns the servicenode last ping time in unix time.
+     * @return
+     */
     void updatePing() {
         pingtime = GetAdjustedTime();
     }
 
+    /**
+     * Assigns the specified block information as the best block number and associated hash on the servicenode.
+     * @param blockNumber
+     * @param blockHash
+     */
     void setBestBlock(const uint32_t & blockNumber, const uint256 & blockHash) {
         pingBestBlock = blockNumber;
         pingBestBlockHash = blockHash;
+    }
+
+    /**
+     * Assigsn the specified config to the servicenode.
+     * @param c
+     */
+    void setConfig(const std::string & c) {
+        config = c;
     }
 
     ADD_SERIALIZE_METHODS;
@@ -134,7 +225,6 @@ public:
         READWRITE(collateral);
         READWRITE(bestBlock);
         READWRITE(bestBlockHash);
-        READWRITE(config);
         READWRITE(signature);
         if (ser_action.ForRead()) {
             pingBestBlock = bestBlock;
@@ -142,13 +232,21 @@ public:
         }
     }
 
+    /**
+     * Returns the hash used in signing.
+     * @return
+     */
     uint256 sigHash() const {
-        return CreateSigHash(snodePubKey, static_cast<Tier>(tier), collateral, bestBlock, bestBlockHash, config);
+        return CreateSigHash(snodePubKey, static_cast<Tier>(tier), collateral, bestBlock, bestBlockHash);
     }
 
+    /**
+     * Returns the servicenode's hash (includes the signature).
+     * @return
+     */
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << static_cast<uint32_t>(tier) << collateral << bestBlock << bestBlockHash
+        ss << snodePubKey << static_cast<uint8_t>(tier) << collateral << bestBlock << bestBlockHash
            << config << signature << regtime;
         return ss.GetHash();
     }
@@ -170,11 +268,8 @@ public:
             return false;
 
         // Validate the snode pubkey
-        {
-            CPubKey pubkey(snodePubKey);
-            if (!pubkey.IsFullyValid())
-                return false;
-        }
+        if (!snodePubKey.IsFullyValid())
+            return false;
 
         // If open tier, the signature should be generated from the snode pubkey
         if (tier == Tier::OPEN) {
@@ -182,7 +277,7 @@ public:
             CPubKey pubkey2;
             if (!pubkey2.RecoverCompact(sighash, signature))
                 return false; // not valid if bad sig
-            return CPubKey(snodePubKey).GetID() == pubkey2.GetID();
+            return snodePubKey.GetID() == pubkey2.GetID();
         }
 
         // If not on the open tier, check collateral
@@ -226,12 +321,11 @@ public:
     }
 
 protected: // included in network serialization
-    std::vector<unsigned char> snodePubKey;
-    uint32_t tier;
+    CPubKey snodePubKey;
+    uint8_t tier;
     std::vector<COutPoint> collateral;
     uint32_t bestBlock;
     uint256 bestBlockHash;
-    std::string config;
     std::vector<unsigned char> signature;
 
 protected: // in-memory only
@@ -239,14 +333,37 @@ protected: // in-memory only
     int64_t pingtime;
     uint32_t pingBestBlock;
     uint256 pingBestBlockHash;
+    std::string config;
 };
 
 typedef std::shared_ptr<ServiceNode> ServiceNodePtr;
 
+/**
+ * The Servicenode ping is responsible for notifying peers of the latest servicenode details. The ping
+ * indicates whether a snode is still online and valid, and also includes the snode config, which
+ * details the snode's associated services.
+ */
 class ServiceNodePing {
 public:
-    ServiceNodePing() : snodePubKey(std::vector<unsigned char>()), bestBlock(0), bestBlockHash(uint256()),
-                        snode(ServiceNode()), signature(std::vector<unsigned char>()) {}
+    /**
+     * Constructor
+     */
+    explicit ServiceNodePing() : snodePubKey(CPubKey()), bestBlock(0), bestBlockHash(uint256()),
+                        config(std::string()), snode(ServiceNode()), signature(std::vector<unsigned char>()) {}
+
+    /**
+     * Constructor
+     * @param snodePubKey
+     * @param bestBlock
+     * @param bestBlockHash
+     * @param config
+     * @param snode
+     */
+    explicit ServiceNodePing(CPubKey snodePubKey, uint32_t bestBlock, uint256 bestBlockHash,
+                             std::string config, ServiceNode snode) :
+                                 snodePubKey(snodePubKey), bestBlock(bestBlock), bestBlockHash(bestBlockHash),
+                                 config(std::move(config)), snode(std::move(snode)),
+                                 signature(std::vector<unsigned char>()) {}
 
     ADD_SERIALIZE_METHODS;
 
@@ -255,60 +372,105 @@ public:
         READWRITE(snodePubKey);
         READWRITE(bestBlock);
         READWRITE(bestBlockHash);
+        READWRITE(config);
         READWRITE(snode);
         READWRITE(signature);
         if (!ser_action.ForRead()) { // on write, set the snode best block and ping
             snode.setBestBlock(bestBlock, bestBlockHash);
+            snode.setConfig(config);
             snode.updatePing();
         }
     }
 
+    /**
+     * Public key associated with the ping.
+     * @return
+     */
     CPubKey getSnodePubKey() const {
-        return CPubKey(snodePubKey);
+        return snodePubKey;
     }
 
+    /**
+     * Underlying servicenode associated with the ping.
+     */
     const ServiceNode& getSnode() const {
         return snode;
     }
 
+    /**
+     * Signature of the ping.
+     * @return
+     */
     const std::vector<unsigned char>& getSignature() const {
         return signature;
     }
 
+    /**
+     * Configuration associated with the servicenode.
+     * @return
+     */
+    const std::string& getConfig() const {
+        return config;
+    }
+
+    /**
+     * Hash used in signing.
+     * @return
+     */
     uint256 sigHash() const {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << bestBlock << bestBlockHash << snode;
+        ss << snodePubKey << bestBlock << bestBlockHash << config << snode;
         return ss.GetHash();
     }
 
+    /**
+     * Hash of the ping including the signature.
+     * @return
+     */
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << bestBlock << bestBlockHash << snode << signature;
+        ss << snodePubKey << bestBlock << bestBlockHash << config << snode << signature;
         return ss.GetHash();
     }
 
+    /**
+     * Sign's the servicenode ping with the specified key.
+     * @param key
+     * @return
+     */
+    bool sign(const CKey & key) {
+        return key.SignCompact(sigHash(), signature);
+    }
+
+    /**
+     * Returns true if this servicenode ping is valid. Public keys and associated signatures are checked for
+     * validity.
+     * @param getTxFunc
+     * @param isBlockValid
+     */
     bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid) const {
         if (!isBlockValid(bestBlock, bestBlockHash, true))
             return false; // fail if ping is stale
 
-        CPubKey spubkey(snodePubKey);
-        if (!spubkey.IsFullyValid())
+        // Ensure ping key matches snode key
+        if (!snodePubKey.IsFullyValid() || snodePubKey != snode.getSnodePubKey())
             return false; // not valid if bad snode pubkey
 
         CPubKey pubkey;
         if (!pubkey.RecoverCompact(sigHash(), signature))
             return false; // not valid if bad sig
 
-        if (pubkey.GetID() != spubkey.GetID())
+        if (pubkey.GetID() != snodePubKey.GetID())
             return false; // fail if pubkeys don't match
 
-        return snode.isValid(getTxFunc, isBlockValid, false); // stale check not required here, it happens above
+        return snode.isValid(getTxFunc, isBlockValid, false); // stale check not required here, it happens above on isBlockValid
     }
 
 protected:
-    std::vector<unsigned char> snodePubKey;
+    CPubKey snodePubKey;
     uint32_t bestBlock;
     uint256 bestBlockHash;
+    std::string config;
     ServiceNode snode;
     std::vector<unsigned char> signature;
 };

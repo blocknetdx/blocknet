@@ -594,6 +594,21 @@ public:
     {
         return CInputCoin(tx->tx, i, nInputBytes);
     }
+
+    friend bool operator==(const COutput & a, const COutput & b)
+    {
+        return a.GetInputCoin().outpoint == b.GetInputCoin().outpoint;
+    }
+
+    friend bool operator!=(const COutput & a, const COutput & b)
+    {
+        return !(a.GetInputCoin().outpoint == b.GetInputCoin().outpoint);
+    }
+
+    friend bool operator<(const COutput & a, const COutput & b)
+    {
+        return a.GetInputCoin().outpoint < b.GetInputCoin().outpoint;
+    }
 };
 
 /** Private key that includes an expiration date in case it never gets used. */
