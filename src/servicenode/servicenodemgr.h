@@ -20,6 +20,10 @@
 
 #include <iostream>
 #include <set>
+#include <utility>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/filesystem.hpp>
 
 /**
  * Servicenode namepsace
@@ -28,6 +32,19 @@ namespace sn {
 
 extern const char* REGISTER;
 extern const char* PING;
+
+struct ServiceNodeConfigEntry {
+    std::string alias;
+    ServiceNode::Tier tier;
+    CKey key;
+    CTxDestination address;
+    ServiceNodeConfigEntry(std::string alias, ServiceNode::Tier tier, CKey key, CTxDestination address)
+                                                   : alias(std::move(alias)), tier(tier),
+                                                     address(std::move(address)), key(std::move(key)) {}
+    friend inline bool operator==(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.key == b.key; }
+    friend inline bool operator!=(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return !(a.key == b.key); }
+    friend inline bool operator<(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.alias.compare(b.alias) < 0; }
+};
 
 /**
  * Manages related servicenode functions including handling network messages and storing an active list
@@ -262,6 +279,120 @@ public:
         return getSn(std::vector<unsigned char>{snodePubKey.begin(), snodePubKey.end()});
     }
 
+    /**
+     * Load the servicenode config from disk. Returns true if config was successfully read, otherwise false
+     * if there was a fatal error.
+     * @param entries
+     * @return
+     */
+    bool loadSnConfig(std::set<ServiceNodeConfigEntry> & entries) {
+        boost::filesystem::path fp = getServiceNodeConf();
+        boost::filesystem::ifstream fs(fp);
+
+        auto closeOpenfs = [](boost::filesystem::ifstream & stream) {
+            try {
+                if (stream.is_open())
+                    stream.close();
+            } catch (...) {}
+        };
+
+        if (!fs.good()) {
+            try {
+                FILE *file = fopen(fp.string().c_str(), "a");
+                if (file == nullptr)
+                    return true;
+                std::string strHeader = "# Service Node config\n"
+                                        "# Format: alias tier servicenodeprivkey address\n"
+                                        "#   - alias can be any name, no spaces\n"
+                                        "#   - tier can be either SPV or OPEN\n"
+                                        "#   - servicenodeprivkey must be a valid base58 encoded private key\n"
+                                        "#   - address must be a valid base58 encoded public key that contains the service node collateral\n"
+                                        "# SPV tier requires 5000 BLOCK collateral and an associated BLOCK address\n"
+                                        "# OPEN tier doesn't require any collateral, however, the network is less likely to trust\n"
+                                        "# Example: dev OPEN 6BeBjrnd4DP5rEvUtxBQVu1DTPXUn6mCY5kPB2DWiy9CwEB2qh1\n"
+                                        "# Example: xrouter SPV 6B4VvHTn6BbHM3DRsf6M3Sk3jLbgzm1vp5jNe9ZYZocSyRDx69d Bj2w9gHtGp4FbVdR19tJZ9UHwWQhDXxGCM\n";
+                fwrite(strHeader.c_str(), std::strlen(strHeader.c_str()), 1, file);
+                fclose(file);
+            } catch (std::exception & e) {
+                LogPrint(BCLog::SNODE, "Failed to read servicenode.conf: %s\n", e.what());
+                closeOpenfs(fs);
+                return false;
+            }
+        }
+
+        entries.clear(); // prep the storage
+
+        std::string line;
+        while (std::getline(fs, line)) {
+            if (line.empty())
+                continue;
+
+            std::istringstream iss(line);
+            iss.imbue(std::locale::classic());
+            std::string comment, alias, stier, skey, saddress;
+
+            if (iss >> comment) {
+                if (comment.at(0) == '#') continue;
+                iss.str(line);
+                iss.clear();
+            }
+
+            if (!(iss >> alias >> stier >> skey)) {
+                iss.str(line);
+                iss.clear();
+                if (!(iss >> alias >> stier >> skey)) {
+                    closeOpenfs(fs);
+                    LogPrintf("Failed to setup servicenode, bad servicenode.conf entry: %s\n", line);
+                    return false;
+                }
+            }
+
+            iss >> saddress; // set address (this is optional and only required by non-OPEN tiers)
+            boost::trim(saddress); // remove whitespace
+            CTxDestination addr = DecodeDestination(saddress);
+
+            ServiceNode::Tier tier;
+            if (!tierForString(stier, tier)) {
+                LogPrintf("Failed to setup servicenode, bad servicenode.conf tier: %s %s %s\n", stier, alias, saddress);
+                continue;
+            }
+
+            // Only validate address if this tier is not in the free tier or if optional address was specified
+            if ((!freeTier(tier) || !saddress.empty()) && !IsValidDestination(addr)) {
+                LogPrintf("Failed to setup servicenode, bad servicenode.conf address: %s %s\n", saddress, alias);
+                continue;
+            }
+
+            CKey key = DecodeSecret(skey);
+            if (!key.IsValid()) {
+                LogPrintf("Failed to setup servicenode, bad servicenode.conf servicenodeprivkey: %s %s %s\n", alias, saddress);
+                continue;
+            }
+
+            entries.insert(ServiceNodeConfigEntry(alias, tier, key, addr));
+        }
+
+        // Close the stream if it's open
+        closeOpenfs(fs);
+
+        {
+            LOCK(mu);
+            snodeEntries.clear();
+            snodeEntries.insert(entries.begin(), entries.end());
+        }
+
+        return true;
+    }
+
+public:
+    /**
+     * Returns the servicenode configuration path.
+     * @return
+     */
+    static boost::filesystem::path getServiceNodeConf() {
+        return std::move(GetDataDir() / "servicenode.conf");
+    }
+
 protected:
     /**
      * Returns the height of the longest chain.
@@ -292,6 +423,31 @@ protected:
             return ServiceNode::COLLATERAL_SPV;
         else
             return 0;
+    }
+
+    /**
+     * Returns the tier flag for the specified string, e.g. "OPEN" or "open".
+     * @param tier
+     * @return
+     */
+    static bool tierForString(std::string stier, ServiceNode::Tier & tier) {
+        boost::to_lower(stier, std::locale::classic());
+        if (stier == "spv")
+            tier = ServiceNode::SPV;
+        else if (stier == "open")
+            tier = ServiceNode::OPEN;
+        else return false; // no valid tier found
+
+        return true;
+    }
+
+    /**
+     * Returns true if the specified tier doesn't require collateral.
+     * @param tier
+     * @return
+     */
+    static bool freeTier(const ServiceNode::Tier & tier) {
+        return ServiceNode::OPEN == tier;
     }
 
 protected:
@@ -499,6 +655,7 @@ protected:
     std::set<ServiceNodePtr> snodes;
     std::set<uint256> seenPackets;
     std::set<COutPoint> snodeUtxos;
+    std::set<ServiceNodeConfigEntry> snodeEntries;
 };
 
 }

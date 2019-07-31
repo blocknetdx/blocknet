@@ -90,6 +90,16 @@ sn::ServiceNode snodeNetwork(const CPubKey & snodePubKey, const uint8_t & tier,
     return snode;
 }
 
+/**
+ * Save configuration files to the specified path.
+ */
+void saveFile(const boost::filesystem::path& p, const std::string& str) {
+    boost::filesystem::ofstream file;
+    file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    file.open(p, std::ios_base::binary);
+    file.write(str.c_str(), str.size());
+}
+
 BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServicenodeChainSetup)
 
 // Check case where servicenode is properly validated under normal circumstances
@@ -293,6 +303,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 // Check misc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 {
+    auto & smgr = sn::ServiceNodeMgr::instance();
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
 
@@ -398,6 +409,106 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         // Deserialize servicenode obj from network stream
         sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash(), sig);
         BOOST_CHECK_MESSAGE(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc, false), "Fail on disabled stale check");
+    }
+
+    // Test case where snode config doesn't exist on disk
+    {
+        boost::filesystem::remove(sn::ServiceNodeMgr::getServiceNodeConf());
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load default config");
+        BOOST_CHECK_MESSAGE(entries.empty(), "Snode configs should match expected size");
+    }
+
+    // Test snode config for OPEN tier
+    {
+        const auto & skey = EncodeSecret(key);
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 OPEN " + skey);
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load OPEN tier config");
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "OPEN tier config should match expected size");
+    }
+
+    // Test snode config for SPV tier
+    {
+        const auto & skey = EncodeSecret(key);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 SPV " + skey + " " + saddr);
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load SPV tier config");
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "SPV tier config should match expected size");
+    }
+
+    // Test snode config for multiple tiers
+    {
+        const auto & skey = EncodeSecret(key);
+        CKey key2; key2.MakeNewKey(true);
+        const auto & skey2 = EncodeSecret(key2);
+        const auto & saddr2 = EncodeDestination(GetDestinationForKey(key2.GetPubKey(), OutputType::LEGACY));
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 OPEN " + skey + "\n"
+                                                           "mn2 SPV " + skey2 + " " + saddr2);
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load multi-entry config");
+        BOOST_CHECK_MESSAGE(entries.size() == 2, "Multi-entry config should match expected size");
+    }
+
+    // Test lowercase tiers
+    {
+        const auto & skey = EncodeSecret(key);
+        CKey key2; key2.MakeNewKey(true);
+        const auto & skey2 = EncodeSecret(key2);
+        const auto & saddr2 = EncodeDestination(GetDestinationForKey(key2.GetPubKey(), OutputType::LEGACY));
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 open " + skey + "\n"
+                                                           "mn2 spv " + skey2 + " " + saddr2);
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load lowercase tiers");
+        BOOST_CHECK_MESSAGE(entries.size() == 2, "Lowercase tiers config should match expected size");
+    }
+
+    // Test bad snode configs
+    {
+        const auto & skey = EncodeSecret(key);
+        CKey key2; key2.MakeNewKey(true);
+        const auto & skey2 = EncodeSecret(key2);
+        const auto & saddr2 = EncodeDestination(GetDestinationForKey(key2.GetPubKey(), OutputType::LEGACY));
+
+        // Test bad tiers
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 CUSTOM " + skey + "\n"
+                                                           "mn2 SPVV " + skey2 + " " + saddr2);
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load bad tiers");
+        BOOST_CHECK_MESSAGE(entries.empty(), "Bad tiers config should match expected size");
+
+        // Test bad keys
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 OPEN fkjdsakfjdsakfjksadjfkasjk\n"
+                                                           "mn2 SPV djfksadjfkdasjkfajsk " + saddr2);
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load bad keys");
+        BOOST_CHECK_MESSAGE(entries.empty(), "Bad keys config should match expected size");
+
+        // Test bad address
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 OPEN " + skey + " jdfksjkfajsdkfjaksdfjaksdjk\n"
+                                                           "mn2 SPV " + skey2 + " dsjfksdjkfdsjkfdsjkfjskdjfksdsjk");
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load bad addresses");
+        BOOST_CHECK_MESSAGE(entries.empty(), "Bad addresses config should match expected size");
+    }
+
+    // Test optional address on OPEN tier
+    {
+        const auto & skey = EncodeSecret(key);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 OPEN " + skey + " " + saddr);
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load optional address");
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Optional address config should match expected size");
+    }
+
+    // Test missing address on SPV tier
+    {
+        const auto & skey = EncodeSecret(key);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 SPV " + skey);
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load missing address");
+        BOOST_CHECK_MESSAGE(entries.empty(), "Missing address config should match expected size");
     }
 }
 
