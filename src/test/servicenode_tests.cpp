@@ -689,6 +689,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         params.push_backV({ "list", list });
         BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
     }
+
+    // Test servicenodegenkey rpc
+    {
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodegenkey", UniValue(UniValue::VARR)));
+        const auto & result = CallRPC2("servicenodegenkey", UniValue(UniValue::VARR));
+        BOOST_CHECK_MESSAGE(result.isStr(), "servicenodegenkey should return a string");
+        CKey ckey = DecodeSecret(result.get_str());
+        BOOST_CHECK_MESSAGE(ckey.IsValid(), "servicenodegenkey should return a valid private key");
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

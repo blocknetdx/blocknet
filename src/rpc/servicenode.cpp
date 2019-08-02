@@ -140,11 +140,32 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     return ret;
 }
 
+static UniValue servicenodegenkey(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 0)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodegenkey",
+                "\nGenerates a base58 encoded private key for use with servicenode.conf\n",
+                {},
+                RPCResult{"(string) base58 encoded private key\n"},
+                RPCExamples{
+                    HelpExampleCli("servicenodegenkey", "")
+                  + HelpExampleRpc("servicenodegenkey", "")
+                },
+            }.ToString());
+
+    UniValue ret(UniValue::VSTR);
+    CKey key; key.MakeNewKey(true);
+    ret.setStr(EncodeSecret(key));
+    return ret;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "servicenode",        "servicenodesetup",       &servicenodesetup,       {"type", "options"} },
+    { "servicenode",        "servicenodegenkey",      &servicenodegenkey,      {} },
 };
 // clang-format on
 
