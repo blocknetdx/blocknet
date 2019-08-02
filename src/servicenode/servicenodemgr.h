@@ -64,6 +64,16 @@ public:
     }
 
     /**
+     * Clears the internal state.
+     */
+    void reset() {
+        snodes.clear();
+        seenPackets.clear();
+        snodeUtxos.clear();
+        snodeEntries.clear();
+    }
+
+    /**
      * Processes xbridge packets.
      * @param packet
      * @return
@@ -301,16 +311,7 @@ public:
                 FILE *file = fopen(fp.string().c_str(), "a");
                 if (file == nullptr)
                     return true;
-                std::string strHeader = "# Service Node config\n"
-                                        "# Format: alias tier servicenodeprivkey address\n"
-                                        "#   - alias can be any name, no spaces\n"
-                                        "#   - tier can be either SPV or OPEN\n"
-                                        "#   - servicenodeprivkey must be a valid base58 encoded private key\n"
-                                        "#   - address must be a valid base58 encoded public key that contains the service node collateral\n"
-                                        "# SPV tier requires 5000 BLOCK collateral and an associated BLOCK address\n"
-                                        "# OPEN tier doesn't require any collateral, however, the network is less likely to trust\n"
-                                        "# Example: dev OPEN 6BeBjrnd4DP5rEvUtxBQVu1DTPXUn6mCY5kPB2DWiy9CwEB2qh1\n"
-                                        "# Example: xrouter SPV 6B4VvHTn6BbHM3DRsf6M3Sk3jLbgzm1vp5jNe9ZYZocSyRDx69d Bj2w9gHtGp4FbVdR19tJZ9UHwWQhDXxGCM\n";
+                std::string strHeader = getSnConfigHelp();
                 fwrite(strHeader.c_str(), std::strlen(strHeader.c_str()), 1, file);
                 fclose(file);
             } catch (std::exception & e) {
@@ -352,7 +353,7 @@ public:
             CTxDestination addr = DecodeDestination(saddress);
 
             ServiceNode::Tier tier;
-            if (!tierForString(stier, tier)) {
+            if (!tierFromString(stier, tier)) {
                 LogPrintf("Failed to setup servicenode, bad servicenode.conf tier: %s %s %s\n", stier, alias, saddress);
                 continue;
             }
@@ -384,6 +385,42 @@ public:
         return true;
     }
 
+    /**
+     * Writes the specified entries to the servicenode.conf. Note that this overwrites existing data.
+     * @param entries
+     * @return
+     */
+    bool writeSnConfig(const std::vector<ServiceNodeConfigEntry> & entries) {
+        boost::filesystem::path fp = getServiceNodeConf();
+        try {
+            std::string eol = "\n";
+#ifdef WIN32
+            eol = "\r\n";
+#endif
+            boost::filesystem::ofstream file;
+            file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+            file.open(fp, std::ios_base::binary);
+
+            auto help = getSnConfigHelp() + eol;
+            file.write(help.c_str(), help.size());
+
+            // Write entries
+            for (const auto & entry : entries) {
+                const auto & s = configEntryToString(entry) + eol;
+                file.write(s.c_str(), s.size());
+            }
+
+        } catch (std::exception & e) {
+            LogPrint(BCLog::SNODE, "Failed to write to servicenode.conf: %s\n", e.what());
+            return false;
+        } catch (...) {
+            LogPrint(BCLog::SNODE, "Failed to write to servicenode.conf unknown error\n");
+            return false;
+        }
+
+        return true;
+    }
+
 public:
     /**
      * Returns the servicenode configuration path.
@@ -391,6 +428,66 @@ public:
      */
     static boost::filesystem::path getServiceNodeConf() {
         return std::move(GetDataDir() / "servicenode.conf");
+    }
+
+    /**
+     * Returns the collateral amount required for the specified tier.
+     * @param tier
+     * @return
+     */
+    static CAmount collateralAmountForTier(const ServiceNode::Tier & tier = ServiceNode::Tier::OPEN) {
+        if (tier == ServiceNode::SPV)
+            return ServiceNode::COLLATERAL_SPV;
+        else
+            return 0;
+    }
+
+    /**
+     * Returns the tier flag for the specified string, e.g. "OPEN" or "open".
+     * @param tier
+     * @return
+     */
+    static bool tierFromString(std::string stier, ServiceNode::Tier & tier) {
+        boost::to_lower(stier, std::locale::classic());
+        if (stier == "spv")
+            tier = ServiceNode::SPV;
+        else if (stier == "open")
+            tier = ServiceNode::OPEN;
+        else return false; // no valid tier found
+
+        return true;
+    }
+
+    /**
+     * Returns the string representation of the tier.
+     * @param tier
+     * @return
+     */
+    static std::string tierString(const ServiceNode::Tier & tier) {
+        if (tier == ServiceNode::SPV)
+            return "SPV";
+        else if (tier == ServiceNode::OPEN)
+            return "OPEN";
+        return "INVALID";
+    }
+
+    /**
+     * Returns true if the specified tier doesn't require collateral.
+     * @param tier
+     * @return
+     */
+    static bool freeTier(const ServiceNode::Tier & tier) {
+        return ServiceNode::OPEN == tier;
+    }
+
+    /**
+     * Returns string representation of the config entry.
+     * @param entry
+     * @return
+     */
+    static std::string configEntryToString(const ServiceNodeConfigEntry & entry) {
+        return strprintf("%s %s %s %s", entry.alias, tierString(entry.tier),
+                EncodeSecret(entry.key), EncodeDestination(entry.address));
     }
 
 protected:
@@ -414,40 +511,20 @@ protected:
     }
 
     /**
-     * Returns the collateral amount required for the specified tier.
-     * @param tier
+     * Returns the servicenode.conf help text.
      * @return
      */
-    static CAmount collateralAmountForTier(const ServiceNode::Tier & tier = ServiceNode::Tier::OPEN) {
-        if (tier == ServiceNode::SPV)
-            return ServiceNode::COLLATERAL_SPV;
-        else
-            return 0;
-    }
-
-    /**
-     * Returns the tier flag for the specified string, e.g. "OPEN" or "open".
-     * @param tier
-     * @return
-     */
-    static bool tierForString(std::string stier, ServiceNode::Tier & tier) {
-        boost::to_lower(stier, std::locale::classic());
-        if (stier == "spv")
-            tier = ServiceNode::SPV;
-        else if (stier == "open")
-            tier = ServiceNode::OPEN;
-        else return false; // no valid tier found
-
-        return true;
-    }
-
-    /**
-     * Returns true if the specified tier doesn't require collateral.
-     * @param tier
-     * @return
-     */
-    static bool freeTier(const ServiceNode::Tier & tier) {
-        return ServiceNode::OPEN == tier;
+    static std::string getSnConfigHelp() {
+        return "# Service Node config\n"
+               "# Format: alias tier servicenodeprivkey address\n"
+               "#   - alias can be any name, no spaces\n"
+               "#   - tier can be either SPV or OPEN\n"
+               "#   - servicenodeprivkey must be a valid base58 encoded private key\n"
+               "#   - address must be a valid base58 encoded public key that contains the service node collateral\n"
+               "# SPV tier requires 5000 BLOCK collateral and an associated BLOCK address and can charge fees for services\n"
+               "# OPEN tier doesn't require any collateral, can't charge fees, and can only support XCloud plugins\n"
+               "# Example: dev OPEN 6BeBjrnd4DP5rEvUtxBQVu1DTPXUn6mCY5kPB2DWiy9CwEB2qh1\n"
+               "# Example: xrouter SPV 6B4VvHTn6BbHM3DRsf6M3Sk3jLbgzm1vp5jNe9ZYZocSyRDx69d Bj2w9gHtGp4FbVdR19tJZ9UHwWQhDXxGCM\n";
     }
 
 protected:

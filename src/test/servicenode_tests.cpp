@@ -12,9 +12,12 @@
 #include <miner.h>
 #include <policy/policy.h>
 #include <pow.h>
+#include <rpc/server.h>
+#include <rpc/client.h>
 #include <servicenode/servicenode.h>
 #include <servicenode/servicenodemgr.h>
 #include <timedata.h>
+#include <univalue.h>
 #include <validation.h>
 #include <wallet/wallet.h>
 
@@ -74,6 +77,7 @@ struct ServicenodeChainSetup : public TestingSetup {
     }
 
     ~ServicenodeChainSetup() {
+        sn::ServiceNodeMgr::instance().reset();
     };
 
     CKey coinbaseKey; // private/public key needed to spend coinbase transactions
@@ -98,6 +102,22 @@ void saveFile(const boost::filesystem::path& p, const std::string& str) {
     file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     file.open(p, std::ios_base::binary);
     file.write(str.c_str(), str.size());
+}
+
+UniValue CallRPC2(const std::string & strMethod, const UniValue & params) {
+    JSONRPCRequest request;
+    request.strMethod = strMethod;
+    request.params = params;
+    request.fHelp = false;
+    BOOST_CHECK(tableRPC[strMethod]);
+    rpcfn_type method = tableRPC[strMethod]->actor;
+    try {
+        UniValue result = (*method)(request);
+        return result;
+    }
+    catch (const UniValue& objError) {
+        throw std::runtime_error(find_value(objError, "message").get_str());
+    }
 }
 
 BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServicenodeChainSetup)
@@ -300,6 +320,54 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
     }
 }
 
+// Servicenode registration and ping tests
+BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
+{
+    auto chain = interfaces::MakeChain();
+    auto locked_chain = chain->assumeLocked();
+    auto wallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+    bool firstRun; wallet->LoadWallet(firstRun);
+    {
+        LOCK(wallet->cs_wallet);
+        wallet->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
+    }
+    WalletRescanReserver reserver(wallet.get());
+    reserver.reserve();
+    wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, false);
+    BOOST_CHECK(AddWallet(wallet));
+
+    // Turn on index for staking
+    g_txindex = MakeUnique<TxIndex>(1 << 20, true);
+    g_txindex->Start();
+    g_txindex->Sync();
+
+    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
+    int addedSnodes{0};
+
+    // Snode registration and ping w/ uncompressed key
+    {
+        CKey key; key.MakeNewKey(false);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ uncompressed key");
+        // Snode ping w/ uncompressed key
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ uncompressed key");
+        ++addedSnodes;
+    }
+
+    // Snode registration and ping w/ compressed key
+    {
+        CKey key; key.MakeNewKey(true);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ compressed key");
+        // Snode ping w/ compressed key
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ compressed key");
+        ++addedSnodes;
+    }
+
+    // Check snode count matches number added above
+    BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == addedSnodes);
+
+    RemoveWallet(wallet);
+}
+
 // Check misc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 {
@@ -317,7 +385,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     }
 
     // NOTE** This test must be first!
-    BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().list().size() == 0, "Fail on non-empty snode list");
+    BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().list().empty(), "Fail on non-empty snode list");
 
     // Fail on bad tier
     {
@@ -510,54 +578,117 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load missing address");
         BOOST_CHECK_MESSAGE(entries.empty(), "Missing address config should match expected size");
     }
-}
 
-// Servicenode registration and ping tests
-BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
-{
-    auto chain = interfaces::MakeChain();
-    auto locked_chain = chain->assumeLocked();
-    auto wallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
-    bool firstRun; wallet->LoadWallet(firstRun);
+    // Test rpc servicenode setup
     {
-        LOCK(wallet->cs_wallet);
-        wallet->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
-    }
-    WalletRescanReserver reserver(wallet.get());
-    reserver.reserve();
-    wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {} /* stop_block */, reserver, false /* update */);
-    BOOST_CHECK(AddWallet(wallet));
-
-    // Turn on index for staking
-    g_txindex = MakeUnique<TxIndex>(1 << 20, true);
-    g_txindex->Start();
-    g_txindex->Sync();
-
-    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
-    int addedSnodes{0};
-
-    // Snode registration and ping w/ uncompressed key
-    {
-        CKey key; key.MakeNewKey(false);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ uncompressed key");
-        // Snode ping w/ uncompressed key
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ uncompressed key");
-        ++addedSnodes;
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        params.push_backV({ "auto", 1, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue entries = CallRPC2("servicenodesetup", params);
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match");
+        UniValue params2(UniValue::VARR);
+        params2.push_backV({ "auto", 10, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params2));
+        UniValue entries2 = CallRPC2("servicenodesetup", params2);
+        BOOST_CHECK_MESSAGE(entries2.size() == 10, "Service node config count should match");
     }
 
-    // Snode registration and ping w/ compressed key
+    // Test servicenode.conf formatting
     {
-        CKey key; key.MakeNewKey(true);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ compressed key");
-        // Snode ping w/ compressed key
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ compressed key");
-        ++addedSnodes;
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        params.push_backV({ "auto", 10, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load config");
+        BOOST_CHECK_MESSAGE(entries.size() == 10, "Should load exactly 10 snode config entries");
+        // Check servicenode.conf formatting
+        for (const auto & entry : entries) {
+            const auto & sentry = sn::ServiceNodeMgr::configEntryToString(entry);
+            BOOST_CHECK_EQUAL(sentry, strprintf("%s %s %s %s", entry.alias, "SPV", EncodeSecret(entry.key),
+                                                EncodeDestination(entry.address)));
+        }
     }
 
-    // Check snode count matches number added above
-    BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == addedSnodes);
+    // Test the servicenodesetup list option
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        UniValue list(UniValue::VARR);
+        UniValue snode1(UniValue::VOBJ); snode1.pushKV("alias", "snode1"), snode1.pushKV("tier", "SPV"), snode1.pushKV("address", saddr);
+        UniValue snode2(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue entries = CallRPC2("servicenodesetup", params);
+        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count on list option should match");
+    }
 
-    RemoveWallet(wallet);
+    // Test servicenodesetup list option data checks
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        UniValue params;
+        UniValue list;
+        UniValue snode1 = UniValue(UniValue::VOBJ); snode1.pushKV("alias", "snode1"), snode1.pushKV("tier", "SPV"), snode1.pushKV("address", saddr);
+        UniValue snode2;
+
+        // Should fail on missing alias
+        params = UniValue(UniValue::VARR);
+        list = UniValue(UniValue::VARR);
+        snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+
+        // Should fail if spaces in alias
+        params = UniValue(UniValue::VARR);
+        list = UniValue(UniValue::VARR);
+        snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode 2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+
+        // Should fail on missing tier
+        params = UniValue(UniValue::VARR);
+        list = UniValue(UniValue::VARR);
+        snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("address", saddr);
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+
+        // Should fail on bad tier
+        params = UniValue(UniValue::VARR);
+        list = UniValue(UniValue::VARR);
+        snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "BAD"), snode2.pushKV("address", saddr);
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+
+        // Should fail on missing address in non-free tier
+        params = UniValue(UniValue::VARR);
+        list = UniValue(UniValue::VARR);
+        snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV");
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+
+        // Should fail on empty address in non-free tier
+        params = UniValue(UniValue::VARR);
+        list = UniValue(UniValue::VARR);
+        snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", "");
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+
+        // Should not fail on empty address in free tier
+        params = UniValue(UniValue::VARR);
+        list = UniValue(UniValue::VARR);
+        snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "OPEN"), snode2.pushKV("address", "");
+        list.push_back(snode1), list.push_back(snode2);
+        params.push_backV({ "list", list });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
