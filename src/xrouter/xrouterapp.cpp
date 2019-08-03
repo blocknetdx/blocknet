@@ -1687,8 +1687,10 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
                 Object co;
                 co.emplace_back("command", XRouterCommand_ToString(cmd));
                 co.emplace_back("fee", item.second->commandFee(cmd, w));
-                co.emplace_back("requestlimit", item.second->clientRequestLimit(cmd, w));
                 co.emplace_back("paymentaddress", item.second->paymentAddress(cmd, w));
+                co.emplace_back("requestlimit", item.second->clientRequestLimit(cmd, w));
+                co.emplace_back("fetchlimit", item.second->commandFetchLimit(cmd, w));
+                co.emplace_back("timeout", item.second->commandTimeout(cmd, w));
                 co.emplace_back("disabled", !item.second->isAvailableCommand(cmd, w));
                 cmds.push_back(co);
             }

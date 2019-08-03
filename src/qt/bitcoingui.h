@@ -111,6 +111,7 @@ private:
     QAction* aboutQtAction;
     QAction* openInfoAction;
     QAction* openRPCConsoleAction;
+    QAction* openCoinControl;
     QAction* openNetworkAction;
     QAction* openPeersAction;
     QAction* openRepairAction;
@@ -227,6 +228,7 @@ private slots:
     void usedSendingAddresses();
     void usedReceivingAddresses();
     void lockRequest(bool locked, bool stakingOnly);
+    void showCoinControl();
 
 #endif // ENABLE_WALLET
 

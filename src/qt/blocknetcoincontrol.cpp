@@ -4,10 +4,11 @@
 
 #include "blocknetcoincontrol.h"
 
+#include "main.h"
 #include "bitcoinunits.h"
 #include "uint256.h"
-#include "walletmodel.h"
 #include "optionsmodel.h"
+#include "addresstablemodel.h"
 
 #include <QSizePolicy>
 #include <QAbstractItemView>
@@ -22,8 +23,9 @@
  * @brief Dialog encapsulates the coin control table. The default size is 960x580
  * @param parent
  */
-BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *parent, Qt::WindowFlags f) : QDialog(parent, f),
-                                                                                                           walletModel(w) {
+BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *parent, Qt::WindowFlags f, bool standaloneMode) : 
+    QDialog(parent, f), walletModel(w), standaloneMode(standaloneMode) 
+{
     //this->setStyleSheet("border: 1px solid red;");
     this->setContentsMargins(QMargins());
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -41,7 +43,7 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *pa
     confirmBtn->setText(tr("Confirm"));
     cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");
-    cancelBtn->setText(tr("Cancel"));
+    cancelBtn->setText(standaloneMode ? tr("Close") : tr("Cancel"));
 
     auto *btnBox = new QFrame;
     auto *btnBoxLayout = new QHBoxLayout;
@@ -50,7 +52,8 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *pa
     btnBox->setLayout(btnBoxLayout);
     btnBoxLayout->addStretch(1);
     btnBoxLayout->addWidget(cancelBtn, 0, Qt::AlignLeft);
-    btnBoxLayout->addWidget(confirmBtn, 0, Qt::AlignLeft);
+    if (!standaloneMode)
+        btnBoxLayout->addWidget(confirmBtn, 0, Qt::AlignLeft);
     btnBoxLayout->addStretch(1);
 
     // Manages the coin list
@@ -161,6 +164,110 @@ void BlocknetCoinControlDialog::updateLabels() {
     }
 
     feePanel->setHidden(totalSelectedAmount == 0);
+}
+
+void BlocknetCoinControlDialog::populateUnspentTransactions(const QVector<BlocknetSimpleUTXO> & txSelectedUtxos) {
+    int displayUnit = walletModel->getOptionsModel()->getDisplayUnit();
+    QVector<BlocknetCoinControl::UTXO*> utxos;
+
+    map<QString, vector<COutput> > mapCoins;
+    walletModel->listCoins(mapCoins);
+
+    for (std::pair<QString, vector<COutput> > coins : mapCoins) {
+        CAmount nSum = 0;
+        double dPrioritySum = 0;
+        int nChildren = 0;
+        int nInputSum = 0;
+        auto sWalletAddress = coins.first;
+
+        for (const COutput &out : coins.second) {
+            int nInputSize = 0;
+            nSum += out.tx->vout[out.i].nValue;
+            nChildren++;
+
+            auto *utxo = new BlocknetCoinControl::UTXO;
+            utxo->checked = false;
+
+            // address
+            CTxDestination outputAddress;
+            QString sAddress = "";
+            if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, outputAddress)) {
+                sAddress = QString::fromStdString(CBitcoinAddress(outputAddress).ToString());
+                utxo->address = sAddress;
+                CPubKey pubkey;
+                CKeyID* keyid = boost::get<CKeyID>(&outputAddress);
+                if (keyid && walletModel->getPubKey(*keyid, pubkey) && !pubkey.IsCompressed())
+                    nInputSize = 29; // 29 = 180 - 151 (public key is 180 bytes, priority free area is 151 bytes)
+            }
+
+            // label
+            if (!(sAddress == sWalletAddress)) { // if change
+                utxo->label = tr("(change)");
+            } else {
+                QString sLabel = walletModel->getAddressTableModel()->labelForAddress(sAddress);
+                if (sLabel.isEmpty())
+                    sLabel = tr("(no label)");
+                utxo->label = sLabel;
+            }
+
+            // amount
+            utxo->amount = BitcoinUnits::format(displayUnit, out.tx->vout[out.i].nValue);
+            utxo->camount = out.tx->vout[out.i].nValue;
+
+            // date
+            utxo->date = QDateTime::fromTime_t(static_cast<uint>(out.tx->GetTxTime()));
+
+            // confirmations
+            utxo->confirmations = out.nDepth;
+
+            // priority
+            double dPriority = ((double)out.tx->vout[out.i].nValue / (nInputSize + 78)) * (out.nDepth + 1); // 78 = 2 * 34 + 10
+            utxo->priority = dPriority;
+            dPrioritySum += (double)out.tx->vout[out.i].nValue * (out.nDepth + 1);
+            nInputSum += nInputSize;
+
+            // transaction hash & vout
+            uint256 txhash = out.tx->GetHash();
+            utxo->transaction = QString::fromStdString(txhash.GetHex());
+            utxo->vout = static_cast<unsigned int>(out.i);
+
+            // locked coins
+            utxo->locked = walletModel->isLockedCoin(txhash, static_cast<unsigned int>(out.i));
+            utxo->unlocked = !utxo->locked;
+
+            // selected coins
+            for (auto &outpt : txSelectedUtxos) {
+                if (outpt.hash == txhash && outpt.vout == static_cast<uint>(out.i) && !utxo->locked) {
+                    utxo->checked = true;
+                    break;
+                }
+            }
+
+            utxos.push_back(utxo);
+        }
+    }
+
+    auto ccData = std::make_shared<BlocknetCoinControl::Model>();
+    ccData->freeThreshold = AllowFreeThreshold();
+    ccData->mempoolPriority = mempool.estimatePriority(nTxConfirmTarget);
+    ccData->data = utxos;
+    getCC()->setData(ccData);
+    
+    if (standaloneMode) // only process utxo state changes in standalone mode
+        connect(getCC(), &BlocknetCoinControl::tableUpdated, this, &BlocknetCoinControlDialog::updateUTXOState);
+}
+
+void BlocknetCoinControlDialog::updateUTXOState() {
+    for (auto *data : getCC()->getData()->data) {
+        if (data->locked) {
+            COutPoint utxo(uint256(data->transaction.toStdString()), data->vout);
+            walletModel->lockCoin(utxo);
+        }
+        if (data->unlocked) {
+            COutPoint utxo(uint256(data->transaction.toStdString()), data->vout);
+            walletModel->unlockCoin(utxo);
+        }
+    }
 }
 
 /**

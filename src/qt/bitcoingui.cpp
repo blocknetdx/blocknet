@@ -34,6 +34,7 @@
 #include "multisenddialog.h"
 #include "signverifymessagedialog.h"
 #include "blocknetaddressbook.h"
+#include "blocknetsendfundsutil.h"
 #endif // ENABLE_WALLET
 
 #ifdef Q_OS_MAC
@@ -96,7 +97,8 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
                         explorerWindow(nullptr),           verifyMessageAction(nullptr),
                         prevBlocks(0),                     bip38ToolAction(nullptr),
                         spinnerFrame(0),                   aboutAction(nullptr),
-                        stylesOld(QString()),              receiveCoinsAction(nullptr)
+                        stylesOld(QString()),              receiveCoinsAction(nullptr),
+                        openCoinControl(nullptr)
 {
     /* Open CSS when configured */
     boost::filesystem::path pathAddr = GetDataDir() / "themes";
@@ -227,6 +229,9 @@ BitcoinGUI::BitcoinGUI(const NetworkStyle* networkStyle, QWidget* parent) : QMai
     // prevents an open debug window from becoming stuck/unusable on client shutdown
     connect(quitAction, SIGNAL(triggered()), rpcConsole, SLOT(hide()));
 
+    // Open coin control
+    connect(openCoinControl, SIGNAL(triggered()), this, SLOT(showCoinControl()));
+    
     // connect(openBlockExplorerAction, SIGNAL(triggered()), explorerWindow, SLOT(show()));
 
     // prevents an open debug window from becoming stuck/unusable on client shutdown
@@ -392,6 +397,8 @@ void BitcoinGUI::createActions(const NetworkStyle* networkStyle)
 
     openInfoAction = new QAction(QApplication::style()->standardIcon(QStyle::SP_MessageBoxInformation), tr("&Information"), this);
     openInfoAction->setStatusTip(tr("Show diagnostic information"));
+    openCoinControl = new QAction(QIcon(":/redesign/block-icon"), tr("&Coin Control"), this);
+    openCoinControl->setStatusTip(tr("Open Coin Control"));
     openRPCConsoleAction = new QAction(QIcon(":/icons/debugwindow"), tr("&Debug console"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging console"));
     openNetworkAction = new QAction(QIcon(":/icons/connect_4"), tr("&Network Monitor"), this);
@@ -486,6 +493,7 @@ void BitcoinGUI::createMenuBar()
     if (walletFrame) {
         QMenu* tools = appMenuBar->addMenu(tr("&Tools"));
         tools->addAction(openInfoAction);
+        tools->addAction(openCoinControl);
         tools->addAction(openRPCConsoleAction);
         tools->addAction(openNetworkAction);
         tools->addAction(openPeersAction);
@@ -692,6 +700,7 @@ void BitcoinGUI::createTrayIconMenu()
     trayIconMenu->addAction(optionsAction);
     trayIconMenu->addSeparator();
     trayIconMenu->addAction(openInfoAction);
+    trayIconMenu->addAction(openCoinControl);
     trayIconMenu->addAction(openRPCConsoleAction);
     trayIconMenu->addAction(openNetworkAction);
     trayIconMenu->addAction(openPeersAction);
@@ -1286,6 +1295,14 @@ void BitcoinGUI::handleRestart(QStringList args)
 {
     if (!ShutdownRequested())
         emit requestedRestart(args);
+}
+
+void BitcoinGUI::showCoinControl() {
+    auto ccDialog = new BlocknetCoinControlDialog(walletModel, nullptr, Qt::WindowSystemMenuHint | Qt::WindowTitleHint, true);
+    ccDialog->setStyleSheet(GUIUtil::loadStyleSheet());
+    QVector<BlocknetSimpleUTXO> txSelectedUtxos;
+    ccDialog->populateUnspentTransactions(txSelectedUtxos);
+    ccDialog->show();
 }
 
 UnitDisplayStatusBarControl::UnitDisplayStatusBarControl() : optionsModel(0),

@@ -1075,17 +1075,24 @@ bool signRawTransaction(const std::string & rpcuser,
                                "signrawtransaction", params);
 
         // Parse reply
-        const Value & result = find_value(reply, "result");
-        const Value & error  = find_value(reply, "error");
+        Value result = find_value(reply, "result");
+        const Value & error = find_value(reply, "error");
 
         if (error.type() != null_type)
         {
-            // Error
-            LOG() << "error: " << write_string(error, false);
-            // int code = find_value(error.get_obj(), "code").get_int();
-            return false;
+            // For newer bitcoin clients try signrawtransactionwithwallet
+            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "signrawtransactionwithwallet", params);
+
+            const Value & error2 = find_value(reply, "error");
+            if (error2.type() != null_type) {
+                LOG() << "error: " << write_string(error, false) << " " << write_string(error2, false);
+                return false;
+            }
+
+            result = find_value(reply, "result");
         }
-        else if (result.type() != obj_type)
+
+        if (result.type() != obj_type)
         {
             // Result
             LOG() << "result not an object " <<
@@ -2042,6 +2049,13 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
             LOG() << "tx " << depositTxId << " bad vin txid " << __FUNCTION__;
             return true; // done
         }
+        const json_spirit::Value & txSequence = json_spirit::find_value(vin.get_obj(), "sequence");
+        if (txSequence.type() != json_spirit::null_type) { // if sequence is available, then enforce
+            if (txSequence.type() != json_spirit::int_type || txSequence.get_int() < std::numeric_limits<uint32_t>::max()-1) {
+                LOG() << "tx " << depositTxId << " bad sequence for input, all inputs must be final " << __FUNCTION__;
+                return true; // done
+            }
+        }
         const json_spirit::Value & txVoutObj = json_spirit::find_value(vin.get_obj(), "vout");
         if (txVoutObj.type() != json_spirit::int_type) {
             LOG() << "tx " << depositTxId << " bad input vout " << __FUNCTION__;
@@ -2293,7 +2307,7 @@ bool BtcWalletConnector<CryptoProvider>::acceptableLockTimeDrift(const char role
     auto lt = lockTime(role);
     if (lt == 0 || lt >= LOCKTIME_THRESHOLD || lckTime >= LOCKTIME_THRESHOLD)
         return false;
-    return (lt - lckTime) * blockTime <= 600; // if locktime drift is greater than 10 minutes 
+    return (static_cast<int64_t>(lt) - static_cast<int64_t>(lckTime)) * static_cast<int64_t>(blockTime) <= 600; // if locktime drift is greater than 10 minutes
 }
 
 //******************************************************************************
