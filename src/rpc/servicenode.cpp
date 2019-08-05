@@ -14,9 +14,9 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     if (request.fHelp || request.params.empty() || request.params.size() > 3)
         throw std::runtime_error(
             RPCHelpMan{"servicenodesetup",
-                "\nSets up Service Nodes by populating the servicenode.conf. Note* that the existing data in servicenode.conf will be deleted.\n",
+                "\nSets up Service Nodes by populating the servicenode.conf. Note* by default new data is appended to servicenode.conf\n",
                 {
-                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Options: auto|list|remove 'auto' will automatically setup the number of service nodes you specify. 'list' will setup service nodes according to a predetermined list. 'remove' will erase the existing servicenode.conf",
+                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Options: auto|list|remove\n'auto' will automatically setup the number of service nodes you specify.\n'list' will setup service nodes according to a predetermined list.\n'remove' will erase the existing servicenode.conf",
                      {
                         {"count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "'auto' number of servicenodes to create (not used with the 'list' type)"},
                         {"address", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "'auto' service node address (not used with the 'list' type)"},
@@ -40,6 +40,8 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
                   + HelpExampleCli("servicenodesetup", R"("list" [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])")
                   + HelpExampleRpc("servicenodesetup", R"("auto" 5 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa")")
                   + HelpExampleRpc("servicenodesetup", R"("list" [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])")
+                  + HelpExampleRpc("servicenodesetup", "remove")
+                  + HelpExampleRpc("servicenodesetup", "remove")
                 },
             }.ToString());
 
@@ -132,7 +134,7 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
         UniValue r(UniValue::VBOOL); r.setBool(true);
         return r; // done
     } else {
-        throw JSONRPCError(RPC_INVALID_PARAMS, "Acceptable types are: auto,list");
+        throw JSONRPCError(RPC_INVALID_PARAMS, "Acceptable types are: auto,list,remove");
     }
 
     for (const auto & entry : entries) {
