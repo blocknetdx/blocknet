@@ -385,42 +385,6 @@ public:
         return true;
     }
 
-    /**
-     * Writes the specified entries to the servicenode.conf. Note that this overwrites existing data.
-     * @param entries
-     * @return
-     */
-    bool writeSnConfig(const std::vector<ServiceNodeConfigEntry> & entries) {
-        boost::filesystem::path fp = getServiceNodeConf();
-        try {
-            std::string eol = "\n";
-#ifdef WIN32
-            eol = "\r\n";
-#endif
-            boost::filesystem::ofstream file;
-            file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-            file.open(fp, std::ios_base::binary);
-
-            auto help = getSnConfigHelp() + eol;
-            file.write(help.c_str(), help.size());
-
-            // Write entries
-            for (const auto & entry : entries) {
-                const auto & s = configEntryToString(entry) + eol;
-                file.write(s.c_str(), s.size());
-            }
-
-        } catch (std::exception & e) {
-            LogPrint(BCLog::SNODE, "Failed to write to servicenode.conf: %s\n", e.what());
-            return false;
-        } catch (...) {
-            LogPrint(BCLog::SNODE, "Failed to write to servicenode.conf unknown error\n");
-            return false;
-        }
-
-        return true;
-    }
-
 public:
     /**
      * Returns the servicenode configuration path.
@@ -488,6 +452,47 @@ public:
     static std::string configEntryToString(const ServiceNodeConfigEntry & entry) {
         return strprintf("%s %s %s %s", entry.alias, tierString(entry.tier),
                 EncodeSecret(entry.key), EncodeDestination(entry.address));
+    }
+
+    /**
+     * Writes the specified entries to the servicenode.conf. Note that this overwrites existing data.
+     * @param entries
+     * @return
+     */
+    static bool writeSnConfig(const std::vector<ServiceNodeConfigEntry> & entries, const bool & append=true) {
+        boost::filesystem::path fp = getServiceNodeConf();
+        try {
+            std::string eol = "\n";
+#ifdef WIN32
+            eol = "\r\n";
+#endif
+            boost::filesystem::ofstream file;
+            file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+            std::ios_base::openmode opts = std::ios_base::binary;
+            if (append)
+                opts |= std::ios_base::app;
+            file.open(fp, opts);
+
+            if (!append) { // write the help only if not appending
+                auto help = getSnConfigHelp() + eol;
+                file.write(help.c_str(), help.size());
+            }
+
+            // Write entries
+            for (const auto & entry : entries) {
+                const auto & s = configEntryToString(entry) + eol;
+                file.write(s.c_str(), s.size());
+            }
+
+        } catch (std::exception & e) {
+            LogPrint(BCLog::SNODE, "Failed to write to servicenode.conf: %s\n", e.what());
+            return false;
+        } catch (...) {
+            LogPrint(BCLog::SNODE, "Failed to write to servicenode.conf unknown error\n");
+            return false;
+        }
+
+        return true;
     }
 
 protected:

@@ -15,7 +15,7 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
             RPCHelpMan{"servicenodesetup",
                 "\nSets up Service Nodes by populating the servicenode.conf. Note* that the existing data in servicenode.conf will be deleted.\n",
                 {
-                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Options: auto|list 'auto' will automatically setup the number of service nodes you specify. 'list' will setup service nodes according to a predetermined list",
+                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Options: auto|list|remove 'auto' will automatically setup the number of service nodes you specify. 'list' will setup service nodes according to a predetermined list. 'remove' will erase the existing servicenode.conf",
                      {
                         {"count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "'auto' number of servicenodes to create (not used with the 'list' type)"},
                         {"address", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "'auto' service node address (not used with the 'list' type)"},
@@ -65,7 +65,7 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
             CKey key; key.MakeNewKey(true);
             tmpEntries.emplace_back(alias, tier, key, address);
         }
-        if (!sn::ServiceNodeMgr::instance().writeSnConfig(tmpEntries))
+        if (!sn::ServiceNodeMgr::writeSnConfig(tmpEntries))
             throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
 
         if (!sn::ServiceNodeMgr::instance().loadSnConfig(entries))
@@ -118,12 +118,18 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
             tmpEntries.emplace_back(alias, tier, key, addr);
         }
 
-        if (!sn::ServiceNodeMgr::instance().writeSnConfig(tmpEntries))
+        if (!sn::ServiceNodeMgr::writeSnConfig(tmpEntries))
             throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
 
         if (!sn::ServiceNodeMgr::instance().loadSnConfig(entries))
             throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
 
+    } else if (type.get_str() == "remove") {
+        std::vector<sn::ServiceNodeConfigEntry> none;
+        if (!sn::ServiceNodeMgr::writeSnConfig(none, false))
+            throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
+        UniValue r(UniValue::VBOOL); r.setBool(true);
+        return r; // done
     } else {
         throw JSONRPCError(RPC_INVALID_PARAMS, "Acceptable types are: auto,list");
     }
