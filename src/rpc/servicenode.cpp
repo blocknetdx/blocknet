@@ -4,6 +4,7 @@
 
 #include <rpc/server.h>
 
+#include <net.h>
 #include <rpc/protocol.h>
 #include <rpc/util.h>
 #include <servicenode/servicenodemgr.h>
@@ -166,12 +167,71 @@ static UniValue servicenodegenkey(const JSONRPCRequest& request)
     return ret;
 }
 
+static UniValue servicenoderegister(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenoderegister",
+                "\nRegisters all service nodes specified in servicenode.conf or registers the snode with a specific alias.\n",
+                {
+                    {"alias", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Optionally register snode with the specified 'alias'"}
+                },
+                RPCResult{
+                "[\n"
+                "  {\n"
+                "    \"alias\": n,                       (string) Service node name\n"
+                "    \"tier\": n,                        (numeric) Tier of this service node\n"
+                "    \"servicenodeprivkey\":\"xxxxxx\",  (string) Base58 encoded private key\n"
+                "    \"address\":\"blocknet address\",   (string) Blocknet address associated with the service node\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenoderegister", "")
+                  + HelpExampleRpc("servicenoderegister", "")
+                  + HelpExampleCli("servicenoderegister", "snode1")
+                  + HelpExampleRpc("servicenoderegister", "snode1")
+                },
+            }.ToString());
+
+    std::string alias;
+    if (request.params.size() == 1)
+        alias = request.params[0].get_str();
+
+    UniValue ret(UniValue::VARR);
+    const auto entries = sn::ServiceNodeMgr::instance().getSnEntries();
+    for (const auto & entry : entries) {
+        if (!alias.empty() && alias != entry.alias)
+            continue; // skip if alias doesn't match filter
+        if (!sn::ServiceNodeMgr::instance().registerSn(entry, g_connman.get()))
+            throw JSONRPCError(RPC_MISC_ERROR, strprintf("failed to register the service node", entry.alias));
+    }
+
+    for (const auto & entry : entries) {
+        if (!alias.empty() && alias != entry.alias)
+            continue; // skip if alias doesn't match filter
+        UniValue obj(UniValue::VOBJ);
+        obj.pushKV("alias", entry.alias);
+        obj.pushKV("tier", entry.tier);
+        obj.pushKV("servicenodeprivkey", EncodeSecret(entry.key));
+        obj.pushKV("address", EncodeDestination(entry.address));
+        ret.push_back(obj);
+    }
+
+    if (ret.empty())
+        throw JSONRPCError(RPC_MISC_ERROR, "No service nodes registered, is servicenode.conf populated?");
+
+    return ret;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "servicenode",        "servicenodesetup",       &servicenodesetup,       {"type", "options"} },
     { "servicenode",        "servicenodegenkey",      &servicenodegenkey,      {} },
+    { "servicenode",        "servicenoderegister",    &servicenoderegister,    {"alias"} },
 };
 // clang-format on
 

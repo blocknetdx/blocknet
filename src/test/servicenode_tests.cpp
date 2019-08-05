@@ -13,7 +13,6 @@
 #include <policy/policy.h>
 #include <pow.h>
 #include <rpc/server.h>
-#include <rpc/client.h>
 #include <servicenode/servicenode.h>
 #include <servicenode/servicenodemgr.h>
 #include <timedata.h>
@@ -39,7 +38,7 @@ struct ServicenodeChainSetup : public TestingSetup {
         coinbaseKey.MakeNewKey(true); // default privkey for coinbase spends
 
         CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
-        for (int i = 0; i <= Params().GetConsensus().coinMaturity + 5; ++i) { // we'll need to spend coinbases, make sure we have enough blocks
+        for (int i = 0; i <= Params().GetConsensus().coinMaturity + 10; ++i) { // we'll need to spend coinbases, make sure we have enough blocks
             SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing*20); // prevent difficulty from increasing too rapidly
             CBlock b = CreateAndProcessBlock(std::vector<CMutableTransaction>(), scriptPubKey);
             m_coinbase_txns.push_back(b.vtx[0]);
@@ -364,6 +363,85 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 
     // Check snode count matches number added above
     BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == addedSnodes);
+    sn::ServiceNodeMgr::instance().reset();
+
+    // Check servicenoderegister all rpc
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        params.push_backV({ "auto", 2, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue entries = CallRPC2("servicenodesetup", params);
+        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        params = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", params));
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+    }
+
+    // Check servicenoderegister by alias rpc
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        params.push_backV({ "auto", 2, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue entries = CallRPC2("servicenodesetup", params);
+        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        params = UniValue(UniValue::VARR);
+        params.push_backV({ "snode1" });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", params));
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+    }
+
+    // Check servicenoderegister rpc result data
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        params.push_backV({ "auto", 2, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue entries = CallRPC2("servicenodesetup", params);
+        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        params = UniValue(UniValue::VARR);
+        try {
+            auto result = CallRPC2("servicenoderegister", params);
+            BOOST_CHECK_EQUAL(result.isArray(), true);
+            UniValue o = result[1];
+            BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode1");
+            BOOST_CHECK_EQUAL(find_value(o, "tier").get_int(), sn::ServiceNode::SPV);
+            BOOST_CHECK_EQUAL(find_value(o, "servicenodeprivkey").get_str().empty(), false); // check not empty
+            BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        } catch (std::exception & e) {
+            BOOST_CHECK_MESSAGE(false, strprintf("servicenoderegister failed: %s", e.what()));
+        }
+
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+    }
+
+    // Check servicenoderegister bad alias
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        params.push_backV({ "auto", 2, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue entries = CallRPC2("servicenodesetup", params);
+        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        params = UniValue(UniValue::VARR);
+        params.push_backV({ "bad_alias" });
+        BOOST_CHECK_THROW(CallRPC2("servicenoderegister", params), std::runtime_error);
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+    }
+
+    // Check servicenoderegister no configs
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        BOOST_CHECK_THROW(CallRPC2("servicenoderegister", params), std::runtime_error);
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+    }
 
     RemoveWallet(wallet);
 }

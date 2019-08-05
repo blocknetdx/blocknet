@@ -135,6 +135,17 @@ public:
     /**
      * Registers a snode on the network. This will also automatically search the wallet for required collateral.
      * This requires the wallet to be unlocked any snodes that are not "OPEN" (free) snodes.
+     * @param entry
+     * @param connman
+     * @return
+     */
+    bool registerSn(const ServiceNodeConfigEntry & entry, CConnman *connman) {
+        return registerSn(entry.key, entry.tier, EncodeDestination(entry.address), connman);
+    }
+
+    /**
+     * Registers a snode on the network. This will also automatically search the wallet for required collateral.
+     * This requires the wallet to be unlocked any snodes that are not "OPEN" (free) snodes.
      * @param key
      * @param tier
      * @param address
@@ -287,6 +298,15 @@ public:
      */
     ServiceNode getSn(const CPubKey & snodePubKey) {
         return getSn(std::vector<unsigned char>{snodePubKey.begin(), snodePubKey.end()});
+    }
+
+    /**
+     * Returns a copy of the currently loaded snode entries.
+     * @return
+     */
+    std::vector<ServiceNodeConfigEntry> getSnEntries() {
+        LOCK(mu);
+        return std::move(std::vector<ServiceNodeConfigEntry>(snodeEntries.begin(), snodeEntries.end()));
     }
 
     /**
@@ -662,7 +682,7 @@ protected:
         }
 
         if (allCoins.empty()) {
-            LogPrint(BCLog::SNODE, "bad service node collateral, no coins %s", EncodeDestination(dest));
+            LogPrint(BCLog::SNODE, "bad service node collateral, no coins %s\n", EncodeDestination(dest));
             return false; // not enough coin for snode
         }
 
@@ -686,7 +706,7 @@ protected:
             }
 
             if (allCoins.size() == 1) {
-                LogPrint(BCLog::SNODE, "bad service node collateral, not enough coins %s", EncodeDestination(dest));
+                LogPrint(BCLog::SNODE, "bad service node collateral, not enough coins %s\n", EncodeDestination(dest));
                 return false; // nothing to search
             }
 
@@ -721,7 +741,7 @@ protected:
         }
 
         if (!done) {
-            LogPrint(BCLog::SNODE, "bad service node collateral, not enough coins %s", EncodeDestination(dest));
+            LogPrint(BCLog::SNODE, "bad service node collateral, not enough coins %s\n", EncodeDestination(dest));
             return false; // failed to find enough coin for snode
         }
 
