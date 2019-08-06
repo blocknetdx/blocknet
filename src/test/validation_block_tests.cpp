@@ -123,11 +123,11 @@ void BuildChain(const uint256& root, int height, const unsigned int invalid_rate
 
 BOOST_AUTO_TEST_CASE(processnewblock_signals_ordering)
 {
-    CChainParams params = Params();
+    auto *params = (CChainParams*)&Params();
     auto Params = [&params]() {
-        return params;
+        return *params;
     };
-    params.consensus.BIP34Height = 500; // disable bip34 for the forking tests below
+    params->consensus.BIP34Height = 500; // disable bip34 for the forking tests below
 
     // build a large-ish chain that's likely to have some forks
     std::vector<std::shared_ptr<const CBlock>> blocks;

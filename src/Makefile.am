@@ -183,6 +183,8 @@ BITCOIN_CORE_H = \
   script/sigcache.h \
   script/sign.h \
   script/standard.h \
+  servicenode/servicenode.h \
+  servicenode/servicenodemgr.h \
   shutdown.h \
   streams.h \
   support/allocators/secure.h \
@@ -277,6 +279,7 @@ libbitcoin_server_a_SOURCES = \
   rpc/net.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
+  rpc/servicenode.cpp \
   rpc/util.cpp \
   script/sigcache.cpp \
   shutdown.cpp \
@@ -451,6 +454,8 @@ libbitcoin_common_a_SOURCES = \
   script/ismine.cpp \
   script/sign.cpp \
   script/standard.cpp \
+  servicenode/servicenode.cpp \
+  servicenode/servicenodemgr.cpp \
   versionbitsinfo.cpp \
   warnings.cpp \
   $(BITCOIN_CORE_H)

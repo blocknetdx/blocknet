@@ -5171,3 +5171,28 @@ bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & ke
 
     return true;
 }
+
+CTransactionRef GetTxFunc(const COutPoint & out) {
+    CTransactionRef tx;
+    uint256 hashBlock;
+    if (!GetTransaction(out.hash, tx, Params().GetConsensus(), hashBlock))
+        return nullptr;
+    {
+        LOCK2(cs_main, mempool.cs);
+        CCoinsViewMemPool view(pcoinsTip.get(), mempool);
+        Coin coin;
+        if (!view.GetCoin(out, coin) || mempool.isSpent(out))
+            return nullptr;
+    }
+    return tx;
+}
+
+bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale) {
+    LOCK(cs_main);
+    if (checkStale && blockNumber < chainActive.Height() - SNODE_STALE_BLOCKS) // check if stale
+        return false; // only accept blocks that meet the threshold
+    const auto block = chainActive.Tip()->GetAncestor(blockNumber);
+    if (!block)
+        return false; // fail if block wasn't found
+    return block->GetBlockHash() == blockHash;
+}

@@ -535,4 +535,22 @@ bool VerifySig(const CBlock & block, const CScript & stakeScript);
  */
 bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore);
 
+/**
+ * Only return transaction for utxo that hasn't been spent. If the utxo has been spent
+ * this will return nullptr. This method will check the mempool.
+ * @param out
+ * @return CTransactionRef
+ */
+CTransactionRef GetTxFunc(const COutPoint & out);
+
+/**
+ * Returns true if the specified block is found in the chain tip.
+ * @param blockNumber
+ * @param blockHash
+ * @param checkStale
+ * @return bool
+ */
+static const int SNODE_STALE_BLOCKS = 5; // number of blocks to allow before a snode is marked "stale"
+bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale=true);
+
 #endif // BITCOIN_VALIDATION_H
