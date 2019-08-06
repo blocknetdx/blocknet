@@ -63,6 +63,7 @@ FUZZ_SUITE = \
 BITCOIN_TESTS =\
   test/arith_uint256_tests.cpp \
   test/scriptnum10.h \
+  test/staking_tests.h \
   test/addrman_tests.cpp \
   test/amount_tests.cpp \
   test/allocator_tests.cpp \
