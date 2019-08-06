@@ -564,6 +564,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load default config");
         BOOST_CHECK_MESSAGE(entries.empty(), "Snode configs should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test snode config for OPEN tier
@@ -574,6 +575,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load OPEN tier config");
         BOOST_CHECK_MESSAGE(entries.size() == 1, "OPEN tier config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test snode config for SPV tier
@@ -585,6 +587,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load SPV tier config");
         BOOST_CHECK_MESSAGE(entries.size() == 1, "SPV tier config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test snode config for multiple tiers
@@ -599,6 +602,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load multi-entry config");
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Multi-entry config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test lowercase tiers
@@ -613,6 +617,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load lowercase tiers");
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Lowercase tiers config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test bad snode configs
@@ -629,6 +634,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load bad tiers");
         BOOST_CHECK_MESSAGE(entries.empty(), "Bad tiers config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
 
         // Test bad keys
         saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 OPEN fkjdsakfjdsakfjksadjfkasjk\n"
@@ -636,6 +642,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load bad keys");
         BOOST_CHECK_MESSAGE(entries.empty(), "Bad keys config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
 
         // Test bad address
         saveFile(sn::ServiceNodeMgr::getServiceNodeConf(), "mn1 OPEN " + skey + " jdfksjkfajsdkfjaksdfjaksdjk\n"
@@ -643,6 +650,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load bad addresses");
         BOOST_CHECK_MESSAGE(entries.empty(), "Bad addresses config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test optional address on OPEN tier
@@ -654,6 +662,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load optional address");
         BOOST_CHECK_MESSAGE(entries.size() == 1, "Optional address config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test missing address on SPV tier
@@ -665,6 +674,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should not load missing address");
         BOOST_CHECK_MESSAGE(entries.empty(), "Missing address config should match expected size");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test rpc servicenode setup
@@ -676,12 +686,14 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         UniValue entries = CallRPC2("servicenodesetup", params);
         BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
         UniValue params2(UniValue::VARR);
         params2.push_backV({ "auto", 10, saddr });
         BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params2));
         UniValue entries2 = CallRPC2("servicenodesetup", params2);
         BOOST_CHECK_MESSAGE(entries2.size() == 10, "Service node config count should match");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test servicenode.conf formatting
@@ -700,6 +712,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
                                                 EncodeDestination(entry.address)));
         }
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test the servicenodesetup list option
@@ -715,6 +728,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         UniValue entries = CallRPC2("servicenodesetup", params);
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count on list option should match");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test servicenodesetup list option data checks
@@ -782,6 +796,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test the servicenodesetup remove option
@@ -801,6 +816,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(ent.empty(), "Service node setup remove option should result in 0 snode entries");
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test servicenodegenkey rpc
@@ -810,6 +826,51 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_MESSAGE(result.isStr(), "servicenodegenkey should return a string");
         CKey ckey = DecodeSecret(result.get_str());
         BOOST_CHECK_MESSAGE(ckey.IsValid(), "servicenodegenkey should return a valid private key");
+    }
+
+    // Test servicenodeexport and servicenodeimport rpc
+    {
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        UniValue params(UniValue::VARR);
+        params.push_backV({ "auto", 1, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue entries = CallRPC2("servicenodesetup", params);
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match expected");
+
+        const std::string & passphrase = "password";
+        params = UniValue(UniValue::VARR);
+        params.push_backV({ "snode0", passphrase });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodeexport", params));
+        const auto & result = CallRPC2("servicenodeexport", params);
+        BOOST_CHECK_MESSAGE(result.isStr(), "servicenodeexport should return a string");
+
+        // Check that the encrypted hex matches the expected output
+        SecureString spassphrase; spassphrase.reserve(100);
+        spassphrase = passphrase.c_str();
+        CCrypter crypt;
+        const std::vector<unsigned char> vchSalt = ParseHex("0000aabbccee0000"); // note* this salt is fixed (i.e. it's not being used)
+        crypt.SetKeyFromPassphrase(spassphrase, vchSalt, 100, 0);
+        CKeyingMaterial plaintext;
+        BOOST_CHECK_MESSAGE(crypt.Decrypt(ParseHex(result.get_str()), plaintext), "servicenodeexport failed to decrypt plaintext");
+        std::string strtext(plaintext.begin(), plaintext.end());
+        const std::string & str = entries[0].write();
+        BOOST_CHECK_EQUAL(strtext, str);
+
+        // Check servicenodeimport
+        params = UniValue(UniValue::VARR);
+        params.push_backV({ result.get_str(), passphrase });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodeimport", params));
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSnEntries().size() == 1, "servicenodeimport should have imported snode data");
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+
+        // Check servicenodeimport bad passphrase
+        params = UniValue(UniValue::VARR);
+        params.push_backV({ result.get_str(), "bad passphrase" });
+        BOOST_CHECK_THROW(CallRPC2("servicenodeimport", params), std::runtime_error);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSnEntries().empty(), "servicenodeimport should fail due to bad passphrase");
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 }
 

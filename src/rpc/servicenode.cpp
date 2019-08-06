@@ -227,6 +227,119 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
     return ret;
 }
 
+static UniValue servicenodeexport(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodeexport",
+                "\nExport the service node data with the specified alias.\n",
+                {
+                    {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service Node alias to export (example: snode0)"},
+                    {"password", RPCArg::Type::STR, RPCArg::Optional::NO, "Password used to encrypt the export data"}
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodeexport", "snode1 mypassword1")
+                  + HelpExampleRpc("servicenodeexport", "snode1 mypassword1")
+                },
+            }.ToString());
+
+    const auto & alias = request.params[0].get_str();
+    SecureString passphrase; passphrase.reserve(100);
+    passphrase = request.params[1].get_str().c_str();
+
+    UniValue ret(UniValue::VSTR);
+    sn::ServiceNodeConfigEntry selentry;
+    bool found{false};
+
+    const auto entries = sn::ServiceNodeMgr::instance().getSnEntries();
+    for (const auto & entry : entries) {
+        if (alias != entry.alias)
+            continue;
+        found = true;
+        selentry = entry;
+        break;
+    }
+
+    if (!found)
+        throw JSONRPCError(RPC_MISC_ERROR, strprintf("No service nodes found with alias %s", alias));
+
+
+    UniValue obj(UniValue::VOBJ);
+    obj.pushKV("alias", selentry.alias);
+    obj.pushKV("tier", selentry.tier);
+    obj.pushKV("servicenodeprivkey", EncodeSecret(selentry.key));
+    obj.pushKV("address", EncodeDestination(selentry.address));
+    const std::string & exportt = obj.write();
+    std::vector<unsigned char> input(exportt.begin(), exportt.end());
+
+    std::vector<unsigned char> vchSalt = ParseHex("0000aabbccee0000"); // not using salt
+    CCrypter crypt;
+    crypt.SetKeyFromPassphrase(passphrase, vchSalt, 100, 0);
+
+    std::vector<unsigned char> cypher;
+    if (!crypt.Encrypt(CKeyingMaterial(input.begin(), input.end()), cypher))
+        throw JSONRPCError(RPC_MISC_ERROR, strprintf("Bad passphrase %s", passphrase));
+
+    ret.setStr(HexStr(cypher));
+    return ret;
+}
+
+static UniValue servicenodeimport(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 2)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodeimport",
+                "\nImport the service node data, requires export password (not wallet password).\n",
+                {
+                    {"importdata", RPCArg::Type::STR, RPCArg::Optional::NO, "Service Node data to import (from export)"},
+                    {"password", RPCArg::Type::STR, RPCArg::Optional::NO, "Export password used to encrypt the service node data, this is not the wallet passphrase"}
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodeimport", "aae6d7aedaed54ade57da4eda3e5d4a7de8a67d8e7a8d768ea567da5e467d4ea7a6d7a6d7a6d75a7d5a757da5 mypassword1")
+                  + HelpExampleRpc("servicenodeimport", "aae6d7aedaed54ade57da4eda3e5d4a7de8a67d8e7a8d768ea567da5e467d4ea7a6d7a6d7a6d75a7d5a757da5 mypassword1")
+                },
+            }.ToString());
+
+    const std::vector<unsigned char> & input = ParseHex(request.params[0].get_str());
+    SecureString passphrase; passphrase.reserve(100);
+    passphrase = request.params[1].get_str().c_str();
+
+    std::vector<unsigned char> vchSalt = ParseHex("0000aabbccee0000"); // not using salt
+    CCrypter crypt;
+    crypt.SetKeyFromPassphrase(passphrase, vchSalt, 100, 0);
+
+    CKeyingMaterial plaintext;
+    if (!crypt.Decrypt(input, plaintext))
+        throw JSONRPCError(RPC_MISC_ERROR, strprintf("Bad passphrase %s", passphrase));
+
+    UniValue snode(UniValue::VOBJ);
+    if (!snode.read(std::string(plaintext.begin(), plaintext.end())))
+        throw JSONRPCError(RPC_MISC_ERROR, "Failed to add the service node, is the password correct?");
+
+    const auto & alias = find_value(snode, "alias").get_str();
+    const auto & tier = static_cast<sn::ServiceNode::Tier>(find_value(snode, "tier").get_int());
+    const auto & key = DecodeSecret(find_value(snode, "servicenodeprivkey").get_str());
+    const auto & address = DecodeDestination(find_value(snode, "address").get_str());
+    sn::ServiceNodeConfigEntry entry(alias, tier, key, address);
+    std::vector<sn::ServiceNodeConfigEntry> v{entry};
+    if (!sn::ServiceNodeMgr::writeSnConfig(v, false))
+        throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
+
+    std::set<sn::ServiceNodeConfigEntry> s(v.begin(), v.end());
+    if (!sn::ServiceNodeMgr::instance().loadSnConfig(s))
+        throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
+
+    UniValue ret(UniValue::VBOOL);
+    ret.setBool(true);
+    return ret;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
@@ -234,6 +347,8 @@ static const CRPCCommand commands[] =
     { "servicenode",        "servicenodesetup",       &servicenodesetup,       {"type", "options"} },
     { "servicenode",        "servicenodegenkey",      &servicenodegenkey,      {} },
     { "servicenode",        "servicenoderegister",    &servicenoderegister,    {"alias"} },
+    { "servicenode",        "servicenodeexport",      &servicenodeexport,      {"alias", "password"} },
+    { "servicenode",        "servicenodeimport",      &servicenodeimport,      {"alias", "password"} },
 };
 // clang-format on
 

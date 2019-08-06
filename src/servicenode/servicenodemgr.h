@@ -38,9 +38,11 @@ struct ServiceNodeConfigEntry {
     ServiceNode::Tier tier;
     CKey key;
     CTxDestination address;
+    ServiceNodeConfigEntry() : tier(ServiceNode::Tier::OPEN) {}
     ServiceNodeConfigEntry(std::string alias, ServiceNode::Tier tier, CKey key, CTxDestination address)
                                                    : alias(std::move(alias)), tier(tier),
                                                      address(std::move(address)), key(std::move(key)) {}
+    ServiceNodeConfigEntry& operator=(const ServiceNodeConfigEntry & other) = default;
     friend inline bool operator==(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.key == b.key; }
     friend inline bool operator!=(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return !(a.key == b.key); }
     friend inline bool operator<(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.alias.compare(b.alias) < 0; }
