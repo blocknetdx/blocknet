@@ -192,8 +192,8 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
                 RPCExamples{
                     HelpExampleCli("servicenoderegister", "")
                   + HelpExampleRpc("servicenoderegister", "")
-                  + HelpExampleCli("servicenoderegister", "snode1")
-                  + HelpExampleRpc("servicenoderegister", "snode1")
+                  + HelpExampleCli("servicenoderegister", "snode0")
+                  + HelpExampleRpc("servicenoderegister", "snode0")
                 },
             }.ToString());
 
@@ -241,8 +241,8 @@ static UniValue servicenodeexport(const JSONRPCRequest& request)
                 "\n"
                 },
                 RPCExamples{
-                    HelpExampleCli("servicenodeexport", "snode1 mypassword1")
-                  + HelpExampleRpc("servicenodeexport", "snode1 mypassword1")
+                    HelpExampleCli("servicenodeexport", "snode0 mypassword1")
+                  + HelpExampleRpc("servicenodeexport", "snode0 mypassword1")
                 },
             }.ToString());
 
