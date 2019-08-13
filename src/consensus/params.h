@@ -87,6 +87,8 @@ struct Params {
     int coinMaturity;
     int superblock;
     int64_t stakingV05UpgradeTime;
+    CAmount proposalMinAmount{10 * COIN};
+    CAmount proposalFee{10 * COIN};
 };
 } // namespace Consensus
 

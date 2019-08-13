@@ -4,17 +4,7 @@
 
 #include <test/staking_tests.h>
 
-#include <amount.h>
 #include <consensus/merkle.h>
-#include <consensus/validation.h>
-#include <index/txindex.h>
-#include <kernel.h>
-#include <pow.h>
-#include <policy/policy.h>
-#include <primitives/transaction.h>
-#include <script/script.h>
-#include <validation.h>
-#include <wallet/wallet.h>
 
 // Proof-of-Stake tests
 BOOST_AUTO_TEST_SUITE(staking_tests)

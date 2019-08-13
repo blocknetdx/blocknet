@@ -7,17 +7,36 @@
 
 #include <test/test_bitcoin.h>
 
+#define protected public // for overridding protected fields in CChainParams
 #include <chainparams.h>
+#undef protected
 #include <index/txindex.h>
 #include <kernel.h>
 #include <miner.h>
 #include <policy/policy.h>
 #include <pow.h>
+#include <rpc/server.h>
 #include <timedata.h>
+#include <univalue.h>
 #include <validation.h>
 #include <wallet/wallet.h>
 
 #include <boost/test/unit_test.hpp>
+
+static UniValue CallRPC2(const std::string & strMethod, const UniValue & params) {
+    JSONRPCRequest request;
+    request.strMethod = strMethod;
+    request.params = params;
+    request.fHelp = false;
+    rpcfn_type method = tableRPC[strMethod]->actor;
+    try {
+        UniValue result = (*method)(request);
+        return result;
+    }
+    catch (const UniValue& objError) {
+        throw std::runtime_error(find_value(objError, "message").get_str());
+    }
+}
 
 static void AddKey(CWallet & wallet, const CKey & key) {
     LOCK(wallet.cs_wallet);
@@ -67,6 +86,7 @@ struct TestChainPoS : public TestingSetup {
 
         bool firstRun;
         wallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+        AddWallet(wallet); // add wallet to global mgr
         wallet->LoadWallet(firstRun);
         AddKey(*wallet, coinbaseKey);
         {
@@ -74,6 +94,7 @@ struct TestChainPoS : public TestingSetup {
             reserver.reserve();
             wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {} /* stop_block */, reserver, false /* update */);
         }
+        wallet->SetBroadcastTransactions(true);
 
         // Turn on index for staking
         g_txindex = MakeUnique<TxIndex>(1 << 20, true);
@@ -121,10 +142,10 @@ struct TestChainPoS : public TestingSetup {
                 std::vector<std::shared_ptr<CWallet>> wallets{wallet};
                 if (pindex && staker.Update(wallets, pindex, Params().GetConsensus()) && staker.TryStake(pindex, Params())) {
                     LOCK(cs_main);
-                    auto locked_chain = wallet->chain().lock();
+                    auto lc = wallet->chain().lock();
                     WalletRescanReserver reserver(wallet.get());
                     reserver.reserve();
-                    wallet->ScanForWalletTransactions(locked_chain->getBlockHash(chainActive.Height()), {} /* stop_block */, reserver, true /* update */);
+                    wallet->ScanForWalletTransactions(lc->getBlockHash(chainActive.Height()), {} /* stop_block */, reserver, true /* update */);
                 }
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
@@ -134,6 +155,7 @@ struct TestChainPoS : public TestingSetup {
     }
 
     ~TestChainPoS() {
+        RemoveWallet(wallet);
         g_txindex->Stop();
         g_txindex.reset();
     };

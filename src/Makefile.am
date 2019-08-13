@@ -130,6 +130,7 @@ BITCOIN_CORE_H = \
   core_memusage.h \
   cuckoocache.h \
   fs.h \
+  governance/governance.h \
   httprpc.h \
   httpserver.h \
   index/base.h \
@@ -441,6 +442,7 @@ libbitcoin_common_a_SOURCES = \
   compressor.cpp \
   core_read.cpp \
   core_write.cpp \
+  governance/governance.cpp \
   key.cpp \
   key_io.cpp \
   keystore.cpp \

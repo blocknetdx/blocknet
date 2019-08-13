@@ -328,7 +328,7 @@ public:
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= 32)
                 return 5000 * COIN;
-            else if (blockHeight > consensusParams.lastPOWBlock && blockHeight % 144 == 0)
+            else if (blockHeight > consensusParams.lastPOWBlock && blockHeight % consensusParams.superblock == 0)
                 return 20001 * COIN;
             return 1 * COIN;
         };
@@ -434,6 +434,8 @@ public:
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
                 return 50 * COIN;
+            else if (blockHeight % consensusParams.superblock == 0)
+                return 10000 * COIN;
             return 1 * COIN;
         };
     }
