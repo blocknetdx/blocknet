@@ -1109,12 +1109,7 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus:
     }
 
     // Check the header
-    // TODO Blocknet check PoS work here
-    if (block.IsProofOfStake()) {
-        uint256 hashProofOfStake;
-        if (!CheckProofOfStake(block, hashProofOfStake, consensusParams))
-            return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
-    } else {
+    if (!block.IsProofOfStake()) { // If not PoS check the work here
     if (!CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
         return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
     }
@@ -1132,6 +1127,14 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 
     if (!ReadBlockFromDisk(block, blockPos, consensusParams))
         return false;
+
+    // Check the header
+    if (block.IsProofOfStake()) { // TODO Blocknet check PoS here
+        uint256 hashProofOfStake;
+        if (!CheckProofOfStake(block, pindex->pprev, hashProofOfStake, consensusParams))
+            return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): proof of stake check failed on block %u", pindex->nHeight);
+    }
+
     if (block.GetHash() != pindex->GetBlockHash())
         return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
                 pindex->ToString(), pindex->GetBlockPos().ToString());
@@ -3007,7 +3010,8 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
         pindexNew->BuildSkip();
 
         // ppcoin: set entropy bit and pos
-        pindexNew->SetStakeEntropyBit();
+        const auto ebit = GetStakeEntropyBit(pindexNew->GetBlockHash(), pindexNew->GetBlockTime());
+        pindexNew->SetStakeEntropyBit(ebit);
         if (IsProofOfStake(pindexNew->nHeight)) {
             pindexNew->SetProofOfStake();
             if (mapProofOfStake.count(hash))

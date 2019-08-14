@@ -32,20 +32,28 @@ static const int MODIFIER_INTERVAL_RATIO = 3;
 // Compute the hash modifier for proof-of-stake
 bool ComputeNextStakeModifier(const CBlockIndex* pindexPrev, uint64_t& nStakeModifier, bool& fGeneratedStakeModifier);
 
+// Stake modifier selection upgrade
+bool IsProtocolV05(uint64_t nTimeTx);
+
+uint256 stakeHash(unsigned int nTimeTx, CDataStream ss, unsigned int prevoutIndex, uint256 prevoutHash,unsigned int nTimeBlockFrom);
+uint256 stakeHashV05(CDataStream ss, const unsigned int & nTimeBlockFrom, const int & blockHeight, const unsigned int & prevoutIndex, const unsigned int & nTimeTx);
+
 // Check whether stake kernel meets hash target
-// Sets hashProofOfStake on success return
-uint256 stakeHash(unsigned int nTimeTx, CDataStream ss, unsigned int prevoutIndex, uint256 prevoutHash,
-        unsigned int nTimeBlockFrom);
 bool stakeTargetHit(uint256 hashProofOfStake, int64_t nValueIn, arith_uint256 bnTargetPerCoinDay);
-bool CheckStakeKernelHash(unsigned int nBits, const uint256 txInBlockHash, const int64_t txInBlockTime,
+
+bool CheckStakeKernelHash(const CBlockIndex *pindexPrev, unsigned int nBits, const uint256 txInBlockHash, const int64_t txInBlockTime,
         const CAmount txInAmount, const COutPoint prevout, unsigned int& nTimeTx, unsigned int nHashDrift, bool fCheck,
         uint256& hashProofOfStake, bool fPrintProofOfStake = false);
-bool GetKernelStakeModifier(uint256 hashBlockFrom, uint64_t& nStakeModifier, int& nStakeModifierHeight,
-        int64_t& nStakeModifierTime, bool /*fPrintProofOfStake*/);
+bool GetKernelStakeModifier(const CBlockIndex *pindexPrev, const uint256 & hashBlockFrom, const unsigned int & nTimeTx, uint64_t& nStakeModifier, int& nStakeModifierHeight, int64_t& nStakeModifierTime, bool fPrintProofOfStake);
+bool GetKernelStakeModifierV03(uint256 hashBlockFrom, uint64_t& nStakeModifier, int& nStakeModifierHeight, int64_t& nStakeModifierTime, bool fPrintProofOfStake);
+bool GetKernelStakeModifierBlocknet(const CBlockIndex *pindexPrev, const uint256 & hashBlockFrom, const unsigned int & nTimeTx, uint64_t & nStakeModifier, int & nStakeModifierHeight, int64_t & nStakeModifierTime, bool fPrintProofOfStake);
 
 // Check kernel hash target and coinstake signature
 // Sets hashProofOfStake on success return
-bool CheckProofOfStake(const CBlockHeader & block, uint256 & hashProofOfStake, const Consensus::Params & consensusParams);
+bool CheckProofOfStake(const CBlockHeader & block, const CBlockIndex *pindexPrev, uint256 & hashProofOfStake, const Consensus::Params & consensusParams);
+
+// peercoin: For use with Staking Protocol V05.
+unsigned int GetStakeEntropyBit(const uint256 & blockHash, const int64_t & blockTime);
 
 // Get stake modifier checksum
 unsigned int GetStakeModifierChecksum(const CBlockIndex* pindex);
@@ -78,7 +86,7 @@ public:
             SetNull();
         }
         explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time, uint256 hashBlock, uint256 hashProofOfStake)
-                  : coin(coin), wallet(wallet), time(time), hashBlock(std::move(hashBlock)), hashProofOfStake(std::move(hashProofOfStake)) { }
+                  : coin(coin), wallet(wallet), time(time), hashBlock(hashBlock), hashProofOfStake(hashProofOfStake) { }
         bool IsNull() {
             return coin == nullptr;
         }
@@ -160,32 +168,57 @@ public:
             boost::this_thread::interruption_point();
             const auto & txInBlockHash = out->tx->hashBlock;
 
-            uint64_t stakeModifier = HasStakeModifier(txInBlockHash) ? GetStakeModifier(txInBlockHash) : 0;
-            int stakeModifierHeight = 0;
-            int64_t stakeModifierTime = 0;
-            if (stakeModifier == 0 && !GetKernelStakeModifier(txInBlockHash, stakeModifier, stakeModifierHeight, stakeModifierTime, false))
-                continue;
+            if (IsProtocolV05(lastUpdateTime)) { // if v05 staking protocol modifier is dynamic (not in hash lookup)
+                int64_t i = lastUpdateTime + 1;
+                for (; i < endTime; ++i) {
+                    uint64_t stakeModifier{0};
+                    int stakeModifierHeight{0};
+                    int64_t stakeModifierTime{0};
+                    if (!GetKernelStakeModifier(tip, txInBlockHash, static_cast<const unsigned int>(i), stakeModifier, stakeModifierHeight, stakeModifierTime, false))
+                        continue;
 
-            if (!HasStakeModifier(txInBlockHash)) {
-                LOCK(mu);
-                stakeModifiers[txInBlockHash] = stakeModifier;
-            }
+                    CDataStream ss(SER_GETHASH, 0);
+                    ss << stakeModifier;
 
-            CDataStream ss(SER_GETHASH, 0);
-            ss << stakeModifier;
-
-            int64_t i = lastUpdateTime + 1;
-            for (; i < endTime; ++i) {
-                const auto hashProofOfStake = stakeHash(i, ss, out->i, out->tx->GetHash(), out->tx->GetTxTime());
-                if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
+                    const auto hashProofOfStake = stakeHashV05(ss, out->tx->GetTxTime(), tip->nHeight + 1, out->i, i);
+                    if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
+                        continue;
+                    {
+                        LOCK(mu);
+                        stakeTimes[i].emplace_back(std::make_shared<CInputCoin>(out->GetInputCoin()), item.wallet, i,
+                                                   out->tx->hashBlock, hashProofOfStake);
+                        break;
+                    }
+                }
+            } else {
+                uint64_t stakeModifier = HasStakeModifier(txInBlockHash) ? GetStakeModifier(txInBlockHash) : 0;
+                int stakeModifierHeight{0};
+                int64_t stakeModifierTime{0};
+                const unsigned int stakeTime{0}; // this is not used here by v03 staking protocol (see GetKernelStakeModifierV03)
+                if (stakeModifier == 0 && !GetKernelStakeModifier(tip, txInBlockHash, stakeTime, stakeModifier, stakeModifierHeight, stakeModifierTime, false))
                     continue;
-                {
+
+                if (!HasStakeModifier(txInBlockHash)) {
                     LOCK(mu);
-                    stakeTimes[i].emplace_back(std::make_shared<CInputCoin>(out->GetInputCoin()), item.wallet, i,
-                            out->tx->hashBlock, hashProofOfStake);
-                    break;
+                    stakeModifiers[txInBlockHash] = stakeModifier;
+                }
+                CDataStream ss(SER_GETHASH, 0);
+                ss << stakeModifier;
+
+                int64_t i = lastUpdateTime + 1;
+                for (; i < endTime; ++i) {
+                    const auto hashProofOfStake = stakeHash(i, ss, out->i, out->tx->GetHash(), out->tx->GetTxTime());
+                    if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
+                        continue;
+                    {
+                        LOCK(mu);
+                        stakeTimes[i].emplace_back(std::make_shared<CInputCoin>(out->GetInputCoin()), item.wallet, i,
+                                out->tx->hashBlock, hashProofOfStake);
+                        break;
+                    }
                 }
             }
+
         }
 
         lastBlockHeight = tip->nHeight;

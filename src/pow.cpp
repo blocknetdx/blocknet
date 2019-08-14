@@ -124,7 +124,7 @@ bool CheckPoS(const CBlockHeader & block, CValidationState & state, uint256 & ha
         return error("%s : incorrect work at %d", __func__, currentHeight);
     }
 
-    if (!CheckProofOfStake(block, hashProofOfStake, params)) {
+    if (!CheckProofOfStake(block, pindexPrev, hashProofOfStake, params)) {
         state.DoS(50, false, REJECT_INVALID, "bad-stake", false, "bad pow or pos block");
         return false;
     }

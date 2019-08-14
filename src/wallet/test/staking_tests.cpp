@@ -5,6 +5,9 @@
 #include <test/test_bitcoin.h>
 
 #include <amount.h>
+#define protected public // for overridding protected fields in CChainParams
+#include <chainparams.h>
+#undef protected
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
 #include <index/txindex.h>
@@ -145,9 +148,7 @@ struct TestChainPoS : public TestingSetup {
     StakeMgr staker;
 };
 
-/**
- * Ensure that the mempool won't accept coinstake transactions.
- */
+/// Ensure that the mempool won't accept coinstake transactions.
 BOOST_FIXTURE_TEST_CASE(staking_tests_nocoinstake, TestChainPoS)
 {
     CMutableTransaction coinstake;
@@ -192,9 +193,17 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_nocoinstake, TestChainPoS)
     BOOST_CHECK_EQUAL(nDoS, 100);
 }
 
-/**
- * Ensure that bad stakes are not accepted by the protocol.
- */
+/// Check that the v05 staking protocol upgrade works properly
+BOOST_FIXTURE_TEST_CASE(staking_tests_protocolupgrade, TestChainPoS)
+{
+    auto *params = (CChainParams*)&Params();
+    params->consensus.stakingV05UpgradeTime = GetAdjustedTime() + params->GetConsensus().nPowTargetSpacing * 10; // set 10 min in future (~10 blocks)
+    int blocks = chainActive.Height();
+    StakeBlocks(25); // make sure seemless upgrade to v05 staking protocol occurs
+    BOOST_CHECK_EQUAL(chainActive.Height(), blocks + 25);
+}
+
+/// Ensure that bad stakes are not accepted by the protocol.
 BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
 {
     // Find a stake

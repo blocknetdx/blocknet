@@ -112,6 +112,7 @@ public:
         consensus.stakeMinAge = 3600;
         consensus.stakingModiferV2Block = 615800;
         consensus.coinMaturity = 100;
+        consensus.stakingV05UpgradeTime = 1568570400; // Sep 15, 2019
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -265,6 +266,7 @@ public:
         consensus.stakeMinAge = 60;
         consensus.stakingModiferV2Block = 1;
         consensus.coinMaturity = 15;
+        consensus.stakingV05UpgradeTime = 1566085343; // Aug 17, 2019
 
         pchMessageStart[0] = 0x45;
         pchMessageStart[1] = 0x76;
