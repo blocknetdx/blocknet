@@ -570,4 +570,7 @@ protected:
     friend void ::UnregisterAllValidationInterfaces();
 };
 */
+
+extern map<uint256, uint256> mapProofOfStake;
+
 #endif // BITCOIN_MAIN_H

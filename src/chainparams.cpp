@@ -110,6 +110,7 @@ public:
         nMaturity = 100;
         nServicenodeCountDrift = 20;
         nModifierUpdateBlock = 615800;
+        nStakingV05UpdateTime = 1568570400;
         nStakeMinAge = 3600;
 
         /**
@@ -217,6 +218,7 @@ public:
         nLastPOWBlock = 31;
         nMaturity = 15;
         nModifierUpdateBlock = 1;
+        nStakingV05UpdateTime = 1566361122;
         nStakeMinAge = 60;
 
         //! Modify the testnet genesis block so the timestamp is valid for a later start.

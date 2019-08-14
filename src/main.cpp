@@ -2961,14 +2961,21 @@ CBlockIndex* AddToBlockIndex(const CBlock& block)
         pindexNew->bnChainTrust = (pindexNew->pprev ? pindexNew->pprev->bnChainTrust : 0) + pindexNew->GetBlockTrust();
 
         // ppcoin: compute stake entropy bit for stake modifier
-        if (!pindexNew->SetStakeEntropyBit(pindexNew->GetStakeEntropyBit()))
+        const auto ebit = GetStakeEntropyBit(pindexNew->GetBlockHash(), pindexNew->GetBlockTime());
+        if (!pindexNew->SetStakeEntropyBit(ebit))
             LogPrintf("AddToBlockIndex() : SetStakeEntropyBit() failed \n");
 
         // ppcoin: record proof-of-stake hash value
         if (pindexNew->IsProofOfStake()) {
-            if (!mapProofOfStake.count(hash))
-                LogPrintf("AddToBlockIndex() : hashProofOfStake not found in map \n");
-            pindexNew->hashProofOfStake = mapProofOfStake[hash];
+            if (mapProofOfStake.count(hash))
+                pindexNew->hashProofOfStake = mapProofOfStake[hash];
+            else if (IsProtocolV05(static_cast<uint64_t>(pindexNew->GetBlockTime()))) {
+                uint256 hashProofOfStake;
+                if (!CheckProofOfStake(block, pindexNew->pprev, hashProofOfStake))
+                    LogPrintf("AddToBlockIndex() : CheckProofOfStake failed\n");
+                pindexNew->hashProofOfStake = hashProofOfStake;
+                mapProofOfStake[block.GetHash()] = hashProofOfStake;
+            }
             pindexNew->prevoutStake = { block.hashStake, block.nStakeIndex };
         }
 
@@ -3282,12 +3289,12 @@ bool CheckWork(const CBlock block, CBlockIndex* const pindexPrev)
         uint256 hashProofOfStake;
         uint256 hash = block.GetHash();
 
-        if(!CheckProofOfStake(block, hashProofOfStake)) {
+        if(!CheckProofOfStake(block, pindexPrev, hashProofOfStake)) {
             LogPrintf("WARNING: ProcessBlock(): check proof-of-stake failed for block %s\n", hash.ToString().c_str());
             return false;
         }
         if(!mapProofOfStake.count(hash)) // add to mapProofOfStake
-            mapProofOfStake.insert(make_pair(hash, hashProofOfStake));
+            mapProofOfStake[hash] = hashProofOfStake;
     }
 
     return true;
@@ -3762,6 +3769,23 @@ bool static LoadBlockIndexDB()
             pindex->BuildSkip();
         if (pindex->IsValid(BLOCK_VALID_TREE) && (pindexBestHeader == NULL || CBlockIndexWorkComparator()(pindexBestHeader, pindex)))
             pindexBestHeader = pindex;
+    }
+
+    // Load stake hashes
+    for (const auto & item : vSortedByHeight) {
+        const auto & blockIndex = item.second;
+        if (blockIndex->IsProofOfStake() && IsProtocolV05(static_cast<uint64_t>(blockIndex->GetBlockTime()))) {
+            CBlock block;
+            if (!ReadBlockFromDisk(block, blockIndex->GetBlockPos()))
+                return error("LoadBlockIndex() : failed to read block: %s", blockIndex->ToString());
+            uint256 hashProofOfStake;
+            if (!CheckProofOfStake(block, blockIndex->pprev, hashProofOfStake))
+                LogPrintf("AddToBlockIndex() : CheckProofOfStake failed\n");
+            else {
+                blockIndex->hashProofOfStake = hashProofOfStake;
+                mapProofOfStake[block.GetHash()] = hashProofOfStake;
+            }
+        }
     }
 
     // Load block file info
