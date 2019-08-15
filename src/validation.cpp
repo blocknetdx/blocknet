@@ -1613,6 +1613,8 @@ DisconnectResult CChainState::DisconnectBlock(const CBlock& block, const CBlockI
         const CTransaction &tx = *(block.vtx[i]);
         uint256 hash = tx.GetHash();
         bool is_coinbase = tx.IsCoinBase();
+        if (tx.IsCoinStake())
+            is_coinbase = true; // set coinbase flag for coinstake in this context (coinsdb treats coinstake as coinbase)
 
         // Check that all outputs are available and match the outputs in the block itself
         // exactly.
