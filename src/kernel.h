@@ -112,7 +112,7 @@ public:
     bool Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBlockIndex *tip, const Consensus::Params & params) {
         if (IsInitialBlockDownload())
             return false;
-        const int stakeSearchPeriodSeconds{60};
+        const int stakeSearchPeriodSeconds{MAX_FUTURE_BLOCK_TIME_POS};
         const bool notExpired = GetAdjustedTime() <= lastUpdateTime;
         const bool tipChanged = tip->nHeight != lastBlockHeight;
         const bool staleTip = tip->nTime <= lastUpdateTime || tip->nTime < GetAdjustedTime() - params.stakeMinAge*2; // TODO Blocknet testnet could stall chain?
