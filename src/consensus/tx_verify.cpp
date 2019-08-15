@@ -233,23 +233,8 @@ bool Consensus::CheckTxInputs(const CTransaction& tx, CValidationState& state, c
         }
     }
 
-    // TODO Blocknet review subsidy check here
-    if (tx.IsCoinStake()) { // handle PoS coinstakes
-        const CAmount value_out = tx.GetValueOut();
-        const CAmount subsidy = consensusParams.GetBlockSubsidy(nSpendHeight, consensusParams);
-        const CAmount minted = value_out - nValueIn < 0 ? 0 : value_out - nValueIn;
-        if (minted > subsidy) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-txns-reward-high", false,
-                             strprintf("value in (%s) < value out (%s)", FormatMoney(nValueIn), FormatMoney(value_out - subsidy)));
-        }
-
-        // Tally transaction fees
-        const CAmount txfee_aux = nValueIn + subsidy - value_out;
-        if (!MoneyRange(txfee_aux)) {
-            return state.DoS(100, false, REJECT_INVALID, "bad-txns-fee-outofrange");
-        }
-
-        txfee = txfee_aux;
+    if (tx.IsCoinStake()) { // Blocknet does not handle PoS coinstake fee checks here (see validation.cpp ConnectBlock)
+        txfee = 0;
         return true;
     }
 
