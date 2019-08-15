@@ -742,7 +742,7 @@ static bool AcceptToMemoryPoolWorker(const CChainParams& chainparams, CTxMemPool
         bool fSpendsCoinbase = false;
         for (const CTxIn &txin : tx.vin) {
             const Coin &coin = view.AccessCoin(txin.prevout);
-            if (coin.IsCoinBase()) { // TODO Blocknet PoS track reorgs on spend coinstake
+            if (coin.IsCoinBase()) {
                 fSpendsCoinbase = true;
                 break;
             }
