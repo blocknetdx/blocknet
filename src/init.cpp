@@ -19,6 +19,7 @@
 #include <compat/sanity.h>
 #include <consensus/validation.h>
 #include <fs.h>
+#include <governance/governance.h>
 #include <httpserver.h>
 #include <httprpc.h>
 #include <interfaces/chain.h>
@@ -1456,6 +1457,9 @@ bool AppInitMain(InitInterfaces& interfaces)
     }
 
     // ********************************************************* Step 7: load block chain
+
+    // Governance setup
+    RegisterValidationInterface(&gov::Governance::instance());
 
     // Load coin validator
     CoinValidator::instance().LoadStatic();

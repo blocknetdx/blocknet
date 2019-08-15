@@ -23,13 +23,58 @@
 #include <string>
 #include <utility>
 
+/**
+ * Governance namespace.
+ */
 namespace gov {
 
-enum ProposalType : uint8_t {
-    NONE        = 0,
-    DEFAULT     = 1,
+/**
+ * Governance types are used with OP_RETURN to indicate how the messages should be processed.
+ */
+enum Type : uint8_t {
+    NONE         = 0,
+    PROPOSAL     = 1,
+    VOTE         = 2,
 };
 
+static const uint8_t NETWORK_VERSION = 0x01;
+
+/**
+ * Encapsulates serialized OP_RETURN governance data.
+ */
+class NetworkObject {
+public:
+    explicit NetworkObject() = default;
+
+    /**
+     * Returns true if this network data contains the proper version.
+     * @return
+     */
+    bool isValid() const {
+        return version == NETWORK_VERSION;
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(version);
+        READWRITE(type);
+    }
+
+    const uint8_t & getType() const {
+        return type;
+    }
+
+protected:
+    uint8_t version{NETWORK_VERSION};
+    uint8_t type{NONE};
+};
+
+/**
+ * Proposals encapsulate the data required by the network to support voting and payments.
+ * They can be created by anyone willing to pay the submission fee.
+ */
 class Proposal {
 public:
     explicit Proposal(std::string name, int superblock, CAmount amount, std::string address,
@@ -59,9 +104,10 @@ public:
         static std::regex rrname("^\\w+[\\w- ]*\\w+$");
         bool valid = std::regex_match(name, rrname) && (superblock % params.superblock == 0)
                      && amount >= params.proposalMinAmount && amount <= params.GetBlockSubsidy(superblock, params)
-                     && IsValidDestination(DecodeDestination(address));
+                     && IsValidDestination(DecodeDestination(address))
+                     && type == PROPOSAL && version == NETWORK_VERSION;
         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-        ss << type << name << superblock << amount << address << url << description;
+        ss << version << type << name << superblock << amount << address << url << description;
         return valid && ss.size() <= MAX_OP_RETURN_RELAY-3; // -1 for OP_RETURN -2 for pushdata opcodes
     }
 
@@ -119,7 +165,7 @@ public:
      */
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << type << name << superblock << amount << address << url << description;
+        ss << version << type << name << superblock << amount << address << url << description;
         return ss.GetHash();
     }
 
@@ -127,6 +173,7 @@ public:
 
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(version);
         READWRITE(type);
         READWRITE(superblock);
         READWRITE(amount);
@@ -137,7 +184,8 @@ public:
     }
 
 protected:
-    uint8_t type{DEFAULT};
+    uint8_t version{NETWORK_VERSION};
+    uint8_t type{PROPOSAL};
     std::string name;
     int superblock{0};
     CAmount amount{0};
@@ -146,13 +194,163 @@ protected:
     std::string description;
 };
 
+enum VoteType : uint8_t {
+    NO      = 0,
+    YES     = 1,
+    ABSTAIN = 2,
+};
+
+/**
+ * Votes can be cast on proposals and ultimately lead to unlocking funds for proposals that meet
+ * the minimum requirements and minimum required votes.
+ */
+class Vote {
+public:
+    explicit Vote() = default;
+    Vote& operator=(const Vote & other) = default;
+    friend inline bool operator==(const Vote & a, const Vote & b) { return a.getHash() == b.getHash(); }
+    friend inline bool operator!=(const Vote & a, const Vote & b) { return !(a.getHash() == b.getHash()); }
+    friend inline bool operator<(const Vote & a, const Vote & b) { return a.getProposal() < b.getProposal(); }
+
+    /**
+     * Null check
+     * @return
+     */
+    bool isNull() {
+        return utxo.IsNull();
+    }
+
+    /**
+     * Valid if the proposal properties are correct.
+     * @param params
+     * @return
+     */
+    bool isValid() const {
+        return version == NETWORK_VERSION && isValidVoteType(vote) && pubkey.IsFullyValid()
+                       && pubkey.Verify(sigHash(), signature);
+    }
+
+    /**
+     * Proposal hash
+     * @return
+     */
+    const uint256 & getProposal() const {
+        return proposal;
+    }
+
+    /**
+     * Proposal vote
+     * @return
+     */
+    VoteType getVote() const {
+        return static_cast<VoteType>(vote);
+    }
+
+    /**
+     * Proposal vote
+     * @return
+     */
+    const std::vector<unsigned char> & getSignature() const {
+        return signature;
+    }
+
+    /**
+     * Proposal utxo containing the vote
+     * @return
+     */
+    const COutPoint & getUtxo() const {
+        return utxo;
+    }
+
+    /**
+     * Proposal hash
+     * @return
+     */
+    uint256 getHash() const {
+        CHashWriter ss(SER_GETHASH, 0);
+        ss << version << type << proposal << vote << utxo << pubkey << signature;
+        return ss.GetHash();
+    }
+
+    /**
+     * Proposal signature hash
+     * @return
+     */
+    uint256 sigHash() const {
+        CHashWriter ss(SER_GETHASH, 0);
+        ss << version << type << proposal << vote << utxo << pubkey;
+        return ss.GetHash();
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(version);
+        READWRITE(type);
+        READWRITE(proposal);
+        READWRITE(vote);
+        READWRITE(utxo);
+        READWRITE(signature);
+    }
+
+protected:
+    /**
+     * Returns true if the unsigned char is a valid vote type enum.
+     * @param voteType
+     * @return
+     */
+    bool isValidVoteType(const uint8_t & voteType) const {
+        return voteType >= NO && voteType <= ABSTAIN;
+    }
+
+protected:
+    uint8_t version{NETWORK_VERSION};
+    uint8_t type{VOTE};
+    uint256 proposal;
+    uint8_t vote{ABSTAIN};
+    std::vector<unsigned char> signature;
+    CPubKey pubkey;
+    COutPoint utxo;
+};
+
+/**
+ * ProposalVote associates a proposal with a specific vote.
+ */
+struct ProposalVote {
+    Proposal proposal;
+    VoteType vote;
+};
+
 /**
  * Manages related servicenode functions including handling network messages and storing an active list
  * of valid servicenodes.
  */
-class Governance {
+class Governance : public CValidationInterface {
 public:
-    Governance() = default;
+    explicit Governance() = default;
+
+    /**
+     * Returns true if the proposal with the specified hash exists.
+     * @param hash
+     * @return
+     */
+    bool hasProposal(const uint256 & hash) {
+        LOCK(mu);
+        return proposals.count(hash) > 0;
+    }
+
+    /**
+     * Returns true if the vote with the specified hash exists.
+     * @param hash
+     * @return
+     */
+    bool hasVote(const uint256 & hash) {
+        LOCK(mu);
+        return votes.count(hash) > 0;
+    }
+
+public: // static
 
     /**
      * Singleton instance.
@@ -161,6 +359,18 @@ public:
     static Governance & instance() {
         static Governance gov;
         return gov;
+    }
+
+    /**
+     * Cast a vote on the specified proposal.
+     * @param proposals
+     * @param params
+     * @param tx Transaction containing proposal votes
+     * @return
+     */
+    static bool submitVotes(const std::vector<ProposalVote> & proposals, const Consensus::Params & params, CTransactionRef & tx) {
+        // TODO Blocknet implement
+        return false;
     }
 
     /**
@@ -185,6 +395,7 @@ public:
         if (proposalAddressSpecified) {
             if (!IsValidDestinationString(strAddress))
                 return error("Bad proposal address specified in 'proposaladdress' config option. Make sure it's a valid legacy address");
+            address = DecodeDestination(strAddress);
             CScript s = GetScriptForDestination(address);
             std::vector<std::vector<unsigned char> > solutions;
             if (Solver(s, solutions) != TX_PUBKEYHASH)
@@ -247,8 +458,7 @@ public:
             }
 
             CValidationState state;
-            mapValue_t mapValue;
-            if (!wallet->CommitTransaction(tx, std::move(mapValue), {}, reservekey, g_connman.get(), state))
+            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state))
                 return error("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
 
             send = true;
@@ -260,6 +470,93 @@ public:
 
         return true;
     }
+
+protected:
+    void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
+                        const std::vector<CTransactionRef>& txn_conflicted) override
+    {
+        for (const auto & tx : block->vtx) {
+            for (const auto & out : tx->vout) {
+                if (out.scriptPubKey[0] != OP_RETURN)
+                    continue; // no proposal data
+                CScript::const_iterator pc = out.scriptPubKey.begin();
+                std::vector<unsigned char> data;
+                while (pc < out.scriptPubKey.end()) {
+                    opcodetype opcode;
+                    if (!out.scriptPubKey.GetOp(pc, opcode, data))
+                        break;
+                    if (!data.empty())
+                        break;
+                }
+
+                CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+                NetworkObject obj; ss >> obj;
+                if (!obj.isValid())
+                    continue; // must match expected version
+
+                if (obj.getType() == PROPOSAL) {
+                    CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+                    Proposal proposal; ss2 >> proposal;
+                    if (proposal.isValid(Params().GetConsensus())) {
+                        LOCK(mu);
+                        proposals[proposal.getHash()] = proposal;
+                    }
+                } else if (obj.getType() == VOTE) {
+                    CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+                    Vote vote; ss2 >> vote;
+                    if (vote.isValid()) {
+                        LOCK(mu);
+                        votes[vote.getHash()] = vote;
+                    }
+                }
+            }
+        }
+    }
+
+    void BlockDisconnected(const std::shared_ptr<const CBlock>& block) override {
+        for (const auto & tx : block->vtx) {
+            for (const auto & out : tx->vout) {
+                if (out.scriptPubKey[0] != OP_RETURN)
+                    continue; // no proposal data
+
+                CScript::const_iterator pc = out.scriptPubKey.begin();
+                std::vector<unsigned char> data;
+                while (pc < out.scriptPubKey.end()) {
+                    opcodetype opcode;
+                    if (!out.scriptPubKey.GetOp(pc, opcode, data))
+                        break;
+                    if (!data.empty())
+                        break;
+                }
+
+                CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+                NetworkObject obj; ss >> obj;
+                if (!obj.isValid())
+                    continue; // must match expected version
+
+                if (obj.getType() == PROPOSAL) {
+                    CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+                    Proposal proposal; ss2 >> proposal;
+                    if (proposal.isValid(Params().GetConsensus())) {
+                        LOCK(mu);
+                        proposals.erase(proposal.getHash());
+                    }
+                } else if (obj.getType() == VOTE) {
+                    CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+                    Vote vote; ss2 >> vote;
+                    if (vote.isValid()) {
+                        LOCK(mu);
+                        votes.erase(vote.getHash());
+                    }
+                }
+            }
+        }
+    }
+
+protected:
+    std::map<uint256, Proposal> proposals;
+    std::map<uint256, Vote> votes;
+    Mutex mu;
 };
 
 }

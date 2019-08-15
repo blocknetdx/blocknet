@@ -12,8 +12,37 @@ int nextSuperblock(const int & block, const int & superblock) {
     return block + (superblock - block % superblock);
 }
 
+bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount & amount, CTransactionRef & tx) {
+    // Create and send the transaction
+    CReserveKey reservekey(wallet);
+    CAmount nFeeRequired;
+    std::string strError;
+    std::vector<CRecipient> vecSend;
+    int nChangePosRet = -1;
+    CRecipient recipient = {GetScriptForDestination(dest), amount, false};
+    vecSend.push_back(recipient);
+    CCoinControl cc;
+    auto locked_chain = wallet->chain().lock();
+    if (!wallet->CreateTransaction(*locked_chain, vecSend, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
+        return false;
+
+    CValidationState state;
+    return wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+}
+
+bool newWalletAddress(CWallet *wallet, CTxDestination & dest) {
+    CPubKey newKey;
+    if (!wallet->GetKeyFromPool(newKey))
+        return false;
+    wallet->LearnRelatedScripts(newKey, OutputType::LEGACY);
+    dest = GetDestinationForKey(newKey, OutputType::LEGACY);
+    return true;
+}
+
 BOOST_AUTO_TEST_CASE(governance_tests_proposals)
 {
+    RegisterValidationInterface(&gov::Governance::instance());
+
     const auto & params = Params();
     const auto & consensus = params.GetConsensus();
     CTxDestination dest(coinbaseKey.GetPubKey().GetID());
@@ -50,7 +79,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_proposals)
 
     // Proposal with maxed out size should pass (157 bytes is the max size of a proposal)
     gov::Proposal p2m("Test proposal max", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "This description is the maximum allowed for this particular prop");
+                     EncodeDestination(dest), "https://forum.blocknet.co", "This description is the maximum allowed for this particular prp");
     BOOST_CHECK_MESSAGE(p2m.isValid(consensus), "Proposal at max description should pass");
 
     // Proposal with maxed out size + 1 should fail
@@ -99,23 +128,106 @@ BOOST_AUTO_TEST_CASE(governance_tests_proposals)
     BOOST_CHECK_MESSAGE(!p9.isValid(consensus), "Proposal should be invalid if name ends with whitespace");
 
     // Submit proposal
+    {
+        gov::Proposal psubmit("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
+                              EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+        CTransactionRef tx = nullptr;
+        BOOST_CHECK_EQUAL(true, gov::Governance::submitProposal(psubmit, consensus, tx));
+        BOOST_CHECK_EQUAL(false, tx == nullptr); // tx should be valid
+        BOOST_CHECK_MESSAGE(mempool.exists(tx->GetHash()), "Proposal submission tx should be in the mempool");
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        ss << psubmit;
+        bool found{false};
+        for (const auto & out : tx->vout) {
+            if (out.scriptPubKey[0] == OP_RETURN) {
+                BOOST_CHECK_EQUAL(consensus.proposalFee,  out.nValue);
+                BOOST_CHECK_MESSAGE((CScript() << OP_RETURN << ToByteVector(ss)) == out.scriptPubKey, "Proposal submission OP_RETURN script in tx should match expected");
+                found = true;
+            }
+        }
+        BOOST_CHECK_MESSAGE(found, "Proposal submission tx must contain an OP_RETURN");
+    }
+
+    // Check -proposaladdress config option
+    {
+        CTxDestination newDest;
+        BOOST_CHECK(newWalletAddress(wallet.get(), newDest));
+        gArgs.ForceSetArg("-proposaladdress", EncodeDestination(newDest));
+
+        // Send coin to the proposal address
+        CTransactionRef tx;
+        BOOST_CHECK(sendToAddress(wallet.get(), newDest, 50 * COIN, tx));
+        StakeBlocks(1);
+
+        // Create and submit proposal
+        gov::Proposal pp1("Test -proposaladdress", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
+                              EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+        CTransactionRef pp1_tx = nullptr;
+        BOOST_CHECK_EQUAL(true, gov::Governance::submitProposal(pp1, consensus, pp1_tx));
+
+        // Check that proposal tx was accepted
+        uint256 block;
+        CTransactionRef txPrev;
+        BOOST_CHECK(GetTransaction(pp1_tx->vin[0].prevout.hash, txPrev, consensus, block));
+        BOOST_CHECK_EQUAL(tx->GetHash(), txPrev->GetHash());
+
+        // Check that proposal block was accepted with proposal tx in it
+        int blockHeight = chainActive.Height();
+        StakeBlocks(1);
+        BOOST_CHECK_EQUAL(blockHeight+1, chainActive.Height());
+        CBlock proposalBlock;
+        BOOST_CHECK(ReadBlockFromDisk(proposalBlock, chainActive.Tip(), consensus));
+        bool found{false};
+        for (const auto & txn : proposalBlock.vtx) {
+            if (txn->GetHash() == pp1_tx->GetHash()) {
+                found = true;
+                break;
+            }
+        }
+        BOOST_CHECK_MESSAGE(found, "Proposal submission tx should be in the most recent block");
+
+        // Check that proposal tx pays change to -proposaladdress
+        const auto & prevOut = txPrev->vout[pp1_tx->vin[0].prevout.n];
+        const auto & inAmount = prevOut.nValue;
+        const auto & inAddress = prevOut.scriptPubKey;
+        CTxDestination extractAddr;
+        BOOST_CHECK_MESSAGE(ExtractDestination(inAddress, extractAddr), "Failed to extract payment address from proposaladdress vin");
+        BOOST_CHECK_MESSAGE(newDest == extractAddr, "Address vin should match -proposaladdress config flag");
+        bool foundOpReturn{false};
+        bool foundChangeAddress{false};
+        for (const auto & out : pp1_tx->vout) {
+            if (out.scriptPubKey[0] == OP_RETURN && out.nValue == consensus.proposalFee)
+                foundOpReturn = true;
+            if (out.scriptPubKey == GetScriptForDestination(extractAddr)) {
+                const auto fee = inAmount - pp1_tx->GetValueOut();
+                BOOST_CHECK_MESSAGE(fee > 0, "Proposal tx must account for network fee");
+                foundChangeAddress = out.nValue == inAmount - consensus.proposalFee - fee;
+            }
+        }
+        BOOST_CHECK_MESSAGE(foundOpReturn, "Failed to find proposal fee payment");
+        BOOST_CHECK_MESSAGE(foundChangeAddress, "Failed to find proposal change address payment");
+    }
+
+    UnregisterValidationInterface(&gov::Governance::instance());
+}
+
+BOOST_AUTO_TEST_CASE(governance_tests_proposal_vote_submissions)
+{
+    RegisterValidationInterface(&gov::Governance::instance());
+
+    const auto & params = Params();
+    const auto & consensus = params.GetConsensus();
+    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
+
     gov::Proposal psubmit("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
                           EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
     CTransactionRef tx = nullptr;
     BOOST_CHECK_EQUAL(true, gov::Governance::submitProposal(psubmit, consensus, tx));
     BOOST_CHECK_EQUAL(false, tx == nullptr); // tx should be valid
-    BOOST_CHECK_MESSAGE(mempool.exists(tx->GetHash()), "Proposal submission tx should be in the mempool");
-    bool found{false};
-    for (const auto & out : tx->vout) {
-        if (out.scriptPubKey[0] == OP_RETURN) {
-            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-            ss << psubmit;
-            BOOST_CHECK_MESSAGE((CScript() << OP_RETURN << ToByteVector(ss)) == out.scriptPubKey, "Proposal submission OP_RETURN script in tx should match expected");
-            found = true;
-        }
-    }
-    BOOST_CHECK_MESSAGE(found, "Proposal submission tx must contain an OP_RETURN");
+    StakeBlocks(1);
+    BOOST_CHECK_EQUAL(true, gov::Governance::instance().hasProposal(psubmit.getHash()));
 
+    UnregisterValidationInterface(&gov::Governance::instance());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

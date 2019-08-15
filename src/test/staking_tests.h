@@ -131,6 +131,7 @@ struct TestChainPoS : public TestingSetup {
     }
 
     void StakeBlocks(const int blockCount) {
+        int tries{0};
         const int currentBlockHeight = chainActive.Height();
         while (chainActive.Height() < currentBlockHeight + blockCount) {
             try {
@@ -149,8 +150,11 @@ struct TestChainPoS : public TestingSetup {
                 }
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
-            } catch (...) { }
+                throw e;
+            } catch (...) { throw std::runtime_error("Staker unknown error"); }
             SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing);
+            if (++tries > 1000)
+                throw std::runtime_error("Staker failed to find stake");
         }
     }
 
