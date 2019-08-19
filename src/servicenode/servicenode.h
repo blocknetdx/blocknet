@@ -375,7 +375,7 @@ public:
         READWRITE(config);
         READWRITE(snode);
         READWRITE(signature);
-        if (!ser_action.ForRead()) { // on write, set the snode best block and ping
+        if (ser_action.ForRead()) { // on read stream, set the snode best block and ping
             snode.setBestBlock(bestBlock, bestBlockHash);
             snode.setConfig(config);
             snode.updatePing();
