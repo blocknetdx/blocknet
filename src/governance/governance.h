@@ -11,12 +11,15 @@
 #include <hash.h>
 #include <key_io.h>
 #include <net.h>
+#include <policy/policy.h>
 #include <script/standard.h>
 #include <streams.h>
+#include <txmempool.h>
 #include <uint256.h>
 #include <util/moneystr.h>
 #include <validation.h>
 #include <wallet/coincontrol.h>
+#include <wallet/fees.h>
 #include <wallet/wallet.h>
 
 #include <regex>
@@ -38,6 +41,26 @@ enum Type : uint8_t {
 };
 
 static const uint8_t NETWORK_VERSION = 0x01;
+static const CAmount VOTING_UTXO_INPUT_AMOUNT = 0.1 * COIN;
+
+/**
+ * Return the CKeyID for the specified utxo.
+ * @param utxo
+ * @param keyid
+ * @return
+ */
+static bool GetKeyIDForUTXO(const COutPoint & utxo, CTransactionRef & tx, CKeyID & keyid) {
+    uint256 hashBlock;
+    if (!GetTransaction(utxo.hash, tx, Params().GetConsensus(), hashBlock))
+        return false;
+    if (utxo.n >= tx->vout.size())
+        return false;
+    CTxDestination dest;
+    if (!ExtractDestination(tx->vout[utxo.n].scriptPubKey, dest))
+        return false;
+    keyid = *boost::get<CKeyID>(&dest);
+    return true;
+}
 
 /**
  * Encapsulates serialized OP_RETURN governance data.
@@ -81,8 +104,9 @@ public:
                       std::string url, std::string description) : name(std::move(name)), superblock(superblock),
                                                                   amount(amount), address(std::move(address)), url(std::move(url)),
                                                                   description(std::move(description)) {}
-    explicit Proposal() = default;
-    Proposal& operator=(const Proposal & other) = default;
+    Proposal() = default;
+    Proposal(const Proposal &) = default;
+    Proposal& operator=(const Proposal &) = default;
     friend inline bool operator==(const Proposal & a, const Proposal & b) { return a.getHash() == b.getHash(); }
     friend inline bool operator!=(const Proposal & a, const Proposal & b) { return !(a.getHash() == b.getHash()); }
     friend inline bool operator<(const Proposal & a, const Proposal & b) { return a.getName().compare(b.getName()) < 0; }
@@ -206,8 +230,13 @@ enum VoteType : uint8_t {
  */
 class Vote {
 public:
-    explicit Vote() = default;
-    Vote& operator=(const Vote & other) = default;
+    explicit Vote(const uint256 & proposal, const VoteType & vote, const COutPoint & utxo) : proposal(proposal),
+                                                                                             vote(vote),
+                                                                                             utxo(utxo) {}
+
+    Vote() = default;
+    Vote(const Vote &) = default;
+    Vote& operator=(const Vote &) = default;
     friend inline bool operator==(const Vote & a, const Vote & b) { return a.getHash() == b.getHash(); }
     friend inline bool operator!=(const Vote & a, const Vote & b) { return !(a.getHash() == b.getHash()); }
     friend inline bool operator<(const Vote & a, const Vote & b) { return a.getProposal() < b.getProposal(); }
@@ -221,13 +250,44 @@ public:
     }
 
     /**
-     * Valid if the proposal properties are correct.
-     * @param params
+     * Returns true if the vote properties are valid and the utxo pubkey
+     * matches the pubkey of the signature.
      * @return
      */
-    bool isValid() const {
-        return version == NETWORK_VERSION && isValidVoteType(vote) && pubkey.IsFullyValid()
-                       && pubkey.Verify(sigHash(), signature);
+    bool isValid(const Consensus::Params & params) const {
+        if (!(version == NETWORK_VERSION && isValidVoteType(vote)))
+            return false;
+        // Ensure the pubkey of the utxo matches the pubkey of the vote signature
+        CTransactionRef tx;
+        CKeyID keyid;
+        if (!GetKeyIDForUTXO(utxo, tx, keyid))
+            return false;
+        if (tx->vout[utxo.n].nValue < params.voteMinUtxoAmount) // n bounds checked in GetKeyIDForUTXO
+            return false;
+        if (keyid.IsNull())
+            return false;
+        if (pubkey.GetID() != keyid)
+            return false;
+        { // Check that utxo isn't already spent
+            LOCK(mempool.cs);
+            CCoinsViewMemPool view(pcoinsTip.get(), mempool);
+            Coin coin;
+            if (!view.GetCoin(utxo, coin) || mempool.isSpent(utxo))
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Sign the vote with the specified private key.
+     * @param key
+     * @return
+     */
+    bool sign(const CKey & key) {
+        signature.clear();
+        if (!key.SignCompact(sigHash(), signature))
+            return false;
+        return pubkey.RecoverCompact(sigHash(), signature);
     }
 
     /**
@@ -268,7 +328,7 @@ public:
      */
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << version << type << proposal << vote << utxo << pubkey << signature;
+        ss << version << type << proposal << vote << utxo;
         return ss.GetHash();
     }
 
@@ -278,7 +338,7 @@ public:
      */
     uint256 sigHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << version << type << proposal << vote << utxo << pubkey;
+        ss << version << type << proposal << vote << utxo;
         return ss.GetHash();
     }
 
@@ -292,6 +352,8 @@ public:
         READWRITE(vote);
         READWRITE(utxo);
         READWRITE(signature);
+        if (ser_action.ForRead())
+            pubkey.RecoverCompact(sigHash(), signature);
     }
 
 protected:
@@ -310,8 +372,10 @@ protected:
     uint256 proposal;
     uint8_t vote{ABSTAIN};
     std::vector<unsigned char> signature;
-    CPubKey pubkey;
     COutPoint utxo;
+
+private:
+    CPubKey pubkey;
 };
 
 /**
@@ -362,15 +426,196 @@ public: // static
     }
 
     /**
-     * Cast a vote on the specified proposal.
+     * Cast votes on proposals.
      * @param proposals
      * @param params
-     * @param tx Transaction containing proposal votes
+     * @param txsRet List of transactions containing proposal votes
+     * @param failReason Error message (empty if no error)
      * @return
      */
-    static bool submitVotes(const std::vector<ProposalVote> & proposals, const Consensus::Params & params, CTransactionRef & tx) {
-        // TODO Blocknet implement
-        return false;
+    static bool submitVotes(const std::vector<ProposalVote> & proposals, const Consensus::Params & params, std::vector<CTransactionRef> & txsRet, std::string *failReasonRet=nullptr) {
+        if (proposals.empty())
+            return false; // no proposals specified, reject
+
+        for (const auto & pv : proposals) { // check if any proposals are invalid
+            if (!pv.proposal.isValid(params)) {
+                *failReasonRet = strprintf("Failed to vote on proposal (%s) because it's invalid", pv.proposal.getName());
+                return error(failReasonRet->c_str());
+            }
+        }
+
+        txsRet.clear(); // prep tx result
+        CAmount totalBalance{0};
+        auto wallets = GetWallets();
+
+        // Make sure there's enough coin to cast a vote
+        for (auto & wallet : wallets) {
+            if (wallet->IsLocked()) {
+                *failReasonRet = "All wallets must be unlocked to vote";
+                return error(failReasonRet->c_str());
+            }
+            totalBalance += wallet->GetBalance();
+        }
+        if (totalBalance < params.voteBalance) {
+            *failReasonRet = strprintf("Not enough coin to cast a vote, %s is required", FormatMoney(params.voteBalance));
+            return error(failReasonRet->c_str());
+        }
+
+        // Create the transactions that will required to casts votes
+        // An OP_RETURN is required for each UTXO casting a vote
+        // towards each proposal. This may require multiple txns
+        // to properly cast all votes across all proposals.
+        //
+        // A single input from each unique address is required to
+        // prove ownership over the associated utxo. Each OP_RETURN
+        // vote must contain the signature generated from the
+        // associated utxo casting the vote.
+
+        // Store all voting transactions
+        std::map<CWallet*, std::vector<CTransactionRef>> txns;
+
+        // Minimum vote input amount
+        const auto voteMinAmount = static_cast<CAmount>(gArgs.GetArg("-voteinputamount", VOTING_UTXO_INPUT_AMOUNT));
+
+        for (auto & wallet : wallets) {
+            auto locked_chain = wallet->chain().lock();
+            LOCK(wallet->cs_wallet);
+
+            // Obtain all valid coin from this wallet that can be used in casting votes
+            std::vector<COutput> coins;
+            wallet->AvailableCoins(*locked_chain, coins);
+            std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool { // sort ascending (smallest first)
+                return out1.GetInputCoin().txout.nValue < out2.GetInputCoin().txout.nValue;
+            });
+
+            // Do not proceed if no inputs were found
+            if (coins.empty())
+                continue;
+
+            // Filter the coins that meet the minimum requirement for utxo amount. These
+            // inputs are used as the inputs to the vote transaction. Need one unique
+            // input per address in the wallet that's being used in voting.
+            std::map<CKeyID, const COutput*> inputCoins;
+
+            // Select the coin set that meets the utxo amount requirements for use with
+            // vote outputs in the tx.
+            std::vector<COutput> filtered;
+            for (const auto & coin : coins) {
+                if (!coin.fSpendable)
+                    continue;
+                CTxDestination dest;
+                if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
+                    continue;
+                // Input selection assumes "coins" is sorted ascending by nValue
+                const auto & addr = boost::get<CKeyID>(dest);
+                if (!inputCoins.count(addr) && coin.GetInputCoin().txout.nValue >= static_cast<CAmount>((double)voteMinAmount*0.6)) {
+                    inputCoins[addr] = &coin; // store smallest coin meeting vote input amount requirement
+                    continue; // do not use in the vote b/c it's being used in the input
+                }
+                if (coin.GetInputCoin().txout.nValue < params.voteMinUtxoAmount)
+                    continue;
+                filtered.push_back(coin);
+            }
+
+            // Do not proceed if no coins or inputs were found
+            if (filtered.empty() || inputCoins.empty())
+                continue;
+
+            // TODO Blocknet skip filtered utxos that are already associated with existing on-chain votes
+
+            // Store all the votes for each proposal across all participating utxos. Each
+            // utxo can be used to vote towards each proposal.
+            std::vector<CRecipient> voteOuts;
+            for (const auto & coin : filtered) {
+                CTxDestination dest;
+                if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
+                    continue;
+                CKey key; // utxo private key
+                {
+                    const auto keyid = GetKeyForDestination(*wallet, dest);
+                    if (keyid.IsNull())
+                        continue;
+                    if (!wallet->GetKey(keyid, key))
+                        continue;
+                }
+                for (const auto & pv : proposals) {
+                    // Create and serialize the vote data and insert in OP_RETURN script. The vote
+                    // is signed with the utxo that is representing that vote. The signing must
+                    // happen before the vote object is serialized.
+                    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+                    Vote vote(pv.proposal.getHash(), pv.vote, coin.GetInputCoin().outpoint);
+                    if (!vote.sign(key)) {
+                        LogPrint(BCLog::GOVERNANCE, "WARNING: Failed to vote on {%s} proposal, utxo signing failed %s",
+                                 pv.proposal.getName(), coin.GetInputCoin().outpoint.ToString());
+                        continue;
+                    }
+                    if (!vote.isValid(params)) { // validate vote
+                        LogPrint(BCLog::GOVERNANCE, "WARNING: Failed to vote on {%s} proposal, validation failed",
+                                 pv.proposal.getName());
+                        continue;
+                    }
+                    ss << vote;
+                    voteOuts.push_back({CScript() << OP_RETURN << ToByteVector(ss), 0, false});
+                }
+            }
+
+            // Handle case where transaction exceeds the max alloted OP_RETURN
+            if (voteOuts.size() > MAX_OP_RETURN_IN_TRANSACTION) { // If too many votes, bail
+                *failReasonRet = strprintf("Failed to submit votes, max exceeded. Try submitting votes on one proposal at a time. Votes attempted: %d  Max allowed: %d", voteOuts.size(), MAX_OP_RETURN_IN_TRANSACTION);
+                return error(failReasonRet->c_str());
+            } else if (voteOuts.empty()) { // Handle case where no votes were produced
+                *failReasonRet = strprintf("Failed to submit votes, no votes were created, is the wallet unlocked and have sufficient funds? Funds required: %s", FormatMoney(params.voteBalance));
+                return error(failReasonRet->c_str());
+            }
+
+            // Select the inputs for use with the transaction. Also add separate outputs to pay
+            // back the vote inputs to their own addresses as change (requires estimating fees).
+            CCoinControl cc;
+            cc.fAllowOtherInputs = false;
+            cc.destChange = CTxDestination(inputCoins.begin()->first); // pay change to the first input coin
+            FeeCalculation fee_calc;
+            const auto feeBytes = static_cast<unsigned int>(inputCoins.size()*150) + // TODO Blocknet accurate input size estimation required
+                                  static_cast<unsigned int>(voteOuts.size()*MAX_OP_RETURN_RELAY);
+            CAmount payFee = GetMinimumFee(*wallet, feeBytes, cc, ::mempool, ::feeEstimator, &fee_calc);
+            CAmount estimatedFeePerInput = payFee/(CAmount)inputCoins.size();
+            // Select inputs and distribute fees equally across the change addresses (paid back to input addresses minus fee)
+            for (const auto & inputItem : inputCoins) {
+                cc.Select(inputItem.second->GetInputCoin().outpoint);
+                voteOuts.push_back({GetScriptForDestination({inputItem.first}),
+                                    inputItem.second->GetInputCoin().txout.nValue - estimatedFeePerInput,
+                                    false});
+            }
+            // Create and send the transaction
+            CReserveKey reservekey(wallet.get());
+            CAmount nFeeRequired;
+            std::string strError;
+            int nChangePosRet = -1;
+            CTransactionRef tx;
+            {
+                if (!wallet->CreateTransaction(*locked_chain, voteOuts, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc)) {
+                    *failReasonRet = strprintf("Failed to create the proposal submission transaction: %s", strError);
+                    return error(failReasonRet->c_str());
+                }
+            }
+
+            // Send all voting transaction to the network. If there's a failure
+            // at any point in the process, bail out.
+            if (wallet->GetBroadcastTransactions() && !g_connman) {
+                *failReasonRet = "Peer-to-peer functionality missing or disabled";
+                return error(failReasonRet->c_str());
+            }
+
+            CValidationState state;
+            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state)) {
+                *failReasonRet = strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
+                return error(failReasonRet->c_str());
+            }
+
+            // Store the committed voting transaction
+            txsRet.push_back(tx);
+        }
+
+        return true;
     }
 
     /**
@@ -379,11 +624,14 @@ public: // static
      * @param proposal
      * @param params
      * @param tx Transaction containing proposal submission
+     * @param failReasonRet Error message (empty if no error)
      * @return
      */
-    static bool submitProposal(const Proposal & proposal, const Consensus::Params & params, CTransactionRef & tx) {
-        if (!proposal.isValid(params))
-            return error("Proposal is not valid"); // TODO Blocknet indicate what isn't valid
+    static bool submitProposal(const Proposal & proposal, const Consensus::Params & params, CTransactionRef & tx, std::string *failReasonRet) {
+        if (!proposal.isValid(params)) {
+            *failReasonRet = "Proposal is not valid";
+            return error(failReasonRet->c_str()); // TODO Blocknet indicate what isn't valid
+        }
 
         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
         ss << proposal;
@@ -393,17 +641,28 @@ public: // static
 
         CTxDestination address;
         if (proposalAddressSpecified) {
-            if (!IsValidDestinationString(strAddress))
-                return error("Bad proposal address specified in 'proposaladdress' config option. Make sure it's a valid legacy address");
+            if (!IsValidDestinationString(strAddress)) {
+                *failReasonRet = "Bad proposal address specified in 'proposaladdress' config option. Make sure it's a valid legacy address";
+                return error(failReasonRet->c_str());
+            }
             address = DecodeDestination(strAddress);
             CScript s = GetScriptForDestination(address);
             std::vector<std::vector<unsigned char> > solutions;
-            if (Solver(s, solutions) != TX_PUBKEYHASH)
-                return error("Bad proposal address specified in 'proposaladdress' config option. Only p2pkh (pay-to-pubkey-hash) addresses are accepted");
+            if (Solver(s, solutions) != TX_PUBKEYHASH) {
+                *failReasonRet = "Bad proposal address specified in 'proposaladdress' config option. Only p2pkh (pay-to-pubkey-hash) addresses are accepted";
+                return error(failReasonRet->c_str());
+            }
         }
 
         bool send{false};
         auto wallets = GetWallets();
+
+        // Iterate over all wallets and attempt to submit proposal fee transaction.
+        // If a proposal address is specified via config option and the amount
+        // doesn't meet the requirements, the proposal transaction will not be sent.
+        // The first valid wallet that succeeds in creating a valid proposal tx
+        // will be used. This does not support sending transactions with inputs
+        // shared across multiple wallets.
         for (auto & wallet : wallets) {
             auto locked_chain = wallet->chain().lock();
             LOCK(wallet->cs_wallet);
@@ -412,16 +671,20 @@ public: // static
             if (balance <= params.proposalFee || wallet->IsLocked())
                 continue;
 
-            if (wallet->GetBroadcastTransactions() && !g_connman)
-                return error("Peer-to-peer functionality missing or disabled");
+            if (wallet->GetBroadcastTransactions() && !g_connman) {
+                *failReasonRet = "Peer-to-peer functionality missing or disabled";
+                return error(failReasonRet->c_str());
+            }
+
+            // Sort coins ascending to use up all the undesirable utxos
+            std::vector<COutput> coins;
+            wallet->AvailableCoins(*locked_chain, coins, true);
+            if (coins.empty())
+                continue;
 
             CCoinControl cc;
             if (proposalAddressSpecified) { // if a specific proposal address was specified, only spend from that address
-                cc.destChange = address;
-
-                // Sort coins ascending to use up all the undesirable utxos
-                std::vector<COutput> coins;
-                wallet->AvailableCoins(*locked_chain, coins, true);
+                // Sort ascending
                 std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool {
                     return out1.GetInputCoin().txout.nValue < out2.GetInputCoin().txout.nValue;
                 });
@@ -440,7 +703,20 @@ public: // static
                     if (selectedAmount > params.proposalFee)
                         break;
                 }
+
+                if (selectedAmount <= params.proposalFee)
+                    continue; // bail out if not enough funds (need to account for network fee, i.e. > proposalFee)
+
+            } else { // set change address to address of largest utxo
+                std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool {
+                    return out1.GetInputCoin().txout.nValue > out2.GetInputCoin().txout.nValue; // Sort descending
+                });
+                for (const auto & coin : coins) {
+                    if (ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, address))
+                        break;
+                }
             }
+            cc.destChange = address;
 
             // Create and send the transaction
             CReserveKey reservekey(wallet.get());
@@ -452,21 +728,27 @@ public: // static
             vecSend.push_back(recipient);
             if (!wallet->CreateTransaction(*locked_chain, vecSend, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc)) {
                 CAmount totalAmount = params.proposalFee + nFeeRequired;
-                if (totalAmount > balance)
-                    return error("This transaction requires a transaction fee of at least %s: %s", FormatMoney(nFeeRequired), strError);
+                if (totalAmount > balance) {
+                    *failReasonRet = strprintf("This transaction requires a transaction fee of at least %s: %s", FormatMoney(nFeeRequired), strError);
+                    return error(failReasonRet->c_str());
+                }
                 return error("Failed to create the proposal submission transaction: %s", strError);
             }
 
             CValidationState state;
-            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state))
-                return error("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
+            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state)) {
+                *failReasonRet = strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
+                return error(failReasonRet->c_str());
+            }
 
             send = true;
             break; // done
         }
 
-        if (!send)
-            return error("Failed to create proposal, check that your wallet is unlocked with a balance of at least %s", FormatMoney(params.proposalFee));
+        if (!send) {
+            *failReasonRet = strprintf("Failed to create proposal, check that your wallet is unlocked with a balance of at least %s", FormatMoney(params.proposalFee));
+            return error(failReasonRet->c_str());
+        }
 
         return true;
     }
@@ -504,7 +786,7 @@ protected:
                 } else if (obj.getType() == VOTE) {
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
                     Vote vote; ss2 >> vote;
-                    if (vote.isValid()) {
+                    if (vote.isValid(Params().GetConsensus())) {
                         LOCK(mu);
                         votes[vote.getHash()] = vote;
                     }
@@ -544,7 +826,7 @@ protected:
                 } else if (obj.getType() == VOTE) {
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
                     Vote vote; ss2 >> vote;
-                    if (vote.isValid()) {
+                    if (vote.isValid(Params().GetConsensus())) {
                         LOCK(mu);
                         votes.erase(vote.getHash());
                     }

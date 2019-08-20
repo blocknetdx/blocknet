@@ -89,6 +89,8 @@ struct Params {
     int64_t stakingV05UpgradeTime;
     CAmount proposalMinAmount{10 * COIN};
     CAmount proposalFee{10 * COIN};
+    CAmount voteBalance{5000 * COIN};
+    CAmount voteMinUtxoAmount{100 * COIN};
 };
 } // namespace Consensus
 

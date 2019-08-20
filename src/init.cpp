@@ -545,6 +545,7 @@ void SetupServerArgs()
 
     // Governance
     gArgs.AddArg("-proposaladdress", "Spend funds from this address when submitting proposals", false, OptionsCategory::GOVERNANCE);
+    gArgs.AddArg("-voteinputamount", strprintf("Look for utxos around this size or larger for use with voting inputs (default: %d)", gov::VOTING_UTXO_INPUT_AMOUNT), false, OptionsCategory::GOVERNANCE);
 
 #if HAVE_DECL_DAEMON
     gArgs.AddArg("-daemon", "Run in the background as a daemon and accept commands", false, OptionsCategory::OPTIONS);
