@@ -55,7 +55,7 @@ static int64_t GetStakeModifierSelectionIntervalSection(int nSection)
 }
 
 // Get stake modifier selection interval (in seconds)
-static int64_t GetStakeModifierSelectionInterval()
+int64_t GetStakeModifierSelectionInterval()
 {
     int64_t nSelectionInterval = 0;
     for (int nSection = 0; nSection < 64; nSection++) {
@@ -82,10 +82,13 @@ static bool SelectBlockFromCandidates(
     arith_uint256 hashBest = 0;
     *pindexSelected = (const CBlockIndex*)0;
     BOOST_FOREACH (const auto & item, vSortedByTimestamp) {
-        if (!mapBlockIndex.count(item.second))
+        const CBlockIndex* pindex = nullptr;
+        {
+            LOCK(cs_main);
+            pindex = LookupBlockIndex(item.second);
+        }
+        if (!pindex)
             return error("SelectBlockFromCandidates: failed to find block index for candidate block %s", item.second.ToString().c_str());
-
-        const CBlockIndex* pindex = mapBlockIndex[item.second];
         if (fSelected && pindex->GetBlockTime() > nSelectionIntervalStop)
             break;
 
@@ -276,9 +279,14 @@ bool GetKernelStakeModifierBlocknet(const CBlockIndex* pindexPrev, const uint256
     nStakeModifierHeight = pindexPrev->nHeight;
     nStakeModifierTime = pindexPrev->GetBlockTime();
 
-    if (!mapBlockIndex.count(hashBlockFrom))
+    const CBlockIndex *pindexFrom = nullptr;
+    {
+        LOCK(cs_main);
+        pindexFrom = LookupBlockIndex(hashBlockFrom);
+    }
+    if (!pindexFrom)
         return error("GetKernelStakeModifierBlocknet() block not indexed %s", hashBlockFrom.ToString());
-    const auto & blockFromTime = mapBlockIndex[hashBlockFrom]->GetBlockTime();
+    const auto & blockFromTime = pindexFrom->GetBlockTime();
 
     // Do not allow picking a modifier that is generated before or at the time the utxo is confirmed in a block
     const auto useInterval = static_cast<int64_t>(Params().GetConsensus().stakeMinAge);
@@ -294,9 +302,13 @@ bool GetKernelStakeModifierBlocknet(const CBlockIndex* pindexPrev, const uint256
 bool GetKernelStakeModifierV03(uint256 hashBlockFrom, uint64_t& nStakeModifier, int& nStakeModifierHeight, int64_t& nStakeModifierTime, bool fPrintProofOfStake)
 {
     nStakeModifier = 0;
-    if (!mapBlockIndex.count(hashBlockFrom))
-        return error("GetKernelStakeModifier() : block not indexed");
-    const CBlockIndex* pindexFrom = mapBlockIndex[hashBlockFrom];
+    const CBlockIndex *pindexFrom = nullptr;
+    {
+        LOCK(cs_main);
+        pindexFrom = LookupBlockIndex(hashBlockFrom);
+    }
+    if (!pindexFrom)
+        return error("GetKernelStakeModifierV03() block not indexed %s", hashBlockFrom.ToString());
     nStakeModifierHeight = pindexFrom->nHeight;
     nStakeModifierTime = pindexFrom->GetBlockTime();
     int64_t nStakeModifierSelectionInterval = GetStakeModifierSelectionInterval();
@@ -414,10 +426,11 @@ bool CheckStakeKernelHash(const CBlockIndex* pindexPrev, unsigned int nBits, con
         nTimeTx = nTryTime;
 
         if (fPrintProofOfStake) {
+            LOCK(cs_main);
             LogPrintf("CheckStakeKernelHash() : using modifier %s at height=%d timestamp=%s for block from height=%d timestamp=%s\n",
                 boost::lexical_cast<std::string>(nStakeModifier).c_str(), nStakeModifierHeight,
                 DateTimeStrFormat("%Y-%m-%d %H:%M:%S", nStakeModifierTime).c_str(),
-                mapBlockIndex[txInBlockHash]->nHeight,
+                LookupBlockIndex(txInBlockHash)->nHeight,
                 DateTimeStrFormat("%Y-%m-%d %H:%M:%S", txInBlockTime).c_str());
             LogPrintf("CheckStakeKernelHash() : pass protocol=%s modifier=%s nTimeBlockFrom=%u prevoutHash=%s nTimeTxPrev=%u nPrevout=%u nTimeTx=%u hashProof=%s\n",
                 v05StakeProtocol ? "0.5" : "0.3",
@@ -432,7 +445,11 @@ bool CheckStakeKernelHash(const CBlockIndex* pindexPrev, unsigned int nBits, con
 }
 
 bool CheckProofOfStake(const CBlockHeader & block, const CBlockIndex* pindexPrev, uint256 & hashProofOfStake, const Consensus::Params & consensusParams) {
-    CBlockIndex *pindex = mapBlockIndex[block.hashStakeBlock];
+    CBlockIndex *pindex = nullptr;
+    {
+        LOCK(cs_main);
+        pindex = LookupBlockIndex(block.hashStakeBlock);
+    }
     if (!pindex)
         return error("read block failed %s", __func__);
 
