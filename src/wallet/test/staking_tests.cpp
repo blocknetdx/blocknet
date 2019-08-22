@@ -5,6 +5,9 @@
 #include <test/test_bitcoin.h>
 
 #include <amount.h>
+#define protected public // for overridding protected fields in CChainParams
+#include <chainparams.h>
+#undef protected
 #include <consensus/merkle.h>
 #include <consensus/validation.h>
 #include <index/txindex.h>
@@ -32,7 +35,12 @@ static void AddKey(CWallet & wallet, const CKey & key) {
  * Proof-of-Stake test chain.
  */
 struct TestChainPoS : public TestingSetup {
-    TestChainPoS() : TestingSetup(CBaseChainParams::REGTEST) {
+    explicit TestChainPoS(bool init = true) : TestingSetup(CBaseChainParams::REGTEST) {
+        if (init)
+            Init();
+    }
+
+    void Init() {
         // set coin maturity to something small to help staking tests
         coinbaseKey.MakeNewKey(true);
         CBasicKeyStore keystore; // temp used to spend coinbases
@@ -57,7 +65,7 @@ struct TestChainPoS : public TestingSetup {
                 UpdateInput(mtx.vin[0], sigdata);
                 ScriptError serror = SCRIPT_ERR_OK;
                 BOOST_CHECK(VerifyScript(mtx.vin[0].scriptSig, tx->vout[0].scriptPubKey, &mtx.vin[0].scriptWitness,
-                        STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, 0, mtx.vout[0].nValue), &serror));
+                                         STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, 0, mtx.vout[0].nValue), &serror));
                 txs.push_back(mtx);
             }
             CBlock b = CreateAndProcessBlock(txs, scriptPubKey);
@@ -145,9 +153,7 @@ struct TestChainPoS : public TestingSetup {
     StakeMgr staker;
 };
 
-/**
- * Ensure that the mempool won't accept coinstake transactions.
- */
+/// Ensure that the mempool won't accept coinstake transactions.
 BOOST_FIXTURE_TEST_CASE(staking_tests_nocoinstake, TestChainPoS)
 {
     CMutableTransaction coinstake;
@@ -192,9 +198,74 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_nocoinstake, TestChainPoS)
     BOOST_CHECK_EQUAL(nDoS, 100);
 }
 
-/**
- * Ensure that bad stakes are not accepted by the protocol.
- */
+/// Check that v03 staking modifier doesn't change for each new selection interval
+BOOST_AUTO_TEST_CASE(staking_tests_v03modifier)
+{
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.stakingV05UpgradeTime = std::numeric_limits<int>::max(); // set far into future
+    pos.Init();
+    pos.StakeBlocks(40);
+
+    const auto endTime = GetAdjustedTime() + GetStakeModifierSelectionInterval()*20;
+    uint64_t firstStakeModifier{0};
+    const auto stakeIndex = chainActive[chainActive.Height() - 40];
+    CBlock stakeBlock; BOOST_CHECK(ReadBlockFromDisk(stakeBlock, stakeIndex, params->consensus));
+    while (GetAdjustedTime() < endTime) {
+        int64_t runningTime = GetAdjustedTime();
+        uint64_t nStakeModifier{0};
+        int nStakeModifierHeight{0};
+        int64_t nStakeModifierTime{0};
+        BOOST_CHECK(GetKernelStakeModifier(chainActive.Tip(), stakeBlock.GetHash(), runningTime, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, false));
+        if (firstStakeModifier == 0)
+            firstStakeModifier = nStakeModifier;
+        else BOOST_CHECK_MESSAGE(nStakeModifier == firstStakeModifier, "Stake modifier v03 should be the same indefinitely");
+        pos.StakeBlocks(1);
+    }
+}
+
+// Check that v05 staking modifier changes for each new selection interval
+BOOST_AUTO_TEST_CASE(staking_tests_v05modifier)
+{
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.stakingV05UpgradeTime = GetAdjustedTime(); // set to current
+    pos.Init();
+    pos.StakeBlocks(15);
+
+    const auto endTime = GetAdjustedTime() + GetStakeModifierSelectionInterval()*20;
+    uint64_t lastStakeModifier{0};
+    const auto stakeIndex = chainActive[chainActive.Height() - 10];
+    CBlock stakeBlock; BOOST_CHECK(ReadBlockFromDisk(stakeBlock, stakeIndex, params->consensus));
+    while (GetAdjustedTime() < endTime) {
+        int64_t runningTime = GetAdjustedTime();
+        uint64_t nStakeModifier{0};
+        int nStakeModifierHeight{0};
+        int64_t nStakeModifierTime{0};
+        BOOST_CHECK(GetKernelStakeModifier(chainActive.Tip(), stakeBlock.GetHash(), runningTime, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, false));
+        if (lastStakeModifier > 0 && chainActive.Height() % 2 == 0)
+            BOOST_CHECK_MESSAGE(nStakeModifier != lastStakeModifier, "Stake modifier should be different for every new selection interval");
+        lastStakeModifier = nStakeModifier;
+        pos.StakeBlocks(1);
+    }
+}
+
+/// Check that the v05 staking protocol upgrade works properly
+BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade)
+{
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.stakingV05UpgradeTime = std::numeric_limits<int>::max();
+    pos.Init();
+
+    // Switch on the upgrade
+    params->consensus.stakingV05UpgradeTime = GetAdjustedTime() + params->GetConsensus().nPowTargetSpacing * 10; // set 10 min in future (~10 blocks)
+    int blocks = chainActive.Height();
+    pos.StakeBlocks(25); // make sure seemless upgrade to v05 staking protocol occurs
+    BOOST_CHECK_EQUAL(chainActive.Height(), blocks + 25);
+}
+
+/// Ensure that bad stakes are not accepted by the protocol.
 BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
 {
     // Find a stake

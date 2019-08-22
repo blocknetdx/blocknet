@@ -60,11 +60,6 @@
 #define MICRO 0.000001
 #define MILLI 0.001
 
-/**
- * Global state
- */
-std::map<uint256, uint256> mapProofOfStake; // TODO Blocknet use locking on mapProofOfStake
-
 namespace {
     struct CBlockIndexWorkComparator
     {
@@ -1109,12 +1104,7 @@ bool ReadBlockFromDisk(CBlock& block, const CDiskBlockPos& pos, const Consensus:
     }
 
     // Check the header
-    // TODO Blocknet check PoS work here
-    if (block.IsProofOfStake()) {
-        uint256 hashProofOfStake;
-        if (!CheckProofOfStake(block, hashProofOfStake, consensusParams))
-            return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
-    } else {
+    if (!block.IsProofOfStake()) { // If not PoS check the work here
     if (!CheckProofOfWork(block.GetHash(), block.nBits, consensusParams))
         return error("ReadBlockFromDisk: Errors in block header at %s", pos.ToString());
     }
@@ -1132,6 +1122,14 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
 
     if (!ReadBlockFromDisk(block, blockPos, consensusParams))
         return false;
+
+    // Check the header
+    if (block.IsProofOfStake()) { // TODO Blocknet check PoS here
+        uint256 hashProofOfStake;
+        if (!CheckProofOfStake(block, pindex->pprev, hashProofOfStake, consensusParams))
+            return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): proof of stake check failed on block %u", pindex->nHeight);
+    }
+
     if (block.GetHash() != pindex->GetBlockHash())
         return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): GetHash() doesn't match index for %s at %s",
                 pindex->ToString(), pindex->GetBlockPos().ToString());
@@ -3007,11 +3005,19 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
         pindexNew->BuildSkip();
 
         // ppcoin: set entropy bit and pos
-        pindexNew->SetStakeEntropyBit();
+        const auto ebit = GetStakeEntropyBit(pindexNew->GetBlockHash(), pindexNew->GetBlockTime());
+        pindexNew->SetStakeEntropyBit(ebit);
         if (IsProofOfStake(pindexNew->nHeight)) {
             pindexNew->SetProofOfStake();
-            if (mapProofOfStake.count(hash))
-                pindexNew->hashProofOfStake = mapProofOfStake[hash];
+            if (HasHashProofOfStake(hash))
+                pindexNew->hashProofOfStake = GetHashProofOfStake(hash);
+            else {
+                uint256 hashProofOfStake;
+                if (!CheckProofOfStake(block, pindexNew->pprev, hashProofOfStake, Params().GetConsensus()))
+                    LogPrint(BCLog::ALL, "AddToBlockIndex() : CheckProofOfStake failed\n");
+                pindexNew->hashProofOfStake = hashProofOfStake;
+                SetHashProofOfStake(block.GetHash(), hashProofOfStake);
+            }
         }
 
         // ppcoin: compute stake modifier
@@ -3188,8 +3194,8 @@ static bool CheckBlockHeader(const CBlockHeader& block, CValidationState& state,
     uint256 blockHash = block.GetHash();
     uint256 hashProofOfStake;
     bool valid = CheckPoS(block, state, hashProofOfStake, consensusParams);
-    if (valid && !mapProofOfStake.count(blockHash))
-        mapProofOfStake[blockHash] = hashProofOfStake;
+    if (valid && !HasHashProofOfStake(blockHash))
+        SetHashProofOfStake(blockHash, hashProofOfStake);
     return valid;
 }
 
@@ -5197,4 +5203,21 @@ bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & b
     if (!block)
         return false; // fail if block wasn't found
     return block->GetBlockHash() == blockHash;
+}
+
+Mutex muMapProofOfStake;
+std::map<uint256, uint256> mapProofOfStake;
+uint256 GetHashProofOfStake(const uint256 & blockHash) {
+    LOCK(muMapProofOfStake);
+    if (mapProofOfStake.count(blockHash))
+        return mapProofOfStake[blockHash];
+    return {};
+}
+bool HasHashProofOfStake(const uint256 & blockHash) {
+    LOCK(muMapProofOfStake);
+    return mapProofOfStake.count(blockHash) > 0;
+}
+void SetHashProofOfStake(const uint256 & blockHash, const uint256 & hashProofOfStake) {
+    LOCK(muMapProofOfStake);
+    mapProofOfStake[blockHash] = hashProofOfStake;
 }

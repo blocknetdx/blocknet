@@ -421,17 +421,14 @@ public:
     bool IsProofOfStake() {
         return nFlags & BLOCK_PROOF_OF_STAKE;
     }
-    bool SetStakeEntropyBit() {
-        unsigned int ebit = (UintToArith256(GetBlockHash()).Get64()) & 1;
+    bool SetStakeEntropyBit(const unsigned int & ebit) {
         if (ebit > 1)
             return false;
         nFlags |= (ebit ? BLOCK_STAKE_ENTROPY : 0);
         return true;
     }
     unsigned int GetStakeEntropyBit() const {
-        const auto a = UintToArith256(GetBlockHash());
-        unsigned int ebit = (a.Get64() & 1);
-        return ebit;
+        return ((nFlags & BLOCK_STAKE_ENTROPY) >> 1);
     }
     void SetStakeModifier(uint64_t modifer, bool didGenStakeModifer) {
         nStakeModifier = modifer;

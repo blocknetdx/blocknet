@@ -86,6 +86,7 @@ struct Params {
     int stakingModiferV2Block;
     int coinMaturity;
     int superblock;
+    int64_t stakingV05UpgradeTime;
 };
 } // namespace Consensus
 

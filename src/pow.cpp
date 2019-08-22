@@ -95,11 +95,14 @@ bool CheckProofOfWork(uint256 hash, unsigned int nBits, const Consensus::Params&
     return true;
 }
 
-// TODO Blocknet enable PoS checks
 bool CheckPoS(const CBlockHeader & block, CValidationState & state, uint256 & hashProofOfStake, const Consensus::Params & params)
 {
     // Get prev block index
-    CBlockIndex *pindexPrev = mapBlockIndex[block.hashPrevBlock];
+    CBlockIndex *pindexPrev = nullptr;
+    {
+        LOCK(cs_main);
+        pindexPrev = LookupBlockIndex(block.hashPrevBlock);
+    }
     if (!pindexPrev) {
         state.DoS(0, error("%s : prev block %s not found", __func__, block.hashPrevBlock.ToString().c_str()), 0, "bad-prevblk");
         return false;
@@ -124,7 +127,7 @@ bool CheckPoS(const CBlockHeader & block, CValidationState & state, uint256 & ha
         return error("%s : incorrect work at %d", __func__, currentHeight);
     }
 
-    if (!CheckProofOfStake(block, hashProofOfStake, params)) {
+    if (!CheckProofOfStake(block, pindexPrev, hashProofOfStake, params)) {
         state.DoS(50, false, REJECT_INVALID, "bad-stake", false, "bad pow or pos block");
         return false;
     }

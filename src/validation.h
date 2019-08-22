@@ -514,8 +514,6 @@ inline bool IsBlockPruned(const CBlockIndex* pblockindex)
 /** Determining the block sync progress */
 double SyncProgress(const int activeChainHeight);
 
-// TODO Blocknet atomic mapProofOfStake
-extern std::map<uint256, uint256> mapProofOfStake;
 extern std::atomic<double> meanBlockHeightConnectedNodes;
 extern std::atomic<int> estimatedConnectedNodes;
 
@@ -552,5 +550,10 @@ CTransactionRef GetTxFunc(const COutPoint & out);
  */
 static const int SNODE_STALE_BLOCKS = 5; // number of blocks to allow before a snode is marked "stale"
 bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale=true);
+
+/** hashProofOfStake management */
+uint256 GetHashProofOfStake(const uint256 & blockHash);
+bool HasHashProofOfStake(const uint256 & blockHash);
+void SetHashProofOfStake(const uint256 & blockHash, const uint256 & hashProofOfStake);
 
 #endif // BITCOIN_VALIDATION_H
