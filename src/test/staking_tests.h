@@ -146,13 +146,13 @@ struct TestChainPoS : public TestingSetup {
                     auto lc = wallet->chain().lock();
                     WalletRescanReserver reserver(wallet.get());
                     reserver.reserve();
-                    wallet->ScanForWalletTransactions(lc->getBlockHash(chainActive.Height()), {} /* stop_block */, reserver, true /* update */);
+                    wallet->ScanForWalletTransactions(lc->getBlockHash(chainActive.Height()), {}, reserver, true);
                 }
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
                 throw e;
             } catch (...) { throw std::runtime_error("Staker unknown error"); }
-            SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing);
+            SetMockTime(GetAdjustedTime() + MAX_FUTURE_BLOCK_TIME_POS);
             if (++tries > 1000)
                 throw std::runtime_error("Staker failed to find stake");
         }

@@ -6,7 +6,7 @@
 
 #include <governance/governance.h>
 
-BOOST_FIXTURE_TEST_SUITE(governance_tests, TestChainPoS)
+BOOST_AUTO_TEST_SUITE(governance_tests)
 
 int nextSuperblock(const int & block, const int & superblock) {
     return block + (superblock - block % superblock);
@@ -99,7 +99,7 @@ bool createUtxos(const CAmount & targetAmount, const CAmount & utxoAmount, TestC
     return wallet->CommitTransaction(MakeTransactionRef(mtx), {}, {}, reservekey, g_connman.get(), state);
 }
 
-bool cleanup(int blockCount) {
+bool cleanup(int blockCount, CWallet *wallet=nullptr) {
     while (chainActive.Height() < blockCount) {
         CValidationState state;
         InvalidateBlock(state, Params(), chainActive.Tip());
@@ -107,10 +107,15 @@ bool cleanup(int blockCount) {
     mempool.clear();
     gArgs.ForceSetArg("-proposaladdress", "");
     gov::Governance::instance().reset();
+    if (wallet) {
+        WalletRescanReserver reserver(wallet);
+        reserver.reserve();
+        wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, false);
+    }
     return true;
 }
 
-BOOST_AUTO_TEST_CASE(governance_tests_proposals)
+BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
 {
     RegisterValidationInterface(&gov::Governance::instance());
 
@@ -280,7 +285,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_proposals)
     UnregisterValidationInterface(&gov::Governance::instance());
 }
 
-BOOST_AUTO_TEST_CASE(governance_tests_votes)
+BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
 {
     RegisterValidationInterface(&gov::Governance::instance());
 
@@ -395,7 +400,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votes)
     UnregisterValidationInterface(&gov::Governance::instance());
 }
 
-BOOST_AUTO_TEST_CASE(governance_tests_submissions)
+BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
 {
     RegisterValidationInterface(&gov::Governance::instance());
 
@@ -522,7 +527,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_submissions)
     UnregisterValidationInterface(&gov::Governance::instance());
 }
 
-BOOST_AUTO_TEST_CASE(governance_tests_vote_limits)
+BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 {
     RegisterValidationInterface(&gov::Governance::instance());
 
@@ -617,6 +622,134 @@ BOOST_AUTO_TEST_CASE(governance_tests_vote_limits)
 
     cleanup(chainActive.Height());
     UnregisterValidationInterface(&gov::Governance::instance());
+}
+
+BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata)
+{
+//    RegisterValidationInterface(&gov::Governance::instance()); // not used in this test
+
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.voteMinUtxoAmount = 25*COIN;
+    params->consensus.voteBalance = 1000*COIN;
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 100 * COIN;
+        else if (blockHeight % consensusParams.superblock == 0)
+            return 10000 * COIN;
+        return 25 * COIN;
+    };
+    const auto & consensus = params->GetConsensus();
+    pos.Init();
+    CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
+
+    // Check preloading governance proposal data
+    {
+        const auto resetBlocks = chainActive.Height();
+        std::string failReason;
+
+        // Prep vote utxo
+        CTransactionRef sendtx;
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
+        BOOST_TEST_REQUIRE(accepted, "Proposal fee account should confirm to the network before continuing");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        const int proposalCount = 25;
+        std::vector<gov::Proposal> proposals; proposals.resize(proposalCount);
+        // Create some proposals
+        for (int i = 0; i < proposalCount; ++i) {
+            gov::Proposal proposal(strprintf("Test proposal %d", i), nextSuperblock(chainActive.Height(), consensus.superblock), 250 * COIN,
+                                   EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+            CTransactionRef tx = nullptr;
+            BOOST_CHECK(gov::Governance::submitProposal(proposal, consensus, tx, &failReason));
+            BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
+            proposals[i] = proposal;
+            if (i == 15) {
+                // Add adequate blocks to for superblock tests (test across multiple superblocks)
+                pos.StakeBlocks(params->consensus.superblock), SyncWithValidationInterfaceQueue();
+            }
+        }
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        BOOST_CHECK_MESSAGE(gov::Governance::instance().loadGovernanceData(chainActive, consensus), "Failed to load governance data from the chain");
+        auto govprops = gov::Governance::instance().getProposals();
+        BOOST_CHECK_MESSAGE(govprops.size() == proposalCount, strprintf("Failed to load governance data proposals, found %d expected %d", govprops.size(), proposalCount));
+
+        // clean up
+        cleanup(resetBlocks, pos.wallet.get());
+    }
+
+    // Check preloading governance vote data
+    {
+        const auto resetBlocks = chainActive.Height();
+        std::string failReason;
+
+        // Prep vote utxo
+        CTransactionRef sendtx;
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
+        BOOST_TEST_REQUIRE(accepted, "Proposal fee account should confirm to the network before continuing");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        // Store vote transactions
+        std::vector<CTransactionRef> txns;
+        {
+            gov::Proposal proposal(strprintf("Test proposal 1"), nextSuperblock(chainActive.Height(), consensus.superblock), 250 * COIN,
+                                   EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+            gov::ProposalVote proposalVote{proposal, gov::YES};
+            std::vector<CTransactionRef> txns1;
+            BOOST_CHECK(gov::Governance::submitVotes(std::vector<gov::ProposalVote>{proposalVote}, consensus, txns1, &failReason));
+            txns.insert(txns.end(), txns1.begin(), txns1.end());
+        }
+        // Add adequate blocks to for superblock tests (test across multiple superblocks)
+        pos.StakeBlocks(params->consensus.superblock), SyncWithValidationInterfaceQueue();
+        {
+            gov::Proposal proposal(strprintf("Test proposal 2"), nextSuperblock(chainActive.Height(), consensus.superblock), 250 * COIN,
+                                   EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+            gov::ProposalVote proposalVote{proposal, gov::YES};
+            std::vector<CTransactionRef> txns1;
+            BOOST_CHECK(gov::Governance::submitVotes(std::vector<gov::ProposalVote>{proposalVote}, consensus, txns1, &failReason));
+            txns.insert(txns.end(), txns1.begin(), txns1.end());
+        }
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        BOOST_CHECK_MESSAGE(gov::Governance::instance().loadGovernanceData(chainActive, consensus), "Failed to load governance data from the chain");
+        auto gvotes = gov::Governance::instance().getVotes();
+        int expecting{0};
+        for (const auto & tx : txns) { // only count valid votes
+            if (tx->IsCoinBase() || tx->IsCoinStake())
+                continue;
+            for (const auto & out : tx->vout) {
+                CScript::const_iterator pc = out.scriptPubKey.begin();
+                std::vector<unsigned char> data;
+                while (pc < out.scriptPubKey.end()) {
+                    opcodetype opcode;
+                    if (!out.scriptPubKey.GetOp(pc, opcode, data))
+                        break;
+                    if (!data.empty())
+                        break;
+                }
+                CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+                gov::NetworkObject obj; ss >> obj;
+                if (!obj.isValid())
+                    continue; // must match expected version
+                if (obj.getType() == gov::VOTE) {
+                    CDataStream ssv(data, SER_NETWORK, PROTOCOL_VERSION);
+                    gov::Vote vote; ssv >> vote;
+                    if (vote.isValid(consensus))
+                        ++expecting;
+                }
+            }
+        }
+        BOOST_CHECK_MESSAGE(gvotes.size() == expecting, strprintf("Failed to load governance data votes, found %d expected %d", gvotes.size(), expecting));
+
+        // clean up
+        cleanup(resetBlocks, pos.wallet.get());
+    }
+
+    cleanup(chainActive.Height());
+//    UnregisterValidationInterface(&gov::Governance::instance()); // not used in this test
 }
 
 BOOST_AUTO_TEST_SUITE_END()

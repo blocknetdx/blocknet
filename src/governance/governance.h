@@ -440,6 +440,57 @@ public:
         return true;
     }
 
+    /**
+     * Loads the governance data from the past and current superblocks.
+     * @return
+     */
+    bool loadGovernanceData(const CChain & chain, const Consensus::Params & consensus) {
+        bool result{true};
+        const int nextSuperblock = chain.Height() - chain.Height() % consensus.superblock + consensus.superblock;
+        const int prevousSuperblock = nextSuperblock - consensus.superblock;
+        const int beginningOflastSuperblock = prevousSuperblock == 0 // genesis check
+                                                    ? 1
+                                                    : prevousSuperblock - consensus.superblock + 1;
+        for (int i = beginningOflastSuperblock; i <= chain.Height(); ++i) {
+            const auto blockIndex = chain[i];
+            CBlock block;
+            if (!ReadBlockFromDisk(block, blockIndex, consensus)) {
+                result = false;
+                continue;
+            }
+            // Process blocks
+            const auto sblock = std::make_shared<const CBlock>(block);
+            BlockConnected(sblock, blockIndex, {});
+        }
+        return result;
+    }
+
+    /**
+     * Fetch the list of all known proposals.
+     * @return
+     */
+    std::vector<Proposal> getProposals() {
+        LOCK(mu);
+        std::vector<Proposal> props;
+        props.reserve(proposals.size());
+        for (const auto & item : proposals)
+            props.push_back(item.second);
+        return std::move(props);
+    }
+
+    /**
+     * Fetch the list of all known votes.
+     * @return
+     */
+    std::vector<Vote> getVotes() {
+        LOCK(mu);
+        std::vector<Vote> vos;
+        vos.reserve(votes.size());
+        for (const auto & item : votes)
+            vos.push_back(item.second);
+        return std::move(vos);
+    }
+
 public: // static
 
     /**
@@ -576,9 +627,11 @@ public: // static
 
                     for (int j = 0; j < static_cast<int>(proposals.size()); ++j) {
                         const auto & pv = proposals[j];
-                        if (usedUtxos.count(coin.GetInputCoin().outpoint) &&
-                            usedUtxos[coin.GetInputCoin().outpoint].count(pv.proposal.getHash()))
-                            continue; // already voted
+                        const bool utxoAlreadyUsed = usedUtxos.count(coin.GetInputCoin().outpoint) > 0 &&
+                                usedUtxos[coin.GetInputCoin().outpoint].count(pv.proposal.getHash()) > 0;
+                        const bool alreadyVoted = instance().hasVote(pv.proposal.getHash(), coin.GetInputCoin().outpoint);
+                        if (utxoAlreadyUsed || alreadyVoted)
+                            continue; // skip,  already voted
 
                         // Create and serialize the vote data and insert in OP_RETURN script. The vote
                         // is signed with the utxo that is representing that vote. The signing must

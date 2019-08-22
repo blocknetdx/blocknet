@@ -127,7 +127,7 @@ public:
         }
 
         std::vector<StakeOutput> selected; // selected coins that meet criteria for staking
-        const int coinMaturity = std::max(params.coinMaturity, 64); // 64 is minimum blocks required to meet staking selection interval requirements
+        const int coinMaturity = params.coinMaturity;
         const auto minStakeAmount = static_cast<CAmount>(gArgs.GetArg("-minstakeamount", 0) * COIN);
 
         for (auto pwallet : wallets) {

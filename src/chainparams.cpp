@@ -181,6 +181,8 @@ public:
 
         // Superblock
         consensus.superblock = 43200;
+        consensus.proposalCutoff = 2880;
+        consensus.votingCutoff = 60;
 
         // subsidy func mainnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -323,6 +325,8 @@ public:
 
         // Superblock
         consensus.superblock = 144;
+        consensus.proposalCutoff = 20;
+        consensus.votingCutoff = 10;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -429,6 +433,8 @@ public:
 
         // Superblock
         consensus.superblock = 144;
+        consensus.proposalCutoff = 20;
+        consensus.votingCutoff = 10;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
