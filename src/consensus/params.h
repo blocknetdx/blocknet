@@ -91,6 +91,7 @@ struct Params {
     int votingCutoff; // blocks prior to superblock
     int proposalCutoff; // blocks prior to superblock
     CAmount proposalMinAmount{10 * COIN};
+    CAmount proposalMaxAmount{40000 * COIN};
     CAmount proposalFee{10 * COIN};
     CAmount voteBalance{5000 * COIN};
     CAmount voteMinUtxoAmount{100 * COIN};

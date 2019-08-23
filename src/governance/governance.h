@@ -63,6 +63,16 @@ static bool GetKeyIDForUTXO(const COutPoint & utxo, CTransactionRef & tx, CKeyID
 }
 
 /**
+ * Returns the next superblock from the most recent chain tip.
+ * @param params
+ * @return
+ */
+static int NextSuperblock(const Consensus::Params & params) {
+    LOCK(cs_main);
+    return chainActive.Height() - chainActive.Height() % params.superblock + params.superblock;
+}
+
+/**
  * Encapsulates serialized OP_RETURN governance data.
  */
 class NetworkObject {
@@ -122,17 +132,43 @@ public:
     /**
      * Valid if the proposal properties are correct.
      * @param params
+     * @param failureReasonRet
      * @return
      */
-    bool isValid(const Consensus::Params & params) const {
+    bool isValid(const Consensus::Params & params, std::string *failureReasonRet=nullptr) const {
         static std::regex rrname("^\\w+[\\w- ]*\\w+$");
-        bool valid = std::regex_match(name, rrname) && (superblock % params.superblock == 0)
-                     && amount >= params.proposalMinAmount && amount <= params.GetBlockSubsidy(superblock, params)
-                     && IsValidDestination(DecodeDestination(address))
-                     && type == PROPOSAL && version == NETWORK_VERSION;
+        if (!std::regex_match(name, rrname)) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Proposal name %s is invalid, only alpha-numeric characters are accepted", name);
+            return false;
+        }
+        if (superblock % params.superblock != 0) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Bad superblock number, did you mean %d", gov::NextSuperblock(params));
+            return false;
+        }
+        if (!(amount >= params.proposalMinAmount && amount <= params.GetBlockSubsidy(superblock, params))) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Bad proposal amount, specify amount between %s - %s", FormatMoney(params.proposalMinAmount), FormatMoney(params.proposalMaxAmount));
+            return false;
+        }
+        if (!IsValidDestination(DecodeDestination(address))) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Bad payment address %s", address);
+            return false;
+        }
+        if (type != PROPOSAL) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Bad proposal type, expected %d", PROPOSAL);
+            return false;
+        }
+        if (version != NETWORK_VERSION) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Bad proposal network version, expected %d", NETWORK_VERSION);
+            return false;
+        }
         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
         ss << version << type << name << superblock << amount << address << url << description;
-        return valid && ss.size() <= MAX_OP_RETURN_RELAY-3; // -1 for OP_RETURN -2 for pushdata opcodes
+        const int maxBytes = MAX_OP_RETURN_RELAY-3; // -1 for OP_RETURN -2 for pushdata opcodes
+        if (ss.size() > maxBytes) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Proposal data is too long, try reducing the description by %d characters, expected total of %d bytes, received %d", ss.size()-maxBytes, maxBytes, ss.size());
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -500,6 +536,15 @@ public: // static
     static Governance & instance() {
         static Governance gov;
         return gov;
+    }
+
+    /**
+     * Returns the upcoming superblock.
+     * @param params
+     * @return
+     */
+    static int nextSuperblock(const Consensus::Params & params) {
+        return NextSuperblock(params);
     }
 
     /**

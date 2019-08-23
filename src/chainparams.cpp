@@ -183,6 +183,7 @@ public:
         consensus.superblock = 43200;
         consensus.proposalCutoff = 2880;
         consensus.votingCutoff = 60;
+        consensus.proposalMaxAmount = 40000 * COIN;
 
         // subsidy func mainnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -205,7 +206,7 @@ public:
             else if (blockHeight == 71897)        return 50000 * COIN + baseReward;
             else if (blockHeight == 72043)        return 48786 * COIN + baseReward; // expl amounts
             else if (blockHeight % consensusParams.superblock == 0) { // superblocks
-               if (blockHeight >= 820800)         return 40000 * COIN + baseReward; // phase 2 superblock
+               if (blockHeight >= 820800)         return consensusParams.proposalMaxAmount + baseReward; // phase 2 superblock
                else                               return 4320  * COIN + baseReward; // phase 1 superblock
             }
             else
@@ -327,13 +328,14 @@ public:
         consensus.superblock = 144;
         consensus.proposalCutoff = 20;
         consensus.votingCutoff = 10;
+        consensus.proposalMaxAmount = 20000 * COIN;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= 32)
                 return 5000 * COIN;
             else if (blockHeight > consensusParams.lastPOWBlock && blockHeight % consensusParams.superblock == 0)
-                return 20001 * COIN;
+                return consensusParams.proposalMaxAmount + 1 * COIN;
             return 1 * COIN;
         };
     }
@@ -435,13 +437,14 @@ public:
         consensus.superblock = 144;
         consensus.proposalCutoff = 20;
         consensus.votingCutoff = 10;
+        consensus.proposalMaxAmount = 40000 * COIN;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
                 return 50 * COIN;
             else if (blockHeight % consensusParams.superblock == 0)
-                return 10000 * COIN;
+                return consensusParams.proposalMaxAmount + 1 * COIN;
             return 1 * COIN;
         };
     }

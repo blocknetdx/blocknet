@@ -752,4 +752,157 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata)
 //    UnregisterValidationInterface(&gov::Governance::instance()); // not used in this test
 }
 
+BOOST_AUTO_TEST_CASE(governance_tests_rpc)
+{
+    TestChainPoS pos(false);
+    RegisterValidationInterface(&gov::Governance::instance());
+    auto *params = (CChainParams*)&Params();
+    params->consensus.voteMinUtxoAmount = 25*COIN;
+    params->consensus.voteBalance = 1000*COIN;
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 100 * COIN;
+        else if (blockHeight % consensusParams.superblock == 0)
+            return 10000 * COIN;
+        return 25 * COIN;
+    };
+    const auto & consensus = params->GetConsensus();
+    pos.Init();
+    CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
+
+    // Check createproposal rpc
+    {
+        const auto resetBlocks = chainActive.Height();
+        std::string failReason;
+
+        // Prep vote utxo
+        CTransactionRef sendtx;
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
+        BOOST_TEST_REQUIRE(accepted, "Proposal fee account should confirm to the network before continuing");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        // Submit proposal via rpc
+        CKey key; key.MakeNewKey(true);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({
+            "Test proposal 1",                                           // name
+            nextSuperblock(chainActive.Height(), consensus.superblock),  // superblock
+            250,                                                         // amount
+            saddr,                                                       // address
+            "https://forum.blocknet.co",                                 // url
+            "Short description"                                          // description
+        });
+        UniValue result;
+        BOOST_CHECK_NO_THROW(result = CallRPC2("createproposal", rpcparams));
+        BOOST_CHECK_MESSAGE(result.isObject(), "createproposal rpc should return an object");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        // Validate rpc result data
+        const auto proposalHash = uint256S(find_value(result.get_obj(), "hash").get_str());
+        BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposalHash), "Failed to find proposal in governance manager");
+        const auto txid = uint256S(find_value(result.get_obj(), "txid").get_str());
+        CTransactionRef tx;
+        uint256 hashBlock;
+        BOOST_CHECK_MESSAGE(GetTransaction(txid, tx, consensus, hashBlock), "Failed to find proposal tx in mempool");
+        BOOST_CHECK_EQUAL(find_value(result.get_obj(), "name")       .get_str(), rpcparams[0].get_str());
+        BOOST_CHECK_EQUAL(find_value(result.get_obj(), "superblock") .get_int(), rpcparams[1].get_int());
+        BOOST_CHECK_EQUAL(find_value(result.get_obj(), "amount")     .get_int(), rpcparams[2].get_int());
+        BOOST_CHECK_EQUAL(find_value(result.get_obj(), "address")    .get_str(), rpcparams[3].get_str());
+        BOOST_CHECK_EQUAL(find_value(result.get_obj(), "url")        .get_str(), rpcparams[4].get_str());
+        BOOST_CHECK_EQUAL(find_value(result.get_obj(), "description").get_str(), rpcparams[5].get_str());
+
+        // clean up
+        cleanup(resetBlocks, pos.wallet.get());
+    }
+
+    {
+        // Submit proposal via rpc
+        CKey key; key.MakeNewKey(true);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        const auto nextSB = nextSuperblock(chainActive.Height(), consensus.superblock);
+
+        // Fail on bad name
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal $", nextSB, 250, saddr, "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+        // Fail on bad superblock
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB + 1, 250, saddr, "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+        // Fail on bad amount (too small)
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, consensus.proposalMinAmount - 1, saddr, "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+        // Fail on bad amount (too large)
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, consensus.proposalMaxAmount + 1, saddr, "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+        // Fail on bad address
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, "bvkbvkbvkbvkbkvkbkvkbkbvkvkkbkvk", "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+        // Succeed on empty url
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr, "", "Short description" });
+            BOOST_CHECK_NO_THROW(CallRPC2("createproposal", rpcparams));
+        }
+        // Succeed on omitted description
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr, "https://forum.blocknet.co" });
+            BOOST_CHECK_NO_THROW(CallRPC2("createproposal", rpcparams));
+        }
+        // Succeed on omitted url + description
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr });
+            BOOST_CHECK_NO_THROW(CallRPC2("createproposal", rpcparams));
+        }
+        // Succeed on default superblock
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", 0, 250, saddr, "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_NO_THROW(CallRPC2("createproposal", rpcparams));
+        }
+        // Fail on string amount
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, "250", saddr, "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+        // Fail on string superblock
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", strprintf("%d", nextSB), 250, saddr, "https://forum.blocknet.co", "Short description" });
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+        // Fail on long description
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr, "https://forum.blocknet.co", "Long description Long description Long description Long description Long description Long "
+                                                                                                      "Long description Long description Long description Long description Long description Long "
+                                                                                                      "Long description Long description Long description Long description Long description Long "
+                                                                                                      "Long description Long description Long description Long description Long description Long "
+                                                                                                      "Long description Long description Long description Long description Long description Long "});
+            BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+    }
+
+    cleanup(chainActive.Height());
+    UnregisterValidationInterface(&gov::Governance::instance());
+}
+
 BOOST_AUTO_TEST_SUITE_END()
