@@ -70,11 +70,33 @@ static UniValue createproposal(const JSONRPCRequest& request)
     return ret;
 }
 
+static UniValue proposalfee(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error(
+            RPCHelpMan{"proposalfee",
+                "\nFee in BLOCK for proposal submissions.\n",
+                {},
+                RPCResult{
+                "10\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("proposalfee", "")
+                  + HelpExampleRpc("proposalfee", "")
+                },
+            }.ToString());
+
+    UniValue ret(UniValue::VNUM);
+    ret.setInt(Params().GetConsensus().proposalFee/COIN);
+    return ret;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "governance",         "createproposal",         &createproposal,         {"name", "superblock", "amount", "address", "url", "description"} },
+    { "governance",         "proposalfee",            &proposalfee,            {} },
 };
 // clang-format on
 
