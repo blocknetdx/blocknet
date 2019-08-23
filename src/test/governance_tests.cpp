@@ -817,8 +817,8 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         cleanup(resetBlocks, pos.wallet.get());
     }
 
+    // Check createproposal rpc
     {
-        // Submit proposal via rpc
         CKey key; key.MakeNewKey(true);
         const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
         const auto nextSB = nextSuperblock(chainActive.Height(), consensus.superblock);
@@ -898,6 +898,98 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
                                                                                                       "Long description Long description Long description Long description Long description Long "
                                                                                                       "Long description Long description Long description Long description Long description Long "});
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
+        }
+    }
+
+    // Check vote rpc
+    {
+        CKey key; key.MakeNewKey(true);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        const auto nextSB = nextSuperblock(chainActive.Height(), consensus.superblock);
+
+        const gov::Proposal proposal{"Test proposal 1", nextSB, 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+        CTransactionRef tx;
+        std::string failReason;
+        BOOST_CHECK(gov::Governance::submitProposal(proposal, consensus, tx, &failReason));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        // Succeed on proper yes vote
+        {
+            UniValue rpcparams(UniValue::VARR);
+            const auto voteCast = gov::Vote::voteTypeToString(gov::YES);
+            rpcparams.push_backV({ proposal.getHash().ToString(), voteCast });
+            UniValue result;
+            BOOST_CHECK_NO_THROW(result = CallRPC2("vote", rpcparams));
+
+            // Validate rpc result data
+            const auto proposalHash = uint256S(find_value(result.get_obj(), "hash").get_str());
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposalHash), "Failed to find proposal in governance manager");
+            BOOST_CHECK_EQUAL(find_value(result.get_obj(), "name")       .get_str(), proposal.getName());
+            BOOST_CHECK_EQUAL(find_value(result.get_obj(), "superblock") .get_int(), proposal.getSuperblock());
+            BOOST_CHECK_EQUAL(find_value(result.get_obj(), "amount")     .get_int()*COIN, proposal.getAmount());
+            BOOST_CHECK_EQUAL(find_value(result.get_obj(), "address")    .get_str(), proposal.getAddress());
+            BOOST_CHECK_EQUAL(find_value(result.get_obj(), "url")        .get_str(), proposal.getUrl());
+            BOOST_CHECK_EQUAL(find_value(result.get_obj(), "description").get_str(), proposal.getDescription());
+            BOOST_CHECK_EQUAL(find_value(result.get_obj(), "vote")       .get_str(), voteCast);
+            BOOST_CHECK(find_value(result.get_obj(), "txids").isArray());
+            auto txids = find_value(result.get_obj(), "txids").get_array().getValues();
+            for (const auto & txid : txids) {
+                BOOST_CHECK_MESSAGE(txid.isStr(), "vote rpc should return an array of strings for txids");
+                CTransactionRef ttx;
+                uint256 hashBlock;
+                BOOST_CHECK_MESSAGE(GetTransaction(uint256S(txid.get_str()), ttx, consensus, hashBlock), "vote rpc failed to find vote tx in mempool");
+            }
+        }
+        // Succeed on proper no vote
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), gov::Vote::voteTypeToString(gov::NO) });
+            BOOST_CHECK_NO_THROW(CallRPC2("vote", rpcparams));
+        }
+        // Succeed on proper abstain vote
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), gov::Vote::voteTypeToString(gov::ABSTAIN) });
+            BOOST_CHECK_NO_THROW(CallRPC2("vote", rpcparams));
+        }
+
+        // Succeed on proper yes vote
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), "YES" });
+            BOOST_CHECK_NO_THROW(CallRPC2("vote", rpcparams));
+        }
+        // Succeed on proper no vote
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), "NO" });
+            BOOST_CHECK_NO_THROW(CallRPC2("vote", rpcparams));
+        }
+        // Succeed on proper abstain vote
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), "ABSTAIN" });
+            BOOST_CHECK_NO_THROW(CallRPC2("vote", rpcparams));
+        }
+
+        // Fail on bad proposal hash
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ "8784372873284728347182471283742813748127", gov::Vote::voteTypeToString(gov::YES) });
+            BOOST_CHECK_THROW(CallRPC2("vote", rpcparams), std::runtime_error);
+        }
+
+        // Fail on non-hex hash
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ "zvczmnvczxnvzxcmnvxcznvmxznvmzx", gov::Vote::voteTypeToString(gov::YES) });
+            BOOST_CHECK_THROW(CallRPC2("vote", rpcparams), std::runtime_error);
+        }
+        // Fail on bad vote type
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), "bad vote type" });
+            BOOST_CHECK_THROW(CallRPC2("vote", rpcparams), std::runtime_error);
         }
     }
 

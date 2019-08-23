@@ -26,6 +26,8 @@
 #include <string>
 #include <utility>
 
+#include <boost/algorithm/string.hpp>
+
 /**
  * Governance namespace.
  */
@@ -278,6 +280,47 @@ public:
     friend inline bool operator<(const Vote & a, const Vote & b) { return a.getProposal() < b.getProposal(); }
 
     /**
+     * Returns true if a valid vote string type was converted.
+     * @param strVote
+     * @param voteType Mutated with the converted vote type.
+     * @return
+     */
+    static bool voteTypeForString(std::string strVote, VoteType & voteType) {
+        boost::to_lower(strVote, std::locale::classic());
+        if (strVote == "yes") {
+            voteType = YES;
+        } else if (strVote == "no") {
+            voteType = NO;
+        } else if (strVote == "abstain") {
+            voteType = ABSTAIN;
+        } else {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Returns the string representation of the vote type.
+     * @param voteType
+     * @param valid true if conversion was successful, otherwise false.
+     * @return
+     */
+    static std::string voteTypeToString(const VoteType & voteType, bool *valid = nullptr) {
+        std::string strVote;
+        if (voteType == YES) {
+            strVote = "yes";
+        } else if (voteType == NO) {
+            strVote = "no";
+        } else if (voteType == ABSTAIN) {
+            strVote = "abstain";
+        } else {
+            if (valid) *valid = false;
+        }
+        if (valid) *valid = true;
+        return strVote;
+    }
+
+    /**
      * Null check
      * @return
      */
@@ -499,6 +542,30 @@ public:
             BlockConnected(sblock, blockIndex, {});
         }
         return result;
+    }
+
+    /**
+     * Fetch the specified proposal.
+     * @param hash Proposal hash
+     * @return
+     */
+    Proposal getProposal(const uint256 & hash) {
+        LOCK(mu);
+        if (proposals.count(hash) > 0)
+            return proposals[hash];
+        return std::move(Proposal{});
+    }
+
+    /**
+     * Fetch the specified vote.
+     * @param hash Vote hash
+     * @return
+     */
+    Vote getVote(const uint256 & hash) {
+        LOCK(mu);
+        if (votes.count(hash) > 0)
+            return votes[hash];
+        return std::move(Vote{});
     }
 
     /**
