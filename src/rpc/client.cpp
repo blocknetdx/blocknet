@@ -168,6 +168,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "servicenodesetup", 3, "list" },
     { "createproposal", 1, "superblock" },
     { "createproposal", 2, "amount" },
+    { "listproposals", 0, "sinceblock" },
 };
 // clang-format on
 

@@ -68,16 +68,15 @@ struct TestChainPoS : public TestingSetup {
                 CMutableTransaction mtx;
                 mtx.vin.resize(1);
                 mtx.vin[0] = CTxIn(COutPoint(tx->GetHash(), 0));
-                mtx.vout.resize(1);
-                mtx.vout[0].scriptPubKey = scriptPubKey;
-                mtx.vout[0].nValue = tx->GetValueOut() - CENT;
+                mtx.vout.resize(2);
+                for (int k = 0; k < (int)mtx.vout.size(); ++k) {
+                    mtx.vout[k].scriptPubKey = scriptPubKey;
+                    mtx.vout[k].nValue = (tx->GetValueOut()/mtx.vout.size()) - CENT;
+                }
                 const CTransaction txConst(mtx);
                 SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[0]);
                 ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, mtx.vout[0].nValue, SIGHASH_ALL), tx->vout[0].scriptPubKey, sigdata);
                 UpdateInput(mtx.vin[0], sigdata);
-                ScriptError serror = SCRIPT_ERR_OK;
-                BOOST_CHECK(VerifyScript(mtx.vin[0].scriptSig, tx->vout[0].scriptPubKey, &mtx.vin[0].scriptWitness,
-                                         STANDARD_SCRIPT_VERIFY_FLAGS, TransactionSignatureChecker(&txConst, 0, mtx.vout[0].nValue), &serror));
                 txs.push_back(mtx);
             }
             CBlock b = CreateAndProcessBlock(txs, scriptPubKey);
@@ -92,7 +91,7 @@ struct TestChainPoS : public TestingSetup {
         {
             WalletRescanReserver reserver(wallet.get());
             reserver.reserve();
-            wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {} /* stop_block */, reserver, false /* update */);
+            wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
         }
         wallet->SetBroadcastTransactions(true);
 
@@ -151,10 +150,12 @@ struct TestChainPoS : public TestingSetup {
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
                 throw e;
-            } catch (...) { throw std::runtime_error("Staker unknown error"); }
-            SetMockTime(GetAdjustedTime() + MAX_FUTURE_BLOCK_TIME_POS);
+            } catch (...) {
+                throw std::runtime_error("Staker unknown error");
+            }
             if (++tries > 1000)
                 throw std::runtime_error("Staker failed to find stake");
+            SetMockTime(staker.LastUpdateTime() + MAX_FUTURE_BLOCK_TIME_POS);
         }
     }
 

@@ -70,6 +70,77 @@ static UniValue createproposal(const JSONRPCRequest& request)
     return ret;
 }
 
+static UniValue listproposals(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+            RPCHelpMan{"listproposals",
+                "\nLists proposals since the specified block. By default lists the current and upcoming proposals.\n",
+                {
+                    {"sinceblock", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "0", "(default=0) which pull most recent proposals. Otherwise specify the block number."},
+                },
+                RPCResult{
+                "{\n"
+                "  \"hash\":\"xxxx\",                (string) Hex string of the proposal hash\n"
+                "  \"name\": \"proposal name\",      (string) Service node name\n"
+                "  \"superblock\": n,                (numeric) Upcoming Superblock to receive payment. Obtain the next Superblock with \"nextsuperblock\" rpc call.\n"
+                "  \"amount\": n,                    (numeric) Amount of BLOCK being requested in the proposal\n"
+                "  \"address\":\"blocknet address\", (string) Blocknet payment address\n"
+                "  \"url\":\"xxxx\",                 (string) Url where voters can read more details\n"
+                "  \"description\":\"xxxx\",         (string) Brief description. Note, if description is too long the proposal submission will fail\n"
+                "  \"votes_yes\": n,                 (numeric) All yes votes\n"
+                "  \"votes_no\": n,                  (numeric) All no votes\n"
+                "  \"votes_abstain\": n              (numeric) All abstain votes\n"
+                "}\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("listproposals", "")
+                  + HelpExampleCli("listproposals", "1036800")
+                  + HelpExampleRpc("listproposals", "")
+                  + HelpExampleRpc("listproposals", "1036800")
+                },
+            }.ToString());
+
+    const auto & prevSuperblock = gov::PreviousSuperblock(Params().GetConsensus());
+    const auto & sinceBlock = request.params.size() < 1 || request.params[0].get_int() <= 0
+                                                         ? prevSuperblock
+                                                         : request.params[0].get_int();
+    {
+        LOCK(cs_main);
+        if (sinceBlock > chainActive.Height())
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("'sinceblock' is bad, cannot be greater than %d", chainActive.Height()));
+    }
+
+    std::vector<gov::Proposal> proposals;
+    std::vector<gov::Vote> votes;
+    if (sinceBlock >= prevSuperblock) {
+        proposals = gov::Governance::instance().getProposals();
+        for (const auto & proposal : proposals) {
+            std::vector<gov::Vote> v =  gov::Governance::instance().getVotes(proposal.getHash());
+            votes.insert(votes.end(), v.begin(), v.end());
+        }
+    }
+    else gov::Governance::getProposalsSince(sinceBlock, chainActive, cs_main, proposals, votes);
+
+    UniValue ret(UniValue::VARR);
+    for (const auto & proposal : proposals) {
+        const auto tally = gov::Governance::getTally(proposal.getHash(), votes, Params().GetConsensus());
+        UniValue prop(UniValue::VOBJ);
+        prop.pushKV("hash", proposal.getHash().ToString());
+        prop.pushKV("name", proposal.getName());
+        prop.pushKV("superblock", proposal.getSuperblock());
+        prop.pushKV("amount", proposal.getAmount() / COIN);
+        prop.pushKV("address", proposal.getAddress());
+        prop.pushKV("url", proposal.getUrl());
+        prop.pushKV("description", proposal.getDescription());
+        prop.pushKV("votes_yes", tally.yes);
+        prop.pushKV("votes_no", tally.no);
+        prop.pushKV("votes_abstain", tally.abstain);
+        ret.push_back(prop);
+    }
+    return ret;
+}
+
 static UniValue vote(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
@@ -123,7 +194,7 @@ static UniValue vote(const JSONRPCRequest& request)
     gov::ProposalVote vote{proposal, castVote};
     std::vector<CTransactionRef> txns;
     std::string failReason;
-    if (!gov::Governance::submitVotes({vote}, Params().GetConsensus(), txns, &failReason))
+    if (!gov::Governance::submitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, &failReason))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit vote: %s", failReason));
 
     UniValue ret(UniValue::VOBJ);
@@ -168,6 +239,7 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
   //  --------------------- ------------------------  -----------------------  ----------
     { "governance",         "createproposal",         &createproposal,         {"name", "superblock", "amount", "address", "url", "description"} },
+    { "governance",         "listproposals",          &listproposals,          {"sinceblock"} },
     { "governance",         "vote",                   &vote,                   {"proposal", "vote"} },
     { "governance",         "proposalfee",            &proposalfee,            {} },
 };

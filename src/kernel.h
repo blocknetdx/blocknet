@@ -139,7 +139,17 @@ public:
                     LogPrintf("Wallet is locked not staking inputs: %s", pwallet->GetDisplayName());
                     continue; // skip locked wallets
                 }
-                pwallet->AvailableCoins(*locked_chain, coins, true, nullptr, minStakeAmount, MAX_MONEY, MAX_MONEY, 0, coinMaturity);
+                pwallet->AvailableCoins(*locked_chain, coins, true, nullptr, minStakeAmount, MAX_MONEY, MAX_MONEY, 0);
+            }
+
+            { // Remove all immature coins (any previous stakes that do not meet the maturity requirement)
+                LOCK(cs_main);
+                CCoinsViewCache &view = *pcoinsTip;
+                auto pred = [&view,&coinMaturity](const COutput & c) -> bool {
+                    const auto & coin = view.AccessCoin(c.GetInputCoin().outpoint);
+                    return coin.IsCoinBase() && coin.nHeight < coinMaturity;
+                };
+                coins.erase(std::remove_if(coins.begin(), coins.end(), pred), coins.end());
             }
 
             // Find suitable staking coins
@@ -247,8 +257,7 @@ public:
             return false;
 
         int block = tip->nHeight + 1; // next block (one being staked)
-        if (block % chainparams.GetConsensus().superblock == 0 && chainparams.GetConsensus().superblock > 144) // TODO Blocknet PoS handle superblock staking
-            return false;
+        // TODO Blocknet PoS handle superblock staking
 
         auto cutoffTime = tip->nTime; // must find stake input valid for a time newer than cutoff
         arith_uint256 bnTargetPerCoinDay; // current difficulty
@@ -309,6 +318,10 @@ public:
             LogPrintf("Error: Staking %s\n", e.what());
         }
         return fNewBlock;
+    }
+
+    int64_t LastUpdateTime() const {
+        return lastUpdateTime;
     }
 
 private:

@@ -434,7 +434,7 @@ public:
         m_fallback_fee_enabled = true;
 
         // Superblock
-        consensus.superblock = 144;
+        consensus.superblock = 165;
         consensus.proposalCutoff = 20;
         consensus.votingCutoff = 10;
         consensus.proposalMaxAmount = 40000 * COIN;
