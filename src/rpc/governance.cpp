@@ -105,10 +105,12 @@ static UniValue listproposals(const JSONRPCRequest& request)
     const auto & sinceBlock = request.params.size() < 1 || request.params[0].get_int() <= 0
                                                          ? prevSuperblock
                                                          : request.params[0].get_int();
+    int blockHeight{0};
     {
         LOCK(cs_main);
         if (sinceBlock > chainActive.Height())
             throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("'sinceblock' is bad, cannot be greater than %d", chainActive.Height()));
+        blockHeight = chainActive.Height();
     }
 
     std::vector<gov::Proposal> proposals;
@@ -119,8 +121,11 @@ static UniValue listproposals(const JSONRPCRequest& request)
             std::vector<gov::Vote> v =  gov::Governance::instance().getVotes(proposal.getHash());
             votes.insert(votes.end(), v.begin(), v.end());
         }
+    } else { // if more than 10 days worth of blocks use threaded check
+        const int twoWeeksOfBlocks{24*3600*10/static_cast<int>(Params().GetConsensus().nPowTargetSpacing)};
+        const bool multithreadedSearch = (blockHeight-sinceBlock) >= twoWeeksOfBlocks;
+        gov::Governance::getProposalsSince(sinceBlock, chainActive, cs_main, proposals, votes, multithreadedSearch);
     }
-    else gov::Governance::getProposalsSince(sinceBlock, chainActive, cs_main, proposals, votes);
 
     UniValue ret(UniValue::VARR);
     for (const auto & proposal : proposals) {

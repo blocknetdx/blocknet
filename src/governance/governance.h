@@ -576,7 +576,7 @@ public:
     }
 
     /**
-     * Returns true if the specified utxo matches a known vote.
+     * Returns true if the specified proposal and utxo matches a known vote.
      * @param utxo
      * @return
      */
@@ -608,10 +608,10 @@ public:
     bool loadGovernanceData(const CChain & chain, const Consensus::Params & consensus) {
         bool result{true};
         const int nextSuperblock = chain.Height() - chain.Height() % consensus.superblock + consensus.superblock;
-        const int prevousSuperblock = nextSuperblock - consensus.superblock;
-        const int beginningOflastSuperblock = prevousSuperblock == 0 // genesis check
+        const int previousSuperblock = nextSuperblock - consensus.superblock;
+        const int beginningOflastSuperblock = previousSuperblock == 0 // genesis check
                                                     ? 1
-                                                    : prevousSuperblock - consensus.superblock + 1;
+                                                    : previousSuperblock - consensus.superblock + 1;
         for (int i = beginningOflastSuperblock; i <= chain.Height(); ++i) {
             const auto blockIndex = chain[i];
             CBlock block;
@@ -623,7 +623,20 @@ public:
             const auto sblock = std::make_shared<const CBlock>(block);
             BlockConnected(sblock, blockIndex, {});
         }
+        {
+            LOCK(mu);
+            governanceCachedFromBlock = beginningOflastSuperblock;
+        }
         return result;
+    }
+
+    /**
+     * Returns the block number of the governance system's oldest proposal data.
+     * @return
+     */
+    int getGoveranceCachedSince() {
+        LOCK(mu);
+        return governanceCachedFromBlock;
     }
 
     /**
@@ -1014,8 +1027,8 @@ public: // static
         // vote must contain the signature generated from the
         // associated utxo casting the vote.
 
-        // Store all voting transactions
-        std::map<CWallet*, std::vector<CTransactionRef>> txns;
+        // Store all voting transactions counter
+        int txCounter{0};
 
         // Store the utxos that are associated with votes map<utxo, proposal hash>
         std::map<COutPoint, std::set<uint256>> usedUtxos;
@@ -1095,9 +1108,11 @@ public: // static
                         const auto & pv = proposals[j];
                         const bool utxoAlreadyUsed = usedUtxos.count(coin.GetInputCoin().outpoint) > 0 &&
                                 usedUtxos[coin.GetInputCoin().outpoint].count(pv.proposal.getHash()) > 0;
+                        if (utxoAlreadyUsed)
+                            continue;
                         const bool alreadyVoted = instance().hasVote(pv.proposal.getHash(), coin.GetInputCoin().outpoint);
-                        if (utxoAlreadyUsed || alreadyVoted)
-                            continue; // skip,  already voted
+                        if (alreadyVoted)
+                            continue; // skip, already voted
 
                         // Create and serialize the vote data and insert in OP_RETURN script. The vote
                         // is signed with the utxo that is representing that vote. The signing must
@@ -1139,10 +1154,8 @@ public: // static
                 // At this point the code assumes that MAX_OP_RETURN_IN_TRANSACTION is reached
                 // or that we've reached the last known vote (last item in all iterations)
 
-                if (voteOuts.empty()) { // Handle case where no votes were produced
-                    *failReasonRet = strprintf("Failed to submit votes, no votes were created, is the wallet unlocked and have sufficient funds? Funds required: %s", FormatMoney(params.voteBalance));
-                    return error(failReasonRet->c_str());
-                }
+                if (voteOuts.empty()) // Handle case where no votes were produced
+                    break;
 
                 // Select the inputs for use with the transaction. Also add separate outputs to pay
                 // back the vote inputs to their own addresses as change (requires estimating fees).
@@ -1191,8 +1204,16 @@ public: // static
                 txsRet.push_back(tx);
                 // Clear vote outs
                 voteOuts.clear();
+                // Increment vote transaction counter
+                ++txCounter;
 
             } while(!completelyDone);
+        }
+
+        // If not voting transactions were created, return error
+        if (txCounter == 0) {
+            *failReasonRet = strprintf("Failed to submit votes, no votes were created, is the wallet unlocked and have sufficient funds? Funds required: %s", FormatMoney(params.voteBalance));
+            return error(failReasonRet->c_str());
         }
 
         return true;
@@ -1337,84 +1358,118 @@ public: // static
      * Fetch the list of all proposals since the specified block.
      * @return
      */
-    static void getProposalsSince(const int & blockNumber, const CChain & chain, CCriticalSection & chainMutex,
-                                  std::vector<Proposal> & allProposals, std::vector<Vote> & allVotes)
+    static void getProposalsSince(const int & sinceBlock, const CChain & chain, CCriticalSection & chainMutex,
+                                  std::vector<Proposal> & allProposals, std::vector<Vote> & allVotes,
+                                  const bool & threadedSearch = false)
     {
-        // Only lookup blocks up to the previous superblock because
-        // governance has already cached proposals since then.
-        int toBlockHeight = PreviousSuperblock(Params().GetConsensus());
-        if (toBlockHeight - blockNumber > 0) {
-            const int totalBlocks = toBlockHeight - blockNumber;
-            // If we have a lot of blocks, use threads
-            if (totalBlocks > 0) {
-                const int twoWeeksOfBlocks{24*3600*14/static_cast<int>(Params().GetConsensus().nPowTargetSpacing)};
-                if (totalBlocks > twoWeeksOfBlocks) { // multithreaded
-                    // Shard the blocks into num_cores slices
-                    boost::thread_group tg;
-                    const auto cores = GetNumCores();
-                    const auto slice = totalBlocks/cores;
-                    unsigned int counter{0};
-                    Mutex mu;
-                    for (int k = blockNumber; k < toBlockHeight; k += slice) {
-                        const int start = k;
-                        const int end = start+slice > totalBlocks ? totalBlocks : start+slice; // check bounds
-                        tg.create_thread([start,end,&allProposals,&allVotes,&counter,&chain,&chainMutex,&mu] {
-                            RenameThread("bitcoin-proposalsince");
-                            for (int blockNumber = start; blockNumber < end; ++blockNumber) {
-                                if (ShutdownRequested()) // don't hold up shutdown requests
-                                    break;
-                                CBlockIndex *blockIndex;
-                                {
-                                    LOCK(chainMutex);
-                                    blockIndex = chain[blockNumber];
-                                }
-                                if (!blockIndex)
-                                    continue;
-                                CBlock block;
-                                if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus()))
-                                    continue;
-                                std::set<Proposal> ps;
-                                std::set<Vote> vs;
-                                Governance::dataFromBlock(&block, ps, vs, blockIndex);
-                                {
-                                    LOCK(mu);
-                                    allProposals.insert(allProposals.end(), ps.begin(), ps.end());
-                                    allVotes.insert(allVotes.end(), vs.begin(), vs.end());
-                                    ++counter;
-                                }
-                            }
-                        });
-                    }
-                    // Wait for all shards to process
-                    tg.join_all();
+        // Only lookup blocks prior to the governance system's cached
+        // block b/c any proposals and votes after this are already
+        // known.
+        const auto cachedSinceBlock = instance().getGoveranceCachedSince();
+        if (sinceBlock >= cachedSinceBlock) {
+            // Insert all cached proposals
+            const auto & proposals = gov::Governance::instance().getProposals();
+            allProposals.insert(allProposals.end(), proposals.begin(), proposals.end());
+            // Insert all cached votes
+            const auto & votes = gov::Governance::instance().getVotes();
+            allVotes.insert(allVotes.end(), votes.begin(), votes.end());
+            return;
+        }
 
-                } else { // single threaded
-                    for (int i = blockNumber; i < totalBlocks; ++i) {
+        int blockHeight{0};
+        {
+            LOCK(chainMutex);
+            blockHeight = chain.Height();
+        }
+        const auto toBlockHeight = cachedSinceBlock == 0 ? blockHeight : cachedSinceBlock;
+        const int totalBlocks = toBlockHeight - sinceBlock;
+
+        if (totalBlocks <= 0) // don't process if we don't have a valid block range
+            return;
+
+        if (threadedSearch) { // multithreaded
+            // Shard the blocks into num_cores slices
+            boost::thread_group tg;
+            const auto cores = GetNumCores();
+            const auto slice = totalBlocks/cores;
+            Mutex mu; // manage access to shared data
+            for (int k = 0; k < cores; ++k) {
+                const int start = sinceBlock + k*slice;
+                const int end = k == cores-1 ? toBlockHeight+1 // check bounds, +1 due to "<" logic below, ensure inclusion of last block
+                                             : start+slice;
+                tg.create_thread([start,end,&allProposals,&allVotes,&chain,&chainMutex,&mu] {
+                    RenameThread("bitcoin-proposalsince");
+                    for (int blockNumber = start; blockNumber < end; ++blockNumber) {
                         if (ShutdownRequested()) // don't hold up shutdown requests
                             break;
+
                         CBlockIndex *blockIndex;
                         {
                             LOCK(chainMutex);
-                            blockIndex = chain[i];
+                            blockIndex = chain[blockNumber];
                         }
                         if (!blockIndex)
                             continue;
+
                         CBlock block;
                         if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus()))
                             continue;
                         std::set<Proposal> ps;
                         std::set<Vote> vs;
                         Governance::dataFromBlock(&block, ps, vs, blockIndex);
-                        allProposals.insert(allProposals.end(), ps.begin(), ps.end());
-                        allVotes.insert(allVotes.end(), vs.begin(), vs.end());
+
+                        if (ps.empty() && vs.empty())
+                            return; // nothing to process, done
+
+                        {
+                            LOCK(mu);
+                            if (!ps.empty())
+                                allProposals.insert(allProposals.end(), ps.begin(), ps.end());
+                            if (!vs.empty())
+                                allVotes.insert(allVotes.end(), vs.begin(), vs.end());
+                        }
                     }
+                });
+            }
+            // Wait for all threads to complete
+            tg.join_all();
+
+        } else { // single threaded
+            for (int i = sinceBlock; i < toBlockHeight; ++i) {
+                if (ShutdownRequested()) // don't hold up shutdown requests
+                    break;
+
+                CBlockIndex *blockIndex;
+                {
+                    LOCK(chainMutex);
+                    blockIndex = chain[i];
                 }
+                if (!blockIndex)
+                    continue;
+
+                CBlock block;
+                if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus()))
+                    continue;
+                std::set<Proposal> ps;
+                std::set<Vote> vs;
+                Governance::dataFromBlock(&block, ps, vs, blockIndex);
+
+                if (ps.empty() && vs.empty())
+                    return; // nothing to process, done
+
+                if (!ps.empty())
+                    allProposals.insert(allProposals.end(), ps.begin(), ps.end());
+                if (!vs.empty())
+                    allVotes.insert(allVotes.end(), vs.begin(), vs.end());
             }
         }
 
         // Insert all cached proposals
         auto proposals = gov::Governance::instance().getProposals();
         allProposals.insert(allProposals.end(), proposals.begin(), proposals.end());
+        // Insert all cached votes
+        auto votes = gov::Governance::instance().getVotes();
+        allVotes.insert(allVotes.end(), votes.begin(), votes.end());
     }
 
 protected:
@@ -1450,6 +1505,21 @@ protected:
                 } else // if no vote exists then add
                     votes[vote.getHash()] = std::move(vote);
             }
+            // Remove any spent votes, i.e. any votes that have had their
+            // utxos spent in this block. We'll store all the vin prevouts
+            // and then check any votes that share those utxos to determine
+            // if they're invalid.
+            std::set<COutPoint> prevouts;
+            for (const auto & tx : block->vtx) {
+                for (const auto & vin : tx->vin)
+                    prevouts.insert(vin.prevout);
+            }
+            for (auto it = votes.cbegin(); it != votes.cend(); ) {
+                if (prevouts.count(it->second.getUtxo()))
+                    votes.erase(it++); // vote utxo was spent in vin, remove it
+                else
+                    ++it;
+            }
         }
     }
 
@@ -1471,6 +1541,7 @@ protected:
     Mutex mu;
     std::map<uint256, Proposal> proposals GUARDED_BY(mu);
     std::map<uint256, Vote> votes GUARDED_BY(mu);
+    int governanceCachedFromBlock{0};
 };
 
 }
