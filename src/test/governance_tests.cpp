@@ -127,6 +127,23 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
     const auto & consensus = params.GetConsensus();
     CTxDestination dest(coinbaseKey.GetPubKey().GetID());
 
+    // Check vote copy constructor
+    {
+        gov::Vote vote1(COutPoint{m_coinbase_txns[5]->vin[0].prevout});
+        gov::Vote vote2;
+        vote2 = vote1;
+        BOOST_CHECK_MESSAGE(vote1 == vote2, "Vote copy constructor should work");
+    }
+
+    // Check proposal copy constructor
+    {
+        gov::Proposal proposal1("Test proposal-1", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
+                         EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+        gov::Proposal proposal2;
+        proposal2 = proposal1;
+        BOOST_CHECK_MESSAGE(proposal1 == proposal2, "Proposal copy constructor should work");
+    }
+
     // Check normal proposal
     gov::Proposal p1("Test proposal-1", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
             EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
@@ -797,7 +814,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_proposalssince)
 
             std::vector<gov::Proposal> allProposals;
             std::vector<gov::Vote> allVotes;
-            gov::Governance::getProposalsSince(searchFrom, chainActive, cs_main, allProposals, allVotes, true);
+            gov::Governance::getProposalsSince(searchFrom, allProposals, allVotes);
             BOOST_CHECK_MESSAGE(proposals.size() == allProposals.size(), strprintf("Expected getProposalsSince to return %d proposals, instead it returned %d", proposals.size(), allProposals.size()));
             BOOST_CHECK_MESSAGE(votes.size() == allVotes.size(), strprintf("Expected getProposalsSince to return %d votes, instead it returned %d", votes.size(), allVotes.size()));
 
@@ -843,7 +860,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_proposalssince)
 
             std::vector<gov::Proposal> allProposals;
             std::vector<gov::Vote> allVotes;
-            gov::Governance::getProposalsSince(1, chainActive, cs_main, allProposals, allVotes, true);
+            gov::Governance::getProposalsSince(1, allProposals, allVotes);
             // Insert proposals from batch A
             proposals.insert(proposalsA.begin(), proposalsA.end());
             BOOST_CHECK_MESSAGE(proposals.size() == allProposals.size(), strprintf("Expected getProposalsSince to return %d proposals, instead it returned %d", proposals.size(), allProposals.size()));
@@ -922,7 +939,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata)
     }
     pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
-    BOOST_CHECK_MESSAGE(gov::Governance::instance().loadGovernanceData(chainActive, consensus), "Failed to load governance data from the chain");
+    failReason.clear();
+    BOOST_CHECK_MESSAGE(gov::Governance::instance().loadGovernanceData(chainActive, cs_main, consensus, failReason), "Failed to load governance data from the chain");
+    BOOST_CHECK_MESSAGE(failReason.empty(), "loadGovernanceData fail reason should be empty");
     auto govprops = gov::Governance::instance().getProposals();
     BOOST_CHECK_MESSAGE(govprops.size() == proposalCount, strprintf("Failed to load governance data proposals, found %d expected %d", govprops.size(), proposalCount));
 
@@ -992,7 +1011,10 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata2)
         }
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
-        BOOST_CHECK_MESSAGE(gov::Governance::instance().loadGovernanceData(chainActive, consensus), "Failed to load governance data from the chain");
+        failReason.clear();
+        BOOST_CHECK_MESSAGE(gov::Governance::instance().loadGovernanceData(chainActive, cs_main, consensus, failReason), "Failed to load governance data from the chain");
+        BOOST_CHECK_MESSAGE(failReason.empty(), "loadGovernanceData fail reason should be empty");
+
         auto gvotes = gov::Governance::instance().getVotes();
         int expecting{0};
         for (const auto & tx : txns) { // only count valid votes

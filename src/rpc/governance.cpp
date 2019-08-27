@@ -121,10 +121,8 @@ static UniValue listproposals(const JSONRPCRequest& request)
             std::vector<gov::Vote> v =  gov::Governance::instance().getVotes(proposal.getHash());
             votes.insert(votes.end(), v.begin(), v.end());
         }
-    } else { // if more than 10 days worth of blocks use threaded check
-        const int twoWeeksOfBlocks{24*3600*10/static_cast<int>(Params().GetConsensus().nPowTargetSpacing)};
-        const bool multithreadedSearch = (blockHeight-sinceBlock) >= twoWeeksOfBlocks;
-        gov::Governance::getProposalsSince(sinceBlock, chainActive, cs_main, proposals, votes, multithreadedSearch);
+    } else {
+        gov::Governance::getProposalsSince(sinceBlock, proposals, votes);
     }
 
     UniValue ret(UniValue::VARR);

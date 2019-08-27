@@ -71,12 +71,18 @@ static bool GetKeyIDForUTXO(const COutPoint & utxo, CTransactionRef & tx, CKeyID
  * @param utxo
  * @return
  */
-static bool IsUTXOSpent(const COutPoint & utxo) {
-    LOCK(mempool.cs);
-    CCoinsViewMemPool view(pcoinsTip.get(), mempool);
+static bool IsUTXOSpent(const COutPoint & utxo, const bool & mempoolCheck = true) {
     Coin coin;
-    if (!view.GetCoin(utxo, coin) || mempool.isSpent(utxo))
-        return true;
+    if (mempoolCheck) {
+        LOCK2(cs_main, mempool.cs);
+        CCoinsViewMemPool view(pcoinsTip.get(), mempool);
+        if (!view.GetCoin(utxo, coin) || mempool.isSpent(utxo))
+            return true;
+    } else {
+        LOCK(cs_main);
+        if (!pcoinsTip->GetCoin(utxo, coin))
+            return true;
+    }
     return false;
 }
 
@@ -144,8 +150,9 @@ class Proposal {
 public:
     explicit Proposal(std::string name, int superblock, CAmount amount, std::string address,
                       std::string url, std::string description) : name(std::move(name)), superblock(superblock),
-                                                                  amount(amount), address(std::move(address)), url(std::move(url)),
-                                                                  description(std::move(description)) {}
+                                              amount(amount), address(std::move(address)), url(std::move(url)),
+                                              description(std::move(description)) {}
+    explicit Proposal(int blockNumber) : blockNumber(blockNumber) {}
     Proposal() = default;
     Proposal(const Proposal &) = default;
     Proposal& operator=(const Proposal &) = default;
@@ -252,6 +259,14 @@ public:
     }
 
     /**
+     * Proposal block number
+     * @return
+     */
+    const int & getBlockNumber() const {
+        return blockNumber;
+    }
+
+    /**
      * Proposal hash
      * @return
      */
@@ -284,6 +299,9 @@ protected:
     std::string address;
     std::string url;
     std::string description;
+
+protected: // memory only
+    int blockNumber{0}; // block containing this proposal
 };
 
 enum VoteType : uint8_t {
@@ -303,7 +321,9 @@ public:
                                                                                              utxo(utxo) {
         loadKeyID();
     }
-    explicit Vote(const COutPoint & outpoint, const int64_t & time = 0) : outpoint(outpoint), time(time) {}
+    explicit Vote(const COutPoint & outpoint, const int64_t & time = 0, const int & blockNumber = 0) : outpoint(outpoint),
+                                                                                                       time(time),
+                                                                                                       blockNumber(blockNumber) {}
     Vote() = default;
     Vote(const Vote &) = default;
     Vote& operator=(const Vote &) = default;
@@ -476,6 +496,14 @@ public:
         return amount;
     }
 
+    /**
+     * Vote block number
+     * @return
+     */
+    const int & getBlockNumber() const {
+        return blockNumber;
+    }
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -525,6 +553,7 @@ protected: // memory only
     int64_t time; // block time of vote
     CAmount amount; // of vote's utxo (this is not the OP_RETURN outpoint amount, which is 0)
     CKeyID keyid; // CKeyID of vote's utxo
+    int blockNumber{0}; // block containing this vote
 };
 
 /**
@@ -602,41 +631,122 @@ public:
     }
 
     /**
-     * Loads the governance data from the past and current superblocks.
+     * Loads the governance data from the blockchain ledger. It's possible to optimize
+     * this further by creating a separate leveldb for goverance data. Currently, this
+     * method will read every block on the chain and search for goverance data.
      * @return
      */
-    bool loadGovernanceData(const CChain & chain, const Consensus::Params & consensus) {
-        bool result{true};
-        const int nextSuperblock = chain.Height() - chain.Height() % consensus.superblock + consensus.superblock;
-        const int previousSuperblock = nextSuperblock - consensus.superblock;
-        const int beginningOflastSuperblock = previousSuperblock == 0 // genesis check
-                                                    ? 1
-                                                    : previousSuperblock - consensus.superblock + 1;
-        for (int i = beginningOflastSuperblock; i <= chain.Height(); ++i) {
-            const auto blockIndex = chain[i];
-            CBlock block;
-            if (!ReadBlockFromDisk(block, blockIndex, consensus)) {
-                result = false;
-                continue;
-            }
-            // Process block
-            const auto sblock = std::make_shared<const CBlock>(block);
-            BlockConnected(sblock, blockIndex, {});
+    bool loadGovernanceData(const CChain & chain, CCriticalSection & chainMutex,
+                            const Consensus::Params & consensus, std::string & failReasonRet)
+    {
+        int blockHeight{0};
+        {
+            LOCK(chainMutex);
+            blockHeight = chain.Height();
         }
+        // No need to load any governance data if we on the genesis block
+        // or if the governance system hasn't been enabled yet.
+        if (blockHeight == 0 || blockHeight < consensus.governanceBlock)
+            return true;
+
+        // Shard the blocks into num_cores slices
+        boost::thread_group tg;
+        const auto cores = GetNumCores();
+        Mutex mut; // manage access to shared data
+
+        const int totalBlocks = blockHeight - consensus.governanceBlock;
+        int slice = totalBlocks / cores;
+        bool failed{false};
+        for (int k = 0; k < cores; ++k) {
+            const int start = consensus.governanceBlock + k*slice;
+            const int end = k == cores-1 ? blockHeight+1 // check bounds, +1 due to "<" logic below, ensure inclusion of last block
+                                         : start+slice;
+            tg.create_thread([start,end,&failed,&failReasonRet,&chain,&chainMutex,&mut,this] {
+                RenameThread("bitcoin-governance");
+                for (int blockNumber = start; blockNumber < end; ++blockNumber) {
+                    if (ShutdownRequested()) { // don't hold up shutdown requests
+                        failed = true;
+                        break;
+                    }
+
+                    CBlockIndex *blockIndex;
+                    {
+                        LOCK(chainMutex);
+                        blockIndex = chain[blockNumber];
+                    }
+                    if (!blockIndex) {
+                        LOCK(mut);
+                        failed = true;
+                        failReasonRet += strprintf("Failed to read block index for block %d\n", blockNumber);
+                        return;
+                    }
+
+                    CBlock block;
+                    if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus())) {
+                        LOCK(mut);
+                        failed = true;
+                        failReasonRet += strprintf("Failed to read block from disk for block %d\n", blockNumber);
+                        return;
+                    }
+                    // Process block
+                    const auto sblock = std::make_shared<const CBlock>(block);
+                    BlockConnected(sblock, blockIndex, {});
+                }
+            });
+        }
+        // Wait for all threads to complete
+        tg.join_all();
+
         {
             LOCK(mu);
-            governanceCachedFromBlock = beginningOflastSuperblock;
+            if (votes.empty() || failed)
+                return !failed;
         }
-        return result;
-    }
 
-    /**
-     * Returns the block number of the governance system's oldest proposal data.
-     * @return
-     */
-    int getGoveranceCachedSince() {
-        LOCK(mu);
-        return governanceCachedFromBlock;
+        // Now that all votes are loaded, check and remove any invalid ones.
+        // Invalid votes can be evaluated using multiple threads since we
+        // have the complete dataset in memory. Below the votes are sliced
+        // up into shards and each available thread works on its own shard.
+        std::vector<std::pair<uint256, Vote>> tmpvotes;
+        tmpvotes.reserve(votes.size());
+        {
+            LOCK(mu);
+            std::copy(votes.begin(), votes.end(), std::back_inserter(tmpvotes));
+        }
+        slice = tmpvotes.size() / cores;
+        for (int k = 0; k < cores; ++k) {
+            const int start = k*slice;
+            const int end = k == cores-1 ? tmpvotes.size()
+                                         : start+slice;
+            try {
+                tg.create_thread([start,end,&tmpvotes,&failed,&mut,this] {
+                    RenameThread("bitcoin-governance");
+                    for (int i = start; i < end; ++i) {
+                        if (ShutdownRequested()) { // don't hold up shutdown requests
+                            failed = true;
+                            break;
+                        }
+                        Vote vote;
+                        {
+                            LOCK(mut);
+                            vote = tmpvotes[i].second;
+                        }
+                        // Erase votes with spent utxos
+                        if (IsUTXOSpent(vote.getUtxo(), false)) { // no mempool check required here (might not be loaded anyways)
+                            LOCK(mu);
+                            votes.erase(vote.getHash());
+                        }
+                    }
+                });
+            } catch (std::exception & e) {
+                failed = true;
+                failReasonRet += strprintf("Failed to create thread to load governance data: %s\n", e.what());
+            }
+        }
+        // Wait for all threads to complete
+        tg.join_all();
+
+        return !failed;
     }
 
     /**
@@ -828,13 +938,13 @@ public: // static
 
                 if (obj.getType() == PROPOSAL) {
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
-                    Proposal proposal; ss2 >> proposal;
+                    Proposal proposal(blockIndex ? blockIndex->nHeight : 0); ss2 >> proposal;
                     // Skip the cutoff check if block index is not specified
                     if (proposal.isValid(consensus) && (!blockIndex || meetsCutoff(proposal, blockIndex->nHeight, consensus)))
                         proposalsRet.insert(proposal);
                 } else if (obj.getType() == VOTE) {
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
-                    Vote vote({tx->GetHash(), static_cast<uint32_t>(n)}, block->GetBlockTime());
+                    Vote vote({tx->GetHash(), static_cast<uint32_t>(n)}, block->GetBlockTime(), blockIndex ? blockIndex->nHeight : 0);
                     ss2 >> vote;
                     // Check that the vote is valid and that it meets the cutoff requirements
                     if (!vote.isValid(consensus) || (blockIndex && !meetsCutoff(vote, blockIndex->nHeight, consensus)))
@@ -1355,121 +1465,23 @@ public: // static
     }
 
     /**
-     * Fetch the list of all proposals since the specified block.
-     * @return
+     * Fetch the list of all proposals since the specified block. Requires loadGovernanceData to have been run
+     * on chain load.
+     * @param sinceBlock
+     * @param allProposals
+     * @param allVotes
      */
-    static void getProposalsSince(const int & sinceBlock, const CChain & chain, CCriticalSection & chainMutex,
-                                  std::vector<Proposal> & allProposals, std::vector<Vote> & allVotes,
-                                  const bool & threadedSearch = false)
-    {
-        // Only lookup blocks prior to the governance system's cached
-        // block b/c any proposals and votes after this are already
-        // known.
-        const auto cachedSinceBlock = instance().getGoveranceCachedSince();
-        if (sinceBlock >= cachedSinceBlock) {
-            // Insert all cached proposals
-            const auto & proposals = gov::Governance::instance().getProposals();
-            allProposals.insert(allProposals.end(), proposals.begin(), proposals.end());
-            // Insert all cached votes
-            const auto & votes = gov::Governance::instance().getVotes();
-            allVotes.insert(allVotes.end(), votes.begin(), votes.end());
-            return;
-        }
-
-        int blockHeight{0};
-        {
-            LOCK(chainMutex);
-            blockHeight = chain.Height();
-        }
-        const auto toBlockHeight = cachedSinceBlock == 0 ? blockHeight : cachedSinceBlock;
-        const int totalBlocks = toBlockHeight - sinceBlock;
-
-        if (totalBlocks <= 0) // don't process if we don't have a valid block range
-            return;
-
-        if (threadedSearch) { // multithreaded
-            // Shard the blocks into num_cores slices
-            boost::thread_group tg;
-            const auto cores = GetNumCores();
-            const auto slice = totalBlocks/cores;
-            Mutex mu; // manage access to shared data
-            for (int k = 0; k < cores; ++k) {
-                const int start = sinceBlock + k*slice;
-                const int end = k == cores-1 ? toBlockHeight+1 // check bounds, +1 due to "<" logic below, ensure inclusion of last block
-                                             : start+slice;
-                tg.create_thread([start,end,&allProposals,&allVotes,&chain,&chainMutex,&mu] {
-                    RenameThread("bitcoin-proposalsince");
-                    for (int blockNumber = start; blockNumber < end; ++blockNumber) {
-                        if (ShutdownRequested()) // don't hold up shutdown requests
-                            break;
-
-                        CBlockIndex *blockIndex;
-                        {
-                            LOCK(chainMutex);
-                            blockIndex = chain[blockNumber];
-                        }
-                        if (!blockIndex)
-                            continue;
-
-                        CBlock block;
-                        if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus()))
-                            continue;
-                        std::set<Proposal> ps;
-                        std::set<Vote> vs;
-                        Governance::dataFromBlock(&block, ps, vs, blockIndex);
-
-                        if (ps.empty() && vs.empty())
-                            return; // nothing to process, done
-
-                        {
-                            LOCK(mu);
-                            if (!ps.empty())
-                                allProposals.insert(allProposals.end(), ps.begin(), ps.end());
-                            if (!vs.empty())
-                                allVotes.insert(allVotes.end(), vs.begin(), vs.end());
-                        }
-                    }
-                });
-            }
-            // Wait for all threads to complete
-            tg.join_all();
-
-        } else { // single threaded
-            for (int i = sinceBlock; i < toBlockHeight; ++i) {
-                if (ShutdownRequested()) // don't hold up shutdown requests
-                    break;
-
-                CBlockIndex *blockIndex;
-                {
-                    LOCK(chainMutex);
-                    blockIndex = chain[i];
-                }
-                if (!blockIndex)
-                    continue;
-
-                CBlock block;
-                if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus()))
-                    continue;
-                std::set<Proposal> ps;
-                std::set<Vote> vs;
-                Governance::dataFromBlock(&block, ps, vs, blockIndex);
-
-                if (ps.empty() && vs.empty())
-                    return; // nothing to process, done
-
-                if (!ps.empty())
-                    allProposals.insert(allProposals.end(), ps.begin(), ps.end());
-                if (!vs.empty())
-                    allVotes.insert(allVotes.end(), vs.begin(), vs.end());
-            }
-        }
-
-        // Insert all cached proposals
+    static void getProposalsSince(const int & sinceBlock, std::vector<Proposal> & allProposals, std::vector<Vote> & allVotes) {
         auto proposals = gov::Governance::instance().getProposals();
-        allProposals.insert(allProposals.end(), proposals.begin(), proposals.end());
-        // Insert all cached votes
         auto votes = gov::Governance::instance().getVotes();
-        allVotes.insert(allVotes.end(), votes.begin(), votes.end());
+        for (const auto & p : proposals) {
+            if (p.getBlockNumber() >= sinceBlock)
+                allProposals.push_back(p);
+        }
+        for (const auto & v : votes) {
+            if (v.getBlockNumber() >= sinceBlock)
+                allVotes.push_back(v);
+        }
     }
 
 protected:

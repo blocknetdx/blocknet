@@ -1673,11 +1673,6 @@ bool AppInitMain(InitInterfaces& interfaces)
         ::feeEstimator.Read(est_filein);
     fFeeEstimatesInitialized = true;
 
-    // *********************************************************
-    // Load governance data for the past and current superblocks
-    if (!gov::Governance::instance().loadGovernanceData(chainActive, Params().GetConsensus()))
-        LogPrintf("ERROR: Failed to load Governance data\n");
-
     // ********************************************************* Step 8: start indexers
     // Blocknet PoS requires indexer to be started before chain load
 
@@ -1764,6 +1759,14 @@ bool AppInitMain(InitInterfaces& interfaces)
     }
 
     // ********************************************************* Step 12: start node
+
+    // Load governance data from chain data
+    std::string failReason;
+    if (!gov::Governance::instance().loadGovernanceData(chainActive, cs_main, Params().GetConsensus(), failReason)) {
+        LogPrintf("ERROR: Failed to load Governance data: %s\n", failReason);
+        uiInterface.InitMessage(_("Failed to load Governance data. If the problem continues please perform a chain reindex. See debug.log for more details"));
+        return false;
+    }
 
     int chain_active_height;
 

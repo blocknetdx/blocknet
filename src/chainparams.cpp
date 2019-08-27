@@ -179,11 +179,12 @@ public:
         /* disable fallback fee on mainnet */
         m_fallback_fee_enabled = false;
 
-        // Superblock
+        // Governance
         consensus.superblock = 43200;
         consensus.proposalCutoff = 2880;
         consensus.votingCutoff = 60;
         consensus.proposalMaxAmount = 40000 * COIN;
+        consensus.governanceBlock = 1068000;
 
         // subsidy func mainnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -324,11 +325,12 @@ public:
         /* enable fallback fee on testnet */
         m_fallback_fee_enabled = true;
 
-        // Superblock
+        // Governance
         consensus.superblock = 144;
         consensus.proposalCutoff = 20;
         consensus.votingCutoff = 10;
         consensus.proposalMaxAmount = 20000 * COIN;
+        consensus.governanceBlock = 250000;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -433,11 +435,12 @@ public:
         /* enable fallback fee on regtest */
         m_fallback_fee_enabled = true;
 
-        // Superblock
+        // Governance
         consensus.superblock = 165;
         consensus.proposalCutoff = 20;
         consensus.votingCutoff = 10;
         consensus.proposalMaxAmount = 40000 * COIN;
+        consensus.governanceBlock = 1;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
