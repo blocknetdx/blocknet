@@ -550,8 +550,8 @@ protected:
 protected: // memory only
     CPubKey pubkey;
     COutPoint outpoint; // of vote's OP_RETURN outpoint
-    int64_t time; // block time of vote
-    CAmount amount; // of vote's utxo (this is not the OP_RETURN outpoint amount, which is 0)
+    int64_t time{0}; // block time of vote
+    CAmount amount{0}; // of vote's utxo (this is not the OP_RETURN outpoint amount, which is 0)
     CKeyID keyid; // CKeyID of vote's utxo
     int blockNumber{0}; // block containing this vote
 };
@@ -713,10 +713,10 @@ public:
             LOCK(mu);
             std::copy(votes.begin(), votes.end(), std::back_inserter(tmpvotes));
         }
-        slice = tmpvotes.size() / cores;
+        slice = static_cast<int>(tmpvotes.size()) / cores;
         for (int k = 0; k < cores; ++k) {
             const int start = k*slice;
-            const int end = k == cores-1 ? tmpvotes.size()
+            const int end = k == cores-1 ? static_cast<int>(tmpvotes.size())
                                          : start+slice;
             try {
                 tg.create_thread([start,end,&tmpvotes,&failed,&mut,this] {
@@ -758,7 +758,7 @@ public:
         LOCK(mu);
         if (proposals.count(hash) > 0)
             return proposals[hash];
-        return std::move(Proposal{});
+        return Proposal{};
     }
 
     /**
@@ -770,7 +770,7 @@ public:
         LOCK(mu);
         if (votes.count(hash) > 0)
             return votes[hash];
-        return std::move(Vote{});
+        return Vote{};
     }
 
     /**
@@ -917,7 +917,7 @@ public: // static
         for (const auto & tx : block->vtx) {
             if (tx->IsCoinBase())
                 continue;
-            for (int n = 0; n < tx->vout.size(); ++n) {
+            for (int n = 0; n < static_cast<int>(tx->vout.size()); ++n) {
                 const auto & out = tx->vout[n];
                 if (out.scriptPubKey[0] != OP_RETURN)
                     continue; // no proposal data
@@ -1062,9 +1062,9 @@ public: // static
                 else if (vote.getVote() == gov::ABSTAIN)
                     tally.cabstain += vote.getAmount();
             }
-            tally.yes = tally.cyes / params.voteBalance;
-            tally.no = tally.cno / params.voteBalance;
-            tally.abstain = tally.cabstain / params.voteBalance;
+            tally.yes = static_cast<int>(tally.cyes / params.voteBalance);
+            tally.no = static_cast<int>(tally.cno / params.voteBalance);
+            tally.abstain = static_cast<int>(tally.cabstain / params.voteBalance);
             tallies.push_back(tally);
         }
 
@@ -1078,7 +1078,7 @@ public: // static
             finalTally.cno += tally.cno;
             finalTally.cabstain += tally.cabstain;
         }
-        return std::move(finalTally);
+        return finalTally;
     }
 
     /**
@@ -1496,7 +1496,7 @@ protected:
         {
             LOCK(mu);
             for (auto & proposal : ps)
-                proposals[proposal.getHash()] = std::move(proposal);
+                proposals[proposal.getHash()] = proposal;
             for (auto & vote : vs) {
                 if (!proposals.count(vote.getProposal()))
                     continue; // skip votes without valid proposals
@@ -1511,11 +1511,11 @@ protected:
                 // Changes to this code below must also be applied to "dataFromBlock()"
                 if (votes.count(vote.getHash())) {
                     if (vote.getTime() > votes[vote.getHash()].getTime())
-                        votes[vote.getHash()] = std::move(vote);
+                        votes[vote.getHash()] = vote;
                     else if (UintToArith256(vote.sigHash()) > UintToArith256(votes[vote.getHash()].sigHash()))
-                        votes[vote.getHash()] = std::move(vote);
+                        votes[vote.getHash()] = vote;
                 } else // if no vote exists then add
-                    votes[vote.getHash()] = std::move(vote);
+                    votes[vote.getHash()] = vote;
             }
             // Remove any spent votes, i.e. any votes that have had their
             // utxos spent in this block. We'll store all the vin prevouts
@@ -1553,7 +1553,6 @@ protected:
     Mutex mu;
     std::map<uint256, Proposal> proposals GUARDED_BY(mu);
     std::map<uint256, Vote> votes GUARDED_BY(mu);
-    int governanceCachedFromBlock{0};
 };
 
 }
