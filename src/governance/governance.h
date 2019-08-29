@@ -731,7 +731,7 @@ public:
                             spentPrevouts[vin.prevout] = blockIndex->nHeight;
                     }
                     // Process block
-                    processBlock(&block, blockIndex, false);
+                    processBlock(&block, blockIndex, Params().GetConsensus(), false);
                 }
             });
         }
@@ -860,84 +860,21 @@ public:
         return std::move(vos);
     }
 
-public: // static
-
     /**
-     * Singleton instance.
-     * @return
-     */
-    static Governance & instance() {
-        static Governance gov;
-        return gov;
-    }
-
-    /**
-     * Returns the upcoming superblock.
-     * @param params
-     * @return
-     */
-    static int nextSuperblock(const Consensus::Params & params, const int fromBlock = 0) {
-        return NextSuperblock(params, fromBlock);
-    }
-
-    /**
-     * Returns true if the proposal meets the requirements for the cutoff.
+     * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
      * @param proposal
      * @param blockNumber
      * @param params
      * @return
      */
-    static bool meetsCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
-        // Proposals can be submitted multiple superblocks in advance. As a
-        // result, a proposal meets the cutoff for a block number that's prior
-        // to the proposal's superblock.
-        return blockNumber <= proposal.getSuperblock() - Params().GetConsensus().proposalCutoff;
-    }
-
-    /**
-     * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
-     * @param vote
-     * @param blockNumber
-     * @param params
-     * @return
-     */
-    static bool meetsCutoff(const Vote & vote, const int & blockNumber, const Consensus::Params & params) {
-        const auto & proposal = instance().getProposal(vote.getProposal());
+    bool meetsCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
         if (proposal.isNull()) // if no proposal found
             return false;
         // Votes can happen multiple superblocks in advance if a proposal is
         // created for a future superblock. As a result, a vote meets the
         // cutoff for a block number that's prior to the superblock of its
         // associated proposal.
-        return blockNumber <= proposal.getSuperblock() - Params().GetConsensus().votingCutoff;
-    }
-
-    /**
-     * If the vote's pubkey matches the specified vin's pubkey returns true, otherwise
-     * returns false.
-     * @param vote
-     * @param vin
-     * @return
-     */
-    static bool matchesVinPubKey(const Vote & vote, const CTxIn & vin) {
-        CScript::const_iterator pc = vin.scriptSig.begin();
-        std::vector<unsigned char> data;
-        bool isPubkey{false};
-        while (pc < vin.scriptSig.end()) {
-            opcodetype opcode;
-            if (!vin.scriptSig.GetOp(pc, opcode, data))
-                break;
-            if (data.size() == CPubKey::PUBLIC_KEY_SIZE || data.size() == CPubKey::COMPRESSED_PUBLIC_KEY_SIZE) {
-                isPubkey = true;
-                break;
-            }
-        }
-
-        if (!isPubkey)
-            return false; // skip, no match
-
-        CPubKey pubkey(data);
-        return pubkey.GetID() == vote.getPubKey().GetID();
+        return blockNumber <= proposal.getSuperblock() - params.votingCutoff;
     }
 
     /**
@@ -946,13 +883,12 @@ public: // static
      * @param proposalsRet
      * @param votesRet
      * @param blockIndex
-     * @param checkProposal
+     * @param checkProposal If false, disables the proposal check
      * @return
      */
-    static void dataFromBlock(const CBlock *block, std::set<Proposal> & proposalsRet, std::set<Vote> & votesRet,
-            const CBlockIndex *blockIndex=nullptr, const bool checkProposal = true)
+    void dataFromBlock(const CBlock *block, std::set<Proposal> & proposalsRet, std::set<Vote> & votesRet,
+            const Consensus::Params & params, const CBlockIndex *blockIndex=nullptr, const bool checkProposal = true)
     {
-        const auto & consensus = Params().GetConsensus();
         for (const auto & tx : block->vtx) {
             if (tx->IsCoinBase())
                 continue;
@@ -979,7 +915,7 @@ public: // static
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
                     Proposal proposal(blockIndex ? blockIndex->nHeight : 0); ss2 >> proposal;
                     // Skip the cutoff check if block index is not specified
-                    if (proposal.isValid(consensus) && (!blockIndex || meetsCutoff(proposal, blockIndex->nHeight, consensus)))
+                    if (proposal.isValid(params) && (!blockIndex || meetsCutoff(proposal, blockIndex->nHeight, params)))
                         proposalsRet.insert(proposal);
                 } else if (obj.getType() == VOTE) {
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
@@ -989,10 +925,10 @@ public: // static
                     // the vote is valid and that it also meets the cutoff requirements.
                     // A valid proposal for this vote must exist in a previous block
                     // otherwise the vote is discarded.
-                    if ((blockIndex && checkProposal && !instance().hasProposal(vote.getProposal(), blockIndex->nHeight))
-                        || !vote.isValid(consensus)
-                        || (blockIndex && !meetsCutoff(vote, blockIndex->nHeight, consensus)))
-                            continue;
+                    if ((blockIndex && checkProposal && !hasProposal(vote.getProposal(), blockIndex->nHeight))
+                        || !vote.isValid(params)
+                        || (blockIndex && !meetsCutoff(getProposal(vote.getProposal()), blockIndex->nHeight, params)))
+                        continue;
                     // Check to make sure that a valid signature exists in the vin scriptSig
                     // that matches the same pubkey used in the vote signature.
                     bool validVin{false};
@@ -1027,137 +963,201 @@ public: // static
     }
 
     /**
-     * Returns the vote tally for the specified proposal.
-     * @param proposal
-     * @param votes Vote array to search
-     * @param params
-     * @return
-     */
-    static Tally getTally(const uint256 & proposal, const std::vector<Vote> & votes, const Consensus::Params & params) {
-        // Organize votes by tx hash to designate common votes (from same user)
-        // We can assume all the votes in the same tx are associated with the
-        // same user (i.e. all privkeys in the votes are known by the tx signer)
-        std::map<uint256, std::set<Vote>> userVotes;
-        // Cross reference all votes associated with a destination. If a vote
-        // is associated with a common destination we can assume the same user
-        // casted the vote. All votes in the tx imply the same user and all
-        // votes associated with the same destination imply the same user.
-        std::map<CTxDestination, std::set<Vote>> userVotesDest;
-
-        std::vector<Vote> proposalVotes = votes;
-        // remove all votes that don't match the proposal
-        proposalVotes.erase(std::remove_if(proposalVotes.begin(), proposalVotes.end(), [&proposal](const Vote & vote) -> bool {
-            return proposal != vote.getProposal();
-        }), proposalVotes.end());
-
-        // Prep our search containers
-        for (const auto & vote : proposalVotes) {
-            std::set<Vote> & v = userVotes[vote.getOutpoint().hash];
-            v.insert(vote);
-            userVotes[vote.getOutpoint().hash] = v;
-
-            std::set<Vote> & v2 = userVotesDest[CTxDestination{vote.getPubKey().GetID()}];
-            v2.insert(vote);
-            userVotesDest[CTxDestination{vote.getPubKey().GetID()}] = v2;
-        }
-
-        // Iterate over all transactions and associated votes. In order to
-        // prevent counting too many votes we need to tally up votes
-        // across users separately and only count up their respective
-        // votes in lieu of the maximum vote balance requirements.
-        std::set<Vote> counted; // track counted votes
-        std::vector<Tally> tallies;
-        for (const auto & item : userVotes) {
-            // First count all unique votes associated with the same tx.
-            // This indicates they're all likely from the same user or
-            // group of users pooling votes.
-            std::set<Vote> allUnique;
-            allUnique.insert(item.second.begin(), item.second.end());
-            for (const auto & vote : item.second) {
-                // Add all unique votes associated with the same destination.
-                // Since we're first iterating over all the votes in the
-                // same tx, and then over the votes based on common destination
-                // we're able to get all the votes associated with a user.
-                // The only exception is if a user votes from different wallets
-                // and doesn't reveal the connection by combining into the same
-                // tx. As a result, there's an optimal way to cast votes and that
-                // should be taken into consideration on the voting client.
-                const auto & destVotes = userVotesDest[CTxDestination{vote.getPubKey().GetID()}];
-                allUnique.insert(destVotes.begin(), destVotes.end());
-            }
-
-            // Prevent counting votes more than once
-            for (auto it = allUnique.begin(); it != allUnique.end(); ) {
-                if (counted.count(*it) > 0)
-                    allUnique.erase(it++);
-                else ++it;
-            }
-
-            if (allUnique.empty())
-                continue; // nothing to count
-            counted.insert(allUnique.begin(), allUnique.end());
-
-            Tally tally;
-            for (const auto & vote : allUnique)  {
-                if (vote.getVote() == gov::YES)
-                    tally.cyes += vote.getAmount();
-                else if (vote.getVote() == gov::NO)
-                    tally.cno += vote.getAmount();
-                else if (vote.getVote() == gov::ABSTAIN)
-                    tally.cabstain += vote.getAmount();
-            }
-            tally.yes = static_cast<int>(tally.cyes / params.voteBalance);
-            tally.no = static_cast<int>(tally.cno / params.voteBalance);
-            tally.abstain = static_cast<int>(tally.cabstain / params.voteBalance);
-            tallies.push_back(tally);
-        }
-
-        // Tally all votes across all users that voted on this proposal
-        Tally finalTally;
-        for (const auto & tally : tallies) {
-            finalTally.yes += tally.yes;
-            finalTally.no += tally.no;
-            finalTally.abstain += tally.abstain;
-            finalTally.cyes += tally.cyes;
-            finalTally.cno += tally.cno;
-            finalTally.cabstain += tally.cabstain;
-        }
-        return finalTally;
-    }
-
-    /**
      * Return the superblock results for all the proposals scheduled for the specified superblock.
      * @param superblock
      * @param params
      * @return
      */
-    static std::map<Proposal, Tally> getSuperblockResults(const int & superblock, const Consensus::Params & params) {
+    std::map<Proposal, Tally> getSuperblockResults(const int & superblock, const Consensus::Params & params) {
         std::map<Proposal, Tally> r;
         if (superblock % params.superblock != 0)
             return std::move(r);
-        std::vector<Proposal> proposals;
-        std::vector<Vote> votes;
-        getProposalsForSuperblock(superblock, proposals, votes);
-        for (const auto & proposal : proposals)
-            r[proposal] = getTally(proposal.getHash(), votes, params);
+        std::vector<Proposal> ps;
+        std::vector<Vote> vs;
+        getProposalsForSuperblock(superblock, ps, vs);
+        for (const auto & proposal : ps)
+            r[proposal] = getTally(proposal.getHash(), vs, params);
         return std::move(r);
     }
 
     /**
+     * Fetch the list of proposals scheduled for the specified superblock. Requires loadGovernanceData to have been run
+     * on chain load.
+     * @param superblock
+     * @param allProposals
+     * @param allVotes Votes specific to the selected proposals.
+     */
+    void getProposalsForSuperblock(const int & superblock, std::vector<Proposal> & allProposals, std::vector<Vote> & allVotes) {
+        auto ps = getProposals();
+        auto vs = getVotes();
+        std::set<uint256> proposalHashes;
+        for (const auto & p : ps) {
+            if (p.getSuperblock() == superblock) {
+                allProposals.push_back(p);
+                proposalHashes.insert(p.getHash());
+            }
+        }
+        // Find all votes associated with the selected proposals
+        for (const auto & v : vs) {
+            if (proposalHashes.count(v.getProposal()))
+                allVotes.push_back(v);
+        }
+    }
+
+    /**
+     * Submits a proposal to the network and returns true. If there's an issue with the proposal or it's
+     * not valid false is returned.
+     * @param proposal
+     * @param params
+     * @param tx Transaction containing proposal submission
+     * @param failReasonRet Error message (empty if no error)
+     * @return
+     */
+    bool submitProposal(const Proposal & proposal, const std::vector<std::shared_ptr<CWallet>> & wallets,
+                        const Consensus::Params & params, CTransactionRef & tx, std::string *failReasonRet) {
+        if (!proposal.isValid(params)) {
+            *failReasonRet = "Proposal is not valid";
+            return error(failReasonRet->c_str()); // TODO Blocknet indicate what isn't valid
+        }
+        if (hasProposal(proposal.getHash())) {
+            *failReasonRet = strprintf("Proposal %s was already submitted with hash %s", proposal.getName(), proposal.getHash().ToString());
+            return error(failReasonRet->c_str());
+        }
+
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        ss << proposal;
+
+        std::string strAddress = gArgs.GetArg("-proposaladdress", "");
+        bool proposalAddressSpecified = !strAddress.empty();
+
+        CTxDestination address;
+        if (proposalAddressSpecified) {
+            if (!IsValidDestinationString(strAddress)) {
+                *failReasonRet = "Bad proposal address specified in 'proposaladdress' config option. Make sure it's a valid legacy address";
+                return error(failReasonRet->c_str());
+            }
+            address = DecodeDestination(strAddress);
+            CScript s = GetScriptForDestination(address);
+            std::vector<std::vector<unsigned char> > solutions;
+            if (Solver(s, solutions) != TX_PUBKEYHASH) {
+                *failReasonRet = "Bad proposal address specified in 'proposaladdress' config option. Only p2pkh (pay-to-pubkey-hash) addresses are accepted";
+                return error(failReasonRet->c_str());
+            }
+        }
+
+        bool send{false};
+
+        // Iterate over all wallets and attempt to submit proposal fee transaction.
+        // If a proposal address is specified via config option and the amount
+        // doesn't meet the requirements, the proposal transaction will not be sent.
+        // The first valid wallet that succeeds in creating a valid proposal tx
+        // will be used. This does not support sending transactions with inputs
+        // shared across multiple wallets.
+        for (auto & wallet : wallets) {
+            auto locked_chain = wallet->chain().lock();
+            LOCK(wallet->cs_wallet);
+
+            const auto & balance = wallet->GetAvailableBalance();
+            if (balance <= params.proposalFee || wallet->IsLocked())
+                continue;
+
+            if (wallet->GetBroadcastTransactions() && !g_connman) {
+                *failReasonRet = "Peer-to-peer functionality missing or disabled";
+                return error(failReasonRet->c_str());
+            }
+
+            // Sort coins ascending to use up all the undesirable utxos
+            std::vector<COutput> coins;
+            wallet->AvailableCoins(*locked_chain, coins, true);
+            if (coins.empty())
+                continue;
+
+            CCoinControl cc;
+            if (proposalAddressSpecified) { // if a specific proposal address was specified, only spend from that address
+                // Sort ascending
+                std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool {
+                    return out1.GetInputCoin().txout.nValue < out2.GetInputCoin().txout.nValue;
+                });
+
+                CAmount selectedAmount{0};
+                for (const COutput & out : coins) { // add coins to cover proposal fee
+                    if (!out.fSpendable)
+                        continue;
+                    CTxDestination dest;
+                    if (!ExtractDestination(out.GetInputCoin().txout.scriptPubKey, dest))
+                        continue;
+                    if (dest != address)
+                        continue; // skip if address isn't proposal address
+                    cc.Select(out.GetInputCoin().outpoint);
+                    selectedAmount += out.GetInputCoin().txout.nValue;
+                    if (selectedAmount > params.proposalFee)
+                        break;
+                }
+
+                if (selectedAmount <= params.proposalFee)
+                    continue; // bail out if not enough funds (need to account for network fee, i.e. > proposalFee)
+
+            } else { // set change address to address of largest utxo
+                std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool {
+                    return out1.GetInputCoin().txout.nValue > out2.GetInputCoin().txout.nValue; // Sort descending
+                });
+                for (const auto & coin : coins) {
+                    if (ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, address))
+                        break;
+                }
+            }
+            cc.destChange = address;
+
+            // Create and send the transaction
+            CReserveKey reservekey(wallet.get());
+            CAmount nFeeRequired;
+            std::string strError;
+            std::vector<CRecipient> vecSend;
+            int nChangePosRet = -1;
+            CRecipient recipient = {CScript() << OP_RETURN << ToByteVector(ss), params.proposalFee, false};
+            vecSend.push_back(recipient);
+            if (!wallet->CreateTransaction(*locked_chain, vecSend, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc)) {
+                CAmount totalAmount = params.proposalFee + nFeeRequired;
+                if (totalAmount > balance) {
+                    *failReasonRet = strprintf("This transaction requires a transaction fee of at least %s: %s", FormatMoney(nFeeRequired), strError);
+                    return error(failReasonRet->c_str());
+                }
+                return error("Failed to create the proposal submission transaction: %s", strError);
+            }
+
+            CValidationState state;
+            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state)) {
+                *failReasonRet = strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
+                return error(failReasonRet->c_str());
+            }
+
+            send = true;
+            break; // done
+        }
+
+        if (!send) {
+            *failReasonRet = strprintf("Failed to create proposal, check that your wallet is unlocked with a balance of at least %s", FormatMoney(params.proposalFee));
+            return error(failReasonRet->c_str());
+        }
+
+        return true;
+    }
+
+    /**
      * Cast votes on proposals.
-     * @param proposals
+     * @param proposalVotes
      * @param params
      * @param txsRet List of transactions containing proposal votes
      * @param failReason Error message (empty if no error)
      * @return
      */
-    static bool submitVotes(const std::vector<ProposalVote> & proposals, const std::vector<std::shared_ptr<CWallet>> & vwallets,
-                            const Consensus::Params & params, std::vector<CTransactionRef> & txsRet, std::string *failReasonRet=nullptr)
+    bool submitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vector<std::shared_ptr<CWallet>> & wallets,
+                     const Consensus::Params & params, std::vector<CTransactionRef> & txsRet, std::string *failReasonRet)
     {
-        if (proposals.empty())
+        if (proposalVotes.empty())
             return false; // no proposals specified, reject
 
-        for (const auto & pv : proposals) { // check if any proposals are invalid
+        for (const auto & pv : proposalVotes) { // check if any proposals are invalid
             if (!pv.proposal.isValid(params)) {
                 *failReasonRet = strprintf("Failed to vote on proposal (%s) because it's invalid", pv.proposal.getName());
                 return error(failReasonRet->c_str());
@@ -1166,9 +1166,6 @@ public: // static
 
         txsRet.clear(); // prep tx result
         CAmount totalBalance{0};
-        std::vector<std::shared_ptr<CWallet>> wallets = vwallets;
-        if (wallets.empty())
-            wallets = GetWallets();
 
         // Make sure wallets are available
         if (wallets.empty()) {
@@ -1276,13 +1273,13 @@ public: // static
                             continue;
                     }
 
-                    for (int j = 0; j < static_cast<int>(proposals.size()); ++j) {
-                        const auto & pv = proposals[j];
+                    for (int j = 0; j < static_cast<int>(proposalVotes.size()); ++j) {
+                        const auto & pv = proposalVotes[j];
                         const bool utxoAlreadyUsed = usedUtxos.count(coin.GetInputCoin().outpoint) > 0 &&
-                                usedUtxos[coin.GetInputCoin().outpoint].count(pv.proposal.getHash()) > 0;
+                                                     usedUtxos[coin.GetInputCoin().outpoint].count(pv.proposal.getHash()) > 0;
                         if (utxoAlreadyUsed)
                             continue;
-                        const bool alreadyVoted = instance().hasVote(pv.proposal.getHash(), pv.vote, coin.GetInputCoin().outpoint);
+                        const bool alreadyVoted = hasVote(pv.proposal.getHash(), pv.vote, coin.GetInputCoin().outpoint);
                         if (alreadyVoted)
                             continue; // skip, already voted
 
@@ -1308,8 +1305,8 @@ public: // static
                         // Track utxos that already voted on this proposal
                         usedUtxos[coin.GetInputCoin().outpoint].insert(pv.proposal.getHash());
 
-                        // Track whether we're on the last vote, used to break out while(true)
-                        completelyDone = (i == filtered.size() - 1 && j == proposals.size() - 1);
+                        // Track whether we're on the last vote, used to break out while loop
+                        completelyDone = (i == filtered.size() - 1 && j == proposalVotes.size() - 1);
 
                         if (voteOuts.size() == MAX_OP_RETURN_IN_TRANSACTION) {
                             doneWithPendingVotes = !completelyDone;
@@ -1393,176 +1390,164 @@ public: // static
         return true;
     }
 
+public: // static
+
     /**
-     * Submits a proposal to the network and returns true. If there's an issue with the proposal or it's
-     * not valid false is returned.
-     * @param proposal
-     * @param params
-     * @param tx Transaction containing proposal submission
-     * @param failReasonRet Error message (empty if no error)
+     * Singleton instance.
      * @return
      */
-    static bool submitProposal(const Proposal & proposal, const Consensus::Params & params, CTransactionRef & tx, std::string *failReasonRet) {
-        if (!proposal.isValid(params)) {
-            *failReasonRet = "Proposal is not valid";
-            return error(failReasonRet->c_str()); // TODO Blocknet indicate what isn't valid
-        }
-
-        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-        ss << proposal;
-
-        std::string strAddress = gArgs.GetArg("-proposaladdress", "");
-        bool proposalAddressSpecified = !strAddress.empty();
-
-        CTxDestination address;
-        if (proposalAddressSpecified) {
-            if (!IsValidDestinationString(strAddress)) {
-                *failReasonRet = "Bad proposal address specified in 'proposaladdress' config option. Make sure it's a valid legacy address";
-                return error(failReasonRet->c_str());
-            }
-            address = DecodeDestination(strAddress);
-            CScript s = GetScriptForDestination(address);
-            std::vector<std::vector<unsigned char> > solutions;
-            if (Solver(s, solutions) != TX_PUBKEYHASH) {
-                *failReasonRet = "Bad proposal address specified in 'proposaladdress' config option. Only p2pkh (pay-to-pubkey-hash) addresses are accepted";
-                return error(failReasonRet->c_str());
-            }
-        }
-
-        bool send{false};
-        auto wallets = GetWallets();
-
-        // Iterate over all wallets and attempt to submit proposal fee transaction.
-        // If a proposal address is specified via config option and the amount
-        // doesn't meet the requirements, the proposal transaction will not be sent.
-        // The first valid wallet that succeeds in creating a valid proposal tx
-        // will be used. This does not support sending transactions with inputs
-        // shared across multiple wallets.
-        for (auto & wallet : wallets) {
-            auto locked_chain = wallet->chain().lock();
-            LOCK(wallet->cs_wallet);
-
-            const auto & balance = wallet->GetAvailableBalance();
-            if (balance <= params.proposalFee || wallet->IsLocked())
-                continue;
-
-            if (wallet->GetBroadcastTransactions() && !g_connman) {
-                *failReasonRet = "Peer-to-peer functionality missing or disabled";
-                return error(failReasonRet->c_str());
-            }
-
-            // Sort coins ascending to use up all the undesirable utxos
-            std::vector<COutput> coins;
-            wallet->AvailableCoins(*locked_chain, coins, true);
-            if (coins.empty())
-                continue;
-
-            CCoinControl cc;
-            if (proposalAddressSpecified) { // if a specific proposal address was specified, only spend from that address
-                // Sort ascending
-                std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool {
-                    return out1.GetInputCoin().txout.nValue < out2.GetInputCoin().txout.nValue;
-                });
-
-                CAmount selectedAmount{0};
-                for (const COutput & out : coins) { // add coins to cover proposal fee
-                    if (!out.fSpendable)
-                        continue;
-                    CTxDestination dest;
-                    if (!ExtractDestination(out.GetInputCoin().txout.scriptPubKey, dest))
-                        continue;
-                    if (dest != address)
-                        continue; // skip if address isn't proposal address
-                    cc.Select(out.GetInputCoin().outpoint);
-                    selectedAmount += out.GetInputCoin().txout.nValue;
-                    if (selectedAmount > params.proposalFee)
-                        break;
-                }
-
-                if (selectedAmount <= params.proposalFee)
-                    continue; // bail out if not enough funds (need to account for network fee, i.e. > proposalFee)
-
-            } else { // set change address to address of largest utxo
-                std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool {
-                    return out1.GetInputCoin().txout.nValue > out2.GetInputCoin().txout.nValue; // Sort descending
-                });
-                for (const auto & coin : coins) {
-                    if (ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, address))
-                        break;
-                }
-            }
-            cc.destChange = address;
-
-            // Create and send the transaction
-            CReserveKey reservekey(wallet.get());
-            CAmount nFeeRequired;
-            std::string strError;
-            std::vector<CRecipient> vecSend;
-            int nChangePosRet = -1;
-            CRecipient recipient = {CScript() << OP_RETURN << ToByteVector(ss), params.proposalFee, false};
-            vecSend.push_back(recipient);
-            if (!wallet->CreateTransaction(*locked_chain, vecSend, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc)) {
-                CAmount totalAmount = params.proposalFee + nFeeRequired;
-                if (totalAmount > balance) {
-                    *failReasonRet = strprintf("This transaction requires a transaction fee of at least %s: %s", FormatMoney(nFeeRequired), strError);
-                    return error(failReasonRet->c_str());
-                }
-                return error("Failed to create the proposal submission transaction: %s", strError);
-            }
-
-            CValidationState state;
-            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state)) {
-                *failReasonRet = strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
-                return error(failReasonRet->c_str());
-            }
-
-            send = true;
-            break; // done
-        }
-
-        if (!send) {
-            *failReasonRet = strprintf("Failed to create proposal, check that your wallet is unlocked with a balance of at least %s", FormatMoney(params.proposalFee));
-            return error(failReasonRet->c_str());
-        }
-
-        return true;
+    static Governance & instance() {
+        static Governance gov;
+        return gov;
     }
 
     /**
-     * Fetch the list of proposals scheduled for the specified superblock. Requires loadGovernanceData to have been run
-     * on chain load.
-     * @param superblock
-     * @param allProposals
-     * @param allVotes Votes specific to the selected proposals.
+     * Returns the upcoming superblock.
+     * @param params
+     * @return
      */
-    static void getProposalsForSuperblock(const int & superblock, std::vector<Proposal> & allProposals, std::vector<Vote> & allVotes) {
-        auto proposals = gov::Governance::instance().getProposals();
-        auto votes = gov::Governance::instance().getVotes();
-        std::set<uint256> proposalHashes;
-        for (const auto & p : proposals) {
-            if (p.getSuperblock() == superblock) {
-                allProposals.push_back(p);
-                proposalHashes.insert(p.getHash());
+    static int nextSuperblock(const Consensus::Params & params, const int fromBlock = 0) {
+        return NextSuperblock(params, fromBlock);
+    }
+
+    /**
+     * If the vote's pubkey matches the specified vin's pubkey returns true, otherwise
+     * returns false.
+     * @param vote
+     * @param vin
+     * @return
+     */
+    static bool matchesVinPubKey(const Vote & vote, const CTxIn & vin) {
+        CScript::const_iterator pc = vin.scriptSig.begin();
+        std::vector<unsigned char> data;
+        bool isPubkey{false};
+        while (pc < vin.scriptSig.end()) {
+            opcodetype opcode;
+            if (!vin.scriptSig.GetOp(pc, opcode, data))
+                break;
+            if (data.size() == CPubKey::PUBLIC_KEY_SIZE || data.size() == CPubKey::COMPRESSED_PUBLIC_KEY_SIZE) {
+                isPubkey = true;
+                break;
             }
         }
-        // Find all votes associated with the selected proposals
-        for (const auto & v : votes) {
-            if (proposalHashes.count(v.getProposal()))
-                allVotes.push_back(v);
+
+        if (!isPubkey)
+            return false; // skip, no match
+
+        CPubKey pubkey(data);
+        return pubkey.GetID() == vote.getPubKey().GetID();
+    }
+
+    /**
+     * Returns the vote tally for the specified proposal.
+     * @param proposal
+     * @param votes Vote array to search
+     * @param params
+     * @return
+     */
+    static Tally getTally(const uint256 & proposal, const std::vector<Vote> & votes, const Consensus::Params & params) {
+        // Organize votes by tx hash to designate common votes (from same user)
+        // We can assume all the votes in the same tx are associated with the
+        // same user (i.e. all privkeys in the votes are known by the tx signer)
+        std::map<uint256, std::set<Vote>> userVotes;
+        // Cross reference all votes associated with a destination. If a vote
+        // is associated with a common destination we can assume the same user
+        // casted the vote. All votes in the tx imply the same user and all
+        // votes associated with the same destination imply the same user.
+        std::map<CTxDestination, std::set<Vote>> userVotesDest;
+
+        std::vector<Vote> proposalVotes = votes;
+        // remove all votes that don't match the proposal
+        proposalVotes.erase(std::remove_if(proposalVotes.begin(), proposalVotes.end(), [&proposal](const Vote & vote) -> bool {
+            return proposal != vote.getProposal();
+        }), proposalVotes.end());
+
+        // Prep our search containers
+        for (const auto & vote : proposalVotes) {
+            std::set<Vote> & v = userVotes[vote.getOutpoint().hash];
+            v.insert(vote);
+            userVotes[vote.getOutpoint().hash] = v;
+
+            std::set<Vote> & v2 = userVotesDest[CTxDestination{vote.getPubKey().GetID()}];
+            v2.insert(vote);
+            userVotesDest[CTxDestination{vote.getPubKey().GetID()}] = v2;
         }
+
+        // Iterate over all transactions and associated votes. In order to
+        // prevent counting too many votes we need to tally up votes
+        // across users separately and only count up their respective
+        // votes in lieu of the maximum vote balance requirements.
+        std::set<Vote> counted; // track counted votes
+        std::vector<Tally> tallies;
+        for (const auto & item : userVotes) {
+            // First count all unique votes associated with the same tx.
+            // This indicates they're all likely from the same user or
+            // group of users pooling votes.
+            std::set<Vote> allUnique;
+            allUnique.insert(item.second.begin(), item.second.end());
+            for (const auto & vote : item.second) {
+                // Add all unique votes associated with the same destination.
+                // Since we're first iterating over all the votes in the
+                // same tx, and then over the votes based on common destination
+                // we're able to get all the votes associated with a user.
+                // The only exception is if a user votes from different wallets
+                // and doesn't reveal the connection by combining into the same
+                // tx. As a result, there's an optimal way to cast votes and that
+                // should be taken into consideration on the voting client.
+                const auto & destVotes = userVotesDest[CTxDestination{vote.getPubKey().GetID()}];
+                allUnique.insert(destVotes.begin(), destVotes.end());
+            }
+
+            // Prevent counting votes more than once
+            for (auto it = allUnique.begin(); it != allUnique.end(); ) {
+                if (counted.count(*it) > 0)
+                    allUnique.erase(it++);
+                else ++it;
+            }
+
+            if (allUnique.empty())
+                continue; // nothing to count
+            counted.insert(allUnique.begin(), allUnique.end());
+
+            Tally tally;
+            for (const auto & vote : allUnique)  {
+                if (vote.getVote() == gov::YES)
+                    tally.cyes += vote.getAmount();
+                else if (vote.getVote() == gov::NO)
+                    tally.cno += vote.getAmount();
+                else if (vote.getVote() == gov::ABSTAIN)
+                    tally.cabstain += vote.getAmount();
+            }
+            tally.yes = static_cast<int>(tally.cyes / params.voteBalance);
+            tally.no = static_cast<int>(tally.cno / params.voteBalance);
+            tally.abstain = static_cast<int>(tally.cabstain / params.voteBalance);
+            tallies.push_back(tally);
+        }
+
+        // Tally all votes across all users that voted on this proposal
+        Tally finalTally;
+        for (const auto & tally : tallies) {
+            finalTally.yes += tally.yes;
+            finalTally.no += tally.no;
+            finalTally.abstain += tally.abstain;
+            finalTally.cyes += tally.cyes;
+            finalTally.cno += tally.cno;
+            finalTally.cabstain += tally.cabstain;
+        }
+        return finalTally;
     }
 
 protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) override
     {
-        processBlock(block.get(), pindex);
+        processBlock(block.get(), pindex, Params().GetConsensus());
     }
 
     void BlockDisconnected(const std::shared_ptr<const CBlock>& block) override {
         std::set<Proposal> ps;
         std::set<Vote> vs;
-        dataFromBlock(block.get(), ps, vs); // cutoff check disabled here b/c we're disconnecting
+        dataFromBlock(block.get(), ps, vs, Params().GetConsensus()); // cutoff check disabled here b/c we're disconnecting
                                             // already validated votes/proposals
         {
             LOCK(mu);
@@ -1581,10 +1566,10 @@ protected:
      * @param pindex
      * @param proposalCheck
      */
-    void processBlock(const CBlock *block, const CBlockIndex *pindex, const bool proposalCheck = true) {
+    void processBlock(const CBlock *block, const CBlockIndex *pindex, const Consensus::Params & params, const bool proposalCheck = true) {
         std::set<Proposal> ps;
         std::set<Vote> vs;
-        dataFromBlock(block, ps, vs, pindex, !proposalCheck); // excludes votes/proposals that don't meet cutoffs
+        dataFromBlock(block, ps, vs, params, pindex, !proposalCheck); // excludes votes/proposals that don't meet cutoffs
         {
             LOCK(mu);
             for (auto & proposal : ps)

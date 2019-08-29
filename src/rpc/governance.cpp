@@ -55,7 +55,7 @@ static UniValue createproposal(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal: %s", failReason));
 
     CTransactionRef tx;
-    if (!gov::Governance::submitProposal(proposal, Params().GetConsensus(), tx, &failReason))
+    if (!gov::Governance::instance().submitProposal(proposal, GetWallets(), Params().GetConsensus(), tx, &failReason))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal: %s", failReason));
 
     UniValue ret(UniValue::VOBJ);
@@ -194,7 +194,7 @@ static UniValue vote(const JSONRPCRequest& request)
     gov::ProposalVote vote{proposal, castVote};
     std::vector<CTransactionRef> txns;
     std::string failReason;
-    if (!gov::Governance::submitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, &failReason))
+    if (!gov::Governance::instance().submitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, &failReason))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit vote: %s", failReason));
 
     UniValue ret(UniValue::VOBJ);
