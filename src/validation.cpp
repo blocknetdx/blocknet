@@ -3246,6 +3246,9 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-pos", false, "PoS coinbase must be 0");
         if (block.vtx[0]->vout.size() > 2 || !block.vtx[0]->vout[0].scriptPubKey.empty()) // supports witness commitment
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-vout", false, "PoS coinbase has too many vouts");
+        // PoS: Second transaction must be coinstake
+        if (!block.vtx[1]->IsCoinStake())
+            return state.DoS(100, false, REJECT_INVALID, "bad-cs-missing", false, "second tx must be coinstake");
     }
 
     // Check transactions
