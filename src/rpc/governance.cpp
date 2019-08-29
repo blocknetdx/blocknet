@@ -105,24 +105,21 @@ static UniValue listproposals(const JSONRPCRequest& request)
     const auto & sinceBlock = request.params.size() < 1 || request.params[0].get_int() <= 0
                                                          ? prevSuperblock
                                                          : request.params[0].get_int();
-    int blockHeight{0};
     {
         LOCK(cs_main);
         if (sinceBlock > chainActive.Height())
             throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("'sinceblock' is bad, cannot be greater than %d", chainActive.Height()));
-        blockHeight = chainActive.Height();
     }
 
     std::vector<gov::Proposal> proposals;
     std::vector<gov::Vote> votes;
-    if (sinceBlock >= prevSuperblock) {
-        proposals = gov::Governance::instance().getProposals();
-        for (const auto & proposal : proposals) {
-            std::vector<gov::Vote> v =  gov::Governance::instance().getVotes(proposal.getHash());
-            votes.insert(votes.end(), v.begin(), v.end());
-        }
-    } else {
-        gov::Governance::getProposalsSince(sinceBlock, proposals, votes);
+    auto ps = gov::Governance::instance().getProposals();
+    for (const auto & proposal : ps) {
+        if (proposal.getSuperblock() < sinceBlock) // skip proposals prior to the since block
+            continue;
+        proposals.push_back(proposal);
+        const auto & v = gov::Governance::instance().getVotes(proposal.getHash());
+        votes.insert(votes.end(), v.begin(), v.end());
     }
 
     UniValue ret(UniValue::VARR);
