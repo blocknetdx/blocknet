@@ -330,7 +330,7 @@ public:
         consensus.proposalCutoff = 20;
         consensus.votingCutoff = 10;
         consensus.proposalMaxAmount = 20000 * COIN;
-        consensus.governanceBlock = 250000;
+        consensus.governanceBlock = 267500;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
