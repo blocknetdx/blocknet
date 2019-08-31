@@ -18,6 +18,7 @@
 #include <consensus/tx_verify.h>
 #include <consensus/validation.h>
 #include <cuckoocache.h>
+#include <governance/governance.h>
 #include <hash.h>
 #include <kernel.h>
 #include <index/txindex.h>
@@ -1883,6 +1884,12 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         return true;
     }
 
+    // Enforce the superblock
+    CAmount superblockPayment{0};
+    if (gov::Governance::isSuperblock(pindex->nHeight, chainparams.GetConsensus())
+        && !gov::Governance::instance().isValidSuperblock(&block, pindex->nHeight, chainparams.GetConsensus(), superblockPayment))
+            return state.DoS(100, false, REJECT_INVALID, "bad-superblock", false, "superblock must have proposal payments");
+
     nBlocksTotal++;
 
     bool fScriptChecks = true;
@@ -2099,8 +2106,12 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
                                block.vtx[0]->GetValueOut(), blockReward),
                                REJECT_INVALID, "bad-cb-amount");
     else if (pindex->nHeight > chainparams.GetConsensus().lastPOWBlock) { // PoS burn fees if fee consensus not set, prevent taking superblock leftovers)
-        bool isSuperblock = pindex->nHeight % chainparams.GetConsensus().superblock == 0;
-        CAmount expectedFees = (IsNetworkFeesEnabled(pindex->pprev, chainparams.GetConsensus()) && !isSuperblock ? nFees : -1*nFees);
+        bool isSuperblock = gov::Governance::isSuperblock(pindex->nHeight, chainparams.GetConsensus());
+        if (isSuperblock) {
+            blockReward -= chainparams.GetConsensus().proposalMaxAmount; // normalize the reward amount (to not include superblock max allotted payment)
+            blockReward += superblockPayment; // account for only the approved superblock payment to designated payees
+        }
+        CAmount expectedFees = (IsNetworkFeesEnabled(pindex->pprev, chainparams.GetConsensus()) ? nFees : -1*nFees);
         if (pindex->nMint > blockReward + expectedFees)
             return state.DoS(100, error("ConnectBlock(): reward pays too much (actual=%d vs limit=%d)",
                                         block.vtx[0]->GetValueOut(), blockReward),
@@ -3460,6 +3471,12 @@ static bool ContextualCheckBlock(const CBlock& block, CValidationState& state, c
             return state.DoS(100, false, REJECT_INVALID, "bad-cb-height", false, "block height mismatch in coinbase");
         }
     }
+
+    // Enforce the superblock
+    CAmount superblockPayment{0};
+    if (gov::Governance::isSuperblock(nHeight, consensusParams)
+        && !gov::Governance::instance().isValidSuperblock(&block, nHeight, consensusParams, superblockPayment))
+           return state.DoS(100, false, REJECT_INVALID, "bad-superblock", false, "superblock must have proposal payments");
 
     // Validation for witness commitments.
     // * We compute the witness hash (which is the hash including witnesses) of all the block's transactions, except the

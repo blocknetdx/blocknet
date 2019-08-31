@@ -315,6 +315,7 @@ bool GetKernelStakeModifierV03(uint256 hashBlockFrom, uint64_t& nStakeModifier, 
     const CBlockIndex* pindex = pindexFrom;
     CBlockIndex* pindexNext = chainActive[pindexFrom->nHeight + 1];
     auto slowSearch = [](std::map<int, CBlockIndex*> & mbi, const int blockNumber) -> CBlockIndex* {
+        LOCK(cs_main);
         return mbi[blockNumber];
     };
     if (!pindexNext) // slow search

@@ -19,6 +19,7 @@
 #include <compat/sanity.h>
 #include <consensus/validation.h>
 #include <fs.h>
+#include <governance/governance.h>
 #include <httpserver.h>
 #include <httprpc.h>
 #include <interfaces/chain.h>
@@ -541,6 +542,10 @@ void SetupServerArgs()
     gArgs.AddArg("-rpcuser=<user>", "Username for JSON-RPC connections", false, OptionsCategory::RPC);
     gArgs.AddArg("-rpcworkqueue=<n>", strprintf("Set the depth of the work queue to service RPC calls (default: %d)", DEFAULT_HTTP_WORKQUEUE), true, OptionsCategory::RPC);
     gArgs.AddArg("-server", "Accept command line and JSON-RPC commands", false, OptionsCategory::RPC);
+
+    // Governance
+    gArgs.AddArg("-proposaladdress", "Spend funds from this address when submitting proposals", false, OptionsCategory::GOVERNANCE);
+    gArgs.AddArg("-voteinputamount", strprintf("Look for utxos around this size or larger for use with voting inputs (default: %d)", gov::VOTING_UTXO_INPUT_AMOUNT), false, OptionsCategory::GOVERNANCE);
 
 #if HAVE_DECL_DAEMON
     gArgs.AddArg("-daemon", "Run in the background as a daemon and accept commands", false, OptionsCategory::OPTIONS);
@@ -1454,6 +1459,9 @@ bool AppInitMain(InitInterfaces& interfaces)
 
     // ********************************************************* Step 7: load block chain
 
+    // Governance setup
+    RegisterValidationInterface(&gov::Governance::instance());
+
     // Load coin validator
     CoinValidator::instance().LoadStatic();
 
@@ -1751,6 +1759,14 @@ bool AppInitMain(InitInterfaces& interfaces)
     }
 
     // ********************************************************* Step 12: start node
+
+    // Load governance data from chain data
+    std::string failReason;
+    if (!gov::Governance::instance().loadGovernanceData(chainActive, cs_main, Params().GetConsensus(), failReason)) {
+        LogPrintf("ERROR: Failed to load Governance data: %s\n", failReason);
+        uiInterface.InitMessage(_("Failed to load Governance data. If the problem continues please perform a chain reindex. See debug.log for more details"));
+        return false;
+    }
 
     int chain_active_height;
 

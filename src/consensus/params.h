@@ -85,8 +85,17 @@ struct Params {
     int stakeMinAge;
     int stakingModiferV2Block;
     int coinMaturity;
+    int64_t stakingV05UpgradeTime{0};
+    /** Governance parameters */
     int superblock;
-    int64_t stakingV05UpgradeTime;
+    int votingCutoff; // blocks prior to superblock
+    int proposalCutoff; // blocks prior to superblock
+    int governanceBlock{1}; // block number indicating when governance system was enabled
+    CAmount proposalMinAmount{10 * COIN};
+    CAmount proposalMaxAmount{40000 * COIN};
+    CAmount proposalFee{10 * COIN};
+    CAmount voteBalance{5000 * COIN};
+    CAmount voteMinUtxoAmount{100 * COIN};
 };
 } // namespace Consensus
 

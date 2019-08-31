@@ -16,12 +16,19 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
             RPCHelpMan{"servicenodesetup",
                 "\nSets up Service Nodes by populating the servicenode.conf. Note* by default new data is appended to servicenode.conf\n",
                 {
-                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Options: auto|list|remove\n'auto' will automatically setup the number of service nodes you specify.\n'list' will setup service nodes according to a predetermined list.\n'remove' will erase the existing servicenode.conf",
-                     {
-                        {"count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "'auto' number of servicenodes to create (not used with the 'list' type)"},
-                        {"address", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "'auto' service node address (not used with the 'list' type)"},
-                        {"list", RPCArg::Type::ARR, RPCArg::Optional::OMITTED, R"(only used with the 'list' type, should contain a list of servicenode objects, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])"}
-                     },
+                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Options: auto|list|remove\n'auto' will automatically setup the number of service nodes you specify.\n'list' will setup service nodes according to a predetermined list.\n'remove' will erase the existing servicenode.conf"},
+                    {"count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "'auto' number of servicenodes to create (not used with the 'list' type)"},
+                    {"address", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "'auto' service node address (not used with the 'list' type)"},
+                    {"list", RPCArg::Type::ARR, RPCArg::Optional::OMITTED, R"(only used with the 'list' type, should contain a list of servicenode objects, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])",
+                        {
+                            {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
+                                {
+                                    {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node alias"},
+                                    {"tier", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node tier: SPV|OPEN"},
+                                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "base58 address containing the service node collateral"},
+                                },
+                            },
+                        }
                     }
                 },
                 RPCResult{

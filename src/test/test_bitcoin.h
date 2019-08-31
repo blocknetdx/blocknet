@@ -19,7 +19,7 @@
 
 #include <boost/thread.hpp>
 
-const int TESTCHAIN_BLOCK_COUNT = 50; // TODO Blocknet uses 50 since quark hash is slow
+const int TESTCHAIN_BLOCK_COUNT = 50; // Blocknet uses 50 since quark hash is slow
 
 // Enable BOOST_CHECK_EQUAL for enum class types
 template <typename T>

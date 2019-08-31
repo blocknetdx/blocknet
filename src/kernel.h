@@ -127,7 +127,7 @@ public:
         }
 
         std::vector<StakeOutput> selected; // selected coins that meet criteria for staking
-        const int coinMaturity = std::max(params.coinMaturity, 64); // 64 is minimum blocks required to meet staking selection interval requirements
+        const int coinMaturity = params.coinMaturity;
         const auto minStakeAmount = static_cast<CAmount>(gArgs.GetArg("-minstakeamount", 0) * COIN);
 
         for (auto pwallet : wallets) {
@@ -139,7 +139,17 @@ public:
                     LogPrintf("Wallet is locked not staking inputs: %s", pwallet->GetDisplayName());
                     continue; // skip locked wallets
                 }
-                pwallet->AvailableCoins(*locked_chain, coins, true, nullptr, minStakeAmount, MAX_MONEY, MAX_MONEY, 0, coinMaturity);
+                pwallet->AvailableCoins(*locked_chain, coins, true, nullptr, minStakeAmount, MAX_MONEY, MAX_MONEY, 0);
+            }
+
+            { // Remove all immature coins (any previous stakes that do not meet the maturity requirement)
+                LOCK(cs_main);
+                CCoinsViewCache &view = *pcoinsTip;
+                auto pred = [&view,&coinMaturity](const COutput & c) -> bool {
+                    const auto & coin = view.AccessCoin(c.GetInputCoin().outpoint);
+                    return coin.IsCoinBase() && coin.nHeight < coinMaturity;
+                };
+                coins.erase(std::remove_if(coins.begin(), coins.end(), pred), coins.end());
             }
 
             // Find suitable staking coins
@@ -246,11 +256,7 @@ public:
         if (stakeTimes.empty())
             return false;
 
-        int block = tip->nHeight + 1; // next block (one being staked)
-        if (block % chainparams.GetConsensus().superblock == 0 && chainparams.GetConsensus().superblock > 144) // TODO Blocknet PoS handle superblock staking
-            return false;
-
-        auto cutoffTime = tip->nTime; // must find stake input valid for a time newer than cutoff
+        const auto cutoffTime = tip->nTime; // must find stake input valid for a time newer than cutoff
         arith_uint256 bnTargetPerCoinDay; // current difficulty
         bnTargetPerCoinDay.SetCompact(tip->nBits);
 
@@ -309,6 +315,16 @@ public:
             LogPrintf("Error: Staking %s\n", e.what());
         }
         return fNewBlock;
+    }
+
+    int64_t LastUpdateTime() const {
+        return lastUpdateTime;
+    }
+
+    const StakeCoin & GetStake() {
+        if (!stakeTimes.empty())
+            return *stakeTimes.begin()->second.begin();
+        return std::move(StakeCoin{});
     }
 
 private:

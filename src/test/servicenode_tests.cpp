@@ -2,25 +2,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <test/test_bitcoin.h>
+#include <test/staking_tests.h>
 
-#define protected public // for overridding protected fields in CChainParams
-#include <chainparams.h>
-#include <coins.h>
-#undef protected
-#include <index/txindex.h>
-#include <miner.h>
-#include <policy/policy.h>
-#include <pow.h>
 #include <rpc/server.h>
 #include <servicenode/servicenode.h>
 #include <servicenode/servicenodemgr.h>
-#include <timedata.h>
-#include <univalue.h>
-#include <validation.h>
-#include <wallet/wallet.h>
-
-#include <boost/test/unit_test.hpp>
 
 /**
  * Setup a chain suitable for testing servicenode inputs. The larger coinbase payout will allow us
@@ -101,22 +87,6 @@ void saveFile(const boost::filesystem::path& p, const std::string& str) {
     file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
     file.open(p, std::ios_base::binary);
     file.write(str.c_str(), str.size());
-}
-
-UniValue CallRPC2(const std::string & strMethod, const UniValue & params) {
-    JSONRPCRequest request;
-    request.strMethod = strMethod;
-    request.params = params;
-    request.fHelp = false;
-    BOOST_CHECK(tableRPC[strMethod]);
-    rpcfn_type method = tableRPC[strMethod]->actor;
-    try {
-        UniValue result = (*method)(request);
-        return result;
-    }
-    catch (const UniValue& objError) {
-        throw std::runtime_error(find_value(objError, "message").get_str());
-    }
 }
 
 BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServicenodeChainSetup)

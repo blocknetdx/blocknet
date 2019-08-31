@@ -13,6 +13,7 @@
 #include <consensus/merkle.h>
 #include <consensus/tx_verify.h>
 #include <consensus/validation.h>
+#include <governance/governance.h>
 #include <hash.h>
 #include <net.h>
 #include <policy/feerate.h>
@@ -180,7 +181,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 }
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                                  const int64_t & stakeTime, CWallet *keystore)
+                                                                  const int64_t & stakeTime, CWallet *keystore,
+                                                                  const bool & disableValidationChecks)
 {
     int64_t nTimeStart = GetTimeMicros();
 
@@ -256,10 +258,23 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     coinstakeTx.vout.resize(2); // coinstake + stake payment
     coinstakeTx.vout[0].SetNull(); // coinstake
     coinstakeTx.vout[0].nValue = 0;
+    if (gov::Governance::isSuperblock(nHeight, chainparams.GetConsensus())) {
+        const auto & results = gov::Governance::instance().getSuperblockResults(nHeight, chainparams.GetConsensus());
+        if (!results.empty()) {
+            const auto &payees = gov::Governance::getSuperblockPayees(nHeight, results, chainparams.GetConsensus());
+            if (payees.empty())
+                throw std::runtime_error(strprintf("%s: Bad superblock payees, failed to stake", __func__));
+            coinstakeTx.vout.resize(2 + payees.size()); // coinstake + stake payment + payees
+            for (int i = 0; i < static_cast<int>(payees.size()); ++i)
+                coinstakeTx.vout[2 + i] = payees[i];
+        }
+    }
 
     const bool feesEnabled = IsNetworkFeesEnabled(pindexPrev, chainparams.GetConsensus());
-    const auto stakeSubsidy = GetBlockSubsidy(nHeight, chainparams.GetConsensus());
-    const auto stakeAmount = (feesEnabled ? nFees : 0) + stakeSubsidy; // TODO Blocknet only if not superblock
+    // Can't claim any part of the superblock amount as stake reward
+    const auto stakeSubsidy = GetBlockSubsidy(nHeight, chainparams.GetConsensus()) -
+            (gov::Governance::isSuperblock(nHeight, chainparams.GetConsensus()) ? chainparams.GetConsensus().proposalMaxAmount : 0);
+    const auto stakeAmount = (feesEnabled ? nFees : 0) + stakeSubsidy;
 
     // Find pubkey of stake input
     CTxDestination stakeInputDest;
@@ -325,7 +340,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
 
     SignBlock(*pblock, stakeInput.txout.scriptPubKey, *keystore); // required to pass PoS checks
 
-    {
+    if (!disableValidationChecks) {
         LOCK(cs_main);
         if (pindexPrev != chainActive.Tip())
             return nullptr;
