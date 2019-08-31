@@ -5,6 +5,8 @@
 #include <test/staking_tests.h>
 
 #include <governance/governance.h>
+#include <consensus/tx_verify.h>
+#include <consensus/merkle.h>
 
 BOOST_AUTO_TEST_SUITE(governance_tests)
 
@@ -97,6 +99,72 @@ bool createUtxos(const CAmount & targetAmount, const CAmount & utxoAmount, TestC
     CReserveKey reservekey(wallet);
     CValidationState state;
     return wallet->CommitTransaction(MakeTransactionRef(mtx), {}, {}, reservekey, g_connman.get(), state);
+}
+
+bool applySuperblockPayees(TestChainPoS & pos, CBlockTemplate *blocktemplate, const StakeMgr::StakeCoin & stake,
+        const std::vector<CTxOut> & payees, const Consensus::Params & consensus)
+{
+    CBlock *pblock = &blocktemplate->block;
+    const int nHeight = chainActive.Height() + 1;
+    // Create coinstake transaction
+    CMutableTransaction coinstakeTx;
+    coinstakeTx.vin.resize(1);
+    coinstakeTx.vin[0] = CTxIn(stake.coin->outpoint);
+    coinstakeTx.vout.resize(2); // coinstake + stake payment
+    coinstakeTx.vout[0].SetNull(); // coinstake
+    coinstakeTx.vout[0].nValue = 0;
+    coinstakeTx.vout.resize(2 + payees.size()); // coinstake + stake payment + payees
+    for (int i = 0; i < static_cast<int>(payees.size()); ++i)
+        coinstakeTx.vout[2 + i] = payees[i];
+    const bool feesEnabled = IsNetworkFeesEnabled(chainActive.Tip(), consensus);
+    // Can't claim any part of the superblock amount as stake reward
+    const auto stakeSubsidy = GetBlockSubsidy(nHeight, consensus) -
+                              (gov::Governance::isSuperblock(nHeight, consensus) ? consensus.proposalMaxAmount : 0);
+    const auto stakeAmount = (feesEnabled ? blocktemplate->vTxFees[0] : 0) + stakeSubsidy;
+    // Find pubkey of stake input
+    CTxDestination stakeInputDest;
+    if (!ExtractDestination(stake.coin->txout.scriptPubKey, stakeInputDest))
+        return false;
+    const auto keyid = GetKeyForDestination(*pos.wallet.get(), stakeInputDest);
+    if (keyid.IsNull())
+        return false;
+    CScript paymentScript;
+    if (VersionBitsState(chainActive.Tip(), consensus, Consensus::DEPLOYMENT_STAKEP2PKH, versionbitscache) == ThresholdState::ACTIVE) { // Stake to p2pkh
+        paymentScript = GetScriptForDestination(keyid);
+    } else { // stake to p2pk
+        CPubKey paymentPubKey;
+        if (!pos.wallet->GetPubKey(keyid, paymentPubKey))
+            throw std::runtime_error(strprintf("%s: Failed to find staked input pubkey", __func__));
+        paymentScript = CScript() << ToByteVector(paymentPubKey) << OP_CHECKSIG;
+    }
+    // stake amount and payment script
+    coinstakeTx.vout[1] = CTxOut(stake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+    // Sign stake input w/ keystore
+    auto signInput = [](CMutableTransaction & tx, CWallet *keystore) -> bool {
+        SignatureData empty; // clean script sig on all inputs
+        for (auto & txin : tx.vin)
+            UpdateInput(txin, empty);
+        auto locked_chain = keystore->chain().lock();
+        LOCK(keystore->cs_wallet);
+        if (!keystore->SignTransaction(tx))
+            return false;
+        return true;
+    };
+    // Calculate network fee for coinbase/coinstake txs
+    if (!signInput(coinstakeTx, pos.wallet.get()))
+        return false;
+    const auto coinbaseBytes = ::GetSerializeSize(pblock->vtx[0], PROTOCOL_VERSION);
+    const auto coinstakeBytes = ::GetSerializeSize(coinstakeTx, PROTOCOL_VERSION);
+    CAmount estimatedNetworkFee = static_cast<CAmount>(::minRelayTxFee.GetFee(coinbaseBytes) + ::minRelayTxFee.GetFee(coinstakeBytes));
+    coinstakeTx.vout[1] = CTxOut(stake.coin->txout.nValue + stakeAmount - estimatedNetworkFee, paymentScript); // staker payment w/ network fee taken out
+    if (!signInput(coinstakeTx, pos.wallet.get())) // resign with correct fee estimation
+        return false;
+    // Assign coinstake tx
+    pblock->vtx[1] = MakeTransactionRef(std::move(coinstakeTx));
+    blocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, chainActive.Tip(), consensus);
+    pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
+    blocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);
+    return SignBlock(*pblock, stake.coin->txout.scriptPubKey, *pos.wallet);
 }
 
 void rescanWallet(CWallet *w) {
@@ -899,6 +967,22 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
         const auto blocks = gov::NextSuperblock(consensus) - chainActive.Height();
         pos.StakeBlocks(blocks), SyncWithValidationInterfaceQueue();
 
+        // Check that the superblock payout was valid
+        {
+            CBlock block;
+            ReadBlockFromDisk(block, chainActive.Tip(), consensus);
+            CAmount superblockPayment{0};
+            const auto & results = gov::Governance::instance().getSuperblockResults(chainActive.Height(), consensus);
+            const auto & payees = gov::Governance::getSuperblockPayees(chainActive.Height(), results, consensus);
+            std::vector<gov::Proposal> allProposalsB;
+            std::vector<gov::Vote> allVotesB;
+            gov::Governance::instance().getProposalsForSuperblock(chainActive.Height(), allProposalsB, allVotesB);
+            BOOST_CHECK_MESSAGE(!results.empty(), "Superblock results should not be empty");
+            BOOST_CHECK_MESSAGE(payees.size() == allProposalsB.size(), "Superblock payees should match expected proposals");
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().isValidSuperblock(&block, chainActive.Height(), consensus, superblockPayment), "Expected superblock payout to be valid");
+            BOOST_CHECK_MESSAGE(gov::Governance::isSuperblock(chainActive.Height(), consensus), "Expected superblock to be accepted");
+        }
+
         std::set<gov::Proposal> proposalsB;
         std::set<gov::Vote> votesB;
 
@@ -978,13 +1062,14 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             }
         }
 
+        const int proposalsNoVotesB{3};
+
         // Test changing votes
         {
             std::vector<gov::Proposal> proposals(proposalsB.begin(), proposalsB.end());
-            gov::ProposalVote proposalVote1{proposals[0], gov::NO};
-            gov::ProposalVote proposalVote2{proposals[1], gov::NO};
-            gov::ProposalVote proposalVote3{proposals[2], gov::NO};
-            std::vector<gov::ProposalVote> castVotes{proposalVote1,proposalVote2,proposalVote3};
+            std::vector<gov::ProposalVote> castVotes;
+            for (int i = 0; i < proposalsNoVotesB; ++i)
+                castVotes.emplace_back(proposals[i], gov::NO);
             std::vector<CTransactionRef> txns;
             failReason.clear();
             BOOST_CHECK_MESSAGE(gov::Governance::instance().submitVotes(castVotes, {otherwallet}, consensus, txns, &failReason), failReason);
@@ -1048,11 +1133,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 
         // Create this proposal before proposal cutoff test
         const gov::Proposal voteCutoffProposal{"Test Vote Cutoff", gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+        proposalsB.insert(voteCutoffProposal);
         {
             CTransactionRef tx;
             BOOST_CHECK(gov::Governance::instance().submitProposal(voteCutoffProposal, {pos.wallet}, consensus, tx, &failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
-            proposalsB.insert(voteCutoffProposal);
         }
 
         // Test proposal cutoff
@@ -1062,7 +1147,6 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             const auto blks = nextSb - chainActive.Height() - consensus.proposalCutoff;
             pos.StakeBlocks(blks), SyncWithValidationInterfaceQueue();
             const gov::Proposal proposal{"Test Proposal Cutoff", gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
-            proposalsB.insert(proposal);
             CTransactionRef tx;
             BOOST_CHECK(gov::Governance::instance().submitProposal(proposal, {pos.wallet}, consensus, tx, &failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -1090,7 +1174,261 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             BOOST_CHECK_MESSAGE(votesB.size() == allVotesB.size(), "Votes should not be accepted if they're submitted after the cutoff");
         }
 
+        // Check that the superblock payout is valid
+        {
+            const auto & height = chainActive.Height();
+            const auto nextSb = gov::NextSuperblock(consensus);
+            const auto blks = nextSb - chainActive.Height();
+            pos.StakeBlocks(blks), SyncWithValidationInterfaceQueue();
+            CBlock block;
+            ReadBlockFromDisk(block, chainActive.Tip(), consensus);
+            CAmount superblockPayment{0};
+            const auto & results = gov::Governance::instance().getSuperblockResults(chainActive.Height(), consensus);
+            const auto & payees = gov::Governance::getSuperblockPayees(chainActive.Height(), results, consensus);
+            std::vector<gov::Proposal> allProposalsB;
+            std::vector<gov::Vote> allVotesB;
+            gov::Governance::instance().getProposalsForSuperblock(chainActive.Height(), allProposalsB, allVotesB);
+            BOOST_CHECK_MESSAGE(!results.empty(), "Superblock results should not be empty");
+            const int expectedPayees = (int)allProposalsB.size() - proposalsNoVotesB - 1; // -1 because of 0 votes on one of the proposals in the B list ("Test Vote Cutoff" proposal)
+            BOOST_CHECK_MESSAGE(payees.size() == expectedPayees, "Superblock payees should match expected proposals");
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().isValidSuperblock(&block, chainActive.Height(), consensus, superblockPayment), "Expected superblock payout to be valid");
+            BOOST_CHECK_MESSAGE(gov::Governance::isSuperblock(chainActive.Height(), consensus), "Expected superblock to be accepted");
+        }
+
         cleanup(resetBlocks, pos.wallet.get());
+    }
+
+    cleanup(chainActive.Height());
+    UnregisterValidationInterface(&gov::Governance::instance());
+}
+
+BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
+{
+    TestChainPoS pos(false);
+    RegisterValidationInterface(&gov::Governance::instance());
+
+    auto *params = (CChainParams*)&Params();
+    params->consensus.voteMinUtxoAmount = 20*COIN;
+    params->consensus.voteBalance = 500*COIN;
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 200 * COIN;
+        else if (blockHeight % consensusParams.superblock == 0)
+            return 40001 * COIN;
+        return 50 * COIN;
+    };
+    const auto & consensus = params->GetConsensus();
+    pos.Init();
+    CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
+
+    // Create voting wallet
+    CKey voteDestKey; voteDestKey.MakeNewKey(true);
+    CTxDestination voteDest(voteDestKey.GetPubKey().GetID());
+    bool firstRun;
+    auto otherwallet = std::make_shared<CWallet>(*pos.chain, WalletLocation(), WalletDatabase::CreateMock());
+    otherwallet->LoadWallet(firstRun);
+    AddKey(*otherwallet, voteDestKey);
+    otherwallet->SetBroadcastTransactions(true);
+    rescanWallet(otherwallet.get());
+    const CAmount totalVoteAmount = consensus.voteBalance*2;
+    const auto voteUtxoCount = static_cast<int>(totalVoteAmount/consensus.voteMinUtxoAmount);
+    const auto maxVotes = totalVoteAmount/consensus.voteBalance;
+    CMutableTransaction votetx;
+
+    // Prepare the utxos to use for votes
+    {
+        // Get to the nearest future SB if necessary
+        if (gov::PreviousSuperblock(consensus, chainActive.Height()) == 0) {
+            const auto blocks = gov::NextSuperblock(consensus) - chainActive.Height();
+            pos.StakeBlocks(blocks), SyncWithValidationInterfaceQueue();
+        }
+        // Create tx with enough inputs to cover votes
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+        }
+        std::sort(coins.begin(), coins.end(), [](const COutput & a, const COutput & b) {
+            return a.GetInputCoin().txout.nValue > b.GetInputCoin().txout.nValue;
+        });
+        // Staker script
+        const auto stakerScriptPubKey = coins[0].GetInputCoin().txout.scriptPubKey;
+        // Create vins
+        CAmount runningAmount{0};
+        int coinpos{0};
+        std::vector<CTxOut> txouts;
+        std::vector<COutPoint> outs;
+        while (runningAmount < totalVoteAmount) {
+            outs.push_back(coins[coinpos].GetInputCoin().outpoint);
+            txouts.push_back(coins[coinpos].GetInputCoin().txout);
+            runningAmount += coins[coinpos].GetInputCoin().txout.nValue;
+            ++coinpos;
+        }
+        outs.emplace_back(coins[coinpos].GetInputCoin().outpoint); // Cover fee
+        txouts.emplace_back(coins[coinpos].GetInputCoin().txout); // Cover fee
+        votetx.vin.resize(outs.size());
+        for (int i = 0; i < (int)outs.size(); ++i)
+            votetx.vin[i] = CTxIn(outs[i]);
+        const CAmount fees = votetx.vin.size()*2*::minRelayTxFee.GetFee(250);
+        const CAmount voteInputUtxoAmount = 5 * COIN;
+        const CAmount change = txouts[txouts.size()-1].nValue - fees - voteInputUtxoAmount; // fee input change
+        // Create vouts
+        for (int i = 0; i < voteUtxoCount; ++i)
+            votetx.vout.emplace_back(consensus.voteMinUtxoAmount, GetScriptForDestination(voteDest));
+        votetx.vout.emplace_back(change, stakerScriptPubKey); // change back to staker
+        votetx.vout.emplace_back(voteInputUtxoAmount, GetScriptForDestination(voteDest)); // use this for vote inputs
+        // Sign the tx inputs
+        for (int i = 0; i < (int)votetx.vin.size(); ++i) {
+            auto & vin = votetx.vin[i];
+            SignatureData sigdata = DataFromTransaction(votetx, i, txouts[i]);
+            ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&votetx, i, txouts[i].nValue, SIGHASH_ALL), stakerScriptPubKey, sigdata);
+            UpdateInput(vin, sigdata);
+        }
+        // Send transaction
+        CReserveKey reservekey(pos.wallet.get());
+        CValidationState state;
+        BOOST_CHECK(pos.wallet->CommitTransaction(MakeTransactionRef(votetx), {}, {}, reservekey, g_connman.get(), state));
+        BOOST_CHECK_MESSAGE(state.IsValid(), "Failed to submit tx for otherwallet vote utxos");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        rescanWallet(otherwallet.get());
+        BOOST_CHECK_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputUtxoAmount, otherwallet->GetBalance()));
+        BOOST_TEST_REQUIRE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount);
+    }
+
+    // Check superblock proposal and votes
+    {
+        std::string failReason;
+        CKey key; key.MakeNewKey(true);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
+        std::set<gov::Proposal> proposals;
+
+        // Prep vote utxo
+        CTransactionRef sendtx;
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
+        BOOST_TEST_REQUIRE(accepted, "Proposal fee account should confirm to the network before continuing");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        // Test single superblock
+        {
+            for (int i = 0; i < 5; ++i) {
+                const gov::Proposal proposal{strprintf("Test Proposal A%d", i), gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+                proposals.insert(proposal);
+                CTransactionRef tx;
+                BOOST_CHECK(gov::Governance::instance().submitProposal(proposal, {pos.wallet}, consensus, tx, &failReason));
+                pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+                // Submit votes
+                gov::ProposalVote proposalVote{proposal, gov::YES};
+                std::vector<CTransactionRef> txns;
+                failReason.clear();
+                BOOST_CHECK_MESSAGE(gov::Governance::instance().submitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns, &failReason), failReason);
+                pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+                rescanWallet(otherwallet.get());
+            }
+
+            // Stake to one block before the next superblock
+            const auto blocks = gov::NextSuperblock(consensus) - chainActive.Height();
+            pos.StakeBlocks(blocks-1), SyncWithValidationInterfaceQueue();
+
+            // Test bad superblock stake
+            const auto & stake = pos.FindStake();
+            const int superblock = chainActive.Height() + 1;
+
+            // Valid superblock payees list should succeed
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                const auto & payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                BOOST_CHECK_MESSAGE(ProcessNewBlock(*params, block, true, &fNewBlock), "Valid superblock payee list should be accepted");
+                CValidationState state;
+                InvalidateBlock(state, *params, chainActive.Tip());
+                ActivateBestChain(state, *params);
+            }
+
+            // Bad superblock payees list should fail
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                for (auto & payee : payees)
+                    payee.scriptPubKey = pos.m_coinbase_txns[0]->vout[0].scriptPubKey;
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Bad superblock payee list, scriptpubkey should fail");
+            }
+
+            // Bad superblock payee amount should fail
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                payees[0].nValue = payees[0].nValue + 1;
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Bad superblock payee nValue should fail");
+            }
+
+            // Extra superblock payee should fail
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                payees.emplace_back(100 * COIN, payees[0].scriptPubKey);
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Bad superblock payee nValue should fail");
+            }
+
+            // Duplicate superblock payee should fail
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                payees.emplace_back(payees[0].nValue, payees[0].scriptPubKey);
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Duplicate superblock payee should fail");
+            }
+
+            // Missing superblock payee should fail
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                payees.erase(payees.begin());
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Missing superblock payee should fail");
+            }
+
+            // All superblock payees missing should fail
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                payees.clear();
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "All superblock payees missing should fail");
+            }
+        }
+
     }
 
     cleanup(chainActive.Height());

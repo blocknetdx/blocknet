@@ -159,6 +159,33 @@ struct TestChainPoS : public TestingSetup {
         }
     }
 
+    const StakeMgr::StakeCoin & FindStake() {
+        int tries{0};
+        const int currentBlockHeight = chainActive.Height();
+        while (chainActive.Height() < currentBlockHeight + 1) {
+            try {
+                CBlockIndex *pindex = nullptr;
+                {
+                    LOCK(cs_main);
+                    pindex = chainActive.Tip();
+                }
+                std::vector<std::shared_ptr<CWallet>> wallets{wallet};
+                if (pindex && staker.Update(wallets, pindex, Params().GetConsensus())) {
+                    return staker.GetStake();
+                }
+            } catch (std::exception & e) {
+                LogPrintf("Staker ran into an exception: %s\n", e.what());
+                throw e;
+            } catch (...) {
+                throw std::runtime_error("Staker unknown error");
+            }
+            if (++tries > 1000)
+                throw std::runtime_error("Staker failed to find stake");
+            SetMockTime(staker.LastUpdateTime() + MAX_FUTURE_BLOCK_TIME_POS);
+        }
+        return std::move(StakeMgr::StakeCoin{});
+    }
+
     ~TestChainPoS() {
         RemoveWallet(wallet);
         g_txindex->Stop();

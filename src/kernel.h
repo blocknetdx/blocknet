@@ -256,10 +256,7 @@ public:
         if (stakeTimes.empty())
             return false;
 
-        int block = tip->nHeight + 1; // next block (one being staked)
-        // TODO Blocknet PoS handle superblock staking
-
-        auto cutoffTime = tip->nTime; // must find stake input valid for a time newer than cutoff
+        const auto cutoffTime = tip->nTime; // must find stake input valid for a time newer than cutoff
         arith_uint256 bnTargetPerCoinDay; // current difficulty
         bnTargetPerCoinDay.SetCompact(tip->nBits);
 
@@ -322,6 +319,12 @@ public:
 
     int64_t LastUpdateTime() const {
         return lastUpdateTime;
+    }
+
+    const StakeCoin & GetStake() {
+        if (!stakeTimes.empty())
+            return *stakeTimes.begin()->second.begin();
+        return std::move(StakeCoin{});
     }
 
 private:

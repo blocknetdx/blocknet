@@ -169,8 +169,9 @@ public:
             if (failureReasonRet) *failureReasonRet = strprintf("Bad superblock number, did you mean %d", gov::NextSuperblock(params));
             return false;
         }
-        if (!(amount >= params.proposalMinAmount && amount <= params.GetBlockSubsidy(superblock, params))) {
-            if (failureReasonRet) *failureReasonRet = strprintf("Bad proposal amount, specify amount between %s - %s", FormatMoney(params.proposalMinAmount), FormatMoney(params.proposalMaxAmount));
+        if (!(amount >= params.proposalMinAmount && amount <= std::min(params.proposalMaxAmount, params.GetBlockSubsidy(superblock, params)))) {
+            if (failureReasonRet) *failureReasonRet = strprintf("Bad proposal amount, specify amount between %s - %s",
+                    FormatMoney(params.proposalMinAmount), FormatMoney(std::min(params.proposalMaxAmount, params.GetBlockSubsidy(superblock, params))));
             return false;
         }
         if (!IsValidDestination(DecodeDestination(address))) {
@@ -397,11 +398,28 @@ public:
 
     /**
      * Marks the vote utxo as being spent.
-     * @param block
+     * @params block Height of the block spending the vote utxo.
+     * @params txhash Hash of transaction spending the vote utxo.
      * @return
      */
-    void spend(const int & block) {
+    void spend(const int & block, const uint256 & txhash) {
         spentBlock = block;
+        spentHash = txhash;
+    }
+
+    /**
+     * Unspends the vote. Returns true if the vote was successfully
+     * unspent, otherwise returns false.
+     * @params block Height of the block that spent the vote utxo.
+     * @params txhash Hash of transaction that spent the vote utxo.
+     * @return
+     */
+    bool unspend(const int & block, const uint256 & txhash) {
+        if (spentBlock == block && spentHash == txhash) {
+            spentBlock = 0;
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -474,7 +492,9 @@ public:
     }
 
     /**
-     * Get the COutPoint of the vote.
+     * Get the COutPoint of the vote. This is the outpoint of the OP_RETURN data
+     * in the "voting" transaction. This shouldn't be confused with the vote's
+     * utxo (the unspent transaction output representing the vote).
      * @return
      */
     const COutPoint & getOutpoint() const {
@@ -556,6 +576,7 @@ protected: // memory only
     CKeyID keyid; // CKeyID of vote's utxo
     int blockNumber{0}; // block containing this vote
     int spentBlock{0}; // block where this vote's utxo was spent (which invalidates it)
+    uint256 spentHash; // tx hash where this vote's utxo was spent (which invalidates it)
 };
 
 /**
@@ -583,7 +604,9 @@ static bool IsVoteSpent(const Vote & vote, const bool & mempoolCheck = true) {
  */
 struct ProposalVote {
     Proposal proposal;
-    VoteType vote;
+    VoteType vote{ABSTAIN};
+    explicit ProposalVote() = default;
+    explicit ProposalVote(const Proposal & proposal, const VoteType & vote) : proposal(proposal), vote(vote) {}
 };
 /**
  * Way to obtain all votes for a specific proposal
@@ -596,6 +619,12 @@ struct Tally {
     int yes{0};
     int no{0};
     int abstain{0};
+    double passing() const {
+        return static_cast<double>(yes) / static_cast<double>(yes + no);
+    }
+    int netyes() const {
+        return yes - no;
+    }
 };
 
 /**
@@ -688,7 +717,7 @@ public:
         // Shard the blocks into num_cores slices
         boost::thread_group tg;
         const auto cores = GetNumCores();
-        std::map<COutPoint, int> spentPrevouts;
+        std::map<COutPoint, std::pair<uint256, int>> spentPrevouts; // pair<txhash, blockheight>
         Mutex mut; // manage access to shared data
 
         const int totalBlocks = blockHeight - consensus.governanceBlock;
@@ -728,7 +757,7 @@ public:
                     // Store all vins in order to use as a lookup for spent votes
                     for (const auto & tx : block.vtx) {
                         for (const auto & vin : tx->vin)
-                            spentPrevouts[vin.prevout] = blockIndex->nHeight;
+                            spentPrevouts[vin.prevout] = {tx->GetHash(), blockIndex->nHeight};
                     }
                     // Process block
                     processBlock(&block, blockIndex, Params().GetConsensus(), false);
@@ -776,8 +805,8 @@ public:
                         if (hasProposal(vote.getProposal(), vote.getBlockNumber())) {
                             // Mark vote as spent if its utxo is spent before on on the
                             // associated proposal's superblock.
-                            if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()] <= getProposal(vote.getProposal()).getSuperblock())
-                                vote.spend(spentPrevouts[vote.getUtxo()]);
+                            if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= getProposal(vote.getProposal()).getSuperblock())
+                                vote.spend(spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first);
                             LOCK(mu);
                             votes[vote.getHash()] = vote;
                         }
@@ -861,23 +890,6 @@ public:
     }
 
     /**
-     * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
-     * @param proposal
-     * @param blockNumber
-     * @param params
-     * @return
-     */
-    bool meetsCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
-        if (proposal.isNull()) // if no proposal found
-            return false;
-        // Votes can happen multiple superblocks in advance if a proposal is
-        // created for a future superblock. As a result, a vote meets the
-        // cutoff for a block number that's prior to the superblock of its
-        // associated proposal.
-        return blockNumber <= proposal.getSuperblock() - params.votingCutoff;
-    }
-
-    /**
      * Obtains all votes and proposals from the specified block.
      * @param block
      * @param proposalsRet
@@ -915,7 +927,7 @@ public:
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
                     Proposal proposal(blockIndex ? blockIndex->nHeight : 0); ss2 >> proposal;
                     // Skip the cutoff check if block index is not specified
-                    if (proposal.isValid(params) && (!blockIndex || meetsCutoff(proposal, blockIndex->nHeight, params)))
+                    if (proposal.isValid(params) && (!blockIndex || meetsProposalCutoff(proposal, blockIndex->nHeight, params)))
                         proposalsRet.insert(proposal);
                 } else if (obj.getType() == VOTE) {
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
@@ -927,7 +939,7 @@ public:
                     // otherwise the vote is discarded.
                     if ((blockIndex && checkProposal && !hasProposal(vote.getProposal(), blockIndex->nHeight))
                         || !vote.isValid(params)
-                        || (blockIndex && !meetsCutoff(getProposal(vote.getProposal()), blockIndex->nHeight, params)))
+                        || (blockIndex && !meetsVotingCutoff(getProposal(vote.getProposal()), blockIndex->nHeight, params)))
                         continue;
                     // Check to make sure that a valid signature exists in the vin scriptSig
                     // that matches the same pubkey used in the vote signature.
@@ -970,13 +982,41 @@ public:
      */
     std::map<Proposal, Tally> getSuperblockResults(const int & superblock, const Consensus::Params & params) {
         std::map<Proposal, Tally> r;
-        if (superblock % params.superblock != 0)
+        if (!isSuperblock(superblock, params))
             return std::move(r);
+
+        std::set<COutPoint> unique;
         std::vector<Proposal> ps;
         std::vector<Vote> vs;
         getProposalsForSuperblock(superblock, ps, vs);
-        for (const auto & proposal : ps)
+
+        CAmount uniqueAmount{0};
+        for (const auto & vote : vs) { // count all the unique voting utxos
+            if (unique.count(vote.getUtxo()))
+                continue;
+            unique.insert(vote.getUtxo());
+            uniqueAmount += vote.getAmount();
+        }
+        const auto uniqueVotes = static_cast<int>(uniqueAmount / params.voteBalance);
+
+        for (const auto & proposal : ps) // get results for each proposal
             r[proposal] = getTally(proposal.getHash(), vs, params);
+
+        // a) Exclude proposals that don't have the required yes votes.
+        //    60% of votes must be "yes" on a passing proposal.
+        // b) Exclude proposals that don't have at least 25% of all participating
+        //    votes. i.e. at least 25% of all votes cast this superblock must have
+        //    voted on this proposal.
+        for (auto it = r.cbegin(); it != r.cend(); ) {
+            const auto & tally = it->second;
+            const int total = tally.yes+tally.no+tally.abstain;
+            if (static_cast<double>(tally.yes) / static_cast<double>(tally.yes+tally.no) < 0.6
+              || static_cast<double>(total) < static_cast<double>(uniqueVotes) * 0.25)
+                r.erase(it++);
+            else
+                ++it;
+        }
+
         return std::move(r);
     }
 
@@ -1390,6 +1430,63 @@ public:
         return true;
     }
 
+    /**
+     * Returns true if the specified block is a valid superblock, including matching the expected proposal
+     * payouts to the superblock payees.
+     * @param block
+     * @param blockHeight
+     * @param params
+     * @param paymentsRet Total superblock payment
+     * @return
+     */
+    bool isValidSuperblock(const CBlock *block, const int & blockHeight, const Consensus::Params & params, CAmount & paymentsRet)
+    {
+        if (!isSuperblock(blockHeight, params))
+            return false;
+
+        // Superblock payout must be in the coinstake
+        if (!block->IsProofOfStake())
+            return false;
+
+        // Get the results and sort descending by passing percent.
+        // We want to sort descending because the most valuable
+        // proposals are those with the highest passing percentage,
+        // in this case we want them at the beginning of the list.
+        const auto & results = getSuperblockResults(blockHeight, params);
+        if (results.empty())
+            return true;
+
+        auto payees = getSuperblockPayees(blockHeight, results, params);
+        if (payees.empty())
+            return false;
+
+        // Add up the total expected superblock payment
+        paymentsRet = 0;
+        for (const auto & payee : payees)
+            paymentsRet += payee.nValue;
+
+        auto vouts = block->vtx[1]->vout;
+        if (vouts.size() - payees.size() > 2) // allow 1 vout for coinbase and 1 vout for the staker's payment
+            return false;
+
+        vouts.erase(std::remove_if(vouts.begin(), vouts.end(),
+            [&payees](const CTxOut & vout) {
+                bool found{false};
+                for (int i = (int)payees.size()-1; i >= 0; --i) {
+                    if (vout == payees[i]) {
+                        found = true;
+                        payees.erase(payees.begin()+i);
+                        break;
+                    }
+                }
+                return found;
+            }), vouts.end());
+
+        // The superblock payment is valid if all payees
+        // are accounted for.
+        return vouts.size() <= 2 && payees.empty();
+    }
+
 public: // static
 
     /**
@@ -1436,6 +1533,50 @@ public: // static
 
         CPubKey pubkey(data);
         return pubkey.GetID() == vote.getPubKey().GetID();
+    }
+
+    /**
+     * Returns true if the specified block height is the superblock.
+     * @param blockHeight
+     * @param params
+     * @return
+     */
+    static bool isSuperblock(const int & blockHeight, const Consensus::Params & params) {
+        return blockHeight >= params.governanceBlock && blockHeight % params.superblock == 0;
+    }
+
+    /**
+     * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
+     * @param proposal
+     * @param blockNumber
+     * @param params
+     * @return
+     */
+    static bool meetsProposalCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
+        if (proposal.isNull()) // check if valid
+            return false;
+        // Proposals can happen multiple superblocks in advance if a proposal
+        // is created for a future superblock. As a result, a proposal meets
+        // the cutoff if it's included in a block that's prior to its scheduled
+        // superblock.
+        return blockNumber <= proposal.getSuperblock() - params.proposalCutoff;
+    }
+
+    /**
+     * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
+     * @param proposal
+     * @param blockNumber
+     * @param params
+     * @return
+     */
+    static bool meetsVotingCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
+        if (proposal.isNull()) // check if valid
+            return false;
+        // Votes can happen multiple superblocks in advance if a proposal is
+        // created for a future superblock. As a result, a vote meets the
+        // cutoff for a block number that's prior to the superblock of its
+        // associated proposal.
+        return blockNumber <= proposal.getSuperblock() - params.votingCutoff;
     }
 
     /**
@@ -1537,6 +1678,54 @@ public: // static
         return finalTally;
     }
 
+    /**
+     * List the expected superblock payees for the specified result set.
+     * @param superblock
+     * @param results
+     * @param params
+     * @return
+     */
+    static std::vector<CTxOut> getSuperblockPayees(const int & superblock, const std::map<Proposal, Tally> & results, const Consensus::Params & params) {
+        std::vector<CTxOut> r;
+        if (results.empty())
+            return std::move(r);
+
+        // Superblock payees are sorted in the following manner:
+        // 1) Net "yes" votes
+        // 2) if tied then by most "yes" votes
+        // 3) if still tied then by block height proposal was created
+        // 4) if still tied the code will probably self destruct
+        std::vector<std::pair<Proposal, Tally>> props(results.begin(), results.end());
+        std::sort(props.begin(), props.end(),
+            [](const std::pair<Proposal, Tally> & a, const std::pair<Proposal, Tally> & b) {
+                if (a.second.netyes() == b.second.netyes() && a.second.yes == b.second.yes)
+                    return a.first.getBlockNumber() < b.first.getBlockNumber(); // proposal submission block number as tie breaker
+                else if (a.second.netyes() == b.second.netyes())
+                    return a.second.yes > b.second.yes; // use "yes" percent as tie breaker
+                else
+                    return a.second.netyes() > b.second.netyes(); // sort net yes votes descending
+            });
+
+        // Fill as many proposals into the payee list as possible.
+        // Proposals that do not fit are skipped and the other
+        // remaining proposals are filled in its place.
+        std::map<CTxDestination, CAmount> payees;
+        CAmount superblockTotal = std::min(params.proposalMaxAmount, params.GetBlockSubsidy(superblock, params));
+        do {
+            // Add the payee if the requested amount fits
+            // in the superblock.
+            const auto & result = props[0];
+            if (superblockTotal - result.first.getAmount() >= 0) {
+                superblockTotal -= result.first.getAmount();
+                r.emplace_back(result.first.getAmount(), GetScriptForDestination(DecodeDestination(result.first.getAddress())));
+            }
+            // done with this result
+            props.erase(props.begin());
+        } while (!props.empty());
+
+        return std::move(r);
+    }
+
 protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) override
@@ -1548,13 +1737,54 @@ protected:
         std::set<Proposal> ps;
         std::set<Vote> vs;
         dataFromBlock(block.get(), ps, vs, Params().GetConsensus()); // cutoff check disabled here b/c we're disconnecting
-                                            // already validated votes/proposals
+                                                                     // already validated votes/proposals
+        // By default use max int for block height in case no
+        // index is found we don't want to mark votes as unspent
+        // if an accurate spent height can't be verified.
+        const auto maxInt = std::numeric_limits<int>::max();
+        int blockHeight{maxInt};
+        {
+            LOCK(cs_main);
+            const auto pindex = LookupBlockIndex(block->GetHash());
+            blockHeight = pindex->nHeight;
+        }
+
         {
             LOCK(mu);
-            for (auto & proposal : ps)
-                proposals.erase(proposal.getHash());
-            for (auto & vote : vs)
-                votes.erase(vote.getHash());
+            for (auto & proposal : ps) {
+                if (!proposals.count(proposal.getHash()))
+                    continue;
+                const auto & stprop = proposals[proposal.getHash()];
+                if (stprop.getBlockNumber() == blockHeight)
+                    proposals.erase(proposal.getHash());
+            }
+            for (auto & vote : vs) {
+                if (!votes.count(vote.getHash()))
+                    continue;
+                const auto & stvote = votes[vote.getHash()];
+                if (stvote.getBlockNumber() == blockHeight)
+                    votes.erase(vote.getHash());
+            }
+
+            if (blockHeight == maxInt)
+                return; // do not unspend votes if block height is undefined
+
+            // Unspend any vote utxos that were spent by this
+            // block. Only unspend those votes where the block
+            // index that tried to spend them was prior to
+            // the proposal's superblock.
+            std::map<COutPoint, uint256> prevouts; // map<outpoint, txhash>
+            for (const auto & tx : block->vtx) {
+                for (const auto & vin : tx->vin)
+                    prevouts[vin.prevout] = tx->GetHash();
+            }
+            for (auto & voteItem : votes) {
+                if (!prevouts.count(voteItem.second.getUtxo()))
+                    continue;
+                // Unspend this vote if it was spent in this block
+                if (blockHeight <= proposals[voteItem.second.getProposal()].getSuperblock())
+                    voteItem.second.unspend(blockHeight, prevouts[voteItem.second.getUtxo()]);
+            }
         }
     }
 
@@ -1572,8 +1802,12 @@ protected:
         dataFromBlock(block, ps, vs, params, pindex, !proposalCheck); // excludes votes/proposals that don't meet cutoffs
         {
             LOCK(mu);
-            for (auto & proposal : ps)
-                proposals[proposal.getHash()] = proposal;
+            for (auto & proposal : ps) {
+                // Do not allow proposals with the same parameters to replace
+                // existing proposals.
+                if (!proposals.count(proposal.getHash()))
+                    proposals[proposal.getHash()] = proposal;
+            }
             for (auto & vote : vs) {
                 if (proposalCheck && !proposals.count(vote.getProposal()))
                     continue; // skip votes without valid proposals
@@ -1603,10 +1837,10 @@ protected:
             // and then check any votes that share those utxos to determine
             // if they've been spent. Only mark votes as spent if the vote's
             // utxo is spent before the proposal expires (on its superblock).
-            std::set<COutPoint> prevouts;
+            std::map<COutPoint, uint256> prevouts; // map<outpoint, txhash>
             for (const auto & tx : block->vtx) {
                 for (const auto & vin : tx->vin)
-                    prevouts.insert(vin.prevout);
+                    prevouts[vin.prevout] = tx->GetHash();
             }
             for (auto & voteItem : votes) {
                 if (!prevouts.count(voteItem.second.getUtxo()))
@@ -1614,7 +1848,7 @@ protected:
                 // Only mark the vote as spent if it happens before or on its
                 // proposal's superblock.
                 if (pindex->nHeight <= proposals[voteItem.second.getProposal()].getSuperblock())
-                    voteItem.second.spend(pindex->nHeight);
+                    voteItem.second.spend(pindex->nHeight, prevouts[voteItem.second.getUtxo()]);
             }
         }
     }
