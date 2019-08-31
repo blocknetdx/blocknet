@@ -636,6 +636,20 @@ public:
     explicit Governance() = default;
 
     /**
+     * Returns true if the proposal with the specified name exists.
+     * @param name
+     * @return
+     */
+    bool hasProposal(const std::string & name, const int & superblock) {
+        LOCK(mu);
+        for (const auto & item : proposals) {
+            if (item.second.getSuperblock() == superblock && item.second.getName() == name)
+                return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns true if the proposal with the specified hash exists.
      * @param hash
      * @return
@@ -1059,8 +1073,9 @@ public:
             *failReasonRet = "Proposal is not valid";
             return error(failReasonRet->c_str()); // TODO Blocknet indicate what isn't valid
         }
-        if (hasProposal(proposal.getHash())) {
-            *failReasonRet = strprintf("Proposal %s was already submitted with hash %s", proposal.getName(), proposal.getHash().ToString());
+        if (hasProposal(proposal.getHash()) || hasProposal(proposal.getName(), proposal.getSuperblock())) {
+            *failReasonRet = strprintf("Proposal %s scheduled for superblock %d was already submitted with hash %s",
+                    proposal.getName(), proposal.getSuperblock(), proposal.getHash().ToString());
             return error(failReasonRet->c_str());
         }
 
