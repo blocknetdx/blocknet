@@ -712,7 +712,7 @@ bool CServicenodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
 
     int n = mnodeman.GetServicenodeRank(vinServicenode, nBlockHeight - 100, ActiveProtocol());
 
-    if (n > MNPAYMENTS_SIGNATURES_TOTAL) {
+    if (!IsSporkActive(SPORK_23_SNODE_SIGNATURES) && n > MNPAYMENTS_SIGNATURES_TOTAL) {
         //It's common to have servicenodes mistakenly think they are in the top 10
         // We don't want to print all of these messages, or punish them unless they're way off
         if (n > MNPAYMENTS_SIGNATURES_TOTAL * 2) {
@@ -720,6 +720,8 @@ bool CServicenodePaymentWinner::IsValid(CNode* pnode, std::string& strError)
             LogPrint("mnpayments", "CServicenodePaymentWinner::IsValid - %s\n", strError);
 //            if (servicenodeSync.IsSynced()) Misbehaving(pnode->GetId(), 20);
         }
+        return false;
+    } else if (IsSporkActive(SPORK_23_SNODE_SIGNATURES) && n > MNPAYMENTS_SIGNATURES_TOTAL2) {
         return false;
     }
 
@@ -739,8 +741,11 @@ bool CServicenodePayments::ProcessBlock(int nBlockHeight)
         return false;
     }
 
-    if (n > MNPAYMENTS_SIGNATURES_TOTAL) {
+    if (!IsSporkActive(SPORK_23_SNODE_SIGNATURES) && n > MNPAYMENTS_SIGNATURES_TOTAL) {
         LogPrint("mnpayments", "CServicenodePayments::ProcessBlock - Servicenode not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL, n);
+        return false;
+    } else if (IsSporkActive(SPORK_23_SNODE_SIGNATURES) && n > MNPAYMENTS_SIGNATURES_TOTAL2) {
+        LogPrint("mnpayments", "CServicenodePayments::ProcessBlock - Servicenode not in the top %d (%d)\n", MNPAYMENTS_SIGNATURES_TOTAL2, n);
         return false;
     }
 
