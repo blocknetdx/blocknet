@@ -98,6 +98,8 @@ static const unsigned int BLOCK_DOWNLOAD_WINDOW = 1024;
 static const unsigned int DATABASE_WRITE_INTERVAL = 3600;
 /** Maximum length of reject messages. */
 static const unsigned int MAX_REJECT_MESSAGE_LENGTH = 111;
+/** Required by the Governance framework. */
+static const unsigned int MAX_OP_RETURN_IN_TRANSACTION = 100;
 
 /** "reject" message codes */
 static const unsigned char REJECT_MALFORMED = 0x01;

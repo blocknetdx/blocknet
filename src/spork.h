@@ -26,7 +26,7 @@ using namespace boost;
     - This would result in old clients getting confused about which spork is for what
 */
 #define SPORK_START 10001
-#define SPORK_END 10021
+#define SPORK_END 10022
 
 #define SPORK_2_SWIFTTX 10001
 #define SPORK_3_SWIFTTX_BLOCK_FILTERING 10002
@@ -42,6 +42,7 @@ using namespace boost;
 #define SPORK_18_PROPOSAL_FEE_AMOUNT 10018
 #define SPORK_20_ONCHAIN_HISTORY 10020
 #define SPORK_21_SNODE_PAYMENT 10021
+#define SPORK_22_OP_RETURN 10022
 
 #define SPORK_2_SWIFTTX_DEFAULT 978307200                         //2001-1-1
 #define SPORK_3_SWIFTTX_BLOCK_FILTERING_DEFAULT 1424217600        //2015-2-18
@@ -57,6 +58,7 @@ using namespace boost;
 #define SPORK_18_PROPOSAL_FEE_AMOUNT_DEFAULT 50                   //50 BLOCK
 #define SPORK_20_ONCHAIN_HISTORY_DEFAULT 4070908800               //OFF
 #define SPORK_21_SNODE_PAYMENT_DEFAULT 4070908800                 //OFF
+#define SPORK_22_OP_RETURN_DEFAULT 1570032000                     //Oct 2 '19 4pm UTC
 
 class CSporkMessage;
 class CSporkManager;

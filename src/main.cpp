@@ -748,8 +748,8 @@ bool IsStandardTx(const CTransaction& tx, string& reason)
         }
     }
 
-    // only one OP_RETURN txout is permitted
-    if (nDataOut > 1) {
+    // max OP_RETURN check
+    if (nDataOut > (IsSporkActive(SPORK_22_OP_RETURN) ? MAX_OP_RETURN_IN_TRANSACTION : 1)) {
         reason = "multi-op-return";
         return false;
     }

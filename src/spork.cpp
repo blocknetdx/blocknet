@@ -93,6 +93,7 @@ bool IsSporkActive(int nSporkID)
         if (nSporkID == SPORK_18_PROPOSAL_FEE_AMOUNT) r = SPORK_18_PROPOSAL_FEE_AMOUNT_DEFAULT;
         if (nSporkID == SPORK_20_ONCHAIN_HISTORY) r = SPORK_20_ONCHAIN_HISTORY_DEFAULT;
         if (nSporkID == SPORK_21_SNODE_PAYMENT) r = SPORK_21_SNODE_PAYMENT_DEFAULT;
+        if (nSporkID == SPORK_22_OP_RETURN) r = SPORK_22_OP_RETURN_DEFAULT;
 
         if (r == -1) LogPrintf("GetSpork::Unknown Spork %d\n", nSporkID);
     }
@@ -123,6 +124,7 @@ int64_t GetSporkValue(int nSporkID)
         if (nSporkID == SPORK_18_PROPOSAL_FEE_AMOUNT) r = SPORK_18_PROPOSAL_FEE_AMOUNT_DEFAULT;
         if (nSporkID == SPORK_20_ONCHAIN_HISTORY) r = SPORK_20_ONCHAIN_HISTORY_DEFAULT;
         if (nSporkID == SPORK_21_SNODE_PAYMENT) r = SPORK_21_SNODE_PAYMENT_DEFAULT;
+        if (nSporkID == SPORK_22_OP_RETURN) r = SPORK_22_OP_RETURN_DEFAULT;
 
         if (r == -1) LogPrintf("GetSpork::Unknown Spork %d\n", nSporkID);
     }
@@ -272,6 +274,7 @@ int CSporkManager::GetSporkIDByName(std::string strName)
     if (strName == "SPORK_18_PROPOSAL_FEE_AMOUNT") return SPORK_18_PROPOSAL_FEE_AMOUNT;
     if (strName == "SPORK_20_ONCHAIN_HISTORY") return SPORK_20_ONCHAIN_HISTORY;
     if (strName == "SPORK_21_SNODE_PAYMENT") return SPORK_21_SNODE_PAYMENT;
+    if (strName == "SPORK_22_OP_RETURN") return SPORK_22_OP_RETURN;
 
     return -1;
 }
@@ -292,6 +295,7 @@ std::string CSporkManager::GetSporkNameByID(int id)
     if (id == SPORK_18_PROPOSAL_FEE_AMOUNT) return "SPORK_18_PROPOSAL_FEE_AMOUNT";
     if (id == SPORK_20_ONCHAIN_HISTORY) return "SPORK_20_ONCHAIN_HISTORY";
     if (id == SPORK_21_SNODE_PAYMENT) return "SPORK_21_SNODE_PAYMENT";
+    if (id == SPORK_22_OP_RETURN) return "SPORK_22_OP_RETURN";
 
     return "Unknown";
 }
