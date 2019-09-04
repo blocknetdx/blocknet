@@ -78,6 +78,7 @@ public:
     int LAST_POW_BLOCK() const { return nLastPOWBlock; }
     int COINBASE_MATURITY() const { return nMaturity; }
     int ModifierUpgradeBlock() const { return nModifierUpdateBlock; }
+    int StakingV05UpgradeTime() const { return nStakingV05UpdateTime; } // staking protocol change
     /** The servicenode count that we will allow the see-saw reward payments to be off by */
     int ServicenodeCountDrift() const { return nServicenodeCountDrift; }
     /** Make miner stop after a block is found. In RPC, don't return until nGenProcLimit blocks are generated */
@@ -116,6 +117,7 @@ protected:
     int nServicenodeCountDrift;
     int nMaturity;
     int nModifierUpdateBlock;
+    int nStakingV05UpdateTime{1};
     int nMinerThreads;
     std::vector<CDNSSeedData> vSeeds;
     std::vector<unsigned char> base58Prefixes[MAX_BASE58_TYPES];

@@ -3,6 +3,11 @@
 *.lo
 *.pb.*
 
+.travis/
+.idea/
+nbproject/
+cmake-build-debug/
+dist/
 .DS_Store
 wallet.dat
 configure
