@@ -112,7 +112,7 @@ public:
         consensus.stakeMinAge = 3600;
         consensus.stakingModiferV2Block = 615800;
         consensus.coinMaturity = 100;
-        consensus.stakingV05UpgradeTime = 1568570400; // Sep 15, 2019
+        consensus.stakingV05UpgradeTime = 1569261600; // Sep 23 '19 6pm UTC
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
