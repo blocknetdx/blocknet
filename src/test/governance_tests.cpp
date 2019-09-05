@@ -395,6 +395,8 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
         wallet->AvailableCoins(*locked_chain, coins);
     }
     BOOST_CHECK_MESSAGE(!coins.empty(), "Vote tests require available coins");
+    const gov::VinHash & vinHash = gov::makeVinHash(coins.front().GetInputCoin().outpoint);
+    std::set<gov::VinHash> vinHashes{vinHash};
 
     // Check normal proposal
     gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
@@ -403,38 +405,38 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
 
     // Check YES vote is valid
     {
-        gov::Vote vote(proposal.getHash(), gov::YES, coins.begin()->GetInputCoin().outpoint);
+        gov::Vote vote(proposal.getHash(), gov::YES, coins.begin()->GetInputCoin().outpoint, vinHash);
         BOOST_CHECK_MESSAGE(vote.sign(coinbaseKey), "Vote YES signing should succeed");
-        BOOST_CHECK_MESSAGE(vote.isValid(consensus), "Vote YES should be valid upon signing");
+        BOOST_CHECK_MESSAGE(vote.isValid(vinHashes, consensus), "Vote YES should be valid upon signing");
     }
 
     // Check NO vote is valid
     {
-        gov::Vote vote(proposal.getHash(), gov::NO, coins.begin()->GetInputCoin().outpoint);
+        gov::Vote vote(proposal.getHash(), gov::NO, coins.begin()->GetInputCoin().outpoint, vinHash);
         BOOST_CHECK_MESSAGE(vote.sign(coinbaseKey), "Vote NO signing should succeed");
-        BOOST_CHECK_MESSAGE(vote.isValid(consensus), "Vote NO should be valid upon signing");
+        BOOST_CHECK_MESSAGE(vote.isValid(vinHashes, consensus), "Vote NO should be valid upon signing");
     }
 
     // Check ABSTAIN vote is valid
     {
-        gov::Vote vote(proposal.getHash(), gov::ABSTAIN, coins.begin()->GetInputCoin().outpoint);
+        gov::Vote vote(proposal.getHash(), gov::ABSTAIN, coins.begin()->GetInputCoin().outpoint, vinHash);
         BOOST_CHECK_MESSAGE(vote.sign(coinbaseKey), "Vote ABSTAIN signing should succeed");
-        BOOST_CHECK_MESSAGE(vote.isValid(consensus), "Vote ABSTAIN should be valid upon signing");
+        BOOST_CHECK_MESSAGE(vote.isValid(vinHashes, consensus), "Vote ABSTAIN should be valid upon signing");
     }
 
     // Bad vote type should fail
     {
-        gov::Vote vote(proposal.getHash(), (gov::VoteType)99, coins.begin()->GetInputCoin().outpoint);
+        gov::Vote vote(proposal.getHash(), (gov::VoteType)99, coins.begin()->GetInputCoin().outpoint, vinHash);
         BOOST_CHECK_MESSAGE(vote.sign(coinbaseKey), "Vote signing should succeed");
-        BOOST_CHECK_MESSAGE(!vote.isValid(consensus), "Vote with invalid type should fail");
+        BOOST_CHECK_MESSAGE(!vote.isValid(vinHashes, consensus), "Vote with invalid type should fail");
     }
 
     // Signing with key not matching utxo should fail
     {
         CKey key; key.MakeNewKey(true);
-        gov::Vote vote(proposal.getHash(), gov::YES, coins.begin()->GetInputCoin().outpoint);
+        gov::Vote vote(proposal.getHash(), gov::YES, coins.begin()->GetInputCoin().outpoint, vinHash);
         BOOST_CHECK_MESSAGE(vote.sign(key), "Vote signing should succeed");
-        BOOST_CHECK_MESSAGE(!vote.isValid(consensus), "Vote with bad signing key should fail");
+        BOOST_CHECK_MESSAGE(!vote.isValid(vinHashes, consensus), "Vote with bad signing key should fail");
     }
 
     // Vote with utxo from a non-owned address in mempool should fail
@@ -456,9 +458,9 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
             }
         }
         BOOST_CHECK_MESSAGE(!outpoint.IsNull(), "Vote utxo should not be null in non-owned address check");
-        gov::Vote vote(proposal.getHash(), gov::YES, outpoint);
+        gov::Vote vote(proposal.getHash(), gov::YES, outpoint, vinHash);
         BOOST_CHECK_MESSAGE(vote.sign(coinbaseKey), "Vote signing should succeed");
-        BOOST_CHECK_MESSAGE(!vote.isValid(consensus), "Vote with bad utxo should fail");
+        BOOST_CHECK_MESSAGE(!vote.isValid(vinHashes, consensus), "Vote with bad utxo should fail");
         // clean up
         cleanup(resetBlocks);
     }
@@ -484,11 +486,222 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
             }
         }
         BOOST_CHECK_MESSAGE(!outpoint.IsNull(), "Vote utxo should not be null in non-owned address check");
-        gov::Vote vote(proposal.getHash(), gov::YES, outpoint);
+        gov::Vote vote(proposal.getHash(), gov::YES, outpoint, vinHash);
         BOOST_CHECK_MESSAGE(vote.sign(coinbaseKey), "Vote signing should succeed");
-        BOOST_CHECK_MESSAGE(!vote.isValid(consensus), "Vote with bad utxo should fail");
+        BOOST_CHECK_MESSAGE(!vote.isValid(vinHashes, consensus), "Vote with bad utxo should fail");
         // Clean up
         cleanup(resetBlocks);
+    }
+
+    cleanup(chainActive.Height());
+    UnregisterValidationInterface(&gov::Governance::instance());
+}
+
+BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
+{
+    TestChainPoS pos(false);
+    RegisterValidationInterface(&gov::Governance::instance());
+
+    auto *params = (CChainParams*)&Params();
+    params->consensus.voteMinUtxoAmount = 20*COIN;
+    params->consensus.voteBalance = 500*COIN;
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 200 * COIN;
+        else if (blockHeight % consensusParams.superblock == 0)
+            return 40001 * COIN;
+        return 50 * COIN;
+    };
+    const auto & consensus = params->GetConsensus();
+    pos.Init();
+    CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
+
+    // Create voting wallet
+    CKey voteDestKey; voteDestKey.MakeNewKey(true);
+    CTxDestination voteDest(voteDestKey.GetPubKey().GetID());
+    bool firstRun;
+    auto otherwallet = std::make_shared<CWallet>(*pos.chain, WalletLocation(), WalletDatabase::CreateMock());
+    otherwallet->LoadWallet(firstRun);
+    AddKey(*otherwallet, voteDestKey);
+    otherwallet->SetBroadcastTransactions(true);
+    rescanWallet(otherwallet.get());
+    const CAmount totalVoteAmount = consensus.voteBalance*2;
+    const auto voteUtxoCount = static_cast<int>(totalVoteAmount/consensus.voteMinUtxoAmount);
+    const auto maxVotes = totalVoteAmount/consensus.voteBalance;
+
+    // Get to the nearest future SB if necessary
+    if (gov::PreviousSuperblock(consensus, chainActive.Height()) == 0) {
+        const auto blocks = gov::NextSuperblock(consensus) - chainActive.Height();
+        pos.StakeBlocks(blocks), SyncWithValidationInterfaceQueue();
+    }
+
+    // Prepare the utxos to use for votes
+    {
+        CMutableTransaction votetx;
+        // Create tx with enough inputs to cover votes
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+        }
+        std::sort(coins.begin(), coins.end(), [](const COutput & a, const COutput & b) {
+            return a.GetInputCoin().txout.nValue > b.GetInputCoin().txout.nValue;
+        });
+        // Staker script
+        const auto stakerScriptPubKey = coins[0].GetInputCoin().txout.scriptPubKey;
+        // Create vins
+        CAmount runningAmount{0};
+        int coinpos{0};
+        std::vector<CTxOut> txouts;
+        std::vector<COutPoint> outs;
+        while (runningAmount < totalVoteAmount) {
+            outs.push_back(coins[coinpos].GetInputCoin().outpoint);
+            txouts.push_back(coins[coinpos].GetInputCoin().txout);
+            runningAmount += coins[coinpos].GetInputCoin().txout.nValue;
+            ++coinpos;
+        }
+        outs.emplace_back(coins[coinpos].GetInputCoin().outpoint); // Cover fee
+        txouts.emplace_back(coins[coinpos].GetInputCoin().txout); // Cover fee
+        votetx.vin.resize(outs.size());
+        for (int i = 0; i < (int)outs.size(); ++i)
+            votetx.vin[i] = CTxIn(outs[i]);
+        const CAmount fees = votetx.vin.size()*2*::minRelayTxFee.GetFee(250);
+        const CAmount voteInputUtxoAmount = 5 * COIN;
+        const CAmount change = txouts[txouts.size()-1].nValue - fees - voteInputUtxoAmount; // fee input change
+        // Create vouts
+        for (int i = 0; i < voteUtxoCount; ++i)
+            votetx.vout.emplace_back(consensus.voteMinUtxoAmount, GetScriptForDestination(voteDest));
+        votetx.vout.emplace_back(change, stakerScriptPubKey); // change back to staker
+        votetx.vout.emplace_back(voteInputUtxoAmount, GetScriptForDestination(voteDest)); // use this for vote inputs
+        // Sign the tx inputs
+        for (int i = 0; i < (int)votetx.vin.size(); ++i) {
+            auto & vin = votetx.vin[i];
+            SignatureData sigdata = DataFromTransaction(votetx, i, txouts[i]);
+            ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&votetx, i, txouts[i].nValue, SIGHASH_ALL), stakerScriptPubKey, sigdata);
+            UpdateInput(vin, sigdata);
+        }
+        // Send transaction
+        CReserveKey reservekey(pos.wallet.get());
+        CValidationState state;
+        BOOST_CHECK(pos.wallet->CommitTransaction(MakeTransactionRef(votetx), {}, {}, reservekey, g_connman.get(), state));
+        BOOST_CHECK_MESSAGE(state.IsValid(), "Failed to submit tx for otherwallet vote utxos");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        rescanWallet(otherwallet.get());
+        BOOST_CHECK_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputUtxoAmount, otherwallet->GetBalance()));
+        BOOST_TEST_REQUIRE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount);
+    }
+
+    gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
+                           EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+    gov::Vote firstVote;
+    COutPoint firstVoteVinPrevout;
+    std::string failReason;
+
+    // Create and submit proposal (use regular wallet)
+    {
+        CTransactionRef tx = nullptr;
+        BOOST_CHECK(gov::Governance::instance().submitProposal(proposal, {pos.wallet}, consensus, tx, &failReason));
+        BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        BOOST_CHECK(gov::Governance::instance().hasProposal(proposal.getHash()));
+    }
+
+    // Submit the first vote
+    {
+        gov::ProposalVote proposalVote{proposal, gov::YES};
+        std::vector<CTransactionRef> txns;
+        failReason.clear();
+        BOOST_CHECK(gov::Governance::instance().submitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns, &failReason));
+        BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit YES vote in replay attack test: %s", failReason));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        CBlock block; // use to check staked inputs used in votes
+        BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+        std::set<gov::Proposal> ps;
+        std::set<gov::Vote> vs;
+        gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+        firstVote = *vs.begin(); // store first vote to use with replay attack
+        BOOST_CHECK_MESSAGE(txns.size() == 1 && txns[0]->vin.size() == 1, "Expecting only 1 vote transaction");
+        firstVoteVinPrevout = txns[0]->vin[0].prevout;
+        failReason.clear();
+        // Change vote to NO
+        gov::ProposalVote proposalVoteNo{proposal, gov::NO};
+        BOOST_CHECK(gov::Governance::instance().submitVotes(std::vector<gov::ProposalVote>{proposalVoteNo}, {otherwallet}, consensus, txns, &failReason));
+        BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit NO vote in replay attack test: %s", failReason));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+    }
+
+    // Try and replay YES vote with non-owner wallet (should fail)
+    {
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+        }
+        CMutableTransaction mtx;
+        mtx.vin.resize(1);
+        mtx.vout.resize(2);
+        mtx.vin[0] = CTxIn(coins.front().GetInputCoin().outpoint);
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        ss << firstVote;
+        auto script = CScript() << OP_RETURN << ToByteVector(ss);
+        mtx.vout[0] = CTxOut(0, script);
+        mtx.vout[1] = CTxOut(coins.front().GetInputCoin().txout.nValue - COIN, coins.front().GetInputCoin().txout.scriptPubKey);
+        SignatureData sigdata = DataFromTransaction(mtx, 0, coins.front().GetInputCoin().txout);
+        ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&mtx, 0, coins.front().GetInputCoin().txout.nValue, SIGHASH_ALL),
+                coins.front().GetInputCoin().txout.scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[0], sigdata);
+        // Send transaction
+        CReserveKey reservekey(pos.wallet.get());
+        CValidationState state;
+        BOOST_CHECK(pos.wallet->CommitTransaction(MakeTransactionRef(mtx), {}, {}, reservekey, g_connman.get(), state));
+        BOOST_CHECK_MESSAGE(state.IsValid(), "Failed to submit vote tx in replay attack test");
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        CBlock block; // use to check staked inputs used in votes
+        BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+        std::set<gov::Proposal> ps;
+        std::set<gov::Vote> vs;
+        gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+        // Vote should not be accepted
+        BOOST_CHECK_MESSAGE(vs.empty(), "Vote replay attack should fail on non-owner wallet");
+    }
+
+    // Try and replay YES vote with same wallet but random input (should fail too)
+    {
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, otherwallet->cs_wallet);
+            otherwallet->AvailableCoins(*pos.locked_chain, coins);
+        }
+        const COutput & selected = coins.front();
+        const auto & prevoutVinHash = gov::makeVinHash(firstVoteVinPrevout);
+        BOOST_CHECK_MESSAGE(memcmp(&firstVote.getVinHash(), &prevoutVinHash, firstVote.getVinHash().size()) == 0,
+                "Expecting first vote's vin prevout to match first vote's vin hash");
+        CMutableTransaction mtx;
+        mtx.vin.resize(1);
+        mtx.vout.resize(2);
+        mtx.vin[0] = CTxIn(selected.GetInputCoin().outpoint);
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        ss << firstVote;
+        auto script = CScript() << OP_RETURN << ToByteVector(ss);
+        mtx.vout[0] = CTxOut(0, script);
+        mtx.vout[1] = CTxOut(selected.GetInputCoin().txout.nValue - 5000, selected.GetInputCoin().txout.scriptPubKey);
+        SignatureData sigdata = DataFromTransaction(mtx, 0, selected.GetInputCoin().txout);
+        ProduceSignature(*otherwallet, MutableTransactionSignatureCreator(&mtx, 0, selected.GetInputCoin().txout.nValue, SIGHASH_ALL),
+                         selected.GetInputCoin().txout.scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[0], sigdata);
+        // Send transaction
+        CReserveKey reservekey(otherwallet.get());
+        CValidationState state;
+        BOOST_CHECK(otherwallet->CommitTransaction(MakeTransactionRef(mtx), {}, {}, reservekey, g_connman.get(), state));
+        BOOST_CHECK_MESSAGE(state.IsValid(), strprintf("Failed to submit vote tx in replay attack test: %s", state.GetRejectReason()));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        CBlock block; // use to check staked inputs used in votes
+        BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
+        std::set<gov::Proposal> ps;
+        std::set<gov::Vote> vs;
+        gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+        // Vote should not be accepted
+        BOOST_CHECK_MESSAGE(vs.empty(), "Vote replay attack should fail on same wallet");
     }
 
     cleanup(chainActive.Height());
@@ -665,7 +878,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         gov::ProposalVote proposalVote{proposal, gov::YES};
         std::vector<CTransactionRef> txns;
         failReason.clear();
-        BOOST_CHECK(gov::Governance::instance().submitVotes(std::vector<gov::ProposalVote>{proposalVote}, GetWallets(), consensus, txns, &failReason));
+        BOOST_CHECK(gov::Governance::instance().submitVotes(std::vector<gov::ProposalVote>{proposalVote}, {wallet}, consensus, txns, &failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit votes: %s", failReason));
         BOOST_CHECK_MESSAGE(txns.size() == 3, strprintf("Expected 3 vote transactions to be created, %d were created", txns.size()));
         BOOST_TEST_REQUIRE(!txns.empty(), "Proposal tx should confirm to the network before continuing");

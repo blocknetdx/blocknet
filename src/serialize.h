@@ -551,6 +551,17 @@ template<typename Stream, typename T, typename A, typename V> void Unserialize_i
 template<typename Stream, typename T, typename A> inline void Unserialize(Stream& is, std::vector<T, A>& v);
 
 /**
+ * array
+ * arrays of unsigned char are a special case and are intended to be serialized as a single opaque blob.
+ */
+template<typename Stream, typename T, std::size_t N> void Serialize_impl(Stream& os, const std::array<T, N>& v, const unsigned char&);
+template<typename Stream, typename T, std::size_t N, typename V> void Serialize_impl(Stream& os, const std::array<T, N>& v, const V&);
+template<typename Stream, typename T, std::size_t N> inline void Serialize(Stream& os, const std::array<T, N>& v);
+template<typename Stream, typename T, std::size_t N> void Unserialize_impl(Stream& is, std::array<T, N>& v, const unsigned char&);
+template<typename Stream, typename T, std::size_t N, typename V> void Unserialize_impl(Stream& is, std::array<T, N>& v, const V&);
+template<typename Stream, typename T, std::size_t N> inline void Unserialize(Stream& is, std::array<T, N>& v);
+
+/**
  * pair
  */
 template<typename Stream, typename K, typename T> void Serialize(Stream& os, const std::pair<K, T>& item);
@@ -753,6 +764,72 @@ void Unserialize_impl(Stream& is, std::vector<T, A>& v, const V&)
 
 template<typename Stream, typename T, typename A>
 inline void Unserialize(Stream& is, std::vector<T, A>& v)
+{
+    Unserialize_impl(is, v, T());
+}
+
+
+
+/**
+ * array
+ */
+template<typename Stream, typename T, std::size_t N>
+void Serialize_impl(Stream& os, const std::array<T, N>& v, const unsigned char&)
+{
+    WriteCompactSize(os, v.size());
+    if (!v.empty())
+        os.write((char*)v.data(), v.size() * sizeof(T));
+}
+
+template<typename Stream, typename T, std::size_t N, typename V>
+void Serialize_impl(Stream& os, const std::array<T, N>& v, const V&)
+{
+    WriteCompactSize(os, v.size());
+    for (typename std::array<T, N>::const_iterator vi = v.begin(); vi != v.end(); ++vi)
+        ::Serialize(os, (*vi));
+}
+
+template<typename Stream, typename T, std::size_t N>
+inline void Serialize(Stream& os, const std::array<T, N>& v)
+{
+    Serialize_impl(os, v, T());
+}
+
+
+template<typename Stream, typename T, std::size_t N>
+void Unserialize_impl(Stream& is, std::array<T, N>& v, const unsigned char&)
+{
+    // Limit size per read so bogus size value won't cause out of memory
+    std::fill(std::begin(v), std::end(v), 0);
+    unsigned int nSize = ReadCompactSize(is);
+    unsigned int i = 0;
+    while (i < N)
+    {
+        unsigned int blk = std::min(nSize - i, (unsigned int)(1 + 4999999 / sizeof(T)));
+        is.read((char*)&v[i], blk * sizeof(T));
+        i += blk;
+    }
+}
+
+template<typename Stream, typename T, std::size_t N, typename V>
+void Unserialize_impl(Stream& is, std::array<T, N>& v, const V&)
+{
+    std::fill(std::begin(v), std::end(v), 0);
+    unsigned int nSize = ReadCompactSize(is);
+    unsigned int i = 0;
+    unsigned int nMid = 0;
+    while (nMid < N)
+    {
+        nMid += 5000000 / sizeof(T);
+        if (nMid > nSize)
+            nMid = nSize;
+        for (; i < nMid; i++)
+            Unserialize(is, v[i]);
+    }
+}
+
+template<typename Stream, typename T, std::size_t N>
+inline void Unserialize(Stream& is, std::array<T, N>& v)
 {
     Unserialize_impl(is, v, T());
 }

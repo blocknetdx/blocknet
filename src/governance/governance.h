@@ -46,6 +46,24 @@ enum Type : uint8_t {
 
 static const uint8_t NETWORK_VERSION = 0x01;
 static const CAmount VOTING_UTXO_INPUT_AMOUNT = 0.1 * COIN;
+static const int VINHASH_SIZE = 12;
+typedef std::array<unsigned char, VINHASH_SIZE> VinHash;
+
+/**
+ * Create VinHash from vin prevout.
+ * @param COutPoint
+ * @return
+ */
+static VinHash makeVinHash(const COutPoint & prevout) {
+    CHashWriter hw(SER_GETHASH, 0);
+    hw << prevout;
+    const auto & hwhash = hw.GetHash();
+    const auto & v = ToByteVector(hwhash);
+    VinHash r;
+    for (int i = 0; i < VINHASH_SIZE; ++i)
+        r[i] = v[i];
+    return r;
+}
 
 /**
  * Return the CKeyID for the specified utxo.
@@ -302,9 +320,11 @@ enum VoteType : uint8_t {
  */
 class Vote {
 public:
-    explicit Vote(const uint256 & proposal, const VoteType & vote, const COutPoint & utxo) : proposal(proposal),
-                                                                                             vote(vote),
-                                                                                             utxo(utxo) {
+    explicit Vote(const uint256 & proposal, const VoteType & vote,
+                  const COutPoint & utxo, const VinHash & vinhash) : proposal(proposal),
+                                                                     vote(vote),
+                                                                     utxo(utxo),
+                                                                     vinhash(vinhash) {
         loadKeyID();
     }
     explicit Vote(const COutPoint & outpoint, const int64_t & time = 0, const int & blockNumber = 0) : outpoint(outpoint),
@@ -382,6 +402,24 @@ public:
         if (pubkey.GetID() != keyid)
             return false;
         return true;
+    }
+
+    /**
+     * Returns true if the vote properties are valid and the utxo pubkey
+     * matches the pubkey of the signature as well as the added check
+     * that the hash of the prevout matches the expected vin hash. This
+     * check will prevent vote replay attacks by ensuring that the vin
+     * associated with the vote matches the expected vin hash sent
+     * with the vote's OP_RETURN data.
+     * @param vinHashes Set of truncated vin prevout hashes.
+     * @paramk params
+     * @return
+     */
+    bool isValid(const std::set<VinHash> & vinHashes, const Consensus::Params & params) const {
+        if (!isValid(params))
+            return false;
+        // Check that the expected vin hash matches an expected vin prevout
+        return vinHashes.count(vinhash) > 0;
     }
 
     /**
@@ -464,6 +502,14 @@ public:
     }
 
     /**
+     * Vote's vin hash (truncated vin prevout spending this vote).
+     * @return
+     */
+    const VinHash & getVinHash() const {
+        return vinhash;
+    }
+
+    /**
      * Proposal hash
      * @return
      */
@@ -479,7 +525,7 @@ public:
      */
     uint256 sigHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << version << type << proposal << vote << utxo;
+        ss << version << type << proposal << vote << utxo << vinhash;
         return ss.GetHash();
     }
 
@@ -534,6 +580,7 @@ public:
         READWRITE(proposal);
         READWRITE(vote);
         READWRITE(utxo);
+        READWRITE(vinhash);
         READWRITE(signature);
         if (ser_action.ForRead()) { // assign memory only fields
             pubkey.RecoverCompact(sigHash(), signature);
@@ -565,6 +612,7 @@ protected:
     uint8_t type{VOTE};
     uint256 proposal;
     uint8_t vote{ABSTAIN};
+    VinHash vinhash;
     std::vector<unsigned char> signature;
     COutPoint utxo; // voting on behalf of this utxo
 
@@ -918,6 +966,7 @@ public:
         for (const auto & tx : block->vtx) {
             if (tx->IsCoinBase())
                 continue;
+            std::set<VinHash> vinHashes;
             for (int n = 0; n < static_cast<int>(tx->vout.size()); ++n) {
                 const auto & out = tx->vout[n];
                 if (out.scriptPubKey[0] != OP_RETURN)
@@ -944,6 +993,12 @@ public:
                     if (proposal.isValid(params) && (!blockIndex || meetsProposalCutoff(proposal, blockIndex->nHeight, params)))
                         proposalsRet.insert(proposal);
                 } else if (obj.getType() == VOTE) {
+                    if (vinHashes.empty()) { // initialize vin hashes
+                        for (const auto & vin : tx->vin) {
+                            const auto & vhash = makeVinHash(vin.prevout);
+                            vinHashes.insert(vhash);
+                        }
+                    }
                     CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
                     Vote vote({tx->GetHash(), static_cast<uint32_t>(n)}, block->GetBlockTime(), blockIndex ? blockIndex->nHeight : 0);
                     ss2 >> vote;
@@ -952,37 +1007,25 @@ public:
                     // A valid proposal for this vote must exist in a previous block
                     // otherwise the vote is discarded.
                     if ((blockIndex && checkProposal && !hasProposal(vote.getProposal(), blockIndex->nHeight))
-                        || !vote.isValid(params)
+                        || !vote.isValid(vinHashes, params)
                         || (blockIndex && !meetsVotingCutoff(getProposal(vote.getProposal()), blockIndex->nHeight, params)))
                         continue;
-                    // Check to make sure that a valid signature exists in the vin scriptSig
-                    // that matches the same pubkey used in the vote signature.
-                    bool validVin{false};
-                    for (const auto & vin : tx->vin) {
-                        if (matchesVinPubKey(vote, vin)) {
-                            validVin = true;
-                            break;
-                        }
-                    }
-                    // if the vote is properly associated with a vin
-                    if (validVin) {
-                        // Handle vote changes, if a vote already exists and the user
-                        // is submitting a change, only count the vote with the most
-                        // recent timestamp. If a vote on the same utxo occurs in the
-                        // same block, the vote with the larger hash is chosen as the
-                        // tie breaker. This could have unintended consequences if the
-                        // user intends the smaller hash to be the most recent vote.
-                        // The best way to handle this is to build the voting client
-                        // to require waiting at least 1 block between vote changes.
-                        // Changes to this logic below must also be applied to "BlockConnected()"
-                        if (votesRet.count(vote)) {
-                            // Assumed that all votes in the same block have the same "time"
-                            auto it = votesRet.find(vote);
-                            if (UintToArith256(vote.sigHash()) > UintToArith256(it->sigHash()))
-                                votesRet.insert(std::move(vote));
-                        } else // if no vote exists then add
+                    // Handle vote changes, if a vote already exists and the user
+                    // is submitting a change, only count the vote with the most
+                    // recent timestamp. If a vote on the same utxo occurs in the
+                    // same block, the vote with the larger hash is chosen as the
+                    // tie breaker. This could have unintended consequences if the
+                    // user intends the smaller hash to be the most recent vote.
+                    // The best way to handle this is to build the voting client
+                    // to require waiting at least 1 block between vote changes.
+                    // Changes to this logic below must also be applied to "BlockConnected()"
+                    if (votesRet.count(vote)) {
+                        // Assumed that all votes in the same block have the same "time"
+                        auto it = votesRet.find(vote);
+                        if (UintToArith256(vote.sigHash()) > UintToArith256(it->sigHash()))
                             votesRet.insert(std::move(vote));
-                    }
+                    } else // if no vote exists then add
+                        votesRet.insert(std::move(vote));
                 }
             }
         }
@@ -1281,6 +1324,10 @@ public:
                 // inputs are used as the inputs to the vote transaction. Need one unique
                 // input per address in the wallet that's being used in voting.
                 std::map<CKeyID, const COutput*> inputCoins;
+                // Store the inputs in use for this round of votes. It's possible that there
+                // are more votes than a single tx allows, as a result, only use the inputs
+                // associated with the votes being used in this tx.
+                std::map<CKeyID, const COutput*> inputsInUse;
 
                 // Select the coin set that meets the utxo amount requirements for use with
                 // vote outputs in the tx.
@@ -1319,6 +1366,9 @@ public:
                     CTxDestination dest;
                     if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
                         continue;
+
+                    const auto & addr = boost::get<CKeyID>(dest);
+
                     CKey key; // utxo private key
                     {
                         const auto keyid = GetKeyForDestination(*wallet, dest);
@@ -1342,7 +1392,8 @@ public:
                         // is signed with the utxo that is representing that vote. The signing must
                         // happen before the vote object is serialized.
                         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-                        Vote vote(pv.proposal.getHash(), pv.vote, coin.GetInputCoin().outpoint);
+                        Vote vote(pv.proposal.getHash(), pv.vote, coin.GetInputCoin().outpoint,
+                                makeVinHash(inputCoins[addr]->GetInputCoin().outpoint));
                         if (!vote.sign(key)) {
                             LogPrint(BCLog::GOVERNANCE,
                                      "WARNING: Failed to vote on {%s} proposal, utxo signing failed %s",
@@ -1356,6 +1407,10 @@ public:
                         }
                         ss << vote;
                         voteOuts.push_back({CScript() << OP_RETURN << ToByteVector(ss), 0, false});
+
+                        // Track inputs
+                        if (!inputsInUse.count(addr))
+                            inputsInUse[addr] = inputCoins[addr];
 
                         // Track utxos that already voted on this proposal
                         usedUtxos[coin.GetInputCoin().outpoint].insert(pv.proposal.getHash());
@@ -1385,15 +1440,15 @@ public:
                 // back the vote inputs to their own addresses as change (requires estimating fees).
                 CCoinControl cc;
                 cc.fAllowOtherInputs = false;
-                cc.destChange = CTxDestination(inputCoins.begin()->first); // pay change to the first input coin
-                FeeCalculation fee_calc;
-                const auto feeBytes = static_cast<unsigned int>(inputCoins.size()*150) + // TODO Blocknet accurate input size estimation required
-                                      static_cast<unsigned int>(voteOuts.size()*MAX_OP_RETURN_RELAY);
-                CAmount payFee = GetMinimumFee(*wallet, feeBytes, cc, ::mempool, ::feeEstimator, &fee_calc);
-                CAmount estimatedFeePerInput = payFee/(CAmount)inputCoins.size();
+                cc.destChange = CTxDestination(inputsInUse.begin()->first); // pay change to the first input coin
+                FeeCalculation feeCalc;
+                const auto feeBytes = static_cast<unsigned int>(inputsInUse.size()*150) + // TODO Blocknet accurate input size estimation required
+                                      static_cast<unsigned int>(voteOuts.size()*(MAX_OP_RETURN_RELAY+50));
+                CAmount payFee = GetMinimumFee(*wallet, feeBytes, cc, ::mempool, ::feeEstimator, &feeCalc);
+                CAmount estimatedFeePerInput = payFee/static_cast<CAmount>(inputsInUse.size());
 
                 // Select inputs and distribute fees equally across the change addresses (paid back to input addresses minus fee)
-                for (const auto & inputItem : inputCoins) {
+                for (const auto & inputItem : inputsInUse) {
                     cc.Select(inputItem.second->GetInputCoin().outpoint);
                     voteOuts.push_back({GetScriptForDestination({inputItem.first}),
                                         inputItem.second->GetInputCoin().txout.nValue - estimatedFeePerInput,
