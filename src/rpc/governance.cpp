@@ -208,7 +208,7 @@ static UniValue vote(const JSONRPCRequest& request)
     ret.pushKV("vote", gov::Vote::voteTypeToString(castVote));
     UniValue txids(UniValue::VARR);
     for (const auto & tx : txns)
-        ret.push_back(tx->GetHash().ToString());
+        txids.push_back(tx->GetHash().ToString());
     ret.pushKV("txids", txids);
     return ret;
 }
