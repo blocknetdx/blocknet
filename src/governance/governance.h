@@ -818,6 +818,7 @@ public:
                     }
                     // Store all vins in order to use as a lookup for spent votes
                     for (const auto & tx : block.vtx) {
+                        LOCK(mut);
                         for (const auto & vin : tx->vin)
                             spentPrevouts[vin.prevout] = {tx->GetHash(), blockIndex->nHeight};
                     }
