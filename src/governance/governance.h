@@ -1443,8 +1443,8 @@ public:
                 cc.fAllowOtherInputs = false;
                 cc.destChange = CTxDestination(inputsInUse.begin()->first); // pay change to the first input coin
                 FeeCalculation feeCalc;
-                const auto feeBytes = static_cast<unsigned int>(inputsInUse.size()*150) + // TODO Blocknet accurate input size estimation required
-                                      static_cast<unsigned int>(voteOuts.size()*(MAX_OP_RETURN_RELAY+50));
+                const auto feeBytes = static_cast<unsigned int>(inputsInUse.size()*175) + // TODO Blocknet accurate input size estimation required
+                                      static_cast<unsigned int>(voteOuts.size()*(MAX_OP_RETURN_RELAY+75));
                 CAmount payFee = GetMinimumFee(*wallet, feeBytes, cc, ::mempool, ::feeEstimator, &feeCalc);
                 CAmount estimatedFeePerInput = payFee/static_cast<CAmount>(inputsInUse.size());
 
