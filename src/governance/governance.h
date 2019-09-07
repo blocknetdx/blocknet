@@ -629,7 +629,8 @@ protected: // memory only
 
 /**
  * Check that utxo isn't already spent
- * @param utxo
+ * @param vote
+ * @param mempoolCheck Will check the mempool for spent votes
  * @return
  */
 static bool IsVoteSpent(const Vote & vote, const bool & mempoolCheck = true) {
@@ -866,12 +867,17 @@ public:
                         }
                         // Record vote if it has an associated proposal
                         if (hasProposal(vote.getProposal(), vote.getBlockNumber())) {
-                            // Mark vote as spent if its utxo is spent before on on the
+                            // Mark vote as spent if its utxo is spent before or on the
                             // associated proposal's superblock.
-                            if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= getProposal(vote.getProposal()).getSuperblock())
-                                vote.spend(spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first);
-                            LOCK(mu);
-                            votes[vote.getHash()] = vote;
+                            {
+                                LOCK(mut);
+                                if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= getProposal(vote.getProposal()).getSuperblock())
+                                    vote.spend(spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first);
+                            }
+                            {
+                                LOCK(mu);
+                                votes[vote.getHash()] = vote;
+                            }
                         }
                     }
                 });
@@ -1865,12 +1871,12 @@ protected:
      * for that vote. Likewise, the vote spent check will be disabled.
      * @param block
      * @param pindex
-     * @param proposalCheck
+     * @param processingChainTip
      */
-    void processBlock(const CBlock *block, const CBlockIndex *pindex, const Consensus::Params & params, const bool proposalCheck = true) {
+    void processBlock(const CBlock *block, const CBlockIndex *pindex, const Consensus::Params & params, const bool processingChainTip = true) {
         std::set<Proposal> ps;
         std::set<Vote> vs;
-        dataFromBlock(block, ps, vs, params, pindex, !proposalCheck); // excludes votes/proposals that don't meet cutoffs
+        dataFromBlock(block, ps, vs, params, pindex, processingChainTip);
         {
             LOCK(mu);
             for (auto & proposal : ps) {
@@ -1880,7 +1886,7 @@ protected:
                     proposals[proposal.getHash()] = proposal;
             }
             for (auto & vote : vs) {
-                if (proposalCheck && !proposals.count(vote.getProposal()))
+                if (processingChainTip && !proposals.count(vote.getProposal()))
                     continue; // skip votes without valid proposals
                 // Handle vote changes, if a vote already exists and the user
                 // is submitting a change, only count the vote with the most
@@ -1896,11 +1902,19 @@ protected:
                         votes[vote.getHash()] = vote;
                     else if (UintToArith256(vote.sigHash()) > UintToArith256(votes[vote.getHash()].sigHash()))
                         votes[vote.getHash()] = vote;
-                } else // if no vote exists then add
+                } else {
+                    // Only check the mempool and coincache for spent utxos if
+                    // we're currently processing the chain tip.
+                    LEAVE_CRITICAL_SECTION(mu);
+                    bool spent = processingChainTip && IsVoteSpent(vote, pindex->nHeight); // check that utxo is unspent
+                    ENTER_CRITICAL_SECTION(mu);
+                    if (spent)
+                        continue;
                     votes[vote.getHash()] = vote;
+                }
             }
 
-            if (!proposalCheck) // if proposal check is disabled, return
+            if (!processingChainTip || votes.empty()) // if proposal check is disabled, return
                 return;
 
             // Mark votes as spent, i.e. any votes that have had their

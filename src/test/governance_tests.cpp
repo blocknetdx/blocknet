@@ -7,6 +7,7 @@
 #include <governance/governance.h>
 #include <consensus/tx_verify.h>
 #include <consensus/merkle.h>
+#include <node/transaction.h>
 
 BOOST_AUTO_TEST_SUITE(governance_tests)
 
@@ -493,6 +494,135 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
         cleanup(resetBlocks);
     }
 
+    // Voting with spent utxo should fail
+    {
+        const auto resetBlocks = chainActive.Height();
+        CKey key; key.MakeNewKey(true);
+        const auto & newDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
+        CTransactionRef tx;
+        CTransactionRef txVoteInput;
+        bool sent = sendToAddress(wallet.get(), newDest, 200 * COIN, tx)
+                 && sendToAddress(wallet.get(), newDest, 1 * COIN, txVoteInput);
+        BOOST_CHECK_MESSAGE(sent, "Send to another address failed");
+        CTransactionRef ptx; // proposal tx
+        std::string failReason;
+        gov::Governance::instance().submitProposal(proposal, {wallet}, consensus, ptx, &failReason);
+        if (sent) StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        COutPoint outpoint;
+        CTxOut txout;
+        for (int i = 0; i < static_cast<int>(tx->vout.size()); ++i) {
+            const auto & out = tx->vout[i];
+            CTxDestination destination;
+            ExtractDestination(out.scriptPubKey, destination);
+            if (newDest == destination) {
+                outpoint = {tx->GetHash(), static_cast<uint32_t>(i)};
+                txout = out;
+                break;
+            }
+        }
+        BOOST_CHECK_MESSAGE(!outpoint.IsNull(), "Vote utxo should not be null");
+        // Submit the vote with spent utxo
+        CBasicKeyStore keystore;
+        keystore.AddKey(key);
+        // Vote should not be accepted since the input is being spent in the voting tx's itself
+        {
+            gov::VinHash voteVinHash = gov::makeVinHash(outpoint);
+            gov::Vote vote(proposal.getHash(), gov::YES, outpoint, voteVinHash);
+            BOOST_CHECK_MESSAGE(vote.sign(key), "Vote signing should succeed");
+            BOOST_CHECK_MESSAGE(vote.isValid(std::set<gov::VinHash>{voteVinHash}, consensus), "Vote should be valid");
+            CMutableTransaction mtx;
+            mtx.vin.resize(1);
+            mtx.vin[0] = CTxIn(outpoint);
+            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+            ss << vote;
+            auto voteScript = CScript() << OP_RETURN << ToByteVector(ss);
+            mtx.vout.resize(2);
+            mtx.vout[0] = CTxOut(0, voteScript); // vote here w/ spent utxo
+            mtx.vout[1] = CTxOut(200 * COIN - COIN, txout.scriptPubKey);
+            SignatureData sigdata = DataFromTransaction(mtx, 0, txout);
+            ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, txout.nValue, SIGHASH_ALL),
+                             txout.scriptPubKey, sigdata);
+            UpdateInput(mtx.vin[0], sigdata);
+            // Send transaction
+            uint256 txid;
+            std::string errstr;
+            const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 100 * COIN);
+            BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send vote transaction: %s", errstr));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            BOOST_CHECK_MESSAGE(!gov::Governance::instance().hasVote(vote.getHash()), "Vote should not be accepted since its input was spent in mempool");
+            // update outpoint with latest utxo
+            outpoint = {mtx.GetHash(), 1};
+            txout = mtx.vout[1];
+        }
+        // Vote should not be accepted since it was spent in the last block
+        // Spend a utxo and then attempt to vote with that spent utxo
+        {
+            CMutableTransaction mtx1;
+            mtx1.vin.resize(1);
+            mtx1.vin[0] = CTxIn(outpoint);
+            mtx1.vout.resize(1);
+            mtx1.vout[0] = CTxOut(txout.nValue - COIN, txout.scriptPubKey);
+            {
+                SignatureData sigdata = DataFromTransaction(mtx1, 0, txout);
+                ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx1, 0, txout.nValue, SIGHASH_ALL),
+                                 txout.scriptPubKey, sigdata);
+                UpdateInput(mtx1.vin[0], sigdata);
+                // Send transaction
+                uint256 txid;
+                std::string errstr;
+                const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx1), txid, errstr, 100 * COIN);
+                BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send vote transaction: %s", errstr));
+                StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            }
+
+            // Obtain valid utxo to use in submitting the vote
+            COutPoint prevout;
+            CTxOut prevtxout;
+            for (int i = 0; i < static_cast<int>(txVoteInput->vout.size()); ++i) {
+                const auto & out = txVoteInput->vout[i];
+                CTxDestination destination;
+                ExtractDestination(out.scriptPubKey, destination);
+                if (newDest == destination) {
+                    prevout = {txVoteInput->GetHash(), static_cast<uint32_t>(i)};
+                    prevtxout = out;
+                    break;
+                }
+            }
+            COutPoint voteOutpoint = outpoint; // reference the spent utxo
+            gov::VinHash voteVinHash = gov::makeVinHash(prevout); // valid prevout to submit the vote with
+            gov::Vote vote(proposal.getHash(), gov::YES, voteOutpoint, voteVinHash);
+            BOOST_CHECK_MESSAGE(vote.sign(key), "Vote signing should succeed");
+            BOOST_CHECK_MESSAGE(vote.isValid(std::set<gov::VinHash>{voteVinHash}, consensus), "Vote should be valid");
+
+            // Create voting transaction, make sure the vote is referencing the spent utxo
+            // but is being submitted by a valid unspent vin
+            CMutableTransaction mtx2;
+            mtx2.vin.resize(1);
+            mtx2.vin[0] = CTxIn(prevout);
+            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+            ss << vote;
+            auto voteScript = CScript() << OP_RETURN << ToByteVector(ss);
+            mtx2.vout.resize(2);
+            mtx2.vout[0] = CTxOut(0, voteScript); // vote here w/ spent utxo
+            mtx2.vout[1] = CTxOut(prevtxout.nValue - 10000, prevtxout.scriptPubKey);
+            {
+                SignatureData sigdata = DataFromTransaction(mtx2, 0, prevtxout);
+                ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx2, 0, prevtxout.nValue, SIGHASH_ALL),
+                                 prevtxout.scriptPubKey, sigdata);
+                UpdateInput(mtx2.vin[0], sigdata);
+                // Send transaction
+                uint256 txid;
+                std::string errstr;
+                const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx2), txid, errstr, 100 * COIN);
+                BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send vote transaction: %s", errstr));
+                StakeBlocks(1), SyncWithValidationInterfaceQueue();
+                BOOST_CHECK_MESSAGE(!gov::Governance::instance().hasVote(vote.getHash()), "Vote should not be accepted since its input was spent in previous block");
+            }
+        }
+        // Clean up
+        cleanup(resetBlocks);
+    }
+
     cleanup(chainActive.Height());
     UnregisterValidationInterface(&gov::Governance::instance());
 }
@@ -781,6 +911,9 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
         // proposal are larger than the minimum amount.
         CAmount voteAmount{0};
         for (const auto & txn : txns) {
+            std::set<gov::VinHash> vinHashes;
+            for (const auto & vin : txn->vin)
+                vinHashes.insert(gov::makeVinHash(vin.prevout));
             for (int n = 0; n < (int)txn->vout.size(); ++n) {
                 const auto & out = txn->vout[n];
                 if (out.scriptPubKey[0] != OP_RETURN)
@@ -804,16 +937,17 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
                 CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
                 gov::Vote vote({txn->GetHash(), static_cast<uint32_t>(n)}, block.GetBlockTime());
                 ss2 >> vote;
-                bool valid = vote.isValid(consensus);
-                if (vote.getUtxo() == block.vtx[1]->vin[0].prevout) // staked inputs associated with votes should be invalid
-                    BOOST_CHECK_MESSAGE(gov::IsVoteSpent(vote, true), "Vote should be marked as spent when its utxo stakes");
-                else
-                    BOOST_CHECK_MESSAGE(valid, "Vote should be valid");
-                BOOST_CHECK_MESSAGE(gov::Governance::instance().hasVote(vote.getHash()), "Governance manager should know about the vote");
+                bool valid = vote.isValid(vinHashes, consensus);
                 BOOST_CHECK_MESSAGE(vote.getProposal() == proposal.getHash(), "Vote data should match the expected proposal hash");
                 BOOST_CHECK_MESSAGE(vote.getVote() == proposalVote.vote, "Vote data should match the expected vote type");
-                if (gov::IsVoteSpent(vote, true))
+                if (vote.getUtxo() == block.vtx[1]->vin[0].prevout) { // staked inputs associated with votes should be invalid
+                    BOOST_CHECK_MESSAGE(gov::IsVoteSpent(vote, true), "Vote should be marked as spent when its utxo stakes");
+                    BOOST_CHECK_MESSAGE(!gov::Governance::instance().hasVote(vote.getHash()), "Governance manager should not know about spent votes");
                     continue;
+                } else {
+                    BOOST_CHECK_MESSAGE(valid, "Vote should be valid");
+                    BOOST_CHECK_MESSAGE(gov::Governance::instance().hasVote(vote.getHash()), "Governance manager should know about the vote");
+                }
 
                 // Search for vote utxo transaction
                 uint256 blk;
@@ -1793,7 +1927,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata2)
                     CDataStream ssv(data, SER_NETWORK, PROTOCOL_VERSION);
                     gov::Vote vote({tx->GetHash(), static_cast<uint32_t>(n)});
                     ssv >> vote;
-                    if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote))
+                    if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, chainActive.Height()))
                         ++expecting;
                 }
             }
@@ -1822,17 +1956,17 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
     pos.Init();
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
 
+    // Prep vote utxo
+    CTransactionRef sendtx;
+    bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+    BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
+    BOOST_TEST_REQUIRE(accepted, "Proposal fee account should confirm to the network before continuing");
+    pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
     // Check createproposal rpc
     {
         const auto resetBlocks = chainActive.Height();
         std::string failReason;
-
-        // Prep vote utxo
-        CTransactionRef sendtx;
-        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
-        BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
-        BOOST_TEST_REQUIRE(accepted, "Proposal fee account should confirm to the network before continuing");
-        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
         // Submit proposal via rpc
         CKey key; key.MakeNewKey(true);
@@ -2053,13 +2187,6 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         const auto resetBlocks = chainActive.Height();
         std::string failReason;
 
-        // Prep vote utxo
-        CTransactionRef sendtx;
-        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
-        BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
-        BOOST_TEST_REQUIRE(accepted, "Proposal fee account should confirm to the network before continuing");
-        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
-
         // Submit proposal
         CKey key; key.MakeNewKey(true);
         const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
@@ -2081,7 +2208,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         BOOST_CHECK_NO_THROW(result = CallRPC2("listproposals", rpcparams));
         BOOST_CHECK_MESSAGE(result.isArray(), "listproposals rpc call should return array");
         for (const auto & uprop : result.get_array().getValues()) {
-            UniValue p = uprop.get_obj();
+            const UniValue & p = uprop.get_obj();
             const auto proposalHash = uint256S(find_value(p.get_obj(), "hash").get_str());
             BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposalHash), "Failed to find proposal in governance manager");
             BOOST_CHECK_EQUAL(find_value(p, "name")       .get_str(), proposal.getName());
