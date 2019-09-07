@@ -1635,8 +1635,6 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
     // transaction info
     size_t maxBytes = nMaxDatacarrierBytes-3;
-    if (!IsSporkActive(SPORK_20_ONCHAIN_HISTORY))
-        maxBytes = MAX_OP_RETURN_RELAY_OLD-3;
 
     json_spirit::Array info;
     info.push_back("");
