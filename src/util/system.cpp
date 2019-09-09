@@ -610,6 +610,9 @@ std::string ArgsManager::GetHelpMessage() const
             case OptionsCategory::GOVERNANCE:
                 usage += HelpMessageGroup("Governance Commands:");
                 break;
+            case OptionsCategory::XBRIDGE:
+                usage += HelpMessageGroup("XBridge Commands:");
+                break;
             default:
                 break;
         }

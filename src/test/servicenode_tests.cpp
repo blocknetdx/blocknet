@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
     }
 
     // Generate the signature from sig hash
-    const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+    const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
     std::vector<unsigned char> sig;
     BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
 
@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_opentier)
     // Valid check
     {
         // Generate the signature from sig hash
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(key.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_opentier)
     // must be used to generate the signature. In this test we use another key.
     {
         // Generate the signature from sig hash
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));  // use invalid coinbase key (invalid for open tier)
         // Deserialize servicenode obj from network stream
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_duplicate_collateral)
     }
 
     // Generate the signature from sig hash
-    const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+    const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
     std::vector<unsigned char> sig;
     BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
 
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_insufficient_collateral)
     BOOST_CHECK(m_coinbase_txns[0]->GetValueOut() < sn::ServiceNode::COLLATERAL_SPV);
 
     // Generate the signature from sig hash
-    const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+    const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
     std::vector<unsigned char> sig;
     BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
 
@@ -238,7 +238,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         }
 
         // Generate the signature from sig hash
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
@@ -280,7 +280,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         }
 
         // Generate the signature from sig hash
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     // Fail on empty snode pubkey
     {
         const auto tier = sn::ServiceNode::Tier::SPV;
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
         sn::ServiceNode snode = snodeNetwork(CPubKey(), tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
@@ -484,7 +484,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     // Fail on bad best block
     {
         const auto tier = sn::ServiceNode::Tier::SPV;
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, 0, uint256());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, 0, uint256());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
@@ -496,7 +496,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     {
         const int staleBlockNumber = chainActive.Height()-SNODE_STALE_BLOCKS - 1;
         const auto tier = sn::ServiceNode::Tier::SPV;
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
@@ -507,7 +507,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     // Fail on best block number being too far into future
     {
         const auto tier = sn::ServiceNode::Tier::SPV;
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, chainActive.Height()+5, chainActive[5]->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height()+5, chainActive[5]->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
@@ -519,7 +519,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     {
         const int staleBlockNumber = chainActive.Height()-SNODE_STALE_BLOCKS - 1;
         const auto tier = sn::ServiceNode::Tier::SPV;
-        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash());
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash());
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream

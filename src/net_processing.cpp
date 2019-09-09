@@ -31,6 +31,8 @@
 #include <util/moneystr.h>
 #include <util/strencodings.h>
 
+#include <xbridge/xbridgeapp.h>
+
 #include <memory>
 
 #if defined(NDEBUG)
@@ -2986,6 +2988,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     if (strCommand == NetMsgType::XBRIDGE) { // handle xbridge packets
         std::vector<unsigned char> raw;
         vRecv >> raw;
+        auto rawcopy = raw;
 
         // Top-level validation checks
         if (raw.size() < (20 + sizeof(time_t))) {
@@ -2995,16 +2998,51 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             return true;
         }
 
-        // Process xbridge packet
-        if (!smgr.processXBridge(raw))
-            return true;
+        int dos = 0;
 
-        // Relay xbridge packets
-        connman->ForEachNode([&](CNode* pnode) {
-            if (!pnode->fSuccessfullyConnected)
-                return;
-            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::XBRIDGE, raw));
-        });
+        try {
+            // Process xbridge packet
+            if (!smgr.processXBridge(raw))
+                return true;
+
+            CValidationState state;
+
+            // Pass packet to XBridge
+            auto & xapp = xbridge::App::instance();
+            if (xapp.isEnabled()) {
+                static std::vector<unsigned char> zero(20, 0);
+                std::vector<unsigned char> addr(raw.begin(), raw.begin()+20);
+                raw.erase(raw.begin(), raw.begin()+20); // remove addr from raw
+                raw.erase(raw.begin(), raw.begin()+sizeof(uint64_t)); // remove timestamp from raw
+                if (addr != zero)
+                    xapp.onMessageReceived(addr, raw, state);
+                else
+                    xapp.onBroadcastReceived(raw, state);
+
+                if (state.IsInvalid(dos)) {
+                    LogPrint(BCLog::XBRIDGE, "invalid xbridge packet from peer=%d %s : %s\n", pfrom->GetId(),
+                            pfrom->cleanSubVer, state.GetRejectReason());
+                    if (dos > 0)
+                        Misbehaving(pfrom->GetId(), dos);
+                }
+                else if (state.IsError()) {
+                    LogPrint(BCLog::XBRIDGE, "xbridge packet from peer=%d %s processed with error: %s\n",
+                             pfrom->GetId(), pfrom->cleanSubVer,
+                             state.GetRejectReason());
+                }
+            }
+        } catch (...) {
+            LogPrint(BCLog::XBRIDGE, "Fatal XBridge error detected");
+        }
+
+        // Relay xbridge packets only if state is good
+        if (dos <= 0) {
+            connman->ForEachNode([&](CNode *pnode) {
+                if (!pnode->fSuccessfullyConnected)
+                    return;
+                connman->PushMessage(pnode, msgMaker.Make(NetMsgType::XBRIDGE, rawcopy));
+            });
+        }
 
         return true;
     }

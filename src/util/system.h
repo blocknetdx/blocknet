@@ -124,6 +124,7 @@ enum class OptionsCategory {
     COMMANDS,
     REGISTER_COMMANDS,
     GOVERNANCE,
+    XBRIDGE,
 
     HIDDEN // Always the last option to avoid printing these in the help
 };

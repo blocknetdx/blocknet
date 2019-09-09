@@ -1,4 +1,5 @@
 # Copyright (c) 2015-2016 The Bitcoin Core developers
+# Copyright (c) 2019 The Blocknet developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -48,6 +49,9 @@ bench_bench_bitcoin_LDADD = \
   $(LIBMEMENV) \
   $(LIBSECP256K1) \
   $(LIBUNIVALUE)
+
+# Blocknet XBridge
+bench_bench_bitcoin_LDADD += $(LIBXBRIDGE)
 
 if ENABLE_ZMQ
 bench_bench_bitcoin_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)

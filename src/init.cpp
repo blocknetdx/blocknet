@@ -67,6 +67,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
+#include <xbridge/xbridgeapp.h>
 
 #if ENABLE_ZMQ
 #include <zmq/zmqabstractnotifier.h>
@@ -208,6 +209,15 @@ void Shutdown(InitInterfaces& interfaces)
     /// module was initialized.
     RenameThread("bitcoin-shutoff");
     mempool.AddTransactionsUpdated(1);
+
+    // Shutdown xbridge
+    xbridge::App::instance().cancelMyXBridgeTransactions();
+    xbridge::App::instance().disconnectWallets();
+    xbridge::App::instance().stop();
+
+    // Shutdown xrouter
+    // TODO Blocknet XRouter shutdown
+//    xrouter::App::instance().stop();
 
     StopHTTPRPC();
     StopREST();
@@ -546,6 +556,12 @@ void SetupServerArgs()
     // Governance
     gArgs.AddArg("-proposaladdress", "Spend funds from this address when submitting proposals", false, OptionsCategory::GOVERNANCE);
     gArgs.AddArg("-voteinputamount", strprintf("Look for utxos around this size or larger for use with voting inputs (default: %d)", gov::VOTING_UTXO_INPUT_AMOUNT), false, OptionsCategory::GOVERNANCE);
+
+    // XBridge
+    gArgs.AddArg("-enableexchange", strprintf("Enable exchange mode on this service node (default: %u)", false), false, OptionsCategory::XBRIDGE);
+    gArgs.AddArg("-orderinputscheck", strprintf("Time interval for the utxo validity check on order inputs (default: %d seconds)", 900), false, OptionsCategory::XBRIDGE);
+    gArgs.AddArg("-maxmempoolxbridge", strprintf("Maximum size in MB (megabytes) for the xbridge mempool (default: %dMB)", 128), false, OptionsCategory::XBRIDGE);
+    gArgs.AddArg("-rpcxbridgetimeout", strprintf("Timeout for internal XBridge RPC calls (default: %d seconds)", 120), false, OptionsCategory::XBRIDGE);
 
 #if HAVE_DECL_DAEMON
     gArgs.AddArg("-daemon", "Run in the background as a daemon and accept commands", false, OptionsCategory::OPTIONS);
@@ -1849,6 +1865,14 @@ bool AppInitMain(InitInterfaces& interfaces)
     // Start the staker
     if (gArgs.GetBoolArg("-staking", true))
         threadGroup.create_thread(&ThreadStakeMinter);
+
+#ifdef ENABLE_WALLET
+    // init xbridge
+    if (!ShutdownRequested()) {
+        xbridge::App & xapp = xbridge::App::instance();
+        xapp.init();
+    }
+#endif
 
     // ********************************************************* Step 13: finished
 

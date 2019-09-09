@@ -55,6 +55,7 @@ namespace BCLog {
         LEVELDB     = (1 << 20),
         SNODE       = (1 << 21),
         GOVERNANCE  = (1 << 22),
+        XBRIDGE     = (1 << 23),
         ALL         = ~(uint32_t)0,
     };
 

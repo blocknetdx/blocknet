@@ -46,6 +46,12 @@ struct ServiceNodeConfigEntry {
     friend inline bool operator==(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.key == b.key; }
     friend inline bool operator!=(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return !(a.key == b.key); }
     friend inline bool operator<(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.alias.compare(b.alias) < 0; }
+    bool isNull() const {
+        return !address.empty();
+    }
+    CKeyID keyId() const {
+        return key.GetPubKey().GetID();
+    }
 };
 
 /**
@@ -69,6 +75,7 @@ public:
      * Clears the internal state.
      */
     void reset() {
+        LOCK(mu);
         snodes.clear();
         seenPackets.clear();
         snodeUtxos.clear();
@@ -178,7 +185,7 @@ public:
                 return false; // fail on bad collateral
             }
 
-            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral,
+            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, boost::get<CKeyID>(dest), collateral,
                                                                   chainActive.Height(), chainActive.Tip()->GetBlockHash());
 
             // Sign the servicenode with the collateral's private key
@@ -203,7 +210,7 @@ public:
                 return false; // key not found in wallets
             }
         } else { // OPEN tier
-            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, collateral,
+            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, {}, collateral,
                                                                   chainActive.Height(), chainActive.Tip()->GetBlockHash());
 
             if (!key.SignCompact(sighash, sig) || sig.empty()) { // sign with snode pubkey
@@ -309,6 +316,24 @@ public:
     std::vector<ServiceNodeConfigEntry> getSnEntries() {
         LOCK(mu);
         return std::move(std::vector<ServiceNodeConfigEntry>(snodeEntries.begin(), snodeEntries.end()));
+    }
+
+    /**
+     * Returns true if an active service node exists.
+     * @return
+     */
+    bool hasActiveSn() {
+        LOCK(mu);
+        return !snodeEntries.empty();
+    }
+
+    /**
+     * Returns the active service node entry (the first in the list).
+     * @return
+     */
+    const ServiceNodeConfigEntry & getActiveSn() {
+        LOCK(mu);
+        return *snodeEntries.begin();
     }
 
     /**

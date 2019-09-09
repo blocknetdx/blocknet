@@ -21,6 +21,9 @@
 #include <utility>
 #include <vector>
 
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
 /**
  * Servicenode namepsace
  */
@@ -81,16 +84,17 @@ public:
      * Create a valid servicenode hash for use with signing.
      * @param snodePubKey
      * @param tier
+     * @param paymentAddress
      * @param collateral
      * @param bestBlock
      * @param bestBlockHash
      */
-    static uint256 CreateSigHash(const CPubKey & snodePubKey, const Tier & tier,
+    static uint256 CreateSigHash(const CPubKey & snodePubKey, const Tier & tier, const CKeyID & paymentAddress,
                                  const std::vector<COutPoint> & collateral,
                                  const uint32_t & bestBlock=0, const uint256 & bestBlockHash=uint256())
     {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << static_cast<uint8_t>(tier) << collateral << bestBlock << bestBlockHash;
+        ss << snodePubKey << static_cast<uint8_t>(tier) << paymentAddress << collateral << bestBlock << bestBlockHash;
         return ss.GetHash();
     }
 
@@ -148,6 +152,15 @@ public:
      */
     Tier getTier() const {
         return static_cast<Tier>(tier);
+    }
+
+    /**
+     * Returns the servicenode default payment address.
+     * @return
+     */
+    CKeyID getDefaultPaymentAddress() const {
+        // TODO Blocknet Servicenode allow overriding default payment address in config
+        return paymentAddress;
     }
 
     /**
@@ -214,6 +227,16 @@ public:
      */
     void setConfig(const std::string & c) {
         config = c;
+        services.clear();
+        // TODO Blocknet XBridge XRouter parse config and assign services
+    }
+
+    /**
+     * Returns the spv services list (supported tokens).
+     * @return
+     */
+    const std::vector<std::string> & serviceList() const {
+        return services;
     }
 
     ADD_SERIALIZE_METHODS;
@@ -222,6 +245,7 @@ public:
     inline void SerializationOp(Stream& s, Operation ser_action) {
         READWRITE(snodePubKey);
         READWRITE(tier);
+        READWRITE(paymentAddress);
         READWRITE(collateral);
         READWRITE(bestBlock);
         READWRITE(bestBlockHash);
@@ -237,7 +261,7 @@ public:
      * @return
      */
     uint256 sigHash() const {
-        return CreateSigHash(snodePubKey, static_cast<Tier>(tier), collateral, bestBlock, bestBlockHash);
+        return CreateSigHash(snodePubKey, static_cast<Tier>(tier), paymentAddress, collateral, bestBlock, bestBlockHash);
     }
 
     /**
@@ -246,7 +270,7 @@ public:
      */
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
-        ss << snodePubKey << static_cast<uint8_t>(tier) << collateral << bestBlock << bestBlockHash
+        ss << snodePubKey << static_cast<uint8_t>(tier) << paymentAddress << collateral << bestBlock << bestBlockHash
            << config << signature << regtime;
         return ss.GetHash();
     }
@@ -279,6 +303,9 @@ public:
                 return false; // not valid if bad sig
             return snodePubKey.GetID() == pubkey2.GetID();
         }
+
+        if (paymentAddress.IsNull())
+            return false; // must have valid payment address
 
         // If not on the open tier, check collateral
         if (collateral.empty())
@@ -323,6 +350,7 @@ public:
 protected: // included in network serialization
     CPubKey snodePubKey;
     uint8_t tier;
+    CKeyID paymentAddress;
     std::vector<COutPoint> collateral;
     uint32_t bestBlock;
     uint256 bestBlockHash;
@@ -334,6 +362,7 @@ protected: // in-memory only
     uint32_t pingBestBlock;
     uint256 pingBestBlockHash;
     std::string config;
+    std::vector<std::string> services;
 };
 
 typedef std::shared_ptr<ServiceNode> ServiceNodePtr;
