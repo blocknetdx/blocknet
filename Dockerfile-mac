@@ -34,20 +34,17 @@ ENV HOST=x86_64-apple-darwin14
 # Download depends
 RUN mkdir -p $PROJECTDIR \
   && cd $PROJECTDIR \
-  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-v18-mac-bionic.tar.gz \
-  && [ "$(printf 'bebd03b6382ba3b1e3dabfa40865a7cd752902ab6600ad0bd8d9239240f152ca depends-v18-mac-bionic.tar.gz' | sha256sum -c)" = "depends-v18-mac-bionic.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-v18-mac-bionic2.tar.gz \
+  && [ "$(printf 'f70b814ee72124dca43ccdef43b9748cf400e26d1110dc6f0fecb696d639162d depends-v18-mac-bionic2.tar.gz' | sha256sum -c)" = "depends-v18-mac-bionic2.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
 
 # Copy source files
-#RUN cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch blocknet https://github.com/blocknetdx/bitcoin.git tmp \
-#  && mv tmp/* bitcoin/
 COPY . $PROJECTDIR/
 
 # Build source
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
   && rm -r $BASEPREFIX \
-  && tar xzf depends-v18-mac-bionic.tar.gz \
+  && tar xzf depends-v18-mac-bionic2.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CFLAGS="-g -O0" CXXFLAGS="-g -O0" --with-gui=qt5 --enable-debug --prefix=/ \

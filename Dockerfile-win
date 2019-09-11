@@ -33,20 +33,17 @@ ENV HOST=x86_64-w64-mingw32
 # Download depends
 RUN mkdir -p $PROJECTDIR \
   && cd $PROJECTDIR \
-  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-v18-win-bionic.tar.gz \
-  && [ "$(printf '2541c27c8aabc19dc52582c2ed69864cbace08ba6585722d4b2a6e51632eddef depends-v18-win-bionic.tar.gz' | sha256sum -c)" = "depends-v18-win-bionic.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-v18-win-bionic2.tar.gz \
+  && [ "$(printf '1d1f239efccacefd8a396b274d8f380edeaf79ba16a5530297dd58e6f6ebd665 depends-v18-win-bionic2.tar.gz' | sha256sum -c)" = "depends-v18-win-bionic2.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
 
 # Copy source files
-#RUN cd /opt/blocknetdx \
-#  && git clone --depth 1 --branch blocknet https://github.com/blocknetdx/bitcoin.git tmp \
-#  && mv tmp/* bitcoin/
 COPY . $PROJECTDIR/
 
 # Build source
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
   && rm -r $BASEPREFIX \
-  && tar xzvf depends-v18-win-bionic.tar.gz \
+  && tar xzvf depends-v18-win-bionic2.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CFLAGS="-g -O0" CXXFLAGS="-g -O0 -Wno-deprecated -Wa,-mbig-obj" --disable-maintainer-mode --disable-dependency-tracking --enable-debug --prefix=/ \
