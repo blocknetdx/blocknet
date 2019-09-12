@@ -4581,8 +4581,9 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                     if (!pindex || (pindex->nStatus & BLOCK_HAVE_DATA) == 0) {
                       CValidationState state;
                       if (g_chainstate.AcceptBlock(pblock, state, chainparams, nullptr, true, dbp, nullptr)) {
-                          if (fReindex && g_txindex) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
-                              g_txindex->BlockConnectedSync(pblock, mapBlockIndex[pblock->GetHash()], std::vector<CTransactionRef>());
+                          const auto & bhash = pblock->GetHash();
+                          if (fReindex && g_txindex && mapBlockIndex.count(bhash)) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
+                              g_txindex->BlockConnectedSync(pblock, mapBlockIndex[bhash], std::vector<CTransactionRef>());
                           nLoaded++;
                       }
                       if (state.IsError()) {
@@ -4627,8 +4628,9 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                             CValidationState dummy;
                             if (g_chainstate.AcceptBlock(pblockrecursive, dummy, chainparams, nullptr, true, &it->second, nullptr))
                             {
-                                if (fReindex && g_txindex) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
-                                    g_txindex->BlockConnectedSync(pblock, mapBlockIndex[pblock->GetHash()], std::vector<CTransactionRef>());
+                                const auto & bhash = pblock->GetHash();
+                                if (fReindex && g_txindex && mapBlockIndex.count(bhash)) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
+                                    g_txindex->BlockConnectedSync(pblock, mapBlockIndex[bhash], std::vector<CTransactionRef>());
                                 nLoaded++;
                                 queue.push_back(pblockrecursive->GetHash());
                             }
