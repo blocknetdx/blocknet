@@ -179,11 +179,10 @@ std::string to_str(const std::vector<unsigned char> & obj)
 
 const std::string iso8601(const boost::posix_time::ptime &time)
 {
-    auto lt = boost::posix_time::second_clock::local_time();
-    auto df = new boost::gregorian::date_facet("%Y-%m-%dT%H:%M:%S%q");
+    auto df = new boost::gregorian::date_facet("%Y-%m-%dT%H:%M:%S");
     std::ostringstream ss;
     ss.imbue(std::locale(ss.getloc(), df));
-    ss << lt.date();
+    ss << time.date();
     return ss.str() + "Z";
 }
 
