@@ -1610,17 +1610,17 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         pksnode.Set(ptr->sPubKey.begin(), ptr->sPubKey.end());
     }
     // Get servicenode collateral address
-    CKeyID snodePubKey;
+    CKeyID snodeCollateralAddress;
     {
         sn::ServiceNode snode = sn::ServiceNodeMgr::instance().getSn(pksnode);
-        if (!snode.isNull())
+        if (snode.isNull())
         {
             // try to uncompress pubkey and search
             if (pksnode.Decompress())
             {
                 snode = sn::ServiceNodeMgr::instance().getSn(pksnode);
             }
-            if (!snode.isNull())
+            if (snode.isNull())
             {
                 // bad service node, no more
                 LOG() << "unknown service node pubkey " << pksnode.GetID().ToString() << " " << __FUNCTION__;
@@ -1628,7 +1628,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             }
         }
 
-        snodePubKey = snode.getDefaultPaymentAddress();
+        snodeCollateralAddress = snode.getPaymentAddress();
 
         LOG() << "use service node " << snode.getSnodePubKey().GetHash().ToString() << " " << __FUNCTION__;
     }
@@ -1656,7 +1656,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     if (strInfo.size() > maxBytes) // make sure we're not too large
         return xbridge::Error::INVALID_ONCHAIN_HISTORY;
 
-    auto destScript = CScript() << OP_DUP << OP_HASH160 << ToByteVector(snodePubKey) << OP_EQUALVERIFY << OP_CHECKSIG;
+    auto destScript = CScript() << OP_DUP << OP_HASH160 << ToByteVector(snodeCollateralAddress) << OP_EQUALVERIFY << OP_CHECKSIG;
     auto data = ToByteVector(strInfo);
 
     // Utxo selection
