@@ -37,10 +37,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_nocoinstake, TestChainPoS)
     LOCK(cs_main);
     const auto initialPoolSize = mempool.size();
     BOOST_CHECK_EQUAL(false, AcceptToMemoryPool(mempool, state, MakeTransactionRef(coinstake),
-                                                nullptr /* pfMissingInputs */,
-                                                nullptr /* plTxnReplaced */,
-                                                true /* bypass_limits */,
-                                                0 /* nAbsurdFee */));
+                                                nullptr, nullptr, true, 0));
 
     // Check that the transaction hasn't been added to mempool.
     BOOST_CHECK_EQUAL(mempool.size(), initialPoolSize);
@@ -99,9 +96,10 @@ BOOST_AUTO_TEST_CASE(staking_tests_v05modifier)
         int nStakeModifierHeight{0};
         int64_t nStakeModifierTime{0};
         BOOST_CHECK(GetKernelStakeModifier(chainActive.Tip(), stakeBlock.GetHash(), runningTime, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, false));
-        if (lastStakeModifier > 0 && chainActive.Height() % 2 == 0)
-            BOOST_CHECK_MESSAGE(nStakeModifier != lastStakeModifier, "Stake modifier should be different for every new selection interval");
-        lastStakeModifier = nStakeModifier;
+        if (lastStakeModifier > 0 && chainActive.Height() % 3 == 0) {
+            BOOST_CHECK_MESSAGE(nStakeModifier != lastStakeModifier, strprintf("Stake modifier should be different for every new selection interval: new modifier %d vs previous %d", nStakeModifier, lastStakeModifier));
+            lastStakeModifier = nStakeModifier;
+        }
         pos.StakeBlocks(1);
     }
 }
@@ -122,7 +120,7 @@ BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade)
 }
 
 /// Ensure that bad stakes are not accepted by the protocol.
-BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
+BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
 {
     // Find a stake
     auto findStake = [](StakeMgr::StakeCoin & nextStake, StakeMgr & staker, const CBlockIndex *tip, std::shared_ptr<CWallet> wallet) -> bool {
@@ -278,6 +276,74 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_badstakes, TestChainPoS)
         ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
         BOOST_CHECK_EQUAL(blockHash, chainActive.Tip()->GetBlockHash()); // block should not be accepted
         BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex should not update on bad stake");
+    }
+
+    // Check forking via staking
+    {
+        scanWalletTxs(wallet.get());
+        while (chainActive.Height() < 165) {
+            StakeMgr staker;
+            CBlockIndex *pindex = chainActive.Tip();
+            const int forkchainLen{3};
+            std::vector<std::shared_ptr<CBlock>> forkA; forkA.resize(forkchainLen);
+            std::vector<std::shared_ptr<CBlock>> forkB; forkB.resize(forkchainLen);
+            {
+                CBlockIndex *prevIndex = pindex;
+                for (int i = 0; i < forkchainLen; ++i) {
+                    if (!prevIndex)
+                        break;
+                    CBlock block;
+                    CMutableTransaction coinbaseTx;
+                    CMutableTransaction coinstakeTx;
+                    StakeMgr::StakeCoin nextStake;
+                    BOOST_CHECK(findStake(nextStake, staker, prevIndex, wallet));
+                    createStakeBlock(nextStake, prevIndex, block, coinbaseTx, coinstakeTx);
+                    block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+                    coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+                    BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
+                    block.vtx[1] = MakeTransactionRef(coinstakeTx);
+                    block.hashMerkleRoot = BlockMerkleRoot(block);
+                    BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+                    auto blockptr = std::make_shared<CBlock>(block);
+                    if (ProcessNewBlock(Params(), blockptr, false, nullptr)) {
+                        if (mapBlockIndex.count(block.GetHash()))
+                            prevIndex = mapBlockIndex[block.GetHash()];
+                    }
+//                    else
+//                        BOOST_TEST_MESSAGE("ProcessNewBlock failed");
+                    forkA[i] = blockptr;
+                }
+            }
+            {
+                CBlockIndex *prevIndex = pindex;
+                for (int i = 0; i < forkchainLen; ++i) {
+                    if (!prevIndex)
+                        break;
+                    CBlock block;
+                    CMutableTransaction coinbaseTx;
+                    CMutableTransaction coinstakeTx;
+                    StakeMgr::StakeCoin nextStake;
+                    BOOST_CHECK(findStake(nextStake, staker, prevIndex, wallet));
+                    createStakeBlock(nextStake, prevIndex, block, coinbaseTx, coinstakeTx);
+                    block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+                    coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+                    BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
+                    block.vtx[1] = MakeTransactionRef(coinstakeTx);
+                    block.hashMerkleRoot = BlockMerkleRoot(block);
+                    BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+                    auto blockptr = std::make_shared<CBlock>(block);
+                    if (ProcessNewBlock(Params(), blockptr, false, nullptr)) {
+                        if (mapBlockIndex.count(block.GetHash()))
+                            prevIndex = mapBlockIndex[block.GetHash()];
+                    }
+//                    else
+//                        BOOST_TEST_MESSAGE("ProcessNewBlock failed");
+                    forkB[i] = blockptr;
+                }
+            }
+
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        }
     }
 
     // TODO Blocknet PoS unit test for p2pkh stakes
