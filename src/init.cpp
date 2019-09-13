@@ -55,6 +55,9 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <servicenode/servicenodemgr.h>
+#include <xbridge/xbridgeapp.h>
+
 #ifndef WIN32
 #include <attributes.h>
 #include <cerrno>
@@ -67,7 +70,6 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/thread.hpp>
 #include <openssl/crypto.h>
-#include <xbridge/xbridgeapp.h>
 
 #if ENABLE_ZMQ
 #include <zmq/zmqabstractnotifier.h>
@@ -558,6 +560,7 @@ void SetupServerArgs()
     gArgs.AddArg("-voteinputamount", strprintf("Look for utxos around this size or larger for use with voting inputs (default: %d)", gov::VOTING_UTXO_INPUT_AMOUNT), false, OptionsCategory::GOVERNANCE);
 
     // XBridge
+    gArgs.AddArg("-servicenode", strprintf("Auto register this service node on application start (default: %u)", false), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-enableexchange", strprintf("Enable exchange mode on this service node (default: %u)", false), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-orderinputscheck", strprintf("Time interval for the utxo validity check on order inputs (default: %d seconds)", 900), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-maxmempoolxbridge", strprintf("Maximum size in MB (megabytes) for the xbridge mempool (default: %dMB)", 128), false, OptionsCategory::XBRIDGE);
@@ -1867,10 +1870,25 @@ bool AppInitMain(InitInterfaces& interfaces)
         threadGroup.create_thread(&ThreadStakeMinter);
 
 #ifdef ENABLE_WALLET
-    // init xbridge
     if (!ShutdownRequested()) {
+        // init xbridge
         xbridge::App & xapp = xbridge::App::instance();
         xapp.init();
+
+        // load service node entries
+        if (gArgs.GetBoolArg("-servicenode", false)) {
+            sn::ServiceNodeMgr & smgr = sn::ServiceNodeMgr::instance();
+            std::set<sn::ServiceNodeConfigEntry> s;
+            if (!smgr.loadSnConfig(s))
+                LogPrint(BCLog::XBRIDGE, "Failed to load service node entries from servicenode.conf");
+            if (!s.empty()) {
+                // Proceed to register service nodes
+                for (const auto & snode : s) {
+                    if (!smgr.registerSn(snode, g_connman.get(), GetWallets()))
+                        LogPrintf("Failed to start service node %s\n", snode.alias);
+                }
+            }
+        }
     }
 #endif
 
