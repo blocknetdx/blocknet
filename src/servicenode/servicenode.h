@@ -102,10 +102,10 @@ public:
     /**
      * Constructor
      */
-    explicit ServiceNode() : snodePubKey(CPubKey()), tier(Tier::OPEN), collateral(std::vector<COutPoint>()),
-                             bestBlock(0), bestBlockHash(uint256()), signature(std::vector<unsigned char>()),
-                             regtime(GetAdjustedTime()), pingtime(0), config(std::string()), pingBestBlock(0),
-                             pingBestBlockHash(uint256()) {}
+    explicit ServiceNode() : snodePubKey(CPubKey()), tier(Tier::OPEN), paymentAddress(CKeyID()),
+                             collateral(std::vector<COutPoint>()), bestBlock(0), bestBlockHash(uint256()),
+                             signature(std::vector<unsigned char>()), regtime(GetAdjustedTime()), pingtime(0),
+                             config(std::string()), pingBestBlock(0), pingBestBlockHash(uint256()) {}
 
     /**
      * Constructor
@@ -116,20 +116,18 @@ public:
      * @param bestBlockHash
      * @param signature
      */
-    explicit ServiceNode(CPubKey snodePubKey,
-                         Tier tier,
-                         std::vector<COutPoint> collateral,
-                         uint32_t bestBlock,
-                         uint256 bestBlockHash,
-                         std::vector<unsigned char> signature) : snodePubKey(snodePubKey), tier(tier),
-                                           collateral(std::move(collateral)), bestBlock(bestBlock),
-                                           bestBlockHash(bestBlockHash), signature(std::move(signature)),
-                                           regtime(GetAdjustedTime()), pingBestBlock(bestBlock),
-                                           pingBestBlockHash(bestBlockHash), pingtime(0), config(std::string()) {}
+    explicit ServiceNode(CPubKey snodePubKey, Tier tier, CKeyID paymentAddress, std::vector<COutPoint> collateral,
+                         uint32_t bestBlock, uint256 bestBlockHash, std::vector<unsigned char> signature)
+                              : snodePubKey(snodePubKey),        tier(tier),
+                                paymentAddress(paymentAddress),  collateral(std::move(collateral)),
+                                bestBlock(bestBlock),            bestBlockHash(bestBlockHash),
+                                signature(std::move(signature)), regtime(GetAdjustedTime()),
+                                pingBestBlock(bestBlock),        pingBestBlockHash(bestBlockHash),
+                                pingtime(0),                     config(std::string()) {}
 
     friend inline bool operator==(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey == b.snodePubKey; }
-    friend inline bool operator!=(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey != b.snodePubKey; }
-    friend inline bool operator<(const ServiceNode & a, const ServiceNode & b) { return a.regtime < b.regtime; }
+    friend inline bool operator!=(const ServiceNode & a, const ServiceNode & b) { return !(a.snodePubKey == b.snodePubKey); }
+    friend inline bool operator<(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey < b.snodePubKey; }
 
     /**
      * Returns true if the servicenode is uninitialized (e.g. via empty constructor).
@@ -158,7 +156,7 @@ public:
      * Returns the servicenode default payment address.
      * @return
      */
-    CKeyID getDefaultPaymentAddress() const {
+    CKeyID getPaymentAddress() const {
         // TODO Blocknet Servicenode allow overriding default payment address in config
         return paymentAddress;
     }
@@ -201,6 +199,14 @@ public:
      */
     const int64_t& getRegTime() const {
         return regtime;
+    }
+
+    /**
+     * Returns the servicenode last ping time in unix time.
+     * @return
+     */
+    const int64_t& getPingTime() const {
+        return pingtime;
     }
 
     /**
@@ -304,19 +310,33 @@ public:
             return snodePubKey.GetID() == pubkey2.GetID();
         }
 
+        //
+        // Paid tiers signatures should be derived from the collateral privkey.
+        //
+
+        // only require this check on paid tiers
         if (paymentAddress.IsNull())
             return false; // must have valid payment address
 
         // If not on the open tier, check collateral
-        if (collateral.empty())
-            return false; // not valid if no collateral
+        if (collateral.empty() || collateral.size() > Params().GetConsensus().snMaxCollateralCount)
+            return false; // not valid if no collateral or too many collateral inputs
+
+        // Check for duplicate collateral utxos
+        const std::set<COutPoint> dups(collateral.begin(), collateral.end());
+        if (dups.size() != collateral.size())
+            return false; // not valid if duplicates
 
         const auto & sighash = sigHash();
+        CPubKey pubkey;
+        if (!pubkey.RecoverCompact(sighash, signature))
+            return false; // not valid if bad sig
+
         CAmount total{0}; // Track the total collateral amount
-        std::set<COutPoint> unique_collateral(collateral.begin(), collateral.end()); // prevent duplicates
+        std::set<CScriptID> processed; // Track already processed utxos
 
         // Determine if all collateral utxos validate the sig
-        for (const auto & op : unique_collateral) {
+        for (const auto & op : collateral) {
             CTransactionRef tx = getTxFunc(op);
             if (!tx)
                 return false; // not valid if no transaction found or utxo is already spent
@@ -327,19 +347,21 @@ public:
             const auto & out = tx->vout[op.n];
             total += out.nValue;
 
+            if (processed.count(CScriptID(out.scriptPubKey)))
+                continue;
+
             CTxDestination address;
             if (!ExtractDestination(out.scriptPubKey, address))
                 return false; // not valid if bad address
 
             CKeyID *keyid = boost::get<CKeyID>(&address);
-            CPubKey pubkey;
-            if (!pubkey.RecoverCompact(sighash, signature))
-                return false; // not valid if bad sig
             if (pubkey.GetID() != *keyid)
                 return false; // fail if pubkeys don't match
+
+            processed.insert(CScriptID(out.scriptPubKey));
         }
 
-        if (tier == Tier::SPV && total >= COLLATERAL_SPV)
+        if (tier == Tier::SPV && total >= COLLATERAL_SPV) // check SPV collateral amount
             return true;
 
         // Other Tiers here

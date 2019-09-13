@@ -86,6 +86,8 @@ struct Params {
     int stakingModiferV2Block;
     int coinMaturity;
     int64_t stakingV05UpgradeTime{0};
+    /** Service node parameters */
+    int snMaxCollateralCount{10}; // max utxos for use with service node collateral
     /** Governance parameters */
     int superblock;
     int votingCutoff; // blocks prior to superblock

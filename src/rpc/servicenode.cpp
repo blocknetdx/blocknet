@@ -8,6 +8,9 @@
 #include <rpc/protocol.h>
 #include <rpc/util.h>
 #include <servicenode/servicenodemgr.h>
+#include <util/moneystr.h>
+#include <wallet/coincontrol.h>
+#include <xbridge/xbridgeapp.h>
 
 static UniValue servicenodesetup(const JSONRPCRequest& request)
 {
@@ -34,10 +37,10 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
                 RPCResult{
             "[\n"
             "  {\n"
-            "    \"alias\": n,                       (string) Service node name\n"
-            "    \"tier\": n,                        (numeric) Tier of this service node\n"
-            "    \"servicenodeprivkey\":\"xxxxxx\",  (string) Base58 encoded private key\n"
-            "    \"address\":\"blocknet address\",   (string) Blocknet address associated with the service node\n"
+            "    \"alias\": \"xxxx\",              (string) Service node name\n"
+            "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
+            "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+            "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
             "  }\n"
             "  ,...\n"
             "]\n"
@@ -147,12 +150,130 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     for (const auto & entry : entries) {
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
-        obj.pushKV("tier", entry.tier);
-        obj.pushKV("servicenodeprivkey", EncodeSecret(entry.key));
+        obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
+        obj.pushKV("snodekey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         ret.push_back(obj);
     }
 
+    return ret;
+}
+
+static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
+{
+    const auto smallestInputSize = static_cast<int>(sn::ServiceNode::COLLATERAL_SPV/COIN/Params().GetConsensus().snMaxCollateralCount);
+    const int defaultInputSize{1250};
+    if (request.fHelp || request.params.empty() || request.params.size() > 3)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodecreateinputs",
+                "\nCreates service node unspent transaction outputs prior to snode registration.\n",
+                {
+                    {"nodeaddress", RPCArg::Type::STR, RPCArg::Optional::NO, "Blocknet address for the service node. Funds will be sent here from the wallet."},
+                    {"nodecount", RPCArg::Type::NUM, RPCArg::Optional::NO, "1", "Number of service nodes to create"},
+                    {"inputsize", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, strprintf("%u", defaultInputSize), strprintf("Coin amount for each input size, must be larger than or equal to %u", smallestInputSize)},
+                },
+                RPCResult{
+                "\n{"
+                "    \"nodecount\": n,   (numeric) Number of service nodes\n"
+                "    \"collateral\": n,  (numeric) Total collateral configured\n"
+                "    \"inputsize\": n,   (numeric) Amount used for service node inputs\n"
+                "    \"txid\": \"xxxx\", (string) Transaction id used to create the service node inputs\n"
+                "\n}"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1")
+                  + HelpExampleRpc("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1")
+                  + HelpExampleCli("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 5")
+                  + HelpExampleRpc("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 5")
+                  + HelpExampleCli("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1 2500")
+                  + HelpExampleRpc("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1 2500")
+                },
+            }.ToString());
+
+    RPCTypeCheck(request.params, {UniValue::VSTR, UniValue::VNUM, UniValue::VNUM});
+
+    const std::string & saddr = request.params[0].get_str();
+    int count{1};
+    if (request.params.size() < 2)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing nodecount");
+    count = request.params[1].get_int();
+    if (count <= 0)
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Bad nodecount, must be a number greater than or equal to 1");
+
+    int inputSize{defaultInputSize};
+    if (request.params.size() > 2)
+        inputSize = request.params[2].get_int();
+    if (inputSize < smallestInputSize)
+        throw JSONRPCError(RPC_INVALID_PARAMS, strprintf("Input size (%u) must be larger or equal to the minimum %u",
+                inputSize, smallestInputSize));
+
+    // Make sure we find saddr key in the wallet (indicating ownership)
+    const auto dest = DecodeDestination(saddr);
+    if (!IsValidDestination(dest))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad nodeaddress %s", saddr));
+
+    std::shared_ptr<CWallet> wallet;
+    bool haveAddr{false};
+    for (auto & w : GetWallets()) {
+        if (w->HaveKey(boost::get<CKeyID>(dest))) {
+            haveAddr = true;
+            wallet = w;
+            break;
+        }
+    }
+    if (!haveAddr)
+        throw JSONRPCError(RPC_INVALID_PARAMS, strprintf("Failed to find %s address in your wallet(s)", saddr));
+
+    // Check balance
+    const CAmount inputAmount = inputSize * COIN;
+    const CAmount leftOver = (sn::ServiceNode::COLLATERAL_SPV * static_cast<CAmount>(count)) % inputAmount;
+    const CAmount requiredBalance = sn::ServiceNode::COLLATERAL_SPV * count + leftOver;
+    CAmount balance = wallet->GetBalance();
+    if (balance <= requiredBalance) {
+        const std::string extra = leftOver > 0 ?
+                strprintf("\nWe noticed that your input size %u isn't ideal, use an input size "
+                          "that divides the required collateral amount %d with no remainder "
+                          "(e.g. use %u)", inputSize, defaultInputSize, FormatMoney(requiredBalance)) : "";
+        throw JSONRPCError(RPC_INVALID_PARAMS, strprintf("Not enough coin (%s) in wallet containing the snode address. "
+                                                         "Unable to create %u service node(s). Require more than %s to "
+                                                         "cover snode inputs + fee %s", FormatMoney(balance),
+                                                         count, FormatMoney(requiredBalance), extra));
+    }
+
+    CCoinControl cc;
+    cc.fAllowOtherInputs = true;
+
+    CAmount running{0};
+    std::vector<CRecipient> vouts;
+    while (running < requiredBalance) {
+        vouts.push_back({GetScriptForDestination(dest), inputAmount, false});
+        running += inputAmount;
+    }
+
+    // Create and send the transaction
+    CReserveKey reservekey(wallet.get());
+    CAmount nFeeRequired;
+    std::string strError;
+    int nChangePosRet = -1;
+    CTransactionRef tx;
+    auto locked_chain = wallet->chain().lock();
+    if (!wallet->CreateTransaction(*locked_chain, vouts, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
+        throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to create service node inputs: %s", strError));
+
+    // Send all voting transaction to the network. If there's a failure
+    // at any point in the process, bail out.
+    if (wallet->GetBroadcastTransactions() && !g_connman)
+        throw JSONRPCError(RPC_MISC_ERROR, "Peer-to-peer functionality missing or disabled");
+
+    CValidationState state;
+    if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state))
+        throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state)));
+
+    UniValue ret(UniValue::VOBJ);
+    ret.pushKV("nodecount", count);
+    ret.pushKV("collateral", requiredBalance/COIN);
+    ret.pushKV("inputsize", inputSize);
+    ret.pushKV("txid", tx->GetHash().ToString());
     return ret;
 }
 
@@ -181,17 +302,18 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 1)
         throw std::runtime_error(
             RPCHelpMan{"servicenoderegister",
-                "\nRegisters all service nodes specified in servicenode.conf or registers the snode with a specific alias.\n",
+                "\nRegisters all service nodes specified in servicenode.conf or registers the snode with a specific alias.\n"
+                "If the alias isn't specified all known service nodes (in servicenode.conf) will be registered.\n",
                 {
                     {"alias", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Optionally register snode with the specified 'alias'"}
                 },
                 RPCResult{
                 "[\n"
                 "  {\n"
-                "    \"alias\": n,                       (string) Service node name\n"
-                "    \"tier\": n,                        (numeric) Tier of this service node\n"
-                "    \"servicenodeprivkey\":\"xxxxxx\",  (string) Base58 encoded private key\n"
-                "    \"address\":\"blocknet address\",   (string) Blocknet address associated with the service node\n"
+                "    \"alias\": n,                     (string) Service node name\n"
+                "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "  }\n"
                 "  ,...\n"
                 "]\n"
@@ -213,8 +335,8 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
     for (const auto & entry : entries) {
         if (!alias.empty() && alias != entry.alias)
             continue; // skip if alias doesn't match filter
-        if (!sn::ServiceNodeMgr::instance().registerSn(entry, g_connman.get()))
-            throw JSONRPCError(RPC_MISC_ERROR, strprintf("failed to register the service node", entry.alias));
+        if (!sn::ServiceNodeMgr::instance().registerSn(entry, g_connman.get(), GetWallets()))
+            throw JSONRPCError(RPC_MISC_ERROR, strprintf("failed to register the service node %s", entry.alias));
     }
 
     for (const auto & entry : entries) {
@@ -222,8 +344,8 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
             continue; // skip if alias doesn't match filter
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
-        obj.pushKV("tier", entry.tier);
-        obj.pushKV("servicenodeprivkey", EncodeSecret(entry.key));
+        obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
+        obj.pushKV("snodekey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         ret.push_back(obj);
     }
@@ -276,8 +398,8 @@ static UniValue servicenodeexport(const JSONRPCRequest& request)
 
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("alias", selentry.alias);
-    obj.pushKV("tier", selentry.tier);
-    obj.pushKV("servicenodeprivkey", EncodeSecret(selentry.key));
+    obj.pushKV("tier", sn::ServiceNodeMgr::tierString(selentry.tier));
+    obj.pushKV("snodekey", EncodeSecret(selentry.key));
     obj.pushKV("address", EncodeDestination(selentry.address));
     const std::string & exportt = obj.write();
     std::vector<unsigned char> input(exportt.begin(), exportt.end());
@@ -330,15 +452,15 @@ static UniValue servicenodeimport(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_MISC_ERROR, "Failed to add the service node, is the password correct?");
 
     const auto & alias = find_value(snode, "alias").get_str();
-    const auto & tier = static_cast<sn::ServiceNode::Tier>(find_value(snode, "tier").get_int());
-    const auto & key = DecodeSecret(find_value(snode, "servicenodeprivkey").get_str());
+    sn::ServiceNode::Tier tier; sn::ServiceNodeMgr::tierFromString(find_value(snode, "tier").get_str(), tier);
+    const auto & key = DecodeSecret(find_value(snode, "snodekey").get_str());
     const auto & address = DecodeDestination(find_value(snode, "address").get_str());
     sn::ServiceNodeConfigEntry entry(alias, tier, key, address);
     std::vector<sn::ServiceNodeConfigEntry> v{entry};
     if (!sn::ServiceNodeMgr::writeSnConfig(v, false))
         throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
 
-    std::set<sn::ServiceNodeConfigEntry> s(v.begin(), v.end());
+    std::set<sn::ServiceNodeConfigEntry> s;
     if (!sn::ServiceNodeMgr::instance().loadSnConfig(s))
         throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
 
@@ -347,15 +469,235 @@ static UniValue servicenodeimport(const JSONRPCRequest& request)
     return ret;
 }
 
+static UniValue servicenodestatus(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodestatus",
+                "\nLists all your service nodes and their reported statuses.\n"
+                "\nIf one of your service nodes are reported offline check connectivity and verify\n"
+                "they are registered with the network. See \"help servicenoderegister\"\n",
+                {},
+                RPCResult{
+                "[\n"
+                "  {\n"
+                "    \"alias\": n,                     (string) Service node name\n"
+                "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "    \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
+                "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
+                "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
+                "    \"status\":\"xxxx\",              (string) Status of service node (e.g. running, offline)\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodestatus", "")
+                  + HelpExampleRpc("servicenodestatus", "")
+                },
+            }.ToString());
+
+    if (!sn::ServiceNodeMgr::instance().hasActiveSn())
+        throw JSONRPCError(RPC_INVALID_REQUEST, R"(No Service Node is running, check servicenode.conf or run the "servicenodesetup" command)");
+
+    UniValue ret(UniValue::VARR);
+
+    // List all the service node entries and their statuses
+    const auto & entries = sn::ServiceNodeMgr::instance().getSnEntries();
+    for (const auto & entry : entries) {
+        const auto & snode = sn::ServiceNodeMgr::instance().getSn(entry.key.GetPubKey());
+        UniValue obj(UniValue::VOBJ);
+        obj.pushKV("alias", entry.alias);
+        obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
+        obj.pushKV("snodekey", EncodeSecret(entry.key));
+        obj.pushKV("address", EncodeDestination(entry.address));
+        obj.pushKV("timeregistered", snode.getRegTime());
+        obj.pushKV("timelastseen", snode.getPingTime());
+        obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
+        obj.pushKV("status", snode.isNull() ? "offline" : "running");
+        ret.push_back(obj);
+    }
+
+    return ret;
+}
+
+static UniValue servicenodelist(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodelist",
+                "\nLists all service nodes registered on the Blocknet network\n",
+                {},
+                RPCResult{
+                "[\n"
+                "  {\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
+                "    \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
+                "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "    \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
+                "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
+                "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
+                "    \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodelist", "")
+                  + HelpExampleRpc("servicenodelist", "")
+                },
+            }.ToString());
+
+    UniValue ret(UniValue::VARR);
+
+    // List all the service node entries and their statuses
+    const auto & snodes = sn::ServiceNodeMgr::instance().list();
+    for (const auto & snode : snodes) {
+        UniValue obj(UniValue::VOBJ);
+        obj.pushKV("snodekey", HexStr(snode.getSnodePubKey()));
+        obj.pushKV("tier", sn::ServiceNodeMgr::tierString(snode.getTier()));
+        obj.pushKV("address", EncodeDestination(snode.getPaymentAddress()));
+        obj.pushKV("timeregistered", snode.getRegTime());
+        obj.pushKV("timelastseen", snode.getPingTime());
+        obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
+        obj.pushKV("status", !snode.isNull() ? "running" : "offline");
+        ret.push_back(obj);
+    }
+
+    return ret;
+}
+
+static UniValue servicenodesendping(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodeping",
+                "\nSends the service node ping to the Blocknet network for the active node. This updates the network "
+                "with the latest service node configs.\n",
+                {},
+                RPCResult{
+                "{\n"
+                "  \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
+                "  \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
+                "  \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "  \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
+                "  \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
+                "  \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
+                "  \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
+                "}\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodeping", "")
+                  + HelpExampleRpc("servicenodeping", "")
+                },
+            }.ToString());
+
+    if (!sn::ServiceNodeMgr::instance().hasActiveSn())
+        throw JSONRPCError(RPC_INVALID_REQUEST, R"(No active service node, check servicenode.conf)");
+
+    const auto & activesn = sn::ServiceNodeMgr::instance().getActiveSn();
+    auto snode = sn::ServiceNodeMgr::instance().getSn(activesn.key.GetPubKey());
+
+    if (snode.isNull())
+        throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping, %s is not running. See \"help servicenoderegister\"", activesn.alias));
+
+    // Send the ping
+    if (!sn::ServiceNodeMgr::instance().sendPing(activesn.key, g_connman.get()))
+        throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping for service node %s", activesn.alias));
+
+    // Obtain latest snode data
+    snode = sn::ServiceNodeMgr::instance().getSn(activesn.key.GetPubKey());
+
+    UniValue obj(UniValue::VOBJ);
+    obj.pushKV("alias", activesn.alias);
+    obj.pushKV("tier", sn::ServiceNodeMgr::tierString(activesn.tier));
+    obj.pushKV("snodekey", HexStr(activesn.key.GetPubKey()));
+    obj.pushKV("address", EncodeDestination(activesn.address));
+    obj.pushKV("timeregistered", snode.getRegTime());
+    obj.pushKV("timelastseen", snode.getPingTime());
+    obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
+    obj.pushKV("status", snode.isNull() ? "offline" : "running");
+    return obj;
+}
+
+static UniValue servicenodelegacy(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenode",
+                "\nLegacy Service Node commands from the old wallet. The following legacy commands are available:\n"
+                "    servicenode status\n"
+                "    servicenode list\n"
+                "    servicenode start\n"
+                "\n"
+                "\"status\" lists your running service nodes\n"
+                "\"list\" lists all running service nodes registered on the Blocknet network\n"
+                "\"start\" starts specified service node by registering it with the Blocknet network\n"
+                "\"start-all\" starts all known service nodes by registering it with the Blocknet network\n",
+                {
+                    {"command", RPCArg::Type::STR, RPCArg::Optional::NO, "Legacy service node command to run"},
+                },
+                RPCResult{
+                "[\n"
+                "  {\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
+                "    \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
+                "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "    \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
+                "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
+                "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
+                "    \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
+                "  }\n"
+                "  ,...\n"
+                "]\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenode", "status")
+                  + HelpExampleRpc("servicenode", "status")
+                  + HelpExampleCli("servicenode", "list")
+                  + HelpExampleRpc("servicenode", "list")
+                  + HelpExampleCli("servicenode", "start snode0")
+                  + HelpExampleRpc("servicenode", "start snode0")
+                  + HelpExampleCli("servicenode", "start-all")
+                  + HelpExampleRpc("servicenode", "start-all")
+                },
+            }.ToString());
+
+    const auto & command = request.params[0].get_str();
+    auto reqcopy = request;
+    reqcopy.params.clear();
+
+    if (command == "status")
+        return servicenodestatus(reqcopy);
+    else if (command == "list")
+        return servicenodelist(reqcopy);
+    else if (command == "start-all")
+        return servicenoderegister(reqcopy);
+    else if (command == "start") { // parse the specified alias
+        if (request.params.size() == 2)
+            reqcopy.params.push_back(request.params[1]);
+        return servicenoderegister(reqcopy);
+    }
+    else
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Unsupported command: %s", command));
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
-{ //  category              name                      actor (function)         argNames
-  //  --------------------- ------------------------  -----------------------  ----------
-    { "servicenode",        "servicenodesetup",       &servicenodesetup,       {"type", "options"} },
-    { "servicenode",        "servicenodegenkey",      &servicenodegenkey,      {} },
-    { "servicenode",        "servicenoderegister",    &servicenoderegister,    {"alias"} },
-    { "servicenode",        "servicenodeexport",      &servicenodeexport,      {"alias", "password"} },
-    { "servicenode",        "servicenodeimport",      &servicenodeimport,      {"alias", "password"} },
+{ //  category              name                       actor (function)          argNames
+  //  --------------------- -------------------------- ------------------------- ----------
+    { "servicenode",        "servicenodesetup",        &servicenodesetup,        {"type", "options"} },
+    { "servicenode",        "servicenodecreateinputs", &servicenodecreateinputs, {"nodeaddress", "nodecount", "inputsize"} },
+    { "servicenode",        "servicenodegenkey",       &servicenodegenkey,       {} },
+    { "servicenode",        "servicenoderegister",     &servicenoderegister,     {"alias"} },
+    { "servicenode",        "servicenodeexport",       &servicenodeexport,       {"alias", "password"} },
+    { "servicenode",        "servicenodeimport",       &servicenodeimport,       {"alias", "password"} },
+    { "servicenode",        "servicenodestatus",       &servicenodestatus,       {} },
+    { "servicenode",        "servicenodelist",         &servicenodelist,         {} },
+    { "servicenode",        "servicenodesendping",     &servicenodesendping,     {} },
+    { "servicenode",        "servicenode",             &servicenodelegacy,       {"command"} },
 };
 // clang-format on
 

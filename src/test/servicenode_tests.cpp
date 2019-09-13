@@ -4,77 +4,18 @@
 
 #include <test/staking_tests.h>
 
+#include <node/transaction.h>
 #include <rpc/server.h>
 #include <servicenode/servicenode.h>
 #include <servicenode/servicenodemgr.h>
+#include <wallet/coincontrol.h>
 
-/**
- * Setup a chain suitable for testing servicenode inputs. The larger coinbase payout will allow us
- * to setup snode inputs.
- */
-struct ServicenodeChainSetup : public TestingSetup {
-    ServicenodeChainSetup() : TestingSetup(CBaseChainParams::REGTEST) {
-        auto *params = (CChainParams*)&Params();
-        params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
-            if (blockHeight <= consensusParams.lastPOWBlock)
-                return 1250 * COIN;
-            return 1 * COIN;
-        };
-
-        coinbaseKey.MakeNewKey(true); // default privkey for coinbase spends
-
-        CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
-        for (int i = 0; i <= Params().GetConsensus().coinMaturity + 10; ++i) { // we'll need to spend coinbases, make sure we have enough blocks
-            SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing*20); // prevent difficulty from increasing too rapidly
-            CBlock b = CreateAndProcessBlock(std::vector<CMutableTransaction>(), scriptPubKey);
-            m_coinbase_txns.push_back(b.vtx[0]);
-        }
-
-        // Turn on index for transaction lookups
-        g_txindex = MakeUnique<TxIndex>(1 << 20, true);
-        g_txindex->Start();
-        g_txindex->Sync();
-    }
-
-    CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const CScript& scriptPubKey) {
-        const CChainParams& chainparams = Params();
-        std::unique_ptr<CBlockTemplate> pblocktemplate = BlockAssembler(chainparams).CreateNewBlock(scriptPubKey);
-        CBlock& block = pblocktemplate->block;
-
-        // Replace mempool-selected txns with just coinbase plus passed-in txns:
-        block.vtx.resize(1);
-        for (const CMutableTransaction& tx : txns)
-            block.vtx.push_back(MakeTransactionRef(tx));
-        // IncrementExtraNonce creates a valid coinbase and merkleRoot
-        {
-            LOCK(cs_main);
-            unsigned int extraNonce = 0;
-            IncrementExtraNonce(&block, chainActive.Tip(), extraNonce);
-        }
-
-        while (!CheckProofOfWork(block.GetHash(), block.nBits, chainparams.GetConsensus())) ++block.nNonce;
-
-        std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
-        ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
-
-        CBlock result = block;
-        return result;
-    }
-
-    ~ServicenodeChainSetup() {
-        sn::ServiceNodeMgr::instance().reset();
-    };
-
-    CKey coinbaseKey; // private/public key needed to spend coinbase transactions
-    std::vector<CTransactionRef> m_coinbase_txns; // For convenience, coinbase transactions
-};
-
-sn::ServiceNode snodeNetwork(const CPubKey & snodePubKey, const uint8_t & tier,
+sn::ServiceNode snodeNetwork(const CPubKey & snodePubKey, const uint8_t & tier, const CKeyID & paymentAddr,
                          const std::vector<COutPoint> & collateral, const uint32_t & blockNumber,
                          const uint256 & blockHash, const std::vector<unsigned char> & sig)
 {
     auto ss = CDataStream(SER_NETWORK, PROTOCOL_VERSION);
-    ss << snodePubKey << tier << collateral << blockNumber << blockHash << sig;
+    ss << snodePubKey << tier << paymentAddr << collateral << blockNumber << blockHash << sig;
     sn::ServiceNode snode; ss >> snode;
     return snode;
 }
@@ -89,36 +30,47 @@ void saveFile(const boost::filesystem::path& p, const std::string& str) {
     file.write(str.c_str(), str.size());
 }
 
-BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServicenodeChainSetup)
+BOOST_AUTO_TEST_SUITE(servicenode_tests)
 
-// Check case where servicenode is properly validated under normal circumstances
+/// Check case where servicenode is properly validated under normal circumstances
 BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
 {
-    CKey key; key.MakeNewKey(true);
-    const auto snodePubKey = key.GetPubKey();
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 1000 * COIN;
+        return 1 * COIN;
+    };
+    pos.Init();
+
+    const auto snodePubKey = pos.coinbaseKey.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
 
     CAmount totalAmount{0};
     std::vector<COutPoint> collateral;
-    for (const auto & tx : m_coinbase_txns) {
+    for (const auto & tx : pos.m_coinbase_txns) {
+        if (!GetTxFunc({tx->GetHash(), 0})) // make sure tx exists
+            continue;
+        totalAmount += tx->vout[0].nValue;
+        collateral.emplace_back(tx->GetHash(), 0);
         if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
             break;
-        totalAmount += tx->GetValueOut();
-        collateral.emplace_back(tx->GetHash(), 0);
     }
 
     // Generate the signature from sig hash
     const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
     std::vector<unsigned char> sig;
-    BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+    BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
 
     // Deserialize servicenode obj from network stream
-    sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+    sn::ServiceNode snode;
+    BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
     BOOST_CHECK(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
 }
 
-// Check open tier case
-BOOST_AUTO_TEST_CASE(servicenode_tests_opentier)
+/// Check open tier case
+BOOST_FIXTURE_TEST_CASE(servicenode_tests_opentier, TestChainPoS)
 {
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
@@ -132,7 +84,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_opentier)
         std::vector<unsigned char> sig;
         BOOST_CHECK(key.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Failed on valid snode key sig");
     }
 
@@ -144,13 +97,14 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_opentier)
         std::vector<unsigned char> sig;
         BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));  // use invalid coinbase key (invalid for open tier)
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Failed on invalid snode key sig");
     }
 }
 
-// Check case where duplicate collateral utxos are used
-BOOST_AUTO_TEST_CASE(servicenode_tests_duplicate_collateral)
+/// Check case where duplicate collateral utxos are used
+BOOST_FIXTURE_TEST_CASE(servicenode_tests_duplicate_collateral, TestChainPoS)
 {
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
@@ -170,12 +124,13 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_duplicate_collateral)
     BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
 
     // Deserialize servicenode obj from network stream
-    sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+    sn::ServiceNode snode;
+    BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
     BOOST_CHECK(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
 }
 
-// Check case where there's not enough snode inputs
-BOOST_AUTO_TEST_CASE(servicenode_tests_insufficient_collateral)
+/// Check case where there's not enough snode inputs
+BOOST_FIXTURE_TEST_CASE(servicenode_tests_insufficient_collateral, TestChainPoS)
 {
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
@@ -192,74 +147,97 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_insufficient_collateral)
     BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
 
     // Deserialize servicenode obj from network stream
-    sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+    sn::ServiceNode snode;
+    BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
     BOOST_CHECK(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
 }
 
-// Check case where collateral inputs are spent
+/// Check case where collateral inputs are spent
 BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 {
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 1000 * COIN;
+        return 1 * COIN;
+    };
+    pos.Init();
+
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
 
     CBasicKeyStore keystore; // temp used to spend inputs
-    keystore.AddKey(coinbaseKey);
+    keystore.AddKey(pos.coinbaseKey);
 
     // Spend inputs that would be used in snode collateral
     {
-        // Spend inputs somewhere
-        CScript scriptPubKey = CScript() << ToByteVector(key.GetPubKey()) << OP_CHECKSIG;
-        CTransactionRef tx = m_coinbase_txns[0];
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+        }
+        // Spend the first available input in "coins"
+        auto c = coins[0];
         CMutableTransaction mtx;
         mtx.vin.resize(1);
-        mtx.vin[0] = CTxIn(COutPoint(tx->GetHash(), 0));
+        mtx.vin[0] = CTxIn(c.GetInputCoin().outpoint);
         mtx.vout.resize(1);
-        mtx.vout[0].scriptPubKey = scriptPubKey;
-        mtx.vout[0].nValue = tx->GetValueOut() - CENT;
-        const CTransaction txConst(mtx);
-        SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[0]);
-        ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, mtx.vout[0].nValue, SIGHASH_ALL), tx->vout[0].scriptPubKey, sigdata);
+        mtx.vout[0].scriptPubKey = GetScriptForRawPubKey(snodePubKey);
+        mtx.vout[0].nValue = c.GetInputCoin().txout.nValue - CENT;
+        SignatureData sigdata = DataFromTransaction(mtx, 0, c.GetInputCoin().txout);
+        ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, mtx.vout[0].nValue, SIGHASH_ALL), c.GetInputCoin().txout.scriptPubKey, sigdata);
         UpdateInput(mtx.vin[0], sigdata);
-        SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing*3); // add some time to make it easier to mine
-        CBlock block = CreateAndProcessBlock(std::vector<CMutableTransaction>({mtx}), scriptPubKey); // spend inputs
-        BOOST_CHECK(chainActive.Tip()->GetBlockHash() == block.GetHash()); // make sure block was added to the chaintip
-
-        Coin coin;
-        BOOST_CHECK_MESSAGE(!pcoinsTip->GetCoin(COutPoint(m_coinbase_txns[0]->GetHash(), 0), coin), "Coin should be spent here"); // should be spent
+        // Send transaction
+        uint256 txid; std::string errstr;
+        const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send snode collateral spent tx: %s", errstr));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        CBlock block;
+        BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), params->GetConsensus()));
+        BOOST_CHECK_MESSAGE(block.vtx.size() >= 3 && block.vtx[2]->GetHash() == mtx.GetHash(), "Expected transaction to be included in latest block");
+        Coin cn;
+        BOOST_CHECK_MESSAGE(!pcoinsTip->GetCoin(c.GetInputCoin().outpoint, cn), "Coin should be spent here");
 
         CAmount totalAmount{0};
         std::vector<COutPoint> collateral;
-        for (const auto & txn : m_coinbase_txns) {
-            if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
-                break;
+        for (int i = 0; i < coins.size(); ++i) {
+            const auto & coin = coins[i];
+            const auto txn = coin.tx->tx;
             totalAmount += txn->GetValueOut();
             collateral.emplace_back(txn->GetHash(), 0);
+            if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
+                break;
         }
 
         // Generate the signature from sig hash
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Should fail on spent collateral");
     }
 
     // Check case where spent collateral is in mempool
     {
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+        }
         // Spend one of the collateral inputs (spend the 2nd coinbase input, b/c first was spent above)
-        CScript scriptPubKey = CScript() << ToByteVector(key.GetPubKey()) << OP_CHECKSIG;
-        CTransactionRef tx = m_coinbase_txns[1];
+        COutput c = coins[0];
         CMutableTransaction mtx;
         mtx.vin.resize(1);
-        mtx.vin[0] = CTxIn(COutPoint(tx->GetHash(), 0));
+        mtx.vin[0] = CTxIn(c.GetInputCoin().outpoint);
         mtx.vout.resize(1);
-        mtx.vout[0].scriptPubKey = scriptPubKey;
-        mtx.vout[0].nValue = tx->GetValueOut() - CENT;
-        const CTransaction txConst(mtx);
-        SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[0]);
-        ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, mtx.vout[0].nValue, SIGHASH_ALL), tx->vout[0].scriptPubKey, sigdata);
+        mtx.vout[0].scriptPubKey = GetScriptForRawPubKey(snodePubKey);
+        mtx.vout[0].nValue = c.GetInputCoin().txout.nValue - CENT;
+        SignatureData sigdata = DataFromTransaction(mtx, 0, c.GetInputCoin().txout);
+        ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, mtx.vout[0].nValue, SIGHASH_ALL), c.GetInputCoin().txout.scriptPubKey, sigdata);
         UpdateInput(mtx.vin[0], sigdata);
 
         CValidationState state;
@@ -271,52 +249,45 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
                                                     0));     // nAbsurdFee
         CAmount totalAmount{0};
         std::vector<COutPoint> collateral;
-        for (int i = 1; i < m_coinbase_txns.size(); ++i) { // start at 1 (ignore first spent coinbase)
-            const auto & txn = m_coinbase_txns[i];
-            if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
-                break;
+        for (int i = 1; i < coins.size(); ++i) { // start at 1 (ignore first spent coinbase)
+            const auto & coin = coins[i];
+            const auto txn = coin.tx->tx;
             totalAmount += txn->GetValueOut();
             collateral.emplace_back(txn->GetHash(), 0);
+            if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
+                break;
         }
 
         // Generate the signature from sig hash
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Should fail on spent collateral in mempool");
     }
 }
 
-// Servicenode registration and ping tests
+/// Servicenode registration and ping tests
 BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 {
-    auto chain = interfaces::MakeChain();
-    auto locked_chain = chain->assumeLocked();
-    auto wallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
-    bool firstRun; wallet->LoadWallet(firstRun);
-    {
-        LOCK(wallet->cs_wallet);
-        wallet->AddKeyPubKey(coinbaseKey, coinbaseKey.GetPubKey());
-    }
-    WalletRescanReserver reserver(wallet.get());
-    reserver.reserve();
-    wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, false);
-    BOOST_CHECK(AddWallet(wallet));
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 1000 * COIN;
+        return 1 * COIN;
+    };
+    pos.Init();
 
-    // Turn on index for staking
-    g_txindex = MakeUnique<TxIndex>(1 << 20, true);
-    g_txindex->Start();
-    g_txindex->Sync();
-
-    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
+    CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
     int addedSnodes{0};
 
     // Snode registration and ping w/ uncompressed key
     {
         CKey key; key.MakeNewKey(false);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ uncompressed key");
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ uncompressed key");
         // Snode ping w/ uncompressed key
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ uncompressed key");
         ++addedSnodes;
@@ -325,7 +296,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     // Snode registration and ping w/ compressed key
     {
         CKey key; key.MakeNewKey(true);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get()), "Register snode w/ compressed key");
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ compressed key");
         // Snode ping w/ compressed key
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ compressed key");
         ++addedSnodes;
@@ -337,49 +308,49 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 
     // Check servicenoderegister all rpc
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 2, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 2, saddr });
+        UniValue entries;
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
-        params = UniValue(UniValue::VARR);
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", params));
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
     // Check servicenoderegister by alias rpc
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 2, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 2, saddr });
+        UniValue entries;
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
-        params = UniValue(UniValue::VARR);
-        params.push_backV({ "snode1" });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", params));
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ "snode1" });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
     // Check servicenoderegister rpc result data
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 2, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 2, saddr });
+        UniValue entries;
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         try {
-            auto result = CallRPC2("servicenoderegister", params);
+            auto result = CallRPC2("servicenoderegister", rpcparams);
             BOOST_CHECK_EQUAL(result.isArray(), true);
             UniValue o = result[1];
             BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode1");
-            BOOST_CHECK_EQUAL(find_value(o, "tier").get_int(), sn::ServiceNode::SPV);
-            BOOST_CHECK_EQUAL(find_value(o, "servicenodeprivkey").get_str().empty(), false); // check not empty
+            BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
+            BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str().empty(), false); // check not empty
             BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
         } catch (std::exception & e) {
             BOOST_CHECK_MESSAGE(false, strprintf("servicenoderegister failed: %s", e.what()));
@@ -391,45 +362,60 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 
     // Check servicenoderegister bad alias
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 2, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 2, saddr });
+        UniValue entries;
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
-        params = UniValue(UniValue::VARR);
-        params.push_backV({ "bad_alias" });
-        BOOST_CHECK_THROW(CallRPC2("servicenoderegister", params), std::runtime_error);
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ "bad_alias" });
+        BOOST_CHECK_THROW(CallRPC2("servicenoderegister", rpcparams), std::runtime_error);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
     // Check servicenoderegister no configs
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(coinbaseKey.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        BOOST_CHECK_THROW(CallRPC2("servicenoderegister", params), std::runtime_error);
+        const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue rpcparams(UniValue::VARR);
+        BOOST_CHECK_THROW(CallRPC2("servicenoderegister", rpcparams), std::runtime_error);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
-    RemoveWallet(wallet);
+    sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+    sn::ServiceNodeMgr::instance().reset();
 }
 
-// Check misc cases
+/// Check misc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 {
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 1000 * COIN;
+        return 1 * COIN;
+    };
+    pos.Init();
+
     auto & smgr = sn::ServiceNodeMgr::instance();
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
 
+    std::vector<COutput> coins;
+    {
+        LOCK2(cs_main, pos.wallet->cs_wallet);
+        pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+    }
     CAmount totalAmount{0};
     std::vector<COutPoint> collateral;
-    for (const auto & tx : m_coinbase_txns) {
+    for (const auto & coin : coins) {
+        totalAmount += coin.GetInputCoin().txout.nValue;
+        collateral.push_back(coin.GetInputCoin().outpoint);
         if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
             break;
-        totalAmount += tx->GetValueOut();
-        collateral.emplace_back(tx->GetHash(), 0);
     }
 
     // NOTE** This test must be first!
@@ -443,9 +429,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         ss << snodePubKey << tier << collateral;
         const auto & sighash = ss.GetHash();
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on bad tier");
     }
 
@@ -458,9 +445,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         ss << snodePubKey << tier << collateral2;
         const auto & sighash = ss.GetHash();
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral2, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral2, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on empty collateral");
     }
 
@@ -469,15 +457,17 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         const auto tier = sn::ServiceNode::Tier::SPV;
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
-        sn::ServiceNode snode = snodeNetwork(CPubKey(), tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(CPubKey(), tier, CPubKey().GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on empty snode pubkey");
     }
 
     // Fail on empty sighash
     {
         const auto tier = sn::ServiceNode::Tier::SPV;
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), std::vector<unsigned char>());
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), std::vector<unsigned char>()));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on empty sighash");
     }
 
@@ -486,9 +476,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         const auto tier = sn::ServiceNode::Tier::SPV;
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, 0, uint256());
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, 0, uint256(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, 0, uint256(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on bad best block");
     }
 
@@ -498,9 +489,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         const auto tier = sn::ServiceNode::Tier::SPV;
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash());
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on stale best block");
     }
 
@@ -509,9 +501,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         const auto tier = sn::ServiceNode::Tier::SPV;
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height()+5, chainActive[5]->GetBlockHash());
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, chainActive.Height()+5, chainActive[5]->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height()+5, chainActive[5]->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Fail on best block, unknown block, too far in future");
     }
 
@@ -521,9 +514,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         const auto tier = sn::ServiceNode::Tier::SPV;
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash());
         std::vector<unsigned char> sig;
-        BOOST_CHECK(coinbaseKey.SignCompact(sighash, sig));
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
         // Deserialize servicenode obj from network stream
-        sn::ServiceNode snode = snodeNetwork(snodePubKey, tier, collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash(), sig);
+        sn::ServiceNode snode;
+        BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, staleBlockNumber, chainActive[staleBlockNumber]->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc, false), "Fail on disabled stale check");
     }
 
@@ -646,32 +640,55 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
+}
+
+/// Check rpc cases
+BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
+{
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 1250 * COIN;
+        return 50 * COIN;
+    };
+    pos.Init();
+
+    auto & smgr = sn::ServiceNodeMgr::instance();
+    const auto snodePubKey = pos.coinbaseKey.GetPubKey();
+    const auto & saddr = EncodeDestination(GetDestinationForKey(snodePubKey, OutputType::LEGACY));
+
+    CAmount totalAmount{0};
+    std::vector<COutPoint> collateral;
+    for (const auto & tx : pos.m_coinbase_txns) {
+        if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
+            break;
+        totalAmount += tx->GetValueOut();
+        collateral.emplace_back(tx->GetHash(), 0);
+    }
 
     // Test rpc servicenode setup
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 1, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 1, saddr });
+        UniValue entries;
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
-        UniValue params2(UniValue::VARR);
-        params2.push_backV({ "auto", 10, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params2));
-        UniValue entries2 = CallRPC2("servicenodesetup", params2);
-        BOOST_CHECK_MESSAGE(entries2.size() == 10, "Service node config count should match");
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 10, saddr });
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entries.size() == 10, "Service node config count should match");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
     // Test servicenode.conf formatting
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 10, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 10, saddr });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", rpcparams));
         std::set<sn::ServiceNodeConfigEntry> entries;
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load config");
         BOOST_CHECK_MESSAGE(entries.size() == 10, "Should load exactly 10 snode config entries");
@@ -687,15 +704,14 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 
     // Test the servicenodesetup list option
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
+        UniValue rpcparams(UniValue::VARR);
         UniValue list(UniValue::VARR);
         UniValue snode1(UniValue::VOBJ); snode1.pushKV("alias", "snode1"), snode1.pushKV("tier", "SPV"), snode1.pushKV("address", saddr);
         UniValue snode2(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        rpcparams.push_backV({ "list", list });
+        UniValue entries;
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count on list option should match");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
@@ -703,67 +719,66 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 
     // Test servicenodesetup list option data checks
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
-        UniValue params;
+        UniValue rpcparams;
         UniValue list;
         UniValue snode1 = UniValue(UniValue::VOBJ); snode1.pushKV("alias", "snode1"), snode1.pushKV("tier", "SPV"), snode1.pushKV("address", saddr);
         UniValue snode2;
 
         // Should fail on missing alias
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+        rpcparams.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
 
         // Should fail if spaces in alias
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode 2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+        rpcparams.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
 
         // Should fail on missing tier
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+        rpcparams.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
 
         // Should fail on bad tier
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "BAD"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+        rpcparams.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
 
         // Should fail on missing address in non-free tier
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV");
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+        rpcparams.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
 
         // Should fail on empty address in non-free tier
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", "");
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", params), std::runtime_error);
+        rpcparams.push_backV({ "list", list });
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
 
         // Should not fail on empty address in free tier
-        params = UniValue(UniValue::VARR);
+        rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "OPEN"), snode2.pushKV("address", "");
         list.push_back(snode1), list.push_back(snode2);
-        params.push_backV({ "list", list });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        rpcparams.push_backV({ "list", list });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", rpcparams));
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
@@ -771,16 +786,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 
     // Test the servicenodesetup remove option
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 10, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 10, saddr });
+        UniValue entries;
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 10, "Service node config count should match expected");
 
-        params = UniValue(UniValue::VARR);
-        params.push_backV({ "remove" });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ "remove" });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", rpcparams));
         std::set<sn::ServiceNodeConfigEntry> ent;
         sn::ServiceNodeMgr::instance().loadSnConfig(ent);
         BOOST_CHECK_MESSAGE(ent.empty(), "Service node setup remove option should result in 0 snode entries");
@@ -791,8 +805,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 
     // Test servicenodegenkey rpc
     {
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodegenkey", UniValue(UniValue::VARR)));
-        const auto & result = CallRPC2("servicenodegenkey", UniValue(UniValue::VARR));
+        UniValue result;
+        BOOST_CHECK_NO_THROW(result = CallRPC2("servicenodegenkey", UniValue(UniValue::VARR)));
         BOOST_CHECK_MESSAGE(result.isStr(), "servicenodegenkey should return a string");
         CKey ckey = DecodeSecret(result.get_str());
         BOOST_CHECK_MESSAGE(ckey.IsValid(), "servicenodegenkey should return a valid private key");
@@ -800,18 +814,18 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 
     // Test servicenodeexport and servicenodeimport rpc
     {
-        const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
-        UniValue params(UniValue::VARR);
-        params.push_backV({ "auto", 1, saddr });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", params));
-        UniValue entries = CallRPC2("servicenodesetup", params);
+        UniValue entries;
+        UniValue result;
+
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 1, saddr });
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match expected");
 
         const std::string & passphrase = "password";
-        params = UniValue(UniValue::VARR);
-        params.push_backV({ "snode0", passphrase });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodeexport", params));
-        const auto & result = CallRPC2("servicenodeexport", params);
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ "snode0", passphrase });
+        BOOST_CHECK_NO_THROW(result = CallRPC2("servicenodeexport", rpcparams));
         BOOST_CHECK_MESSAGE(result.isStr(), "servicenodeexport should return a string");
 
         // Check that the encrypted hex matches the expected output
@@ -827,20 +841,240 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         BOOST_CHECK_EQUAL(strtext, str);
 
         // Check servicenodeimport
-        params = UniValue(UniValue::VARR);
-        params.push_backV({ result.get_str(), passphrase });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodeimport", params));
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ result.get_str(), passphrase });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodeimport", rpcparams));
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSnEntries().size() == 1, "servicenodeimport should have imported snode data");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
 
         // Check servicenodeimport bad passphrase
-        params = UniValue(UniValue::VARR);
-        params.push_backV({ result.get_str(), "bad passphrase" });
-        BOOST_CHECK_THROW(CallRPC2("servicenodeimport", params), std::runtime_error);
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ result.get_str(), "bad passphrase" });
+        BOOST_CHECK_THROW(CallRPC2("servicenodeimport", rpcparams), std::runtime_error);
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSnEntries().empty(), "servicenodeimport should fail due to bad passphrase");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
+    }
+
+    // Test servicenodestatus and servicenodelist rpc
+    {
+        const auto tt = GetAdjustedTime();
+        UniValue entries, o;
+
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 1, saddr });
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match expected");
+        o = entries[0];
+        const auto snodekey = find_value(o, "snodekey").get_str();
+        const auto sk = DecodeSecret(snodekey);
+
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodestatus", rpcparams));
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node status count should match expected");
+        BOOST_CHECK_EQUAL(entries.isArray(), true);
+        o = entries[0];
+        BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode0");
+        BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
+        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), snodekey);
+        BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt);
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00Z");
+        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // hasn't been started, expecting offline
+
+        // Start the snode to add to list
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
+
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodelist", rpcparams));
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node list count should match expected");
+        BOOST_CHECK_EQUAL(entries.isArray(), true);
+        o = entries[0];
+        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
+        BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
+        BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt);
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00Z");
+        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running");
+
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+    }
+
+    // Test servicenodesendping rpc
+    {
+        UniValue entries, o;
+
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ "auto", 1, saddr });
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match expected");
+        o = entries[0];
+        const auto snodekey = find_value(o, "snodekey").get_str();
+        const auto sk = DecodeSecret(snodekey);
+
+        // First check error since snode is not started
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_THROW(CallRPC2("servicenodesendping", rpcparams), std::runtime_error);
+
+        // Start snode
+        const auto tt2 = GetAdjustedTime();
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
+
+        // Start snode and send ping
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesendping", rpcparams));
+        BOOST_CHECK_MESSAGE(entries.isObject(), "Service node ping should return the snode");
+        o = entries.get_obj();
+        BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode0");
+        BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
+        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
+        BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt2);
+        BOOST_CHECK      (find_value(o, "timelastseen").get_int() >= tt2);
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str().empty(), false);
+        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running");
+
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
+    }
+
+    // Test servicenodecreateinputs rpc
+    {
+        CKey key; key.MakeNewKey(true);
+        CTxDestination dest(key.GetPubKey().GetID());
+
+        // Send to other wallet key
+        CReserveKey reservekey(pos.wallet.get());
+        CAmount nFeeRequired;
+        std::string strError;
+        std::vector<CRecipient> vecSend;
+        int nChangePosRet = -1;
+        for (int i = 0; i < params->GetConsensus().snMaxCollateralCount*2; ++i) {
+            CRecipient recipient = {GetScriptForDestination(dest),
+                                    sn::ServiceNode::COLLATERAL_SPV/(params->GetConsensus().snMaxCollateralCount*2),
+                                    false};
+            vecSend.push_back(recipient);
+        }
+        // For fee
+        vecSend.push_back({GetScriptForDestination(dest), COIN, false});
+        CCoinControl cc;
+        CTransactionRef tx;
+        {
+            auto locked_chain = pos.wallet->chain().lock();
+            LOCK(pos.wallet->cs_wallet);
+            BOOST_CHECK_MESSAGE(pos.wallet->CreateTransaction(*locked_chain, vecSend, tx, reservekey, nFeeRequired,
+                                nChangePosRet, strError, cc), "Failed to send coin to other wallet");
+            CValidationState state;
+            BOOST_CHECK_MESSAGE(pos.wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state),
+                                strprintf("Failed to send coin to other wallet: %s", state.GetRejectReason()));
+        }
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        // Create otherwallet to test create inputs rpc
+        bool firstRun;
+        auto otherwallet = std::make_shared<CWallet>(*pos.chain, WalletLocation(), WalletDatabase::CreateMock());
+        otherwallet->LoadWallet(firstRun);
+        AddKey(*otherwallet, key);
+        AddWallet(otherwallet);
+        otherwallet->SetBroadcastTransactions(true);
+        rescanWallet(otherwallet.get());
+
+        UniValue entries, o, rpcparams;
+
+        {
+            // Should fail on bad nodecount
+            rpcparams = UniValue(UniValue::VARR);
+            rpcparams.push_backV({ EncodeDestination(dest), -1 });
+            BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
+
+            // Should fail on missing nodecount
+            rpcparams = UniValue(UniValue::VARR);
+            rpcparams.push_backV({ EncodeDestination(dest) });
+            BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
+
+            // Should fail on bad address
+            rpcparams = UniValue(UniValue::VARR);
+            rpcparams.push_backV({ "kfdjsaklfjksdlajfkdsjfkldsjkfla", 1 });
+            BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
+
+            // Should fail on good address not in wallets
+            CKey nk; nk.MakeNewKey(true);
+            rpcparams = UniValue(UniValue::VARR);
+            rpcparams.push_backV({ EncodeDestination(CTxDestination(nk.GetPubKey().GetID())), 1 });
+            BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
+
+            // Should fail on bad input size
+            rpcparams = UniValue(UniValue::VARR);
+            rpcparams.push_backV({ EncodeDestination(dest), 1, -1000 });
+            BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
+
+            // Should fail on bad input size
+            rpcparams = UniValue(UniValue::VARR);
+            rpcparams.push_backV({ EncodeDestination(dest), 1, 1000.123 });
+            BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
+        }
+
+        // Test normal case (should succeed)
+        {
+            const int inputSize = static_cast<int>(sn::ServiceNode::COLLATERAL_SPV / COIN / params->GetConsensus().snMaxCollateralCount);
+            rpcparams = UniValue(UniValue::VARR);
+            rpcparams.push_backV({ EncodeDestination(dest), 1, inputSize });
+            BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodecreateinputs", rpcparams));
+            BOOST_CHECK_MESSAGE(entries.isObject(), "Bad result object");
+            o = entries.get_obj();
+            BOOST_CHECK_EQUAL(find_value(o, "nodecount").get_int(), 1);
+            BOOST_CHECK_EQUAL(find_value(o, "collateral").get_int(), sn::ServiceNode::COLLATERAL_SPV / COIN);
+            BOOST_CHECK_EQUAL(find_value(o, "inputsize").get_int(), inputSize);
+            BOOST_CHECK_EQUAL(find_value(o, "txid").get_str().empty(), false);
+            pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            rescanWallet(otherwallet.get());
+
+            // Check that tx was created
+            const auto txid = uint256S(find_value(o, "txid").get_str());
+            CTransactionRef txn;
+            uint256 hashBlock;
+            BOOST_CHECK_MESSAGE(GetTransaction(txid, txn, params->GetConsensus(), hashBlock), "Failed to find inputs tx");
+            std::set<COutPoint> txvouts;
+            CAmount txAmount{0};
+            for (int i = 0; i < txn->vout.size(); ++i) {
+                const auto & out = txn->vout[i];
+                if (out.nValue != inputSize * COIN)
+                    continue;
+                txvouts.insert({txn->GetHash(), (uint32_t)i});
+                txAmount += out.nValue;
+            }
+            // Check that coins in wallet match expected
+            std::vector<COutput> coins;
+            {
+                LOCK2(cs_main, otherwallet->cs_wallet);
+                otherwallet->AvailableCoins(*pos.locked_chain, coins);
+            }
+            std::vector<COutput> filtered;
+            CAmount filteredAmount{0};
+            for (const auto & coin : coins) {
+                if (coin.GetInputCoin().txout.nValue != inputSize * COIN)
+                    continue;
+                filtered.push_back(coin);
+                filteredAmount += coin.GetInputCoin().txout.nValue;
+            }
+            BOOST_CHECK_EQUAL(txvouts.size(), filtered.size());
+            BOOST_CHECK_EQUAL(filtered.size(), params->GetConsensus().snMaxCollateralCount);
+            BOOST_CHECK_EQUAL(txAmount, filteredAmount);
+            BOOST_CHECK_EQUAL(filteredAmount, (CAmount)sn::ServiceNode::COLLATERAL_SPV);
+
+            for (const auto & coin : filtered) {
+                if (txvouts.count(coin.GetInputCoin().outpoint))
+                    txvouts.erase(coin.GetInputCoin().outpoint);
+            }
+            BOOST_CHECK_EQUAL(txvouts.size(), 0); // expecting coinsdb to match transaction utxos
+        }
+
+        RemoveWallet(otherwallet);
     }
 }
 

@@ -33,6 +33,9 @@ namespace sn {
 extern const char* REGISTER;
 extern const char* PING;
 
+/**
+ * Service node configuration entry (from servicenode.conf).
+ */
 struct ServiceNodeConfigEntry {
     std::string alias;
     ServiceNode::Tier tier;
@@ -146,10 +149,14 @@ public:
      * This requires the wallet to be unlocked any snodes that are not "OPEN" (free) snodes.
      * @param entry
      * @param connman
+     * @param wallets
+     * @param failReason
      * @return
      */
-    bool registerSn(const ServiceNodeConfigEntry & entry, CConnman *connman) {
-        return registerSn(entry.key, entry.tier, EncodeDestination(entry.address), connman);
+    bool registerSn(const ServiceNodeConfigEntry & entry, CConnman *connman,
+            const std::vector<std::shared_ptr<CWallet>> & wallets, std::string *failReason = nullptr)
+    {
+        return registerSn(entry.key, entry.tier, EncodeDestination(entry.address), connman, wallets, failReason);
     }
 
     /**
@@ -159,9 +166,13 @@ public:
      * @param tier
      * @param address
      * @param connman
+     * @param wallets
+     * @param failReason
      * @return
      */
-    bool registerSn(const CKey & key, const ServiceNode::Tier & tier, const std::string & address, CConnman *connman) {
+    bool registerSn(const CKey & key, const ServiceNode::Tier & tier, const std::string & address, CConnman *connman,
+                    const std::vector<std::shared_ptr<CWallet>> & wallets, std::string *failReason = nullptr)
+    {
         const auto & snodePubKey = key.GetPubKey();
 
         // 1) Iterate over all wallets
@@ -172,6 +183,7 @@ public:
 
         std::vector<unsigned char> sig;
         std::vector<COutPoint> collateral;
+        CKeyID addressId;
 
         if (tier != ServiceNode::Tier::OPEN) {
             CTxDestination dest = DecodeDestination(address);
@@ -180,16 +192,16 @@ public:
                 return false; // fail on bad address
             }
 
-            if (!findCollateral(tier, dest, collateral)) {
+            if (!findCollateral(tier, dest, wallets, collateral)) {
                 LogPrint(BCLog::SNODE, "service node registration failed, bad collateral: %s\n", address);
                 return false; // fail on bad collateral
             }
 
-            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, boost::get<CKeyID>(dest), collateral,
+            addressId = boost::get<CKeyID>(dest);
+            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, addressId, collateral,
                                                                   chainActive.Height(), chainActive.Tip()->GetBlockHash());
 
             // Sign the servicenode with the collateral's private key
-            auto wallets = GetWallets();
             for (auto & wallet : wallets) {
                 CKey sign;
                 {
@@ -210,7 +222,7 @@ public:
                 return false; // key not found in wallets
             }
         } else { // OPEN tier
-            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, {}, collateral,
+            const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, addressId, collateral,
                                                                   chainActive.Height(), chainActive.Tip()->GetBlockHash());
 
             if (!key.SignCompact(sighash, sig) || sig.empty()) { // sign with snode pubkey
@@ -219,7 +231,8 @@ public:
             }
         }
 
-        ServiceNode snode(snodePubKey, tier, collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig);
+        ServiceNode snode(snodePubKey, tier, addressId, collateral, chainActive.Height(),
+                chainActive.Tip()->GetBlockHash(), sig);
         auto snodePtr = addSn(snode);
         if (!snodePtr) {
             LogPrint(BCLog::SNODE, "service node registration failed\n");
@@ -254,15 +267,15 @@ public:
         const uint256 & bestBlockHash = getActiveChainHash(bestBlock);
         std::string config; // TODO Blocknet Add snode config
 
+        snode->setConfig(config);
+        snode->updatePing();
+
         ServiceNodePing ping(key.GetPubKey(), bestBlock, bestBlockHash, config, *snode);
         ping.sign(key);
         if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc)) {
             LogPrint(BCLog::SNODE, "service node ping failed\n");
             return false;
         }
-
-        snode->setConfig(config);
-        snode->updatePing();
 
         // Relay
         connman->ForEachNode([&](CNode* pnode) {
@@ -413,7 +426,7 @@ public:
 
             CKey key = DecodeSecret(skey);
             if (!key.IsValid()) {
-                LogPrintf("Failed to setup servicenode, bad servicenode.conf servicenodeprivkey: %s %s %s\n", alias, saddress);
+                LogPrintf("Failed to setup servicenode, bad servicenode.conf snodekey: %s %s %s\n", alias, saddress);
                 continue;
             }
 
@@ -568,10 +581,10 @@ protected:
      */
     static std::string getSnConfigHelp() {
         return "# Service Node config\n"
-               "# Format: alias tier servicenodeprivkey address\n"
+               "# Format: alias tier snodekey address\n"
                "#   - alias can be any name, no spaces\n"
                "#   - tier can be either SPV or OPEN\n"
-               "#   - servicenodeprivkey must be a valid base58 encoded private key\n"
+               "#   - snodekey must be a valid base58 encoded private key\n"
                "#   - address must be a valid base58 encoded public key that contains the service node collateral\n"
                "# SPV tier requires 5000 BLOCK collateral and an associated BLOCK address and can charge fees for services\n"
                "# OPEN tier doesn't require any collateral, can't charge fees, and can only support XCloud plugins\n"
@@ -682,12 +695,14 @@ protected:
      * Finds collateral for the specifed servicenode tier.
      * @param tier
      * @param dest
+     * @param wallets
      * @param collateral
      * @return
      */
-    bool findCollateral(const ServiceNode::Tier & tier, const CTxDestination & dest, std::vector<COutPoint> & collateral) {
+    bool findCollateral(const ServiceNode::Tier & tier, const CTxDestination & dest,
+            const std::vector<std::shared_ptr<CWallet>> & wallets, std::vector<COutPoint> & collateral)
+    {
         std::vector<COutput> allCoins;
-        auto wallets = GetWallets();
         for (auto & wallet : wallets) {
             std::vector<COutput> coins;
             {
@@ -720,8 +735,8 @@ protected:
             return a.GetInputCoin().txout.nValue > b.GetInputCoin().txout.nValue;
         });
 
+        int maxUtxoCollateralCount{Params().GetConsensus().snMaxCollateralCount};
         std::vector<COutput> selected;
-        int searchRounds{10}; // used to track number of search iterations
         bool done{false};
 
         while (true) { // use while loop for breaking out of control flow
@@ -737,11 +752,15 @@ protected:
                 return false; // nothing to search
             }
 
-            // Conduct search rounds and find most suitable coin selections
+            // Conduct search rounds and find most suitable coin selections. The
+            // purpose of the search below is to find combination of the smallest
+            // coins required to meet the collateral. The list is sorted largest
+            // coins first, so we iterate backwards. Search rounds indicate the
+            // maximum number of utxos allowed to be associated with a snode.
             CAmount running{0};
             std::set<COutput> runningCoin;
             std::vector<COutput> searchCoins(allCoins.begin()+1, allCoins.end());
-            for (int k = 0; k < searchRounds; ++k) {
+            for (int k = 0; k < maxUtxoCollateralCount; ++k) {
                 for (int j = static_cast<int>(searchCoins.size()) - 1; j >= 0; --j) {
                     const auto & next = searchCoins[j];
                     if (runningCoin.count(next) > 0)
