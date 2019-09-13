@@ -168,12 +168,6 @@ bool applySuperblockPayees(TestChainPoS & pos, CBlockTemplate *blocktemplate, co
     return SignBlock(*pblock, stake.coin->txout.scriptPubKey, *pos.wallet);
 }
 
-void rescanWallet(CWallet *w) {
-    WalletRescanReserver reserver(w);
-    reserver.reserve();
-    w->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
-};
-
 bool cleanup(int blockCount, CWallet *wallet=nullptr) {
     while (chainActive.Height() > blockCount) {
         CValidationState state;

@@ -43,6 +43,12 @@ static void AddKey(CWallet & wallet, const CKey & key) {
     wallet.AddKeyPubKey(key, key.GetPubKey());
 }
 
+static void rescanWallet(CWallet *w) {
+    WalletRescanReserver reserver(w);
+    reserver.reserve();
+    w->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
+};
+
 /**
  * Proof-of-Stake test chain.
  */
