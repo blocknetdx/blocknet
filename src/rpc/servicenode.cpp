@@ -12,6 +12,8 @@
 #include <wallet/coincontrol.h>
 #include <xbridge/xbridgeapp.h>
 
+#include <boost/algorithm/algorithm.hpp>
+
 static UniValue servicenodesetup(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.empty() || request.params.size() > 3)
@@ -604,7 +606,8 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping, %s is not running. See \"help servicenoderegister\"", activesn.alias));
 
     // Send the ping
-    if (!sn::ServiceNodeMgr::instance().sendPing(activesn.key, g_connman.get()))
+    auto services = xbridge::App::instance().myServices();
+    if (!sn::ServiceNodeMgr::instance().sendPing(XBRIDGE_PROTOCOL_VERSION, services, g_connman.get()))
         throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping for service node %s", activesn.alias));
 
     // Obtain latest snode data
@@ -619,6 +622,7 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
     obj.pushKV("timelastseen", snode.getPingTime());
     obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
     obj.pushKV("status", snode.isNull() ? "offline" : "running");
+    obj.pushKV("services", boost::join(snode.serviceList(), ","));
     return obj;
 }
 

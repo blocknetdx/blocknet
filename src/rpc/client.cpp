@@ -171,6 +171,20 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "createproposal", 1, "superblock" },
     { "createproposal", 2, "amount" },
     { "listproposals", 0, "sinceblock" },
+    { "dxGetOrderHistory", 2 },
+    { "dxGetOrderHistory", 3 },
+    { "dxGetOrderHistory", 4 },
+    { "dxGetOrderHistory", 5 },
+    { "dxGetOrderHistory", 6 },
+    { "dxGetOrderHistory", 7 },
+    { "dxGetOrderHistory", 8 },
+    { "dxGetOrderBook", 0 },
+    { "dxGetOrderBook", 3 },
+    { "dxGetOrderBook", 4 },
+    { "dxFlushCancelledOrders", 0 },
+    { "dxFlushCancelledOrders", 1 },
+    { "gettradingdata", 0 },
+    { "gettradingdata", 1 },
 };
 // clang-format on
 

@@ -2,6 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <rpc/server.h>
+
 #include <xbridge/util/settings.h>
 #include <xbridge/util/logger.h>
 #include <xbridge/util/xbridgeerror.h>
@@ -15,6 +17,7 @@
 
 #include <init.h>
 #include <shutdown.h>
+#include <validation.h>
 
 #include <array>
 #include <atomic>
@@ -26,26 +29,13 @@
 #include <json/json_spirit_writer_template.h>
 #include <json/json_spirit_utils.h>
 
-#include <boost/asio.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/filesystem/fstream.hpp>
-#include <boost/signals2.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/range/algorithm_ext/push_back.hpp>
-#include <boost/range/adaptor/map.hpp>
-#include <boost/range/adaptor/filtered.hpp>
-#include <boost/range/algorithm/copy.hpp>
+#include <boost/iostreams/concepts.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace json_spirit;
 using namespace std;
 using namespace boost;
-using namespace boost::asio;
 
 using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
 using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
@@ -54,20 +44,110 @@ using TransactionVector = std::vector<xbridge::TransactionDescrPtr>;
 using ArrayValue        = Array::value_type;
 using ArrayIL           = std::initializer_list<ArrayValue>;
 
-namespace bpt           = boost::posix_time;
+UniValue uret(const json_spirit::Value & o) {
+    UniValue uv;
+    if (!uv.read(json_spirit::write_string(o)))
+        throw runtime_error("Unknown server error: failed to process request");
+    return uv;
+}
 
-
-
-//******************************************************************************
-//******************************************************************************
-Value dxLoadXBridgeConf(const Array & params, bool fHelp)
+/**
+ * @brief TxOutToCurrencyPair inspects a CTxOut and returns currency pair transaction info
+ * @param tx.vout - transaction outpoints with possible multisig/op_return
+ * @param snode_pubkey - (output) the service node public key
+ * @return - currency pair transaction details
+ */
+CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& snode_pubkey)
 {
-    if (fHelp)
+    snode_pubkey.clear();
+
+    if (vout.empty())
+        return {};
+
+    bool foundOpData{false};
+    std::string json;
+
+    for (const CTxOut & out : vout) {
+        if (out.scriptPubKey.empty())
+            continue;
+
+        std::vector<std::vector<unsigned char> > solutions;
+        txnouttype type = Solver(out.scriptPubKey, solutions);
+
+        if (type == TX_MULTISIG) {
+            if (solutions.size() < 4)
+                continue;
+
+            snode_pubkey = EncodeDestination(CTxDestination(CPubKey(solutions[1]).GetID()));
+            for (size_t i = 2; i < solutions.size()-1; ++i) {
+                const auto& sol = solutions[i];
+                if (sol.size() != 65)
+                    break;
+                std::copy(sol.begin()+1, sol.end(), std::back_inserter(json));
+            }
+        } else if (type == TX_NULL_DATA) {
+            if (out.nValue != 0 || !out.scriptPubKey.IsUnspendable())
+                continue;
+            std::vector<unsigned char> data;
+            CScript::const_iterator pc = out.scriptPubKey.begin();
+            while (pc < out.scriptPubKey.end()) { // look for order data
+                opcodetype opcode;
+                if (!out.scriptPubKey.GetOp(pc, opcode, data))
+                    break;
+                if (data.size() != 0) {
+                    std::copy(data.begin(), data.end(), std::back_inserter(json));
+                    foundOpData = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (json.empty())
+        return {}; // no data found
+
+    if (foundOpData && vout.size() >= 2) {
+        CTxDestination snodeAddr;
+        if (ExtractDestination(vout[1].scriptPubKey, snodeAddr))
+            snode_pubkey = EncodeDestination(snodeAddr);
+    }
+
+    json_spirit::Value val;
+    if (not json_spirit::read_string(json, val) || val.type() != json_spirit::array_type)
+        return {"unknown chain data, json error"};
+    json_spirit::Array xtx = val.get_array();
+    if (xtx.size() != 5)
+        return {"unknown chain data, bad records count"};
+    // validate chain inputs
+    try { xtx[0].get_str(); } catch(...) {
+        return {"bad id" }; }
+    try { xtx[1].get_str(); } catch(...) {
+        return {"bad from currency" }; }
+    try { xtx[2].get_uint64(); } catch(...) {
+        return {"bad from amount" }; }
+    try { xtx[3].get_str(); } catch(...) {
+        return {"bad to currency" }; }
+    try { xtx[4].get_uint64(); } catch(...) {
+        return {"bad to amount" }; }
+
+    return CurrencyPair{
+            xtx[0].get_str(),    // xid
+            {ccy::Currency{xtx[1].get_str(),xbridge::TransactionDescr::COIN}, // fromCurrency
+             xtx[2].get_uint64()},                                     // fromAmount
+            {ccy::Currency{xtx[3].get_str(),xbridge::TransactionDescr::COIN}, // toCurrency
+             xtx[4].get_uint64()}                                      // toAmount
+    };
+}
+
+UniValue dxLoadXBridgeConf(const JSONRPCRequest& request)
+{
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp)
         throw runtime_error("dxLoadXBridgeConf\nHot loads xbridge.conf (note this may disrupt trades in progress)");
 
     if (params.size() > 0)
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "This function does not accept any parameter");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameter"));
 
     if (ShutdownRequested())
         throw runtime_error("dxLoadXBridgeConf\nFailed to reload the config because a shutdown request is in progress.");
@@ -79,22 +159,21 @@ Value dxLoadXBridgeConf(const Array & params, bool fHelp)
     auto success = app.loadSettings();
     app.clearBadWallets(); // clear any bad wallet designations b/c user is explicitly requesting a wallet update
     app.updateActiveWallets();
-    return success;
+    return uret(success);
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxGetLocalTokens(const Array & params, bool fHelp)
+UniValue dxGetLocalTokens(const JSONRPCRequest& request)
 {
-    if (fHelp) {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp) {
 
         throw runtime_error("dxGetLocalTokens\nList coins supported by your node. You can only trade with these supported coins.");
 
     }
     if (params.size() > 0) {
 
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "This function does not accept any parameter");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameter"));
 
     }
 
@@ -106,22 +185,21 @@ Value dxGetLocalTokens(const Array & params, bool fHelp)
         r.emplace_back(currency);
 
     }
-    return r;
+    return uret(r);
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxGetNetworkTokens(const Array & params, bool fHelp)
+UniValue dxGetNetworkTokens(const JSONRPCRequest& request)
 {
-    if (fHelp) {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp) {
 
         throw runtime_error("dxGetNetworkTokens\nList coins supported by the network.");
 
     }
     if (params.size() > 0) {
 
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "This function does not accept any parameters");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameters"));
 
     }
 
@@ -132,32 +210,29 @@ Value dxGetNetworkTokens(const Array & params, bool fHelp)
         services.insert(s.begin(), s.end());
     }
 
-    return Array{services.begin(), services.end()};
+    return uret(Array{services.begin(), services.end()});
 }
-
-//******************************************************************************
-//******************************************************************************
 
 /** \brief Returns the list of open and pending transactions
   * \param params A list of input params.
-  * \param fHelp For debug purposes, throw the exception describing parameters.
+  * \param request.fHelp For debug purposes, throw the exception describing parameters.
   * \return A list of open(they go first) and pending transactions.
   *
   * Returns the list of open and pending transactions as JSON structures.
   * The open transactions go first.
   */
-
-Value dxGetOrders(const Array & params, bool fHelp)
+UniValue dxGetOrders(const JSONRPCRequest& request)
 {
-    if (fHelp) {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp) {
 
         throw runtime_error("dxGetOrders\nList of all orders.");
 
     }
     if (!params.empty()) {
 
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "This function does not accept any parameters");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "This function does not accept any parameters"));
 
     }
 
@@ -200,15 +275,13 @@ Value dxGetOrders(const Array & params, bool fHelp)
     }
 
 
-    return result;
+    return uret(result);
 }
 
-//*****************************************************************************
-//*****************************************************************************
-
-Value dxGetOrderFills(const Array & params, bool fHelp)
+UniValue dxGetOrderFills(const JSONRPCRequest& request)
 {
-    if (fHelp) {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp) {
 
         throw runtime_error("dxGetOrderFills (maker) (taker) (combined, default=true)[optional]\n"
                             "Returns all the recent trades by trade pair that have been filled \n"
@@ -223,8 +296,8 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
                           (params.size() != 3));
     if (invalidParams) {
 
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(maker) (taker) (combined, default=true)[optional]");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "(maker) (taker) (combined, default=true)[optional]"));
 
     }
 
@@ -268,15 +341,13 @@ Value dxGetOrderFills(const Array & params, bool fHelp)
         arr.emplace_back(tmp);
 
     }
-    return arr;
+    return uret(arr);
 }
 
-//*****************************************************************************
-//*****************************************************************************
-
-Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
+UniValue dxGetOrderHistory(const JSONRPCRequest& request)
 {
-    if (fHelp) {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp) {
         throw runtime_error("dxGetOrderHistory (maker) (taker) (start time) (end time)"
                             " (granularity) (order_ids, default=false)[optional]\n"
                             " (with_inverse, default=false)[optional]\n"
@@ -297,13 +368,13 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 
     //--Validate query parameters
     if (params.size() < 5 || params.size() > 8)
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "(maker) (taker) (start time) (end time) (granularity) "
                                "(order_ids, default=false)[optional] "
                                "(with_inverse, default=false)[optional] "
                                "(limit, default="+std::to_string(xQuery::IntervalLimit{}.count())+")[optional]"
                                "(interval_timestamp, one of [at_start | at_end])[optional] "
-                               );
+                               ));
     const xQuery query{
         params[0].get_str(),    // maker
         params[1].get_str(),    // taker
@@ -325,7 +396,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
     };
 
     if (query.error())
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, query.what() );
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, query.what() ));
     try {
         //--Process query, get result
         auto& xseries = xbridge::App::instance().getXSeriesCache();
@@ -333,7 +404,7 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
 
         //--Serialize result
         Array arr{};
-        const time_duration offset = query.interval_timestamp.at_start()
+        const boost::posix_time::time_duration offset = query.interval_timestamp.at_start()
             ? query.granularity
             : boost::posix_time::seconds{0};
         for (const auto& x : result) {
@@ -349,20 +420,18 @@ Value dxGetOrderHistory(const json_spirit::Array& params, bool fHelp)
             }
             arr.emplace_back(ohlc);
         }
-        return arr;
+        return uret(arr);
     } catch(const std::exception& e) {
-        return xbridge::makeError(xbridge::UNKNOWN_ERROR, __FUNCTION__, e.what() );
+        return uret(xbridge::makeError(xbridge::UNKNOWN_ERROR, __FUNCTION__, e.what() ));
     } catch( ... ) {
-        return xbridge::makeError(xbridge::UNKNOWN_ERROR, __FUNCTION__, "unknown exception" );
+        return uret(xbridge::makeError(xbridge::UNKNOWN_ERROR, __FUNCTION__, "unknown exception" ));
     }
 }
 
-//*****************************************************************************
-//*****************************************************************************
-
-Value dxGetOrder(const Array & params, bool fHelp)
+UniValue dxGetOrder(const JSONRPCRequest& request)
 {
-    if (fHelp) {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp) {
 
          throw runtime_error("dxGetOrder (id)\n"
                              "Get order info by id.");
@@ -370,8 +439,7 @@ Value dxGetOrder(const Array & params, bool fHelp)
     }
     if (params.size() != 1) {
 
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(id)");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "(id)"));
 
     }
 
@@ -383,8 +451,7 @@ Value dxGetOrder(const Array & params, bool fHelp)
 
     if(order == nullptr) {
 
-        return xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__,
-                               id.ToString());
+        return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString()));
 
     }
 
@@ -392,14 +459,12 @@ Value dxGetOrder(const Array & params, bool fHelp)
     xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(order->toCurrency);
     if(!connFrom) {
 
-        return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__,
-                               order->fromCurrency);
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, order->fromCurrency));
 
     }
     if (!connTo) {
 
-        return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__,
-                               order->toCurrency);
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, order->toCurrency));
 
     }
 
@@ -412,15 +477,14 @@ Value dxGetOrder(const Array & params, bool fHelp)
     result.emplace_back(Pair("updated_at",  xbridge::iso8601(order->txtime)));
     result.emplace_back(Pair("created_at",  xbridge::iso8601(order->created)));
     result.emplace_back(Pair("status",      order->strState()));
-    return result;
+    return uret(result);
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxMakeOrder(const Array &params, bool fHelp)
+UniValue dxMakeOrder(const JSONRPCRequest& request)
 {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (fHelp) {
+    if (request.fHelp) {
 
         throw runtime_error("dxMakeOrder (maker) (maker size) (maker address) "
                             "(taker) (taker size) (taker address) (type) (dryrun)[optional]\n"
@@ -442,7 +506,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
                               std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+        return uret(error);
     }
 
     if (!xbridge::xBridgeValidCoin(params[4].get_str())) {
@@ -452,7 +516,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
                               std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+        return uret(error);
     }
 
     std::string fromCurrency    = params[0].get_str();
@@ -468,55 +532,55 @@ Value dxMakeOrder(const Array &params, bool fHelp)
     // Validate the order type
     if (type != "exact") {
 
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Only the exact type is supported at this time.");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "Only the exact type is supported at this time."));
 
     }
 
     // Check that addresses are not the same
     if (fromAddress == toAddress) {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "maker address and taker address cannot be the same: " + fromAddress);
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "maker address and taker address cannot be the same: " + fromAddress));
     }
 
     // Check upper limits
     if (fromAmount > (double)xbridge::TransactionDescr::MAX_COIN ||
             toAmount > (double)xbridge::TransactionDescr::MAX_COIN) {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN));
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "Maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN)));
     }
     // Check lower limits
     if (fromAmount <= 0 || toAmount <= 0) {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Minimum supported size is " + xbridge::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN));
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "Minimum supported size is " + xbridge::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN)));
     }
 
     // Validate addresses
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
-    if (!connFrom) return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + fromCurrency);
-    if (!connTo) return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + toCurrency);
+    if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + fromCurrency));
+    if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + toCurrency));
 
     xbridge::App &app = xbridge::App::instance();
 
     if (!app.isValidAddress(fromAddress, connFrom)) {
 
-        return xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress);
+        return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress));
 
     }
     if (!app.isValidAddress(toAddress, connTo)) {
 
-        return xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress);
+        return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress));
 
     }
     if(fromAmount <= .0) {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "maker size must be greater than 0");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "maker size must be greater than 0"));
     }
     if(toAmount <= .0) {
 
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "taker size must be greater than 0");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "taker size must be greater than 0"));
 
     }
     // Perform explicit check on dryrun to avoid executing order on bad spelling
@@ -525,7 +589,7 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         std::string dryrunParam = params[7].get_str();
         if (dryrunParam != "dryrun") {
 
-            return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam);
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
 
         }
         dryrun = true;
@@ -549,23 +613,23 @@ Value dxMakeOrder(const Array &params, bool fHelp)
                                      xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
             result.emplace_back(Pair("taker_address", toAddress));
             result.emplace_back(Pair("status", "created"));
-            return result;
+            return uret(result);
         }
         break;
     }
 
     case xbridge::INVALID_CURRENCY: {
-        return xbridge::makeError(statusCode, __FUNCTION__, fromCurrency);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
     }
     case xbridge::NO_SESSION:{
-        return xbridge::makeError(statusCode, __FUNCTION__, fromCurrency);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
     }
     case xbridge::INSIFFICIENT_FUNDS:{
-        return xbridge::makeError(statusCode, __FUNCTION__, fromAddress);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     }
 
     default:
-        return xbridge::makeError(statusCode, __FUNCTION__);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
 
 
@@ -587,22 +651,21 @@ Value dxMakeOrder(const Array &params, bool fHelp)
         obj.emplace_back(Pair("taker_size",     xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
         const auto &createdTime = xbridge::App::instance().transaction(id)->created;
         obj.emplace_back(Pair("created_at",     xbridge::iso8601(createdTime)));
-        obj.emplace_back(Pair("updated_at",     xbridge::iso8601(bpt::microsec_clock::universal_time()))); // TODO Need actual updated time, this is just estimate
+        obj.emplace_back(Pair("updated_at",     xbridge::iso8601(boost::posix_time::microsec_clock::universal_time()))); // TODO Need actual updated time, this is just estimate
         obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
         obj.emplace_back(Pair("status",         "created"));
-        return obj;
+        return uret(obj);
 
     } else {
-        return xbridge::makeError(statusCode, __FUNCTION__);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxTakeOrder(const Array & params, bool fHelp)
+UniValue dxTakeOrder(const JSONRPCRequest& request)
 {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (fHelp)
+    if (request.fHelp)
     {
         throw runtime_error("dxTakeOrder (id) (address from) (address to) [optional](dryrun)\n"
                             "Accepts the order. dryrun will evaluate input without accepting the order.");
@@ -610,8 +673,8 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     if ((params.size() != 3) && (params.size() != 4))
     {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(id) (address from) (address to) [optional](dryrun)");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "(id) (address from) (address to) [optional](dryrun)"));
     }
 
     uint256 id = uint256S(params[0].get_str());
@@ -622,8 +685,8 @@ Value dxTakeOrder(const Array & params, bool fHelp)
 
     // Check that addresses are not the same
     if (fromAddress == toAddress) {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "address from and address to cannot be the same: " + fromAddress);
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "address from and address to cannot be the same: " + fromAddress));
     }
 
     // Perform explicit check on dryrun to avoid executing order on bad spelling
@@ -631,7 +694,7 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     if (params.size() == 4) {
         std::string dryrunParam = params[3].get_str();
         if (dryrunParam != "dryrun") {
-            return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam);
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
         dryrun = true;
     }
@@ -644,22 +707,22 @@ Value dxTakeOrder(const Array & params, bool fHelp)
     {
     case xbridge::SUCCESS: {
         if (txDescr->isLocal()) // no self trades
-            return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "unable to accept your own order");
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "unable to accept your own order"));
 
         // taker [to] will match order [from] currency (due to pair swap happening later)
         xbridge::WalletConnectorPtr connTo = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
         // taker [from] will match order [to] currency (due to pair swap happening later)
         xbridge::WalletConnectorPtr connFrom   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
-        if (!connFrom) return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->toCurrency);
-        if (!connTo) return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->fromCurrency);
+        if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->toCurrency));
+        if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "unable to connect to wallet: " + txDescr->fromCurrency));
         // Check for valid toAddress
         if (!app.isValidAddress(toAddress, connTo))
-            return xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                                   ": " + txDescr->fromCurrency + " address is bad, are you using the correct address?");
+            return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
+                                   ": " + txDescr->fromCurrency + " address is bad, are you using the correct address?"));
         // Check for valid fromAddress
         if (!app.isValidAddress(fromAddress, connFrom))
-            return xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                                   ": " + txDescr->toCurrency + " address is bad, are you using the correct address?");
+            return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
+                                   ": " + txDescr->toCurrency + " address is bad, are you using the correct address?"));
 
         if(dryrun)
         {
@@ -671,32 +734,32 @@ Value dxTakeOrder(const Array & params, bool fHelp)
             result.emplace_back(Pair("taker", txDescr->toCurrency));
             result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->toAmount)));
 
-            result.emplace_back(Pair("updated_at", xbridge::iso8601(bpt::microsec_clock::universal_time())));
+            result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
             result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
 
             result.emplace_back(Pair("status", "filled"));
-            return result;
+            return uret(result);
         }
 
         break;
     }
     case xbridge::TRANSACTION_NOT_FOUND:
     {
-        return xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString());
+        return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString()));
     }
 
     case xbridge::NO_SESSION:
     {
-        return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, txDescr->toCurrency);
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, txDescr->toCurrency));
     }
 
     case xbridge::INSIFFICIENT_FUNDS:
     {
-        return xbridge::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__, fromAddress);
+        return uret(xbridge::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__, fromAddress));
     }
 
     default:
-        return xbridge::makeError(statusCode, __FUNCTION__);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
 
     }
 
@@ -715,25 +778,24 @@ Value dxTakeOrder(const Array & params, bool fHelp)
         result.emplace_back(Pair("taker", txDescr->toCurrency));
         result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->toAmount)));
 
-        result.emplace_back(Pair("updated_at", xbridge::iso8601(bpt::microsec_clock::universal_time())));
+        result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
         result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
 
         result.emplace_back(Pair("status", txDescr->strState()));
-        return result;
+        return uret(result);
 
     } else {
         // restore state on error
         std::swap(txDescr->fromCurrency, txDescr->toCurrency);
         std::swap(txDescr->fromAmount, txDescr->toAmount);
-        return xbridge::makeError(statusCode, __FUNCTION__);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxCancelOrder(const Array &params, bool fHelp)
+UniValue dxCancelOrder(const JSONRPCRequest& request)
 {
-    if(fHelp)
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if(request.fHelp)
     {
         throw runtime_error("dxCancelOrder (id)\n"
                             "Cancel xbridge order.");
@@ -741,8 +803,8 @@ Value dxCancelOrder(const Array &params, bool fHelp)
 
     if (params.size() != 1)
     {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(id)");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "(id)"));
     }
 
     LOG() << "rpc cancel order " << __FUNCTION__;
@@ -751,28 +813,28 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     xbridge::TransactionDescrPtr tx = xbridge::App::instance().transaction(id);
     if (!tx)
     {
-        return xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString());
+        return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString()));
     }
 
     if (tx->state >= xbridge::TransactionDescr::trCreated)
     {
-        return xbridge::makeError(xbridge::INVALID_STATE, __FUNCTION__, "order is already " + tx->strState());
+        return uret(xbridge::makeError(xbridge::INVALID_STATE, __FUNCTION__, "order is already " + tx->strState()));
     }
 
     const auto res = xbridge::App::instance().cancelXBridgeTransaction(id, crRpcRequest);
     if (res != xbridge::SUCCESS)
     {
-        return xbridge::makeError(res, __FUNCTION__);
+        return uret(xbridge::makeError(res, __FUNCTION__));
     }
 
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->fromCurrency);
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->toCurrency);
     if (!connFrom) {
-        return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, tx->fromCurrency);
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, tx->fromCurrency));
     }
 
     if (!connTo) {
-        return xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, tx->toCurrency);
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, tx->toCurrency));
     }
     Object obj;
     obj.emplace_back(Pair("id", id.GetHex()));
@@ -790,14 +852,13 @@ Value dxCancelOrder(const Array &params, bool fHelp)
     obj.emplace_back(Pair("created_at", xbridge::iso8601(tx->created)));
 
     obj.emplace_back(Pair("status", tx->strState()));
-    return obj;
+    return uret(obj);
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxFlushCancelledOrders(const Array &params, bool fHelp)
+UniValue dxFlushCancelledOrders(const JSONRPCRequest& request)
 {
-    if(fHelp)
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if(request.fHelp)
     {
         throw runtime_error("dxFlushCancelledOrders (ageMillis)\n"
                             "Flush cancelled orders older than ageMillis");
@@ -809,8 +870,8 @@ Value dxFlushCancelledOrders(const Array &params, bool fHelp)
 
     if (ageMillis < 0)
     {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(ageMillis)");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "(ageMillis)"));
     }
 
     const auto minAge = boost::posix_time::millisec{ageMillis};
@@ -823,7 +884,7 @@ Value dxFlushCancelledOrders(const Array &params, bool fHelp)
 
     Object result{
         Pair{"ageMillis",        ageMillis},
-        Pair{"now",              boost::posix_time::to_iso_string(now)},
+        Pair{"now",              xbridge::iso8601(now)},
         Pair{"durationMicrosec", static_cast<int>(micros.total_microseconds())},
     };
     Array a;
@@ -831,20 +892,19 @@ Value dxFlushCancelledOrders(const Array &params, bool fHelp)
         a.emplace_back(
             ArrayValue{Object{
                 Pair{"id",        it.id.GetHex()},
-                Pair{"txtime",    boost::posix_time::to_iso_string(it.txtime)},
+                Pair{"txtime",    xbridge::iso8601(it.txtime)},
                 Pair{"use_count", it.use_count},
             }}
         );
     }
     result.emplace_back("flushedOrders", a);
-    return result;
+    return uret(result);
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
+UniValue dxGetOrderBook(const JSONRPCRequest& request)
 {
-    if (fHelp)
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp)
     {
         throw runtime_error("dxGetOrderBook (detail level, 1-4) (maker) (taker) (max orders, default=50)[optional]\n"
                             "Returns the order book. There are 4 detail levels that can be specified to obtain \n"
@@ -855,8 +915,8 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
     if ((params.size() < 3 || params.size() > 4))
     {
-        return xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(detail level, 1-4) (maker) (taker) (max orders, default=50)[optional]");
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "(detail level, 1-4) (maker) (taker) (max orders, default=50)[optional]"));
     }
 
     Object res;
@@ -880,7 +940,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
         if (detailLevel < 1 || detailLevel > 4)
         {
-            return xbridge::makeError(xbridge::INVALID_DETAIL_LEVEL, __FUNCTION__);
+            return uret(xbridge::makeError(xbridge::INVALID_DETAIL_LEVEL, __FUNCTION__));
         }
 
         res.emplace_back(Pair("detail", detailLevel));
@@ -901,7 +961,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
             LOG() << "empty transactions list";
             res.emplace_back(Pair("asks", asks));
             res.emplace_back(Pair("bids", bids));
-            return res;
+            return uret(res);
         }
 
         TransactionMap asksList;
@@ -1080,7 +1140,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             res.emplace_back(Pair("asks", asks));
             res.emplace_back(Pair("bids", bids));
-            return res;
+            return uret(res);
         }
         case 2:
         {
@@ -1159,7 +1219,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             res.emplace_back(Pair("asks", asks));
             res.emplace_back(Pair("bids", bids));
-            return  res;
+            return uret(res);
         }
         case 3:
         {
@@ -1199,7 +1259,7 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             res.emplace_back(Pair("asks", asks));
             res.emplace_back(Pair("bids", bids));
-            return  res;
+            return uret(res);
         }
         case 4:
         {
@@ -1309,20 +1369,19 @@ Value dxGetOrderBook(const json_spirit::Array& params, bool fHelp)
 
             res.emplace_back(Pair("asks", asks));
             res.emplace_back(Pair("bids", bids));
-            return res;
+            return uret(res);
         }
 
         default:
-            return xbridge::makeError(xbridge::INVALID_DETAIL_LEVEL, __FUNCTION__);
+            return uret(xbridge::makeError(xbridge::INVALID_DETAIL_LEVEL, __FUNCTION__));
         }
     }
 }
 
-//******************************************************************************
-//******************************************************************************
-json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
+UniValue dxGetMyOrders(const JSONRPCRequest& request)
 {
-    if (fHelp) {
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp) {
 
         throw runtime_error("dxGetMyOrders\nLists all orders owned by you.");
 
@@ -1336,7 +1395,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
                                                                       "This function does not accept any parameters")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return  error;
+        return uret(error);
 
     }
 
@@ -1370,7 +1429,7 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
 
     // Return if no records
     if (orders.empty())
-        return r;
+        return uret(r);
 
     // sort ascending by updated time
     std::sort(orders.begin(), orders.end(),
@@ -1414,14 +1473,13 @@ json_spirit::Value dxGetMyOrders(const json_spirit::Array& params, bool fHelp)
         r.emplace_back(o);
     }
 
-    return r;
+    return uret(r);
 }
 
-//******************************************************************************
-//******************************************************************************
-json_spirit::Value dxGetTokenBalances(const json_spirit::Array& params, bool fHelp)
+UniValue dxGetTokenBalances(const JSONRPCRequest& request)
 {
-    if (fHelp)
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp)
     {
         throw runtime_error("dxGetTokenBalances\n"
                             "List of connected wallet balances. These balances do not include orders that are using \n"
@@ -1437,7 +1495,7 @@ json_spirit::Value dxGetTokenBalances(const json_spirit::Array& params, bool fHe
                                                                       "This function does not accept any parameters")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return  error;
+        return uret(error);
     }
 
     Object res;
@@ -1458,14 +1516,13 @@ json_spirit::Value dxGetTokenBalances(const json_spirit::Array& params, bool fHe
             res.emplace_back(connector->currency, xbridge::xBridgeStringValueFromPrice(balance));
     }
 
-    return res;
+    return uret(res);
 }
 
-//******************************************************************************
-//******************************************************************************
-Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
+UniValue dxGetLockedUtxos(const JSONRPCRequest& request)
 {
-    if (fHelp)
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp)
     {
         throw runtime_error("dxGetLockedUtxos (id)\n"
                             "Return list of locked utxo of an order.");
@@ -1477,7 +1534,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS, "requered transaction id or empty param")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+        return uret(error);
     }
 
     xbridge::Exchange & e = xbridge::Exchange::instance();
@@ -1487,7 +1544,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::NOT_EXCHANGE_NODE)));
         error.emplace_back(Pair("code",     xbridge::Error::NOT_EXCHANGE_NODE));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+        return uret(error);
     }
 
     uint256 id;
@@ -1503,7 +1560,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
         error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+        return uret(error);
     }
 
     Array utxo;
@@ -1516,7 +1573,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     {
         obj.emplace_back(Pair("all_locked_utxo", utxo));
 
-        return obj;
+        return uret(obj);
     }
 
     xbridge::TransactionPtr pendingTx = e.pendingTransaction(id);
@@ -1528,7 +1585,7 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::Error::TRANSACTION_NOT_FOUND, id.GetHex())));
         error.emplace_back(Pair("code",     xbridge::Error::TRANSACTION_NOT_FOUND));
         error.emplace_back(Pair("name",     __FUNCTION__));
-        return error;
+        return uret(error);
     }
 
     obj.emplace_back(Pair("id", id.GetHex()));
@@ -1538,5 +1595,124 @@ Value dxGetLockedUtxos(const json_spirit::Array& params, bool fHelp)
     else if(acceptedTx->isValid())
         obj.emplace_back(Pair(acceptedTx->a_currency() + "_and_" + acceptedTx->b_currency(), utxo));
 
-    return obj;
+    return uret(obj);
+}
+
+UniValue gettradingdata(const JSONRPCRequest& request)
+{
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    if (request.fHelp || params.size() > 1)
+        throw runtime_error(
+            "gettradingdata blocks errors\n"
+            "Returns an object containing xbridge trading records.\n"
+            "\nArguments:\n"
+            "1. blocks  (integer, optional) count of blocks for search\n"
+            "2. errors  (bool, optional, default: false) show errors\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"timestamp\":  \"timestamp\",       (uint64) block date in unixtime format\n"
+            "  \"txid\":       \"transaction id\",  (string) blocknet transaction id\n"
+            "  \"to\":         \"address\",         (string) receiver address\n"
+            "  \"xid\":        \"transaction id\",  (string) xbridge transaction id\n"
+            "  \"from\":       \"XXX\",             (string) from currency\n"
+            "  \"fromAmount\": 0,                   (uint64) from amount\n"
+            "  \"to\":         \"XXX\",             (string) to currency\n"
+            "  \"toAmount\":   0,                   (uint64) toAmount\n"
+            "}\n"
+            "\nExamples:\n" +
+            HelpExampleCli("gettradingdata", "") + HelpExampleRpc("gettradingdata", ""));
+
+    uint32_t countOfBlocks = std::numeric_limits<uint32_t>::max();
+    if (params.size() >= 1)
+    {
+        RPCTypeCheck(request.params, {UniValue::VNUM});
+        countOfBlocks = params[0].get_int();
+    }
+    bool showErrors = false;
+    if (params.size() == 2) {
+        RPCTypeCheck(request.params, {UniValue::VBOOL});
+        showErrors = params[1].get_bool();
+    }
+
+    LOCK(cs_main);
+
+    Array records;
+
+    CBlockIndex * pindex = chainActive.Tip();
+    int64_t timeBegin = chainActive.Tip()->GetBlockTime();
+    for (; pindex->pprev && pindex->GetBlockTime() > (timeBegin-30*24*60*60) && countOfBlocks > 0;
+             pindex = pindex->pprev, --countOfBlocks)
+    {
+        CBlock block;
+        if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus()))
+        {
+            // throw
+            continue;
+        }
+        const auto timestamp = block.GetBlockTime();
+        for (const CTransactionRef & tx : block.vtx)
+        {
+            const auto txid = tx->GetHash().GetHex();
+            std::string snode_pubkey{};
+
+            const CurrencyPair p = TxOutToCurrencyPair(tx->vout, snode_pubkey);
+            switch(p.tag) {
+            case CurrencyPair::Tag::Error:
+                // Show errors
+                if (showErrors)
+                    records.emplace_back(Object{
+                        Pair{"timestamp",  timestamp},
+                        Pair{"txid",       txid},
+                        Pair{"xid",        p.error()}
+                    });
+                break;
+            case CurrencyPair::Tag::Valid:
+                records.emplace_back(Object{
+                            Pair{"timestamp",  timestamp},
+                            Pair{"txid",       txid},
+                            Pair{"to",         snode_pubkey},
+                            Pair{"xid",        p.xid()},
+                            Pair{"from",       p.from.currency().to_string()},
+                            Pair{"fromAmount", p.from.amount<double>()},
+                            Pair{"to",         p.to.currency().to_string()},
+                            Pair{"toAmount",   p.to.amount<double>()},
+                            });
+                break;
+            case CurrencyPair::Tag::Empty:
+            default:
+                break;
+            }
+        }
+    }
+
+    return uret(records);
+}
+
+// clang-format off
+static const CRPCCommand commands[] =
+{ //  category              name                       actor (function)          argNames
+  //  --------------------- -------------------------- ------------------------- ----------
+    { "xbridge",            "dxGetOrderFills",         &dxGetOrderFills,         {} },
+    { "xbridge",            "dxGetOrders",             &dxGetOrders,             {} },
+    { "xbridge",            "dxGetOrder",              &dxGetOrder,              {} },
+    { "xbridge",            "dxGetLocalTokens",        &dxGetLocalTokens,        {} },
+    { "xbridge",            "dxLoadXBridgeConf",       &dxLoadXBridgeConf,       {} },
+    { "xbridge",            "dxGetNetworkTokens",      &dxGetNetworkTokens,      {} },
+    { "xbridge",            "dxMakeOrder",             &dxMakeOrder,             {} },
+    { "xbridge",            "dxTakeOrder",             &dxTakeOrder,             {} },
+    { "xbridge",            "dxCancelOrder",           &dxCancelOrder,           {} },
+    { "xbridge",            "dxGetOrderHistory",       &dxGetOrderHistory,       {} },
+    { "xbridge",            "dxGetOrderBook",          &dxGetOrderBook,          {} },
+    { "xbridge",            "dxGetTokenBalances",      &dxGetTokenBalances,      {} },
+    { "xbridge",            "dxGetMyOrders",           &dxGetMyOrders,           {} },
+    { "xbridge",            "dxGetLockedUtxos",        &dxGetLockedUtxos,        {} },
+    { "xbridge",            "dxFlushCancelledOrders",  &dxFlushCancelledOrders,  {} },
+    { "xbridge",            "gettradingdata",          &gettradingdata,          {} },
+};
+// clang-format on
+
+void RegisterXBridgeRPCCommands(CRPCTable &t)
+{
+    for (const auto & command : commands)
+        t.appendCommand(command.name, &command);
 }

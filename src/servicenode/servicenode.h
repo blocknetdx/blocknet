@@ -93,7 +93,7 @@ public:
                                  const std::vector<COutPoint> & collateral,
                                  const uint32_t & bestBlock=0, const uint256 & bestBlockHash=uint256())
     {
-        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        CHashWriter ss(SER_GETHASH, 0);
         ss << snodePubKey << static_cast<uint8_t>(tier) << paymentAddress << collateral << bestBlock << bestBlockHash;
         return ss.GetHash();
     }
@@ -228,12 +228,17 @@ public:
     }
 
     /**
-     * Assigsn the specified config to the servicenode.
+     * Assigns the specified config to the servicenode.
      * @param c
      */
     void setConfig(const std::string & c) {
         config = c;
         services.clear();
+        boost::split(services, c, boost::is_any_of(", "));
+        try {
+            protocol = std::stoi(services.front());
+            services.erase(services.begin()); // remove the protocol version from the services list
+        } catch (...) { }
         // TODO Blocknet XBridge XRouter parse config and assign services
     }
 
@@ -275,7 +280,7 @@ public:
      * @return
      */
     uint256 getHash() const {
-        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        CHashWriter ss(SER_GETHASH, 0);
         ss << snodePubKey << static_cast<uint8_t>(tier) << paymentAddress << collateral << bestBlock << bestBlockHash
            << config << signature << regtime;
         return ss.GetHash();
@@ -384,6 +389,7 @@ protected: // in-memory only
     uint32_t pingBestBlock;
     uint256 pingBestBlockHash;
     std::string config;
+    uint32_t protocol{0};
     std::vector<std::string> services;
 };
 
@@ -469,7 +475,7 @@ public:
      * @return
      */
     uint256 sigHash() const {
-        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        CHashWriter ss(SER_GETHASH, 0);
         ss << snodePubKey << bestBlock << bestBlockHash << config << snode;
         return ss.GetHash();
     }
@@ -479,7 +485,7 @@ public:
      * @return
      */
     uint256 getHash() const {
-        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        CHashWriter ss(SER_GETHASH, 0);
         ss << snodePubKey << bestBlock << bestBlockHash << config << snode << signature;
         return ss.GetHash();
     }
@@ -506,6 +512,18 @@ public:
         // Ensure ping key matches snode key
         if (!snodePubKey.IsFullyValid() || snodePubKey != snode.getSnodePubKey())
             return false; // not valid if bad snode pubkey
+
+        std::vector<std::string> services;
+        boost::split(services, config, boost::is_any_of(", "));
+        if (services.empty())
+            return false; // bad config
+        try {
+            const uint32_t protocol = std::stoi(services.front());
+            if (protocol <= 0)
+                return false; // bad protocol version
+        } catch (...) {
+            return false; // bad protocol version in config
+        }
 
         CPubKey pubkey;
         if (!pubkey.RecoverCompact(sigHash(), signature))

@@ -289,8 +289,13 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         CKey key; key.MakeNewKey(false);
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ uncompressed key");
         // Snode ping w/ uncompressed key
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ uncompressed key");
+        sn::ServiceNodeConfigEntry entry("snode0", sn::ServiceNode::SPV, key, dest);
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>{entry});
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        sn::ServiceNodeMgr::instance().loadSnConfig(entries);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, "BLOCK,BTC,LTC", g_connman.get()), "Snode ping w/ uncompressed key");
         ++addedSnodes;
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     }
 
     // Snode registration and ping w/ compressed key
@@ -298,8 +303,13 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         CKey key; key.MakeNewKey(true);
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ compressed key");
         // Snode ping w/ compressed key
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(key, g_connman.get()), "Snode ping w/ compressed key");
+        sn::ServiceNodeConfigEntry entry("snode1", sn::ServiceNode::SPV, key, dest);
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>{entry});
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        sn::ServiceNodeMgr::instance().loadSnConfig(entries);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, "BLOCK,BTC,LTC", g_connman.get()), "Snode ping w/ compressed key");
         ++addedSnodes;
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     }
 
     // Check snode count matches number added above
@@ -409,6 +419,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         LOCK2(cs_main, pos.wallet->cs_wallet);
         pos.wallet->AvailableCoins(*pos.locked_chain, coins);
     }
+    // sort largest coins first
+    std::sort(coins.begin(), coins.end(), [](COutput & a, COutput & b) {
+        return a.GetInputCoin().txout.nValue > b.GetInputCoin().txout.nValue;
+    });
     CAmount totalAmount{0};
     std::vector<COutPoint> collateral;
     for (const auto & coin : coins) {
@@ -425,7 +439,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     {
         const uint8_t tier = 0xff;
         // Generate the signature from sig hash
-        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        CHashWriter ss(SER_GETHASH, 0);
         ss << snodePubKey << tier << collateral;
         const auto & sighash = ss.GetHash();
         std::vector<unsigned char> sig;
@@ -441,7 +455,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         const uint8_t tier = sn::ServiceNode::Tier::SPV;
         std::vector<COutPoint> collateral2;
         // Generate the signature from sig hash
-        CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
+        CHashWriter ss(SER_GETHASH, 0);
         ss << snodePubKey << tier << collateral2;
         const auto & sighash = ss.GetHash();
         std::vector<unsigned char> sig;

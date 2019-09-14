@@ -72,7 +72,13 @@ public:
      * @brief version
      * @return current version of application
      */
-    static std::string version();
+    static uint32_t version();
+
+    /**
+     * @brief version
+     * @return current version of application
+     */
+    static std::string versionStr();
 
     /**
      * @brief isEnabled
@@ -456,6 +462,12 @@ public:
      * @return
      */
     bool hasNodeService(const ::CPubKey &nodePubKey, const std::string &service);
+
+    /**
+     * Return all the services on this node.
+     * @return
+     */
+    std::string myServices() const;
 
     /**
      * @brief Returns the all services across all nodes.

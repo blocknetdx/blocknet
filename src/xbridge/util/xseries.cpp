@@ -1,21 +1,19 @@
-// Copyright (c) 2018 The Blocknet developers
+// Copyright (c) 2018-2019 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <xbridge/util/xseries.h>
-#include <xbridge/xbridgeapp.h>
-#include <xbridge/xbridgetransactiondescr.h>
 
 #include <chain.h>
+#include <key_io.h>
 #include <validation.h>
 
-#include <json/json_spirit_utils.h>
-#include <json/json_spirit_value.h>
-
-extern CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& snode_pubkey);
+#include <json/json_spirit_reader_template.h>
 
 //******************************************************************************
 //******************************************************************************
+extern CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& snode_pubkey); // declared in rpcxbridge.cpp
+
 namespace {
     // Helper functions to filter transactions in a query
     //
@@ -55,21 +53,21 @@ namespace {
             series.at(idx).update(tf == xQuery::Transform::Invert ? it->inverse() : *it, q.with_txids);
         }
     }
-    std::vector<CurrencyPair> get_tradingdata(time_period query)
+    std::vector<CurrencyPair> get_tradingdata(boost::posix_time::time_period query)
     {
         LOCK(cs_main);
 
         std::vector<CurrencyPair> records;
 
         CBlockIndex * pindex = chainActive.Tip();
-        auto ts = from_time_t(pindex->GetBlockTime());
+        auto ts = boost::posix_time::from_time_t(pindex->GetBlockTime());
         while (pindex->pprev != nullptr && query.end() < ts) {
             pindex = pindex->pprev;
-            ts = from_time_t(pindex->GetBlockTime());
+            ts = boost::posix_time::from_time_t(pindex->GetBlockTime());
         }
 
         for (; pindex->pprev != nullptr && query.contains(ts);
-             pindex = pindex->pprev, ts = from_time_t(pindex->GetBlockTime()))
+             pindex = pindex->pprev, ts = boost::posix_time::from_time_t(pindex->GetBlockTime()))
         {
             CBlock block;
             if (not ReadBlockFromDisk(block, pindex, Params().GetConsensus()))
@@ -87,14 +85,14 @@ namespace {
         return records;
     }
 
-    ptime get_end_time(int64_t end_secs, time_duration cache_granularity) {
+    boost::posix_time::ptime get_end_time(int64_t end_secs, boost::posix_time::time_duration cache_granularity) {
         const int64_t psec = cache_granularity.total_seconds();
         if (end_secs < 0 || psec < 1)
-            return from_time_t(0);
-        return from_time_t(((end_secs + psec - 1) / psec) * psec);
+            return boost::posix_time::from_time_t(0);
+        return boost::posix_time::from_time_t(((end_secs + psec - 1) / psec) * psec);
     }
-    ptime get_end_time(ptime end_time, time_duration cache_granularity) {
-        auto epoch_duration = end_time - from_time_t(0);
+    boost::posix_time::ptime get_end_time(boost::posix_time::ptime end_time, boost::posix_time::time_duration cache_granularity) {
+        auto epoch_duration = end_time - boost::posix_time::from_time_t(0);
         return get_end_time(epoch_duration.total_seconds(), cache_granularity);
     }
 }
@@ -109,9 +107,9 @@ xSeriesCache::getChainXAggregateSeries(const xQuery& query)
     const size_t granularity_seconds = q.granularity.total_seconds();
     const size_t num_intervals = std::min(query_seconds / granularity_seconds,
                                           static_cast<size_t>(q.interval_limit.count()));
-    time_duration adjusted_duration = boost::posix_time::seconds{
+    boost::posix_time::time_duration adjusted_duration = boost::posix_time::seconds{
         static_cast<long>(num_intervals * granularity_seconds)};
-    q.period = time_period{q.period.end() - adjusted_duration, q.period.end()};
+    q.period = boost::posix_time::time_period{q.period.end() - adjusted_duration, q.period.end()};
     std::vector<xAggregate> series{};
     series.resize(num_intervals,xAggregate{q.fromCurrency, q.toCurrency});
 
@@ -148,7 +146,7 @@ xSeriesCache::getXAggregateContainer(const pairSymbol& key)
 
 //******************************************************************************
 //******************************************************************************
-void xSeriesCache::updateSeriesCache(const time_period& period)
+void xSeriesCache::updateSeriesCache(const boost::posix_time::time_period& period)
 {
     // TODO(amdn) cached aggregate series for blocks that are purged from the chain
     // need to be invalidated... this code invalidates on every query to

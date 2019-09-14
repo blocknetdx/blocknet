@@ -1,16 +1,15 @@
-// Copyright (c) 2018 The Blocknet developers
+// Copyright (c) 2018-2019 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef CURRENCYPAIR_H
-#define CURRENCYPAIR_H
+#ifndef BLOCKNET_XBRIDGE_CURRENCYPAIR_H
+#define BLOCKNET_XBRIDGE_CURRENCYPAIR_H
 
-#include "currency.h"
-
-#include <boost/date_time/posix_time/ptime.hpp>
-using boost::posix_time::ptime;
+#include <xbridge/currency.h>
 
 #include <string>
+
+#include <boost/date_time/posix_time/ptime.hpp>
 
 using xid_t = std::string;
 
@@ -21,7 +20,7 @@ class CurrencyPair {
 public:
 
     // variables
-    ptime timeStamp{};
+    boost::posix_time::ptime timeStamp{};
     std::string xid_or_error{};
     ccy::Asset from{};
     ccy::Asset to{};
@@ -31,7 +30,7 @@ public:
     CurrencyPair() = default;
     CurrencyPair(const std::string& e) : xid_or_error{e}, tag{Tag::Error} {}
     CurrencyPair(const xid_t& xid, const ccy::Asset& from,
-                 const ccy::Asset& to, ptime ts = ptime{})
+                 const ccy::Asset& to, boost::posix_time::ptime ts = boost::posix_time::ptime{})
         : timeStamp(ts), xid_or_error(xid), from(from), to(to), tag{Tag::Valid}
     {}
 
@@ -43,4 +42,4 @@ public:
     std::string error() const { return tag == Tag::Error ? xid_or_error : std::string{}; }
 };
 
-#endif // CURRENCYPAIR_H
+#endif // BLOCKNET_XBRIDGE_CURRENCYPAIR_H

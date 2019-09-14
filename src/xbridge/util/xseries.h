@@ -1,18 +1,16 @@
-// Copyright (c) 2018 The Blocknet developers
+// Copyright (c) 2018-2019 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef XSERIES_H
-#define XSERIES_H
+#ifndef BLOCKNET_XBRIDGE_UTIL_XSERIES_H
+#define BLOCKNET_XBRIDGE_UTIL_XSERIES_H
 
 #include <xbridge/currencypair.h>
-#include <xbridge/util/xutil.h>
 #include <xbridge/xbridgetransactiondescr.h>
 
 #include <chainparams.h>
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/date_time/posix_time/ptime.hpp>
+#include <key_io.h>
+#include <script/standard.h>
 
 #include <algorithm>
 #include <cstdint>
@@ -22,17 +20,18 @@
 #include <unordered_map>
 #include <vector>
 
-using boost::posix_time::ptime;
-using boost::posix_time::time_period;
-using boost::posix_time::time_duration;
-using boost::posix_time::from_time_t;
+#include <json/json_spirit_reader_template.h>
+#include <json/json_spirit_value.h>
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
 
 /**
  * @brief validate and hold parameters used by dxGetOrderHistory() and others
  */
 class xQuery {
-    const ptime currentTime   = boost::posix_time::microsec_clock::universal_time();
-    const ptime oneDayFromNow = currentTime + boost::gregorian::days{1};
+    const boost::posix_time::ptime currentTime   = boost::posix_time::microsec_clock::universal_time();
+    const boost::posix_time::ptime oneDayFromNow = currentTime + boost::gregorian::days{1};
 public:
 // types
     enum class WithTxids { Excluded, Included };
@@ -61,8 +60,8 @@ public:
 // variables
     ccy::Currency fromCurrency;
     ccy::Currency toCurrency;
-    time_duration granularity{boost::date_time::not_a_date_time};
-    time_period period{ptime{},ptime{}};
+    boost::posix_time::time_duration granularity{boost::date_time::not_a_date_time};
+    boost::posix_time::time_period period{boost::posix_time::ptime{},boost::posix_time::ptime{}};
     WithTxids with_txids;
     WithInverse with_inverse;
     IntervalLimit interval_limit;
@@ -105,8 +104,8 @@ public:
 // functions
     bool error() const { return not reason.empty(); }
     const std::string& what() const { return reason; }
-    static inline ptime earliestTime() {
-        return ptime{boost::gregorian::date{2018, 2, 25}};
+    static inline boost::posix_time::ptime earliestTime() {
+        return boost::posix_time::ptime{boost::gregorian::date{2018, 2, 25}};
     }
     static inline std::string supported_seconds_csv() {
         std::string str{}, s{};
@@ -120,30 +119,30 @@ private:
     static inline constexpr std::array<int,6> supported_seconds() {
         return {{ 1*60, 5*60, 15*60, 1*60*60, 6*60*60, 24*60*60 }};
     }
-    static inline time_duration validate_granularity(int val) {
+    static inline boost::posix_time::time_duration validate_granularity(int val) {
         constexpr auto s = supported_seconds();
         const auto f = std::find(s.begin(), s.end(), val);
         return boost::posix_time::seconds{f == s.end() ? 0 : *f};
     }
-    static inline bool is_valid_granularity(const time_duration& td) {
+    static inline bool is_valid_granularity(const boost::posix_time::time_duration& td) {
         constexpr auto s = supported_seconds();
         return s.end() != std::find(s.begin(), s.end(), td.total_seconds());
     }
-    static inline ptime get_start_time(int64_t start_secs, time_duration period) {
+    static inline boost::posix_time::ptime get_start_time(int64_t start_secs, boost::posix_time::time_duration period) {
         const int64_t psec = period.total_seconds();
         if (start_secs < 0 || psec < 1)
-            return from_time_t(0);
-        return from_time_t( (start_secs / psec) * psec );
+            return boost::posix_time::from_time_t(0);
+        return boost::posix_time::from_time_t( (start_secs / psec) * psec );
     }
-    static inline ptime get_end_time(int64_t end_secs, time_duration period) {
+    static inline boost::posix_time::ptime get_end_time(int64_t end_secs, boost::posix_time::time_duration period) {
         const int64_t psec = period.total_seconds();
         if (end_secs < 0 || psec < 1)
-            return from_time_t(0);
-        return from_time_t(((end_secs + psec - 1) / psec) * psec);
+            return boost::posix_time::from_time_t(0);
+        return boost::posix_time::from_time_t(((end_secs + psec - 1) / psec) * psec);
     }
 
 public:
-    static inline time_duration min_granularity() {
+    static inline boost::posix_time::time_duration min_granularity() {
         constexpr auto s = supported_seconds();
         const auto* m = std::min_element(s.begin(), s.end());
         return boost::posix_time::seconds{*m};
@@ -160,7 +159,7 @@ public:
     using price_t = double;
 
     // variables
-    ptime timeEnd{};
+    boost::posix_time::ptime timeEnd{};
     price_t open{0};
     price_t high{0};
     price_t low{0};
@@ -214,18 +213,18 @@ public:
     template <class Iterator>
     xRange getXAggregateRange(const Iterator& begin,
                               const Iterator& end,
-                              const time_period& period)
+                              const boost::posix_time::time_period& period)
     {
         auto low = std::lower_bound(begin, end, period.begin(),
-                                    [](const xAggregate& a, const ptime& b) {
+                                    [](const xAggregate& a, const boost::posix_time::ptime& b) {
                                         return a.timeEnd <= b; });
         auto up = std::upper_bound(low, end, period.end(),
-                                   [](const ptime& period_end, const xAggregate& b) {
+                                   [](const boost::posix_time::ptime& period_end, const xAggregate& b) {
                                        return period_end <= b.timeEnd; });
         return {low, up};
     }
 
-    void updateSeriesCache(const time_period&);
+    void updateSeriesCache(const boost::posix_time::time_period&);
 
 private:
     void updateXSeries(std::vector<xAggregate>& series,
@@ -241,10 +240,11 @@ private:
      *    - the minimum granularity supported in a query.
      * There may be gaps between intervals, so it is potentially sparse.
      */
-    time_duration m_cache_granularity{
-        std::min(xQuery::min_granularity(), time_duration{boost::posix_time::seconds{
+    boost::posix_time::time_duration m_cache_granularity{
+        std::min(xQuery::min_granularity(), boost::posix_time::time_duration{boost::posix_time::seconds{
                      static_cast<long>(Params().GetConsensus().nPowTargetSpacing)}})};
-    time_period m_cache_period{ptime{},ptime{}};
+    boost::posix_time::time_period m_cache_period{boost::posix_time::ptime{},boost::posix_time::ptime{}};
     std::unordered_map<pairSymbol, xAggregateContainer> mSparseSeries;
 };
-#endif // XSERIES_H
+
+#endif // BLOCKNET_XBRIDGE_UTIL_XSERIES_H

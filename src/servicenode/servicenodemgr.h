@@ -256,22 +256,31 @@ public:
      * @param connman
      * @return
      */
-    bool sendPing(const CKey & key, CConnman *connman) {
-        ServiceNodePtr snode = findSn(key.GetPubKey());
-        if (!snode) {
+    bool sendPing(const uint32_t & protocol, const std::string & config, CConnman *connman) {
+        if (!hasActiveSn()) {
             LogPrint(BCLog::SNODE, "service node ping failed, service node not found\n");
+            return false;
+        }
+
+        const auto & activesn = getActiveSn();
+        const auto & snode = findSn(activesn.key.GetPubKey());
+        if (!snode) {
+            LogPrint(BCLog::SNODE, "service node ping failed, service node not running\n");
             return false;
         }
 
         const uint32_t bestBlock = getActiveChainHeight();
         const uint256 & bestBlockHash = getActiveChainHash(bestBlock);
-        std::string config; // TODO Blocknet Add snode config
 
-        snode->setConfig(config);
+        std::ostringstream o;
+        o << protocol;
+
+        const auto uconfig = o.str() + "," + config;
+        snode->setConfig(uconfig);
         snode->updatePing();
 
-        ServiceNodePing ping(key.GetPubKey(), bestBlock, bestBlockHash, config, *snode);
-        ping.sign(key);
+        ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, uconfig, *snode);
+        ping.sign(activesn.key);
         if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc)) {
             LogPrint(BCLog::SNODE, "service node ping failed\n");
             return false;

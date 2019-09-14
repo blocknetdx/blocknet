@@ -270,13 +270,12 @@ App & App::instance()
 //*****************************************************************************
 //*****************************************************************************
 // static
-std::string App::version()
-{
+uint32_t App::version() {
+    return static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
+}
+std::string App::versionStr() {
     std::ostringstream o;
-    o << XBRIDGE_VERSION_MAJOR
-      << "." << XBRIDGE_VERSION_MINOR
-      << "." << XBRIDGE_VERSION_DESCR
-      << " [" << XBRIDGE_VERSION << "]";
+    o << XBRIDGE_PROTOCOL_VERSION;
     return o.str();
 }
 
@@ -2042,6 +2041,35 @@ void App::unwatchTraderDeposit(TransactionPtr tr) {
         return;
     LOCK(m_p->m_watchTradersLocker);
     m_p->m_watchTraders.erase(tr->id());
+}
+
+/**
+ * Return this node's services.
+ * @return
+ */
+std::string App::myServices() const {
+    Exchange & e = Exchange::instance();
+    std::vector<std::string> services;
+    std::map<std::string, bool> nodup;
+
+    // Add xbridge connected wallets
+    if (e.isStarted()) {
+        const auto & wallets = e.connectedWallets();
+        for (const auto & wallet : wallets)
+            nodup[wallet] = hasCurrency(wallet);
+    } else {
+        ERR() << "Services not sent to the network, exchange hasn't started. Is the servicenode in exchange mode? " << __FUNCTION__;
+        return "";
+    }
+
+    // All services
+    for (const auto &item : nodup) {
+        if (item.second) // only show enabled wallets
+            services.push_back(item.first);
+    }
+
+    std::string servicesStr = boost::algorithm::join(services, ",");
+    return servicesStr;
 }
 
 //******************************************************************************
