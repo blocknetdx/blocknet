@@ -10,6 +10,7 @@
 #include <servicenode/servicenodemgr.h>
 #include <util/moneystr.h>
 #include <wallet/coincontrol.h>
+#include <wallet/rpcwallet.h>
 #include <xbridge/xbridgeapp.h>
 
 #include <boost/algorithm/algorithm.hpp>
@@ -242,6 +243,8 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
                                                          count, FormatMoney(requiredBalance), extra));
     }
 
+    EnsureWalletIsUnlocked(wallet.get());
+
     CCoinControl cc;
     cc.fAllowOtherInputs = true;
 
@@ -337,7 +340,19 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
     for (const auto & entry : entries) {
         if (!alias.empty() && alias != entry.alias)
             continue; // skip if alias doesn't match filter
-        if (!sn::ServiceNodeMgr::instance().registerSn(entry, g_connman.get(), GetWallets()))
+        std::shared_ptr<CWallet> wallet = nullptr;
+        for (auto & w : GetWallets()) {
+            if (w->HaveKey(entry.keyId())) {
+                wallet = w;
+                break;
+            }
+        }
+        if (!wallet)
+            throw JSONRPCError(RPC_MISC_ERROR, strprintf("wallet could not be found for registering %s", entry.alias));
+
+        EnsureWalletIsUnlocked(wallet.get());
+
+        if (!sn::ServiceNodeMgr::instance().registerSn(entry, g_connman.get(), {wallet}))
             throw JSONRPCError(RPC_MISC_ERROR, strprintf("failed to register the service node %s", entry.alias));
     }
 
