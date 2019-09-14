@@ -500,8 +500,10 @@ public:
     }
 
     /**
-     * Returns true if this servicenode ping is valid. Public keys and associated signatures are checked for
-     * validity.
+     * Returns true if this servicenode ping is valid. Service node pubkey and associated signatures are checked for
+     * validity. The ping is signed by the snode privkey while the registration is signed by the snode collateral
+     * privkey. The exception is OPEN (free) tier nodes always sign with their snode privkeys since they are not
+     * allowed to accept payments.
      * @param getTxFunc
      * @param isBlockValid
      */
