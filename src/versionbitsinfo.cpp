@@ -22,5 +22,9 @@ const struct VBDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_B
     {
         /*.name =*/ "networkfees",
         /*.gbt_force =*/ true,
+    },
+    {
+        /*.name =*/ "stakep2pkh",
+        /*.gbt_force =*/ true,
     }
 };
