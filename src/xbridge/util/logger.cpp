@@ -96,7 +96,7 @@ std::string LOG::makeFileName()
     boost::filesystem::create_directory(directory);
 
     auto lt = boost::posix_time::second_clock::local_time();
-    auto df = new boost::gregorian::date_facet("%Y%m%dT%H%M%S");
+    auto df = new boost::gregorian::date_facet("%Y%m%d");
     std::ostringstream ss;
     ss.imbue(std::locale(ss.getloc(), df));
     ss << lt.date();
