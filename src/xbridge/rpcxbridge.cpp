@@ -204,8 +204,8 @@ UniValue dxGetNetworkTokens(const JSONRPCRequest& request)
     }
 
     std::set<std::string> services;
-    auto nodeServices = xbridge::App::instance().walletServices();
-    for (auto & serviceItem : nodeServices) {
+    auto ws = xbridge::App::instance().walletServices();
+    for (auto & serviceItem : ws) {
         auto s = serviceItem.second.services();
         services.insert(s.begin(), s.end());
     }

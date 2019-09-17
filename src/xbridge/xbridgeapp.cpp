@@ -140,8 +140,14 @@ protected:
      */
     bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
 
-    bool addNodeServices(const ::CPubKey & node, const std::vector<std::string> & services, const uint32_t version);
-    bool hasNodeService(const ::CPubKey & node, const std::string & service);
+    /**
+     * @brief hasNodeService - returns true if the specified node is found with the
+     *        a service.
+     * @param node
+     * @param service
+     * @return
+     */
+    static bool hasNodeService(const ::CPubKey & node, const std::string & service);
 
     /**
      * @brief findShuffledNodesWithService - finds nodes with given services
@@ -219,10 +225,6 @@ protected:
     // network packets queue
     CCriticalSection                                   m_ppLocker;
     std::map<uint256, XBridgePacketPtr>                m_pendingPackets;
-
-    // services and xwallets
-    mutable CCriticalSection                           m_xwalletsLocker;
-    std::map<::CPubKey, XWallets>                      m_xwallets;
 
     // store deposit watches
     CCriticalSection                                   m_watchDepositsLocker;
@@ -2074,74 +2076,6 @@ std::string App::myServices() const {
 
 //******************************************************************************
 /**
- * @brief Sends the service ping to the network on behalf of the current Servicenode.
- * @return
- */
-//******************************************************************************
-bool App::sendServicePing(std::vector<std::string> &nonWalletServices)
-{
-    auto pmn = sn::ServiceNodeMgr::instance().getActiveSn();
-    if (pmn.isNull()) {
-        ERR() << "This servicenode must be started in order to report report services to the network " << __FUNCTION__;
-        return false;
-    }
-
-    Exchange & e = Exchange::instance();
-    std::map<std::string, bool> nodup;
-
-    for (const auto &s : nonWalletServices)
-    {
-        nodup[s] = true;
-    }
-
-    std::vector<std::string> services;
-
-    // Add xbridge connected wallets
-    if (e.isStarted()) {
-        const auto &wallets = e.connectedWallets();
-        for (const auto &wallet : wallets) {
-            nodup[wallet] = hasCurrency(wallet);
-        }
-    } else {
-        ERR() << "Services not sent to the network, exchange hasn't started. Is the servicenode in exchange mode? " << __FUNCTION__;
-    }
-
-    // All services
-    services.reserve(nodup.size());
-    for (const auto &item : nodup)
-    {
-        if (item.second) // only show enabled wallets
-            services.push_back(item.first);
-    }
-
-    std::string servicesStr = boost::algorithm::join(services, ",");
-
-    // Create the ping packet
-    XBridgePacketPtr ping(new XBridgePacket(xbcServicesPing));
-    {
-        ping->append(static_cast<uint32_t>(services.size()));
-        ping->append(servicesStr);
-        ping->sign(e.pubKey(), e.privKey());
-    }
-
-    if (ping->size() > 10000)
-    {
-
-        ERR() << "Service ping too big, too many services. Max of 10000 bytes supported " << __FUNCTION__;
-        return false;
-    }
-
-    // Update node services on self
-    m_p->addNodeServices(pmn.key.GetPubKey(), services, static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION));
-
-    LOG() << "Sending service ping: " << servicesStr << " " << __FUNCTION__;
-
-    sendPacket(ping);
-    return true;
-}
-
-//******************************************************************************
-/**
  * @brief Returns true if the current node supports the specified service.
  * @param service Service to lookup
  * @return
@@ -2175,59 +2109,44 @@ bool App::hasNodeService(const ::CPubKey &nodePubKey, const std::string &service
 //******************************************************************************
 std::map<::CPubKey, App::XWallets> App::allServices()
 {
-    LOCK(m_p->m_xwalletsLocker);
-    return m_p->m_xwallets;
+    std::map<::CPubKey, App::XWallets> ws;
+    const auto & snodes = sn::ServiceNodeMgr::instance().list();
+    for (const auto & snode : snodes) {
+        ws[snode.getSnodePubKey()] = XWallets{
+            snode.getProtocolVersion(), snode.getSnodePubKey(),
+            std::set<std::string>{snode.serviceList().begin(), snode.serviceList().end()}
+        };
+    }
+    return std::move(ws);
 }
 
 //******************************************************************************
 /**
- * @brief Returns all wallets supported by the network.
+ * @brief Returns all wallets supported by the network. This excludes other non-wallet
+ * services (i.e. excludes xrouter services).
  * @return
  */
 //******************************************************************************
 std::map<::CPubKey, App::XWallets> App::walletServices()
 {
-    LOCK(m_p->m_xwalletsLocker);
-
     std::regex rwallet("^[^:]+$"); // match wallets
     std::smatch m;
     std::map<::CPubKey, App::XWallets> ws;
 
-    for (const auto & item : m_p->m_xwallets) {
-        const auto & services = item.second.services();
-        std::vector<std::string> tmp{services.begin(), services.end()};
+    const auto & snodes = sn::ServiceNodeMgr::instance().list();
+    for (const auto & snode : snodes) {
+        const auto & services = snode.serviceList();
         std::set<std::string> xwallets;
-        for (const auto & s : tmp) {
+        for (const auto & s : services) {
             if (!std::regex_match(s, m, rwallet) || s == "xr" || s == "xrs") // TODO Blocknet XRouter:  if (!std::regex_match(s, m, rwallet) || s == xrouter::xr || s == xrouter::xrs)
                 continue;
             xwallets.insert(s);
         }
-        App::XWallets & x = ws[item.first];
-        ws[item.first] = XWallets{x.version(), x.nodePubKey(), xwallets};
+        App::XWallets & x = ws[snode.getSnodePubKey()];
+        ws[snode.getSnodePubKey()] = XWallets{x.version(), x.nodePubKey(), xwallets};
     }
 
-    return ws;
-}
-
-//******************************************************************************
-/**
- * @brief Returns the node services supported by the specified node.
- * @return
- */
-//******************************************************************************
-std::set<std::string> App::nodeServices(const ::CPubKey &nodePubKey)
-{
-    LOCK(m_p->m_xwalletsLocker);
-    return m_p->m_xwallets[nodePubKey].services();
-}
-
-//******************************************************************************
-//******************************************************************************
-bool App::addNodeServices(const ::CPubKey & nodePubKey,
-                          const std::vector<std::string> & services,
-                          const uint32_t version)
-{
-    return m_p->addNodeServices(nodePubKey, services, version);
+    return std::move(ws);
 }
 
 //******************************************************************************
@@ -2235,8 +2154,8 @@ bool App::addNodeServices(const ::CPubKey & nodePubKey,
 bool App::findNodeWithService(const std::set<std::string> & services,
         CPubKey & node, const std::set<CPubKey> & notIn) const
 {
-    const uint32_t version = static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
-    auto list = m_p->findShuffledNodesWithService(services,version, notIn);
+    const uint32_t ver = version();
+    auto list = m_p->findShuffledNodesWithService(services, ver, notIn);
     if (list.empty())
         return false;
     node = list.front();
@@ -2355,64 +2274,36 @@ std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
     const uint32_t version,
     const std::set<CPubKey> & notIn) const
 {
-    LOCK(m_xwalletsLocker);
-
     std::vector<CPubKey> list;
-    for (const auto& x : m_xwallets)
+    const auto & snodes = sn::ServiceNodeMgr::instance().list();
+    for (const auto& x : snodes)
     {
-        if (x.second.version() != version || notIn.count(x.first))
+        if (x.getProtocolVersion() != version || notIn.count(x.getSnodePubKey()))
             continue;
 
         // Make sure this xwallet entry is in the servicenode list
-        auto pmn = sn::ServiceNodeMgr::instance().getSn(x.first);
+        auto pmn = sn::ServiceNodeMgr::instance().getSn(x.getSnodePubKey());
         if (pmn.isNull()) {
-            auto k = x.first;
+            auto k = x.getSnodePubKey();
             if (k.Decompress()) // try to uncompress pubkey and search
                 pmn = sn::ServiceNodeMgr::instance().getSn(k);
             if (pmn.isNull())
                 continue;
         }
 
-        const auto& wallet_services = x.second.services();
+        const auto& wallet_services = std::set<std::string>{x.serviceList().begin(), x.serviceList().end()};
         auto searchCounter = requested_services.size();
         for (const std::string & serv : requested_services)
         {
             if (not wallet_services.count(serv))
                 break;
             if (--searchCounter == 0)
-                list.push_back(x.first);
+                list.push_back(x.getSnodePubKey());
         }
     }
     static std::default_random_engine rng{0};
     std::shuffle(list.begin(), list.end(), rng);
     return list;
-}
-
-//******************************************************************************
-/**
- * @brief Stores the specified services for the node.
- * @param nodePubKey Pubkey of the node
- * @param services List of supported services
- * @param version Xbridge protocol version
- * @return True if success, otherwise false
- */
-//******************************************************************************
-bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
-                                const std::vector<std::string> & services,
-                                const uint32_t version)
-{
-    LOCK(m_xwalletsLocker);
-
-    std::set<std::string> validServices;
-    std::regex r("^[a-zA-Z0-9\\-:\\$]+$");
-    std::smatch m;
-    for (const auto & s : services) { // validate service names
-        if (std::regex_match(s, m, r))
-            validServices.insert(s);
-    }
-
-    m_xwallets[nodePubKey] = XWallets{version, nodePubKey, validServices};
-    return true;
 }
 
 //******************************************************************************
@@ -2426,13 +2317,10 @@ bool App::Impl::addNodeServices(const ::CPubKey & nodePubKey,
 bool App::Impl::hasNodeService(const ::CPubKey & nodePubKey,
                                const std::string & service)
 {
-    LOCK(m_xwalletsLocker);
-    if (m_xwallets.count(nodePubKey))
-    {
-        return m_xwallets[nodePubKey].services().count(service) > 0;
-    }
-
-    return false;
+    const auto & snode = sn::ServiceNodeMgr::instance().getSn(nodePubKey);
+    if (snode.isNull())
+        return false;
+    return snode.hasService(service);
 }
 
 //******************************************************************************

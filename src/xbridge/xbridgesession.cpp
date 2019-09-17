@@ -212,9 +212,6 @@ void Session::Impl::init()
 
     // xchat ()
     m_handlers[xbcXChatMessage].bind(this, &Impl::processXChatMessage);
-
-    // Services ping (xwallets)
-    m_handlers[xbcServicesPing].bind(this, &Impl::processServicesPing);
 }
 
 //*****************************************************************************
@@ -315,79 +312,6 @@ bool Session::processPacket(XBridgePacketPtr packet, CValidationState * state)
     }
 
     setNotWorking();
-    return true;
-}
-
-//*****************************************************************************
-/**
- * @brief Process and verify the received services ping. This will enforce a maximum size for the packet. Packets
- *        in excess of the max size will be rejected. The pubkey of the packet will be used to associate the services.
- *        The sending node is required to sign the packet with its private key, this will mitigate MITM.
- * @param packet
- * @return
- */
-//*****************************************************************************
-bool Session::Impl::processServicesPing(XBridgePacketPtr packet) const
-{
-    if (packet->size() > 10000)
-    {
-        // enforce a limit of max bytes
-        ERR() << "Services packet too large, a max of 10000 bytes is supported "
-              << __FUNCTION__;
-        return false;
-    }
-    else if (packet->size() < (sizeof(uint32_t) + 1))
-    {
-        // service count (4 bytes) + service name (at least 1 byte)
-        ERR() << "Rejecting Services packet, it's too small "
-              << __FUNCTION__;
-        return false;
-    }
-
-    // Get pubkey from the packet so that we can check if it's in the snode list
-    CPubKey nodePubKey;
-    nodePubKey.Set(packet->pubkey(), packet->pubkey() + CPubKey::COMPRESSED_PUBLIC_KEY_SIZE);
-    if (!nodePubKey.IsFullyValid()) {
-        LOG() << "Bad Servicenode public key " << __FUNCTION__;
-        return false;
-    }
-
-    std::vector<std::string> services;
-    uint32_t offset = 0;
-
-    // Find Servicenode in list
-    auto pmn = sn::ServiceNodeMgr::instance().getSn(nodePubKey);
-    if (pmn.isNull()) {
-        // try to uncompress pubkey and search
-        if (nodePubKey.Decompress())
-            pmn = sn::ServiceNodeMgr::instance().getSn(nodePubKey);
-        if (pmn.isNull()) {
-            ERR() << "Bad Services packet, Servicenode not found with vin "
-                  << nodePubKey.GetHash().ToString() << " "
-                  << __FUNCTION__;
-            return false;
-        }
-    }
-
-    // Services
-    uint32_t servicesCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
-    offset += sizeof(uint32_t);
-    std::string rawServices(reinterpret_cast<const char *>(packet->data() + offset));
-    if (rawServices.length() > 0)
-    {
-        boost::split(services, rawServices, boost::is_any_of(","));
-    }
-
-    if (services.size() != servicesCount)
-    {
-        ERR() << "Rejecting Services packet, the reported services count doesn't match the actual count "
-              << __FUNCTION__;
-        return false;
-    }
-
-    // Store updated services list for this node
-    App::instance().addNodeServices(nodePubKey, services, packet->version());
-
     return true;
 }
 

@@ -1869,29 +1869,6 @@ bool AppInitMain(InitInterfaces& interfaces)
     if (gArgs.GetBoolArg("-staking", true))
         threadGroup.create_thread(&ThreadStakeMinter);
 
-#ifdef ENABLE_WALLET
-    if (!ShutdownRequested()) {
-        // init xbridge
-        xbridge::App & xapp = xbridge::App::instance();
-        xapp.init();
-
-        // load service node entries
-        if (gArgs.GetBoolArg("-servicenode", false)) {
-            sn::ServiceNodeMgr & smgr = sn::ServiceNodeMgr::instance();
-            std::set<sn::ServiceNodeConfigEntry> s;
-            if (!smgr.loadSnConfig(s))
-                LogPrint(BCLog::XBRIDGE, "Failed to load service node entries from servicenode.conf");
-            if (!s.empty()) {
-                // Proceed to register service nodes
-                for (const auto & snode : s) {
-                    if (!smgr.registerSn(snode, g_connman.get(), GetWallets()))
-                        LogPrintf("Failed to start service node %s\n", snode.alias);
-                }
-            }
-        }
-    }
-#endif
-
     // ********************************************************* Step 13: finished
 
     SetRPCWarmupFinished();
@@ -1904,6 +1881,34 @@ bool AppInitMain(InitInterfaces& interfaces)
     scheduler.scheduleEvery([]{
         g_banman->DumpBanlist();
     }, DUMP_BANS_INTERVAL * 1000);
+
+    // init xbridge
+#ifdef ENABLE_WALLET
+    if (!ShutdownRequested()) {
+        sn::ServiceNodeMgr & smgr = sn::ServiceNodeMgr::instance();
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        if (!smgr.loadSnConfig(entries))
+            LogPrint(BCLog::XBRIDGE, "Failed to load service node entries from servicenode.conf");
+
+        // If there's snode entries, proceed to start xbridge service
+        if (!entries.empty()) {
+            xbridge::App & xapp = xbridge::App::instance();
+            xapp.init(); // init xbridge
+            // Register service nodes
+            for (const auto & snode : entries) {
+                if (!smgr.registerSn(snode, g_connman.get(), GetWallets()))
+                    LogPrintf("Failed to start service node %s\n", snode.alias);
+            }
+            xapp.start(); // start xbridge
+
+            // Send first service ping for the active snode
+            if (smgr.hasActiveSn()) {
+                const auto & services = xbridge::App::instance().myServices();
+                smgr.sendPing(xbridge::App::version(), services, g_connman.get());
+            }
+        }
+    }
+#endif
 
     return true;
 }

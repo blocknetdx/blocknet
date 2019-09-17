@@ -210,6 +210,14 @@ public:
     }
 
     /**
+     * Returns the servicenode protocol version.
+     * @return
+     */
+    const uint32_t& getProtocolVersion() const {
+        return protocol;
+    }
+
+    /**
      * Returns the servicenode last ping time in unix time.
      * @return
      */
@@ -240,6 +248,19 @@ public:
             services.erase(services.begin()); // remove the protocol version from the services list
         } catch (...) { }
         // TODO Blocknet XBridge XRouter parse config and assign services
+    }
+
+    /**
+     * Returns true if this servicenode supports the specified service.
+     * @param service
+     * @return
+     */
+    bool hasService(const std::string & service) const {
+        for (const auto & s : services) {
+            if (s == service)
+                return true;
+        }
+        return false;
     }
 
     /**

@@ -447,12 +447,6 @@ public:
     bool removePackets(const uint256 & txid);
 
     /**
-     * @brief Sends the services ping to the network (including supported xwallets).
-     * @return
-     */
-    bool sendServicePing(std::vector<std::string> &nonWalletServices);
-
-    /**
      * @brief Returns true if the current node supports the specified service.
      * @return
      */
@@ -473,20 +467,13 @@ public:
      * @brief Returns the all services across all nodes.
      * @return
      */
-    std::map<CPubKey, XWallets> allServices();
+    static std::map<CPubKey, XWallets> allServices();
+
     /**
      * @brief Returns the wallet specific services (non-xrouter services).
      * @return
      */
-    std::map<CPubKey, XWallets> walletServices();
-    /**
-     * @brief Returns the node services supported by the specified node.
-     * @return
-     */
-    std::set<std::string> nodeServices(const ::CPubKey & nodePubKey);
-    bool addNodeServices(const ::CPubKey & nodePubKey,
-                         const std::vector<std::string> & services,
-                         const uint32_t version);
+    static std::map<CPubKey, XWallets> walletServices();
 
     /**
      * @brief Finds a servicenode with the specified services that is also not in an "excluded" set.

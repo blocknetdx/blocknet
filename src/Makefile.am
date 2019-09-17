@@ -552,6 +552,7 @@ libbitcoin_util_a_SOURCES = \
 xbridge_libxbridge_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
 xbridge_libxbridge_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xbridge_libxbridge_a_SOURCES = \
+  rpc/client.cpp \
   xbridge/bitcoinrpcconnector.cpp \
   xbridge/rpcxbridge.cpp \
   xbridge/util/logger.cpp \
