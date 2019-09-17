@@ -272,6 +272,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 /// Servicenode registration and ping tests
 BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 {
+    gArgs.SoftSetBoolArg("-servicenode", true);
     TestChainPoS pos(false);
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -396,6 +397,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 
     sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     sn::ServiceNodeMgr::instance().reset();
+    gArgs.SoftSetBoolArg("-servicenode", false);
 }
 
 /// Check misc cases
@@ -659,6 +661,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 /// Check rpc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 {
+    gArgs.SoftSetBoolArg("-servicenode", true);
     TestChainPoS pos(false);
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -895,12 +898,29 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
         BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
-        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00Z");
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // hasn't been started, expecting offline
+        BOOST_CHECK_EQUAL(find_value(o, "services").isArray(), true);
 
         // Start the snode to add to list
         rpcparams = UniValue(UniValue::VARR);
         BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
+
+        // Check the status
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodestatus", rpcparams));
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node status count should match expected");
+        BOOST_CHECK_EQUAL(entries.isArray(), true);
+        o = entries[0];
+        BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode0");
+        BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
+        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), snodekey);
+        BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
+        BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt);
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
+        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running"); // snode was started in register
+        BOOST_CHECK_EQUAL(find_value(o, "services").isArray(), true);
 
         rpcparams = UniValue(UniValue::VARR);
         BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodelist", rpcparams));
@@ -912,8 +932,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
         BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
-        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00Z");
+        BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running");
+        BOOST_CHECK_EQUAL(find_value(o, "services").isArray(), true);
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
@@ -952,6 +973,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK      (find_value(o, "timelastseen").get_int() >= tt2);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str().empty(), false);
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running");
+        BOOST_CHECK_EQUAL(find_value(o, "services").isArray(), true);
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
@@ -1090,6 +1112,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 
         RemoveWallet(otherwallet);
     }
+    gArgs.SoftSetBoolArg("-servicenode", false);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

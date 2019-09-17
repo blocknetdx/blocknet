@@ -342,7 +342,7 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
             continue; // skip if alias doesn't match filter
         std::shared_ptr<CWallet> wallet = nullptr;
         for (auto & w : GetWallets()) {
-            if (w->HaveKey(entry.keyId())) {
+            if (w->HaveKey(entry.addressKeyId())) {
                 wallet = w;
                 break;
             }
@@ -506,6 +506,7 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"status\":\"xxxx\",              (string) Status of service node (e.g. running, offline)\n"
+                "    \"services\":[...],               (array<string>) List of supported services\n"
                 "  }\n"
                 "  ,...\n"
                 "]\n"
@@ -534,6 +535,12 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("status", snode.isNull() ? "offline" : "running");
+        UniValue services(UniValue::VARR);
+        if (!snode.isNull()) {
+            for (const auto & service : snode.serviceList())
+                services.push_back(service);
+        }
+        obj.pushKV("services", services);
         ret.push_back(obj);
     }
 
@@ -557,6 +564,7 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
+                "    \"services\":[...],               (array<string>) List of supported services\n"
                 "  }\n"
                 "  ,...\n"
                 "]\n"
@@ -580,6 +588,10 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("status", !snode.isNull() ? "running" : "offline");
+        UniValue services(UniValue::VARR);
+        for (const auto & service : snode.serviceList())
+            services.push_back(service);
+        obj.pushKV("services", services);
         ret.push_back(obj);
     }
 
@@ -603,6 +615,7 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
                 "  \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "  \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "  \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
+                "  \"services\":[...],               (array<string>) List of supported services\n"
                 "}\n"
                 },
                 RPCExamples{
@@ -637,7 +650,10 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
     obj.pushKV("timelastseen", snode.getPingTime());
     obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
     obj.pushKV("status", snode.isNull() ? "offline" : "running");
-    obj.pushKV("services", boost::join(snode.serviceList(), ","));
+    UniValue uservices(UniValue::VARR);
+    for (const auto & service : snode.serviceList())
+        uservices.push_back(service);
+    obj.pushKV("services", uservices);
     return obj;
 }
 

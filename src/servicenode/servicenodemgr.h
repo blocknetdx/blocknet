@@ -55,6 +55,9 @@ struct ServiceNodeConfigEntry {
     CKeyID keyId() const {
         return key.GetPubKey().GetID();
     }
+    CKeyID addressKeyId() const {
+        return boost::get<CKeyID>(address);
+    }
 };
 
 /**
@@ -111,7 +114,7 @@ public:
      * @param snode
      * @return
      */
-    bool processRegistration(CDataStream & ss, ServiceNodePtr & snode) {
+    bool processRegistration(CDataStream & ss, ServiceNode & snode) {
         ServiceNode sn;
         try {
             ss >> sn;
@@ -121,7 +124,7 @@ public:
         if (seenPacket(sn.getHash()))
             return false;
 
-        snode = addSn(sn);
+        snode = *addSn(sn);
         return true;
     }
 
@@ -244,7 +247,7 @@ public:
             if (!pnode->fSuccessfullyConnected)
                 return;
             const CNetMsgMaker msgMaker(pnode->GetSendVersion());
-            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, snode));
+            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, *snodePtr));
         });
 
         return true;
@@ -304,9 +307,8 @@ public:
     std::vector<ServiceNode> list() {
         LOCK(mu);
         std::vector<ServiceNode> l; l.reserve(snodes.size());
-        std::for_each(snodes.begin(), snodes.end(), [&l](const ServiceNodePtr & snode){
-           l.push_back(*snode);
-        });
+        for (const auto & item : snodes)
+           l.push_back(*item.second);
         return std::move(l);
     }
 
@@ -341,12 +343,13 @@ public:
     }
 
     /**
-     * Returns true if an active service node exists.
+     * Returns true if an active service node exists. This node must be a servicenode
+     * indicated by the "-servicenode=1" flag on the command line or in the config.
      * @return
      */
     bool hasActiveSn() {
         LOCK(mu);
-        return !snodeEntries.empty();
+        return gArgs.GetBoolArg("-servicenode", false) && !snodeEntries.empty();
     }
 
     /**
@@ -482,13 +485,14 @@ public:
      */
     static bool tierFromString(std::string stier, ServiceNode::Tier & tier) {
         boost::to_lower(stier, std::locale::classic());
-        if (stier == "spv")
+        if (stier == "spv") {
             tier = ServiceNode::SPV;
-        else if (stier == "open")
+            return true;
+        } else if (stier == "open") {
             tier = ServiceNode::OPEN;
-        else return false; // no valid tier found
-
-        return true;
+            return true;
+        } else
+            return false; // no valid tier found
     }
 
     /**
@@ -611,7 +615,7 @@ protected:
         if (!snode)
             return nullptr;
         LOCK(mu);
-        snodes.insert(snode);
+        snodes[snode->getSnodePubKey()] = snode;
         return snode;
     }
 
@@ -634,12 +638,8 @@ protected:
      */
     ServiceNodePtr findSn(const CPubKey & snodePubKey) {
         LOCK(mu);
-        auto it = std::find_if(snodes.begin(), snodes.end(),
-                               [&snodePubKey](const ServiceNodePtr & snode) {
-                                   return snode->getSnodePubKey() == CPubKey(snodePubKey);
-                               });
-        if (it != snodes.end())
-            return *it;
+        if (snodes.count(snodePubKey))
+            return snodes[snodePubKey];
         return nullptr;
     }
 
@@ -661,7 +661,7 @@ protected:
         if (!hasSn(snode))
             return false;
         LOCK(mu);
-        snodes.erase(snode);
+        snodes.erase(snode->getSnodePubKey());
         return true;
     }
 
@@ -672,7 +672,7 @@ protected:
      */
     bool hasSn(const ServiceNodePtr & snode) {
         LOCK(mu);
-        return snodes.count(snode) > 0;
+        return snodes.count(snode->getSnodePubKey()) > 0;
     }
 
     /**
@@ -809,7 +809,7 @@ protected:
 
 protected:
     Mutex mu;
-    std::set<ServiceNodePtr> snodes;
+    std::map<CPubKey, ServiceNodePtr> snodes;
     std::set<uint256> seenPackets;
     std::set<COutPoint> snodeUtxos;
     std::set<ServiceNodeConfigEntry> snodeEntries;

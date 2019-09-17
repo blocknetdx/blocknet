@@ -3048,7 +3048,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
     }
 
     if (strCommand == sn::REGISTER) { // handle snode registrations
-        sn::ServiceNodePtr snode;
+        sn::ServiceNode snode;
         if (!smgr.processRegistration(vRecv, snode))
             return true;
 
@@ -3056,7 +3056,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         connman->ForEachNode([&](CNode* pnode) {
             if (!pnode->fSuccessfullyConnected)
                 return;
-            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, *snode));
+            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, snode));
         });
 
         return true;
