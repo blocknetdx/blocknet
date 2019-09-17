@@ -143,7 +143,10 @@ public:
         if (seenPacket(ping.getHash()))
             return false;
 
-        addSn(ping.getSnode()); // add or replace existing snode
+        if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
+            return false; // bad ping
+
+        addSn(ping.getSnode(), false); // skip validity check here because it's checked in the ping's
         return true;
     }
 
@@ -622,10 +625,11 @@ protected:
     /**
      * Add servicenode if valid and returns the added snode, otherwise returns nullptr.
      * @param snode
+     * @param checkValid default true, skips validity check if false
      * @return
      */
-    ServiceNodePtr addSn(const ServiceNode & snode) {
-        if (!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
+    ServiceNodePtr addSn(const ServiceNode & snode, const bool checkValid = true) {
+        if (checkValid && !snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
             return nullptr;
         auto ptr = std::make_shared<ServiceNode>(snode);
         return addSn(ptr);
