@@ -55,7 +55,7 @@ namespace xbridge
      * @param time - boost posix time
      * @return string in ISO 8061 format
      */
-    const std::string iso8601(const boost::posix_time::ptime &time);
+    std::string iso8601(const boost::posix_time::ptime &time);
 
     /**
      * @brief tranactionPrice - calculated transaction price in terms of bid price - toAmount/fromAmount

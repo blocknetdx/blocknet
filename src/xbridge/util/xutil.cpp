@@ -19,6 +19,7 @@
 #include <boost/archive/iterators/transform_width.hpp>
 #include <boost/archive/iterators/ostream_iterator.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/date_time/time_facet.hpp>
 #include <boost/locale.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
@@ -177,13 +178,15 @@ std::string to_str(const std::vector<unsigned char> & obj)
     return base64_encode(obj);
 }
 
-const std::string iso8601(const boost::posix_time::ptime &time)
+std::string iso8601(const boost::posix_time::ptime &time)
 {
-    auto df = new boost::gregorian::date_facet("%Y-%m-%dT%H:%M:%S");
+    auto ms = time.time_of_day().total_milliseconds() % 1000;
+    auto tm = to_tm(time);
     std::ostringstream ss;
-    ss.imbue(std::locale(ss.getloc(), df));
-    ss << time.date();
-    return ss.str() + "Z";
+    ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S");
+    ss << '.' << std::setfill('0') << std::setw(3) << ms; // add milliseconds
+    ss << 'Z';
+    return ss.str();
 }
 
 std::string xBridgeStringValueFromAmount(uint64_t amount)
