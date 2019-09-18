@@ -1063,6 +1063,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
             BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodecreateinputs", rpcparams));
             BOOST_CHECK_MESSAGE(entries.isObject(), "Bad result object");
             o = entries.get_obj();
+            BOOST_CHECK_EQUAL(find_value(o, "nodeaddress").get_str(), EncodeDestination(dest));
             BOOST_CHECK_EQUAL(find_value(o, "nodecount").get_int(), 1);
             BOOST_CHECK_EQUAL(find_value(o, "collateral").get_int(), sn::ServiceNode::COLLATERAL_SPV / COIN);
             BOOST_CHECK_EQUAL(find_value(o, "inputsize").get_int(), inputSize);

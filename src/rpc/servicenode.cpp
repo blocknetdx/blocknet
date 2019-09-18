@@ -172,15 +172,16 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
                 "\nCreates service node unspent transaction outputs prior to snode registration.\n",
                 {
                     {"nodeaddress", RPCArg::Type::STR, RPCArg::Optional::NO, "Blocknet address for the service node. Funds will be sent here from the wallet."},
-                    {"nodecount", RPCArg::Type::NUM, RPCArg::Optional::NO, "1", "Number of service nodes to create"},
-                    {"inputsize", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, strprintf("%u", defaultInputSize), strprintf("Coin amount for each input size, must be larger than or equal to %u", smallestInputSize)},
+                    {"nodecount", RPCArg::Type::NUM, "1", "Number of service nodes to create"},
+                    {"inputsize", RPCArg::Type::NUM, strprintf("%u", defaultInputSize), strprintf("Coin amount for each input size, must be larger than or equal to %u", smallestInputSize)},
                 },
                 RPCResult{
                 "{\n"
-                "    \"nodecount\": n,   (numeric) Number of service nodes\n"
-                "    \"collateral\": n,  (numeric) Total collateral configured\n"
-                "    \"inputsize\": n,   (numeric) Amount used for service node inputs\n"
-                "    \"txid\": \"xxxx\", (string) Transaction id used to create the service node inputs\n"
+                "  \"nodeaddress\": \"xxxx\", (string) Service node address\n"
+                "  \"nodecount\": n,          (numeric) Number of service nodes\n"
+                "  \"collateral\": n,         (numeric) Total collateral configured\n"
+                "  \"inputsize\": n,          (numeric) Amount used for service node inputs\n"
+                "  \"txid\": \"xxxx\",        (string) Transaction id used to create the service node inputs\n"
                 "}\n"
                 },
                 RPCExamples{
@@ -193,18 +194,15 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
                 },
             }.ToString());
 
-    RPCTypeCheck(request.params, {UniValue::VSTR, UniValue::VNUM, UniValue::VNUM});
-
     const std::string & saddr = request.params[0].get_str();
     int count{1};
-    if (request.params.size() < 2)
-        throw JSONRPCError(RPC_INVALID_PARAMETER, "Missing nodecount");
-    count = request.params[1].get_int();
+    if (!request.params[1].isNull())
+        count = request.params[1].get_int();
     if (count <= 0)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Bad nodecount, must be a number greater than or equal to 1");
 
     int inputSize{defaultInputSize};
-    if (request.params.size() > 2)
+    if (!request.params[2].isNull())
         inputSize = request.params[2].get_int();
     if (inputSize < smallestInputSize)
         throw JSONRPCError(RPC_INVALID_PARAMS, strprintf("Input size (%u) must be larger or equal to the minimum %u",
@@ -275,6 +273,7 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state)));
 
     UniValue ret(UniValue::VOBJ);
+    ret.pushKV("nodeaddress", saddr);
     ret.pushKV("nodecount", count);
     ret.pushKV("collateral", requiredBalance/COIN);
     ret.pushKV("inputsize", inputSize);
