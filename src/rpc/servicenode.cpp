@@ -176,12 +176,12 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
                     {"inputsize", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, strprintf("%u", defaultInputSize), strprintf("Coin amount for each input size, must be larger than or equal to %u", smallestInputSize)},
                 },
                 RPCResult{
-                "\n{"
+                "{\n"
                 "    \"nodecount\": n,   (numeric) Number of service nodes\n"
                 "    \"collateral\": n,  (numeric) Total collateral configured\n"
                 "    \"inputsize\": n,   (numeric) Amount used for service node inputs\n"
                 "    \"txid\": \"xxxx\", (string) Transaction id used to create the service node inputs\n"
-                "\n}"
+                "}\n"
                 },
                 RPCExamples{
                     HelpExampleCli("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1")
