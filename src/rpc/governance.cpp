@@ -45,8 +45,8 @@ static UniValue createproposal(const JSONRPCRequest& request)
     const CAmount & superblock = request.params[1].get_int() == 0 ? gov::Governance::nextSuperblock(Params().GetConsensus()) : request.params[1].get_int();
     const CAmount & amount = request.params[2].get_int() * COIN;
     const std::string & address = request.params[3].get_str();
-    const std::string & url = request.params.size() > 4 ? request.params[4].get_str() : "";
-    const std::string & description = request.params.size() > 5 ? request.params[5].get_str() : "";
+    const std::string & url = !request.params[4].isNull() ? request.params[4].get_str() : "";
+    const std::string & description = !request.params[5].isNull() ? request.params[5].get_str() : "";
 
     std::string failReason;
 
@@ -102,7 +102,7 @@ static UniValue listproposals(const JSONRPCRequest& request)
             }.ToString());
 
     const auto & prevSuperblock = gov::PreviousSuperblock(Params().GetConsensus());
-    const auto & sinceBlock = request.params.size() < 1 || request.params[0].get_int() <= 0
+    const auto & sinceBlock = request.params[0].isNull() || request.params[0].get_int() <= 0
                                                          ? prevSuperblock
                                                          : request.params[0].get_int();
     {
