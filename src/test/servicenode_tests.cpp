@@ -919,7 +919,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
-        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running"); // snode was started in register
+        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // snode is offline until ping
         BOOST_CHECK_EQUAL(find_value(o, "services").isArray(), true);
 
         rpcparams = UniValue(UniValue::VARR);
@@ -933,7 +933,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK      (find_value(o, "timeregistered").get_int() >= tt);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
-        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "running");
+        BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // snode is offline until ping
         BOOST_CHECK_EQUAL(find_value(o, "services").isArray(), true);
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset

@@ -534,7 +534,7 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
         obj.pushKV("timeregistered", snode.getRegTime());
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
-        obj.pushKV("status", snode.isNull() ? "offline" : "running");
+        obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
         UniValue services(UniValue::VARR);
         if (!snode.isNull()) {
             for (const auto & service : snode.serviceList())
@@ -587,7 +587,7 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("timeregistered", snode.getRegTime());
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
-        obj.pushKV("status", !snode.isNull() ? "running" : "offline");
+        obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
         UniValue services(UniValue::VARR);
         for (const auto & service : snode.serviceList())
             services.push_back(service);
@@ -649,7 +649,7 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
     obj.pushKV("timeregistered", snode.getRegTime());
     obj.pushKV("timelastseen", snode.getPingTime());
     obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
-    obj.pushKV("status", snode.isNull() ? "offline" : "running");
+    obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
     UniValue uservices(UniValue::VARR);
     for (const auto & service : snode.serviceList())
         uservices.push_back(service);

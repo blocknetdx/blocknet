@@ -2278,7 +2278,7 @@ std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
     const auto & snodes = sn::ServiceNodeMgr::instance().list();
     for (const auto& x : snodes)
     {
-        if (x.getProtocolVersion() != version || notIn.count(x.getSnodePubKey()))
+        if (x.getProtocolVersion() != version || notIn.count(x.getSnodePubKey()) || !x.running())
             continue;
 
         // Make sure this xwallet entry is in the servicenode list
@@ -2823,12 +2823,19 @@ void App::Impl::onTimer()
         if (!isServicenode) // if not servicenode, watch deposits
             io->post(boost::bind(&Impl::checkWatchesOnDepositSpends, this));
 
-        // If servicenode, watch trader deposits
         if (isServicenode) {
+            // If servicenode, watch trader deposits
             static uint32_t watchCounter = 0;
             if (++watchCounter == 40) { // ~10 min
                 watchCounter = 0;
                 io->post(boost::bind(&Impl::watchTraderDeposits, this));
+            }
+
+            // Send service ping every 3 minutes
+            static int pingCounter{0};
+            if (++pingCounter % 12 == 0) {
+                auto smgr = &sn::ServiceNodeMgr::instance();
+                io->post(boost::bind(&sn::ServiceNodeMgr::sendPing, smgr, version(), app->myServices(), g_connman.get()));
             }
         }
 

@@ -218,6 +218,15 @@ public:
     }
 
     /**
+     * Returns true if the servicenode is running. A servicenode is considered
+     * running if its last ping time was less than 4 minutes ago.
+     * @return
+     */
+    bool running() const {
+        return GetAdjustedTime() - pingtime < 240;
+    }
+
+    /**
      * Returns the servicenode last ping time in unix time.
      * @return
      */
