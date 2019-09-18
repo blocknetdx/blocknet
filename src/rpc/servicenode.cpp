@@ -144,6 +144,7 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
         std::vector<sn::ServiceNodeConfigEntry> none;
         if (!sn::ServiceNodeMgr::writeSnConfig(none, false))
             throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
+        sn::ServiceNodeMgr::instance().removeSnEntries();
         UniValue r(UniValue::VBOOL); r.setBool(true);
         return r; // done
     } else {

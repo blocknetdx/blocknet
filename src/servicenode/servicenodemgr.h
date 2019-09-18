@@ -268,6 +268,11 @@ public:
             return false;
         }
 
+        if (config.empty()) {
+            LogPrint(BCLog::SNODE, "service node ping failed, empty config\n");
+            return false;
+        }
+
         const auto & activesn = getActiveSn();
         const auto & snode = findSn(activesn.key.GetPubKey());
         if (!snode) {
@@ -353,6 +358,16 @@ public:
     bool hasActiveSn() {
         LOCK(mu);
         return gArgs.GetBoolArg("-servicenode", false) && !snodeEntries.empty();
+    }
+
+    /**
+     * Remove snode entries as well as their respective servicenode pointers.
+     */
+    void removeSnEntries() {
+        LOCK(mu);
+        for (const auto & entry : snodeEntries)
+            snodes.erase(entry.key.GetPubKey());
+        snodeEntries.clear();
     }
 
     /**
@@ -661,11 +676,11 @@ protected:
      * @param snode
      * @return
      */
-    bool removeSn(const ServiceNodePtr & snode) {
-        if (!hasSn(snode))
+    bool removeSn(const CPubKey & snodePubKey) {
+        if (!hasSn(snodePubKey))
             return false;
         LOCK(mu);
-        snodes.erase(snode->getSnodePubKey());
+        snodes.erase(snodePubKey);
         return true;
     }
 
@@ -674,9 +689,9 @@ protected:
      * @param snode
      * @return
      */
-    bool hasSn(const ServiceNodePtr & snode) {
+    bool hasSn(const CPubKey & snodePubKey) {
         LOCK(mu);
-        return snodes.count(snode->getSnodePubKey()) > 0;
+        return snodes.count(snodePubKey) > 0;
     }
 
     /**
