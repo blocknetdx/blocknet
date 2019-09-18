@@ -331,7 +331,7 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
             }.ToString());
 
     std::string alias;
-    if (request.params.size() == 1)
+    if (!request.params[0].isNull())
         alias = request.params[0].get_str();
 
     UniValue ret(UniValue::VARR);
