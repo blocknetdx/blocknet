@@ -298,14 +298,10 @@ bool App::start()
     updateActiveWallets();
 
     if (xbridge::Exchange::instance().isEnabled())
-    {
-        LOG() << "exchange enabled";
-    }
+        LOG() << "XBridge exchange enabled";
 
     if (xbridge::Exchange::instance().isStarted())
-    {
-        LOG() << "exchange started";
-    }
+        LOG() << "XBridge exchange started";
 
     return s;
 }
@@ -1411,7 +1407,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
     uint64_t timestampValue = timeToInt(timestamp);
 
-    blockHash = chainActive.Tip()->pprev->GetBlockHash();
+    {
+        LOCK(cs_main);
+        blockHash = chainActive.Tip()->pprev->GetBlockHash();
+    }
 
     std::vector<unsigned char> firstUtxoSig = outputsForUse.at(0).signature;
 
@@ -1443,7 +1442,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->blockHash    = blockHash;
     ptr->role         = 'A';
 
-    LOG() << "using servicenode " << pmn.getSnodePubKey().GetHash().ToString() << " for order " << id.ToString();
+    LOG() << "using servicenode " << HexStr(pmn.getSnodePubKey()) << " for order " << id.ToString();
 
     // m key
     connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
@@ -1631,7 +1630,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
         snodeCollateralAddress = snode.getPaymentAddress();
 
-        LOG() << "use service node " << snode.getSnodePubKey().GetHash().ToString() << " " << __FUNCTION__;
+        LOG() << "use service node " << HexStr(snode.getSnodePubKey()) << " " << __FUNCTION__;
     }
 
     // transaction info
