@@ -23,6 +23,7 @@
 
 #include <json/json_spirit.h>
 #include <json/json_spirit_reader_template.h>
+#include <json/json_spirit_writer_template.h>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -125,11 +126,11 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
     evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
 
     // Attach request data
-    std::vector<std::string> strparams;
-    for (const auto & item : params)
-        strparams.push_back(item.get_str());
-    const auto reqparams = RPCConvertValues(strMethod, strparams);
-    const auto reqobj = JSONRPCRequestObj(strMethod, reqparams, 1);
+    const auto tostring = json_spirit::write_string(json_spirit::Value(params), json_spirit::none, 8);
+    UniValue toval;
+    if (!toval.read(tostring))
+        throw std::runtime_error(strprintf("failed to decode json_spirit data: %s", tostring));
+    const auto reqobj = JSONRPCRequestObj(strMethod, toval.get_array(), 1);
     std::string strRequest = reqobj.write() + "\n";
     struct evbuffer* output_buffer = evhttp_request_get_output_buffer(req.get());
     assert(output_buffer);
