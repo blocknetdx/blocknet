@@ -1888,24 +1888,21 @@ bool AppInitMain(InitInterfaces& interfaces)
         sn::ServiceNodeMgr & smgr = sn::ServiceNodeMgr::instance();
         std::set<sn::ServiceNodeConfigEntry> entries;
         if (!smgr.loadSnConfig(entries))
-            LogPrint(BCLog::XBRIDGE, "Failed to load service node entries from servicenode.conf");
+            LogPrint(BCLog::SNODE, "Failed to load service node entries from servicenode.conf");
 
-        // If there's snode entries, proceed to start xbridge service
+        xbridge::App & xapp = xbridge::App::instance();
+        xapp.init(); // init xbridge
+        xapp.start(); // start xbridge
+
+        // If there's snode entries, proceed to register them
         if (!entries.empty()) {
-            xbridge::App & xapp = xbridge::App::instance();
-            xapp.init(); // init xbridge
-            // Register service nodes
+            auto wallets = GetWallets();
             for (const auto & snode : entries) {
-                if (!smgr.registerSn(snode, g_connman.get(), GetWallets()))
-                    LogPrintf("Failed to start service node %s\n", snode.alias);
+                if (!smgr.registerSn(snode, g_connman.get(), wallets))
+                    LogPrintf("Failed to register service node %s\n", snode.alias);
             }
-            xapp.start(); // start xbridge
-
-            // Send first service ping for the active snode
-            if (smgr.hasActiveSn()) {
-                const auto & services = xbridge::App::instance().myServices();
-                smgr.sendPing(xbridge::App::version(), services, g_connman.get());
-            }
+            if (smgr.hasActiveSn() && !smgr.sendPing(xbridge::App::version(), xapp.myServices(), g_connman.get()))
+                LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
         }
     }
 #endif

@@ -198,7 +198,19 @@ public:
                 return false; // fail on bad address
             }
 
-            if (!findCollateral(tier, dest, wallets, collateral)) {
+            std::shared_ptr<CWallet> wallet;
+            bool haveAddr{false};
+            for (auto & w : wallets) {
+                if (w->HaveKey(boost::get<CKeyID>(dest))) {
+                    haveAddr = true;
+                    wallet = w;
+                    break;
+                }
+            }
+            if (!haveAddr)
+                return false; // stop if wallets do not have the collateral address
+
+            if (!findCollateral(tier, dest, {wallet}, collateral)) {
                 LogPrint(BCLog::SNODE, "service node registration failed, bad collateral: %s\n", address);
                 return false; // fail on bad collateral
             }
@@ -208,25 +220,13 @@ public:
                                                                   chainActive.Height(), chainActive.Tip()->GetBlockHash());
 
             // Sign the servicenode with the collateral's private key
-            for (auto & wallet : wallets) {
-                CKey sign;
-                {
-                    auto locked_chain = wallet->chain().lock();
-                    LOCK(wallet->cs_wallet);
-                    const auto keyid = GetKeyForDestination(*wallet, dest);
-                    if (keyid.IsNull())
-                        continue;
-                    if (!wallet->GetKey(keyid, sign))
-                        continue;
-                }
-                if (sign.SignCompact(sighash, sig))
-                    break; // sign successful
-            }
-
-            if (sig.empty()) {
+            CKey sign;
+            CKeyID keyid = GetKeyForDestination(*wallet, dest);
+            if (keyid.IsNull() || !wallet->GetKey(keyid, sign) || !sign.SignCompact(sighash, sig) || sig.empty()) {
                 LogPrint(BCLog::SNODE, "service node registration failed, bad signature, is the wallet unlocked? %s\n", address);
                 return false; // key not found in wallets
             }
+
         } else { // OPEN tier
             const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, addressId, collateral,
                                                                   chainActive.Height(), chainActive.Tip()->GetBlockHash());
@@ -296,6 +296,8 @@ public:
             LogPrint(BCLog::SNODE, "service node ping failed\n");
             return false;
         }
+
+        addSn(ping.getSnode(), false); // skip validity check here because it's checked in the ping's
 
         // Relay
         connman->ForEachNode([&](CNode* pnode) {
@@ -375,6 +377,8 @@ public:
      * @return
      */
     const ServiceNodeConfigEntry & getActiveSn() {
+        if (!gArgs.GetBoolArg("-servicenode", false))
+            return std::move(ServiceNodeConfigEntry{});
         LOCK(mu);
         return *snodeEntries.begin();
     }
@@ -624,18 +628,6 @@ protected:
     }
 
 protected:
-    /**
-     * Add servicenode if valid and returns the added snode, otherwise returns nullptr.
-     * @param snode
-     * @return
-     */
-    ServiceNodePtr addSn(const ServiceNodePtr & snode) {
-        if (!snode)
-            return nullptr;
-        LOCK(mu);
-        snodes[snode->getSnodePubKey()] = snode;
-        return snode;
-    }
 
     /**
      * Add servicenode if valid and returns the added snode, otherwise returns nullptr.
@@ -646,8 +638,13 @@ protected:
     ServiceNodePtr addSn(const ServiceNode & snode, const bool checkValid = true) {
         if (checkValid && !snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
             return nullptr;
+        removeSnWithCollateral(snode);
         auto ptr = std::make_shared<ServiceNode>(snode);
-        return addSn(ptr);
+        {
+            LOCK(mu);
+            snodes[ptr->getSnodePubKey()] = ptr;
+        }
+        return ptr;
     }
 
     /**
@@ -717,6 +714,30 @@ protected:
     bool seenPacket(const std::vector<unsigned char> & packet) {
         const auto & hash = Hash(packet.begin(), packet.end());
         return seenPacket(hash);
+    }
+
+    /**
+     * Removes existing snodes that match the collateral utxos of
+     * the specified snode. i.e. This method will mutate the snode
+     * list and remove the existing snodes matching the specified
+     * snode's collateral. This will prevent duplicate snodes
+     * pointing to the same collateral inputs.
+     * @param snode
+     */
+    void removeSnWithCollateral(const ServiceNode & snode) {
+        LOCK(mu);
+        std::map<COutPoint, ServiceNodePtr> utxos;
+        for (const auto & item : snodes) {
+            const auto & s = item.second;
+            if (s->getSnodePubKey() != snode.getSnodePubKey()) { // exclude specified snode
+                for (const auto & utxo : s->getCollateral())
+                    utxos[utxo] = s;
+            }
+        }
+        for (const auto & utxo : snode.getCollateral()) {
+            if (utxos.count(utxo) && snodes.count(utxos[utxo]->getSnodePubKey()))
+                snodes.erase(utxos[utxo]->getSnodePubKey());
+        }
     }
 
     /**

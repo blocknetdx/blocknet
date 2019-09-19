@@ -2984,6 +2984,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     // Servicenode related packet handling
     auto & smgr = sn::ServiceNodeMgr::instance();
+    auto & xapp = xbridge::App::instance();
 
     if (strCommand == NetMsgType::XBRIDGE) { // handle xbridge packets
         std::vector<unsigned char> raw;
@@ -3008,7 +3009,6 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             CValidationState state;
 
             // Pass packet to XBridge
-            auto & xapp = xbridge::App::instance();
             if (xapp.isEnabled()) {
                 static std::vector<unsigned char> zero(20, 0);
                 std::vector<unsigned char> addr(raw.begin(), raw.begin()+20);
@@ -3051,6 +3051,12 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         sn::ServiceNode snode;
         if (!smgr.processRegistration(vRecv, snode))
             return true;
+
+        // Send the ping out if we are a snode waiting for registration
+        if (smgr.hasActiveSn() && smgr.getActiveSn().keyId() == snode.getSnodePubKey().GetID()) {
+            if (!smgr.sendPing(xbridge::App::version(), xapp.myServices(), connman))
+                LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
+        }
 
         // Relay packets
         connman->ForEachNode([&](CNode* pnode) {
