@@ -79,11 +79,13 @@ Transaction::~Transaction()
 //*****************************************************************************
 uint256 Transaction::id() const
 {
+    LOCK(m_lock);
     return m_id;
 }
 
 uint256 Transaction::blockHash() const
 {
+    LOCK(m_lock);
     return m_blockHash;
 }
 
@@ -92,6 +94,7 @@ uint256 Transaction::blockHash() const
 //*****************************************************************************
 Transaction::State Transaction::state() const
 {
+    LOCK(m_lock);
     return m_state;
 }
 
@@ -100,6 +103,7 @@ Transaction::State Transaction::state() const
 Transaction::State Transaction::increaseStateCounter(const Transaction::State state,
                                                      const std::vector<unsigned char> & from)
 {
+    LOCK(m_lock);
     LOG() << "confirm transaction state <" << strState(state)
           << "> from " << HexStr(from);
 
@@ -194,6 +198,7 @@ std::string Transaction::strState(const State state)
 //*****************************************************************************
 std::string Transaction::strState() const
 {
+    LOCK(m_lock);
     return strState(m_state);
 }
 
@@ -201,6 +206,7 @@ std::string Transaction::strState() const
 //*****************************************************************************
 void Transaction::updateTimestamp()
 {
+    LOCK(m_lock);
     m_last = boost::posix_time::microsec_clock::universal_time();
 }
 
@@ -208,6 +214,7 @@ void Transaction::updateTimestamp()
 //*****************************************************************************
 bool Transaction::updateTooSoon()
 {
+    LOCK(m_lock);
     auto current = boost::posix_time::microsec_clock::universal_time();
     return (current - m_last).total_seconds() < pendingTTL/2;
 }
@@ -216,6 +223,7 @@ bool Transaction::updateTooSoon()
 //*****************************************************************************
 boost::posix_time::ptime Transaction::createdTime() const
 {
+    LOCK(m_lock);
     return m_created;
 }
 
@@ -223,6 +231,7 @@ boost::posix_time::ptime Transaction::createdTime() const
 //*****************************************************************************
 bool Transaction::isFinished() const
 {
+    LOCK(m_lock);
     return m_state == trCancelled ||
            m_state == trFinished ||
            m_state == trDropped;
@@ -232,6 +241,7 @@ bool Transaction::isFinished() const
 //*****************************************************************************
 bool Transaction::isValid() const
 {
+    LOCK(m_lock);
     return m_state != trInvalid;
 }
 
@@ -239,6 +249,7 @@ bool Transaction::isValid() const
 //*****************************************************************************
 bool Transaction::matches(uint256 & id) const
 {
+    LOCK(m_lock);
     return m_id == id;
 }
 
@@ -246,6 +257,7 @@ bool Transaction::matches(uint256 & id) const
 //*****************************************************************************
 bool Transaction::isExpired() const
 {
+    LOCK(m_lock);
     boost::posix_time::time_duration tdLast = boost::posix_time::microsec_clock::universal_time() - m_last;
     boost::posix_time::time_duration tdCreated = boost::posix_time::microsec_clock::universal_time() - m_created;
 
@@ -265,8 +277,15 @@ bool Transaction::isExpired() const
 //*****************************************************************************
 bool Transaction::isExpiredByBlockNumber() const
 {
-    if(m_state > trNew && !isFinished())
+    bool gtNew{false};
+    {
+        LOCK(m_lock);
+        gtNew = m_state > trNew;
+    }
+    if (gtNew && !isFinished())
         return false;
+
+    LOCK2(m_lock, cs_main);
 
     CBlockIndex* blockindex = LookupBlockIndex(m_blockHash);
     if (!blockindex)
@@ -285,6 +304,7 @@ bool Transaction::isExpiredByBlockNumber() const
 //*****************************************************************************
 void Transaction::cancel()
 {
+    LOCK(m_lock);
     LOG() << "cancel transaction <" << m_id.GetHex() << ">";
     m_state = trCancelled;
 }
@@ -293,6 +313,7 @@ void Transaction::cancel()
 //*****************************************************************************
 void Transaction::drop()
 {
+    LOCK(m_lock);
     LOG() << "drop transaction <" << m_id.GetHex() << ">";
     m_state = trDropped;
 }
@@ -301,6 +322,7 @@ void Transaction::drop()
 //*****************************************************************************
 void Transaction::finish()
 {
+    LOCK(m_lock);
     LOG() << "finish transaction <" << m_id.GetHex() << ">";
     m_state = trFinished;
 }
@@ -309,6 +331,7 @@ void Transaction::finish()
 //*****************************************************************************
 std::vector<unsigned char> Transaction::a_address() const
 {
+    LOCK(m_lock);
     return m_a.source();
 }
 
@@ -316,6 +339,7 @@ std::vector<unsigned char> Transaction::a_address() const
 //*****************************************************************************
 std::vector<unsigned char> Transaction::a_destination() const
 {
+    LOCK(m_lock);
     return m_a.dest();
 }
 
@@ -323,6 +347,7 @@ std::vector<unsigned char> Transaction::a_destination() const
 //*****************************************************************************
 std::string Transaction::a_currency() const
 {
+    LOCK(m_lock);
     return m_sourceCurrency;
 }
 
@@ -330,6 +355,7 @@ std::string Transaction::a_currency() const
 //*****************************************************************************
 uint64_t Transaction::a_amount() const
 {
+    LOCK(m_lock);
     return m_sourceAmount;
 }
 
@@ -337,6 +363,7 @@ uint64_t Transaction::a_amount() const
 //*****************************************************************************
 std::string Transaction::a_bintxid() const
 {
+    LOCK(m_lock);
     return m_bintxid1;
 }
 
@@ -351,6 +378,7 @@ uint32_t Transaction::a_lockTime() const
 //*****************************************************************************
 std::vector<unsigned char> Transaction::a_pk1() const
 {
+    LOCK(m_lock);
     return m_a.mpubkey();
 }
 
@@ -358,6 +386,7 @@ std::vector<unsigned char> Transaction::a_pk1() const
 //*****************************************************************************
 std::string Transaction::a_payTxId() const
 {
+    LOCK(m_lock);
     return m_a.payTxId();
 }
 
@@ -372,6 +401,7 @@ std::string Transaction::a_payTxId() const
 //*****************************************************************************
 std::vector<unsigned char> Transaction::b_address() const
 {
+    LOCK(m_lock);
     return m_b.source();
 }
 
@@ -379,6 +409,7 @@ std::vector<unsigned char> Transaction::b_address() const
 //*****************************************************************************
 std::vector<unsigned char> Transaction::b_destination() const
 {
+    LOCK(m_lock);
     return m_b.dest();
 }
 
@@ -386,6 +417,7 @@ std::vector<unsigned char> Transaction::b_destination() const
 //*****************************************************************************
 std::string Transaction::b_currency() const
 {
+    LOCK(m_lock);
     return m_destCurrency;
 }
 
@@ -393,6 +425,7 @@ std::string Transaction::b_currency() const
 //*****************************************************************************
 uint64_t Transaction::b_amount() const
 {
+    LOCK(m_lock);
     return m_destAmount;
 }
 
@@ -400,6 +433,7 @@ uint64_t Transaction::b_amount() const
 //*****************************************************************************
 std::string Transaction::b_bintxid() const
 {
+    LOCK(m_lock);
     return m_bintxid2;
 }
 
@@ -407,6 +441,7 @@ std::string Transaction::b_bintxid() const
 //*****************************************************************************
 uint32_t Transaction::b_lockTime() const
 {
+    LOCK(m_lock);
     return m_b.lockTime();
 }
 
@@ -421,6 +456,7 @@ uint32_t Transaction::b_lockTime() const
 //*****************************************************************************
 std::vector<unsigned char> Transaction::b_pk1() const
 {
+    LOCK(m_lock);
     return m_b.mpubkey();
 }
 
@@ -428,6 +464,7 @@ std::vector<unsigned char> Transaction::b_pk1() const
 //*****************************************************************************
 std::string Transaction::b_payTxId() const
 {
+    LOCK(m_lock);
     return m_b.payTxId();
 }
 
@@ -435,6 +472,7 @@ std::string Transaction::b_payTxId() const
 //*****************************************************************************
 bool Transaction::tryJoin(const TransactionPtr other)
 {
+    LOCK(m_lock);
     DEBUG_TRACE();
 
     if (m_state != trNew || other->state() != trNew)
@@ -471,6 +509,7 @@ bool Transaction::tryJoin(const TransactionPtr other)
 bool Transaction::setKeys(const std::vector<unsigned char> & addr,
                           const std::vector<unsigned char> & pk)
 {
+    LOCK(m_lock);
     if (m_b.dest() == addr)
     {
         m_b.setMPubkey(pk);
@@ -489,6 +528,7 @@ bool Transaction::setKeys(const std::vector<unsigned char> & addr,
 bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
                              const std::string & id)
 {
+    LOCK(m_lock);
     if (m_b.source() == addr)
     {
         m_bintxid2     = id;

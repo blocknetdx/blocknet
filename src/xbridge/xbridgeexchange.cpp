@@ -719,7 +719,6 @@ size_t Exchange::eraseExpiredTransactions()
     {
         TransactionPtr ptr = it->second;
 
-        LOCK(ptr->m_lock);
         if (ptr->isExpiredByBlockNumber())
         {
              LOG() << __FUNCTION__ << std::endl << "order block expired" << ptr;

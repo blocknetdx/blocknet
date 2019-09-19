@@ -135,6 +135,7 @@ public:
      * @return time of the last check on maker utxos.
      */
     boost::posix_time::ptime utxoCheckTime() const {
+        LOCK(m_lock);
         return m_lastUtxoCheck;
     }
 
@@ -143,6 +144,7 @@ public:
      * @return Set the time of the last check on maker utxos.
      */
     void updateUtxoCheckTime(const boost::posix_time::ptime & t) {
+        LOCK(m_lock);
         m_lastUtxoCheck = t;
     }
 
@@ -190,12 +192,12 @@ public:
     std::string                a_currency() const;
     uint64_t                   a_amount() const;
     std::string                a_payTx() const;
-    std::string                a_refTx() const { return m_a.refTx(); }
+    std::string                a_refTx() const { LOCK(m_lock); return m_a.refTx(); }
     std::string                a_bintxid() const;
     uint32_t                   a_lockTime() const;
     std::string                a_payTxId() const;
-    bool                       a_refunded() const { return m_a_refunded; }
-    const std::vector<wallet::UtxoEntry> a_utxos() const { return m_a.utxos(); }
+    bool                       a_refunded() const { LOCK(m_lock); return m_a_refunded; }
+    const std::vector<wallet::UtxoEntry> a_utxos() const { LOCK(m_lock); return m_a.utxos(); }
 
     std::vector<unsigned char> a_pk1() const;
 
@@ -205,12 +207,12 @@ public:
     std::string                b_currency() const;
     uint64_t                   b_amount() const;
     std::string                b_payTx() const;
-    std::string                b_refTx() const { return m_b.refTx(); }
+    std::string                b_refTx() const { LOCK(m_lock); return m_b.refTx(); }
     std::string                b_bintxid() const;
     uint32_t                   b_lockTime() const;
     std::string                b_payTxId() const;
-    bool                       b_refunded() const { return m_b_refunded; }
-    const std::vector<wallet::UtxoEntry> b_utxos() const { return m_b.utxos(); }
+    bool                       b_refunded() const { LOCK(m_lock); return m_b_refunded; }
+    const std::vector<wallet::UtxoEntry> b_utxos() const { LOCK(m_lock); return m_b.utxos(); }
 
     std::vector<unsigned char> b_pk1() const;
 
@@ -221,29 +223,31 @@ public:
     bool                       setBinTxId(const std::vector<unsigned char> &addr,
                                           const std::string & id);
 
-    void a_setRefunded(const bool refunded) { m_a_refunded = refunded; }
-    void b_setRefunded(const bool refunded) { m_b_refunded = refunded; }
+    void a_setRefunded(const bool refunded) { LOCK(m_lock); m_a_refunded = refunded; }
+    void b_setRefunded(const bool refunded) { LOCK(m_lock); m_b_refunded = refunded; }
 
-    void a_setUtxos(const std::vector<wallet::UtxoEntry> & utxos) { m_a.setUtxos(utxos); }
-    void b_setUtxos(const std::vector<wallet::UtxoEntry> & utxos) { m_b.setUtxos(utxos); }
+    void a_setUtxos(const std::vector<wallet::UtxoEntry> & utxos) { LOCK(m_lock); m_a.setUtxos(utxos); }
+    void b_setUtxos(const std::vector<wallet::UtxoEntry> & utxos) { LOCK(m_lock); m_b.setUtxos(utxos); }
 
-    void a_setLockTime(const uint32_t lockTime) { m_a.setLockTime(lockTime); }
-    void b_setLockTime(const uint32_t lockTime) { m_b.setLockTime(lockTime); }
+    void a_setLockTime(const uint32_t lockTime) { LOCK(m_lock); m_a.setLockTime(lockTime); }
+    void b_setLockTime(const uint32_t lockTime) { LOCK(m_lock); m_b.setLockTime(lockTime); }
 
-    void a_setPayTxId(const std::string & payTxId) { m_a.setPayTxId(payTxId); }
-    void b_setPayTxId(const std::string & payTxId) { m_b.setPayTxId(payTxId); }
+    void a_setPayTxId(const std::string & payTxId) { LOCK(m_lock); m_a.setPayTxId(payTxId); }
+    void b_setPayTxId(const std::string & payTxId) { LOCK(m_lock); m_b.setPayTxId(payTxId); }
 
     void a_setRefundTx(const std::string & refTxId, const std::string & refTx) {
+        LOCK(m_lock);
         m_a.setRefTxId(refTxId); m_a.setRefTx(refTx);
     }
     void b_setRefundTx(const std::string & refTxId, const std::string & refTx) {
+        LOCK(m_lock);
         m_b.setRefTxId(refTxId); m_b.setRefTx(refTx);
     }
 
     friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
 
 public:
-    CCriticalSection           m_lock;
+    mutable CCriticalSection   m_lock;
 
 private:
     uint256                    m_id;

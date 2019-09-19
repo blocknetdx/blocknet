@@ -991,8 +991,6 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                 return true;
             }
 
-            LOCK(tr->m_lock);
-
             if (tr->state() != xbridge::Transaction::trJoined)
             {
                 xassert(!"wrong state");
@@ -1081,12 +1079,12 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
             snode = sn::ServiceNodeMgr::instance().getSn(pksnode);
         if (snode.isNull()) {
             // bad service node, no more
-            LOG() << "unknown service node " << pksnode.GetHash().ToString() << " " << __FUNCTION__;
+            LOG() << "unknown service node " << HexStr(pksnode) << " " << __FUNCTION__;
             return true;
         }
     }
 
-    LOG() << "use service node " << pksnode.GetHash().ToString() << " " << __FUNCTION__;
+    LOG() << "use service node " << HexStr(pksnode) << " " << __FUNCTION__;
 
     {
         // for xchange node remove tx
@@ -1097,8 +1095,6 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
             TransactionPtr tr = e.transaction(id);
             if (!tr->matches(id)) // ignore no matching orders
                 return true;
-
-            LOCK(tr->m_lock);
 
             LOG() << __FUNCTION__ << tr;
 
@@ -1203,8 +1199,6 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
     TransactionPtr tr = e.transaction(id);
     if (!tr->matches(id)) // ignore no matching orders
         return true;
-
-    LOCK(tr->m_lock);
 
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
@@ -1481,8 +1475,6 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
                << " in " << __FUNCTION__;
         return true;
     }
-
-    LOCK(tr->m_lock);
 
     tr->updateTimestamp();
 
@@ -1876,8 +1868,6 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
                << " in " << __FUNCTION__;
         return true;
     }
-
-    LOCK(tr->m_lock);
 
     tr->a_setLockTime(lockTimeA);
     tr->a_setRefundTx(refTxId, refTx);
@@ -2318,8 +2308,6 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
         return true;
     }
 
-    LOCK(tr->m_lock);
-
     tr->b_setLockTime(lockTimeB);
     tr->b_setRefundTx(refTxId, refTx);
     tr->updateTimestamp();
@@ -2566,8 +2554,6 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
         return true;
     }
 
-    LOCK(tr->m_lock);
-
     tr->updateTimestamp();
     tr->a_setPayTxId(a_payTxId);
 
@@ -2744,8 +2730,6 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
         return true;
     }
 
-    LOCK(tr->m_lock);
-
     tr->updateTimestamp();
     tr->b_setPayTxId(b_payTxId);
 
@@ -2805,8 +2789,6 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         {
             return true;
         }
-
-        LOCK(tr->m_lock);
 
         if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
         {
@@ -3005,8 +2987,6 @@ void Session::sendListOfTransactions() const
     {
         TransactionPtr & ptr = *i;
 
-        LOCK(ptr->m_lock);
-
         XBridgePacketPtr packet(new XBridgePacket(xbcPendingTransaction));
 
         // field length must be 8 bytes
@@ -3045,8 +3025,6 @@ void Session::Impl::sendTransaction(uint256 & id) const
     TransactionPtr tr = e.pendingTransaction(id);
     if (!tr->matches(id))
         return;
-
-    LOCK(tr->m_lock);
 
     XBridgePacketPtr packet(new XBridgePacket(xbcPendingTransaction));
 
@@ -3089,8 +3067,6 @@ void Session::checkFinishedTransactions() const
     for (; i != list.end(); ++i)
     {
         TransactionPtr & ptr = *i;
-
-        LOCK(ptr->m_lock);
 
         uint256 txid = ptr->id();
 
