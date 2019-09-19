@@ -6,6 +6,7 @@
 
 #include <xbridge/util/logger.h>
 #include <xbridge/util/xutil.h>
+#include <xbridge/xbridgewalletconnectorbtc.h>
 
 #include <base58.h>
 #include <logging.h>
@@ -111,83 +112,6 @@ string real_strprintf(const std::string &format, int dummy, ...)
     string str = vstrprintf(format.c_str(), arg_ptr);
     va_end(arg_ptr);
     return str;
-}
-
-static json_spirit::Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
-                          const std::string & rpcip, const std::string & rpcport,
-                          const std::string & strMethod, const json_spirit::Array & params)
-{
-//        const std::string & host = rpcip;
-//        const int port = stoi(rpcport);
-//
-//        // Obtain event base
-//        raii_event_base base = obtain_event_base();
-//
-//        // Synchronously look up hostname
-//        raii_evhttp_connection evcon = obtain_evhttp_connection_base(base.get(), host, port);
-//        evhttp_connection_set_timeout(evcon.get(), gArgs.GetArg("-rpcxbridgetimeout", 120));
-//
-//        HTTPReply response;
-//        raii_evhttp_request req = obtain_evhttp_request(http_request_done, (void*)&response);
-//        if (req == nullptr)
-//            throw std::runtime_error("create http request failed");
-//#if LIBEVENT_VERSION_NUMBER >= 0x02010300
-//        evhttp_request_set_error_cb(req.get(), http_error_cb);
-//#endif
-//
-//        // Get credentials
-//        std::string strRPCUserColonPass = rpcuser + ":" + rpcpasswd;
-//
-//        struct evkeyvalq* output_headers = evhttp_request_get_output_headers(req.get());
-//        assert(output_headers);
-//        evhttp_add_header(output_headers, "Host", host.c_str());
-//        evhttp_add_header(output_headers, "Connection", "close");
-//        evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
-//
-//        // Attach request data
-//        std::vector<std::string> strparams;
-//        for (const auto & item : params)
-//            strparams.push_back(item.get_str());
-//        const auto reqparams = RPCConvertValues(strMethod, strparams);
-//        const auto reqobj = JSONRPCRequestObj(strMethod, reqparams, 1);
-//        std::string strRequest = reqobj.write() + "\n";
-//        struct evbuffer* output_buffer = evhttp_request_get_output_buffer(req.get());
-//        assert(output_buffer);
-//        evbuffer_add(output_buffer, strRequest.data(), strRequest.size());
-//
-//        // check if we should use a special wallet endpoint
-//        std::string endpoint = "/";
-//        int r = evhttp_make_request(evcon.get(), req.get(), EVHTTP_REQ_POST, endpoint.c_str());
-//        req.release(); // ownership moved to evcon in above call
-//        if (r != 0) {
-//            throw std::runtime_error("send http request failed");
-//        }
-//
-//        event_base_dispatch(base.get());
-//
-//        if (response.status == 0) {
-//            std::string responseErrorMessage;
-//            if (response.error != -1) {
-//                responseErrorMessage = strprintf(" (error code %d - \"%s\")", response.error, http_errorstring(response.error));
-//            }
-//            throw std::runtime_error(strprintf("Could not connect to the server %s:%d%s\n\nMake sure the bitcoind server is running and that you are connecting to the correct RPC port.", host, port, responseErrorMessage));
-//        } else if (response.status == HTTP_UNAUTHORIZED) {
-//            throw std::runtime_error("Authorization failed: Incorrect rpcuser or rpcpassword");
-//        } else if (response.status >= 400 && response.status != HTTP_BAD_REQUEST && response.status != HTTP_NOT_FOUND && response.status != HTTP_INTERNAL_SERVER_ERROR)
-//            throw std::runtime_error(strprintf("server returned HTTP error %d", response.status));
-//        else if (response.body.empty())
-//            throw std::runtime_error("no response from server");
-//
-//        // Parse reply
-//        Value valReply;
-//        if (!read_string(response.body, valReply))
-//            throw std::runtime_error("couldn't parse reply from server");
-//        const Object& reply = valReply.get_obj();
-//        if (reply.empty())
-//            throw std::runtime_error("expected reply to have result, error and id properties");
-//
-//        return reply;
-    return {};
 }
 
 //******************************************************************************
@@ -312,7 +236,7 @@ bool listaccounts(const std::string & rpcuser, const std::string & rpcpasswd,
         // LOG() << "rpc call <listaccounts>";
 
         Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listaccounts", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listaccounts", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -366,7 +290,7 @@ bool getaddressesbyaccount(const std::string & rpcuser, const std::string & rpcp
 
         Array params;
         params.push_back(account);
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getaddressesbyaccount", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getaddressesbyaccount", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -445,7 +369,7 @@ bool getInfo(const std::string & rpcuser,
         LOG() << "rpc call <getinfo>";
 
         Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getinfo", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getinfo", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -499,7 +423,7 @@ bool listUnspent(const std::string & rpcuser,
         LOG() << "rpc call <listunspent>";
 
         Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listunspent", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listunspent", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -614,7 +538,7 @@ bool createRawTransaction(const std::string & rpcuser,
             params.push_back(uint64_t(lockTime));
         }
 
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "createrawtransaction", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "createrawtransaction", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -671,7 +595,7 @@ bool decodeRawTransaction(const std::string & rpcuser,
 
         Array params;
         params.push_back(rawtx);
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "decoderawtransaction", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "decoderawtransaction", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -806,7 +730,7 @@ bool signRawTransaction(const std::string & rpcuser,
             params.push_back(jkeys);
         }
 
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "signrawtransaction", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "signrawtransaction", params);
 
         // Parse reply
         Value result = find_value(reply, "result");
@@ -815,7 +739,7 @@ bool signRawTransaction(const std::string & rpcuser,
         if (error.type() != null_type)
         {
             // For newer bitcoin clients try signrawtransactionwithwallet
-            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "signrawtransactionwithwallet", params);
+            reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "signrawtransactionwithwallet", params);
 
             const Value & error2 = find_value(reply, "error");
             if (error2.type() != null_type) {
@@ -876,7 +800,7 @@ bool sendRawTransaction(const std::string & rpcuser,
 
         Array params;
         params.push_back(rawtx);
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "sendrawtransaction", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "sendrawtransaction", params);
 
         // Parse reply
         // const Value & result = find_value(reply, "result");
@@ -911,7 +835,7 @@ bool getNewPubKey(const std::string & rpcuser,
         LOG() << "rpc call <getnewpubkey>";
 
         Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewpubkey", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewpubkey", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -961,7 +885,7 @@ bool dumpPrivKey(const std::string & rpcuser,
         Array params;
         params.push_back(address);
 
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "dumpprivkey", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "dumpprivkey", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -1018,7 +942,7 @@ bool importPrivKey(const std::string & rpcuser,
         }
 
 
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "importprivkey", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "importprivkey", params);
 
         // Parse reply
         // const Value & result = find_value(reply, "result");
@@ -1054,7 +978,7 @@ bool getNewAddress(const std::string & rpcuser,
         LOG() << "rpc call <getnewaddress>";
 
         Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -1111,7 +1035,7 @@ bool addMultisigAddress(const std::string & rpcuser,
         }
         params.push_back(paramKeys);
 
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "addmultisigaddress", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "addmultisigaddress", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -1160,7 +1084,7 @@ bool getTransaction(const std::string & rpcuser,
 
         Array params;
         params.push_back(txid);
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "gettransaction", params);
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "gettransaction", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -1207,7 +1131,7 @@ bool eth_gasPrice(const std::string & rpcip,
         LOG() << "rpc call <eth_gasPrice>";
 
         Array params;
-        Object reply = CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_gasPrice", params);
+        Object reply = xbridge::CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_gasPrice", params);
 
         // Parse reply
         // const Value & result = find_value(reply, "result");
@@ -1255,7 +1179,7 @@ bool eth_accounts(const std::string   & rpcip,
         LOG() << "rpc call <eth_accounts>";
 
         Array params;
-        Object reply = CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_accounts", params);
+        Object reply = xbridge::CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_accounts", params);
 
         // Parse reply
         // const Value & result = find_value(reply, "result");
@@ -1319,7 +1243,7 @@ bool eth_getBalance(const std::string & rpcip,
             Array params;
             params.push_back(account);
             params.push_back("latest");
-            Object reply = CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_getBalance", params);
+            Object reply = xbridge::CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_getBalance", params);
 
             // Parse reply
             // const Value & result = find_value(reply, "result");
@@ -1388,7 +1312,7 @@ bool eth_sendTransaction(const std::string & rpcip,
 
         params.push_back(o);
 
-        Object reply = CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_sendTransaction", params);
+        Object reply = xbridge::CallRPC("rpcuser", "rpcpasswd", rpcip, rpcport, "eth_sendTransaction", params);
 
         // Parse reply
         // const Value & result = find_value(reply, "result");

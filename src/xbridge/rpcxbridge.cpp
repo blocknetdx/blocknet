@@ -16,6 +16,7 @@
 #include <xbridge/xuiconnector.h>
 
 #include <init.h>
+#include <rpc/util.h>
 #include <shutdown.h>
 #include <validation.h>
 
@@ -46,7 +47,7 @@ using ArrayIL           = std::initializer_list<ArrayValue>;
 
 UniValue uret(const json_spirit::Value & o) {
     UniValue uv;
-    if (!uv.read(json_spirit::write_string(o)))
+    if (!uv.read(json_spirit::write_string(o, json_spirit::none, 8)))
         throw runtime_error("Unknown server error: failed to process request");
     return uv;
 }
@@ -141,9 +142,20 @@ CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& 
 
 UniValue dxLoadXBridgeConf(const JSONRPCRequest& request)
 {
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
     if (request.fHelp)
-        throw runtime_error("dxLoadXBridgeConf\nHot loads xbridge.conf (note this may disrupt trades in progress)");
+        throw std::runtime_error(
+            RPCHelpMan{"dxLoadXBridgeConf",
+                "\nHot loads xbridge.conf (note this may disrupt trades in progress)\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxLoadXBridgeConf", "")
+                  + HelpExampleRpc("dxLoadXBridgeConf", "")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if (params.size() > 0)
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -164,12 +176,21 @@ UniValue dxLoadXBridgeConf(const JSONRPCRequest& request)
 
 UniValue dxGetLocalTokens(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetLocalTokens",
+                "\nList coins supported by your node. You can only trade with these supported coins.\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetLocalTokens", "")
+                  + HelpExampleRpc("dxGetLocalTokens", "")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp) {
 
-        throw runtime_error("dxGetLocalTokens\nList coins supported by your node. You can only trade with these supported coins.");
-
-    }
     if (params.size() > 0) {
 
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -190,12 +211,21 @@ UniValue dxGetLocalTokens(const JSONRPCRequest& request)
 
 UniValue dxGetNetworkTokens(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetNetworkTokens",
+                "\nList coins supported by the network.\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetNetworkTokens", "")
+                  + HelpExampleRpc("dxGetNetworkTokens", "")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp) {
 
-        throw runtime_error("dxGetNetworkTokens\nList coins supported by the network.");
-
-    }
     if (params.size() > 0) {
 
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -223,12 +253,21 @@ UniValue dxGetNetworkTokens(const JSONRPCRequest& request)
   */
 UniValue dxGetOrders(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetOrders",
+                "\nList of all orders.\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetOrders", "")
+                  + HelpExampleRpc("dxGetOrders", "")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp) {
 
-        throw runtime_error("dxGetOrders\nList of all orders.");
-
-    }
     if (!params.empty()) {
 
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -280,17 +319,24 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
 
 UniValue dxGetOrderFills(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetOrderFills",
+                "\n(maker) (taker) (combined, default=true)[optional]\n"
+                "\nReturns all the recent trades by trade pair that have been filled \n"
+                "(i.e. completed). Maker symbol is always listed first. The [combined] \n"
+                "flag defaults to true. When set to false [combined] will return only \n"
+                "maker trades, switch maker and taker to get the reverse.",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetOrderFills", "BLOCK LTC")
+                  + HelpExampleRpc("dxGetOrderFills", "BLOCK LTC")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp) {
-
-        throw runtime_error("dxGetOrderFills (maker) (taker) (combined, default=true)[optional]\n"
-                            "Returns all the recent trades by trade pair that have been filled \n"
-                            "(i.e. completed). Maker symbol is always listed first. The [combined] \n"
-                            "flag defaults to true. When set to false [combined] will return only \n"
-                            "maker trades, switch maker and taker to get the reverse."
-                            );
-
-    }
 
     bool invalidParams = ((params.size() != 2) &&
                           (params.size() != 3));
@@ -346,25 +392,31 @@ UniValue dxGetOrderFills(const JSONRPCRequest& request)
 
 UniValue dxGetOrderHistory(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetOrderHistory",
+                "\n(maker) (taker) (start time) (end time) (granularity) (order_ids, default=false)[optional] (with_inverse, default=false)[optional] (limit, default="+std::to_string(xQuery::IntervalLimit{}.count())+")[optional]\n"
+                "Returns the order history over a specified time interval."
+                " [start_time] and [end_time] are \n"
+                "in unix time seconds [granularity] in seconds of supported"
+                " time interval lengths include: \n"
+                + xQuery::supported_seconds_csv() + ". [order_ids] is a boolean,"
+                " defaults to false (not showing ids).\n"
+                "[with_inverse] is a boolean, defaults to false (not aggregating inverse currency pair).\n"
+                "[limit] is the maximum number of intervals to return,"
+                " default="+std::to_string(xQuery::IntervalLimit{}.count())+
+                " maximum="+std::to_string(xQuery::IntervalLimit::max())+".\n"
+                "[interval_timestamp] is one of [at_start | at_end], defaults to at_start (timestamp at start of the interval)[optional]\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetOrderHistory", "BLOCK LTC")
+                  + HelpExampleRpc("dxGetOrderHistory", "BLOCK LTC")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp) {
-        throw runtime_error("dxGetOrderHistory (maker) (taker) (start time) (end time)"
-                            " (granularity) (order_ids, default=false)[optional]\n"
-                            " (with_inverse, default=false)[optional]\n"
-                            " (limit, default="+std::to_string(xQuery::IntervalLimit{}.count())+")[optional]\n"
-                            "Returns the order history over a specified time interval."
-                            " [start_time] and [end_time] are \n"
-                            "in unix time seconds [granularity] in seconds of supported"
-                            " time interval lengths include: \n"
-                            + xQuery::supported_seconds_csv() + ". [order_ids] is a boolean,"
-                            " defaults to false (not showing ids).\n"
-                            "[with_inverse] is a boolean, defaults to false (not aggregating inverse currency pair).\n"
-                            "[limit] is the maximum number of intervals to return,"
-                            " default="+std::to_string(xQuery::IntervalLimit{}.count())+
-                            " maximum="+std::to_string(xQuery::IntervalLimit::max())+".\n"
-                            "[interval_timestamp] is one of [at_start | at_end], defaults to at_start (timestamp at start of the interval)[optional]\n"
-                            );
-    }
 
     //--Validate query parameters
     if (params.size() < 5 || params.size() > 8)
@@ -430,13 +482,23 @@ UniValue dxGetOrderHistory(const JSONRPCRequest& request)
 
 UniValue dxGetOrder(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetOrder",
+                "\nGet order info by id.\n",
+                {
+                    {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Order id"},
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetOrder", "aae6d7aedaed54ade57da4eda3e5d4a7de8a67d8e7a8d768ea567da5e467d4ea7a6d7a6d7a6d75a7d5a757da5")
+                  + HelpExampleRpc("dxGetOrder", "aae6d7aedaed54ade57da4eda3e5d4a7de8a67d8e7a8d768ea567da5e467d4ea7a6d7a6d7a6d75a7d5a757da5")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp) {
 
-         throw runtime_error("dxGetOrder (id)\n"
-                             "Get order info by id.");
-
-    }
     if (params.size() != 1) {
 
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "(id)"));
@@ -482,15 +544,30 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
 
 UniValue dxMakeOrder(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxMakeOrder",
+                "\nCreate a new order. dryrun will validate the order without submitting the order to the network.\n",
+                {
+                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "Maker (e.g. LTC)"},
+                    {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "Amount of maker coin being sent"},
+                    {"maker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "Maker address containing coin being sent"},
+                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "Taker (e.g. BLOCK)"},
+                    {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "Amount of taker coin being recieved"},
+                    {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "Taker address receiving the coin"},
+                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "exact", "Order type (e.g. exact)"},
+                    {"dryrun", RPCArg::Type::BOOL, "false", "Simulate the order submission without actually submitting the order, i.e. a test run"},
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact")
+                  + HelpExampleRpc("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (request.fHelp) {
-
-        throw runtime_error("dxMakeOrder (maker) (maker size) (maker address) "
-                            "(taker) (taker size) (taker address) (type) (dryrun)[optional]\n"
-                            "Create a new order. dryrun will validate the order without submitting the order to the network.");
-
-    }
     if (params.size() < 7) {
 
         throw runtime_error("dxMakeOrder (maker) (maker size) (maker address) "
@@ -663,13 +740,25 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
 
 UniValue dxTakeOrder(const JSONRPCRequest& request)
 {
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-
     if (request.fHelp)
-    {
-        throw runtime_error("dxTakeOrder (id) (address from) (address to) [optional](dryrun)\n"
-                            "Accepts the order. dryrun will evaluate input without accepting the order.");
-    }
+        throw std::runtime_error(
+            RPCHelpMan{"dxTakeOrder",
+                "\nAccepts the order. dryrun will evaluate input without accepting the order.\n",
+                {
+                    {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Maker (e.g. LTC)"},
+                    {"from_address", RPCArg::Type::STR, RPCArg::Optional::NO, "Address of coin being sent"},
+                    {"to_address", RPCArg::Type::STR, RPCArg::Optional::NO, "Address of coin being received"},
+                    {"dryrun", RPCArg::Type::BOOL, "false", "Simulate the order acceptance without actually accepting the order, i.e. a test run"},
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxTakeOrder", "e1e493130d784d6ce22e4976962d9837c7a671555b0cf78b022dfdf861496872 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR")
+                  + HelpExampleRpc("dxTakeOrder", "e1e493130d784d6ce22e4976962d9837c7a671555b0cf78b022dfdf861496872 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if ((params.size() != 3) && (params.size() != 4))
     {
@@ -794,17 +883,27 @@ UniValue dxTakeOrder(const JSONRPCRequest& request)
 
 UniValue dxCancelOrder(const JSONRPCRequest& request)
 {
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
     if(request.fHelp)
-    {
-        throw runtime_error("dxCancelOrder (id)\n"
-                            "Cancel xbridge order.");
-    }
+        throw std::runtime_error(
+            RPCHelpMan{"dxCancelOrder",
+                "\nCancel xbridge order.\n",
+                {
+                    {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Order to cancel"},
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxCancelOrder", "e1e493130d784d6ce22e4976962d9837c7a671555b0cf78b022dfdf861496872")
+                  + HelpExampleRpc("dxCancelOrder", "e1e493130d784d6ce22e4976962d9837c7a671555b0cf78b022dfdf861496872")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if (params.size() != 1)
     {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(id)"));
+                               ""));
     }
 
     LOG() << "rpc cancel order " << __FUNCTION__;
@@ -857,12 +956,21 @@ UniValue dxCancelOrder(const JSONRPCRequest& request)
 
 UniValue dxFlushCancelledOrders(const JSONRPCRequest& request)
 {
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
     if(request.fHelp)
-    {
-        throw runtime_error("dxFlushCancelledOrders (ageMillis)\n"
-                            "Flush cancelled orders older than ageMillis");
-    }
+        throw std::runtime_error(
+            RPCHelpMan{"dxFlushCancelledOrders",
+                "\n(ageMillis)\n"
+                "Flush cancelled orders older than ageMillis.\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxFlushCancelledOrders", "1568921382306")
+                  + HelpExampleRpc("dxFlushCancelledOrders", "1568921382306")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     const int ageMillis = params.size() == 0
         ? 0
@@ -903,15 +1011,24 @@ UniValue dxFlushCancelledOrders(const JSONRPCRequest& request)
 
 UniValue dxGetOrderBook(const JSONRPCRequest& request)
 {
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
     if (request.fHelp)
-    {
-        throw runtime_error("dxGetOrderBook (detail level, 1-4) (maker) (taker) (max orders, default=50)[optional]\n"
-                            "Returns the order book. There are 4 detail levels that can be specified to obtain \n"
-                            "different outputs for the orderbook. 1 lists the best bid and ask. 2 lists the \n"
-                            "aggregated bids and asks. 3 lists the non-aggregated bids and asks. 4 is level 1 \n"
-                            "with order ids. Optionally specify the maximum orders you wish to return.");
-    }
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetOrderBook",
+                "\n(detail level, 1-4) (maker) (taker) (max orders, default=50)[optional]\n"
+                "\nReturns the order book. There are 4 detail levels that can be specified to obtain \n"
+                "different outputs for the orderbook. 1 lists the best bid and ask. 2 lists the \n"
+                "aggregated bids and asks. 3 lists the non-aggregated bids and asks. 4 is level 1 \n"
+                "with order ids. Optionally specify the maximum orders you wish to return.",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetOrderBook", "3 BLOCK LTC")
+                  + HelpExampleRpc("dxGetOrderBook", "3 BLOCK LTC")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if ((params.size() < 3 || params.size() > 4))
     {
@@ -1380,12 +1497,20 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
 
 UniValue dxGetMyOrders(const JSONRPCRequest& request)
 {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetMyOrders",
+                "\nLists all orders owned by you.\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetMyOrders", "")
+                  + HelpExampleRpc("dxGetMyOrders", "")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp) {
-
-        throw runtime_error("dxGetMyOrders\nLists all orders owned by you.");
-
-    }
 
     if (!params.empty()) {
 
@@ -1478,14 +1603,22 @@ UniValue dxGetMyOrders(const JSONRPCRequest& request)
 
 UniValue dxGetTokenBalances(const JSONRPCRequest& request)
 {
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
     if (request.fHelp)
-    {
-        throw runtime_error("dxGetTokenBalances\n"
-                            "List of connected wallet balances. These balances do not include orders that are using \n"
-                            "locked utxos to support a pending or open order. The DX works best with presliced utxos \n"
-                            "so that your entire wallet balance is capable of multiple simultaneous trades.");
-    }
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetTokenBalances",
+                "\nList of connected wallet balances. These balances do not include orders that are using \n"
+                "locked utxos to support a pending or open order. The DX works best with presliced utxos \n"
+                "so that your entire wallet balance is capable of multiple simultaneous trades.",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetTokenBalances", "")
+                  + HelpExampleRpc("dxGetTokenBalances", "")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if (params.size() != 0)
     {
@@ -1521,12 +1654,21 @@ UniValue dxGetTokenBalances(const JSONRPCRequest& request)
 
 UniValue dxGetLockedUtxos(const JSONRPCRequest& request)
 {
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
     if (request.fHelp)
-    {
-        throw runtime_error("dxGetLockedUtxos (id)\n"
-                            "Return list of locked utxo of an order.");
-    }
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetLockedUtxos",
+                "\n(id)\n"
+                "Return list of locked utxo of an order.",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetLockedUtxos", "e1e493130d784d6ce22e4976962d9837c7a671555b0cf78b022dfdf861496872")
+                  + HelpExampleRpc("dxGetLockedUtxos", "e1e493130d784d6ce22e4976962d9837c7a671555b0cf78b022dfdf861496872")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if (params.size() > 1)
     {
@@ -1600,27 +1742,34 @@ UniValue dxGetLockedUtxos(const JSONRPCRequest& request)
 
 UniValue gettradingdata(const JSONRPCRequest& request)
 {
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+            RPCHelpMan{"gettradingdata",
+                "\nReturns an object containing xbridge trading records.\n",
+                {
+                    {"blocks", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "count of blocks for search"},
+                    {"errors", RPCArg::Type::BOOL, "false", "show errors"},
+                },
+                RPCResult{
+                "{\n"
+                "  \"timestamp\":  \"timestamp\",       (uint64) block date in unixtime format\n"
+                "  \"txid\":       \"transaction id\",  (string) blocknet transaction id\n"
+                "  \"to\":         \"address\",         (string) receiver address\n"
+                "  \"xid\":        \"transaction id\",  (string) xbridge transaction id\n"
+                "  \"from\":       \"XXX\",             (string) from currency\n"
+                "  \"fromAmount\": 0,                   (uint64) from amount\n"
+                "  \"to\":         \"XXX\",             (string) to currency\n"
+                "  \"toAmount\":   0,                   (uint64) toAmount\n"
+                "}\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("gettradingdata", "")
+                  + HelpExampleRpc("gettradingdata", "")
+                  + HelpExampleCli("gettradingdata", "43200")
+                  + HelpExampleRpc("gettradingdata", "43200")
+                },
+            }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    if (request.fHelp || params.size() > 1)
-        throw runtime_error(
-            "gettradingdata blocks errors\n"
-            "Returns an object containing xbridge trading records.\n"
-            "\nArguments:\n"
-            "1. blocks  (integer, optional) count of blocks for search\n"
-            "2. errors  (bool, optional, default: false) show errors\n"
-            "\nResult:\n"
-            "{\n"
-            "  \"timestamp\":  \"timestamp\",       (uint64) block date in unixtime format\n"
-            "  \"txid\":       \"transaction id\",  (string) blocknet transaction id\n"
-            "  \"to\":         \"address\",         (string) receiver address\n"
-            "  \"xid\":        \"transaction id\",  (string) xbridge transaction id\n"
-            "  \"from\":       \"XXX\",             (string) from currency\n"
-            "  \"fromAmount\": 0,                   (uint64) from amount\n"
-            "  \"to\":         \"XXX\",             (string) to currency\n"
-            "  \"toAmount\":   0,                   (uint64) toAmount\n"
-            "}\n"
-            "\nExamples:\n" +
-            HelpExampleCli("gettradingdata", "") + HelpExampleRpc("gettradingdata", ""));
 
     uint32_t countOfBlocks = std::numeric_limits<uint32_t>::max();
     if (params.size() >= 1)
