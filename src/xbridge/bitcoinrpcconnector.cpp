@@ -239,7 +239,7 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
         if (err != TransactionError::OK)
             throw std::runtime_error(strprintf("Failed to send fee tx: %s", errstr));
 
-        rawTx = mtx.GetHash().ToString();
+        rawTx = EncodeHexTx(::CTransaction(mtx));
         LOG() << "feetx " << rawTx;
     }
     catch (json_spirit::Object & obj)
@@ -278,18 +278,17 @@ bool storeDataIntoBlockchain(const std::string & rawTx, std::string & txid)
 
     const static std::string sendCommand("sendrawtransaction");
 
-    int         errCode = 0;
+    int errCode = 0;
     std::string errMessage;
 
     try
     {
         CMutableTransaction mtx;
-        if (!DecodeHexTx(mtx, rawTx))
+        if (!DecodeHexTx(mtx, rawTx, true, false))
             throw std::runtime_error("TX decode failed");
 
         CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
-        bool allowhighfees = false;
-        const CAmount highfee{allowhighfees ? 0 : ::maxTxFee};
+        const CAmount highfee{::maxTxFee};
         uint256 txhash;
         std::string errstr;
         const TransactionError err = BroadcastTransaction(tx, txhash, errstr, highfee);
