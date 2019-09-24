@@ -856,8 +856,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
     CScript redeem;
     {
         CScript tmp;
-        std::vector<unsigned char> raw(mpubKey.begin(), mpubKey.end());
-        tmp << raw << OP_TRUE << inner;
+        tmp << ToByteVector(mpubKey) << OP_TRUE << ToByteVector(inner);
 
         SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
         std::vector<unsigned char> signature;
@@ -935,7 +934,7 @@ bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
     CScript redeem;
     redeem << xpubKey
            << signature << mpubKey
-           << OP_FALSE << inner;
+           << OP_FALSE << ToByteVector(inner);
 
     xbridge::CTransactionPtr tx(createTransaction(txWithTimeField));
     if (!tx)

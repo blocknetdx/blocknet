@@ -2410,8 +2410,7 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
     CScript redeem;
     {
         CScript tmp;
-        std::vector<unsigned char> raw(mpubKey.begin(), mpubKey.end());
-        tmp << raw << OP_TRUE << inner;
+        tmp << ToByteVector(mpubKey) << OP_TRUE << ToByteVector(inner);
 
         std::vector<unsigned char> signature;
         uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL);
@@ -2492,7 +2491,7 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
     CScript redeem;
     redeem << xpubKey
            << signature << mpubKey
-           << OP_FALSE << inner;
+           << OP_FALSE << ToByteVector(inner);
 
     xbridge::CTransactionPtr tx(createTransaction(txWithTimeField));
     if (!tx)
