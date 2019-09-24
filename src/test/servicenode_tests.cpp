@@ -321,10 +321,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     {
         const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 2, saddr });
-        UniValue entries;
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        rpcparams.push_backV({ saddr, "snode0" });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
         rpcparams = UniValue(UniValue::VARR);
         BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
@@ -335,10 +335,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     {
         const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 2, saddr });
-        UniValue entries;
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        rpcparams.push_backV({ saddr, "snode1" });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
         rpcparams = UniValue(UniValue::VARR);
         rpcparams.push_backV({ "snode1" });
         BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
@@ -350,15 +350,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     {
         const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 2, saddr });
-        UniValue entries;
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        rpcparams.push_backV({ saddr, "snode1" });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
         rpcparams = UniValue(UniValue::VARR);
         try {
             auto result = CallRPC2("servicenoderegister", rpcparams);
             BOOST_CHECK_EQUAL(result.isArray(), true);
-            UniValue o = result[1];
+            UniValue o = result[0];
             BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode1");
             BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
             BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str().empty(), false); // check not empty
@@ -375,10 +375,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     {
         const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 2, saddr });
-        UniValue entries;
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count should match expected");
+        rpcparams.push_backV({ saddr });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
         rpcparams = UniValue(UniValue::VARR);
         rpcparams.push_backV({ "bad_alias" });
         BOOST_CHECK_THROW(CallRPC2("servicenoderegister", rpcparams), std::runtime_error);
@@ -684,31 +684,30 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         collateral.emplace_back(tx->GetHash(), 0);
     }
 
-    // Test rpc servicenode setup
+    // Test servicenodesetup rpc
     {
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 1, saddr });
-        UniValue entries;
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match");
+        rpcparams.push_backV({ saddr });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node should be returned");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
         rpcparams = UniValue(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 10, saddr });
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 10, "Service node config count should match");
+        rpcparams.push_backV({ saddr });
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node should be returned");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
-    // Test servicenode.conf formatting
+    // Check servicenode.conf formatting
     {
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 10, saddr });
+        rpcparams.push_backV({ saddr });
         BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", rpcparams));
         std::set<sn::ServiceNodeConfigEntry> entries;
         BOOST_CHECK_MESSAGE(smgr.loadSnConfig(entries), "Should load config");
-        BOOST_CHECK_MESSAGE(entries.size() == 10, "Should load exactly 10 snode config entries");
+        BOOST_CHECK_MESSAGE(entries.size() == 1, "Should load exactly 1 snode config entry");
         // Check servicenode.conf formatting
         for (const auto & entry : entries) {
             const auto & sentry = sn::ServiceNodeMgr::configEntryToString(entry);
@@ -719,22 +718,22 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         sn::ServiceNodeMgr::instance().reset();
     }
 
-    // Test the servicenodesetup list option
+    // Test the servicenodesetuplist rpc command
     {
         UniValue rpcparams(UniValue::VARR);
         UniValue list(UniValue::VARR);
         UniValue snode1(UniValue::VOBJ); snode1.pushKV("alias", "snode1"), snode1.pushKV("tier", "SPV"), snode1.pushKV("address", saddr);
         UniValue snode2(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
+        rpcparams.push_back(list);
         UniValue entries;
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetuplist", rpcparams));
         BOOST_CHECK_MESSAGE(entries.size() == 2, "Service node config count on list option should match");
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
-    // Test servicenodesetup list option data checks
+    // Test servicenodesetuplist rpc command data checks
     {
         UniValue rpcparams;
         UniValue list;
@@ -746,75 +745,87 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
+        rpcparams.push_back(list);
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetuplist", rpcparams), std::runtime_error);
 
         // Should fail if spaces in alias
         rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode 2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
+        rpcparams.push_back(list);
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetuplist", rpcparams), std::runtime_error);
 
         // Should fail on missing tier
         rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
+        rpcparams.push_back(list);
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetuplist", rpcparams), std::runtime_error);
 
         // Should fail on bad tier
         rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "BAD"), snode2.pushKV("address", saddr);
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
+        rpcparams.push_back(list);
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetuplist", rpcparams), std::runtime_error);
 
         // Should fail on missing address in non-free tier
         rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV");
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
+        rpcparams.push_back(list);
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetuplist", rpcparams), std::runtime_error);
 
         // Should fail on empty address in non-free tier
         rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "SPV"), snode2.pushKV("address", "");
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
-        BOOST_CHECK_THROW(CallRPC2("servicenodesetup", rpcparams), std::runtime_error);
+        rpcparams.push_back(list);
+        BOOST_CHECK_THROW(CallRPC2("servicenodesetuplist", rpcparams), std::runtime_error);
 
         // Should not fail on empty address in free tier
         rpcparams = UniValue(UniValue::VARR);
         list = UniValue(UniValue::VARR);
         snode2 = UniValue(UniValue::VOBJ); snode2.pushKV("alias", "snode2"), snode2.pushKV("tier", "OPEN"), snode2.pushKV("address", "");
         list.push_back(snode1), list.push_back(snode2);
-        rpcparams.push_backV({ "list", list });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", rpcparams));
+        rpcparams.push_back(list);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetuplist", rpcparams));
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
 
-    // Test the servicenodesetup remove option
+    // Test the servicenoderemove rpc
     {
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 10, saddr });
-        UniValue entries;
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 10, "Service node config count should match expected");
+        rpcparams.push_backV({ saddr });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry should be returned");
 
         rpcparams = UniValue(UniValue::VARR);
-        rpcparams.push_backV({ "remove" });
-        BOOST_CHECK_NO_THROW(CallRPC2("servicenodesetup", rpcparams));
+        rpcparams.push_backV({ "snode0" });
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderemove", rpcparams));
         std::set<sn::ServiceNodeConfigEntry> ent;
         sn::ServiceNodeMgr::instance().loadSnConfig(ent);
-        BOOST_CHECK_MESSAGE(ent.empty(), "Service node setup remove option should result in 0 snode entries");
+        BOOST_CHECK_MESSAGE(ent.empty(), "servicenoderemove should remove the snode0 entry");
+
+        rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ saddr });
+        entry.clear();
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry should be returned");
+
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderemove", rpcparams));
+        ent.clear();
+        sn::ServiceNodeMgr::instance().loadSnConfig(ent);
+        BOOST_CHECK_MESSAGE(ent.empty(), "servicenoderemove should remove all entry if no alias is specified");
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
@@ -831,13 +842,13 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 
     // Test servicenodeexport and servicenodeimport rpc
     {
-        UniValue entries;
+        UniValue entry;
         UniValue result;
 
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 1, saddr });
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match expected");
+        rpcparams.push_backV({ saddr });
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry should be returned");
 
         const std::string & passphrase = "password";
         rpcparams = UniValue(UniValue::VARR);
@@ -854,7 +865,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         CKeyingMaterial plaintext;
         BOOST_CHECK_MESSAGE(crypt.Decrypt(ParseHex(result.get_str()), plaintext), "servicenodeexport failed to decrypt plaintext");
         std::string strtext(plaintext.begin(), plaintext.end());
-        const std::string & str = entries[0].write();
+        const std::string & str = entry.write();
         BOOST_CHECK_EQUAL(strtext, str);
 
         // Check servicenodeimport
@@ -877,13 +888,13 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
     // Test servicenodestatus and servicenodelist rpc
     {
         const auto tt = GetAdjustedTime();
-        UniValue entries, o;
+        UniValue entries, entry, o;
 
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 1, saddr });
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match expected");
-        o = entries[0];
+        rpcparams.push_backV({ saddr });
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
+        o = entry;
         const auto snodekey = find_value(o, "snodekey").get_str();
         const auto sk = DecodeSecret(snodekey);
 
@@ -942,13 +953,13 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 
     // Test servicenodesendping rpc
     {
-        UniValue entries, o;
+        UniValue entries, entry, o;
 
         UniValue rpcparams(UniValue::VARR);
-        rpcparams.push_backV({ "auto", 1, saddr });
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesetup", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.size() == 1, "Service node config count should match expected");
-        o = entries[0];
+        rpcparams.push_backV({ saddr });
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
+        o = entry;
         const auto snodekey = find_value(o, "snodekey").get_str();
         const auto sk = DecodeSecret(snodekey);
 
@@ -962,9 +973,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
 
         // Start snode and send ping
-        BOOST_CHECK_NO_THROW(entries = CallRPC2("servicenodesendping", rpcparams));
-        BOOST_CHECK_MESSAGE(entries.isObject(), "Service node ping should return the snode");
-        o = entries.get_obj();
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesendping", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node ping should return the snode");
+        o = entry;
         BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode0");
         BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
         BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
@@ -1026,11 +1038,6 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
             // Should fail on bad nodecount
             rpcparams = UniValue(UniValue::VARR);
             rpcparams.push_backV({ EncodeDestination(dest), -1 });
-            BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
-
-            // Should fail on missing nodecount
-            rpcparams = UniValue(UniValue::VARR);
-            rpcparams.push_backV({ EncodeDestination(dest) });
             BOOST_CHECK_THROW(CallRPC2("servicenodecreateinputs", rpcparams), std::runtime_error);
 
             // Should fail on bad address

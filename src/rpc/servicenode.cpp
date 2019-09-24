@@ -13,6 +13,8 @@
 #include <wallet/rpcwallet.h>
 #include <xbridge/xbridgeapp.h>
 
+#include <regex>
+
 #include <boost/algorithm/algorithm.hpp>
 
 static UniValue servicenodesetup(const JSONRPCRequest& request)
@@ -20,22 +22,97 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     if (request.fHelp || request.params.empty() || request.params.size() > 3)
         throw std::runtime_error(
             RPCHelpMan{"servicenodesetup",
+                "\nAdds a Service Node to the servicenode.conf. Note* new snodes are appended to servicenode.conf\n",
+                {
+                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "Blocknet address containing the service node collateral"},
+                    {"alias", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Service node alias, alpha numeric with no spaces (a-z,A-Z,0-9,_-)"},
+                },
+                RPCResult{
+                "{\n"
+                "  \"alias\": \"xxxx\",              (string) Service node name\n"
+                "  \"tier\": \"xxxx\",               (string) Tier of this service node\n"
+                "  \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "  \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
+                "}\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodesetup", R"("Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "snode0")")
+                  + HelpExampleRpc("servicenodesetup", R"("Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "snode0")")
+                },
+            }.ToString());
+
+    auto & smgr = sn::ServiceNodeMgr::instance();
+
+    // Validate address
+    const UniValue & saddress = request.params[0];
+    auto address = DecodeDestination(saddress.get_str());
+    if (!IsValidDestination(address))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("bad address specified: %s", saddress.get_str()));
+
+    auto existingEntries = smgr.getSnEntries();
+    std::string snodeAlias;
+
+    // If an alias is specified use that, otherwise generate an alias
+    if (request.params[1].isNull()) {
+        std::set<std::string> usedAliases;
+        for (const auto & entry : existingEntries)
+            usedAliases.insert(entry.alias);
+
+        int i = existingEntries.size();
+        do {
+            auto alias = "snode" + std::to_string(i); // i.e. snode0, snode1, snode2 ...
+            if (!usedAliases.count(alias)) {
+                snodeAlias = alias;
+                break;
+            }
+            ++i;
+        } while(i < 200);
+    } else
+        snodeAlias = request.params[1].get_str();
+
+    if (snodeAlias.empty())
+        throw JSONRPCError(RPC_MISC_ERROR, "Bad service node alias, it's empty");
+
+    std::regex re("^[a-zA-Z0-9\\-\\_]+$");
+    std::smatch m;
+    if (!std::regex_match(snodeAlias, m, re))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad service node alias, only alpha numeric aliases are allowed with no spaces: %s", snodeAlias));
+
+    // Add new snode entry
+    CKey key; key.MakeNewKey(true);
+    auto tier = sn::ServiceNode::SPV;
+    sn::ServiceNodeConfigEntry entry{snodeAlias, tier, key, address};
+    existingEntries.emplace_back(entry);
+
+    if (!sn::ServiceNodeMgr::writeSnConfig(existingEntries))
+        throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
+
+    std::set<sn::ServiceNodeConfigEntry> entries;
+    if (!sn::ServiceNodeMgr::instance().loadSnConfig(entries))
+        throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
+
+    UniValue obj(UniValue::VOBJ);
+    obj.pushKV("alias", entry.alias);
+    obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
+    obj.pushKV("snodekey", EncodeSecret(entry.key));
+    obj.pushKV("address", EncodeDestination(entry.address));
+    return obj;
+}
+
+static UniValue servicenodesetuplist(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 1)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodesetuplist",
                 "\nSets up Service Nodes by populating the servicenode.conf. Note* by default new data is appended to servicenode.conf\n",
                 {
-                    {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "Options: auto|list|remove\n'auto' will automatically setup the number of service nodes you specify.\n'list' will setup service nodes according to a predetermined list.\n'remove' will erase the existing servicenode.conf"},
-                    {"count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "'auto' number of servicenodes to create (not used with the 'list' type)"},
-                    {"address", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "'auto' service node address (not used with the 'list' type)"},
-                    {"list", RPCArg::Type::ARR, RPCArg::Optional::OMITTED, R"(only used with the 'list' type, should contain a list of servicenode objects, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])",
+                    {"list", RPCArg::Type::OBJ, RPCArg::Optional::NO, R"(Should contain a list of servicenode objects in json format, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])",
                         {
-                            {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
-                                {
-                                    {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node alias"},
-                                    {"tier", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node tier: SPV|OPEN"},
-                                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "base58 address containing the service node collateral"},
-                                },
-                            },
-                        }
-                    }
+                            {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node alias"},
+                            {"tier", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node tier: SPV|OPEN"},
+                            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "base58 address containing the service node collateral"},
+                        },
+                    },
                 },
                 RPCResult{
             "[\n"
@@ -49,107 +126,80 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
             "]\n"
                 },
                 RPCExamples{
-                    HelpExampleCli("servicenodesetup", R"("auto" 5 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa")")
-                  + HelpExampleCli("servicenodesetup", R"("list" [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])")
-                  + HelpExampleRpc("servicenodesetup", R"("auto" 5 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa")")
-                  + HelpExampleRpc("servicenodesetup", R"("list" [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])")
-                  + HelpExampleRpc("servicenodesetup", "remove")
-                  + HelpExampleRpc("servicenodesetup", "remove")
+                    HelpExampleCli("servicenodesetuplist", R"([{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])")
+                  + HelpExampleRpc("servicenodesetuplist", R"([{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])")
                 },
             }.ToString());
 
     UniValue ret(UniValue::VARR);
-    std::set<sn::ServiceNodeConfigEntry> entries;
 
-    const UniValue & type = request.params[0];
-    if (type.get_str() == "auto") {
-        const UniValue & scount = request.params[1];
-        const UniValue & saddress = request.params[2];
-        int snodecount = scount.get_int();
-        if (snodecount <= 0)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("bad count specified: %d", snodecount));
+    const UniValue & list = request.params[0];
+    if (list.isNull() || !list.isArray())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, R"(the list type must be a javascript array of objects, for example [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])");
 
-        // Validate address
-        auto address = DecodeDestination(saddress.get_str());
-        if (!IsValidDestination(address))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("bad address specified: %s", saddress.get_str()));
+    const auto & arr = list.get_array();
+    if (arr.empty())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "the list cannot be empty");
+    if (!arr[0].isObject())
+        throw JSONRPCError(RPC_INVALID_PARAMETER, R"(the list type must be a javascript array of objects, for example [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])");
 
-        std::vector<sn::ServiceNodeConfigEntry> tmpEntries;
-        for (int i = 0; i < snodecount; ++i) {
-            auto alias = "snode" + std::to_string(i); // i.e. snode0, snode1, snode2 ...
-            auto tier = sn::ServiceNode::SPV;
-            CKey key; key.MakeNewKey(true);
-            tmpEntries.emplace_back(alias, tier, key, address);
-        }
-        if (!sn::ServiceNodeMgr::writeSnConfig(tmpEntries))
-            throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
+    // Map existing aliases
+    auto existingEntries = sn::ServiceNodeMgr::instance().getSnEntries();
+    std::set<std::string> usedAliases;
+    for (const auto & entry : existingEntries)
+        usedAliases.insert(entry.alias);
 
-        if (!sn::ServiceNodeMgr::instance().loadSnConfig(entries))
-            throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
+    // alias regex
+    std::regex re("^[a-zA-Z0-9\\-\\_]+$");
 
-    } else if (type.get_str() == "list") {
-        const UniValue & list = request.params[1];
-        if (!list.isArray())
-            throw JSONRPCError(RPC_INVALID_PARAMETER, R"(the list type must be a javascript array of objects, for example [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])");
+    std::vector<sn::ServiceNodeConfigEntry> tmpEntries;
+    for (int i = 0; i < static_cast<int>(arr.size()); ++i) {
+        std::map<std::string, UniValue> snode;
+        arr[i].getObjMap(snode);
 
-        const auto & arr = list.get_array();
-        if (arr.empty())
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "the list cannot be empty");
-        if (!arr[0].isObject())
-            throw JSONRPCError(RPC_INVALID_PARAMETER, R"(the list type must be a javascript array of objects, for example [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"},{"alias":"snode2","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])");
+        // Check alias
+        if (!snode.count("alias") || !snode["alias"].isStr())
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "bad alias");
 
-        std::vector<sn::ServiceNodeConfigEntry> tmpEntries;
-        for (int i = 0; i < static_cast<int>(arr.size()); ++i) {
-            std::map<std::string, UniValue> snode;
-            arr[i].getObjMap(snode);
+        const auto & alias = snode["alias"].get_str();
 
-            // Check alias
-            if (!snode.count("alias") || !snode["alias"].isStr())
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "bad alias");
-            const auto & alias = snode["alias"].get_str();
-            // no spaces allowed
-            int spaces = std::count_if(alias.begin(), alias.end(), [](const unsigned char & c) { return std::isspace(c); });
-            if (spaces > 0)
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "bad alias, whitespace is not allowed: " + alias);
+        // Check if alias already exists
+        if (usedAliases.count(alias))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad service node alias, alias %s already exists in the config", alias));
 
-            // Check tier
-            sn::ServiceNode::Tier tier;
-            if (!snode.count("tier") || !sn::ServiceNodeMgr::tierFromString(snode["tier"].get_str(), tier))
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "bad tier for " + alias);
+        std::smatch m;
+        if (!std::regex_match(alias, m, re))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad service node alias, only alpha numeric aliases are allowed with no spaces: %s", alias));
 
-            // Check address (required for non-free tier)
-            std::string address;
-            if (!snode.count("address") && !sn::ServiceNodeMgr::freeTier(tier)) // only free tier can have an optional address
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "address is required for " + alias);
-            else // if paid tier
-                address = snode["address"].get_str();
-            CTxDestination addr;
-            if (!sn::ServiceNodeMgr::freeTier(tier)) {
-                addr = DecodeDestination(address);
-                if (!IsValidDestination(addr))
-                    throw JSONRPCError(RPC_INVALID_PARAMETER, "bad address for " + alias);
-            }
+        // Check tier
+        sn::ServiceNode::Tier tier;
+        if (!snode.count("tier") || !sn::ServiceNodeMgr::tierFromString(snode["tier"].get_str(), tier))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "bad tier for " + alias);
 
-            CKey key; key.MakeNewKey(true);
-            tmpEntries.emplace_back(alias, tier, key, addr);
+        // Check address (required for non-free tier)
+        std::string address;
+        if (!snode.count("address") && !sn::ServiceNodeMgr::freeTier(tier)) // only free tier can have an optional address
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "address is required for " + alias);
+        else // if paid tier
+            address = snode["address"].get_str();
+        CTxDestination addr;
+        if (!sn::ServiceNodeMgr::freeTier(tier)) {
+            addr = DecodeDestination(address);
+            if (!IsValidDestination(addr))
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "bad address for " + alias);
         }
 
-        if (!sn::ServiceNodeMgr::writeSnConfig(tmpEntries))
-            throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
-
-        if (!sn::ServiceNodeMgr::instance().loadSnConfig(entries))
-            throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
-
-    } else if (type.get_str() == "remove") {
-        std::vector<sn::ServiceNodeConfigEntry> none;
-        if (!sn::ServiceNodeMgr::writeSnConfig(none, false))
-            throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
-        sn::ServiceNodeMgr::instance().removeSnEntries();
-        UniValue r(UniValue::VBOOL); r.setBool(true);
-        return r; // done
-    } else {
-        throw JSONRPCError(RPC_INVALID_PARAMS, "Acceptable types are: auto,list,remove");
+        CKey key; key.MakeNewKey(true);
+        tmpEntries.emplace_back(alias, tier, key, addr);
     }
+
+    existingEntries.insert(existingEntries.end(), tmpEntries.begin(), tmpEntries.end());
+    if (!sn::ServiceNodeMgr::writeSnConfig(tmpEntries))
+        throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
+
+    std::set<sn::ServiceNodeConfigEntry> entries;
+    if (!sn::ServiceNodeMgr::instance().loadSnConfig(entries))
+        throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
 
     for (const auto & entry : entries) {
         UniValue obj(UniValue::VOBJ);
@@ -161,6 +211,51 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     }
 
     return ret;
+}
+
+static UniValue servicenoderemove(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+            RPCHelpMan{"servicenoderemove",
+                "\nRemoves all service nodes from the servicenode.conf. Or if \"alias\" is specified, only removes the\n"
+                "service node with the specified alias.\n",
+                {
+                    {"alias", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Service node alias"},
+                },
+                RPCResult{
+                "true\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenoderemove", "")
+                  + HelpExampleRpc("servicenoderemove", "")
+                  + HelpExampleCli("servicenoderemove", "snode0")
+                  + HelpExampleRpc("servicenoderemove", "snode0")
+                },
+            }.ToString());
+
+    UniValue r(UniValue::VBOOL); r.setBool(false);
+
+    if (request.params[0].isNull()) {
+        std::vector<sn::ServiceNodeConfigEntry> none;
+        if (!sn::ServiceNodeMgr::writeSnConfig(none, false))
+            throw JSONRPCError(RPC_MISC_ERROR, "failed to write to servicenode.conf, check file permissions");
+        sn::ServiceNodeMgr::instance().removeSnEntries();
+        r.setBool(true);
+        return r;
+    }
+
+    const auto alias = request.params[0].get_str();
+    auto entries = sn::ServiceNodeMgr::instance().getSnEntries();
+    for (const auto & entry : entries) {
+        if (entry.alias == alias) {
+            sn::ServiceNodeMgr::instance().removeSnEntry(entry);
+            r.setBool(true);
+            break;
+        }
+    }
+
+    return r;
 }
 
 static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
@@ -723,7 +818,8 @@ static UniValue servicenodelegacy(const JSONRPCRequest& request)
 static const CRPCCommand commands[] =
 { //  category              name                       actor (function)          argNames
   //  --------------------- -------------------------- ------------------------- ----------
-    { "servicenode",        "servicenodesetup",        &servicenodesetup,        {"type", "options"} },
+    { "servicenode",        "servicenodesetup",        &servicenodesetup,        {"address", "alias"} },
+    { "servicenode",        "servicenodesetuplist",    &servicenodesetuplist,    {"list"} },
     { "servicenode",        "servicenodecreateinputs", &servicenodecreateinputs, {"nodeaddress", "nodecount", "inputsize"} },
     { "servicenode",        "servicenodegenkey",       &servicenodegenkey,       {} },
     { "servicenode",        "servicenoderegister",     &servicenoderegister,     {"alias"} },
@@ -732,6 +828,7 @@ static const CRPCCommand commands[] =
     { "servicenode",        "servicenodestatus",       &servicenodestatus,       {} },
     { "servicenode",        "servicenodelist",         &servicenodelist,         {} },
     { "servicenode",        "servicenodesendping",     &servicenodesendping,     {} },
+    { "servicenode",        "servicenoderemove",       &servicenoderemove,       {"alias"} },
     { "servicenode",        "servicenode",             &servicenodelegacy,       {"command"} },
 };
 // clang-format on

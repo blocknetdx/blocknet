@@ -84,7 +84,6 @@ public:
         LOCK(mu);
         snodes.clear();
         seenPackets.clear();
-        snodeUtxos.clear();
         snodeEntries.clear();
     }
 
@@ -210,7 +209,20 @@ public:
             if (!haveAddr)
                 return false; // stop if wallets do not have the collateral address
 
-            if (!findCollateral(tier, dest, {wallet}, collateral)) {
+            // Exclude already used collateral utxos
+            std::set<COutPoint> alreadyAllocatedUtxos;
+            {
+                LOCK(mu);
+                for (const auto & item : snodes) {
+                    const auto & s = item.second;
+                    if (s->getSnodePubKey() != snodePubKey) { // exclude registering snode
+                        const auto & c = s->getCollateral();
+                        alreadyAllocatedUtxos.insert(c.begin(), c.end());
+                    }
+                }
+            }
+
+            if (!findCollateral(tier, dest, {wallet}, collateral, alreadyAllocatedUtxos)) {
                 LogPrint(BCLog::SNODE, "service node registration failed, bad collateral: %s\n", address);
                 return false; // fail on bad collateral
             }
@@ -265,11 +277,6 @@ public:
     bool sendPing(const uint32_t & protocol, const std::string & config, CConnman *connman) {
         if (!hasActiveSn()) {
             LogPrint(BCLog::SNODE, "service node ping failed, service node not found\n");
-            return false;
-        }
-
-        if (config.empty()) {
-            LogPrint(BCLog::SNODE, "service node ping failed, empty config\n");
             return false;
         }
 
@@ -360,6 +367,22 @@ public:
     bool hasActiveSn() {
         LOCK(mu);
         return gArgs.GetBoolArg("-servicenode", false) && !snodeEntries.empty();
+    }
+
+    /**
+     * Removes the specified snode entry.
+     * @return
+     */
+    void removeSnEntry(const ServiceNodeConfigEntry & entry) {
+        {
+            LOCK(mu);
+            if (!snodeEntries.count(entry))
+                return;
+            snodeEntries.erase(entry);
+            writeSnConfig(std::vector<ServiceNodeConfigEntry>(snodeEntries.begin(), snodeEntries.end()), false);
+        }
+        if (hasSn(entry.key.GetPubKey()))
+            removeSn(entry.key.GetPubKey());
     }
 
     /**
@@ -749,7 +772,8 @@ protected:
      * @return
      */
     bool findCollateral(const ServiceNode::Tier & tier, const CTxDestination & dest,
-            const std::vector<std::shared_ptr<CWallet>> & wallets, std::vector<COutPoint> & collateral)
+            const std::vector<std::shared_ptr<CWallet>> & wallets, std::vector<COutPoint> & collateral,
+            const std::set<COutPoint> & excludedUtxos)
     {
         std::vector<COutput> allCoins;
         for (auto & wallet : wallets) {
@@ -762,7 +786,7 @@ protected:
             for (const auto & coin : coins) {
                 if (coin.nDepth < 1)
                     continue; // skip coin that doesn't have confirmations
-                if (snodeUtxos.count(coin.GetInputCoin().outpoint) > 0)
+                if (excludedUtxos.count(coin.GetInputCoin().outpoint) > 0)
                     continue; // skip coin already used in other snodes
                 CTxDestination destination;
                 if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, destination))
@@ -851,7 +875,6 @@ protected:
     Mutex mu;
     std::map<CPubKey, ServiceNodePtr> snodes;
     std::set<uint256> seenPackets;
-    std::set<COutPoint> snodeUtxos;
     std::set<ServiceNodeConfigEntry> snodeEntries;
 };
 
