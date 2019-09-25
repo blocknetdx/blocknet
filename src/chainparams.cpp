@@ -261,7 +261,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1577750400; // December 31, 2019
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00");
+        consensus.nMinimumChainWork = uint256S("00000000000000000000000000000000000000000000000060ea1c6a32e52516");
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0xfd935a7af6c3ba6c776ed08aeafea7cef435441157918f20f7efba20b35e4fd2"); // 192874
@@ -312,14 +312,15 @@ public:
         checkpointData = {
             {
                 {0, uint256S("0x0fd62ae4f74c7ee0c11ef60fc5a2e69a5c02eaee2e77b21c3db70934b5a5c8b9")},
+                {302806, uint256S("0x54d0094600b90ae113cd54360058206b00eb1db2a5a9ae9a95e40f553edb2042")},
             }
         };
 
         chainTxData = ChainTxData{
-            // Data from rpc: getchaintxstats 43200 a015e3cce43d171c25534a0e083d87be7b4019a7888c9164e9161d29ae556dce
-            /* nTime    */ 1559759308,
-            /* nTxCount */ 387003,
-            /* dTxRate  */ 0.03284397695796687
+            // Data from rpc: getchaintxstats
+            /* nTime    */ 1569438390,
+            /* nTxCount */ 607030,
+            /* dTxRate  */ 0.03213750146763548
         };
 
         /* enable fallback fee on testnet */
