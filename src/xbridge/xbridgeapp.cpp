@@ -729,6 +729,8 @@ std::vector<std::string> App::networkCurrencies() const
     auto snodes = sn::ServiceNodeMgr::instance().list();
     // Obtain unique xwallets supported across network
     for (auto & sn : snodes) {
+        if (!sn.running())
+            continue;
         for (auto &w : sn.serviceList()) {
             if (!coins.count(w))
                 coins.insert(w);
@@ -2111,6 +2113,8 @@ std::map<::CPubKey, App::XWallets> App::allServices()
     std::map<::CPubKey, App::XWallets> ws;
     const auto & snodes = sn::ServiceNodeMgr::instance().list();
     for (const auto & snode : snodes) {
+        if (!snode.running())
+            continue;
         ws[snode.getSnodePubKey()] = XWallets{
             snode.getProtocolVersion(), snode.getSnodePubKey(),
             std::set<std::string>{snode.serviceList().begin(), snode.serviceList().end()}
@@ -2134,6 +2138,8 @@ std::map<::CPubKey, App::XWallets> App::walletServices()
 
     const auto & snodes = sn::ServiceNodeMgr::instance().list();
     for (const auto & snode : snodes) {
+        if (!snode.running())
+            continue;
         const auto & services = snode.serviceList();
         std::set<std::string> xwallets;
         for (const auto & s : services) {
