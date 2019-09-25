@@ -44,6 +44,7 @@
 
 #include <openssl/rand.h>
 #include <openssl/md5.h>
+#include <xbridge/util/txlog.h>
 
 using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
 using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
@@ -1455,11 +1456,11 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     assert(ptr->xPubKey.size() == 33 && "bad pubkey size");
 
 #ifdef LOG_KEYPAIR_VALUES
-    LOG() << "generated M keypair " << std::endl <<
+    TXLOG() << "generated M keypair for order " << ptr->id.ToString() << std::endl <<
              "    pub    " << HexStr(ptr->mPubKey) << std::endl <<
              "    pub id " << HexStr(connTo->getKeyId(ptr->mPubKey)) << std::endl <<
              "    priv   " << HexStr(ptr->mPrivKey);
-    LOG() << "generated X keypair " << std::endl <<
+    TXLOG() << "generated X keypair for order " << ptr->id.ToString() << std::endl <<
              "    pub    " << HexStr(ptr->xPubKey) << std::endl <<
              "    pub id " << HexStr(connTo->getKeyId(ptr->xPubKey)) << std::endl <<
              "    priv   " << HexStr(ptr->xPrivKey);
@@ -1794,7 +1795,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     assert(ptr->mPubKey.size() == 33 && "bad pubkey size");
 
 #ifdef LOG_KEYPAIR_VALUES
-    LOG() << "generated M keypair " << std::endl <<
+    TXLOG() << "generated M keypair for order " << ptr->id.ToString() << std::endl <<
              "    pub    " << HexStr(ptr->mPubKey) << std::endl <<
              "    pub id " << HexStr(connTo->getKeyId(ptr->mPubKey)) << std::endl <<
              "    priv   " << HexStr(ptr->mPrivKey);
