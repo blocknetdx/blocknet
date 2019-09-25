@@ -223,6 +223,53 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex failed to update on stake");
     }
 
+    // Check amount other than 0 specified in coinstake should not be accepted
+    {
+        CBlock block;
+        uint256 blockHash;
+        CMutableTransaction coinbaseTx;
+        CMutableTransaction coinstakeTx;
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
+        block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+        coinstakeTx.vout[0] = CTxOut(stakeAmount, paymentScript);
+        coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue, paymentScript); // staker payment
+        BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
+        block.vtx[1] = MakeTransactionRef(coinstakeTx);
+        block.hashMerkleRoot = BlockMerkleRoot(block);
+        BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+        blockHash = chainActive.Tip()->GetBlockHash();
+        ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
+        BOOST_CHECK_EQUAL(blockHash, chainActive.Tip()->GetBlockHash()); // block should not be accepted
+        BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex should not update on bad stake");
+    }
+
+    // Check multiple coinstakes should be rejected
+    {
+        CBlock block;
+        uint256 blockHash;
+        CMutableTransaction coinbaseTx;
+        CMutableTransaction coinstakeTx1;
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx1);
+        CMutableTransaction coinstakeTx2 = coinstakeTx1;
+        block.vtx.resize(3);
+        block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+        coinstakeTx1.vout[1] = CTxOut(nextStake.coin->txout.nValue, paymentScript); // staker payment
+        coinstakeTx2.vout[1] = CTxOut(stakeAmount, paymentScript); // staker payment
+        BOOST_CHECK(signCoinstake(coinstakeTx1, wallet.get()));
+        block.vtx[1] = MakeTransactionRef(coinstakeTx1);
+        block.vtx[2] = MakeTransactionRef(coinstakeTx2);
+        block.hashMerkleRoot = BlockMerkleRoot(block);
+        BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+        blockHash = chainActive.Tip()->GetBlockHash();
+        ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
+        BOOST_CHECK_EQUAL(blockHash, chainActive.Tip()->GetBlockHash()); // block should not be accepted
+        BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex should not update on bad stake");
+    }
+
     // Check invalid stake amount
     {
         scanWalletTxs(wallet.get());
@@ -235,6 +282,28 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
         block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
         coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount*100, paymentScript); // staker payment
+        BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
+        block.vtx[1] = MakeTransactionRef(coinstakeTx);
+        block.hashMerkleRoot = BlockMerkleRoot(block);
+        BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+        blockHash = chainActive.Tip()->GetBlockHash();
+        ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
+        BOOST_CHECK_EQUAL(blockHash, chainActive.Tip()->GetBlockHash()); // block should not be accepted
+        BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex should not update on bad stake");
+    }
+
+    // Check negative stake amount
+    {
+        scanWalletTxs(wallet.get());
+        CBlock block;
+        uint256 blockHash;
+        CMutableTransaction coinbaseTx;
+        CMutableTransaction coinstakeTx;
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
+        block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+        coinstakeTx.vout[1] = CTxOut(-1 * (nextStake.coin->txout.nValue + stakeAmount), paymentScript); // staker payment
         BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
         block.vtx[1] = MakeTransactionRef(coinstakeTx);
         block.hashMerkleRoot = BlockMerkleRoot(block);
