@@ -102,10 +102,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1577750400; // December 31, 2019
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x00");
+        consensus.nMinimumChainWork = uint256S("0x00000000000000000000000000000000000000000000000332e93ed93d394e57");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x00"); // TODO Blocknet set defaultAssumeValid to valid block hash (see release notes)
+        consensus.defaultAssumeValid = uint256S("0x566452bd3fd8608f83a6af45711af88877e54a137cac030ef3d9d134124c0c05");
 
         // Last POW block
         consensus.lastPOWBlock = 2000;
@@ -165,15 +165,15 @@ public:
                 {450000, uint256S("0xe6b2969308f015907b5dbfbca23076d06d4efbac3b768b939c941f3416c3210c")},
                 {700000, uint256S("0xe2f5aa60986b6524e8c4c0983a7212ed8bef9fe0fa5c284277bb3329bc33d9af")},
                 {900000, uint256S("0x40cf476ac051614b28a35ccbf55bcddb9691966a391ec5aa74bb4b8152e072b3")},
+                {1110080, uint256S("0x566452bd3fd8608f83a6af45711af88877e54a137cac030ef3d9d134124c0c05")},
             }
         };
 
         chainTxData = ChainTxData{
-            // TODO Blocknet chaintxdata 1 month worth
             // Data from rpc: getchaintxstats 43200 [block_hash]
-            /* nTime    */ 0,
-            /* nTxCount */ 0,
-            /* dTxRate  */ 0
+            /* nTime    */ 1569443831,
+            /* nTxCount */ 2525882,
+            /* dTxRate  */ 0.03586100549040774
         };
 
         /* disable fallback fee on mainnet */
