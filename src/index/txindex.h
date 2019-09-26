@@ -32,6 +32,8 @@ protected:
 
     const char* GetName() const override { return "txindex"; }
 
+    void ThreadSync();
+
 public:
     /// Constructs the index, which becomes available to be queried.
     explicit TxIndex(size_t n_cache_size, bool f_memory = false, bool f_wipe = false);
@@ -46,6 +48,50 @@ public:
     /// @param[out]  tx  The transaction itself.
     /// @return  true if transaction is found, false otherwise
     bool FindTx(const uint256& tx_hash, uint256& block_hash, CTransactionRef& tx) const;
+
+    /// Override start command
+    void Start() {
+        if (!Init()) {
+            FatalError("%s: %s failed to initialize", __func__, GetName());
+            return;
+        }
+    }
+
+    /// Sync up to the current tip.
+    void Sync() {
+        CBlockLocator locator;
+        if (!GetDB().ReadBestBlock(locator)) {
+            locator.SetNull();
+        }
+
+        {
+            LOCK(cs_main);
+            if (locator.IsNull()) {
+                m_best_block_index = nullptr;
+            } else {
+                m_best_block_index = FindForkInGlobalIndex(chainActive, locator);
+            }
+            m_synced = m_best_block_index.load() == chainActive.Tip();
+        }
+
+        ThreadSync();
+    }
+
+    /// Connect block to the index
+    void BlockConnectedSync(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
+                            const std::vector<CTransactionRef>& txn_conflicted) {
+        BlockConnected(block, pindex, txn_conflicted);
+    }
+
+    /// Write block index
+    void ChainStateFlushedSync(const CBlockLocator& locator) {
+        ChainStateFlushed(locator);
+    }
+
+    /// Returns txindex best block index
+    const CBlockIndex* BestBlockIndex() {
+        return m_best_block_index;
+    }
 };
 
 /// The global transaction index, used in GetTransaction. May be null.

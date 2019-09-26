@@ -287,3 +287,138 @@ bool TxIndex::FindTx(const uint256& tx_hash, uint256& block_hash, CTransactionRe
     block_hash = header.GetHash();
     return true;
 }
+
+/**
+ * Threaded txindex sync
+ */
+void TxIndex::ThreadSync()
+{
+    auto writeBestBlock = [this](CCriticalSection & cs_main, int startingHeight, int totalBlocks) {
+        LOCK(cs_main);
+        CBlockIndex *blockIndex = chainActive[startingHeight + totalBlocks];
+        if (blockIndex) {
+            WriteBestBlock(blockIndex);
+            m_best_block_index = blockIndex;
+            LogPrintf("%s is enabled at height %d\n", GetName(), blockIndex->nHeight);
+        } else {
+            LogPrintf("%s is enabled\n", GetName());
+        }
+    };
+
+    const CBlockIndex *pindex = m_best_block_index.load();
+
+    // If txindex is already caught up
+    if (pindex == chainActive.Tip()) {
+        writeBestBlock(cs_main, pindex->nHeight, 0);
+        m_synced = true;
+        return;
+    }
+
+    int totalBlocks{0};
+    int startingHeight{0};
+    {
+        LOCK(cs_main);
+        if (pindex) {
+            startingHeight = pindex->nHeight + 1;
+            totalBlocks = chainActive.Height() - startingHeight;
+        } else
+            totalBlocks = chainActive.Height();
+    }
+
+    const auto & consensus = Params().GetConsensus();
+    const auto cores = GetNumCores();
+    LogPrintf("Loading txindex with %u thread%s\n", cores, cores > 1 ? "s" : "");
+    LogPrintf("Loading txindex [0%%]\n");
+
+    // For small number of blocks use single thread
+    if (totalBlocks < 1440) {
+        for (int i = startingHeight; i < totalBlocks; ++i) {
+            CBlockIndex *blockIndex = nullptr;
+            {
+                LOCK(cs_main);
+                blockIndex = chainActive[i];
+            }
+            CBlock block;
+            if (!ReadBlockFromDisk(block, blockIndex, consensus)) {
+                FatalError("txindex failed to read block %s from disk", blockIndex->GetBlockHash().ToString());
+                return;
+            }
+            if (!WriteBlock(block, blockIndex)) {
+                FatalError("txindex failed to write block %s to index database", blockIndex->GetBlockHash().ToString());
+                return;
+            }
+        }
+        writeBestBlock(cs_main, startingHeight, totalBlocks);
+        m_synced = true;
+        return;
+    }
+
+    // Use multiple threads to load the txindex. First the indices are sharded
+    // one for each cpu thread. SSDs will see the highest performance gain,
+    // older disks might not see any improvements. Each thread works on its
+    // own shard and loads transaction data from disk as needed. Threads sync
+    // on a counter to report progress. Threads will break on the shutdown
+    // request to prevent hangs during an abrupt shutdown. Caught exceptions
+    // will result in a graceful shutdown request if possible.
+
+    // Shard the block indices into 1 per cpu thread (or core depending on system)
+    std::vector<std::shared_ptr<CBlock>> blocks;
+    std::vector<std::vector<int>> slices;
+    auto allIndices = static_cast<const int>(totalBlocks);
+    slices.resize(cores);
+    for (int i = 0; i < totalBlocks; ++i) {
+        const int idx = i % cores;
+        slices[idx].push_back(startingHeight + i);
+    }
+
+    // Init txindex db with multiple threads
+    boost::thread_group tg;
+    unsigned int counter{0};
+    Mutex mu;
+    for (const auto & shard : slices) {
+        try {
+            tg.create_thread([&shard,&mu,&allIndices,&counter,consensus,this] {
+                RenameThread("bitcoin-txindex");
+                for (const auto i : shard) {
+                    if (ShutdownRequested())
+                        break;
+
+                    CBlockIndex *pindex = nullptr;
+                    {
+                        LOCK(cs_main);
+                        pindex = chainActive[i];
+                    }
+
+                    CBlock block;
+                    if (!ReadBlockFromDisk(block, pindex, consensus)) {
+                        FatalError("txindex failed to read block %s from disk", pindex->GetBlockHash().ToString());
+                        return;
+                    }
+                    if (!WriteBlock(block, pindex)) {
+                        FatalError("txindex failed to write block %s to index database", pindex->GetBlockHash().ToString());
+                        return;
+                    }
+
+                    {
+                        LOCK(mu);
+                        ++counter;
+                        const int perticks = 10;
+                        const int shardpos = allIndices < perticks ? 1 : static_cast<int>((double)allIndices/(double)perticks);
+                        if (counter % shardpos == 0) {
+                            int p = static_cast<int>((double)counter/(double)allIndices*100.0);
+                            LogPrintf("Loading txindex [%u%%]\n", p);
+                        }
+                    }
+
+                }
+            });
+        } catch (...) {
+            FatalError("txindex failed to create init thread");
+            return;
+        }
+    }
+    tg.join_all();
+
+    writeBestBlock(cs_main, startingHeight, totalBlocks);
+    m_synced = true;
+}

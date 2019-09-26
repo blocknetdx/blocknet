@@ -4,28 +4,13 @@
 
 #include <chainparams.h>
 #include <index/base.h>
-#include <shutdown.h>
 #include <tinyformat.h>
-#include <ui_interface.h>
 #include <util/system.h>
-#include <warnings.h>
 
 constexpr char DB_BEST_BLOCK = 'B';
 
 constexpr int64_t SYNC_LOG_INTERVAL = 10; // seconds
 constexpr int64_t SYNC_LOCATOR_WRITE_INTERVAL = 30; // seconds
-
-template<typename... Args>
-static void FatalError(const char* fmt, const Args&... args)
-{
-    std::string strMessage = tfm::format(fmt, args...);
-    SetMiscWarning(strMessage);
-    LogPrintf("*** %s\n", strMessage);
-    uiInterface.ThreadSafeMessageBox(
-        "Error: A fatal internal error occurred, see debug.log for details",
-        "", CClientUIInterface::MSG_ERROR);
-    StartShutdown();
-}
 
 BaseIndex::DB::DB(const fs::path& path, size_t n_cache_size, bool f_memory, bool f_wipe, bool f_obfuscate) :
     CDBWrapper(path, n_cache_size, f_memory, f_wipe, f_obfuscate)
@@ -265,9 +250,8 @@ void BaseIndex::Start()
         return;
     }
 
-    // Blocknet PoS syncs index in real-time, as a result this background thread is not required
-//    m_thread_sync = std::thread(&TraceThread<std::function<void()>>, GetName(),
-//                                std::bind(&BaseIndex::ThreadSync, this));
+    m_thread_sync = std::thread(&TraceThread<std::function<void()>>, GetName(),
+                                std::bind(&BaseIndex::ThreadSync, this));
 }
 
 void BaseIndex::Stop()

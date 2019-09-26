@@ -9,12 +9,27 @@
 #include <dbwrapper.h>
 #include <primitives/block.h>
 #include <primitives/transaction.h>
+#include <shutdown.h>
 #include <threadinterrupt.h>
+#include <ui_interface.h>
 #include <uint256.h>
 #include <validation.h>
 #include <validationinterface.h>
+#include <warnings.h>
 
 class CBlockIndex;
+
+template<typename... Args>
+static void FatalError(const char* fmt, const Args&... args)
+{
+    std::string strMessage = tfm::format(fmt, args...);
+    SetMiscWarning(strMessage);
+    LogPrintf("*** %s\n", strMessage);
+    uiInterface.ThreadSafeMessageBox(
+            "Error: A fatal internal error occurred, see debug.log for details",
+            "", CClientUIInterface::MSG_ERROR);
+    StartShutdown();
+}
 
 /**
  * Base class for indices of blockchain data. This implements
@@ -37,7 +52,7 @@ protected:
         bool WriteBestBlock(const CBlockLocator& locator);
     };
 
-private:
+protected:
     /// Whether the index is in sync with the main chain. The flag is flipped
     /// from false to true once, after which point this starts processing
     /// ValidationInterface notifications to stay in sync.
@@ -95,42 +110,6 @@ public:
 
     /// Stops the instance from staying in sync with blockchain updates.
     void Stop();
-
-    /// Sync up to the current tip.
-    void Sync() {
-        CBlockLocator locator;
-        if (!GetDB().ReadBestBlock(locator)) {
-            locator.SetNull();
-        }
-
-        {
-            LOCK(cs_main);
-            if (locator.IsNull()) {
-                m_best_block_index = nullptr;
-            } else {
-                m_best_block_index = FindForkInGlobalIndex(chainActive, locator);
-            }
-            m_synced = m_best_block_index.load() == chainActive.Tip();
-        }
-
-        ThreadSync();
-    }
-
-    /// Connect block to the index
-    void BlockConnectedSync(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
-                        const std::vector<CTransactionRef>& txn_conflicted) {
-        BlockConnected(block, pindex, txn_conflicted);
-    }
-
-    /// Write block index
-    void ChainStateFlushedSync(const CBlockLocator& locator) {
-        ChainStateFlushed(locator);
-    }
-
-    /// Returns txindex best block index
-    const CBlockIndex* BestBlockIndex() {
-        return m_best_block_index;
-    }
 };
 
 #endif // BITCOIN_INDEX_BASE_H
