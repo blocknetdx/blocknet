@@ -46,11 +46,13 @@ RUN mkdir -p $DISTDIR \
   && tar xzvf depends-v18-win-bionic2.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
-  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CFLAGS="-g -O0" CXXFLAGS="-g -O0 -Wno-deprecated -Wa,-mbig-obj" --disable-maintainer-mode --disable-dependency-tracking --enable-debug --prefix=/ \
+  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-reduce-exports --disable-bench --disable-gui-tests \
   && make clean \
   && echo "Building with cores: $ecores" \
   && make -j$ecores \
+  && make deploy \
   && make install DESTDIR=$DISTDIR \
+  && cp *win64-setup.exe $DISTDIR/bin/bitcoin-win64-setup.exe \
   && make clean
 
 WORKDIR /opt/blocknetdx/dist

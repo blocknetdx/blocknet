@@ -49,7 +49,7 @@ test_win:
   - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoin-qt.exe\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoin-tx.exe\" ];"
   - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/test_bitcoin.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/test_bitcoin-qt.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoin-win64-setup.exe\" ];"
 
 build_mac:
   stage: build
