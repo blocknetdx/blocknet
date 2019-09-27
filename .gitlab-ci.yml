@@ -1,6 +1,3 @@
-before_script:
-  - docker info
-
 build_linux:
   stage: build
   script:
