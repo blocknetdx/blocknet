@@ -92,6 +92,9 @@ public:
     const CBlockIndex* BestBlockIndex() {
         return m_best_block_index;
     }
+
+private:
+    void writeBestBlock(const int height);
 };
 
 /// The global transaction index, used in GetTransaction. May be null.

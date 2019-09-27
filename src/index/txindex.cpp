@@ -289,27 +289,34 @@ bool TxIndex::FindTx(const uint256& tx_hash, uint256& block_hash, CTransactionRe
 }
 
 /**
+ * Helper that writes the best block index on the txindex.
+ * @param height
+ */
+void TxIndex::writeBestBlock(const int height) {
+    CBlockIndex *blockIndex = nullptr;
+    {
+        LOCK(cs_main);
+        blockIndex = chainActive[height];
+    }
+    if (blockIndex) {
+        WriteBestBlock(blockIndex);
+        m_best_block_index = blockIndex;
+        LogPrintf("%s is enabled at height %d\n", GetName(), blockIndex->nHeight);
+    } else {
+        LogPrintf("%s is enabled\n", GetName());
+    }
+}
+
+/**
  * Threaded txindex sync
  */
 void TxIndex::ThreadSync()
 {
-    auto writeBestBlock = [this](CCriticalSection & cs_main, int startingHeight, int totalBlocks) {
-        LOCK(cs_main);
-        CBlockIndex *blockIndex = chainActive[startingHeight + totalBlocks];
-        if (blockIndex) {
-            WriteBestBlock(blockIndex);
-            m_best_block_index = blockIndex;
-            LogPrintf("%s is enabled at height %d\n", GetName(), blockIndex->nHeight);
-        } else {
-            LogPrintf("%s is enabled\n", GetName());
-        }
-    };
-
     const CBlockIndex *pindex = m_best_block_index.load();
 
     // If txindex is already caught up
     if (pindex == chainActive.Tip()) {
-        writeBestBlock(cs_main, pindex->nHeight, 0);
+        writeBestBlock(pindex->nHeight);
         m_synced = true;
         return;
     }
@@ -348,7 +355,7 @@ void TxIndex::ThreadSync()
                 return;
             }
         }
-        writeBestBlock(cs_main, startingHeight, totalBlocks);
+        writeBestBlock(startingHeight + totalBlocks);
         m_synced = true;
         return;
     }
@@ -419,6 +426,6 @@ void TxIndex::ThreadSync()
     }
     tg.join_all();
 
-    writeBestBlock(cs_main, startingHeight, totalBlocks);
+    writeBestBlock(startingHeight + totalBlocks);
     m_synced = true;
 }
