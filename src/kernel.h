@@ -357,10 +357,15 @@ private:
 
 
 void static ThreadStakeMinter() {
-    RenameThread("staker");
+    RenameThread("blocknet-staker");
     LogPrintf("Staker has started\n");
     StakeMgr staker;
     while (!ShutdownRequested()) {
+        const int sleepTimeSeconds{1};
+        if (IsInitialBlockDownload()) { // do not stake during initial download
+            boost::this_thread::sleep_for(boost::chrono::seconds(sleepTimeSeconds));
+            continue;
+        }
         try {
             auto wallets = GetWallets();
             CBlockIndex *pindex = nullptr;
@@ -375,7 +380,7 @@ void static ThreadStakeMinter() {
         } catch (std::exception & e) {
             LogPrintf("Staker ran into an exception: %s\n", e.what());
         } catch (...) { }
-        boost::this_thread::sleep_for(boost::chrono::seconds(1));
+        boost::this_thread::sleep_for(boost::chrono::seconds(sleepTimeSeconds));
     }
     LogPrintf("Staker shutdown\n");
 }
