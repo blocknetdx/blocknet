@@ -83,12 +83,16 @@ public:
         std::shared_ptr<CWallet> wallet;
         int64_t time;
         uint256 hashBlock;
+        int64_t hashBlockTime;
         uint256 hashProofOfStake;
         explicit StakeCoin() {
             SetNull();
         }
-        explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time, uint256 hashBlock, uint256 hashProofOfStake)
-                  : coin(coin), wallet(wallet), time(time), hashBlock(hashBlock), hashProofOfStake(hashProofOfStake) { }
+        explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time,
+                           uint256 hashBlock, int64_t hashBlockTime, uint256 hashProofOfStake)
+                                          : coin(coin), wallet(wallet), time(time),
+                                            hashBlock(hashBlock), hashBlockTime(hashBlockTime),
+                                            hashProofOfStake(hashProofOfStake) { }
         bool IsNull() {
             return coin == nullptr;
         }
@@ -97,6 +101,7 @@ public:
             wallet = nullptr;
             time = 0;
             hashBlock.SetNull();
+            hashBlockTime = 0;
             hashProofOfStake.SetNull();
         }
     };
@@ -130,11 +135,11 @@ public:
         const int coinMaturity = params.coinMaturity;
         const auto minStakeAmount = static_cast<CAmount>(gArgs.GetArg("-minstakeamount", 0) * COIN);
 
-        for (auto pwallet : wallets) {
+        for (const auto & pwallet : wallets) {
             std::vector<COutput> coins; // all confirmed coins
             {
                 auto locked_chain = pwallet->chain().lock();
-                LOCK(pwallet->cs_wallet);
+                LOCK2(cs_main, pwallet->cs_wallet);
                 if (pwallet->IsLocked()) {
                     LogPrintf("Wallet is locked not staking inputs: %s", pwallet->GetDisplayName());
                     continue; // skip locked wallets
@@ -179,6 +184,14 @@ public:
             const auto out = item.out;
             boost::this_thread::interruption_point();
             const auto & txInBlockHash = out->tx->hashBlock;
+            int hashBlockTime{0};
+            {
+                LOCK(cs_main);
+                const auto pindex = LookupBlockIndex(out->tx->hashBlock);
+                if (!pindex)
+                    continue; // skip txs with block that can't be found
+                hashBlockTime = pindex->GetBlockTime();
+            }
 
             if (IsProtocolV05(lastUpdateTime)) { // if v05 staking protocol modifier is dynamic (not in hash lookup)
                 int64_t i = lastUpdateTime + 1;
@@ -192,13 +205,13 @@ public:
                     CDataStream ss(SER_GETHASH, 0);
                     ss << stakeModifier;
 
-                    const auto hashProofOfStake = stakeHashV05(ss, out->tx->GetTxTime(), tip->nHeight + 1, out->i, i);
+                    const auto hashProofOfStake = stakeHashV05(ss, hashBlockTime, tip->nHeight + 1, out->i, i);
                     if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
                         continue;
                     {
                         LOCK(mu);
                         stakeTimes[i].emplace_back(std::make_shared<CInputCoin>(out->GetInputCoin()), item.wallet, i,
-                                                   out->tx->hashBlock, hashProofOfStake);
+                                                   out->tx->hashBlock, hashBlockTime, hashProofOfStake);
                         break;
                     }
                 }
@@ -219,13 +232,13 @@ public:
 
                 int64_t i = lastUpdateTime + 1;
                 for (; i < endTime; ++i) {
-                    const auto hashProofOfStake = stakeHash(i, ss, out->i, out->tx->GetHash(), out->tx->GetTxTime());
+                    const auto hashProofOfStake = stakeHash(i, ss, out->i, out->tx->GetHash(), hashBlockTime);
                     if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
                         continue;
                     {
                         LOCK(mu);
                         stakeTimes[i].emplace_back(std::make_shared<CInputCoin>(out->GetInputCoin()), item.wallet, i,
-                                out->tx->hashBlock, hashProofOfStake);
+                                                   out->tx->hashBlock, hashBlockTime, hashProofOfStake);
                         break;
                     }
                 }
@@ -243,15 +256,19 @@ public:
         if (!tip)
             return false; // make sure tip is valid
 
-        StakeCoin nextStake;
-        if (!NextStake(nextStake, tip, chainparams))
+        std::vector<StakeCoin> nextStakes;
+        if (!NextStake(nextStakes, tip, chainparams))
             return false;
 
         stakeTimes.clear(); // reset stake selections on success or error
-        return StakeBlock(nextStake, chainparams);
+        for (const auto & nextStake : nextStakes) {
+            if (StakeBlock(nextStake, chainparams))
+                return true;
+        }
+        return false;
     }
 
-    bool NextStake(StakeCoin & nextStake, const CBlockIndex *tip, const CChainParams & chainparams) {
+    bool NextStake(std::vector<StakeCoin> & nextStakes, const CBlockIndex *tip, const CChainParams & chainparams) {
         LOCK(mu);
         if (stakeTimes.empty())
             return false;
@@ -277,18 +294,11 @@ public:
                 // Make sure stake still meets network requirements
                 if (!stakeTargetHit(stake.hashProofOfStake, stake.coin->txout.nValue, bnTargetPerCoinDay))
                     continue;
-                if (nextStake.IsNull()) { // select stake if none previously selected
-                    nextStake = stake;
-                    continue;
-                }
-                if (stake.coin->txout.nValue < nextStake.coin->txout.nValue) { // prefer smaller stake input
-                    nextStake = stake;
-                    break; // move to the next available stake time
-                }
+                nextStakes.push_back(stake);
             }
         }
 
-        return !nextStake.IsNull();
+        return !nextStakes.empty();
     }
 
     bool StakeBlock(const StakeCoin & stakeCoin, const CChainParams & chainparams) {

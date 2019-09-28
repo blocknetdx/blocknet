@@ -136,7 +136,11 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         }
 
         // Get a valid stake and then modify it to try and cheat the protocol
-        return staker.NextStake(nextStake, tip, Params());
+        std::vector<StakeMgr::StakeCoin> nextStakes;
+        if (!staker.NextStake(nextStakes, tip, Params()))
+            return false;
+        nextStake = nextStakes.front();
+        return true;
     };
 
     auto createStakeBlock = [](const StakeMgr::StakeCoin & nextStake, const CBlockIndex *tip, CBlock & block, CMutableTransaction & coinbaseTx, CMutableTransaction & coinstakeTx) {
