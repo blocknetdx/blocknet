@@ -370,14 +370,21 @@ void TxIndex::ThreadSync()
     // will result in a graceful shutdown request if possible.
 
     // Shard the block indices into 1 per cpu thread (or core depending on system)
+    struct range {
+        int begin{0};
+        int end{0};
+        explicit range(int begin, int end) : begin(begin), end(end) {}
+    };
     std::vector<std::shared_ptr<CBlock>> blocks;
-    std::vector<std::vector<int>> slices;
-    auto allIndices = static_cast<const int>(totalBlocks);
-    slices.resize(cores);
-    for (int i = 0; i < totalBlocks; ++i) {
-        const int idx = i % cores;
-        slices[idx].push_back(startingHeight + i);
+    std::vector<range> slices;
+    const auto allIndices = static_cast<int>(totalBlocks);
+    const auto shardSize = static_cast<int>(totalBlocks/cores);
+    for (int i = 0; i < cores; ++i) {
+        const int startH = startingHeight + shardSize * i;
+        const int endH = startH + shardSize - 1;
+        slices.emplace_back(startH, endH);
     }
+    slices[cores-1].end += totalBlocks % cores + 1; // add remainder to last shard, plus the last block
 
     // Init txindex db with multiple threads
     boost::thread_group tg;
@@ -387,7 +394,7 @@ void TxIndex::ThreadSync()
         try {
             tg.create_thread([&shard,&mu,&allIndices,&counter,consensus,this] {
                 RenameThread("bitcoin-txindex");
-                for (const auto i : shard) {
+                for (int i = shard.begin; i <= shard.end; ++i) {
                     if (ShutdownRequested())
                         break;
 
