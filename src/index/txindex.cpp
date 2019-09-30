@@ -316,7 +316,8 @@ void TxIndex::ThreadSync()
 
     // If txindex is already caught up
     if (pindex == chainActive.Tip()) {
-        writeBestBlock(pindex->nHeight);
+        if (pindex) // make sure index is defined
+            writeBestBlock(pindex->nHeight);
         m_synced = true;
         return;
     }
