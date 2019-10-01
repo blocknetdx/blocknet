@@ -19,7 +19,7 @@
 
 static UniValue servicenodesetup(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.empty() || request.params.size() > 3)
+    if (request.fHelp || request.params.empty() || request.params.size() > 2)
         throw std::runtime_error(
             RPCHelpMan{"servicenodesetup",
                 "\nAdds a Service Node to the servicenode.conf. Note* new snodes are appended to servicenode.conf\n",
