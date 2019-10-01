@@ -124,7 +124,11 @@ public:
         if (seenPacket(sn.getHash()))
             return false;
 
-        snode = *addSn(sn);
+        auto snptr = addSn(sn);
+        if (!snptr)
+            return false;
+
+        snode = *snptr;
         return true;
     }
 
@@ -898,17 +902,30 @@ protected:
     }
 
     void processValidationBlock(const std::shared_ptr<const CBlock>& block) {
+        // Store all spent vins
+        std::set<COutPoint> spent;
+        for (const auto & tx : block->vtx) {
+            for (const auto & vin : tx->vin)
+                spent.insert(vin.prevout);
+        }
+
+        // Check that existing snodes are valid
+        {
+            LOCK(mu);
+            for (const auto & item : snodes) {
+                auto snode = item.second;
+                for (const auto & collateral : snode->getCollateral()) {
+                    if (spent.count(collateral))
+                        snode->markInvalid();
+                }
+            }
+        }
+
         // Check if any of our snodes have inputs that were spent and/or staked
         std::set<ServiceNodeConfigEntry> entries;
         {
             LOCK(mu);
             entries = snodeEntries;
-        }
-
-        std::set<COutPoint> spent;
-        for (const auto & tx : block->vtx) {
-            for (const auto & vin : tx->vin)
-                spent.insert(vin.prevout);
         }
 
         std::vector<ServiceNodeConfigEntry> requiresRegistration;

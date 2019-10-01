@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         std::vector<COutput> coins;
         {
             LOCK2(cs_main, pos.wallet->cs_wallet);
-            pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins, true, nullptr, 500 * COIN);
         }
         // Spend the first available input in "coins"
         auto c = coins[0];
@@ -205,8 +205,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         for (int i = 0; i < coins.size(); ++i) {
             const auto & coin = coins[i];
             const auto txn = coin.tx->tx;
-            totalAmount += txn->GetValueOut();
-            collateral.emplace_back(txn->GetHash(), 0);
+            totalAmount += coin.GetInputCoin().txout.nValue;
+            collateral.emplace_back(txn->GetHash(), coin.i);
             if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
                 break;
         }
@@ -226,7 +226,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         std::vector<COutput> coins;
         {
             LOCK2(cs_main, pos.wallet->cs_wallet);
-            pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins, true, nullptr, 500 * COIN);
         }
         // Spend one of the collateral inputs (spend the 2nd coinbase input, b/c first was spent above)
         COutput c = coins[0];
@@ -242,18 +242,14 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 
         CValidationState state;
         LOCK(cs_main);
-        BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx),
-                                                    nullptr, // pfMissingInputs
-                                                    nullptr, // plTxnReplaced
-                                                    false,   // bypass_limits
-                                                    0));     // nAbsurdFee
+        BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx), nullptr, nullptr, false, 0));
         CAmount totalAmount{0};
         std::vector<COutPoint> collateral;
-        for (int i = 1; i < coins.size(); ++i) { // start at 1 (ignore first spent coinbase)
+        for (int i = 0; i < coins.size(); ++i) { // start at 1 (ignore first spent coinbase)
             const auto & coin = coins[i];
             const auto txn = coin.tx->tx;
-            totalAmount += txn->GetValueOut();
-            collateral.emplace_back(txn->GetHash(), 0);
+            totalAmount += coin.GetInputCoin().txout.nValue;
+            collateral.emplace_back(txn->GetHash(), coin.i);
             if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
                 break;
         }
@@ -266,6 +262,63 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         sn::ServiceNode snode;
         BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Should fail on spent collateral in mempool");
+    }
+
+    // Servicenode should be marked invalid if collateral is spent
+    {
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins, true, nullptr, 500 * COIN);
+        }
+        CAmount totalAmount{0};
+        std::vector<COutPoint> collateral;
+        for (int i = 1; i < coins.size(); ++i) { // start at 1 (ignore first spent coinbase)
+            const auto & coin = coins[i];
+            const auto txn = coin.tx->tx;
+            totalAmount += coin.GetInputCoin().txout.nValue;
+            collateral.emplace_back(txn->GetHash(), coin.i);
+            if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
+                break;
+        }
+        // Generate the signature from sig hash
+        const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
+        std::vector<unsigned char> sig;
+        BOOST_CHECK(pos.coinbaseKey.SignCompact(sighash, sig));
+        // Deserialize servicenode obj from network stream
+        sn::ServiceNode s;
+        BOOST_CHECK_NO_THROW(s = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        ss << s;
+        sn::ServiceNode s2;
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().processRegistration(ss, s2), "snode registration should succeed");
+
+        const auto snode = sn::ServiceNodeMgr::instance().getSn(snodePubKey);
+        BOOST_CHECK_MESSAGE(!snode.isNull(), "snode registration should succeed");
+        if (!snode.isNull()) {
+            RegisterValidationInterface(&sn::ServiceNodeMgr::instance());
+            const auto firstUtxo = snode.getCollateral().front();
+            CTransactionRef tx; uint256 hashBlock;
+            BOOST_CHECK_MESSAGE(GetTransaction(firstUtxo.hash, tx, Params().GetConsensus(), hashBlock), "failed to get snode collateral");
+            CMutableTransaction mtx;
+            mtx.vin.resize(1); mtx.vout.resize(1);
+            mtx.vin[0] = CTxIn(firstUtxo);
+            mtx.vout[0] = CTxOut(tx->vout[firstUtxo.n].nValue - CENT, tx->vout[firstUtxo.n].scriptPubKey);
+            SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[firstUtxo.n]);
+            ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&mtx, 0, tx->vout[firstUtxo.n].nValue, SIGHASH_ALL), tx->vout[firstUtxo.n].scriptPubKey, sigdata);
+            UpdateInput(mtx.vin[0], sigdata);
+            // Send transaction
+            uint256 txid; std::string errstr; const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+            BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to spend snode collateral: %s", errstr));
+            pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            const auto checkSnode = sn::ServiceNodeMgr::instance().getSn(snodePubKey);
+            BOOST_CHECK_MESSAGE(!checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be invalid because collateral was spent");
+            BOOST_CHECK_MESSAGE(checkSnode.getInvalid(), "snode should be marked invalid in the validation interface event (connect block)");
+            UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
+        }
+
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 }
 
@@ -455,7 +508,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     std::vector<COutput> coins;
     {
         LOCK2(cs_main, pos.wallet->cs_wallet);
-        pos.wallet->AvailableCoins(*pos.locked_chain, coins);
+        pos.wallet->AvailableCoins(*pos.locked_chain, coins, true, nullptr, 500 * COIN);
     }
     // sort largest coins first
     std::sort(coins.begin(), coins.end(), [](COutput & a, COutput & b) {
@@ -716,7 +769,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
     for (const auto & tx : pos.m_coinbase_txns) {
         if (totalAmount >= sn::ServiceNode::COLLATERAL_SPV)
             break;
-        totalAmount += tx->GetValueOut();
+        totalAmount += tx->vout[0].nValue;
         collateral.emplace_back(tx->GetHash(), 0);
     }
 

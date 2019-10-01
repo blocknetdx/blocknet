@@ -223,7 +223,7 @@ public:
      * @return
      */
     bool running() const {
-        return GetAdjustedTime() - pingtime < 240;
+        return !invalid && GetAdjustedTime() - pingtime < 240;
     }
 
     /**
@@ -404,6 +404,21 @@ public:
         return false;
     }
 
+    /**
+     * Marks or unmarks this snode as invalid.
+     * @param flag Invalid state
+     */
+    void markInvalid(const bool flag = true) {
+        invalid = flag;
+    }
+
+    /**
+     * Returns the invalid state.
+     */
+    bool getInvalid() const {
+        return invalid;
+    }
+
 protected: // included in network serialization
     CPubKey snodePubKey;
     uint8_t tier;
@@ -421,6 +436,7 @@ protected: // in-memory only
     std::string config;
     uint32_t protocol{0};
     std::vector<std::string> services;
+    bool invalid{false};
 };
 
 typedef std::shared_ptr<ServiceNode> ServiceNodePtr;
