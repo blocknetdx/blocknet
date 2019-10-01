@@ -68,7 +68,7 @@ static std::vector<COutput> availableCoins(const bool & onlySafe = true, const i
 
 //*****************************************************************************
 //*****************************************************************************
-bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const double amount,
+bool createFeeTransaction(const CScript & dstScript, const double amount,
         const double feePerByte,
         const std::vector<unsigned char> & data,
         std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
@@ -196,7 +196,7 @@ bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const do
         if (!data.empty())
             vouts.emplace_back(0, CScript() << OP_RETURN << ToByteVector(data));
 
-        vouts.emplace_back(static_cast<CAmount>(amount*COIN), CScript(dstScript));
+        vouts.emplace_back(static_cast<CAmount>(amount*COIN), dstScript);
 
         if (changeAmt >= 5460) // BLOCK dust check
             vouts.emplace_back(changeAmt, GetScriptForDestination(DecodeDestination(changeAddr)));

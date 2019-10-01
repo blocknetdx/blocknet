@@ -1659,7 +1659,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     if (strInfo.size() > maxBytes) // make sure we're not too large
         return xbridge::Error::INVALID_ONCHAIN_HISTORY;
 
-    auto destScript = CScript() << OP_DUP << OP_HASH160 << ToByteVector(snodeCollateralAddress) << OP_EQUALVERIFY << OP_CHECKSIG;
+    auto destScript = GetScriptForDestination(CTxDestination(snodeCollateralAddress));
     auto data = ToByteVector(strInfo);
 
     // Utxo selection
@@ -1685,7 +1685,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         );
 
         double blockFeePerByte = 40 / static_cast<double>(COIN);
-        if (!rpc::createFeeTransaction({destScript.begin(), destScript.end()}, connFrom->serviceNodeFee, blockFeePerByte,
+        if (!rpc::createFeeTransaction(destScript, connFrom->serviceNodeFee, blockFeePerByte,
                 data, feeOutputs, ptr->feeUtxos, ptr->rawFeeTx))
         {
             ERR() << "Failed to take order, couldn't prepare the service node fee " << __FUNCTION__;

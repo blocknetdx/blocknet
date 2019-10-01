@@ -10,6 +10,8 @@
 
 #include <xbridge/xbridgewallet.h>
 
+#include <script/script.h>
+
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -36,7 +38,7 @@ namespace rpc
      * @param rawTx
      * @return
      */
-    bool createFeeTransaction(const std::vector<unsigned char> & dstScript, const double amount,
+    bool createFeeTransaction(const CScript & dstScript, const double amount,
                               const double feePerByte,
                               const std::vector<unsigned char> & data,
                               std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
