@@ -1897,13 +1897,17 @@ bool AppInitMain(InitInterfaces& interfaces)
         // If there's snode entries, proceed to register them
         if (!entries.empty()) {
             auto wallets = GetWallets();
+            std::string failReason;
             for (const auto & snode : entries) {
-                if (!smgr.registerSn(snode, g_connman.get(), wallets))
-                    LogPrintf("Failed to register service node %s\n", snode.alias);
+                if (!smgr.registerSn(snode, g_connman.get(), wallets, &failReason))
+                    LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
             }
             if (smgr.hasActiveSn() && !smgr.sendPing(xbridge::App::version(), xapp.myServices(), g_connman.get()))
                 LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
         }
+
+        // Servicenode validation interface
+        RegisterValidationInterface(&smgr);
     }
 #endif
 

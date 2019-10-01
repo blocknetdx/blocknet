@@ -447,8 +447,9 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
 
         EnsureWalletIsUnlocked(wallet.get());
 
-        if (!sn::ServiceNodeMgr::instance().registerSn(entry, g_connman.get(), {wallet}))
-            throw JSONRPCError(RPC_MISC_ERROR, strprintf("failed to register the service node %s", entry.alias));
+        std::string failReason;
+        if (!sn::ServiceNodeMgr::instance().registerSn(entry, g_connman.get(), {wallet}, &failReason))
+            throw JSONRPCError(RPC_MISC_ERROR, strprintf("failed to register the service node %s: %s", entry.alias, failReason));
     }
 
     for (const auto & entry : entries) {

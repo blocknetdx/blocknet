@@ -395,6 +395,42 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         sn::ServiceNodeMgr::instance().reset();
     }
 
+    // Check that snode registration automatically happens after spent utxo detected
+    {
+        sn::ServiceNodeMgr::instance().reset();
+        const auto & saddr = EncodeDestination(GetDestinationForKey(pos.coinbaseKey.GetPubKey(), OutputType::LEGACY));
+        UniValue rpcparams(UniValue::VARR);
+        rpcparams.push_backV({ saddr, "snode0" });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
+        const auto snodeEntry = sn::ServiceNodeMgr::instance().getActiveSn();
+        const auto snode = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        RegisterValidationInterface(&sn::ServiceNodeMgr::instance());
+        const auto firstUtxo = snode.getCollateral().front();
+        CTransactionRef tx; uint256 hashBlock;
+        BOOST_CHECK_MESSAGE(GetTransaction(firstUtxo.hash, tx, Params().GetConsensus(), hashBlock), "failed to get snode collateral");
+        CMutableTransaction mtx;
+        mtx.vin.resize(1); mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(firstUtxo);
+        mtx.vout[0] = CTxOut(tx->vout[firstUtxo.n].nValue - CENT, tx->vout[firstUtxo.n].scriptPubKey);
+        SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[firstUtxo.n]);
+        ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&mtx, 0, tx->vout[firstUtxo.n].nValue, SIGHASH_ALL), tx->vout[firstUtxo.n].scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[0], sigdata);
+        // Send transaction
+        uint256 txid; std::string errstr; const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to spend snode collateral: %s", errstr));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        const auto checkSnode = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        BOOST_CHECK_MESSAGE(checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be auto-registered after spent utxo detected");
+        // make sure spent collateral not in the new registration
+        for (const auto & utxo : checkSnode.getCollateral())
+            BOOST_CHECK_MESSAGE(utxo != firstUtxo, "snode spent utxo should not exist after new registration");
+        UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
+    }
+
     sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     sn::ServiceNodeMgr::instance().reset();
     gArgs.SoftSetBoolArg("-servicenode", false);

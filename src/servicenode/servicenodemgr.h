@@ -16,6 +16,7 @@
 #include <util/strencodings.h>
 #include <util/system.h>
 #include <validation.h>
+#include <validationinterface.h>
 #include <wallet/wallet.h>
 
 #include <iostream>
@@ -64,7 +65,7 @@ struct ServiceNodeConfigEntry {
  * Manages related servicenode functions including handling network messages and storing an active list
  * of valid servicenodes.
  */
-class ServiceNodeMgr {
+class ServiceNodeMgr : public CValidationInterface {
 public:
     ServiceNodeMgr() = default;
 
@@ -193,8 +194,9 @@ public:
         if (tier != ServiceNode::Tier::OPEN) {
             CTxDestination dest = DecodeDestination(address);
             if (!IsValidDestination(dest)) {
-                LogPrint(BCLog::SNODE, "service node registration failed, bad address: %s\n", address);
-                return false; // fail on bad address
+                const auto errMsg = strprintf("service node registration failed, bad address: %s", address);
+                if (failReason) *failReason = errMsg;
+                return error(errMsg.c_str()); // fail on bad address
             }
 
             std::shared_ptr<CWallet> wallet;
@@ -206,8 +208,17 @@ public:
                     break;
                 }
             }
-            if (!haveAddr)
-                return false; // stop if wallets do not have the collateral address
+            if (!haveAddr) {
+                const std::string errMsg = "No wallets found with the specified address";
+                if (failReason) *failReason = errMsg;
+                return error(errMsg.c_str()); // stop if wallets do not have the collateral address
+            }
+
+            if (wallet->IsLocked()) {
+                const std::string errMsg = "Failed to register service node because wallet is locked";
+                if (failReason) *failReason = errMsg;
+                return error(errMsg.c_str());
+            }
 
             // Exclude already used collateral utxos
             std::set<COutPoint> alreadyAllocatedUtxos;
@@ -223,8 +234,9 @@ public:
             }
 
             if (!findCollateral(tier, dest, {wallet}, collateral, alreadyAllocatedUtxos)) {
-                LogPrint(BCLog::SNODE, "service node registration failed, bad collateral: %s\n", address);
-                return false; // fail on bad collateral
+                const auto errMsg = strprintf("service node registration failed, bad collateral: %s", address);
+                if (failReason) *failReason = errMsg;
+                return error(errMsg.c_str()); // fail on bad collateral
             }
 
             addressId = boost::get<CKeyID>(dest);
@@ -235,8 +247,9 @@ public:
             CKey sign;
             CKeyID keyid = GetKeyForDestination(*wallet, dest);
             if (keyid.IsNull() || !wallet->GetKey(keyid, sign) || !sign.SignCompact(sighash, sig) || sig.empty()) {
-                LogPrint(BCLog::SNODE, "service node registration failed, bad signature, is the wallet unlocked? %s\n", address);
-                return false; // key not found in wallets
+                const auto errMsg = strprintf("service node registration failed, bad signature, is the wallet unlocked? %s", address);
+                if (failReason) *failReason = errMsg;
+                return error(errMsg.c_str()); // key not found in wallets
             }
 
         } else { // OPEN tier
@@ -244,8 +257,9 @@ public:
                                                                   chainActive.Height(), chainActive.Tip()->GetBlockHash());
 
             if (!key.SignCompact(sighash, sig) || sig.empty()) { // sign with snode pubkey
-                LogPrint(BCLog::SNODE, "service node registration failed, bad signature, is the servicenode.conf populated? %s\n", address);
-                return false;
+                const auto errMsg = strprintf("service node registration failed, bad signature, is the servicenode.conf populated? %s", address);
+                if (failReason) *failReason = errMsg;
+                return error(errMsg.c_str());
             }
         }
 
@@ -253,8 +267,9 @@ public:
                 chainActive.Tip()->GetBlockHash(), sig);
         auto snodePtr = addSn(snode);
         if (!snodePtr) {
-            LogPrint(BCLog::SNODE, "service node registration failed\n");
-            return false; // failed to add snode
+            const std::string errMsg = "service node registration failed";
+            if (failReason) *failReason = errMsg;
+            return error(errMsg.c_str()); // failed to add snode
         }
 
         // Relay
@@ -869,6 +884,51 @@ protected:
             collateral.push_back(coin.GetInputCoin().outpoint);
 
         return true;
+    }
+
+protected:
+    void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
+                        const std::vector<CTransactionRef>& txn_conflicted) override
+    {
+        processValidationBlock(block);
+    }
+
+    void BlockDisconnected(const std::shared_ptr<const CBlock>& block) override {
+        processValidationBlock(block);
+    }
+
+    void processValidationBlock(const std::shared_ptr<const CBlock>& block) {
+        // Check if any of our snodes have inputs that were spent and/or staked
+        std::set<ServiceNodeConfigEntry> entries;
+        {
+            LOCK(mu);
+            entries = snodeEntries;
+        }
+
+        std::set<COutPoint> spent;
+        for (const auto & tx : block->vtx) {
+            for (const auto & vin : tx->vin)
+                spent.insert(vin.prevout);
+        }
+
+        std::vector<ServiceNodeConfigEntry> requiresRegistration;
+        for (const auto & entry : entries) {
+            const auto & snode = getSn(entry.key.GetPubKey());
+            for (const auto & utxo : snode.getCollateral()) {
+                if (spent.count(utxo))
+                    requiresRegistration.push_back(entry);
+            }
+        }
+
+        if (requiresRegistration.empty())
+            return;
+
+        auto wallets = GetWallets();
+        std::string failReason;
+        for (const auto & snode : requiresRegistration) {
+            if (!registerSn(snode, g_connman.get(), wallets, &failReason))
+                LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
+        }
     }
 
 protected:
