@@ -16,8 +16,8 @@ static UniValue createproposal(const JSONRPCRequest& request)
             RPCHelpMan{"createproposal",
                 "\nCreates a new proposal and submits it to the network. There is a fee associated with proposal submissions. Obtain with \"proposalfee\" rpc call.\n",
                 {
-                    {"name", RPCArg::Type::STR, RPCArg::Optional::NO, "Proposal name, only alpha number characters are accepted (example: \"My Proposal 1\" or \"My_Proposal-1\")"},
-                    {"superblock", RPCArg::Type::NUM, "0", strprintf("default=%d, block number of Superblock. Specify 0 to automatically submit for the next Superblock", gov::NextSuperblock(Params().GetConsensus()))},
+                    {"name", RPCArg::Type::STR, RPCArg::Optional::NO, R"(Proposal name, only alpha number characters are accepted (example: "My Proposal 1" or "My_Proposal-1"))"},
+                    {"superblock", RPCArg::Type::NUM, RPCArg::Optional::NO, strprintf("Block number of Superblock. Specify 0 to automatically submit for the next Superblock %d", gov::NextSuperblock(Params().GetConsensus()))},
                     {"amount", RPCArg::Type::NUM, RPCArg::Optional::NO, "Amount of BLOCK being requested in the proposal"},
                     {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "Blocknet payment address"},
                     {"url", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Url where voters can read more details"},
@@ -77,7 +77,7 @@ static UniValue listproposals(const JSONRPCRequest& request)
             RPCHelpMan{"listproposals",
                 "\nLists proposals since the specified block. By default lists the current and upcoming proposals.\n",
                 {
-                    {"sinceblock", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "0", "(default=0) which pull most recent proposals. Otherwise specify the block number."},
+                    {"sinceblock", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "default=0 which pull most recent proposals. Otherwise specify the block number."},
                 },
                 RPCResult{
                 "{\n"
@@ -229,8 +229,8 @@ static UniValue proposalfee(const JSONRPCRequest& request)
                 },
             }.ToString());
 
-    UniValue ret(UniValue::VNUM);
-    ret.setInt(Params().GetConsensus().proposalFee/COIN);
+    UniValue ret(UniValue::VSTR);
+    ret.setStr(FormatMoney(Params().GetConsensus().proposalFee));
     return ret;
 }
 

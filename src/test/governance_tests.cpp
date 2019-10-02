@@ -2225,7 +2225,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         UniValue rpcparams(UniValue::VARR);
         UniValue result;
         BOOST_CHECK_NO_THROW(result = CallRPC2("proposalfee", rpcparams));
-        BOOST_CHECK_MESSAGE(result.get_int() == consensus.proposalFee/COIN, strprintf("proposalfee should match expected %d", consensus.proposalFee/COIN));
+        BOOST_CHECK_MESSAGE(result.get_str() == FormatMoney(consensus.proposalFee), strprintf("proposalfee should match expected %d", FormatMoney(consensus.proposalFee)));
     }
 
     cleanup(chainActive.Height());
