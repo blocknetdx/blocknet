@@ -598,7 +598,6 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
                 "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
                 "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
-                "    \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"status\":\"xxxx\",              (string) Status of service node (e.g. running, offline)\n"
@@ -627,7 +626,6 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
         obj.pushKV("snodekey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
-        obj.pushKV("timeregistered", snode.getRegTime());
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
@@ -656,7 +654,6 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
                 "    \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
                 "    \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
-                "    \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
@@ -680,7 +677,6 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("snodekey", HexStr(snode.getSnodePubKey()));
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(snode.getTier()));
         obj.pushKV("address", EncodeDestination(snode.getPaymentAddress()));
-        obj.pushKV("timeregistered", snode.getRegTime());
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
@@ -707,7 +703,6 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
                 "  \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
                 "  \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
                 "  \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
-                "  \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
                 "  \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "  \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "  \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
@@ -742,7 +737,6 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
     obj.pushKV("tier", sn::ServiceNodeMgr::tierString(activesn.tier));
     obj.pushKV("snodekey", HexStr(activesn.key.GetPubKey()));
     obj.pushKV("address", EncodeDestination(activesn.address));
-    obj.pushKV("timeregistered", snode.getRegTime());
     obj.pushKV("timelastseen", snode.getPingTime());
     obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
     obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
@@ -776,7 +770,6 @@ static UniValue servicenodelegacy(const JSONRPCRequest& request)
                 "    \"snodekey\":\"xxxxxx\",          (string) Service node's pubkey\n"
                 "    \"tier\": \"xxxx\",               (string) Tier of this Service Node\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
-                "    \"timeregistered\": n,            (numeric) Unix time of when this service node was registered\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"

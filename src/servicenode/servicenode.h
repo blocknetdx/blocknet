@@ -104,7 +104,7 @@ public:
      */
     explicit ServiceNode() : snodePubKey(CPubKey()), tier(Tier::OPEN), paymentAddress(CKeyID()),
                              collateral(std::vector<COutPoint>()), bestBlock(0), bestBlockHash(uint256()),
-                             signature(std::vector<unsigned char>()), regtime(GetAdjustedTime()), pingtime(0),
+                             signature(std::vector<unsigned char>()), pingtime(0),
                              config(std::string()), pingBestBlock(0), pingBestBlockHash(uint256()) {}
 
     /**
@@ -121,9 +121,9 @@ public:
                               : snodePubKey(snodePubKey),        tier(tier),
                                 paymentAddress(paymentAddress),  collateral(std::move(collateral)),
                                 bestBlock(bestBlock),            bestBlockHash(bestBlockHash),
-                                signature(std::move(signature)), regtime(GetAdjustedTime()),
+                                signature(std::move(signature)), pingtime(0),
                                 pingBestBlock(bestBlock),        pingBestBlockHash(bestBlockHash),
-                                pingtime(0),                     config(std::string()) {}
+                                config(std::string()) {}
 
     friend inline bool operator==(const ServiceNode & a, const ServiceNode & b) { return a.snodePubKey == b.snodePubKey; }
     friend inline bool operator!=(const ServiceNode & a, const ServiceNode & b) { return !(a.snodePubKey == b.snodePubKey); }
@@ -191,14 +191,6 @@ public:
      */
     const std::vector<unsigned char>& getSignature() const {
         return signature;
-    }
-
-    /**
-     * Returns the servicenode registration time in unix time.
-     * @return
-     */
-    const int64_t& getRegTime() const {
-        return regtime;
     }
 
     /**
@@ -312,7 +304,7 @@ public:
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, 0);
         ss << snodePubKey << static_cast<uint8_t>(tier) << paymentAddress << collateral << bestBlock << bestBlockHash
-           << config << signature << regtime;
+           << config << signature;
         return ss.GetHash();
     }
 
@@ -429,7 +421,6 @@ protected: // included in network serialization
     std::vector<unsigned char> signature;
 
 protected: // in-memory only
-    int64_t regtime;
     int64_t pingtime;
     uint32_t pingBestBlock;
     uint256 pingBestBlockHash;
