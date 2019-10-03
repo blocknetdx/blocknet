@@ -1119,10 +1119,9 @@ public:
      */
     bool submitProposal(const Proposal & proposal, const std::vector<std::shared_ptr<CWallet>> & wallets,
                         const Consensus::Params & params, CTransactionRef & tx, std::string *failReasonRet) {
-        if (!proposal.isValid(params)) {
-            *failReasonRet = "Proposal is not valid";
-            return error(failReasonRet->c_str()); // TODO Blocknet indicate what isn't valid
-        }
+        if (!proposal.isValid(params, failReasonRet))
+            return error(failReasonRet->c_str());
+
         if (hasProposal(proposal.getHash()) || hasProposal(proposal.getName(), proposal.getSuperblock())) {
             *failReasonRet = strprintf("Proposal %s scheduled for superblock %d was already submitted with hash %s",
                     proposal.getName(), proposal.getSuperblock(), proposal.getHash().ToString());
