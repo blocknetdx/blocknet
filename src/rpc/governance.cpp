@@ -54,6 +54,14 @@ static UniValue createproposal(const JSONRPCRequest& request)
     if (!proposal.isValid(Params().GetConsensus(), &failReason))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal: %s", failReason));
 
+    int currentBlockHeight{0};
+    {
+        LOCK(cs_main);
+        currentBlockHeight = chainActive.Height();
+    }
+    if (currentBlockHeight == 0 || !gov::Governance::meetsProposalCutoff(proposal, currentBlockHeight, Params().GetConsensus()))
+        throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit proposal because it doesn't meet the proposal cutoff time");
+
     CTransactionRef tx;
     if (!gov::Governance::instance().submitProposal(proposal, GetWallets(), Params().GetConsensus(), tx, &failReason))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal: %s", failReason));
