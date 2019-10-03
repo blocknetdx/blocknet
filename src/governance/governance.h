@@ -1071,11 +1071,13 @@ public:
         // b) Exclude proposals that don't have at least 25% of all participating
         //    votes. i.e. at least 25% of all votes cast this superblock must have
         //    voted on this proposal.
+        // c) Exclude proposals with 0 yes votes in all circumstances
         for (auto it = r.cbegin(); it != r.cend(); ) {
             const auto & tally = it->second;
             const int total = tally.yes+tally.no+tally.abstain;
             if (static_cast<double>(tally.yes) / static_cast<double>(tally.yes+tally.no) < 0.6
-              || static_cast<double>(total) < static_cast<double>(uniqueVotes) * 0.25)
+              || static_cast<double>(total) < static_cast<double>(uniqueVotes) * 0.25
+              || tally.yes <= 0)
                 r.erase(it++);
             else
                 ++it;
@@ -1738,6 +1740,13 @@ public: // static
             tally.yes = static_cast<int>(tally.cyes / params.voteBalance);
             tally.no = static_cast<int>(tally.cno / params.voteBalance);
             tally.abstain = static_cast<int>(tally.cabstain / params.voteBalance);
+            // Sanity checks
+            if (tally.yes < 0)
+                tally.yes = 0;
+            if (tally.no < 0)
+                tally.no = 0;
+            if (tally.abstain < 0)
+                tally.abstain = 0;
             tallies.push_back(tally);
         }
 

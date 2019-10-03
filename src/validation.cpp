@@ -2031,8 +2031,8 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         }
         CAmount expectedFees = (IsNetworkFeesEnabled(pindex->pprev, chainparams.GetConsensus()) ? nFees : -1*nFees);
         if (pindex->nMint > blockReward + expectedFees)
-            return state.DoS(100, error("ConnectBlock(): reward pays too much (actual=%d vs limit=%d)",
-                                        block.vtx[0]->GetValueOut(), blockReward),
+            return state.DoS(100, error("ConnectBlock(): reward pays too much (actual=%s vs limit=%s)",
+                                        FormatMoney(pindex->nMint), FormatMoney(blockReward + expectedFees)),
                                         REJECT_INVALID, "bad-cs-amount");
     }
 

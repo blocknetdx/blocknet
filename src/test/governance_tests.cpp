@@ -857,6 +857,23 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
         cleanup(resetBlocks);
     }
 
+    // Check that results are empty for proposal without any votes
+    {
+        const auto resetBlocks = chainActive.Height();
+        gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
+                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+        CTransactionRef tx = nullptr;
+        std::string failReason;
+        BOOST_CHECK(gov::Governance::instance().submitProposal(proposal, {wallet}, consensus, tx, &failReason));
+        BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit proposal: %s", failReason));
+        auto accepted = tx != nullptr && sendProposal(proposal, tx, this, *params);
+        BOOST_CHECK_MESSAGE(accepted, "Proposal submission failed");
+        auto results = gov::Governance::instance().getSuperblockResults(nextSuperblock(chainActive.Height(), consensus.superblock), consensus);
+        BOOST_CHECK_MESSAGE(results.empty(), "Superblock results on a proposal with 0 votes should be empty");
+        // clean up
+        cleanup(resetBlocks);
+    }
+
     // Check proposal submission votes are accepted by the network
     {
         const auto resetBlocks = chainActive.Height();
