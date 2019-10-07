@@ -1,203 +1,221 @@
-//******************************************************************************
-//******************************************************************************
-#include "xrouterutils.h"
-#include "xrouterlogger.h"
-#include "xrouterdef.h"
-#include "xroutererror.h"
+// Copyright (c) 2018-2019 The Blocknet developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <cstdio>
-#include <iostream>
-#include <memory>
-#include <stdexcept>
-#include <string>
+#include <xrouter/xrouterutils.h>
+
+#include <xrouter/xrouterdef.h>
+
+#include <event2/buffer.h>
+#include <rpc/protocol.h>
+#include <support/events.h>
+#include <tinyformat.h>
+#include <util/strencodings.h>
+#include <util/system.h>
+#include <univalue.h>
+
 #include <array>
-#include <ctime>
-
-#include <boost/asio.hpp>
-#include <boost/iostreams/concepts.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/algorithm/string.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/locale.hpp>
-#include <boost/archive/iterators/base64_from_binary.hpp>
-#include <boost/archive/iterators/binary_from_base64.hpp>
-#include <boost/archive/iterators/insert_linebreaks.hpp>
-#include <boost/archive/iterators/transform_width.hpp>
-#include <boost/archive/iterators/ostream_iterator.hpp>
-
 #include <stdio.h>
 
-#include "rpcserver.h"
-#include "rpcprotocol.h"
-#include "rpcclient.h"
-#include "base58.h"
-#include "wallet.h"
-#include "init.h"
-#include "key.h"
-#include "core_io.h"
-
-using namespace std;
-using namespace boost;
-using namespace boost::asio;
+#include <json/json_spirit_writer_template.h>
 
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
 {
 
-int readHTTP(std::basic_istream<char>& stream, map<string, string>& mapHeadersRet, string& strMessageRet)
+/** Reply structure for request_done to fill in */
+struct HTTPReply
 {
-    mapHeadersRet.clear();
-    strMessageRet = "";
+    HTTPReply(): status(0), error(-1) {}
 
-    // Read status
-    int nProto = 0;
-    int nStatus = ReadHTTPStatus(stream, nProto);
+    int status;
+    int error;
+    std::string body;
+};
 
-    // Read header
-    int nLen = ReadHTTPHeaders(stream, mapHeadersRet);
-    if (nLen < 0 || nLen > (int)MAX_SIZE)
-        return HTTP_INTERNAL_SERVER_ERROR;
+static const char *http_errorstring(int code)
+{
+    switch(code) {
+#if LIBEVENT_VERSION_NUMBER >= 0x02010300
+    case EVREQ_HTTP_TIMEOUT:
+        return "timeout reached";
+    case EVREQ_HTTP_EOF:
+        return "EOF reached";
+    case EVREQ_HTTP_INVALID_HEADER:
+        return "error while reading header, or invalid header";
+    case EVREQ_HTTP_BUFFER_ERROR:
+        return "error encountered while reading or writing";
+    case EVREQ_HTTP_REQUEST_CANCEL:
+        return "request was canceled";
+    case EVREQ_HTTP_DATA_TOO_LONG:
+        return "response body is larger than allowed";
+#endif
+    default:
+        return "unknown";
+    }
+}
 
-    // Read message
-    if (nLen > 0)
+static void http_request_done(struct evhttp_request *req, void *ctx)
+{
+    HTTPReply *reply = static_cast<HTTPReply*>(ctx);
+
+    if (req == nullptr) {
+        /* If req is nullptr, it means an error occurred while connecting: the
+         * error code will have been passed to http_error_cb.
+         */
+        reply->status = 0;
+        return;
+    }
+
+    reply->status = evhttp_request_get_response_code(req);
+
+    struct evbuffer *buf = evhttp_request_get_input_buffer(req);
+    if (buf)
     {
-        vector<char> vch(nLen);
-        stream.read(&vch[0], nLen);
-        strMessageRet = string(vch.begin(), vch.end());
+        size_t size = evbuffer_get_length(buf);
+        const char *data = (const char*)evbuffer_pullup(buf, size);
+        if (data)
+            reply->body = std::string(data, size);
+        evbuffer_drain(buf, size);
+    }
+}
+
+#if LIBEVENT_VERSION_NUMBER >= 0x02010300
+static void http_error_cb(enum evhttp_request_error err, void *ctx)
+{
+    HTTPReply *reply = static_cast<HTTPReply*>(ctx);
+    reply->error = err;
+}
+#endif
+
+std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
+               const std::string & strMethod, const Array & params) {
+    return std::move(CallRPC("", "", rpcip, rpcport, strMethod, params));
+}
+
+std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
+                      const std::string & rpcip, const std::string & rpcport,
+                      const std::string & strMethod, const json_spirit::Array & params)
+{
+    const std::string & host = rpcip;
+    const int port = stoi(rpcport);
+
+    // Obtain event base
+    raii_event_base base = obtain_event_base();
+
+    // Synchronously look up hostname
+    raii_evhttp_connection evcon = obtain_evhttp_connection_base(base.get(), host, port);
+    evhttp_connection_set_timeout(evcon.get(), gArgs.GetArg("-rpcxroutertimeout", 60));
+
+    HTTPReply response;
+    raii_evhttp_request req = obtain_evhttp_request(http_request_done, (void*)&response);
+    if (req == nullptr)
+        throw std::runtime_error("create http request failed");
+#if LIBEVENT_VERSION_NUMBER >= 0x02010300
+    evhttp_request_set_error_cb(req.get(), http_error_cb);
+#endif
+
+    // Get credentials
+    std::string strRPCUserColonPass = rpcuser + ":" + rpcpasswd;
+
+    struct evkeyvalq* output_headers = evhttp_request_get_output_headers(req.get());
+    assert(output_headers);
+    evhttp_add_header(output_headers, "Host", host.c_str());
+    evhttp_add_header(output_headers, "Connection", "close");
+    evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
+
+    // Attach request data
+    const auto tostring = json_spirit::write_string(json_spirit::Value(params), json_spirit::none, 8);
+    UniValue toval;
+    if (!toval.read(tostring))
+        throw std::runtime_error(strprintf("failed to decode json_spirit data: %s", tostring));
+    const auto reqobj = JSONRPCRequestObj(strMethod, toval.get_array(), 1);
+    std::string strRequest = reqobj.write() + "\n";
+    struct evbuffer* output_buffer = evhttp_request_get_output_buffer(req.get());
+    assert(output_buffer);
+    evbuffer_add(output_buffer, strRequest.data(), strRequest.size());
+
+    // check if we should use a special wallet endpoint
+    std::string endpoint = "/";
+    int r = evhttp_make_request(evcon.get(), req.get(), EVHTTP_REQ_POST, endpoint.c_str());
+    req.release(); // ownership moved to evcon in above call
+    if (r != 0) {
+        throw std::runtime_error("send http request failed");
     }
 
-    string sConHdr = mapHeadersRet["connection"];
+    event_base_dispatch(base.get());
 
-    if ((sConHdr != "close") && (sConHdr != "keep-alive"))
-    {
-        if (nProto >= 1)
-            mapHeadersRet["connection"] = "keep-alive";
-        else
-            mapHeadersRet["connection"] = "close";
-    }
+    if (response.status == 0) {
+        std::string responseErrorMessage;
+        if (response.error != -1) {
+            responseErrorMessage = strprintf(" (error code %d - \"%s\")", response.error, http_errorstring(response.error));
+        }
+        throw std::runtime_error(strprintf("Could not connect to the server %s:%d%s\n\nMake sure the bitcoind server is running and that you are connecting to the correct RPC port.", host, port, responseErrorMessage));
+    } else if (response.status == HTTP_UNAUTHORIZED) {
+        throw std::runtime_error("Authorization failed: Incorrect rpcuser or rpcpassword");
+    } else if (response.status >= 400 && response.status != HTTP_BAD_REQUEST && response.status != HTTP_NOT_FOUND && response.status != HTTP_INTERNAL_SERVER_ERROR)
+        throw std::runtime_error(strprintf("server returned HTTP error %d", response.status));
+    else if (response.body.empty())
+        throw std::runtime_error("no response from server");
 
-    return nStatus;
+    return response.body;
 }
 
-std::string base64_encode(const std::string& s)
-{
-    namespace bai = boost::archive::iterators;
-    std::string base64_padding[] = {"", "==","="};
+//std::string CallURL(const std::string & ip, const std::string & port, const std::string & url)
+//{
+//    // Connect to localhost
+//    boost::asio::ip::tcp::iostream stream;
+//    stream.expires_from_now(boost::posix_time::seconds(gArgs.GetArg("-rpcxroutertimeout", 60)));
+//    stream.connect(ip, port);
+//    if (stream.error() != boost::system::errc::success) {
+//        LogPrint(BCLog::NET, "Failed to make connection to %s:%s error %d: %s", ip, port,
+//                stream.error(), stream.error().message());
+//        throw std::runtime_error(strprintf("no response from server %s:%s - %s", ip.c_str(), port.c_str(),
+//                                      stream.error().message().c_str()));
+//    }
+//
+//    // Send request
+//    std::ostringstream s;
+//    s << "GET " << url << "\r\n" << "Host: 127.0.0.1\r\n";
+//    std::string strRequest = s.str();
+//
+//    stream << strRequest << std::flush;
+//
+//    // Receive reply
+//    std::map<std::string, std::string> mapHeaders;
+//    std::string strReply;
+//    int nStatus = readHTTP(stream, mapHeaders, strReply);
+//
+//    LOG() << "HTTP: resp " << nStatus << " " << strReply;
+//
+//    if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
+//        throw std::runtime_error("server returned HTTP error " + std::to_string(nStatus));
+//    else if (strReply.empty())
+//        throw std::runtime_error("no response from server");
+//
+//    return strReply;
+//}
 
+std::string CallCMD(const std::string & cmd, int & exit) {
+    std::array<char, 128> buffer{};
+    FILE *pipe = popen(std::string(cmd + " 2>&1").c_str(), "r");
+    if (!pipe)
+        throw std::runtime_error("popen() failed!");
 
-    std::stringstream os;
-
-    // convert binary values to base64 characters
-    typedef bai::base64_from_binary
-    // retrieve 6 bit integers from a sequence of 8 bit bytes
-    <bai::transform_width<const char *, 6, 8> > base64_enc; // compose all the above operations in to a new iterator
-
-    std::copy(base64_enc(s.c_str()), base64_enc(s.c_str() + s.size()),
-            std::ostream_iterator<char>(os));
-
-    os << base64_padding[s.size() % 3];
-    return os.str();
-}
-
-Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
-               const std::string & rpcip, const std::string & rpcport,
-               const std::string & strMethod, const Array & params)
-{
-    boost::asio::ip::tcp::iostream stream;
-    stream.expires_from_now(boost::posix_time::seconds(60));
-    stream.connect(rpcip, rpcport);
-    if (stream.error() != boost::system::errc::success) {
-        LogPrint("net", "Failed to make rpc connection to %s:%s error %d: %s", rpcip, rpcport, stream.error(), stream.error().message());
-        throw runtime_error(strprintf("no response from server %s:%s - %s", rpcip.c_str(), rpcport.c_str(),
-                                      stream.error().message().c_str()));
-    }
-
-    // HTTP basic authentication
-    string strUserPass64 = base64_encode(rpcuser + ":" + rpcpasswd);
-    map<string, string> mapRequestHeaders;
-    mapRequestHeaders["Authorization"] = string("Basic ") + strUserPass64;
-
-    // Send request
-    string strRequest = JSONRPCRequest(strMethod, params, 1);
-
-    DEBUGLOG() << "HTTP: req  " << strMethod << " " << strRequest;
-
-    string strPost = HTTPPost(strRequest, mapRequestHeaders);
-    stream << strPost << std::flush;
-
-    // Receive reply
-    map<string, string> mapHeaders;
-    string strReply;
-    int nStatus = readHTTP(stream, mapHeaders, strReply);
-
-    DEBUGLOG() << "HTTP: resp " << nStatus << " " << strReply;
-
-    if (nStatus == HTTP_UNAUTHORIZED)
-        throw runtime_error("incorrect rpcuser or rpcpassword (authorization failed)");
-    else if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-        throw runtime_error("server returned HTTP error " + nStatus);
-    else if (strReply.empty())
-        throw runtime_error("no response from server");
-
-    // Parse reply
-    Value valReply;
-    if (!read_string(strReply, valReply))
-        throw runtime_error("couldn't parse reply from server");
-    const Object& reply = valReply.get_obj();
-    if (reply.empty())
-        throw runtime_error("expected reply to have result, error and id properties");
-
-    return reply;
-}
-
-std::string CallURL(std::string ip, std::string port, std::string url)
-{
-    // Connect to localhost
-    bool fUseSSL = false;//GetBoolArg("-rpcssl");
-    asio::io_service io_service;
-    ssl::context context(io_service, ssl::context::sslv23);
-    context.set_options(ssl::context::no_sslv2);
-    asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
-    SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
-    iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
-    if (!d.connect(ip, port))
-        throw runtime_error("couldn't connect to server");
-
-    // Send request
-    ostringstream s;
-    s << "GET " << url << "\r\n" << "Host: 127.0.0.1\r\n";
-    string strRequest = s.str();
-
-    LOG() << "HTTP: req  " << strRequest;
-
-    map<string, string> mapRequestHeaders;
-    stream << strRequest << std::flush;
-
-    // Receive reply
-    map<string, string> mapHeaders;
-    string strReply;
-    int nStatus = readHTTP(stream, mapHeaders, strReply);
-
-    LOG() << "HTTP: resp " << nStatus << " " << strReply;
-
-    if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-        throw runtime_error("server returned HTTP error " + nStatus);
-    else if (strReply.empty())
-        throw runtime_error("no response from server");
-
-    return strReply;
-}
-
-std::string CallCMD(std::string cmd) {
-    std::array<char, 128> buffer;
     std::string result;
-    std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (!pipe) throw std::runtime_error("popen() failed!");
-    while (!feof(pipe.get())) {
-        if (fgets(buffer.data(), 128, pipe.get()) != nullptr)
-            result += buffer.data();
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+        result += buffer.data();
     }
+
+    auto n = pclose(pipe);
+
+#ifdef WIN32
+    exit = n & 0xff;
+#else
+    exit = WEXITSTATUS(n);
+#endif
+
     return result;
 }
 

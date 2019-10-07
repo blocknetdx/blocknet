@@ -1,22 +1,23 @@
-//******************************************************************************
-//******************************************************************************
-#include "xrouterutils.h"
-#include "xrouterlogger.h"
-#include "xrouterdef.h"
-#include "xroutererror.h"
+// Copyright (c) 2018-2019 The Blocknet developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "json/json_spirit_reader_template.h"
-#include "json/json_spirit_writer_template.h"
-#include "json/json_spirit_utils.h"
+#include <xrouter/xrouterutils.h>
 
-#include "rpcserver.h"
-#include "rpcprotocol.h"
-#include "rpcclient.h"
-#include "base58.h"
-#include "wallet.h"
-#include "init.h"
-#include "key.h"
-#include "core_io.h"
+#include <xbridge/xbridgeapp.h>
+#include <xbridge/xbridgewallet.h>
+#include <xrouter/xrouterdef.h>
+#include <xrouter/xrouterlogger.h>
+
+#include <base58.h>
+#include <core_io.h>
+#include <key.h>
+#include <node/transaction.h>
+#include <rpc/client.h>
+#include <validation.h>
+#include <wallet/wallet.h>
+
+#include <boost/lexical_cast.hpp>
 
 using namespace json_spirit;
 
@@ -25,10 +26,9 @@ using namespace json_spirit;
 namespace xrouter
 {
 
-
-CMutableTransaction decodeTransaction(std::string tx)
+CMutableTransaction decodeTransaction(const std::string & tx)
 {
-    vector<unsigned char> txData(ParseHex(tx));
+    std::vector<unsigned char> txData(ParseHex(tx));
     CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
     CMutableTransaction result;
     ssData >> result;
@@ -38,240 +38,231 @@ CMutableTransaction decodeTransaction(std::string tx)
 // TODO: check that this variable is static across xbridge and xrouter
 static CCriticalSection cs_rpcBlockchainStore;
 
-bool createAndSignTransaction(Array txparams, std::string & raw_tx)
-{
-    LOCK2(cs_rpcBlockchainStore, pwalletMain->cs_wallet);
-    
-    int         errCode = 0;
-    std::string errMessage;
-    std::string rawtx;
-
-    try
-    {
-        Value result;
-
-        {
-            // call create
-            result = createrawtransaction(txparams, false);
-            LOG() << "Create transaction: " << json_spirit::write_string(Value(result), true);
-            if (result.type() != str_type)
-            {
-                throw std::runtime_error("Create transaction command finished with error");
-            }
-
-            rawtx = result.get_str();
-        }
-
-        {
-            Array params;
-            params.push_back(rawtx);
-            Object options;
-            options.push_back(Pair("lockUnspents", true));
-            params.push_back(options);
-
-            // call fund
-            result = fundrawtransaction(params, false);
-            LOG() << "Fund transaction: " << json_spirit::write_string(Value(result), true);
-            if (result.type() != obj_type)
-            {
-                throw std::runtime_error("Could not fund the transaction. Please check that you have enough funds.");
-            }
-
-            Object obj = result.get_obj();
-            const Value  & tx = find_value(obj, "hex");
-            if (tx.type() != str_type)
-            {
-                throw std::runtime_error("Could not fund the transaction. Please check that you have enough funds.");
-            }
-
-            rawtx = tx.get_str();
-        }
-
-        {
-            Array params;
-            params.push_back(rawtx);
-
-            result = signrawtransaction(params, false);
-            LOG() << "Sign transaction: " << json_spirit::write_string(Value(result), true);
-            if (result.type() != obj_type)
-            {
-                throw std::runtime_error("Sign transaction command finished with error");
-            }
-
-            Object obj = result.get_obj();
-            const Value  & tx = find_value(obj, "hex");
-            const Value & cpl = find_value(obj, "complete");
-
-            if (tx.type() != str_type)
-            {
-                throw std::runtime_error("Sign transaction error");
-            }
-
-            if (cpl.type() != bool_type || !cpl.get_bool())
-            {
-                throw std::runtime_error("Sign transaction not complete");
-            }
-            
-            rawtx = tx.get_str();
-        }
-    }
-    catch (json_spirit::Object & obj)
-    {
-        //
-        errCode = find_value(obj, "code").get_int();
-        errMessage = find_value(obj, "message").get_str();
-    }
-    catch (std::runtime_error & e)
-    {
-        // specified error
-        errCode = -1;
-        errMessage = e.what();
-    }
-    catch (...)
-    {
-        errCode = -1;
-        errMessage = "unknown error";
-    }
-
-    if (errCode != 0)
-    {
-        LOG() << "xdata signrawtransaction " << rawtx;
-        LOG() << "error sign transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
-        return false;
-    }
-
-    raw_tx = rawtx;
-    
-    return true;
-}
-
-bool createAndSignTransaction(std::string address, CAmount amount, string & raw_tx)
-{
-    Array outputs;
-    Object out;
-    out.push_back(Pair("address", address));
-    out.push_back(Pair("amount", ValueFromAmount(amount)));
-    outputs.push_back(out);
-    Array inputs;
-    Value result;
-
-    Array params;
-    params.push_back(inputs);
-    params.push_back(outputs);
-    return createAndSignTransaction(params, raw_tx);
-}
-
-bool createAndSignTransaction(boost::container::map<std::string, CAmount> addrs, string & raw_tx)
-{
-    Array outputs;
-    typedef boost::container::map<std::string, CAmount> addr_map;
-    BOOST_FOREACH( addr_map::value_type &it, addrs ) {
-        Object out;
-        out.push_back(Pair("address", it.first));
-        out.push_back(Pair("amount", ValueFromAmount(it.second)));
-        outputs.push_back(out);
-    }
-    Array inputs;
-    Value result;
-
-    Array params;
-    params.push_back(inputs);
-    params.push_back(outputs);
-    return createAndSignTransaction(params, raw_tx);
-}
-
-void unlockOutputs(std::string tx) {
-    CMutableTransaction txobj = decodeTransaction(tx);
-    for (size_t i = 0; i < txobj.vin.size(); i++) {
-        pwalletMain->UnlockCoin(txobj.vin[0].prevout);
-    }
-}
-
-std::string signTransaction(std::string& raw_tx)
-{
-    LOCK2(cs_rpcBlockchainStore, pwalletMain->cs_wallet);
-    
-    std::vector<std::string> params;
-    params.push_back(raw_tx);
-
-    const static std::string signCommand("signrawtransaction");
-    Value result = tableRPC.execute(signCommand, RPCConvertValues(signCommand, params));
-    LOG() << "Sign transaction: " << json_spirit::write_string(Value(result), true);
-    if (result.type() != obj_type)
-    {
-        throw std::runtime_error("Sign transaction command finished with error");
-    }
-
-    Object obj = result.get_obj();
-    const Value& tx = find_value(obj, "hex");
-    return tx.get_str();
-}
-
-bool sendTransactionBlockchain(std::string raw_tx, std::string & txid)
-{
+bool createAndSignTransaction(const std::string & toaddress, const CAmount & toamount, std::string & raw_tx) {
     LOCK(cs_rpcBlockchainStore);
 
-    const static std::string sendCommand("sendrawtransaction");
+    raw_tx.clear(); // clean ret transaction tx
+    // Exclude the used uxtos
+    const auto excludedUtxos = xbridge::App::instance().getAllLockedUtxos("BLOCK");
 
-    int         errCode = 0;
-    std::string errMessage;
-    Value result;
-    
-    try
-    {
-        {
-            std::vector<std::string> params;
-            params.push_back(raw_tx);
+    // Available utxos from from wallet
+    std::vector<xbridge::wallet::UtxoEntry> inputs;
+    std::vector<xbridge::wallet::UtxoEntry> outputsForUse;
+    std::map<COutPoint, std::pair<const COutput*, std::shared_ptr<CWallet>>> coinLookup;
 
-            result = tableRPC.execute(sendCommand, RPCConvertValues(sendCommand, params));
-            if (result.type() != str_type)
-            {
-                throw std::runtime_error("Send transaction command finished with error");
-            }
-
-            txid = result.get_str();
+    try {
+        std::vector<COutput> coins;
+        auto wallets = GetWallets();
+        for (const auto & wallet : wallets) {
+            LOCK2(cs_main, wallet->cs_wallet);
+            if (wallet->IsLocked())
+                continue;
+            auto lockedChain = wallet->chain().lock();
+            std::vector<COutput> coi;
+            wallet->AvailableCoins(*lockedChain, coi, true, nullptr);
+            coins.insert(coins.end(), coi.begin(), coi.end());
+            for (const auto & coin : coi)
+                coinLookup[coin.GetInputCoin().outpoint] = std::make_pair(&coin, wallet);
         }
-
-        LOG() << "sendrawtransaction " << raw_tx;
-    }
-    catch (json_spirit::Object & obj)
-    {
-        //
-        errCode = find_value(obj, "code").get_int();
-        errMessage = find_value(obj, "message").get_str();
-    }
-    catch (std::runtime_error & e)
-    {
-        // specified error
-        errCode = -1;
-        errMessage = e.what();
-    }
-    catch (...)
-    {
-        errCode = -1;
-        errMessage = "unknown error";
-    }
-
-    if (errCode != 0)
-    {
-        LOG() << "xdata sendrawtransaction " << raw_tx;
-        LOG() << "error send xdata transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
+        if (coins.empty())
+            return false; // not enough inputs
+        for (const auto & coin : coins) {
+            xbridge::wallet::UtxoEntry entry;
+            entry.txId = coin.tx->GetHash().ToString();
+            entry.vout = coin.i;
+            entry.amount = static_cast<double>(coin.GetInputCoin().txout.nValue)/static_cast<double>(COIN);
+            CTxDestination destination;
+            if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, destination))
+                continue; // skip incompatible addresses
+            entry.address = EncodeDestination(destination);
+            entry.scriptPubKey = HexStr(coin.GetInputCoin().txout.scriptPubKey);
+            entry.confirmations = coin.nDepth;
+            inputs.emplace_back(entry);
+        }
+    } catch (...) {
+        ERR() << "Failed to created feetx, listunspent returned error";
         return false;
     }
+
+    // Remove all the excluded utxos
+    inputs.erase(
+        std::remove_if(inputs.begin(), inputs.end(), [&excludedUtxos](xbridge::wallet::UtxoEntry & u) {
+            if (excludedUtxos.count(u))
+                return true; // remove if in excluded list
+
+            // Only accept p2pkh (like 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
+            std::vector<unsigned char> script = ParseHex(u.scriptPubKey);
+            if (script.size() == 25 &&
+                script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
+                script[23] == 0x88 && script[24] == 0xac)
+            {
+                return false; // keep
+            }
+
+            return true; // remove if script invalid
+        }),
+        inputs.end()
+    );
+
+    // Select utxos
+    uint64_t utxoAmount{0};
+    uint64_t fee1{0};
+    uint64_t fee2{0};
+    auto minTxFee1 = [](const uint32_t & inputs, const uint32_t & outputs) -> double {
+        uint64_t fee = (192*inputs + 34*2) * 20;
+        return static_cast<double>(fee) / COIN;
+    };
+    auto minTxFee2 = [](const uint32_t & inputs, const uint32_t & outputs) -> double {
+        return 0;
+    };
+    if (!xbridge::App::instance().selectUtxos("", inputs, minTxFee1, minTxFee2, toamount,
+                                              COIN, outputsForUse, utxoAmount, fee1, fee2))
+    {
+        ERR() << "Insufficient funds for fee tx";
+        return false;
+    }
+
+    std::vector<xbridge::wallet::UtxoEntry> inputs_o;
+    CAmount change = utxoAmount - toamount - fee1;
+    std::string largestInputAddress;
+    double largestInput{0};
+    for (const auto & a : outputsForUse) {
+        if (a.amount > largestInput) {
+            largestInputAddress = a.address;
+            largestInput = a.amount;
+        }
+        inputs_o.push_back(a);
+    }
+
+    std::vector<CTxOut> outputs_o;
+    outputs_o.emplace_back(toamount, GetScriptForDestination(DecodeDestination(toaddress))); // Payment
+    outputs_o.emplace_back(change, GetScriptForDestination(DecodeDestination(largestInputAddress))); // Change
+
+    // Create the transaction
+    std::string rawtx;
+    CMutableTransaction mtx;
+    mtx.vin.resize(inputs_o.size());
+    mtx.vout.resize(outputs_o.size());
+    for (int i = 0; i < (int)inputs_o.size(); ++i)
+        mtx.vin[i] = CTxIn(COutPoint(uint256S(inputs_o[i].txId), inputs_o[i].vout));
+    for (int i = 0; i < (int)outputs_o.size(); ++i)
+        mtx.vout[i] = outputs_o[i];
+    // Sign transaction
+    for (int i = 0; i < (int)mtx.vin.size(); ++i) {
+        const auto & item = coinLookup[mtx.vin[i].prevout];
+        SignatureData sigdata = DataFromTransaction(mtx, i, item.first->GetInputCoin().txout);
+        ProduceSignature(*item.second, MutableTransactionSignatureCreator(&mtx, i, item.first->GetInputCoin().txout.nValue, SIGHASH_ALL),
+                item.first->GetInputCoin().txout.scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[i], sigdata);
+    }
+    const CTransaction txConst(mtx);
+    raw_tx = EncodeHexTx(txConst);
+
+    // lock used coins
+    std::set<xbridge::wallet::UtxoEntry> feeUtxos{outputsForUse.begin(), outputsForUse.end()};
+    xbridge::App::instance().lockFeeUtxos(feeUtxos);
 
     return true;
 }
 
-bool sendTransactionBlockchain(std::string address, CAmount amount, std::string & txid)
-{
-    std::string raw_tx;
-    bool res = createAndSignTransaction(address, amount, raw_tx);
-    if (!res) {
-        return false;
+void unlockOutputs(const std::string & tx) {
+    if (tx.empty())
+        return;
+    try {
+        CMutableTransaction txobj = decodeTransaction(tx);
+        std::set<xbridge::wallet::UtxoEntry> coins;
+        for (const auto & vin : txobj.vin) {
+            xbridge::wallet::UtxoEntry entry;
+            entry.txId = vin.prevout.hash.ToString();
+            entry.vout = vin.prevout.n;
+            coins.insert(entry);
+        }
+        xbridge::App::instance().unlockFeeUtxos(coins);
+    } catch (...) {
+        ERR() << "Failed to unlock fee utxos for tx: " + tx;
     }
-    
-    res = sendTransactionBlockchain(raw_tx, txid);
-    return res;
+}
+
+bool sendTransactionBlockchain(const std::string & rawtx, std::string & txid)
+{
+    CMutableTransaction mtx;
+    if (!DecodeHexTx(mtx, rawtx, true, false))
+        return false;
+    // Send transaction
+    uint256 txhash; std::string errstr;
+    const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txhash, errstr, 0);
+    txid = txhash.ToString();
+    return err == TransactionError::OK;
+}
+
+double checkPayment(const std::string & rawtx, const std::string & address, const CAmount & expectedFee)
+{
+    CMutableTransaction tx;
+    if (!DecodeHexTx(tx, rawtx) || tx.vin.empty() || tx.vout.empty())
+        throw std::runtime_error("Bad fee payment");
+
+    for (const auto & input : tx.vin) {
+        CTransactionRef t;
+        uint256 hashBlock;
+        if (!GetTransaction(input.prevout.hash, t, Params().GetConsensus(), hashBlock))
+            throw std::runtime_error("Bad fee payment, failed to find fee inputs");
+    }
+
+    CAmount payment{0};
+    for (const auto & output : tx.vout) {
+        std::vector<CTxDestination> addresses;
+        txnouttype whichType;
+        int nRequired;
+        ExtractDestinations(output.scriptPubKey, whichType, addresses, nRequired);
+        for (const CTxDestination & addr : addresses) {
+            if (EncodeDestination(addr) == address) {
+                payment += output.nValue;
+                break;
+            }
+        }
+    }
+
+    if (payment == 0)
+        throw std::runtime_error("Bad fee payment, payment address is missing");
+
+    if (payment < expectedFee)
+        throw std::runtime_error("Bad fee payment, fee is too low");
+
+    return payment;
+
+//    const static std::string decodeCommand("decoderawtransaction");
+//    std::vector<std::string> params;
+//    params.push_back(rawtx);
+//
+//    Value result = tableRPC.execute(decodeCommand, RPCConvertValues(decodeCommand, params));
+//    if (result.type() != obj_type)
+//        throw std::runtime_error("Check payment failed: Decode transaction command finished with error");
+//
+//    Object obj = result.get_obj();
+//    Array vouts = find_value(obj, "vout").get_array();
+//    for (const auto & vout : vouts) {
+//        // Validate tx type
+//        auto & scriptPubKey = find_value(vout.get_obj(), "scriptPubKey").get_obj();
+//        const auto & vouttype = find_value(scriptPubKey, "type").get_str();
+//        if (vouttype != "pubkeyhash")
+//            throw std::runtime_error("Check payment failed: Only pubkeyhash payments are accepted");
+//
+//        // Validate payment address
+//        const auto & addr_val = find_value(scriptPubKey, "addresses");
+//        if (addr_val.type() != array_type)
+//            continue;
+//
+//        auto & addrs = addr_val.get_array();
+//        if (addrs.size() <= 0)
+//            continue;
+//
+//        if (addrs[0].get_str() != address) // check address
+//            continue;
+//
+//        return find_value(vout.get_obj(), "value").get_real();
+//    }
+//
+//    return 0.0;
 }
     
 } // namespace xrouter

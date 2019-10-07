@@ -1,13 +1,10 @@
-#ifndef XROUTERVERSION
-#define XROUTERVERSION
+// Copyright (c) 2018-2019 The Blocknet developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#define XROUTER_VERSION_MAJOR 0
-#define XROUTER_VERSION_MINOR 1
-#define XROUTER_VERSION_DESCR "xrouter"
+#ifndef BLOCKNET_XROUTER_XROUTERVERSION_H
+#define BLOCKNET_XROUTER_XROUTERVERSION_H
 
-#define MAKE_VERSION(major,minor) (( major << 16 ) + minor )
-#define XROUTER_VERSION MAKE_VERSION(XROUTER_VERSION_MAJOR, XROUTER_VERSION_MINOR)
+#define XROUTER_PROTOCOL_VERSION 50
 
-#define XROUTER_PROTOCOL_VERSION 0xff000023
-
-#endif // XROUTERVERSION
+#endif // BLOCKNET_XROUTER_XROUTERVERSION_H

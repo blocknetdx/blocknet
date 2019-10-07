@@ -42,6 +42,7 @@ const char *CMPCTBLOCK="cmpctblock";
 const char *GETBLOCKTXN="getblocktxn";
 const char *BLOCKTXN="blocktxn";
 const char *XBRIDGE="xbridge";
+const char *XROUTER="xrouter";
 } // namespace NetMsgType
 
 /** All known message types. Keep this in the same order as the list of
@@ -75,6 +76,7 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::GETBLOCKTXN,
     NetMsgType::BLOCKTXN,
     NetMsgType::XBRIDGE,
+    NetMsgType::XROUTER,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
 

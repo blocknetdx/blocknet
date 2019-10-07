@@ -34,6 +34,7 @@ LIBBITCOIN_CRYPTO_BASE=crypto/libbitcoin_crypto_base.a
 LIBBITCOINQT=qt/libbitcoinqt.a
 LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBXBRIDGE=xbridge/libxbridge.a
+LIBXROUTER=xrouter/libxrouter.a
 
 if ENABLE_ZMQ
 LIBBITCOIN_ZMQ=libbitcoin_zmq.a
@@ -79,6 +80,10 @@ EXTRA_LIBRARIES += \
 # Blocknet XBridge
 EXTRA_LIBRARIES += \
   $(LIBXBRIDGE)
+
+# Blocknet XRouter
+EXTRA_LIBRARIES += \
+  $(LIBXROUTER)
 
 lib_LTLIBRARIES = $(LIBBITCOINCONSENSUS)
 
@@ -285,6 +290,22 @@ BITCOIN_CORE_H += \
   xbridge/xbridgewalletconnectorbtc.h \
   xbridge/xbridgewalletconnectordgb.h \
   xbridge/xuiconnector.h
+
+# Blocknet XRouter
+BITCOIN_CORE_H += \
+  xrouter/version.h \
+  xrouter/xrouterapp.h \
+  xrouter/xrouterconnector.h \
+  xrouter/xrouterconnectorbtc.h \
+  xrouter/xrouterconnectoreth.h \
+  xrouter/xrouterdef.h \
+  xrouter/xroutererror.h \
+  xrouter/xrouterlogger.h \
+  xrouter/xrouterpacket.h \
+  xrouter/xrouterpeer.h \
+  xrouter/xrouterserver.h \
+  xrouter/xroutersettings.h \
+  xrouter/xrouterutils.h
 
 
 obj/build.h: FORCE
@@ -581,6 +602,25 @@ xbridge_libxbridge_a_SOURCES = \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
 
+# xrouter: interoperability protocol
+xrouter_libxrouter_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
+xrouter_libxrouter_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+xrouter_libxrouter_a_SOURCES = \
+  xrouter/rpcxrouter.cpp \
+  xrouter/utils-misc.cpp \
+  xrouter/utils-network.cpp \
+  xrouter/utils-payments.cpp \
+  xrouter/xrouterapp.cpp \
+  xrouter/xrouterconnector.cpp \
+  xrouter/xrouterconnectorbtc.cpp \
+  xrouter/xrouterconnectoreth.cpp \
+  xrouter/xrouterlogger.cpp \
+  xrouter/xrouterpacket.cpp \
+  xrouter/xrouterserver.cpp \
+  xrouter/xroutersettings.cpp \
+  $(JSON_H) \
+  $(BITCOIN_CORE_H)
+
 if GLIBC_BACK_COMPAT
 libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
 AM_LDFLAGS += $(COMPAT_LDFLAGS)
@@ -623,6 +663,9 @@ bitcoind_LDADD = \
 
 # Blocknet XBridge
 bitcoind_LDADD += $(LIBXBRIDGE)
+
+# Blocknet XRouter
+bitcoind_LDADD += $(LIBXROUTER)
 
 bitcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
@@ -691,6 +734,9 @@ bitcoin_wallet_LDADD = \
 
 # Blocknet XBridge
 bitcoin_wallet_LDADD += $(LIBXBRIDGE)
+
+# Blocknet XRouter
+bitcoin_wallet_LDADD += $(LIBXROUTER)
 
 bitcoin_wallet_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
 #

@@ -1,19 +1,19 @@
-//******************************************************************************
-//******************************************************************************
+// Copyright (c) 2018-2019 The Blocknet developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "xrouterlogger.h"
-#include "util.h"
+#include <xrouter/xrouterlogger.h>
 
-#include <string>
+#include <util/system.h>
+
 #include <sstream>
-#include <fstream>
-#include <boost/thread/thread.hpp>
-#include <boost/thread/mutex.hpp>
-#include <boost/thread/locks.hpp>
-#include <boost/date_time/gregorian/gregorian.hpp>
+#include <string>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/filesystem.hpp>
-
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/thread.hpp>
 
 namespace xrouter
 {
@@ -34,21 +34,21 @@ LOG::LOG(const char reason, std::string filename)
 {
     // 'D' is turned on when debug=1 in blocknetdx.conf
     if (reason == 'D')
-        if (!GetBoolArg("-debug", false))
+        if (!gArgs.GetBoolArg("-debug", false))
             return;
+
+    if (!filename.empty())
+        filenameOverride = filename;
         
     *this << "\n" << "[" << (char)std::toupper(m_r) << "] "
           << boost::posix_time::second_clock::local_time()
           << " [0x" << boost::this_thread::get_id() << "] ";
-    if (filename != "")
-        filenameOverride = filename;
 }
 
 //******************************************************************************
 //******************************************************************************
 // static
-std::string LOG::logFileName()
-{
+std::string LOG::logFileName() {
     return m_logFileName;
 }
 
@@ -58,45 +58,31 @@ LOG::~LOG()
 {
     boost::lock_guard<boost::mutex> lock(logLocker);
 
-    // const static std::string path     = settings().logPath().size() ? settings().logPath() : settings().appPath();
-    const static bool logToFile       = true; // !path.empty();
-    static boost::gregorian::date day =
-            boost::gregorian::day_clock::local_day();
+    static boost::gregorian::date day = boost::gregorian::day_clock::local_day();
     if (m_logFileName.empty())
-    {
-        m_logFileName    = makeFileName();
-    }
-
-    // std::cout << str().c_str();
+        m_logFileName = makeFileName();
 
     try
     {
-        if (filenameOverride != "") {
+        if (!filenameOverride.empty()) {
             boost::filesystem::path directory = GetDataDir(false) / "log";
             boost::filesystem::create_directory(directory);
 
-            std::ofstream file(directory.string() + "/" + filenameOverride.c_str(), std::ios_base::app);
+            std::ofstream file(directory.string() + "/" + filenameOverride, std::ios_base::app);
             file << str().c_str();
             return;
         }
-        if (logToFile)
-        {
-            boost::gregorian::date tmpday =
-                    boost::gregorian::day_clock::local_day();
 
-            if (day != tmpday)
-            {
-                m_logFileName = makeFileName();
-                day = tmpday;
-            }
-
-            std::ofstream file(m_logFileName.c_str(), std::ios_base::app);
-            file << str().c_str();
+        boost::gregorian::date tmpday = boost::gregorian::day_clock::local_day();
+        if (day != tmpday) {
+            m_logFileName = makeFileName();
+            day = tmpday;
         }
+
+        std::ofstream file(m_logFileName.c_str(), std::ios_base::app);
+        file << str().c_str();
     }
-    catch (std::exception &)
-    {
-    }
+    catch (...) { }
 }
 
 //******************************************************************************
@@ -107,10 +93,12 @@ std::string LOG::makeFileName()
     boost::filesystem::path directory = GetDataDir(false) / "log";
     boost::filesystem::create_directory(directory);
 
-    return directory.string() + "/" +
-            "xrouter_" +
-            boost::gregorian::to_iso_string(boost::gregorian::day_clock::local_day()) +
-            ".log";
+    auto lt = boost::posix_time::second_clock::local_time();
+    auto df = new boost::gregorian::date_facet("%Y%m%d");
+    std::ostringstream ss;
+    ss.imbue(std::locale(ss.getloc(), df));
+    ss << lt.date();
+    return directory.string() + "/" + "xrouter_" + ss.str() + ".log";
 }
 
 } // namespace

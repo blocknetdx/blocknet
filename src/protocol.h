@@ -243,6 +243,11 @@ extern const char *BLOCKTXN;
  * @since protocol version 70712
  */
 extern const char *XBRIDGE;
+/**
+ * Contains an XRouter message.
+ * @since protocol version 70712
+ */
+extern const char *XROUTER;
 };
 
 /* Get a vector of all valid message types (see above) */

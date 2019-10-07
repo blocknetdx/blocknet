@@ -32,6 +32,7 @@
 #include <util/strencodings.h>
 
 #include <xbridge/xbridgeapp.h>
+#include <xrouter/xrouterapp.h>
 
 #include <memory>
 
@@ -79,9 +80,6 @@ CCriticalSection g_cs_orphans;
 std::map<uint256, COrphanTx> mapOrphanTransactions GUARDED_BY(g_cs_orphans);
 
 void EraseOrphansFor(NodeId peer);
-
-/** Increase a node's misbehavior score. */
-void Misbehaving(NodeId nodeid, int howmuch, const std::string& message="") EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
 /** Average delay between local address broadcasts in seconds. */
 static constexpr unsigned int AVG_LOCAL_ADDRESS_BROADCAST_INTERVAL = 24 * 60 * 60;
@@ -323,6 +321,8 @@ static void UpdatePreferredDownload(CNode* node, CNodeState* state) EXCLUSIVE_LO
 
     // Whether this node should be marked as a preferred download node.
     state->fPreferredDownload = (!node->fInbound || node->fWhitelisted) && !node->fOneShot && !node->fClient;
+    if (node->fXRouter)
+        state->fPreferredDownload = false;
 
     nPreferredDownload += state->fPreferredDownload;
 }
@@ -1841,8 +1841,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             // Get recent addresses
             if (pfrom->fOneShot || pfrom->nVersion >= CADDR_TIME_VERSION || connman->GetAddressCount() < 1000)
             {
+            if (!pfrom->fXRouter) { // if not xrouter peer advertise addresses
                 connman->PushMessage(pfrom, CNetMsgMaker(nSendVersion).Make(NetMsgType::GETADDR));
                 pfrom->fGetAddr = true;
+            }
             }
             connman->MarkAddressGood(pfrom->addr);
         }
@@ -3054,7 +3056,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
         // Send the ping out if we are a snode waiting for registration
         if (smgr.hasActiveSn() && smgr.getActiveSn().keyId() == snode.getSnodePubKey().GetID()) {
-            if (!smgr.sendPing(xbridge::App::version(), xapp.myServices(), connman))
+            if (!smgr.sendPing(XROUTER_PROTOCOL_VERSION, xapp.myServicesJSON(), connman))
                 LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
         }
 
@@ -3080,7 +3082,34 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             connman->PushMessage(pnode, msgMaker.Make(sn::PING, ping));
         });
 
+        bool isReady = xrouter::App::isEnabled() && xrouter::App::instance().isReady();
+        if (isReady)
+            xrouter::App::instance().processConfigMessage(ping.getSnode());
+
         return true;
+    }
+
+    if (strCommand == NetMsgType::XROUTER) { // handle xrouter packets
+        bool isReady = xrouter::App::isEnabled() && xrouter::App::instance().isReady();
+        if (isReady) {
+            std::vector<unsigned char> raw;
+            vRecv >> raw;
+            if (raw.size() < (20 + sizeof(time_t))) {
+                // bad packet, small penalty
+                LOCK(cs_main);
+                Misbehaving(pfrom->GetId(), 10);
+            } else {
+                try {
+                    xrouter::App::instance().onMessageReceived(pfrom, raw);
+                } catch (std::exception & e) {
+                    LOCK(cs_main);
+                    LogPrint(BCLog::XROUTER, "xrouter packet from peer=%d %s processed with error: %s\n",
+                             pfrom->GetId(), pfrom->cleanSubVer, std::string(e.what()));
+                    // bad packet, small penalty
+                    Misbehaving(pfrom->GetId(), 10);
+                }
+            }
+        }
     }
 
     // Ignore unknown commands for extensibility
@@ -3451,6 +3480,8 @@ bool PeerLogicValidation::SendMessages(CNode* pto)
             return true;
 
         if (SendRejectsAndCheckIfBanned(pto, m_enable_bip61)) return true;
+        if (pto->fXRouter) // do not process non-xrouter messages from xrouter peers
+            return true;
         CNodeState &state = *State(pto->GetId());
 
         // Address refresh broadcast

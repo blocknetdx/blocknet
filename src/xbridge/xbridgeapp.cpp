@@ -9,6 +9,7 @@
 
 #include <xbridge/util/logger.h>
 #include <xbridge/util/settings.h>
+#include <xbridge/util/txlog.h>
 #include <xbridge/util/xassert.h>
 #include <xbridge/util/xbridgeerror.h>
 #include <xbridge/util/xseries.h>
@@ -19,6 +20,7 @@
 #include <xbridge/xbridgewalletconnectorbch.h>
 #include <xbridge/xbridgewalletconnectordgb.h>
 #include <xbridge/xuiconnector.h>
+#include <xrouter/xrouterapp.h>
 
 #include <init.h>
 #include <net.h>
@@ -44,7 +46,6 @@
 
 #include <openssl/rand.h>
 #include <openssl/md5.h>
-#include <xbridge/util/txlog.h>
 
 using TransactionMap    = std::map<uint256, xbridge::TransactionDescrPtr>;
 using TransactionPair   = std::pair<uint256, xbridge::TransactionDescrPtr>;
@@ -397,7 +398,7 @@ bool App::disconnectWallets()
 
     std::set<std::string> noWallets;
     xbridge::Exchange::instance().loadWallets(noWallets);
-    // TODO Blocknet XRouter
+    // TODO Blocknet XRouter notify network wallets are going offline
 //    std::vector<std::string> nonWalletServices = xrouter::App::instance().getServicesList();
 //    sendServicePing(nonWalletServices);
 
@@ -487,7 +488,7 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
     g_connman->ForEachNode([&](CNode* pnode) {
         if (!pnode->fSuccessfullyConnected)
             return;
-        if (pnode->fSuccessfullyConnected && !pnode->fDisconnect)// TODO Blocknet XRouter: && !pnode->isXRouter()) // do not relay to xrouter nodes
+        if (pnode->fSuccessfullyConnected && !pnode->fDisconnect && !pnode->fXRouter) // do not relay to xrouter nodes
             g_connman->PushMessage(pnode, msgMaker.Make(NetMsgType::XBRIDGE, msg));
     });
 }
@@ -2049,31 +2050,62 @@ void App::unwatchTraderDeposit(TransactionPtr tr) {
 
 /**
  * Return this node's services.
+ * @param includeXRouter defaults to true
  * @return
  */
-std::string App::myServices() const {
+std::vector<std::string> App::myServices(const bool includeXRouter) const {
     Exchange & e = Exchange::instance();
-    std::vector<std::string> services;
-    std::map<std::string, bool> nodup;
+    std::set<std::string> services; // weed out duplicates
 
     // Add xbridge connected wallets
     if (e.isStarted()) {
+        std::map<std::string, bool> nodup;
         const auto & wallets = e.connectedWallets();
         for (const auto & wallet : wallets)
             nodup[wallet] = hasCurrency(wallet);
-    } else {
-        ERR() << "Services not sent to the network, exchange hasn't started. Is the servicenode in exchange mode? " << __FUNCTION__;
-        return "";
+        // All services
+        for (const auto &item : nodup) {
+            if (item.second) // only show enabled wallets
+                services.insert(item.first);
+        }
     }
 
-    // All services
-    for (const auto &item : nodup) {
-        if (item.second) // only show enabled wallets
-            services.push_back(item.first);
+    // Add xrouter wallets and plugins
+    if (includeXRouter && xrouter::App::isEnabled() && xrouter::App::instance().isReady()) {
+        auto & xrapp = xrouter::App::instance();
+        const auto & wallets = xrapp.xrSettings()->getWallets();
+        for (const auto & wallet : wallets)
+            services.insert(xrouter::walletCommandKey(wallet));
+        const auto & plugins = xrapp.xrSettings()->getPlugins();
+        for (const auto & plugin : plugins)
+            services.insert(xrouter::pluginCommandKey(plugin));
     }
 
-    std::string servicesStr = boost::algorithm::join(services, ",");
-    return servicesStr;
+    return std::move(std::vector<std::string>{services.begin(), services.end()});
+}
+
+/**
+ * Return this node's services.
+ * @return
+ */
+std::string App::myServicesJSON() const {
+    json_spirit::Array xwallets;
+    const auto & services = myServices(false); // do not include xrouter here (xrouter included below)
+    for (const auto & service : services)
+        xwallets.push_back(service);
+
+    json_spirit::Object result;
+    json_spirit::Value xrouterConfigVal;
+    if (xrouter::App::isEnabled() && xrouter::App::instance().isReady()) {
+        auto & xrapp = xrouter::App::instance();
+        const std::string & xrouterConfig = xrapp.parseConfig(xrapp.xrSettings());
+        json_spirit::read_string(xrouterConfig, xrouterConfigVal);
+    }
+    result.emplace_back("xrouterversion", static_cast<int>(XROUTER_PROTOCOL_VERSION));
+    result.emplace_back("xbridgeversion", static_cast<int>(version()));
+    result.emplace_back("xrouter", xrouterConfigVal);
+    result.emplace_back("xbridge", xwallets);
+    return json_spirit::write_string(json_spirit::Value(result), json_spirit::none, 8);
 }
 
 //******************************************************************************
@@ -2117,7 +2149,7 @@ std::map<::CPubKey, App::XWallets> App::allServices()
         if (!snode.running())
             continue;
         ws[snode.getSnodePubKey()] = XWallets{
-            snode.getProtocolVersion(), snode.getSnodePubKey(),
+            snode.getXBridgeVersion(), snode.getSnodePubKey(),
             std::set<std::string>{snode.serviceList().begin(), snode.serviceList().end()}
         };
     }
@@ -2144,7 +2176,7 @@ std::map<::CPubKey, App::XWallets> App::walletServices()
         const auto & services = snode.serviceList();
         std::set<std::string> xwallets;
         for (const auto & s : services) {
-            if (!std::regex_match(s, m, rwallet) || s == "xr" || s == "xrs") // TODO Blocknet XRouter:  if (!std::regex_match(s, m, rwallet) || s == xrouter::xr || s == xrouter::xrs)
+            if (!std::regex_match(s, m, rwallet) || s == xrouter::xr || s == xrouter::xrs)
                 continue;
             xwallets.insert(s);
         }
@@ -2284,7 +2316,7 @@ std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
     const auto & snodes = sn::ServiceNodeMgr::instance().list();
     for (const auto& x : snodes)
     {
-        if (x.getProtocolVersion() != version || notIn.count(x.getSnodePubKey()) || !x.running())
+        if (x.getXBridgeVersion() != version || notIn.count(x.getSnodePubKey()) || !x.running())
             continue;
 
         // Make sure this xwallet entry is in the servicenode list
@@ -2841,7 +2873,8 @@ void App::Impl::onTimer()
             static int pingCounter{0};
             if (++pingCounter % 12 == 0) {
                 auto smgr = &sn::ServiceNodeMgr::instance();
-                io->post(boost::bind(&sn::ServiceNodeMgr::sendPing, smgr, version(), app->myServices(), g_connman.get()));
+                io->post(boost::bind(&sn::ServiceNodeMgr::sendPing, smgr, XROUTER_PROTOCOL_VERSION,
+                                     app->myServicesJSON(), g_connman.get()));
             }
         }
 

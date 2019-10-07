@@ -1,19 +1,19 @@
-//******************************************************************************
-//******************************************************************************
+// Copyright (c) 2018-2019 The Blocknet developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef XROUTERDEF_H
-#define XROUTERDEF_H
+#ifndef BLOCKNET_XROUTER_XROUTERDEF_H
+#define BLOCKNET_XROUTER_XROUTERDEF_H
 
-#include <vector>
 #include <map>
-#include <queue>
 #include <memory>
+#include <queue>
+#include <vector>
 
-#define MIN_BLOCK 200
-#define XROUTER_DEFAULT_TIMEOUT 10
-#define XROUTER_DEFAULT_WAIT 5000
-#define XROUTER_DEFAULT_BLOCK_LIMIT 1
-#define XROUTER_DOMAIN_REGISTRATION_DEPOSIT 1.0
+#define XROUTER_DEFAULT_TIMEOUT 30   // seconds
+#define XROUTER_CONFIGSYNC_TIMEOUT 3 // seconds
+#define XROUTER_DEFAULT_FETCHLIMIT 50
 #define XROUTER_DEFAULT_CONFIRMATIONS 1
+#define XROUTER_TIMER_SECONDS 15
 
-#endif // XROUTERDEF_H
+#endif // BLOCKNET_XROUTER_XROUTERDEF_H

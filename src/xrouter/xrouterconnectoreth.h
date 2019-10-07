@@ -1,38 +1,37 @@
-//******************************************************************************
-//******************************************************************************
+// Copyright (c) 2018-2019 The Blocknet developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef _XROUTER_CONNECTOR_ETH_H_
-#define _XROUTER_CONNECTOR_ETH_H_
+#ifndef BLOCKNET_XROUTER_XROUTERCONNECTORETH_H
+#define BLOCKNET_XROUTER_XROUTERCONNECTORETH_H
 
-#include <vector>
-#include <string>
+#include <xrouter/xrouterconnector.h>
+
+#include <streams.h>
+
 #include <cstdint>
 #include <sstream>
-#include "json/json_spirit.h"
-#include "xrouterconnector.h"
-#include "streams.h"
-
-using namespace json_spirit;
+#include <string>
+#include <vector>
 
 namespace xrouter
 {
 
 class EthWalletConnectorXRouter : public WalletConnectorXRouter {
 public:
-    std::string getBlockCount() const;
-    Object getBlockHash(const std::string & blockId) const;
-    Object      getBlock(const std::string & blockHash) const;
-    Object      getTransaction(const std::string & trHash) const;
-    Array       getAllBlocks(const int number, int blocklimit=0) const;
-    Array       getAllTransactions(const std::string & account, const int number, const int time=0, int blocklimit=0) const;
-    std::string getBalance(const std::string & account, const int time=0, int blocklimit=0) const;
-    std::string getBalanceUpdate(const std::string & account, const int number, const int time=0, int blocklimit=0) const;
-    Array       getTransactionsBloomFilter(const int, CDataStream &, int blocklimit=0) const;
-    Object      sendTransaction(const std::string &) const;
-    std::string convertTimeToBlockCount(const std::string & timestamp) const;
+    std::string              getBlockCount() const override;
+    std::string              getBlockHash(const int & block) const override;
+    std::string              getBlock(const std::string & hash) const override;
+    std::vector<std::string> getBlocks(const std::vector<std::string> & blockHashes) const override;
+    std::string              getTransaction(const std::string & hash) const override;
+    std::vector<std::string> getTransactions(const std::vector<std::string> & txHashes) const override;
+    std::vector<std::string> getTransactionsBloomFilter(const int &, CDataStream &, const int & fetchlimit=0) const override;
+    std::string              sendTransaction(const std::string & rawtx) const override;
+    std::string              decodeRawTransaction(const std::string & hex) const override;
+    std::string              convertTimeToBlockCount(const std::string & timestamp) const override;
+    std::string              getBalance(const std::string & address) const override;
 };
-
 
 } // namespace xrouter
 
-#endif
+#endif // BLOCKNET_XROUTER_XROUTERCONNECTORETH_H

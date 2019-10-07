@@ -309,14 +309,10 @@ public:
         const uint32_t bestBlock = getActiveChainHeight();
         const uint256 & bestBlockHash = getActiveChainHash(bestBlock);
 
-        std::ostringstream o;
-        o << protocol;
-
-        const auto uconfig = o.str() + "," + config;
-        snode->setConfig(uconfig);
+        snode->setConfig(config);
         snode->updatePing();
 
-        ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, uconfig, *snode);
+        ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, config, *snode);
         ping.sign(activesn.key);
         if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc)) {
             LogPrint(BCLog::SNODE, "service node ping failed\n");
@@ -370,6 +366,19 @@ public:
     }
 
     /**
+     * Returns the servicenode with the specified node address.
+     * @param nodeAddr
+     * @return
+     */
+    ServiceNode getSn(const std::string & nodeAddr) {
+        LOCK(mu);
+        for (const auto & s : snodes)
+            if (s.second->getHost() == nodeAddr)
+                return *s.second;
+        return ServiceNode{};
+    }
+
+    /**
      * Returns a copy of the currently loaded snode entries.
      * @return
      */
@@ -418,7 +427,7 @@ public:
      * Returns the active service node entry (the first in the list).
      * @return
      */
-    const ServiceNodeConfigEntry & getActiveSn() {
+    ServiceNodeConfigEntry getActiveSn() {
         if (!gArgs.GetBoolArg("-servicenode", false))
             return std::move(ServiceNodeConfigEntry{});
         LOCK(mu);

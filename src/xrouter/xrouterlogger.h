@@ -1,10 +1,12 @@
-//******************************************************************************
-//******************************************************************************
+// Copyright (c) 2018-2019 The Blocknet developers
+// Distributed under the MIT software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef XROUTERLOGGER_H
-#define XROUTERLOGGER_H
+#ifndef BLOCKNET_XROUTER_XROUTERLOGGER_H
+#define BLOCKNET_XROUTER_XROUTERLOGGER_H
 
 #include <sstream>
+
 #include <boost/pool/pool_alloc.hpp>
 
 #define WARN()  LOG('W')
@@ -24,8 +26,8 @@ class LOG : public std::basic_stringstream<char, std::char_traits<char>,
                                         boost::pool_allocator<char> > // std::stringstream
 {
 public:
-    LOG(const char reason = 'I', std::string filename="");
-    virtual ~LOG();
+    explicit LOG(const char reason = 'I', std::string filename="");
+    ~LOG() override;
 
     static std::string logFileName();
 

@@ -96,6 +96,11 @@ public:
 
     //! Checks for empty and full filters to avoid wasting cpu
     void UpdateEmptyFull();
+
+    //! Return copy of internal data
+    const std::vector<unsigned char> data() const {
+        return vData;
+    }
 };
 
 /**

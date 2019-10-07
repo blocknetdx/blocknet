@@ -459,9 +459,16 @@ public:
 
     /**
      * Return all the services on this node.
+     * @param includeXRouter defaults to true
      * @return
      */
-    std::string myServices() const;
+    std::vector<std::string> myServices(bool includeXRouter = true) const;
+
+    /**
+     * Return all the services on this node in json format.
+     * @return
+     */
+    std::string myServicesJSON() const;
 
     /**
      * @brief Returns the all services across all nodes.

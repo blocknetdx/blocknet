@@ -14,7 +14,6 @@
 
 #include <chainparamsbase.h>
 #include <coinvalidator.h>
-
 #include <key.h>
 #include <pubkey.h>
 #include <servicenode/servicenodemgr.h>

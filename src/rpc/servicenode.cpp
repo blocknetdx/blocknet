@@ -725,8 +725,8 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping, %s is not running. See \"help servicenoderegister\"", activesn.alias));
 
     // Send the ping
-    auto services = xbridge::App::instance().myServices();
-    if (!sn::ServiceNodeMgr::instance().sendPing(xbridge::App::version(), services, g_connman.get()))
+    const auto & jservices = xbridge::App::instance().myServicesJSON();
+    if (!sn::ServiceNodeMgr::instance().sendPing(XROUTER_PROTOCOL_VERSION, jservices, g_connman.get()))
         throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping for service node %s", activesn.alias));
 
     // Obtain latest snode data

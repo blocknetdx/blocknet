@@ -53,6 +53,9 @@ bench_bench_bitcoin_LDADD = \
 # Blocknet XBridge
 bench_bench_bitcoin_LDADD += $(LIBXBRIDGE)
 
+# Blocknet XRouter
+bench_bench_bitcoin_LDADD += $(LIBXROUTER)
+
 if ENABLE_ZMQ
 bench_bench_bitcoin_LDADD += $(LIBBITCOIN_ZMQ) $(ZMQ_LIBS)
 endif

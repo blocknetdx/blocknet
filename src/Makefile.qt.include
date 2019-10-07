@@ -431,6 +431,9 @@ qt_bitcoin_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL)
 # Blocknet XBridge
 qt_bitcoin_qt_LDADD += $(LIBXBRIDGE)
 
+# Blocknet XRouter
+qt_bitcoin_qt_LDADD += $(LIBXROUTER)
+
 if ENABLE_BIP70
 qt_bitcoin_qt_LDADD += $(SSL_LIBS)
 else
@@ -447,7 +450,7 @@ QT_QM=$(QT_TS:.ts=.qm)
 
 SECONDARY: $(QT_QM)
 
-$(srcdir)/qt/bitcoinstrings.cpp: $(libbitcoin_server_a_SOURCES) $(libbitcoin_wallet_a_SOURCES) $(libbitcoin_common_a_SOURCES) $(libbitcoin_zmq_a_SOURCES) $(libbitcoin_consensus_a_SOURCES) $(libbitcoin_util_a_SOURCES) $(libxbridge_xbridge_a_SOURCES)
+$(srcdir)/qt/bitcoinstrings.cpp: $(libbitcoin_server_a_SOURCES) $(libbitcoin_wallet_a_SOURCES) $(libbitcoin_common_a_SOURCES) $(libbitcoin_zmq_a_SOURCES) $(libbitcoin_consensus_a_SOURCES) $(libbitcoin_util_a_SOURCES) $(libxbridge_xbridge_a_SOURCES) $(libxrouter_xrouter_a_SOURCES)
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
 	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $^
 
