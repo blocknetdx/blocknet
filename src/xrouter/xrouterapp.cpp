@@ -48,10 +48,8 @@ bool PushXRouterMessage(CNode *pnode, const T & message) {
 static std::vector<CNode*> CopyNodes() {
     std::vector<CNode*> nodes;
     g_connman->ForEachNode([&nodes](CNode *pnode) {
-        if (!pnode->fDisconnect) {
-            pnode->AddRef();
-            nodes.push_back(pnode);
-        }
+        pnode->AddRef();
+        nodes.push_back(pnode);
     });
     return std::move(nodes);
 }
@@ -514,6 +512,17 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         CAddress addr(snode.getHostAddr(), NODE_NONE);
         CNode *node = g_connman->OpenXRouterConnection(addr, snodeAddr.c_str()); // Filters out bad nodes (banned, etc)
         if (node) {
+            const auto startTime = GetTime();
+            while (!node->fSuccessfullyConnected) { // wait n seconds for node to become available
+                const auto currentTime = GetTime();
+                if (ShutdownRequested() || currentTime - startTime > 3) { // wait 3 seconds
+                    updateScore(snodeAddr, -5);
+                    pendingConnMgr.notify(snodeAddr);
+                    return;
+                }
+                boost::this_thread::interruption_point();
+                boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+            }
             LOG() << "Connected to servicenode " << EncodeDestination(CTxDestination(snode.getPaymentAddress()));
             addNode(node); // store the node connection
             if (!hasConfig(snodeAddr) || needConfigUpdate(snodeAddr))
