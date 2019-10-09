@@ -1702,9 +1702,9 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
 
     const auto configs = getNodeConfigs(); // get configs and store matching ones
     for (const auto & item : configs) {
-        // TODO Blocknet XRouter exclude banned nodes
-//        if (g_banman->IsBanned(item.first)) // exclude banned
-//            continue;
+        const auto & snode = sn::ServiceNodeMgr::instance().getSn(item.first);
+        if (g_banman->IsBanned(static_cast<CNetAddr>(snode.getHostAddr()))) // exclude banned
+            continue;
         if (command != xrService && item.second->hasWallet(service)) {
             selectedConfigs.insert(item);
             continue;
