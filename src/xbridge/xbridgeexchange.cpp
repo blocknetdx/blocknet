@@ -112,6 +112,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         std::string passwd     = s.get<std::string>(*i + ".Password");
         uint64_t    minAmount  = s.get<uint64_t>(*i + ".MinimumAmount", 0);
         uint32_t    txVersion  = s.get<uint32_t>(*i + ".TxVersion", 1);
+        std::string jsonver    = s.get<std::string>(*i + ".JSONVersion", "");
 
 
         if (/*address.empty() || */ip.empty() || port.empty() ||
@@ -130,6 +131,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         wp.m_passwd   = passwd;
         wp.dustAmount = minAmount;
         wp.txVersion  = txVersion;
+        wp.jsonver    = jsonver;
     }
 
     return true;
