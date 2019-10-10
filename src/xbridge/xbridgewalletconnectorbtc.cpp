@@ -2051,7 +2051,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         }
         const json_spirit::Value & txSequence = json_spirit::find_value(vin.get_obj(), "sequence");
         if (txSequence.type() != json_spirit::null_type) { // if sequence is available, then enforce
-            if (txSequence.type() != json_spirit::int_type || txSequence.get_int() < std::numeric_limits<uint32_t>::max()-1) {
+            if (txSequence.type() != json_spirit::int_type || txSequence.get_int() != std::numeric_limits<uint32_t>::max()-1) {
                 LOG() << "tx " << depositTxId << " bad sequence for input, all inputs must be final " << __FUNCTION__;
                 return true; // done
             }
