@@ -896,6 +896,7 @@ void App::updateActiveWallets()
         wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
         wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
         wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
+        wp.jsonver                     = s.get<std::string>(*i + ".JSONVersion", "");
 
         if (wp.m_ip.empty() || wp.m_port.empty() ||
             wp.m_user.empty() || wp.m_passwd.empty() ||

@@ -64,7 +64,7 @@ int readHTTP(std::basic_istream<char>& stream, map<string, string>& mapHeadersRe
 }
 
 std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
-               const std::string & strMethod, const Array & params)
+               const std::string & strMethod, const Array & params, const std::string& jsonver)
 {
     boost::asio::ip::tcp::iostream stream;
     stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
@@ -76,7 +76,7 @@ std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
     }
 
     // Send request
-    string strRequest = JSONRPCRequest(strMethod, params, 1);
+    string strRequest = JSONRPCRequest(strMethod, params, 1, jsonver);
     map<string, string> mapRequestHeaders;
 
     string strPost = HTTPPost(strRequest, mapRequestHeaders);
@@ -134,7 +134,7 @@ static int hex2dec(std::string s) {
 std::string EthWalletConnectorXRouter::getBlockCount() const
 {
     static const std::string command("eth_blockNumber");
-    const auto & data = rpc::CallRPC(m_ip, m_port, command, Array());
+    const auto & data = rpc::CallRPC(m_ip, m_port, command, Array(), jsonver);
 
     Value data_val; read_string(data, data_val);
     if (data_val.type() != obj_type)
@@ -162,13 +162,13 @@ std::string EthWalletConnectorXRouter::getBlockCount() const
 std::string EthWalletConnectorXRouter::getBlockHash(const int & block) const
 {
     static const std::string command("eth_getBlockByNumber");
-    return rpc::CallRPC(m_ip, m_port, command, { dec2hex(block), false });
+    return rpc::CallRPC(m_ip, m_port, command, { dec2hex(block), false }, jsonver);
 }
 
 std::string EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
 {
     static const std::string command("eth_getBlockByHash");
-    return rpc::CallRPC(m_ip, m_port, command, { blockHash, true });
+    return rpc::CallRPC(m_ip, m_port, command, { blockHash, true }, jsonver);
 }
 
 std::vector<std::string> EthWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const
@@ -182,7 +182,7 @@ std::vector<std::string> EthWalletConnectorXRouter::getBlocks(const std::vector<
 std::string EthWalletConnectorXRouter::getTransaction(const std::string & trHash) const
 {
     static const std::string command("eth_getTransactionByHash");
-    return rpc::CallRPC(m_ip, m_port, command, { trHash });
+    return rpc::CallRPC(m_ip, m_port, command, { trHash }, jsonver);
 }
 
 std::string EthWalletConnectorXRouter::decodeRawTransaction(const std::string & trHash) const
@@ -208,7 +208,7 @@ std::vector<std::string> EthWalletConnectorXRouter::getTransactionsBloomFilter(c
 std::string EthWalletConnectorXRouter::sendTransaction(const std::string & rawtx) const
 {
     static const std::string command("eth_sendRawTransaction");
-    return rpc::CallRPC(m_ip, m_port, command, { rawtx });
+    return rpc::CallRPC(m_ip, m_port, command, { rawtx }, jsonver);
 }
 
 std::string EthWalletConnectorXRouter::convertTimeToBlockCount(const std::string & timestamp) const
