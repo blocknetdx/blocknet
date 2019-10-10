@@ -24,6 +24,8 @@
 #include "util/util.h"
 #include "util/logger.h"
 #include "httpstatuscode.h"
+#include <primitives/transaction.h>
+#include <xbridge/xbridgewalletconnector.h>
 
 #define HTTP_DEBUG
 
@@ -637,7 +639,8 @@ bool createRawTransaction(const std::string & rpcuser,
                           const std::vector<std::pair<string, int> > & inputs,
                           const std::vector<std::pair<std::string, double> > & outputs,
                           const uint32_t lockTime,
-                          std::string & tx)
+                          std::string & tx,
+                          const bool cltv=false)
 {
     try
     {
@@ -650,7 +653,8 @@ bool createRawTransaction(const std::string & rpcuser,
             Object tmp;
             tmp.push_back(Pair("txid", input.first));
             tmp.push_back(Pair("vout", input.second));
-
+            if (cltv)
+                tmp.push_back(Pair("sequence", static_cast<int64_t>(xbridge::SEQUENCE_FINAL)));
             i.push_back(tmp);
         }
 
