@@ -135,10 +135,12 @@ public:
      * @param count Number of nodes to open connections to
      * @param parameterCount Number of parameters used in the call
      * @param skipNodes avoids connecting to these nodes
+     * @param nonWalletXRNodes are selected nodes that do not accept requests on the default blocknet wallet port
      * @param foundCount number of nodes found
      */
     bool openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
-                         const int & parameterCount, const std::vector<CNode*> & skipNodes, uint32_t & foundCount);
+                         const int & parameterCount, const std::vector<CNode*> & skipNodes,
+                         std::vector<sn::ServiceNode> & nonWalletXRNodes, uint32_t & foundCount);
     
     /**
      * @brief send config update requests to all nodes
@@ -838,6 +840,9 @@ private:
                 // Query condition
                 if (replies)
                     qcond = queriesLocks[id][node];
+                // If invalid query condition return
+                if (!qcond.first || !qcond.second)
+                    return 0;
             }
 
             if (replies) { // only handle locks if they exist for this query

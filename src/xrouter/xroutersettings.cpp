@@ -239,16 +239,17 @@ std::string XRouterSettings::host(XRouterCommand c, const std::string & service)
     const std::string cstr{XRouterCommand_ToString(c)};
     auto res = get<std::string>("Main.host", "");
 
-    if (c == xrService) { // Handle plugin
-        if (!service.empty())
-            res = get<std::string>(cstr + xrdelimiter + service + ".host", res);
-    } else if (c != xrDefault) {
-        res = get<std::string>(cstr + ".host", res);
-        if (!service.empty()) {
-            res = get<std::string>(service + ".host", res);
-            res = get<std::string>(service + xrdelimiter + cstr + ".host", res);
-        }
-    }
+    // TODO Blocknet XRouter support subsection host designations
+//    if (c == xrService) { // Handle plugin
+//        if (!service.empty())
+//            res = get<std::string>(cstr + xrdelimiter + service + ".host", res);
+//    } else if (c != xrDefault) {
+//        res = get<std::string>(cstr + ".host", res);
+//        if (!service.empty()) {
+//            res = get<std::string>(service + ".host", res);
+//            res = get<std::string>(service + xrdelimiter + cstr + ".host", res);
+//        }
+//    }
 
     return res;
 }
@@ -257,16 +258,17 @@ int XRouterSettings::port(XRouterCommand c, const std::string & service) {
     const std::string cstr{XRouterCommand_ToString(c)};
     auto res = get<int>("Main.port", Params().GetDefaultPort());
 
-    if (c == xrService) { // Handle plugin
-        if (!service.empty())
-            res = get<int>(cstr + xrdelimiter + service + ".port", res);
-    } else if (c != xrDefault) {
-        res = get<int>(cstr + ".port", res);
-        if (!service.empty()) {
-            res = get<int>(service + ".port", res);
-            res = get<int>(service + xrdelimiter + cstr + ".port", res);
-        }
-    }
+    // TODO Blocknet XRouter support subsection port designations
+//    if (c == xrService) { // Handle plugin
+//        if (!service.empty())
+//            res = get<int>(cstr + xrdelimiter + service + ".port", res);
+//    } else if (c != xrDefault) {
+//        res = get<int>(cstr + ".port", res);
+//        if (!service.empty()) {
+//            res = get<int>(service + ".port", res);
+//            res = get<int>(service + xrdelimiter + cstr + ".port", res);
+//        }
+//    }
 
     return res;
 }

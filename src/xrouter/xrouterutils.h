@@ -33,15 +33,22 @@ static const std::string xrdelimiter = "::"; // XRouter namespace delimiter
  * Helper to build key for use with lookups.
  * @param wallet
  * @param command
+ * @param withNamespace Optionally include the namespace. Defaults to false.
  * @return
  */
-std::string walletCommandKey(const std::string & wallet, const std::string & command);
+std::string walletCommandKey(const std::string & wallet, const std::string & command, const bool & withNamespace = false);
 /**
  * Helper to build key for use with lookups.
  * @param wallet
  * @return
  */
 std::string walletCommandKey(const std::string & wallet);
+/**
+ * Helper to transform a fully qualified service (e.g. xrs::CustomPlugin) to a url (e.g. xrs/CustomPlugin).
+ * @param fqservice
+ * @return
+ */
+std::string fqServiceToUrl(std::string fqservice);
 /**
  * Remove the top-level namespace from the service name. Returns true if successful, otherwise false.
  * @param service
@@ -82,9 +89,18 @@ bool commandFromNamespace(const std::string & fqService, std::string & command);
  */
 bool xrsplit(const std::string & fqService, const std::string & del, std::vector<std::string> & vout);
 
+// XRouter client request
+struct XRouterReply {
+    int status;
+    int error;
+    CPubKey hdrpubkey;
+    std::vector<unsigned char> hdrsignature;
+    std::string result;
+};
+XRouterReply CallXRouterUrl(const std::string & host, const int & port, const std::string & url, const std::string & data,
+                    const CKey & signingkey, const CPubKey & serverkey, const std::string & paymentrawtx);
 // Network and RPC interface
 std::string CallCMD(const std::string & cmd, int & exit);
-//extern std::string CallURL(const std::string & ip, const std::string & port, const std::string & url);
 std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
                            const std::string & strMethod, const Array & params);
 std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,

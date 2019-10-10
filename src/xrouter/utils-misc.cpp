@@ -56,11 +56,15 @@ std::string generateUUID()
 namespace xrouter
 {
 
-std::string walletCommandKey(const std::string & wallet, const std::string & command) {
-    return wallet + xrdelimiter + command;
+std::string walletCommandKey(const std::string & wallet, const std::string & command, const bool & withNamespace) {
+    return (withNamespace ? xr + xrdelimiter : "") + wallet + xrdelimiter + command;
 }
 std::string walletCommandKey(const std::string & wallet) {
     return xr + xrdelimiter + wallet;
+}
+std::string fqServiceToUrl(std::string fqservice) {
+    boost::replace_all(fqservice, "::", "/");
+    return std::move("/" + fqservice);
 }
 bool removeNamespace(const std::string & service, std::string & result) {
     auto namespaces = std::vector<std::string>{xr, xrs};

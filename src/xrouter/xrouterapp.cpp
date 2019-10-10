@@ -157,16 +157,16 @@ bool App::createConf()
                 "#! The name of the plugin file ExampleRPC will be the service name broadcasted to the XRouter"     + eol +
                 "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                     + eol +
                 ""                                                                                                  + eol +
-                "#! Optional host identifying the location of the service. this tells the XRouter network how "     + eol +
-                "#! to find your node. The default is xrouter.conf [Main].host"                                     + eol +
-                "#! DNS and ip address are acceptable values."                                                      + eol +
-                "#! host=mynode.example.com"                                                                        + eol +
-                "#! host=208.67.222.222"                                                                            + eol +
-                ""                                                                                                  + eol +
-                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."      + eol +
-                "#! The default is xrouter.conf [Main].port"                                                        + eol +
-                "#! port=80"                                                                                        + eol +
-                ""                                                                                                  + eol +
+//                "#! Optional host identifying the location of the service. this tells the XRouter network how "     + eol +
+//                "#! to find your node. The default is xrouter.conf [Main].host"                                     + eol +
+//                "#! DNS and ip address are acceptable values."                                                      + eol +
+//                "#! host=mynode.example.com"                                                                        + eol +
+//                "#! host=208.67.222.222"                                                                            + eol +
+//                ""                                                                                                  + eol +
+//                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."      + eol +
+//                "#! The default is xrouter.conf [Main].port"                                                        + eol +
+//                "#! port=80"                                                                                        + eol +
+//                ""                                                                                                  + eol +
                 "#! parameters that you need from the user, acceptable types: string,bool,int,double"               + eol +
                 "#! Example parameters=string,bool if you want to accept a string parameter and boolean"            + eol +
                 "#! parameter from an XRouter client."                                                              + eol +
@@ -203,16 +203,16 @@ bool App::createConf()
                 "#! The name of the plugin file ExampleDocker will be the service name broadcasted to the XRouter"    + eol +
                 "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                       + eol +
                 ""                                                                                                    + eol +
-                "#! Optional host identifying the location of the service. this tells the XRouter network how "       + eol +
-                "#! to find your node. The default is xrouter.conf [Main].host"                                       + eol +
-                "#! DNS and ip address are acceptable values."                                                        + eol +
-                "#! host=mynode.example.com"                                                                          + eol +
-                "#! host=208.67.222.222"                                                                              + eol +
-                ""                                                                                                    + eol +
-                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."        + eol +
-                "#! The default is xrouter.conf [Main].port"                                                          + eol +
-                "#! port=80"                                                                                          + eol +
-                ""                                                                                                    + eol +
+//                "#! Optional host identifying the location of the service. this tells the XRouter network how "       + eol +
+//                "#! to find your node. The default is xrouter.conf [Main].host"                                       + eol +
+//                "#! DNS and ip address are acceptable values."                                                        + eol +
+//                "#! host=mynode.example.com"                                                                          + eol +
+//                "#! host=208.67.222.222"                                                                              + eol +
+//                ""                                                                                                    + eol +
+//                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."        + eol +
+//                "#! The default is xrouter.conf [Main].port"                                                          + eol +
+//                "#! port=80"                                                                                          + eol +
+//                ""                                                                                                    + eol +
                 "#! parameters that you need from the user, acceptable types: string,bool,int,double"                 + eol +
                 "#! Example parameters=string,bool if you want to accept a string parameter and boolean"              + eol +
                 "#! parameter from an XRouter client."                                                                + eol +
@@ -342,7 +342,8 @@ bool App::createConnectors() {
 }
 
 bool App::openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
-                          const int & parameterCount, const std::vector<CNode*> & skipNodes, uint32_t & foundCount)
+                          const int & parameterCount, const std::vector<CNode*> & skipNodes,
+                          std::vector<sn::ServiceNode> & nonWalletXRNodes, uint32_t & foundCount)
 {
     const auto fqService = (command == xrService) ? pluginCommandKey(service) // plugin
                                                   : walletCommandKey(service, XRouterCommand_ToString(command)); // spv wallet
@@ -604,8 +605,20 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     for (const auto & it : needConnectionsNoConfigs)
         all.push_back(it.first);
 
-    if (!all.empty()) {
-        if (all.size() < count) { // Check not enough nodes
+    // Remove all nodes that use non-default ports
+    nonWalletXRNodes.clear();
+    for (int i = (int)all.size()-1; i >= 0; --i) {
+        const auto & snodeAddr = all[i];
+        auto settings = getConfig(snodeAddr);
+        if (settings->port(xrDefault) != Params().GetDefaultPort()) {
+            nonWalletXRNodes.push_back(snodec[snodeAddr]);
+            all.erase(all.begin()+i);
+        }
+    }
+
+    const int adjustedCount = static_cast<int>(count) - nonWalletXRNodes.size();
+    if (!all.empty() && adjustedCount > 0) {
+        if (all.size() < adjustedCount) { // Check not enough nodes
             releaseNodes(nodes);
             foundCount = all.size();
             return false;
@@ -627,7 +640,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             if (snodesConnected.count(snodeAddr) && addSelected(snodeAddr)) // record already connected nodes
                 continue;
 
-            if (count - connectedCount() <= 0)
+            if (adjustedCount - connectedCount() <= 0)
                 break; // done, all connected!
 
             bool needConfig = snodesNeedConfig.count(snodeAddr) > 0;
@@ -661,12 +674,12 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                     fetchConfig(node, s);
             });
 
-            // Wait until we have all required connections (count - connected = 0)
+            // Wait until we have all required connections (adjustedCount - connected = 0)
             // Wait while thread group has more running threads than we need connections for -or-
             //            thread group has too many threads (2 per cpu core)
             auto waitTime = GetAdjustedTime();
-            while (count - connectedCount() > 0 && // only continue waiting for threads if we need more connections
-                  (tg.size() > (count - connectedCount()) || tg.size() >= boost::thread::hardware_concurrency() * 2)) {
+            while (adjustedCount - connectedCount() > 0 && // only continue waiting for threads if we need more connections
+                  (tg.size() > (adjustedCount - connectedCount()) || tg.size() >= boost::thread::hardware_concurrency() * 2)) {
                 if (ShutdownRequested()) {
                     tg.interrupt_all();
                     tg.join_all();
@@ -691,7 +704,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                 break;
         }
 
-        if (count - connectedCount() <= 0 || timedOut)
+        if (adjustedCount - connectedCount() <= 0 || timedOut)
             tg.interrupt_all();
         tg.join_all();
 
@@ -703,8 +716,9 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     }
 
     releaseNodes(nodes);
-    foundCount = connected;
-    return connected >= count;
+    foundCount = connected + nonWalletXRNodes.size();
+    // Account for the non-wallet xrouter nodes
+    return foundCount >= count;
 }
 
 std::string App::updateConfigs(bool force)
@@ -1236,8 +1250,9 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                                                         : walletCommandKey(service, commandStr); // spv wallet
 
         // Open connections (at least number equal to how many confirmations we want)
+        std::vector<sn::ServiceNode> nonWalletSnodes;
         uint32_t found{0};
-        if (!openConnections(command, service, confs, params.size(), {}, found)) {
+        if (!openConnections(command, service, confs, params.size(), {}, nonWalletSnodes, found)) {
             std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService +
                             " with config limits, found " + std::to_string(found));
             throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
@@ -1248,20 +1263,31 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         const auto & selected = static_cast<int>(selectedNodes.size());
 
         // Check if we have enough nodes
-        if (selected < confs)
+        if (selected + nonWalletSnodes.size() < confs)
             throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
                                fqService + " with config limits, found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
 
-        std::vector<CNode*> queryNodes;
+        std::vector<sn::ServiceNode> queryNodes;
         int snodeCount = 0;
         std::string fundErr{"Could not create payments. Please check that your wallet "
                             "is fully unlocked and you have at least " + std::to_string(confs) +
                             " available unspent transaction."};
 
+        // helper container to use with node lookups on addr name
+        std::map<NodeAddr, CNode*> mapSelectedNodes;
+        for (auto & pnode : selectedNodes)
+            mapSelectedNodes[pnode->GetAddrName()] = pnode;
+        // helper container to use with node lookups on addr name
+        std::map<NodeAddr, sn::ServiceNode> mapSelectedSnodes;
+        for (auto & pnode : selectedNodes)
+            mapSelectedSnodes[pnode->GetAddrName()] = sn::ServiceNodeMgr::instance().getSn(pnode->GetAddrName());
+        for (auto & snode : nonWalletSnodes)
+            mapSelectedSnodes[snode.getHostAddr().ToStringIPPort()] = snode;
+
         // Compose a final list of snodes to request. selectedNodes here should be sorted
         // ascending best to worst
-        for (CNode* pnode : selectedNodes) {
-            const auto & addr = pnode->GetAddrName();
+        for (auto & item : mapSelectedSnodes) {
+            const auto & addr = item.first;
             if (!hasConfig(addr))
                 continue; // skip nodes that do not have configs
 
@@ -1284,7 +1310,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 }
             }
 
-            queryNodes.push_back(pnode);
+            queryNodes.push_back(item.second);
             ++snodeCount;
             if (snodeCount == confs)
                 break;
@@ -1298,29 +1324,80 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         }
 
         int timeout = xrsettings->commandTimeout(command, service);
+        boost::thread_group tg;
 
         // Send xrouter request to each selected node
-        for (CNode* pnode : queryNodes) {
-            const auto & addr = pnode->GetAddrName();
+        for (auto & snode : queryNodes) {
+            const std::string & addr = snode.getHost();
             std::string feetx;
             if (feePaymentTxs.count(addr))
                 feetx = feePaymentTxs[addr];
+
             // Record the node sending request to
             addQuery(uuid, addr);
             queryMgr.addQuery(uuid, addr);
 
-            // Send packet to xrouter node
-            XRouterPacket packet(command, uuid);
-            packet.append(service);
-            packet.append(feetx); // feetx
-            packet.append(static_cast<uint32_t>(params.size()));
-            for (const std::string & p : params)
-                packet.append(p);
-            packet.sign(cpubkey, cprivkey);
-            PushXRouterMessage(pnode, packet.body());
+            if (mapSelectedNodes.count(addr)) {
+                auto pnode = mapSelectedNodes[addr];
+                // Send packet to xrouter node
+                XRouterPacket packet(command, uuid);
+                packet.append(service);
+                packet.append(feetx); // feetx
+                packet.append(static_cast<uint32_t>(params.size()));
+                for (const std::string & p : params)
+                    packet.append(p);
+                packet.sign(cpubkey, cprivkey);
+                PushXRouterMessage(pnode, packet.body());
+                updateSentRequest(addr, fqService);
+            } else {
+                // Set the fully qualified service url to the form /xr/BLOCK/xrGetBlockCount
+                const auto & fqUrl = fqServiceToUrl((command == xrService) ? pluginCommandKey(service) // plugin
+                                                       : walletCommandKey(service, commandStr, true)); // spv wallet
+                try {
+                    tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,this]() {
+                        RenameThread("blocknet-xrclientrequest");
+                        if (ShutdownRequested())
+                            return;
+                        json_spirit::Array jparams;
+                        for (const std::string & p : params)
+                            jparams.push_back(p);
 
-            updateSentRequest(addr, fqService);
-            LOG() << "Sent command " << fqService << " query " << uuid << " to node " << pnode->GetAddrName();
+                        CKey clientKey; clientKey.Set(cprivkey.begin(), cprivkey.end(), true);
+                        XRouterReply xrresponse;
+                        try {
+                            std::string data;
+                            if (!jparams.empty())
+                                data = json_spirit::write_string(Value(jparams), json_spirit::none, 8);
+                            xrresponse = xrouter::CallXRouterUrl(snode.getHostAddr().ToStringIP(),
+                                    snode.getHostAddr().GetPort(), fqUrl, data, clientKey, snode.getSnodePubKey(), feetx);
+                        } catch (std::exception & e) {
+                            json_spirit::Object r;
+                            r.emplace_back("error", std::string(e.what()));
+                            queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(r), json_spirit::none, 8));
+                            queryMgr.purge(uuid, addr);
+                            return;
+                        }
+
+                        // Do not process if we aren't expecting a result. Also prevent reply malleability (only first reply is accepted)
+                        if (!queryMgr.hasQuery(uuid, addr) || queryMgr.hasReply(uuid, addr))
+                            return; // done, nothing found
+
+                        // TODO Blocknet XRouter verify snode response
+//                        // Verify servicenode response
+//                        CHashWriter hw(SER_GETHASH, 0);
+//                        hw << xrresponse.result;
+//                        if (snode.getSnodePubKey() != xrresponse.hdrpubkey
+//                            || !snode.getSnodePubKey().Verify(hw.GetHash(), xrresponse.hdrsignature))
+//                            return;
+
+                        // Store the reply
+                        queryMgr.addReply(uuid, addr, xrresponse.result);
+                        queryMgr.purge(uuid, addr);
+                    });
+                } catch (...) { }
+                updateSentRequest(addr, fqService);
+            }
+            LOG() << "Sent command " << fqService << " query " << uuid << " to node " << addr;
         }
 
         // At this point we need to wait for responses
@@ -1697,8 +1774,9 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
     const std::string plugin = boost::algorithm::join(std::vector<std::string>{nparts.begin()+1, nparts.end()}, xrdelimiter);
     const std::string service = command != xrService ? wallet : plugin;
 
+    std::vector<sn::ServiceNode> nonWalletSnodes;
     uint32_t found{0};
-    openConnections(command, service, count, -1, { }, found); // open connections to snodes that have our service
+    openConnections(command, service, count, -1, { }, nonWalletSnodes, found); // open connections to snodes that have our service
 
     const auto configs = getNodeConfigs(); // get configs and store matching ones
     for (const auto & item : configs) {

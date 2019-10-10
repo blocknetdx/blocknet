@@ -31,6 +31,8 @@ struct HTTPReply
 
     int status;
     int error;
+    CPubKey hdrpubkey;
+    std::vector<unsigned char> hdrsignature;
     std::string body;
 };
 
@@ -78,6 +80,18 @@ static void http_request_done(struct evhttp_request *req, void *ctx)
         if (data)
             reply->body = std::string(data, size);
         evbuffer_drain(buf, size);
+    }
+
+    auto headers = evhttp_request_get_input_headers(req);
+    if (headers) {
+        std::string hdrPubKey = "XR-Pubkey";
+        std::string hdrSignature = "XR-Signature";
+        auto hdrPubKeyVal = evhttp_find_header(headers, hdrPubKey.c_str());
+        if (hdrPubKeyVal)
+            reply->hdrpubkey = CPubKey(ParseHex(hdrPubKeyVal));
+        auto hdrSignatureVal = evhttp_find_header(headers, hdrSignature.c_str());
+        if (hdrSignatureVal)
+            reply->hdrsignature = ParseHex(hdrSignatureVal);
     }
 }
 
@@ -136,9 +150,7 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     assert(output_buffer);
     evbuffer_add(output_buffer, strRequest.data(), strRequest.size());
 
-    // check if we should use a special wallet endpoint
-    std::string endpoint = "/";
-    int r = evhttp_make_request(evcon.get(), req.get(), EVHTTP_REQ_POST, endpoint.c_str());
+    int r = evhttp_make_request(evcon.get(), req.get(), EVHTTP_REQ_POST, "/");
     req.release(); // ownership moved to evcon in above call
     if (r != 0) {
         throw std::runtime_error("send http request failed");
@@ -162,40 +174,74 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     return response.body;
 }
 
-//std::string CallURL(const std::string & ip, const std::string & port, const std::string & url)
-//{
-//    // Connect to localhost
-//    boost::asio::ip::tcp::iostream stream;
-//    stream.expires_from_now(boost::posix_time::seconds(gArgs.GetArg("-rpcxroutertimeout", 60)));
-//    stream.connect(ip, port);
-//    if (stream.error() != boost::system::errc::success) {
-//        LogPrint(BCLog::NET, "Failed to make connection to %s:%s error %d: %s", ip, port,
-//                stream.error(), stream.error().message());
-//        throw std::runtime_error(strprintf("no response from server %s:%s - %s", ip.c_str(), port.c_str(),
-//                                      stream.error().message().c_str()));
-//    }
-//
-//    // Send request
-//    std::ostringstream s;
-//    s << "GET " << url << "\r\n" << "Host: 127.0.0.1\r\n";
-//    std::string strRequest = s.str();
-//
-//    stream << strRequest << std::flush;
-//
-//    // Receive reply
-//    std::map<std::string, std::string> mapHeaders;
-//    std::string strReply;
-//    int nStatus = readHTTP(stream, mapHeaders, strReply);
-//
-//    LOG() << "HTTP: resp " << nStatus << " " << strReply;
-//
-//    if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-//        throw std::runtime_error("server returned HTTP error " + std::to_string(nStatus));
-//    else if (strReply.empty())
-//        throw std::runtime_error("no response from server");
-//
-//    return strReply;
-//}
+XRouterReply CallXRouterUrl(const std::string & host, const int & port, const std::string & url, const std::string & data,
+                    const CKey & signingkey, const CPubKey & serverkey, const std::string & paymentrawtx)
+{
+    // Obtain event base
+    raii_event_base base = obtain_event_base();
+
+    // Synchronously look up hostname
+    raii_evhttp_connection evcon = obtain_evhttp_connection_base(base.get(), host, port);
+    evhttp_connection_set_timeout(evcon.get(), gArgs.GetArg("-rpcxroutertimeout", 60));
+
+    HTTPReply response;
+    raii_evhttp_request req = obtain_evhttp_request(http_request_done, (void*)&response);
+    if (req == nullptr)
+        throw std::runtime_error("create http request failed");
+#if LIBEVENT_VERSION_NUMBER >= 0x02010300
+    evhttp_request_set_error_cb(req.get(), http_error_cb);
+#endif
+
+    struct evkeyvalq* output_headers = evhttp_request_get_output_headers(req.get());
+    assert(output_headers);
+    evhttp_add_header(output_headers, "Host", host.c_str());
+    evhttp_add_header(output_headers, "Connection", "close");
+    evhttp_add_header(output_headers, "XR-Pubkey", HexStr(signingkey.GetPubKey()).c_str());
+
+    CHashWriter hw(SER_GETHASH, 0);
+    hw << data;
+    std::vector<unsigned char> signature;
+    if (!signingkey.SignCompact(hw.GetHash(), signature))
+        throw std::runtime_error("failed to produce signature on payload");
+    evhttp_add_header(output_headers, "XR-Signature", HexStr(signature).c_str());
+    evhttp_add_header(output_headers, "XR-Payment", paymentrawtx.c_str());
+
+    // Attach request data
+    std::string strRequest = data + "\n";
+    struct evbuffer *output_buffer = evhttp_request_get_output_buffer(req.get());
+    if (!output_buffer)
+        throw std::runtime_error(strprintf("Internal error in connection to server %s:%d failed to set headers\n", host, port));
+    evbuffer_add(output_buffer, strRequest.data(), strRequest.size());
+
+    int r = evhttp_make_request(evcon.get(), req.get(), EVHTTP_REQ_POST, url.c_str());
+    req.release(); // ownership moved to evcon in above call
+    if (r != 0)
+        throw std::runtime_error("send http request failed");
+
+    event_base_dispatch(base.get());
+
+    if (response.status == 0) {
+        std::string responseErrorMessage;
+        if (response.error != -1) {
+            responseErrorMessage = strprintf(" (error code %d - \"%s\")", response.error, http_errorstring(response.error));
+        }
+        throw std::runtime_error(strprintf("Could not connect to the server %s:%d %s\n", host, port, responseErrorMessage));
+    } else if (response.status == HTTP_UNAUTHORIZED) {
+        throw std::runtime_error("Authorization failed");
+    } else if (response.status >= 400 && response.status != HTTP_BAD_REQUEST && response.status != HTTP_NOT_FOUND && response.status != HTTP_INTERNAL_SERVER_ERROR) {
+        throw std::runtime_error(strprintf("server returned HTTP error %d", response.status));
+    } else if (response.body.empty()) {
+        throw std::runtime_error("no response from server");
+    }
+
+    XRouterReply reply;
+    reply.status = response.status;
+    reply.error = response.error;
+    reply.result = response.body;
+    reply.hdrpubkey = response.hdrpubkey;
+    reply.hdrsignature = response.hdrsignature;
+    return std::move(reply);
+}
 
 std::string CallCMD(const std::string & cmd, int & exit) {
     std::array<char, 128> buffer{};
