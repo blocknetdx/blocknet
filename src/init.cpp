@@ -1888,10 +1888,11 @@ bool AppInitMain(InitInterfaces& interfaces)
 
         xrouter::App & xrapp = xrouter::App::instance();
         xrouter::App::createConf(); // create config if it doesn't exist
-        bool xrinit{false};
         if (xrouter::App::isEnabled()) {
-            xrinit = xrapp.init(); // init xrouter
             uiInterface.InitMessage(_("Starting xrouter service"));
+            const auto xrinit = xrapp.init(); // init xrouter
+            if (!xrinit || !xrapp.start()) // start xrouter if init succeeds
+                LogPrintf("XRouter failed to start, please check your configs\n");
         }
 
         // If there's snode entries, proceed to register them
@@ -1899,15 +1900,22 @@ bool AppInitMain(InitInterfaces& interfaces)
             auto wallets = GetWallets();
             std::string failReason;
             for (const auto & snode : entries) {
-                if (!smgr.registerSn(snode, g_connman.get(), wallets, &failReason))
-                    LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
+                bool haveAddr{false};
+                for (auto & w : wallets) {
+                    if (w->HaveKey(boost::get<CKeyID>(snode.address))) {
+                        haveAddr = true;
+                        break;
+                    }
+                }
+                if (haveAddr) {
+                    if (!smgr.registerSn(snode, g_connman.get(), wallets, &failReason))
+                        LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
+                } else if (!smgr.hasActiveSn())
+                    LogPrintf("Failed to register service node %s because the collateral could not be found in the wallet.", snode.alias);
             }
             if (smgr.hasActiveSn() && !smgr.sendPing(XROUTER_PROTOCOL_VERSION, xapp.myServicesJSON(), g_connman.get()))
                 LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
         }
-
-        if (!xrinit || !xrapp.start()) // start xrouter if init succeeds
-            LogPrintf("XRouter failed to start, please check your configs\n");
 
         // Servicenode validation interface
         RegisterValidationInterface(&smgr);
