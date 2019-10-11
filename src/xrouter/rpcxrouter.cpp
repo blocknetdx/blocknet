@@ -544,10 +544,10 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
                 })"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrGetBlocks", "BLOCK 39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c")
-                  + HelpExampleRpc("xrGetBlocks", "BLOCK 39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c")
-                  + HelpExampleCli("xrGetBlocks", "BLOCK 39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c 2")
-                  + HelpExampleRpc("xrGetBlocks", "BLOCK 39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c 2")
+                    HelpExampleCli("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\"")
+                  + HelpExampleRpc("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\"")
+                  + HelpExampleCli("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\" 2")
+                  + HelpExampleRpc("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\" 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -573,9 +573,9 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
         if (hash.empty() || hash.find(',') != std::string::npos) {
             Object error;
             error.emplace_back("error", "Block hashes must be specified in a comma delimited list with no spaces.\n"
-                                        "Example: xrGetBlocks BLOCK 302a309d6b6c4a65e4b9ff06c7ea81bb17e985d00abdb01978ace62cc5e18421,"
+                                        "Example: xrGetBlocks BLOCK \"302a309d6b6c4a65e4b9ff06c7ea81bb17e985d00abdb01978ace62cc5e18421,"
                                         "175d2a428b5649c2a4732113e7f348ba22a0e69cc0a87631449d1d77cd6e1b04,"
-                                        "34989eca8ed66ff53631294519e147a12f4860123b4bdba36feac6da8db492ab");
+                                        "34989eca8ed66ff53631294519e147a12f4860123b4bdba36feac6da8db492ab\"");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -674,10 +674,10 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
                 })"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrGetTransactions", "BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d")
-                  + HelpExampleRpc("xrGetTransactions", "BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d")
-                  + HelpExampleCli("xrGetTransactions", "BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d 2")
-                  + HelpExampleRpc("xrGetTransactions", "BLOCK 6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d 2")
+                    HelpExampleCli("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\"")
+                  + HelpExampleRpc("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\"")
+                  + HelpExampleCli("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\" 2")
+                  + HelpExampleRpc("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\" 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -705,9 +705,9 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
         if (hash.empty() || hash.find(',') != std::string::npos) {
             Object error;
             error.emplace_back("error", "Transaction hashes must be specified in a comma delimited list with no spaces.\n"
-                                        "Example: xrGetTransactions BLOCK 24ff5506a30772acfb65012f1b3309d62786bc386be3b6ea853a798a71c010c8,"
+                                        "Example: xrGetTransactions BLOCK \"24ff5506a30772acfb65012f1b3309d62786bc386be3b6ea853a798a71c010c8,"
                                         "24b6bcb44f045d7a4cf8cd47c94a14cc609352851ea973f8a47b20578391629f,"
-                                        "66a5809c7090456965fe30280b88f69943e620894e1c4538a724ed9a89c769be");
+                                        "66a5809c7090456965fe30280b88f69943e620894e1c4538a724ed9a89c769be\"");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
