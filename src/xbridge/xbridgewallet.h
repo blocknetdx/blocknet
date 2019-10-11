@@ -105,6 +105,7 @@ public:
         requiredConfirmations       = other.requiredConfirmations;
         txWithTimeField             = other.txWithTimeField;
         isLockCoinsSupported        = other.isLockCoinsSupported;
+        jsonver                     = other.jsonver;
 
         return *this;
     }
@@ -150,6 +151,9 @@ public:
     bool                         isLockCoinsSupported;
     mutable CCriticalSection     lockedCoinsLocker;
     std::set<wallet::UtxoEntry>  lockedCoins;
+
+    // json version for use with rpc
+    std::string                  jsonver;
 };
 
 } // namespace xbridge

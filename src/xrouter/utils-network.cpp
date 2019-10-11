@@ -101,7 +101,7 @@ std::string base64_encode(const std::string& s)
 
 std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
-               const std::string & strMethod, const Array & params)
+               const std::string & strMethod, const Array & params, const std::string& jsonver)
 {
     boost::asio::ip::tcp::iostream stream;
     stream.expires_from_now(boost::posix_time::seconds(GetArg("-rpcxroutertimeout", 60)));
@@ -119,7 +119,7 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     mapRequestHeaders["Authorization"] = string("Basic ") + strUserPass64;
 
     // Send request
-    string strRequest = JSONRPCRequest(strMethod, params, 1);
+    string strRequest = JSONRPCRequest(strMethod, params, 1, jsonver);
 
     if (fDebug)
         LOG() << "HTTP: req  " << strMethod << " " << strRequest;

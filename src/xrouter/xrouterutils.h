@@ -99,7 +99,7 @@ std::string CallCMD(const std::string & cmd, int & exit);
 std::string CallURL(const std::string & ip, const std::string & port, const std::string & url);
 std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                const std::string & rpcip, const std::string & rpcport,
-               const std::string & strMethod, const Array & params);
+               const std::string & strMethod, const Array & params, const std::string& jsonver="");
 
 
 // Payment functions
