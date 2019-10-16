@@ -610,7 +610,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     for (int i = (int)all.size()-1; i >= 0; --i) {
         const auto & snodeAddr = all[i];
         auto settings = getConfig(snodeAddr);
-        if (settings->port(xrDefault) != Params().GetDefaultPort()) {
+        if (!settings || settings->port(xrDefault) != Params().GetDefaultPort()) {
             nonWalletXRNodes.push_back(snodec[snodeAddr]);
             all.erase(all.begin()+i);
         }
