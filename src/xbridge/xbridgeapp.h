@@ -579,6 +579,14 @@ public:
             std::vector<wallet::UtxoEntry> &outputsForUse,
             uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
 
+    /**
+     * Unit tests: add xwallets
+     * @param services
+     */
+    void utAddXWallets(const std::vector<std::string> & services) {
+        utxwallets = services;
+    }
+
 protected:
     void clearMempool();
 
@@ -594,6 +602,8 @@ private:
     std::map<std::string, std::set<xbridge::wallet::UtxoEntry> > m_utxosDict;
     CCriticalSection m_utxosLock;
     CCriticalSection m_utxosOrderLock;
+
+    std::vector<std::string> utxwallets; // unit tests only
 };
 
 /**

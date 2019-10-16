@@ -312,7 +312,7 @@ public:
         snode->setConfig(config);
         snode->updatePing();
 
-        ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, GetTime(), config, *snode);
+        ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()), config, *snode);
         ping.sign(activesn.key);
         if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc)) {
             LogPrint(BCLog::SNODE, "service node ping failed\n");

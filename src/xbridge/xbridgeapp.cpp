@@ -2094,6 +2094,9 @@ std::string App::myServicesJSON() const {
     for (const auto & service : services)
         xwallets.push_back(service);
 
+    for (const auto & service : utxwallets) // add unit test supplied services
+        xwallets.push_back(service);
+
     json_spirit::Object result;
     json_spirit::Value xrouterConfigVal;
     if (xrouter::App::isEnabled() && xrouter::App::instance().isReady()) {

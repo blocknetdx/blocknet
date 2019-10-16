@@ -31,7 +31,8 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
                 "{\n"
                 "  \"alias\": \"xxxx\",              (string) Service node name\n"
                 "  \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-                "  \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "  \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+                "  \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
                 "  \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "}\n"
                 },
@@ -94,7 +95,8 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("alias", entry.alias);
     obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-    obj.pushKV("snodekey", EncodeSecret(entry.key));
+    obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+    obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
     obj.pushKV("address", EncodeDestination(entry.address));
     return obj;
 }
@@ -119,7 +121,8 @@ static UniValue servicenodesetuplist(const JSONRPCRequest& request)
             "  {\n"
             "    \"alias\": \"xxxx\",              (string) Service node name\n"
             "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-            "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+            "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+            "    \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
             "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
             "  }\n"
             "  ,...\n"
@@ -205,7 +208,8 @@ static UniValue servicenodesetuplist(const JSONRPCRequest& request)
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-        obj.pushKV("snodekey", EncodeSecret(entry.key));
+        obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+        obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         ret.push_back(obj);
     }
@@ -412,7 +416,8 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
                 "  {\n"
                 "    \"alias\": n,                     (string) Service node name\n"
                 "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+                "    \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "  }\n"
                 "  ,...\n"
@@ -458,7 +463,8 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-        obj.pushKV("snodekey", EncodeSecret(entry.key));
+        obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+        obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         ret.push_back(obj);
     }
@@ -596,7 +602,8 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
                 "  {\n"
                 "    \"alias\": n,                     (string) Service node name\n"
                 "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+                "    \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
@@ -624,7 +631,8 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-        obj.pushKV("snodekey", EncodeSecret(entry.key));
+        obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+        obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
