@@ -563,7 +563,7 @@ public:
     /**
      * Constructor
      */
-    explicit ServiceNodePing() : snodePubKey(CPubKey()), bestBlock(0), bestBlockHash(uint256()),
+    explicit ServiceNodePing() : snodePubKey(CPubKey()), bestBlock(0), bestBlockHash(uint256()), pingTime(GetTime()),
                         config(std::string()), snode(ServiceNode()), signature(std::vector<unsigned char>()) {}
 
     /**
@@ -571,13 +571,14 @@ public:
      * @param snodePubKey
      * @param bestBlock
      * @param bestBlockHash
+     * @param pingTime
      * @param config
      * @param snode
      */
-    explicit ServiceNodePing(CPubKey snodePubKey, uint32_t bestBlock, uint256 bestBlockHash,
+    explicit ServiceNodePing(CPubKey snodePubKey, uint32_t bestBlock, uint256 bestBlockHash, uint32_t pingTime,
                              std::string config, ServiceNode snode) :
                                  snodePubKey(snodePubKey), bestBlock(bestBlock), bestBlockHash(bestBlockHash),
-                                 config(std::move(config)), snode(std::move(snode)),
+                                 pingTime(pingTime), config(std::move(config)), snode(std::move(snode)),
                                  signature(std::vector<unsigned char>()) {}
 
     ADD_SERIALIZE_METHODS;
@@ -587,6 +588,7 @@ public:
         READWRITE(snodePubKey);
         READWRITE(bestBlock);
         READWRITE(bestBlockHash);
+        READWRITE(pingTime);
         READWRITE(config);
         READWRITE(snode);
         READWRITE(signature);
@@ -634,7 +636,7 @@ public:
      */
     uint256 sigHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << snodePubKey << bestBlock << bestBlockHash << config << snode;
+        ss << snodePubKey << bestBlock << bestBlockHash << pingTime << config << snode;
         return ss.GetHash();
     }
 
@@ -644,7 +646,7 @@ public:
      */
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << snodePubKey << bestBlock << bestBlockHash << config << snode << signature;
+        ss << snodePubKey << bestBlock << bestBlockHash << pingTime << config << snode << signature;
         return ss.GetHash();
     }
 
@@ -690,6 +692,7 @@ protected:
     CPubKey snodePubKey;
     uint32_t bestBlock;
     uint256 bestBlockHash;
+    uint32_t pingTime;
     std::string config;
     ServiceNode snode;
     std::vector<unsigned char> signature;
