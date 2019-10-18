@@ -31,9 +31,6 @@
  */
 namespace sn {
 
-extern const char* REGISTER;
-extern const char* PING;
-
 /**
  * Service node configuration entry (from servicenode.conf).
  */
@@ -281,7 +278,7 @@ public:
             if (!pnode->fSuccessfullyConnected)
                 return;
             const CNetMsgMaker msgMaker(pnode->GetSendVersion());
-            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, *snodePtr));
+            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNREGISTER, *snodePtr));
         });
 
         return true;
@@ -326,7 +323,7 @@ public:
             if (!pnode->fSuccessfullyConnected)
                 return;
             const CNetMsgMaker msgMaker(pnode->GetSendVersion());
-            connman->PushMessage(pnode, msgMaker.Make(sn::PING, ping));
+            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNPING, ping));
         });
 
         return true;

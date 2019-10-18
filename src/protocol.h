@@ -244,6 +244,16 @@ extern const char *BLOCKTXN;
  */
 extern const char *XBRIDGE;
 /**
+ * Contains a Service Node registration message.
+ * @since protocol version 70713
+ */
+extern const char *SNREGISTER;
+/**
+ * Contains a Service Node ping message.
+ * @since protocol version 70713
+ */
+extern const char *SNPING;
+/**
  * Contains an XRouter message.
  * @since protocol version 70712
  */

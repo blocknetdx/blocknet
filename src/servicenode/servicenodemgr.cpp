@@ -3,8 +3,3 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include <servicenode/servicenodemgr.h>
-
-namespace sn {
-const char* REGISTER = "snr";
-const char* PING = "snp";
-}

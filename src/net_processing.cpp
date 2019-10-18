@@ -3057,7 +3057,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         return true;
     }
 
-    if (strCommand == sn::REGISTER) { // handle snode registrations
+    if (strCommand == NetMsgType::SNREGISTER) { // handle snode registrations
         sn::ServiceNode snode;
         if (!smgr.processRegistration(vRecv, snode))
             return true;
@@ -3070,24 +3070,24 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
         // Relay packets
         connman->ForEachNode([&](CNode* pnode) {
-            if (!pnode->fSuccessfullyConnected)
+            if (!pnode->fSuccessfullyConnected || pfrom == pnode)
                 return;
-            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, snode));
+            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNREGISTER, snode));
         });
 
         return true;
     }
 
-    if (strCommand == sn::PING) { // handle snode pings
+    if (strCommand == NetMsgType::SNPING) { // handle snode pings
         sn::ServiceNodePing ping;
         if (!smgr.processPing(vRecv, ping))
             return true;
 
         // Relay packets
         connman->ForEachNode([&](CNode* pnode) {
-            if (!pnode->fSuccessfullyConnected)
+            if (!pnode->fSuccessfullyConnected || pfrom == pnode)
                 return;
-            connman->PushMessage(pnode, msgMaker.Make(sn::PING, ping));
+            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNPING, ping));
         });
 
         bool isReady = xrouter::App::isEnabled() && xrouter::App::instance().isReady();

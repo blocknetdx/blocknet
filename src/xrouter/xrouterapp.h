@@ -383,7 +383,7 @@ public:
     bool processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationState & state);
 
     /**
-     * @brief process config message from sn::PING packet.
+     * @brief process config message from NetMsgType::SNPING packet.
      * @param snode Service node to process config from
      * @return
      */
