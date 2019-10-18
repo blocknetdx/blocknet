@@ -12,6 +12,7 @@
 #include <wallet/coincontrol.h>
 #include <wallet/rpcwallet.h>
 #include <xbridge/xbridgeapp.h>
+#include <xrouter/xrouterapp.h>
 
 #include <regex>
 
@@ -688,6 +689,7 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
+        obj.pushKV("score", xrouter::App::instance().isReady() ? xrouter::App::instance().getScore(snode.getHost()) : 0);
         UniValue services(UniValue::VARR);
         for (const auto & service : snode.serviceList())
             services.push_back(service);

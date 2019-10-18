@@ -544,6 +544,19 @@ public:
      */
     std::string parseConfig(XRouterSettingsPtr cfg);
 
+    /**
+     * Return servicenode score for specified node.
+     * @param node
+     * @return
+     */
+    int getScore(const NodeAddr & node) {
+        if (hasScore(node)) {
+            LOCK(mu);
+            return snodeScore[node];
+        }
+        return 0;
+    }
+
 private:
     /**
      * @brief App - default contructor,
@@ -559,10 +572,6 @@ private:
     bool hasScore(const NodeAddr & node) {
         LOCK(mu);
         return snodeScore.count(node);
-    }
-    int getScore(const NodeAddr & node) {
-        LOCK(mu);
-        return snodeScore[node];
     }
     void updateScore(const NodeAddr & node, const int score) {
         LOCK(mu);
