@@ -103,14 +103,28 @@ static void http_error_cb(enum evhttp_request_error err, void *ctx)
 }
 #endif
 
-std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
-               const std::string & strMethod, const Array & params) {
-    return std::move(CallRPC("", "", rpcip, rpcport, strMethod, params));
+UniValue XRouterJSONRPCRequestObj(const std::string& strMethod, const UniValue& params,
+        const UniValue& id, const std::string& jsonver="")
+{
+    UniValue request(UniValue::VOBJ);
+    if (!jsonver.empty())
+        request.pushKV("jsonrpc", jsonver);
+    request.pushKV("method", strMethod);
+    request.pushKV("params", params);
+    request.pushKV("id", id);
+    return request;
+}
+
+std::string CallRPC(const std::string & rpcip, const std::string & rpcport, const std::string & strMethod,
+                    const Array & params, const std::string & jsonver)
+{
+    return std::move(CallRPC("", "", rpcip, rpcport, strMethod, params, jsonver));
 }
 
 std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                       const std::string & rpcip, const std::string & rpcport,
-                      const std::string & strMethod, const json_spirit::Array & params)
+                      const std::string & strMethod, const json_spirit::Array & params,
+                      const std::string & jsonver)
 {
     const std::string & host = rpcip;
     const int port = stoi(rpcport);
@@ -144,7 +158,7 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     UniValue toval;
     if (!toval.read(tostring))
         throw std::runtime_error(strprintf("failed to decode json_spirit data: %s", tostring));
-    const auto reqobj = JSONRPCRequestObj(strMethod, toval.get_array(), 1);
+    const auto reqobj = XRouterJSONRPCRequestObj(strMethod, toval.get_array(), 1, jsonver);
     std::string strRequest = reqobj.write() + "\n";
     struct evbuffer* output_buffer = evhttp_request_get_output_buffer(req.get());
     assert(output_buffer);

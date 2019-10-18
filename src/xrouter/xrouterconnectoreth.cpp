@@ -48,7 +48,7 @@ static int hex2dec(std::string s) {
 std::string EthWalletConnectorXRouter::getBlockCount() const
 {
     static const std::string command("eth_blockNumber");
-    const auto & data = CallRPC(m_ip, m_port, command, Array());
+    const auto & data = CallRPC(m_ip, m_port, command, Array(), jsonver);
 
     Value data_val; read_string(data, data_val);
     if (data_val.type() != obj_type)
@@ -76,13 +76,13 @@ std::string EthWalletConnectorXRouter::getBlockCount() const
 std::string EthWalletConnectorXRouter::getBlockHash(const int & block) const
 {
     static const std::string command("eth_getBlockByNumber");
-    return CallRPC(m_ip, m_port, command, { dec2hex(block), false });
+    return CallRPC(m_ip, m_port, command, { dec2hex(block), false }, jsonver);
 }
 
 std::string EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
 {
     static const std::string command("eth_getBlockByHash");
-    return CallRPC(m_ip, m_port, command, { blockHash, true });
+    return CallRPC(m_ip, m_port, command, { blockHash, true }, jsonver);
 }
 
 std::vector<std::string> EthWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const
@@ -96,7 +96,7 @@ std::vector<std::string> EthWalletConnectorXRouter::getBlocks(const std::vector<
 std::string EthWalletConnectorXRouter::getTransaction(const std::string & trHash) const
 {
     static const std::string command("eth_getTransactionByHash");
-    return CallRPC(m_ip, m_port, command, { trHash });
+    return CallRPC(m_ip, m_port, command, { trHash }, jsonver);
 }
 
 std::string EthWalletConnectorXRouter::decodeRawTransaction(const std::string & trHash) const
@@ -122,7 +122,7 @@ std::vector<std::string> EthWalletConnectorXRouter::getTransactionsBloomFilter(c
 std::string EthWalletConnectorXRouter::sendTransaction(const std::string & rawtx) const
 {
     static const std::string command("eth_sendRawTransaction");
-    return CallRPC(m_ip, m_port, command, { rawtx });
+    return CallRPC(m_ip, m_port, command, { rawtx }, jsonver);
 }
 
 std::string EthWalletConnectorXRouter::convertTimeToBlockCount(const std::string & timestamp) const

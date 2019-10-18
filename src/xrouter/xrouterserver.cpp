@@ -75,6 +75,7 @@ bool XRouterServer::createConnectors() {
             wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
             wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
             wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
+            wp.jsonver                     = s.get<std::string>(*i + ".JSONVersion", "");
 
             if (wp.m_ip.empty() || wp.m_port.empty() ||
                 wp.m_user.empty() || wp.m_passwd.empty() ||
