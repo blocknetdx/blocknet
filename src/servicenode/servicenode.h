@@ -25,8 +25,9 @@
 #include <xrouter/xroutersettings.h>
 #include <xrouter/xrouterutils.h>
 
-#include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 /**
  * Servicenode namepsace
@@ -579,7 +580,11 @@ public:
                              std::string config, ServiceNode snode) :
                                  snodePubKey(snodePubKey), bestBlock(bestBlock), bestBlockHash(bestBlockHash),
                                  pingTime(pingTime), config(std::move(config)), snode(std::move(snode)),
-                                 signature(std::vector<unsigned char>()) {}
+                                 signature(std::vector<unsigned char>()) {
+        this->snode.setBestBlock(this->bestBlock, this->bestBlockHash);
+        this->snode.setConfig(this->config);
+        this->snode.updatePing();
+    }
 
     ADD_SERIALIZE_METHODS;
 
@@ -677,6 +682,19 @@ public:
 
         if (snode.serviceList().empty()) // check for valid services
             return false;
+
+        // OPEN tier can only advertise on xrs:: namespace
+        if (snode.getTier() == ServiceNode::Tier::OPEN) {
+            const auto & slist = snode.serviceList();
+            if (slist.size() == 1)
+                return false; // expecting [xr,xrs::SomePlugin]
+            for (const auto & s : slist) {
+                if (s == xrouter::xr) // skip the default xrouter service flag
+                    continue;
+                if (!boost::algorithm::istarts_with(s, xrouter::xrs + xrouter::xrdelimiter))
+                    return false;
+            }
+        }
 
         CPubKey pubkey;
         if (!pubkey.RecoverCompact(sigHash(), signature))
