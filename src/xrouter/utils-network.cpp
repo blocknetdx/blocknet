@@ -175,14 +175,15 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 }
 
 XRouterReply CallXRouterUrl(const std::string & host, const int & port, const std::string & url, const std::string & data,
-                    const CKey & signingkey, const CPubKey & serverkey, const std::string & paymentrawtx)
+                    const int & timeout, const CKey & signingkey, const CPubKey & serverkey, const std::string & paymentrawtx)
 {
     // Obtain event base
     raii_event_base base = obtain_event_base();
 
     // Synchronously look up hostname
     raii_evhttp_connection evcon = obtain_evhttp_connection_base(base.get(), host, port);
-    evhttp_connection_set_timeout(evcon.get(), gArgs.GetArg("-rpcxroutertimeout", 60));
+    evhttp_connection_set_timeout(evcon.get(), timeout > 0 ? timeout
+                                                           : static_cast<int>(gArgs.GetArg("-rpcxroutertimeout", 60)));
 
     HTTPReply response;
     raii_evhttp_request req = obtain_evhttp_request(http_request_done, (void*)&response);

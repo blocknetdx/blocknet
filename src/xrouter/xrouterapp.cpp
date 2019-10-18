@@ -1332,7 +1332,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             throw XRouterError(msg, xrouter::NOT_ENOUGH_NODES);
         }
 
-        int timeout = xrsettings->commandTimeout(command, service);
+        const int timeout = xrsettings->commandTimeout(command, service);
         boost::thread_group tg;
 
         // Send xrouter request to each selected node
@@ -1346,7 +1346,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             addQuery(uuid, addr);
             queryMgr.addQuery(uuid, addr);
 
-            if (mapSelectedNodes.count(addr)) {
+            if (mapSelectedNodes.count(addr)) { // query via the blocknet network
                 auto pnode = mapSelectedNodes[addr];
                 // Send packet to xrouter node
                 XRouterPacket packet(command, uuid);
@@ -1358,12 +1358,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 packet.sign(cpubkey, cprivkey);
                 PushXRouterMessage(pnode, packet.body());
                 updateSentRequest(addr, fqService);
-            } else {
+            } else { // query via external ip specified in config
                 // Set the fully qualified service url to the form /xr/BLOCK/xrGetBlockCount
                 const auto & fqUrl = fqServiceToUrl((command == xrService) ? pluginCommandKey(service) // plugin
                                                        : walletCommandKey(service, commandStr, true)); // spv wallet
                 try {
-                    tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,this]() {
+                    tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,timeout,this]() {
                         RenameThread("blocknet-xrclientrequest");
                         if (ShutdownRequested())
                             return;
@@ -1378,8 +1378,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                             if (!jparams.empty())
                                 data = json_spirit::write_string(Value(jparams), json_spirit::none, 8);
                             xrresponse = xrouter::CallXRouterUrl(snode.getHostAddr().ToStringIP(),
-                                    snode.getHostAddr().GetPort(), fqUrl, data, clientKey, snode.getSnodePubKey(), feetx);
+                                    snode.getHostAddr().GetPort(), fqUrl, data, timeout + 5, clientKey,
+                                    snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
+                            // Do not process if we aren't expecting a result. Also prevent reply malleability (only first reply is accepted)
+                            if (!queryMgr.hasQuery(uuid, addr) || queryMgr.hasReply(uuid, addr))
+                                return; // done, nothing found
                             json_spirit::Object r;
                             r.emplace_back("error", std::string(e.what()));
                             queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(r), json_spirit::none, 8));

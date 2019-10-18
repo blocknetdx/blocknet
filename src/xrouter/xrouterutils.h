@@ -98,7 +98,8 @@ struct XRouterReply {
     std::string result;
 };
 XRouterReply CallXRouterUrl(const std::string & host, const int & port, const std::string & url, const std::string & data,
-                    const CKey & signingkey, const CPubKey & serverkey, const std::string & paymentrawtx);
+                            const int & timeout, const CKey & signingkey, const CPubKey & serverkey,
+                            const std::string & paymentrawtx);
 // Network and RPC interface
 std::string CallCMD(const std::string & cmd, int & exit);
 std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
