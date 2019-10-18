@@ -1378,17 +1378,10 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                             if (!jparams.empty())
                                 data = json_spirit::write_string(Value(jparams), json_spirit::none, 8);
                             xrresponse = xrouter::CallXRouterUrl(snode.getHostAddr().ToStringIP(),
-                                    snode.getHostAddr().GetPort(), fqUrl, data, timeout + 5, clientKey,
+                                    snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
                                     snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
-                            // Do not process if we aren't expecting a result. Also prevent reply malleability (only first reply is accepted)
-                            if (!queryMgr.hasQuery(uuid, addr) || queryMgr.hasReply(uuid, addr))
-                                return; // done, nothing found
-                            json_spirit::Object r;
-                            r.emplace_back("error", std::string(e.what()));
-                            queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(r), json_spirit::none, 8));
-                            queryMgr.purge(uuid, addr);
-                            return;
+                            return; // failed to connect
                         }
 
                         // Do not process if we aren't expecting a result. Also prevent reply malleability (only first reply is accepted)
