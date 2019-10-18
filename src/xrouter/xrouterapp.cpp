@@ -546,6 +546,9 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         if (!nodec.count(snodeAddr)) // skip non-connected nodes
             continue;
 
+        if (!s.running()) // skip non-running snodes
+            continue;
+
         if (connectedSnodes.count(snodeAddr)) // skip already selected nodes
             continue;
 
@@ -583,6 +586,10 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         const auto & snodeAddr = s.getHost();
         if (snodeAddr.empty()) // Sanity check
             continue;
+
+        if (!s.running()) // skip non-running snodes
+            continue;
+
         if (nodec.count(snodeAddr) || connectedSnodes.count(snodeAddr) || snodesNeedConfig.count(snodeAddr)
             || needConnectionsHaveConfigs.count(snodeAddr))
             continue; // already processed, skip
@@ -843,6 +850,8 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
         if (!settings->isAvailableCommand(command, service))
             continue;
         if (!snodec.count(nodeAddr)) // Ignore if not a snode
+            continue;
+        if (!snodec[nodeAddr].running()) // skip if not running
             continue;
         if (!snodec[nodeAddr].hasService(command == xrService ? fqCmd : walletCommandKey(service))) // use top-level wallet key (e.g. xr::BLOCK)
             continue; // Ignore snodes that don't have the service
