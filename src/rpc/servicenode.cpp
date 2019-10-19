@@ -109,12 +109,17 @@ static UniValue servicenodesetuplist(const JSONRPCRequest& request)
             RPCHelpMan{"servicenodesetuplist",
                 "\nSets up Service Nodes by populating the servicenode.conf. Note* by default new data is appended to servicenode.conf\n",
                 {
-                    {"list", RPCArg::Type::OBJ, RPCArg::Optional::NO, R"(Should contain a list of servicenode objects in json format, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])",
+                    {"list", RPCArg::Type::ARR, RPCArg::Optional::NO, R"(Should contain a list of servicenode objects in json format, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])",
                         {
-                            {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node alias"},
-                            {"tier", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node tier: SPV|OPEN"},
-                            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "base58 address containing the service node collateral"},
-                        },
+                            {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
+                                {
+                                    {"key", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The hex-encoded public key"},
+                                    {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node alias"},
+                                    {"tier", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node tier: SPV|OPEN"},
+                                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "base58 address containing the service node collateral"},
+                                }
+                            }
+                        }
                     },
                 },
                 RPCResult{
