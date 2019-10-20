@@ -8,6 +8,7 @@
 #include "xbridgecryptoproviderbtc.h"
 #include "xbridgewalletconnectorbch.h"
 #include "xbridgewalletconnectordgb.h"
+#include "xbridgewalletconnectormerge.h"
 #include "xrouter/xrouterapp.h"
 
 #include "util/xutil.h"
@@ -901,7 +902,7 @@ void App::updateActiveWallets()
             wp.m_user.empty() || wp.m_passwd.empty() ||
             wp.COIN == 0 || wp.blockTime == 0)
         {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect (1), check the config";
             removeConnector(wp.currency);
             continue;
         }
@@ -932,6 +933,11 @@ void App::updateActiveWallets()
             conn.reset(new DgbWalletConnector);
             *conn = wp;
         }
+        else if (wp.method == "MERGE")
+        {
+            conn.reset(new MergeWalletConnector);
+            *conn = wp;
+        }
         else
         {
             ERR() << "unknown session type " << __FUNCTION__;
@@ -940,7 +946,7 @@ void App::updateActiveWallets()
         // If the wallet is invalid, remove it from the list
         if (!conn)
         {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect (2), check the config";
             removeConnector(wp.currency);
             continue;
         }
@@ -1047,7 +1053,7 @@ void App::updateActiveWallets()
                     boost::posix_time::ptime time{boost::posix_time::second_clock::universal_time()};
                     m_badWallets[conn->currency] = time;
                 }
-                WARN() << conn->currency << " \"" << conn->title << "\"" << " Failed to connect, check the config";
+                WARN() << conn->currency << " \"" << conn->title << "\"" << " Failed to connect (3), check the config";
             }
         }
     }
