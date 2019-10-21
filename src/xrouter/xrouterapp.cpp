@@ -90,8 +90,7 @@ App& App::instance()
 // static
 bool App::isEnabled()
 {
-    // Disabled by default
-    return gArgs.GetBoolArg("-xrouter", false);
+    return gArgs.GetBoolArg("-xrouter", true);
 }
 
 // static
