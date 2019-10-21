@@ -1387,13 +1387,22 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                         if (!queryMgr.hasQuery(uuid, addr) || queryMgr.hasReply(uuid, addr))
                             return; // done, nothing found
 
-                        // TODO Blocknet XRouter verify snode response
-//                        // Verify servicenode response
-//                        CHashWriter hw(SER_GETHASH, 0);
-//                        hw << xrresponse.result;
-//                        if (snode.getSnodePubKey() != xrresponse.hdrpubkey
-//                            || !snode.getSnodePubKey().Verify(hw.GetHash(), xrresponse.hdrsignature))
-//                            return;
+                        // Verify servicenode response
+                        CHashWriter hw(SER_GETHASH, 0);
+                        hw << std::vector<unsigned char>(xrresponse.result.begin(), xrresponse.result.end());
+                        const auto hash = hw.GetHash();
+                        CPubKey sigPubKey;
+                        if (snode.getSnodePubKey() != xrresponse.hdrpubkey
+                        || !sigPubKey.RecoverCompact(hash, xrresponse.hdrsignature)
+                        || snode.getSnodePubKey() != sigPubKey) {
+                            json_spirit::Object obj;
+                            obj.emplace_back("error", "Unable to verify if the service node is valid. Received bad signature on this request.");
+                            obj.emplace_back("code", xrouter::Error::BAD_SIGNATURE);
+                            obj.emplace_back("reply", xrresponse.result);
+                            queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(obj)));
+                            queryMgr.purge(uuid, addr);
+                            return;
+                        }
 
                         // Store the reply
                         queryMgr.addReply(uuid, addr, xrresponse.result);

@@ -26,6 +26,7 @@ namespace xrouter
         MAXFEE_TOO_LOW          = 1033,
         TOO_MANY_REQUESTS       = 1034,
         NO_REPLIES              = 1035,
+        BAD_SIGNATURE           = 1036,
     };
 
     class XRouterError {
