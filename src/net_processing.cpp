@@ -3059,8 +3059,17 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     if (strCommand == NetMsgType::SNREGISTER) { // handle snode registrations
         sn::ServiceNode snode;
-        if (!smgr.processRegistration(vRecv, snode))
+        try {
+            if (!smgr.processRegistration(vRecv, snode))
+                return true;
+        } catch (std::exception & e) {
+            LOCK(cs_main);
+            LogPrint(BCLog::NET, "servicenode packet from peer=%d %s processed with error: %s\n",
+                     pfrom->GetId(), pfrom->cleanSubVer, std::string(e.what()));
+            // bad packet, small penalty
+            Misbehaving(pfrom->GetId(), 10);
             return true;
+        }
 
         // Send the ping out if we are a snode waiting for registration
         if (smgr.hasActiveSn() && smgr.getActiveSn().keyId() == snode.getSnodePubKey().GetID()) {
@@ -3070,7 +3079,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
         // Relay packets
         connman->ForEachNode([&](CNode* pnode) {
-            if (!pnode->fSuccessfullyConnected || pfrom == pnode)
+            if (pfrom == pnode)
                 return;
             connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNREGISTER, snode));
         });
@@ -3080,12 +3089,21 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
     if (strCommand == NetMsgType::SNPING) { // handle snode pings
         sn::ServiceNodePing ping;
-        if (!smgr.processPing(vRecv, ping))
+        try {
+            if (!smgr.processPing(vRecv, ping))
+                return true;
+        } catch (std::exception & e) {
+            LOCK(cs_main);
+            LogPrint(BCLog::NET, "servicenode packet from peer=%d %s processed with error: %s\n",
+                     pfrom->GetId(), pfrom->cleanSubVer, std::string(e.what()));
+            // bad packet, small penalty
+            Misbehaving(pfrom->GetId(), 10);
             return true;
+        }
 
         // Relay packets
         connman->ForEachNode([&](CNode* pnode) {
-            if (!pnode->fSuccessfullyConnected || pfrom == pnode)
+            if (pfrom == pnode)
                 return;
             connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNPING, ping));
         });
@@ -3118,6 +3136,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 }
             }
         }
+        return true;
     }
 
     // Ignore unknown commands for extensibility
