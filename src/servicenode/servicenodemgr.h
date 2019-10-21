@@ -31,9 +31,6 @@
  */
 namespace sn {
 
-extern const char* REGISTER;
-extern const char* PING;
-
 /**
  * Service node configuration entry (from servicenode.conf).
  */
@@ -281,7 +278,7 @@ public:
             if (!pnode->fSuccessfullyConnected)
                 return;
             const CNetMsgMaker msgMaker(pnode->GetSendVersion());
-            connman->PushMessage(pnode, msgMaker.Make(sn::REGISTER, *snodePtr));
+            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNREGISTER, *snodePtr));
         });
 
         return true;
@@ -309,14 +306,10 @@ public:
         const uint32_t bestBlock = getActiveChainHeight();
         const uint256 & bestBlockHash = getActiveChainHash(bestBlock);
 
-        std::ostringstream o;
-        o << protocol;
-
-        const auto uconfig = o.str() + "," + config;
-        snode->setConfig(uconfig);
+        snode->setConfig(config);
         snode->updatePing();
 
-        ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, uconfig, *snode);
+        ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()), config, *snode);
         ping.sign(activesn.key);
         if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc)) {
             LogPrint(BCLog::SNODE, "service node ping failed\n");
@@ -330,7 +323,7 @@ public:
             if (!pnode->fSuccessfullyConnected)
                 return;
             const CNetMsgMaker msgMaker(pnode->GetSendVersion());
-            connman->PushMessage(pnode, msgMaker.Make(sn::PING, ping));
+            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNPING, ping));
         });
 
         return true;
@@ -367,6 +360,19 @@ public:
      */
     ServiceNode getSn(const CPubKey & snodePubKey) {
         return getSn(std::vector<unsigned char>{snodePubKey.begin(), snodePubKey.end()});
+    }
+
+    /**
+     * Returns the servicenode with the specified node address.
+     * @param nodeAddr
+     * @return
+     */
+    ServiceNode getSn(const std::string & nodeAddr) {
+        LOCK(mu);
+        for (const auto & s : snodes)
+            if (s.second->getHost() == nodeAddr)
+                return *s.second;
+        return ServiceNode{};
     }
 
     /**
@@ -418,7 +424,7 @@ public:
      * Returns the active service node entry (the first in the list).
      * @return
      */
-    const ServiceNodeConfigEntry & getActiveSn() {
+    ServiceNodeConfigEntry getActiveSn() {
         if (!gArgs.GetBoolArg("-servicenode", false))
             return std::move(ServiceNodeConfigEntry{});
         LOCK(mu);

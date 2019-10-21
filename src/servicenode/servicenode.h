@@ -16,13 +16,18 @@
 #include <streams.h>
 #include <sync.h>
 #include <timedata.h>
+#include <univalue.h>
 
 #include <set>
 #include <utility>
 #include <vector>
 
-#include <boost/algorithm/string/split.hpp>
+#include <xrouter/xroutersettings.h>
+#include <xrouter/xrouterutils.h>
+
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 
 /**
  * Servicenode namepsace
@@ -202,11 +207,19 @@ public:
     }
 
     /**
-     * Returns the servicenode protocol version.
+     * Returns the servicenode xbridge protocol version.
      * @return
      */
-    const uint32_t& getProtocolVersion() const {
-        return protocol;
+    const uint32_t& getXBridgeVersion() const {
+        return xbridgeversion;
+    }
+
+    /**
+     * Returns the servicenode xrouter protocol version.
+     * @return
+     */
+    const uint32_t& getXRouterVersion() const {
+        return xrouterversion;
     }
 
     /**
@@ -243,12 +256,44 @@ public:
     void setConfig(const std::string & c) {
         config = c;
         services.clear();
-        boost::split(services, c, boost::is_any_of(", "));
-        try {
-            protocol = std::stoi(services.front());
-            services.erase(services.begin()); // remove the protocol version from the services list
-        } catch (...) { }
-        // TODO Blocknet XBridge XRouter parse config and assign services
+        parseConfig();
+    }
+
+    /**
+     * Return the servicenode config.
+     * @return
+     */
+    std::string getConfig() const {
+        return config;
+    }
+
+    /**
+     * Return the servicenode config filtered by the specified key name. The config's
+     * json object matching the name of the specified filter will be returned.
+     * @param filter Filter the config by the specified json object key.
+     * @return
+     */
+    std::string getConfig(const std::string & filter) const {
+        UniValue uv;
+        if (!uv.read(config))
+            return "";
+        return find_value(uv, filter).write();
+    }
+
+    /**
+     * Return the host cnet address.
+     * @return
+     */
+    const CService & getHostAddr() const {
+        return addr;
+    }
+
+    /**
+     * Return the ip address of the host.
+     * @return
+     */
+    std::string getHost() const {
+        return addr.ToStringIPPort();
     }
 
     /**
@@ -411,6 +456,81 @@ public:
         return invalid;
     }
 
+protected:
+    /**
+     * Return true if the config was successfully parsed.
+     * @return
+     */
+    bool parseConfig() {
+        try {
+            UniValue uv;
+            if (!uv.read(config))
+                return false; // do not continue processing if config is bad json
+
+            // Get the config version
+            const auto uxbver = find_value(uv, "xbridgeversion");
+            if (uxbver.isNull() || !uxbver.isNum())
+                return false; // do not continue processing the config on bad protocol version
+            xbridgeversion = uxbver.get_int();
+
+            // Get the config version
+            const auto uxrver = find_value(uv, "xrouterversion");
+            if (uxrver.isNull() || !uxrver.isNum())
+                return false; // do not continue processing the config on bad protocol version
+            xrouterversion = uxrver.get_int();
+
+            // Parse xbridge config if it's specified
+            const auto uxb = find_value(uv, "xbridge");
+            if (!uxb.isNull() && uxb.isArray()) {
+                auto us = uxb.getValues();
+                for (const auto & s : us)
+                    services.push_back(s.get_str());
+            }
+
+            // Parse xrouter config if it's specified
+            const auto uxr = find_value(uv, "xrouter");
+            if (!uxr.isNull() && uxr.isObject()) {
+                const auto uxrconf = find_value(uxr, "config");
+                if (uxrconf.isNull() || !uxrconf.isStr())
+                    return false; // do not continue processing if bad config format
+
+                // Parse config
+                xrouter::XRouterSettings settings(false); // not our config
+                if (!settings.init(uxrconf.get_str()))
+                    return false;
+
+                // Parse plugins
+                const auto uxrplugins = find_value(uxr, "plugins");
+                std::map<std::string, UniValue> kv;
+                uxrplugins.getObjMap(kv);
+                for (const auto & item : kv) {
+                    const auto plugin = item.first;
+                    const auto pluginconf = item.second.write();
+                    try {
+                        auto psettings = std::make_shared<xrouter::XRouterPluginSettings>(false); // not our config
+                        psettings->read(pluginconf);
+                        settings.addPlugin(plugin, psettings);
+                    } catch (...) { }
+                }
+
+                addr = settings.getAddr();
+                services.push_back(xrouter::xr); // add the general xrouter service
+
+                for (const auto & s : settings.getWallets())
+                    services.push_back(xrouter::walletCommandKey(s));
+
+                for (const auto & p : settings.getPlugins()) {
+                    if (!settings.isAvailableCommand(xrouter::xrService, p)) // exclude any disabled plugins
+                        continue;
+                    services.push_back(xrouter::pluginCommandKey(p));
+                }
+            }
+        } catch (...) {
+            return false;
+        }
+        return true;
+    }
+
 protected: // included in network serialization
     CPubKey snodePubKey;
     uint8_t tier;
@@ -425,7 +545,9 @@ protected: // in-memory only
     uint32_t pingBestBlock;
     uint256 pingBestBlockHash;
     std::string config;
-    uint32_t protocol{0};
+    uint32_t xbridgeversion{0};
+    uint32_t xrouterversion{0};
+    CService addr;
     std::vector<std::string> services;
     bool invalid{false};
 };
@@ -442,7 +564,7 @@ public:
     /**
      * Constructor
      */
-    explicit ServiceNodePing() : snodePubKey(CPubKey()), bestBlock(0), bestBlockHash(uint256()),
+    explicit ServiceNodePing() : snodePubKey(CPubKey()), bestBlock(0), bestBlockHash(uint256()), pingTime(GetTime()),
                         config(std::string()), snode(ServiceNode()), signature(std::vector<unsigned char>()) {}
 
     /**
@@ -450,14 +572,19 @@ public:
      * @param snodePubKey
      * @param bestBlock
      * @param bestBlockHash
+     * @param pingTime
      * @param config
      * @param snode
      */
-    explicit ServiceNodePing(CPubKey snodePubKey, uint32_t bestBlock, uint256 bestBlockHash,
+    explicit ServiceNodePing(CPubKey snodePubKey, uint32_t bestBlock, uint256 bestBlockHash, uint32_t pingTime,
                              std::string config, ServiceNode snode) :
                                  snodePubKey(snodePubKey), bestBlock(bestBlock), bestBlockHash(bestBlockHash),
-                                 config(std::move(config)), snode(std::move(snode)),
-                                 signature(std::vector<unsigned char>()) {}
+                                 pingTime(pingTime), config(std::move(config)), snode(std::move(snode)),
+                                 signature(std::vector<unsigned char>()) {
+        this->snode.setBestBlock(this->bestBlock, this->bestBlockHash);
+        this->snode.setConfig(this->config);
+        this->snode.updatePing();
+    }
 
     ADD_SERIALIZE_METHODS;
 
@@ -466,6 +593,7 @@ public:
         READWRITE(snodePubKey);
         READWRITE(bestBlock);
         READWRITE(bestBlockHash);
+        READWRITE(pingTime);
         READWRITE(config);
         READWRITE(snode);
         READWRITE(signature);
@@ -513,7 +641,7 @@ public:
      */
     uint256 sigHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << snodePubKey << bestBlock << bestBlockHash << config << snode;
+        ss << snodePubKey << bestBlock << bestBlockHash << pingTime << config << snode;
         return ss.GetHash();
     }
 
@@ -523,7 +651,7 @@ public:
      */
     uint256 getHash() const {
         CHashWriter ss(SER_GETHASH, 0);
-        ss << snodePubKey << bestBlock << bestBlockHash << config << snode << signature;
+        ss << snodePubKey << bestBlock << bestBlockHash << pingTime << config << snode << signature;
         return ss.GetHash();
     }
 
@@ -552,16 +680,20 @@ public:
         if (!snodePubKey.IsFullyValid() || snodePubKey != snode.getSnodePubKey())
             return false; // not valid if bad snode pubkey
 
-        std::vector<std::string> services;
-        boost::split(services, config, boost::is_any_of(", "));
-        if (services.empty())
-            return false; // bad config
-        try {
-            const uint32_t protocol = std::stoi(services.front());
-            if (protocol <= 0)
-                return false; // bad protocol version
-        } catch (...) {
-            return false; // bad protocol version in config
+        if (snode.serviceList().empty()) // check for valid services
+            return false;
+
+        // OPEN tier can only advertise on xrs:: namespace
+        if (snode.getTier() == ServiceNode::Tier::OPEN) {
+            const auto & slist = snode.serviceList();
+            if (slist.size() == 1)
+                return false; // expecting [xr,xrs::SomePlugin]
+            for (const auto & s : slist) {
+                if (s == xrouter::xr) // skip the default xrouter service flag
+                    continue;
+                if (!boost::algorithm::istarts_with(s, xrouter::xrs + xrouter::xrdelimiter))
+                    return false;
+            }
         }
 
         CPubKey pubkey;
@@ -578,6 +710,7 @@ protected:
     CPubKey snodePubKey;
     uint32_t bestBlock;
     uint256 bestBlockHash;
+    uint32_t pingTime;
     std::string config;
     ServiceNode snode;
     std::vector<unsigned char> signature;

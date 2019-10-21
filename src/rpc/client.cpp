@@ -183,6 +183,22 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "dxFlushCancelledOrders", 1 },
     { "gettradingdata", 0 },
     { "gettradingdata", 1 },
+    { "xrGetBlockCount",1 },
+    { "xrGetBlockHash",2 },
+    { "xrGetBlock", 2 },
+    { "xrGetBlocks", 2 },
+    { "xrGetTransaction", 2 },
+    { "xrGetTransactions", 2 },
+    { "xrDecodeRawTransaction", 2 },
+    { "xrSendTransaction", 2 },
+    { "xrServiceConsensus", 0 },
+    { "xrUpdateConfigs", 0 },
+    { "xrGetBalance", 2 },
+    { "xrGetTxBloomFilter", 2 },
+    { "xrGetTxBloomFilter", 3 },
+    { "xrGetBlockAtTime", 1 },
+    { "xrGetBlockAtTime", 2 },
+    { "xrConnect", 1 },
 };
 // clang-format on
 

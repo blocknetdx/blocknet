@@ -1719,6 +1719,7 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
             LOCK(cs_vNodes);
             for (const CNode* pnode : vNodes) {
                 if (!pnode->fInbound && !pnode->m_manual_connection) {
+                if (!pnode->fXRouter) { // do not count xrouter peers
                     // Netgroups for inbound and addnode peers are not excluded because our goal here
                     // is to not use multiple of our limited outbound slots on a single netgroup
                     // but inbound and addnode peers do not use our outbound slots.  Inbound peers
@@ -1726,6 +1727,7 @@ void CConnman::ThreadOpenConnections(const std::vector<std::string> connect)
                     // to prevent us from connecting to particular hosts if we used them here.
                     setConnected.insert(pnode->addr.GetGroup());
                     nOutbound++;
+                }
                 }
             }
         }
@@ -2793,4 +2795,36 @@ bool CConnman::StoreConnectedNodesBlockHeights(const int latestChainHeight, doub
     estimatedConnectedNodes = nodeCount;
 
     return true;
+}
+
+CNode* CConnman::OpenXRouterConnection(const CAddress & addrConnect, const char *pszDest) {
+    if (interruptNet)
+        return nullptr;
+    if (!fNetworkActive)
+        return nullptr;
+    if (IsLocal(addrConnect))
+        return nullptr; // do not connect to self
+    if (m_banman && m_banman->IsBanned(addrConnect))
+        return nullptr; // do not connect to banned nodes
+
+    CNode *pnode = nullptr;
+    pnode = FindNode(static_cast<CNetAddr>(addrConnect));
+    if (pnode)
+        return pnode; // If node is already connected return
+    pnode = FindNode(addrConnect.ToStringIPPort());
+    if (pnode)
+        return pnode; // If node is already connected return
+
+    pnode = ConnectNode(addrConnect, pszDest, false, true);
+    if (!pnode)
+        return nullptr;
+    pnode->fXRouter = true;
+
+    m_msgproc->InitializeNode(pnode);
+    {
+        LOCK(cs_vNodes);
+        vNodes.push_back(pnode);
+    }
+
+    return pnode;
 }

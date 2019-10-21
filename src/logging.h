@@ -56,6 +56,7 @@ namespace BCLog {
         SNODE       = (1 << 21),
         GOVERNANCE  = (1 << 22),
         XBRIDGE     = (1 << 23),
+        XROUTER     = (1 << 24),
         ALL         = ~(uint32_t)0,
     };
 

@@ -25,6 +25,8 @@ void RegisterServiceNodeRPCCommands(CRPCTable &tableRPC);
 void RegisterGovernanceNodeRPCCommands(CRPCTable &tableRPC);
 /** Register xbridge RPC commands */
 void RegisterXBridgeRPCCommands(CRPCTable &tableRPC);
+/** Register xrouter RPC commands */
+void RegisterXRouterRPCCommands(CRPCTable &tableRPC);
 
 static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
 {
@@ -36,6 +38,7 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterServiceNodeRPCCommands(t);
     RegisterGovernanceNodeRPCCommands(t);
     RegisterXBridgeRPCCommands(t);
+    RegisterXRouterRPCCommands(t);
 }
 
 #endif // BITCOIN_RPC_REGISTER_H

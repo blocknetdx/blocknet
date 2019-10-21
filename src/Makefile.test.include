@@ -172,6 +172,8 @@ test_test_bitcoin_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
 # Blocknet XBridge
 test_test_bitcoin_LDADD += $(LIBXBRIDGE)
+# Blocknet XRouter
+test_test_bitcoin_LDADD += $(LIBXROUTER)
 test_test_bitcoin_LDADD += $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(RAPIDCHECK_LIBS)
 test_test_bitcoin_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -static
 

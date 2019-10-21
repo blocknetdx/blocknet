@@ -12,6 +12,7 @@
 #include <wallet/coincontrol.h>
 #include <wallet/rpcwallet.h>
 #include <xbridge/xbridgeapp.h>
+#include <xrouter/xrouterapp.h>
 
 #include <regex>
 
@@ -31,7 +32,8 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
                 "{\n"
                 "  \"alias\": \"xxxx\",              (string) Service node name\n"
                 "  \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-                "  \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "  \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+                "  \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
                 "  \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "}\n"
                 },
@@ -94,7 +96,8 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("alias", entry.alias);
     obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-    obj.pushKV("snodekey", EncodeSecret(entry.key));
+    obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+    obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
     obj.pushKV("address", EncodeDestination(entry.address));
     return obj;
 }
@@ -106,12 +109,17 @@ static UniValue servicenodesetuplist(const JSONRPCRequest& request)
             RPCHelpMan{"servicenodesetuplist",
                 "\nSets up Service Nodes by populating the servicenode.conf. Note* by default new data is appended to servicenode.conf\n",
                 {
-                    {"list", RPCArg::Type::OBJ, RPCArg::Optional::NO, R"(Should contain a list of servicenode objects in json format, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])",
+                    {"list", RPCArg::Type::ARR, RPCArg::Optional::NO, R"(Should contain a list of servicenode objects in json format, example: [{"alias":"snode1","tier":"SPV","address":"Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa"}])",
                         {
-                            {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node alias"},
-                            {"tier", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node tier: SPV|OPEN"},
-                            {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "base58 address containing the service node collateral"},
-                        },
+                            {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
+                                {
+                                    {"key", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The hex-encoded public key"},
+                                    {"alias", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node alias"},
+                                    {"tier", RPCArg::Type::STR, RPCArg::Optional::NO, "Service node tier: SPV|OPEN"},
+                                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "base58 address containing the service node collateral"},
+                                }
+                            }
+                        }
                     },
                 },
                 RPCResult{
@@ -119,7 +127,8 @@ static UniValue servicenodesetuplist(const JSONRPCRequest& request)
             "  {\n"
             "    \"alias\": \"xxxx\",              (string) Service node name\n"
             "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-            "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+            "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+            "    \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
             "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
             "  }\n"
             "  ,...\n"
@@ -205,7 +214,8 @@ static UniValue servicenodesetuplist(const JSONRPCRequest& request)
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-        obj.pushKV("snodekey", EncodeSecret(entry.key));
+        obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+        obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         ret.push_back(obj);
     }
@@ -412,7 +422,8 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
                 "  {\n"
                 "    \"alias\": n,                     (string) Service node name\n"
                 "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+                "    \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "  }\n"
                 "  ,...\n"
@@ -458,7 +469,8 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-        obj.pushKV("snodekey", EncodeSecret(entry.key));
+        obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+        obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         ret.push_back(obj);
     }
@@ -596,7 +608,8 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
                 "  {\n"
                 "    \"alias\": n,                     (string) Service node name\n"
                 "    \"tier\": \"xxxx\",               (string) Tier of this service node\n"
-                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded private key\n"
+                "    \"snodekey\":\"xxxxxx\",          (string) Base58 encoded public key\n"
+                "    \"snodeprivkey\":\"xxxxxx\",      (string) Base58 encoded private key\n"
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
@@ -624,7 +637,8 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
         UniValue obj(UniValue::VOBJ);
         obj.pushKV("alias", entry.alias);
         obj.pushKV("tier", sn::ServiceNodeMgr::tierString(entry.tier));
-        obj.pushKV("snodekey", EncodeSecret(entry.key));
+        obj.pushKV("snodekey", HexStr(entry.key.GetPubKey()));
+        obj.pushKV("snodeprivkey", EncodeSecret(entry.key));
         obj.pushKV("address", EncodeDestination(entry.address));
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
@@ -680,6 +694,7 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
+        obj.pushKV("score", xrouter::App::instance().isReady() ? xrouter::App::instance().getScore(snode.getHost()) : 0);
         UniValue services(UniValue::VARR);
         for (const auto & service : snode.serviceList())
             services.push_back(service);
@@ -725,8 +740,8 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping, %s is not running. See \"help servicenoderegister\"", activesn.alias));
 
     // Send the ping
-    auto services = xbridge::App::instance().myServices();
-    if (!sn::ServiceNodeMgr::instance().sendPing(xbridge::App::version(), services, g_connman.get()))
+    const auto & jservices = xbridge::App::instance().myServicesJSON();
+    if (!sn::ServiceNodeMgr::instance().sendPing(XROUTER_PROTOCOL_VERSION, jservices, g_connman.get()))
         throw JSONRPCError(RPC_INVALID_REQUEST, strprintf("Failed to send service ping for service node %s", activesn.alias));
 
     // Obtain latest snode data

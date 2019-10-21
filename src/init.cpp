@@ -41,6 +41,7 @@
 #include <script/standard.h>
 #include <script/sigcache.h>
 #include <scheduler.h>
+#include <servicenode/servicenodemgr.h>
 #include <shutdown.h>
 #include <timedata.h>
 #include <txdb.h>
@@ -55,8 +56,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include <servicenode/servicenodemgr.h>
 #include <xbridge/xbridgeapp.h>
+#include <xrouter/xrouterapp.h>
 
 #ifndef WIN32
 #include <attributes.h>
@@ -218,8 +219,7 @@ void Shutdown(InitInterfaces& interfaces)
     xbridge::App::instance().stop();
 
     // Shutdown xrouter
-    // TODO Blocknet XRouter shutdown
-//    xrouter::App::instance().stop();
+    xrouter::App::instance().stop();
 
     StopHTTPRPC();
     StopREST();
@@ -1872,6 +1872,56 @@ bool AppInitMain(InitInterfaces& interfaces)
     // ********************************************************* Step 13: finished
 
     SetRPCWarmupFinished();
+
+    // ********************************************************* Start XBridge and XRouter
+#ifdef ENABLE_WALLET
+    if (!ShutdownRequested()) {
+        sn::ServiceNodeMgr & smgr = sn::ServiceNodeMgr::instance();
+        std::set<sn::ServiceNodeConfigEntry> entries;
+        if (!smgr.loadSnConfig(entries))
+            LogPrint(BCLog::SNODE, "Failed to load service node entries from servicenode.conf");
+
+        uiInterface.InitMessage(_("Starting xbridge service"));
+        xbridge::App & xapp = xbridge::App::instance();
+        xapp.init(); // init xbridge
+        xapp.start(); // start xbridge
+
+        xrouter::App & xrapp = xrouter::App::instance();
+        xrouter::App::createConf(); // create config if it doesn't exist
+        if (xrouter::App::isEnabled()) {
+            uiInterface.InitMessage(_("Starting xrouter service"));
+            const auto xrinit = xrapp.init(); // init xrouter
+            if (!xrinit || !xrapp.start()) // start xrouter if init succeeds
+                LogPrintf("XRouter failed to start, please check your configs\n");
+        }
+
+        // If there's snode entries, proceed to register them
+        if (!entries.empty()) {
+            auto wallets = GetWallets();
+            std::string failReason;
+            for (const auto & snode : entries) {
+                bool haveAddr{false};
+                for (auto & w : wallets) {
+                    if (w->HaveKey(boost::get<CKeyID>(snode.address))) {
+                        haveAddr = true;
+                        break;
+                    }
+                }
+                if (haveAddr) {
+                    if (!smgr.registerSn(snode, g_connman.get(), wallets, &failReason))
+                        LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
+                } else if (!smgr.hasActiveSn())
+                    LogPrintf("Failed to register service node %s because the collateral could not be found in the wallet.", snode.alias);
+            }
+            if (smgr.hasActiveSn() && !smgr.sendPing(XROUTER_PROTOCOL_VERSION, xapp.myServicesJSON(), g_connman.get()))
+                LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
+        }
+
+        // Servicenode validation interface
+        RegisterValidationInterface(&smgr);
+    }
+#endif
+
     uiInterface.InitMessage(_("Done loading"));
 
     for (const auto& client : interfaces.chain_clients) {
@@ -1881,35 +1931,6 @@ bool AppInitMain(InitInterfaces& interfaces)
     scheduler.scheduleEvery([]{
         g_banman->DumpBanlist();
     }, DUMP_BANS_INTERVAL * 1000);
-
-    // init xbridge
-#ifdef ENABLE_WALLET
-    if (!ShutdownRequested()) {
-        sn::ServiceNodeMgr & smgr = sn::ServiceNodeMgr::instance();
-        std::set<sn::ServiceNodeConfigEntry> entries;
-        if (!smgr.loadSnConfig(entries))
-            LogPrint(BCLog::SNODE, "Failed to load service node entries from servicenode.conf");
-
-        xbridge::App & xapp = xbridge::App::instance();
-        xapp.init(); // init xbridge
-        xapp.start(); // start xbridge
-
-        // If there's snode entries, proceed to register them
-        if (!entries.empty()) {
-            auto wallets = GetWallets();
-            std::string failReason;
-            for (const auto & snode : entries) {
-                if (!smgr.registerSn(snode, g_connman.get(), wallets, &failReason))
-                    LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
-            }
-            if (smgr.hasActiveSn() && !smgr.sendPing(xbridge::App::version(), xapp.myServices(), g_connman.get()))
-                LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
-        }
-
-        // Servicenode validation interface
-        RegisterValidationInterface(&smgr);
-    }
-#endif
 
     return true;
 }

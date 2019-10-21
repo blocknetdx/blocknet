@@ -9,6 +9,7 @@
 #include <servicenode/servicenode.h>
 #include <servicenode/servicenodemgr.h>
 #include <wallet/coincontrol.h>
+#include <xbridge/xbridgeapp.h>
 
 sn::ServiceNode snodeNetwork(const CPubKey & snodePubKey, const uint8_t & tier, const CKeyID & paymentAddr,
                          const std::vector<COutPoint> & collateral, const uint32_t & blockNumber,
@@ -347,7 +348,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>{entry});
         std::set<sn::ServiceNodeConfigEntry> entries;
         sn::ServiceNodeMgr::instance().loadSnConfig(entries);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, "BLOCK,BTC,LTC", g_connman.get()), "Snode ping w/ uncompressed key");
+        xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
+        const auto & jservices = xbridge::App::instance().myServicesJSON();
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Snode ping w/ uncompressed key");
         ++addedSnodes;
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     }
@@ -361,7 +364,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>{entry});
         std::set<sn::ServiceNodeConfigEntry> entries;
         sn::ServiceNodeMgr::instance().loadSnConfig(entries);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, "BLOCK,BTC,LTC", g_connman.get()), "Snode ping w/ compressed key");
+        xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
+        const auto & jservices = xbridge::App::instance().myServicesJSON();
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Snode ping w/ compressed key");
         ++addedSnodes;
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     }
@@ -415,6 +420,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
             BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode1");
             BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
             BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str().empty(), false); // check not empty
+            BOOST_CHECK_EQUAL(find_value(o, "snodeprivkey").get_str().empty(), false); // check not empty
+            BOOST_CHECK(DecodeSecret(find_value(o, "snodeprivkey").get_str()).IsValid()); // check validity
             BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
         } catch (std::exception & e) {
             BOOST_CHECK_MESSAGE(false, strprintf("servicenoderegister failed: %s", e.what()));
@@ -482,6 +489,24 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         for (const auto & utxo : checkSnode.getCollateral())
             BOOST_CHECK_MESSAGE(utxo != firstUtxo, "snode spent utxo should not exist after new registration");
         UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
+    }
+
+    // Snode ping should fail on open tier with xr:: namespace
+    {
+        CKey key; key.MakeNewKey(true);
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::OPEN, EncodeDestination(dest), g_connman.get(), {}), "Register OPEN tier snode");
+        const auto bestBlock = chainActive.Height();
+        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
+        auto snode = sn::ServiceNodeMgr::instance().getSn(key.GetPubKey());
+        sn::ServiceNodePing pingValid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        pingValid.sign(key);
+        BOOST_CHECK_MESSAGE(pingValid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be valid for open tier xrs services");
+        sn::ServiceNodePing pingInvalid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=BLOCK,LTC\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        pingInvalid.sign(key);
+        BOOST_CHECK_MESSAGE(!pingInvalid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be invalid for open tier non-xrs services");
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     }
 
     sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
@@ -954,8 +979,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         CKeyingMaterial plaintext;
         BOOST_CHECK_MESSAGE(crypt.Decrypt(ParseHex(result.get_str()), plaintext), "servicenodeexport failed to decrypt plaintext");
         std::string strtext(plaintext.begin(), plaintext.end());
-        const std::string & str = entry.write();
-        BOOST_CHECK_EQUAL(strtext, str);
+        UniValue uexport; uexport.read(strtext);
+        BOOST_CHECK_EQUAL(find_value(uexport, "alias").get_str(), find_value(entry, "alias").get_str());
+        BOOST_CHECK_EQUAL(find_value(uexport, "tier").get_str(), find_value(entry, "tier").get_str());
+        BOOST_CHECK_EQUAL(find_value(uexport, "snodekey").get_str(), find_value(entry, "snodeprivkey").get_str());
+        BOOST_CHECK_EQUAL(find_value(uexport, "address").get_str(), find_value(entry, "address").get_str());
 
         // Check servicenodeimport
         rpcparams = UniValue(UniValue::VARR);
@@ -984,7 +1012,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
         o = entry;
-        const auto snodekey = find_value(o, "snodekey").get_str();
+        const auto snodekey = find_value(o, "snodeprivkey").get_str();
         const auto sk = DecodeSecret(snodekey);
 
         rpcparams = UniValue(UniValue::VARR);
@@ -994,7 +1022,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         o = entries[0];
         BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode0");
         BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
-        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), snodekey);
+        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
+        BOOST_CHECK_EQUAL(find_value(o, "snodeprivkey").get_str(), EncodeSecret(sk));
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
@@ -1013,7 +1042,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         o = entries[0];
         BOOST_CHECK_EQUAL(find_value(o, "alias").get_str(), "snode0");
         BOOST_CHECK_EQUAL(find_value(o, "tier").get_str(), sn::ServiceNodeMgr::tierString(sn::ServiceNode::SPV));
-        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), snodekey);
+        BOOST_CHECK_EQUAL(find_value(o, "snodekey").get_str(), HexStr(sk.GetPubKey()));
+        BOOST_CHECK_EQUAL(find_value(o, "snodeprivkey").get_str(), EncodeSecret(sk));
         BOOST_CHECK_EQUAL(find_value(o, "address").get_str(), saddr);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
@@ -1031,6 +1061,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_EQUAL(find_value(o, "timelastseen").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "timelastseenstr").get_str(), "1970-01-01T00:00:00.000Z");
         BOOST_CHECK_EQUAL(find_value(o, "status").get_str(), "offline"); // snode is offline until ping
+        BOOST_CHECK_EQUAL(find_value(o, "score").get_int(), 0);
         BOOST_CHECK_EQUAL(find_value(o, "services").isArray(), true);
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
@@ -1046,7 +1077,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
         BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
         BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
         o = entry;
-        const auto snodekey = find_value(o, "snodekey").get_str();
+        const auto snodekey = find_value(o, "snodeprivkey").get_str();
         const auto sk = DecodeSecret(snodekey);
 
         // First check error since snode is not started
@@ -1060,6 +1091,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 
         // Start snode and send ping
         rpcparams = UniValue(UniValue::VARR);
+        xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesendping", rpcparams));
         BOOST_CHECK_MESSAGE(entry.isObject(), "Service node ping should return the snode");
         o = entry;

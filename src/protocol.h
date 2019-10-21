@@ -243,6 +243,21 @@ extern const char *BLOCKTXN;
  * @since protocol version 70712
  */
 extern const char *XBRIDGE;
+/**
+ * Contains a Service Node registration message.
+ * @since protocol version 70713
+ */
+extern const char *SNREGISTER;
+/**
+ * Contains a Service Node ping message.
+ * @since protocol version 70713
+ */
+extern const char *SNPING;
+/**
+ * Contains an XRouter message.
+ * @since protocol version 70712
+ */
+extern const char *XROUTER;
 };
 
 /* Get a vector of all valid message types (see above) */

@@ -128,6 +128,7 @@ const CLogCategoryDesc LogCategories[] =
     {BCLog::SNODE, "snode"},
     {BCLog::GOVERNANCE, "governance"},
     {BCLog::XBRIDGE, "xbridge"},
+    {BCLog::XROUTER, "xrouter"},
     {BCLog::ALL, "1"},
     {BCLog::ALL, "all"},
 };
