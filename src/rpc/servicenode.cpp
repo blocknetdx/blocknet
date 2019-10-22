@@ -415,7 +415,7 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
                 "\nRegisters all service nodes specified in servicenode.conf or registers the snode with a specific alias.\n"
                 "If the alias isn't specified all known service nodes (in servicenode.conf) will be registered.\n",
                 {
-                    {"alias", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Optionally register snode with the specified 'alias'"}
+                    {"alias", RPCArg::Type::STR, RPCArg::Optional::OMITTED_NAMED_ARG, "Optionally register snode with the specified 'alias'"}
                 },
                 RPCResult{
                 "[\n"

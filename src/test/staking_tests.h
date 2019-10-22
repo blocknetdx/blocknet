@@ -100,6 +100,7 @@ struct TestChainPoS : public TestingSetup {
             wallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
         }
         wallet->SetBroadcastTransactions(true);
+        RegisterValidationInterface(wallet.get());
 
         // Turn on index for staking
         g_txindex = MakeUnique<TxIndex>(1 << 20, true);
@@ -193,6 +194,7 @@ struct TestChainPoS : public TestingSetup {
     }
 
     ~TestChainPoS() {
+        UnregisterValidationInterface(wallet.get());
         RemoveWallet(wallet);
         g_txindex->Stop();
         g_txindex.reset();

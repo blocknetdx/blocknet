@@ -794,6 +794,7 @@ protected:
      * @param dest
      * @param wallets
      * @param collateral
+     * @param excludedUtxos
      * @return
      */
     bool findCollateral(const ServiceNode::Tier & tier, const CTxDestination & dest,
@@ -805,8 +806,7 @@ protected:
             std::vector<COutput> coins;
             {
                 auto locked_chain = wallet->chain().lock();
-                LOCK2(cs_main, wallet->cs_wallet);
-                wallet->AvailableCoins(*locked_chain, coins);
+                registrationCoins(*locked_chain, wallet.get(), coins);
             }
             for (const auto & coin : coins) {
                 if (coin.nDepth < 1)
@@ -896,23 +896,101 @@ protected:
         return true;
     }
 
+    /**
+     * Find coins that meet the requirements for use in service node collateral. Note that immature coins are
+     * valid a service node collateral because they are still under the ownership of the service node operator.
+     * The majority of this code was taken from CWallet::AvailableCoins
+     * @param locked_chain
+     * @param wallet
+     * @param vCoins
+     */
+    void registrationCoins(interfaces::Chain::Lock & locked_chain, CWallet *wallet, std::vector<COutput> & vCoins) const {
+        LOCK2(cs_main, wallet->cs_wallet);
+        vCoins.clear();
+
+        for (const auto & entry : wallet->mapWallet) {
+            const uint256& wtxid = entry.first;
+            const CWalletTx* pcoin = &entry.second;
+
+            if (!CheckFinalTx(*pcoin->tx))
+                continue;
+
+            int nDepth = pcoin->GetDepthInMainChain(locked_chain);
+            if (nDepth <= 0) // require confirmations
+                continue;
+
+            if (!pcoin->IsTrusted(locked_chain))
+                continue;
+
+            for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++) {
+                if (wallet->IsLockedCoin(entry.first, i))
+                    continue;
+
+                if (wallet->IsSpent(locked_chain, wtxid, i))
+                    continue;
+
+                isminetype mine = wallet->IsMine(pcoin->tx->vout[i]);
+                if (mine == ISMINE_NO)
+                    continue;
+
+                bool solvable = IsSolvable(*wallet, pcoin->tx->vout[i].scriptPubKey);
+                bool spendable = ((mine & ISMINE_SPENDABLE) != ISMINE_NO) || ((mine & ISMINE_WATCH_ONLY) != ISMINE_NO);
+
+                vCoins.emplace_back(pcoin, i, nDepth, spendable, solvable, true);
+            }
+        }
+    }
+
 protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) override
     {
-        processValidationBlock(block);
+        processValidationBlock(block, true);
     }
 
     void BlockDisconnected(const std::shared_ptr<const CBlock>& block) override {
-        processValidationBlock(block);
+        processValidationBlock(block, false);
     }
 
-    void processValidationBlock(const std::shared_ptr<const CBlock>& block) {
+    void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override {
+        std::set<ServiceNodeConfigEntry> copyReregister;
+        {
+            LOCK(mu);
+            if (reregister.empty())
+                return;
+            copyReregister = reregister;
+        }
+
+        std::set<ServiceNodeConfigEntry> remove;
+        auto wallets = GetWallets();
+        for (auto & snode : copyReregister) {
+            std::string failReason;
+            if (!registerSn(snode, g_connman.get(), wallets, &failReason))
+                LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
+            else
+                remove.insert(snode);
+        }
+
+        // Erase successfully re-registered service nodes from the list
+        {
+            LOCK(mu);
+            for (auto & snode : remove)
+                reregister.erase(snode);
+        }
+    }
+
+    void processValidationBlock(const std::shared_ptr<const CBlock>& block, const bool connected) {
         // Store all spent vins
         std::set<COutPoint> spent;
         for (const auto & tx : block->vtx) {
-            for (const auto & vin : tx->vin)
-                spent.insert(vin.prevout);
+            if (connected) { // when block is being added check for spend utxos in vin list
+                for (const auto & vin : tx->vin)
+                    spent.insert(vin.prevout);
+            } else { // when block is being disconnected mark utxos in the vout list as spent
+                const auto hash = tx->GetHash();
+                for (int i = 0; i < tx->vout.size(); ++i)
+                    spent.insert(COutPoint{hash, static_cast<uint32_t>(i)});
+            }
         }
 
         // Check that existing snodes are valid
@@ -934,23 +1012,21 @@ protected:
             entries = snodeEntries;
         }
 
-        std::vector<ServiceNodeConfigEntry> requiresRegistration;
+        std::set<ServiceNodeConfigEntry> requiresRegistration;
         for (const auto & entry : entries) {
             const auto & snode = getSn(entry.key.GetPubKey());
             for (const auto & utxo : snode.getCollateral()) {
-                if (spent.count(utxo))
-                    requiresRegistration.push_back(entry);
+                if (spent.count(utxo) && !requiresRegistration.count(entry))
+                    requiresRegistration.insert(entry);
             }
         }
 
         if (requiresRegistration.empty())
             return;
 
-        auto wallets = GetWallets();
-        std::string failReason;
-        for (const auto & snode : requiresRegistration) {
-            if (!registerSn(snode, g_connman.get(), wallets, &failReason))
-                LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
+        {
+            LOCK(mu);
+            reregister.insert(requiresRegistration.begin(), requiresRegistration.end());
         }
     }
 
@@ -959,6 +1035,7 @@ protected:
     std::map<CPubKey, ServiceNodePtr> snodes;
     std::set<uint256> seenPackets;
     std::set<ServiceNodeConfigEntry> snodeEntries;
+    std::set<ServiceNodeConfigEntry> reregister;
 };
 
 }
