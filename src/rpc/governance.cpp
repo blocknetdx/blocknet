@@ -42,8 +42,9 @@ static UniValue createproposal(const JSONRPCRequest& request)
             }.ToString());
 
     const std::string & name = request.params[0].get_str();
-    const CAmount & superblock = request.params[1].get_int() == 0 ? gov::Governance::nextSuperblock(Params().GetConsensus()) : request.params[1].get_int();
-    const CAmount & amount = request.params[2].get_int() * COIN;
+    const bool shouldPickNextSuperblock = request.params[1].get_int() == 0;
+    const int superblock = shouldPickNextSuperblock ? gov::Governance::nextSuperblock(Params().GetConsensus()) : request.params[1].get_int();
+    const CAmount amount = request.params[2].get_int() * COIN;
     const std::string & address = request.params[3].get_str();
     const std::string & url = !request.params[4].isNull() ? request.params[4].get_str() : "";
     const std::string & description = !request.params[5].isNull() ? request.params[5].get_str() : "";
@@ -59,8 +60,17 @@ static UniValue createproposal(const JSONRPCRequest& request)
         LOCK(cs_main);
         currentBlockHeight = chainActive.Height();
     }
-    if (currentBlockHeight == 0 || !gov::Governance::meetsProposalCutoff(proposal, currentBlockHeight, Params().GetConsensus()))
-        throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit proposal because it doesn't meet the proposal cutoff time");
+    if (currentBlockHeight == 0)
+        throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit proposal because current block height is invalid");
+
+    if (!gov::Governance::meetsProposalCutoff(proposal, currentBlockHeight, Params().GetConsensus())) {
+        const int nextsb = gov::Governance::nextSuperblock(Params().GetConsensus(), superblock + 1);
+        if (shouldPickNextSuperblock)
+            throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal for Superblock %u because the proposal cutoff time has passed. "
+                                                         "Please submit the proposal for Superblock %u", superblock, nextsb));
+        else
+            throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit proposal because the proposal cutoff time has passed");
+    }
 
     CTransactionRef tx;
     if (!gov::Governance::instance().submitProposal(proposal, GetWallets(), Params().GetConsensus(), tx, &failReason))
