@@ -191,10 +191,6 @@ public:
 
     void UnloadBlockIndex();
 
-    void ReindexAddToBlockIndex(const CBlock & block) {
-        AddToBlockIndex(block);
-    }
-
 private:
     bool ActivateBestChainStep(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexMostWork, const std::shared_ptr<const CBlock>& pblock, bool& fInvalidFound, ConnectTrace& connectTrace) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
     bool ConnectTip(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindexNew, const std::shared_ptr<const CBlock>& pblock, ConnectTrace& connectTrace, DisconnectedBlockTransactions &disconnectpool) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
@@ -3649,7 +3645,7 @@ bool CChainState::AcceptBlock(const std::shared_ptr<const CBlock>& pblock, CVali
     return true;
 }
 
-bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock)
+bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<const CBlock> pblock, bool fForceProcessing, bool *fNewBlock, const CDiskBlockPos* dbp)
 {
     AssertLockNotHeld(cs_main);
 
@@ -3667,7 +3663,7 @@ bool ProcessNewBlock(const CChainParams& chainparams, const std::shared_ptr<cons
         bool ret = CheckBlock(*pblock, state, chainparams.GetConsensus());
         if (ret) {
             // Store to disk
-            ret = g_chainstate.AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, nullptr, fNewBlock);
+            ret = g_chainstate.AcceptBlock(pblock, state, chainparams, &pindex, fForceProcessing, dbp, fNewBlock);
         }
         if (!ret) {
             GetMainSignals().BlockChecked(*pblock, state);
@@ -4574,33 +4570,24 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                             mapBlocksUnknownParent.insert(std::make_pair(block.hashPrevBlock, *dbp));
                         continue;
                     }
+                }
 
-                    // process in case the block isn't known yet
-                    CBlockIndex* pindex = LookupBlockIndex(hash);
+                // process in case the block isn't known yet
+                CBlockIndex* pindex = nullptr;
+                {
+                    LOCK(cs_main);
+                    pindex = LookupBlockIndex(hash);
+                }
                     if (!pindex || (pindex->nStatus & BLOCK_HAVE_DATA) == 0) {
-                      CValidationState state;
-                      if (g_chainstate.AcceptBlock(pblock, state, chainparams, nullptr, true, dbp, nullptr)) {
-                          const auto & bhash = pblock->GetHash();
-                          if (fReindex && g_txindex && mapBlockIndex.count(bhash)) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
-                              g_txindex->BlockConnectedSync(pblock, mapBlockIndex[bhash], std::vector<CTransactionRef>());
+                      if (ProcessNewBlock(chainparams, pblock, true, nullptr, dbp)) {
                           nLoaded++;
-                      }
-                      if (state.IsError()) {
-                          break;
                       }
                     } else if (hash != chainparams.GetConsensus().hashGenesisBlock && pindex->nHeight % 1000 == 0) {
                       LogPrint(BCLog::REINDEX, "Block Import: already had block %s at height %d\n", hash.ToString(), pindex->nHeight);
                     }
-                }
 
                 // Activate the genesis block so normal node progress can continue
                 if (hash == chainparams.GetConsensus().hashGenesisBlock) {
-                    // If we're reindexing, we need to ensure the genesis block is added to the index
-                    if (fReindex && g_txindex) {
-                        LOCK(cs_main);
-                        g_chainstate.ReindexAddToBlockIndex(chainparams.GenesisBlock());
-                        g_txindex->BlockConnectedSync(std::make_shared<CBlock>(chainparams.GenesisBlock()), mapBlockIndex[chainparams.GenesisBlock().GetHash()], std::vector<CTransactionRef>());
-                    }
                     CValidationState state;
                     if (!ActivateBestChain(state, chainparams)) {
                         break;
@@ -4623,20 +4610,13 @@ bool LoadExternalBlockFile(const CChainParams& chainparams, FILE* fileIn, CDiskB
                         {
                             LogPrint(BCLog::REINDEX, "%s: Processing out of order child %s of %s\n", __func__, pblockrecursive->GetHash().ToString(),
                                     head.ToString());
-                            LOCK(cs_main);
-                            CValidationState dummy;
-                            if (g_chainstate.AcceptBlock(pblockrecursive, dummy, chainparams, nullptr, true, &it->second, nullptr))
-                            {
-                                const auto & bhash = pblock->GetHash();
-                                if (fReindex && g_txindex && mapBlockIndex.count(bhash)) // TODO Blocknet Sync txindex on reindex so tx lookup is available for PoS verification checks
-                                    g_txindex->BlockConnectedSync(pblock, mapBlockIndex[bhash], std::vector<CTransactionRef>());
+                            if (ProcessNewBlock(chainparams, pblockrecursive, true, nullptr, &it->second)) {
                                 nLoaded++;
                                 queue.push_back(pblockrecursive->GetHash());
                             }
                         }
                         range.first++;
                         mapBlocksUnknownParent.erase(it);
-                        NotifyHeaderTip();
                     }
                 }
             } catch (const std::exception& e) {
