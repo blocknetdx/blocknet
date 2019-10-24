@@ -103,7 +103,7 @@ bool createUtxos(const CAmount & targetAmount, const CAmount & utxoAmount, TestC
 }
 
 bool applySuperblockPayees(TestChainPoS & pos, CBlockTemplate *blocktemplate, const StakeMgr::StakeCoin & stake,
-        const std::vector<CTxOut> & payees, const Consensus::Params & consensus)
+        const std::vector<CTxOut> & payees, const Consensus::Params & consensus, const CAmount addStakeSubsidy=0)
 {
     CBlock *pblock = &blocktemplate->block;
     const int nHeight = chainActive.Height() + 1;
@@ -121,7 +121,7 @@ bool applySuperblockPayees(TestChainPoS & pos, CBlockTemplate *blocktemplate, co
     // Can't claim any part of the superblock amount as stake reward
     const auto stakeSubsidy = GetBlockSubsidy(nHeight, consensus) -
                               (gov::Governance::isSuperblock(nHeight, consensus) ? consensus.proposalMaxAmount : 0);
-    const auto stakeAmount = (feesEnabled ? blocktemplate->vTxFees[0] : 0) + stakeSubsidy;
+    const auto stakeAmount = (feesEnabled ? blocktemplate->vTxFees[0] : 0) + stakeSubsidy + addStakeSubsidy;
     // Find pubkey of stake input
     CTxDestination stakeInputDest;
     if (!ExtractDestination(stake.coin->txout.scriptPubKey, stakeInputDest))
@@ -1705,6 +1705,27 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 CValidationState state;
                 InvalidateBlock(state, *params, chainActive.Tip());
                 ActivateBestChain(state, *params);
+                SyncWithValidationInterfaceQueue();
+            }
+
+            // Staker paying himself the superblock remainder should fail
+            {
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
+                const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
+                const auto & payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                CAmount leftOverAmount = [&consensus](const std::vector<CTxOut> & outs) -> CAmount {
+                    CAmount total = consensus.proposalMaxAmount;
+                    for (const auto & o : outs)
+                        total -= o.nValue;
+                    return total;
+                }(payees);
+                BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus, leftOverAmount - COIN), "Failed to create a valid PoS block for the superblock payee test");
+                auto tip = chainActive.Tip()->nHeight;
+                auto block = std::make_shared<const CBlock>(blocktemplate->block);
+                bool fNewBlock{false};
+                ProcessNewBlock(*params, block, true, &fNewBlock);
+                BOOST_CHECK_MESSAGE(tip == chainActive.Tip()->nHeight, "Staker paying self remainder of superblock should be rejected");
             }
 
             // Bad superblock payees list should fail
@@ -1716,9 +1737,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 for (auto & payee : payees)
                     payee.scriptPubKey = pos.m_coinbase_txns[0]->vout[0].scriptPubKey;
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto tip = chainActive.Tip()->nHeight;
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
                 BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Bad superblock payee list, scriptpubkey should fail");
+                BOOST_CHECK_MESSAGE(tip == chainActive.Tip()->nHeight, "Chain tip should not advance");
             }
 
             // Bad superblock payee amount should fail
@@ -1729,9 +1752,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
                 payees[0].nValue = payees[0].nValue + 1;
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto tip = chainActive.Tip()->nHeight;
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
                 BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Bad superblock payee nValue should fail");
+                BOOST_CHECK_MESSAGE(tip == chainActive.Tip()->nHeight, "Chain tip should not advance");
             }
 
             // Extra superblock payee should fail
@@ -1742,9 +1767,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
                 payees.emplace_back(100 * COIN, payees[0].scriptPubKey);
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto tip = chainActive.Tip()->nHeight;
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
                 BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Bad superblock payee nValue should fail");
+                BOOST_CHECK_MESSAGE(tip == chainActive.Tip()->nHeight, "Chain tip should not advance");
             }
 
             // Duplicate superblock payee should fail
@@ -1755,9 +1782,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
                 payees.emplace_back(payees[0].nValue, payees[0].scriptPubKey);
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto tip = chainActive.Tip()->nHeight;
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
                 BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Duplicate superblock payee should fail");
+                BOOST_CHECK_MESSAGE(tip == chainActive.Tip()->nHeight, "Chain tip should not advance");
             }
 
             // Missing superblock payee should fail
@@ -1768,9 +1797,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
                 payees.erase(payees.begin());
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto tip = chainActive.Tip()->nHeight;
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
                 BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "Missing superblock payee should fail");
+                BOOST_CHECK_MESSAGE(tip == chainActive.Tip()->nHeight, "Chain tip should not advance");
             }
 
             // All superblock payees missing should fail
@@ -1781,9 +1812,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
                 payees.clear();
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
+                auto tip = chainActive.Tip()->nHeight;
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
                 BOOST_CHECK_MESSAGE(!ProcessNewBlock(*params, block, true, &fNewBlock), "All superblock payees missing should fail");
+                BOOST_CHECK_MESSAGE(tip == chainActive.Tip()->nHeight, "Chain tip should not advance");
             }
         }
 
