@@ -52,7 +52,7 @@ RUN mkdir -p $DISTDIR \
   && make -j$ecores \
   && make deploy \
   && make install DESTDIR=$DISTDIR \
-  && cp *win64-setup.exe $DISTDIR/bin/bitcoin-win64-setup.exe \
+  && cp *win64-setup.exe $DISTDIR/bin/blocknet-win64-setup.exe \
   && make clean
 
 WORKDIR /opt/blocknetdx/dist

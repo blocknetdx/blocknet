@@ -16,12 +16,13 @@ build_linux:
 test_linux:
   stage: test
   script:
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/bitcoin-cli\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/bitcoind\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/bitcoin-qt\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/bitcoin-tx\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_bitcoin\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_bitcoin-qt\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-cli\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknetd\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-qt\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-tx\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-wallet\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_blocknet\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_blocknet-qt\" ];"
 
 build_win:
   stage: build
@@ -41,12 +42,13 @@ build_win:
 test_win:
   stage: test
   script:
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoin-cli.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoind.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoin-qt.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoin-tx.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/test_bitcoin.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/bitcoin-win64-setup.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-cli.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknetd.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-qt.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-tx.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-wallet.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/test_blocknet.exe\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-win64-setup.exe\" ];"
 
 build_mac:
   stage: build
@@ -66,10 +68,11 @@ build_mac:
 test_mac:
   stage: test
   script:
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/bitcoin-cli\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/bitcoind\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/bitcoin-qt\" ];"
-  - "[ -d \"$CI_PROJECT_DIR/dist/mac/bin/bitcoin-qt.dSYM\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/bitcoin-tx\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_bitcoin\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_bitcoin-qt\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-cli\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetd\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-qt\" ];"
+  - "[ -d \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-qt.dSYM\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-tx\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-wallet\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknet\" ];"
+  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknet-qt\" ];"

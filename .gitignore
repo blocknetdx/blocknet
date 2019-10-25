@@ -9,6 +9,16 @@ src/bitcoin-wallet
 src/test/test_bitcoin
 src/test/test_bitcoin_fuzzy
 src/qt/test/test_bitcoin-qt
+src/blocknet
+src/blocknetd
+src/blocknet-cli
+src/blocknet-tx
+src/blocknet-wallet
+src/test/test_blocknet
+src/test/test_blocknet_fuzzy
+src/qt/test/test_blocknet-qt
+blocknet-qt
+Blocknet.app
 
 # autoreconf
 Makefile.in

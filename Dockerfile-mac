@@ -47,11 +47,11 @@ RUN mkdir -p $DISTDIR \
   && tar xzf depends-v18-mac-bionic2.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
-  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CFLAGS="-g -O0" CXXFLAGS="-g -O0" --with-gui=qt5 --enable-debug --prefix=/ \
+  && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CFLAGS="-g3 -O0" CXXFLAGS="-g3 -O0" --with-gui=qt5 --enable-debug --prefix=/ \
   && make clean \
   && echo "Building with cores: $ecores" \
   && make -j$ecores \
-  && mkdir -p $DISTDIR/bin && llvm-dsymutil-6.0 src/qt/bitcoin-qt -o $DISTDIR/bin/bitcoin-qt.dSYM \
+  && mkdir -p $DISTDIR/bin && llvm-dsymutil-6.0 src/qt/blocknet-qt -o $DISTDIR/bin/blocknet-qt.dSYM \
   && make install DESTDIR=$DISTDIR \
   && make clean
 

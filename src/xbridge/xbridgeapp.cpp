@@ -989,7 +989,7 @@ void App::updateActiveWallets()
                     conns.pop_back();
                     // Asynchronously check connection
                     tg.create_thread([conn, &muJobs, &allJobs, &pendingJobs, &validConnections, &badConnections]() {
-                        RenameThread("blocknetdx-xbridgewalletcheck");
+                        RenameThread("blocknet-xbridgewalletcheck");
                         if (ShutdownRequested())
                             return;
                         // Check that wallet is reachable

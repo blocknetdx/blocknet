@@ -730,7 +730,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 std::string App::updateConfigs(bool force)
 {
     if (!isEnabled() || !isReady())
-        return "XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf to run XRouter.";
+        return "XRouter is turned off. Please set 'xrouter=1' in blocknet.conf to run XRouter.";
     
     std::vector<sn::ServiceNode> vServicenodes = getServiceNodes();
     std::vector<CNode*> nodes = CopyNodes();
@@ -1203,7 +1203,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
     try {
         if (!isEnabled() || !isReady())
-            throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknetdx.conf", xrouter::UNAUTHORIZED);
+            throw XRouterError("XRouter is turned off. Please set 'xrouter=1' in blocknet.conf", xrouter::UNAUTHORIZED);
 
         std::string cleaned;
         if (!removeNamespace(fqServiceName, cleaned))
