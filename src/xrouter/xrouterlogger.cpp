@@ -32,7 +32,7 @@ LOG::LOG(const char reason, std::string filename)
                     boost::pool_allocator<char> >()
     , m_r(reason), filenameOverride("")
 {
-    // 'D' is turned on when debug=1 in blocknetdx.conf
+    // 'D' is turned on when debug=1 in blocknet.conf
     if (reason == 'D')
         if (!gArgs.GetBoolArg("-debug", false))
             return;

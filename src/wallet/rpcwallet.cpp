@@ -2527,7 +2527,7 @@ static UniValue loadwallet(const JSONRPCRequest& request)
         throw std::runtime_error(
             RPCHelpMan{"loadwallet",
                 "\nLoads a wallet from a wallet file or directory."
-                "\nNote that all wallet command-line options used when starting bitcoind will be"
+                "\nNote that all wallet command-line options used when starting blocknetd will be"
                 "\napplied to the new wallet (eg -zapwallettxes, upgradewallet, rescan, etc).\n",
                 {
                     {"filename", RPCArg::Type::STR, RPCArg::Optional::NO, "The wallet directory or .dat file."},
@@ -3388,7 +3388,7 @@ UniValue generate(const JSONRPCRequest& request)
 
     if (!IsDeprecatedRPCEnabled("generate")) {
         throw JSONRPCError(RPC_METHOD_DEPRECATED, "The wallet generate rpc method is deprecated and will be fully removed in v0.19. "
-            "To use generate in v0.18, restart bitcoind with -deprecatedrpc=generate.\n"
+            "To use generate in v0.18, restart blocknetd with -deprecatedrpc=generate.\n"
             "Clients should transition to using the node rpc method generatetoaddress\n");
     }
 
