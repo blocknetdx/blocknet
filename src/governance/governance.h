@@ -178,7 +178,7 @@ public:
      * @return
      */
     bool isValid(const Consensus::Params & params, std::string *failureReasonRet=nullptr) const {
-        static std::regex rrname("^\\w+[\\w- ]*\\w+$");
+        static std::regex rrname("^\\w+[\\w\\-_ ]*\\w+$");
         if (!std::regex_match(name, rrname)) {
             if (failureReasonRet) *failureReasonRet = strprintf("Proposal name %s is invalid, only alpha-numeric characters are accepted", name);
             return false;
