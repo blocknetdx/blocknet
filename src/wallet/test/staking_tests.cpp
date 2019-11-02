@@ -5,6 +5,8 @@
 #include <test/staking_tests.h>
 
 #include <consensus/merkle.h>
+#include <core_io.h>
+#include <node/transaction.h>
 
 // Proof-of-Stake tests
 BOOST_AUTO_TEST_SUITE(staking_tests)
@@ -420,6 +422,137 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
     }
 
     // TODO Blocknet PoS unit test for p2pkh stakes
+}
+
+/// Check CLTV
+BOOST_FIXTURE_TEST_CASE(staking_tests_cltv, TestChainPoS)
+{
+    const auto height = chainActive.Height();
+    const auto lockTime = height + 5;
+    CKey counterPartyKey; counterPartyKey.MakeNewKey(true);
+
+    CScript cltvScript;
+    cltvScript << OP_IF
+                   << lockTime << OP_CHECKLOCKTIMEVERIFY << OP_DROP
+                   << OP_DUP << OP_HASH160 << ToByteVector(coinbaseKey.GetPubKey().GetID()) << OP_EQUALVERIFY << OP_CHECKSIG
+               << OP_ELSE
+                   << OP_DUP << OP_HASH160 << ToByteVector(counterPartyKey.GetPubKey().GetID()) << OP_EQUALVERIFY << OP_CHECKSIGVERIFY
+               << OP_ENDIF;
+
+    CMutableTransaction deposit;
+
+    // CLTV p2sh deposit should succeed
+    {
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, wallet->cs_wallet);
+            wallet->AvailableCoins(*locked_chain, coins, true, nullptr, 25*COIN);
+        }
+        auto coin = coins[0];
+        CMutableTransaction mtx;
+        mtx.vin.resize(1);
+        mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(coin.GetInputCoin().outpoint, CScript(), CTxIn::SEQUENCE_FINAL);
+        mtx.vout[0] = CTxOut(10*COIN, GetScriptForDestination(CScriptID(cltvScript)));
+        SignatureData sigdata = DataFromTransaction(mtx, 0, coin.GetInputCoin().txout);
+        ProduceSignature(*wallet, MutableTransactionSignatureCreator(&mtx, 0, coin.GetInputCoin().txout.nValue, SIGHASH_ALL), coin.GetInputCoin().txout.scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[0], sigdata);
+        deposit = mtx;
+        // Send transaction
+        uint256 txid; std::string errstr;
+        const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send cltv tx: %s", errstr));
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+//        UniValue utx(UniValue::VOBJ); uint256 block{chainActive.Tip()->GetBlockHash()}; TxToUniv(CTransaction(deposit), block, utx);
+//        std::cout << utx.write(2) << std::endl;
+    }
+
+    // CLTV should fail if locktime has not expired
+    {
+        CMutableTransaction mtx;
+        mtx.nLockTime = lockTime;
+        mtx.vin.resize(1);
+        mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(COutPoint{deposit.GetHash(), 0}, CScript(), CTxIn::SEQUENCE_FINAL-1);
+        mtx.vout[0] = CTxOut(8*COIN, GetScriptForDestination(CTxDestination{coinbaseKey.GetPubKey().GetID()}));
+        uint256 hash = SignatureHash(cltvScript, mtx, 0, SIGHASH_ALL, deposit.vout[0].nValue, SigVersion::BASE);
+        std::vector<unsigned char> signature;
+        BOOST_CHECK(coinbaseKey.Sign(hash, signature));
+        signature.push_back(static_cast<unsigned char>(SIGHASH_ALL));
+        CScript redeem;
+        redeem << signature << ToByteVector(coinbaseKey.GetPubKey()) << OP_TRUE << ToByteVector(cltvScript);
+        mtx.vin[0].scriptSig = redeem;
+        // Send transaction
+        uint256 txid; std::string errstr;
+        const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err != TransactionError::OK, strprintf("Failed to send redeem tx: %s", errstr));
+    }
+
+    StakeBlocks(4), SyncWithValidationInterfaceQueue();
+
+    // CLTV redeem should fail on bad vins nSequence (CTxIn::SEQUENCE_FINAL)
+    {
+        CMutableTransaction mtx;
+        mtx.nLockTime = lockTime;
+        mtx.vin.resize(1);
+        mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(COutPoint{deposit.GetHash(), 0}, CScript(), CTxIn::SEQUENCE_FINAL);
+        mtx.vout[0] = CTxOut(8*COIN, GetScriptForDestination(CTxDestination{coinbaseKey.GetPubKey().GetID()}));
+        uint256 hash = SignatureHash(cltvScript, mtx, 0, SIGHASH_ALL, deposit.vout[0].nValue, SigVersion::BASE);
+        std::vector<unsigned char> signature;
+        BOOST_CHECK(coinbaseKey.Sign(hash, signature));
+        signature.push_back(static_cast<unsigned char>(SIGHASH_ALL));
+        CScript redeem;
+        redeem << signature << ToByteVector(coinbaseKey.GetPubKey()) << OP_TRUE << ToByteVector(cltvScript);
+        mtx.vin[0].scriptSig = redeem;
+        // Send transaction
+        uint256 txid; std::string errstr;
+        const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err != TransactionError::OK, strprintf("Redeem tx should fail if inputs marked as final: %s", errstr));
+    }
+
+    // CLTV redeem should fail on missing locktime
+    {
+        CMutableTransaction mtx;
+        mtx.vin.resize(1);
+        mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(COutPoint{deposit.GetHash(), 0}, CScript(), CTxIn::SEQUENCE_FINAL-1);
+        mtx.vout[0] = CTxOut(8*COIN, GetScriptForDestination(CTxDestination{coinbaseKey.GetPubKey().GetID()}));
+        uint256 hash = SignatureHash(cltvScript, mtx, 0, SIGHASH_ALL, deposit.vout[0].nValue, SigVersion::BASE);
+        std::vector<unsigned char> signature;
+        BOOST_CHECK(coinbaseKey.Sign(hash, signature));
+        signature.push_back(static_cast<unsigned char>(SIGHASH_ALL));
+        CScript redeem;
+        redeem << signature << ToByteVector(coinbaseKey.GetPubKey()) << OP_TRUE << ToByteVector(cltvScript);
+        mtx.vin[0].scriptSig = redeem;
+        // Send transaction
+        uint256 txid; std::string errstr;
+        const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err != TransactionError::OK, strprintf("Redeem tx should fail if locktime is missing: %s", errstr));
+    }
+
+    // CLTV should succeed if locktime has properly expired
+    {
+        mempool.clear();
+        CMutableTransaction mtx;
+        mtx.nLockTime = lockTime;
+        mtx.vin.resize(1);
+        mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(COutPoint{deposit.GetHash(), 0}, CScript(), CTxIn::SEQUENCE_FINAL-1);
+        mtx.vout[0] = CTxOut(8*COIN, GetScriptForDestination(CTxDestination{coinbaseKey.GetPubKey().GetID()}));
+        uint256 hash = SignatureHash(cltvScript, mtx, 0, SIGHASH_ALL, deposit.vout[0].nValue, SigVersion::BASE);
+        std::vector<unsigned char> signature;
+        BOOST_CHECK(coinbaseKey.Sign(hash, signature));
+        signature.push_back(static_cast<unsigned char>(SIGHASH_ALL));
+        CScript redeem;
+        redeem << signature << ToByteVector(coinbaseKey.GetPubKey()) << OP_TRUE << ToByteVector(cltvScript);
+        mtx.vin[0].scriptSig = redeem;
+        // Send transaction
+        uint256 txid; std::string errstr;
+        const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send redeem tx: %s", errstr));
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
