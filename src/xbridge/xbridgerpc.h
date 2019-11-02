@@ -59,7 +59,8 @@ namespace rpc
                               const std::vector<std::pair<std::string, int> > & inputs,
                               const std::vector<std::pair<std::string, double> > & outputs,
                               const uint32_t lockTime,
-                              std::string & tx);
+                              std::string & tx,
+                              bool cltv);
 
     bool decodeRawTransaction(const std::string & rpcuser,
                               const std::string & rpcpasswd,

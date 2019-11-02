@@ -53,6 +53,8 @@ struct WalletInfo
 };
 } //namespace rpc
 
+static const uint32_t SEQUENCE_FINAL = 0xffffffff;
+
 //*****************************************************************************
 //*****************************************************************************
 class WalletConnector : public WalletParam

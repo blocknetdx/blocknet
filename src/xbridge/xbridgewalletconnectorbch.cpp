@@ -10,6 +10,8 @@
 #include <xbridge/util/logger.h>
 #include <xbridge/xbitcointransaction.h>
 
+#include <primitives/transaction.h>
+
 
 //*****************************************************************************
 //*****************************************************************************
@@ -849,7 +851,9 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
                                                  std::string & rawTx)
 {
     xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, lockTime, txWithTimeField);
-    txUnsigned->vin[0].nSequence = std::numeric_limits<uint32_t>::max()-1;
+    // Correctly set tx input sequence. If lockTime is specified sequence must be 2^32-2, otherwise 2^32-1 (Final)
+    uint32_t sequence = lockTime > 0 ? xbridge::SEQUENCE_FINAL-1 : xbridge::SEQUENCE_FINAL;
+    txUnsigned->vin[0].nSequence = sequence;
 
     CScript inner(innerScript.begin(), innerScript.end());
 
@@ -883,7 +887,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
         return false;
     }
     tx->nVersion  = txUnsigned->nVersion;
-    tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem, std::numeric_limits<uint32_t>::max()-1));
+    tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem, sequence));
     tx->vout      = txUnsigned->vout;
     tx->nLockTime = txUnsigned->nLockTime;
 

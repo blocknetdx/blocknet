@@ -14,6 +14,7 @@
 #include <xbridge/xbridgecryptoproviderbtc.h>
 
 #include <base58.h>
+#include <primitives/transaction.h>
 
 #include <json/json_spirit_reader_template.h>
 #include <json/json_spirit_writer_template.h>
@@ -891,7 +892,8 @@ bool createRawTransaction(const std::string & rpcuser,
                           const std::vector<XTxIn> & inputs,
                           const std::vector<std::pair<std::string, double> > & outputs,
                           const uint32_t lockTime,
-                          std::string & tx)
+                          std::string & tx,
+                          const bool cltv=false)
 {
     try
     {
@@ -904,7 +906,8 @@ bool createRawTransaction(const std::string & rpcuser,
             Object tmp;
             tmp.push_back(Pair("txid", input.txid));
             tmp.push_back(Pair("vout", static_cast<int>(input.n)));
-
+            if (cltv)
+                tmp.push_back(Pair("sequence", static_cast<int64_t>(xbridge::SEQUENCE_FINAL)));
             i.push_back(tmp);
         }
 
@@ -2020,8 +2023,13 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         }
         const json_spirit::Value & txSequence = json_spirit::find_value(vin.get_obj(), "sequence");
         if (txSequence.type() != json_spirit::null_type) { // if sequence is available, then enforce
-            if (txSequence.type() != json_spirit::int_type || txSequence.get_int() != std::numeric_limits<uint32_t>::max()-1) {
-                LOG() << "tx " << depositTxId << " bad sequence for input, all inputs must be final " << __FUNCTION__;
+            if (txSequence.type() != json_spirit::int_type) {
+                LOG() << "tx " << depositTxId << " bad sequence type " << __FUNCTION__;
+                return true; // done
+            } else if (txSequence.get_int64() != xbridge::SEQUENCE_FINAL) {
+                LOG() << "tx " << depositTxId << " sequence " << txSequence.get_int64()
+                      << " bad sequence for input, expected " << xbridge::SEQUENCE_FINAL
+                      << " " << __FUNCTION__;
                 return true; // done
             }
         }
@@ -2312,7 +2320,7 @@ bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vec
                                                                   std::string & rawTx)
 {
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                   inputs, outputs, 0, rawTx))
+                                   inputs, outputs, 0, rawTx, true))
     {
         // cancel transaction
         LOG() << "create transaction error, transaction canceled " << __FUNCTION__;
@@ -2403,7 +2411,9 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
                                                             inputs, outputs,
                                                             COIN, txVersion,
                                                             lockTime, txWithTimeField);
-    txUnsigned->vin[0].nSequence = std::numeric_limits<uint32_t>::max()-1;
+    // Correctly set tx input sequence. If lockTime is specified sequence must be 2^32-2, otherwise 2^32-1 (Final)
+    uint32_t sequence = lockTime > 0 ? xbridge::SEQUENCE_FINAL-1 : xbridge::SEQUENCE_FINAL;
+    txUnsigned->vin[0].nSequence = sequence;
 
     CScript inner(innerScript.begin(), innerScript.end());
 
@@ -2437,7 +2447,7 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
     }
     tx->nVersion  = txUnsigned->nVersion;
     tx->nTime     = txUnsigned->nTime;
-    tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem, std::numeric_limits<uint32_t>::max()-1));
+    tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem, sequence));
     tx->vout      = txUnsigned->vout;
     tx->nLockTime = txUnsigned->nLockTime;
 

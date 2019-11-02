@@ -8,8 +8,8 @@
 #ifndef BLOCKNET_XBRIDGE_XBRIDGECRYPTOPROVIDERBTC_H
 #define BLOCKNET_XBRIDGE_XBRIDGECRYPTOPROVIDERBTC_H
 
-#include "secp256k1.h"
-#include "uint256.h"
+#include <secp256k1.h>
+#include <uint256.h>
 
 #include <vector>
 
