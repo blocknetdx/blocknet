@@ -78,6 +78,8 @@ public:
 
     double getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
 
+    std::string getNewTokenAddress();
+
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
     virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const = 0;
