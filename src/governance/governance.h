@@ -1624,6 +1624,34 @@ public: // static
     }
 
     /**
+     * Returns true if a vote is found in the specified transaction output.
+     * @param out
+     * @param vote
+     * @return
+     */
+    static bool isVoteInTxOut(const CTxOut & out, Vote & vote) {
+        if (out.scriptPubKey[0] != OP_RETURN)
+            return false;
+        CScript::const_iterator pc = out.scriptPubKey.begin();
+        std::vector<unsigned char> data;
+        while (pc < out.scriptPubKey.end()) {
+            opcodetype opcode;
+            if (!out.scriptPubKey.GetOp(pc, opcode, data))
+                break;
+            if (!data.empty())
+                break;
+        }
+        CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+        NetworkObject obj; ss >> obj;
+        if (obj.getType() == VOTE) {
+            CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+            ss2 >> vote;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
      * @param proposal
      * @param blockNumber

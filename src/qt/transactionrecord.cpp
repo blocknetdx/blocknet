@@ -6,6 +6,7 @@
 
 #include <chain.h>
 #include <consensus/consensus.h>
+#include <governance/governance.h>
 #include <interfaces/wallet.h>
 #include <key_io.h>
 #include <timedata.h>
@@ -133,6 +134,16 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
                     // Sent to IP, or other non-address transaction like OP_EVAL
                     sub.type = TransactionRecord::SendToOther;
                     sub.address = mapValue["to"];
+                }
+
+                gov::Vote vote;
+                if (gov::Governance::isVoteInTxOut(txout, vote)) {
+                    LOCK(cs_main);
+                    sub.type = TransactionRecord::Vote;
+                    Coin coin;
+                    CTxDestination destination;
+                    if (pcoinsTip->GetCoin(vote.getUtxo(), coin) && ExtractDestination(coin.out.scriptPubKey, destination))
+                        sub.address = EncodeDestination(destination);
                 }
 
                 CAmount nValue = txout.nValue;
