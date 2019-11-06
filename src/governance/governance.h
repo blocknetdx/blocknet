@@ -571,6 +571,14 @@ public:
         return blockNumber;
     }
 
+    /**
+     * Return the public key id associated with the vote's utxo.
+     * @return
+     */
+    const CKeyID & getKeyID() const {
+        return keyid;
+    }
+
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>
@@ -956,6 +964,46 @@ public:
                 vos.push_back(item.second);
         }
         return std::move(vos);
+    }
+
+    /**
+     * Fetch vote information for a proposal that haven't been spent and were cast by the
+     * specified wallets.
+     * @param hash Proposal hash
+     * @param coinsTip Chainstate coins tip
+     * @param wallets User wallets to search
+     * @param consensus Chain params
+     * @return
+     */
+    std::tuple<int, VoteType> getMyVotes(const uint256 & hash, CCoinsViewCache *coinsTip,
+            std::vector<std::shared_ptr<CWallet>> & wallets, const Consensus::Params & consensus)
+    {
+        std::map<uint256, Vote> copyVotes;
+        {
+            LOCK(mu);
+            copyVotes = votes;
+        }
+
+        CAmount voteAmount{0};
+        VoteType vtype{ABSTAIN};
+        for (const auto & item : votes) {
+            const auto & vote = item.second;
+            if (vote.getProposal() == hash && !vote.spent()) {
+                const auto & utxo = vote.getUtxo();
+                for (auto & w : wallets) {
+                    if (w->HaveKey(vote.getKeyID())) {
+                        vtype = vote.getVote();
+                        voteAmount += vote.getAmount();
+                        break;
+                    }
+                }
+            }
+        }
+
+        int voteCount{0};
+        if (voteAmount > 0)
+            voteCount = voteAmount/consensus.voteBalance;
+        return { voteCount, vtype };
     }
 
     /**
