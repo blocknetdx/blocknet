@@ -120,6 +120,11 @@ public:
     bool Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBlockIndex *tip, const Consensus::Params & params) {
         if (IsInitialBlockDownload())
             return false;
+        {
+            LOCK(cs_main);
+            if (SyncProgress(chainActive.Height()) < 1.0 - std::numeric_limits<double>::epsilon())
+                return false; /// not ready to stake yet (need to be synced up with peers)
+        }
         const int stakeSearchPeriodSeconds{MAX_FUTURE_BLOCK_TIME_POS};
         const bool notExpired = GetAdjustedTime() <= lastUpdateTime;
         const bool tipChanged = tip->nHeight != lastBlockHeight;
