@@ -28,6 +28,8 @@ public:
     bool fOverrideFeeRate;
     //! Override the wallet's m_pay_tx_fee if set
     boost::optional<CFeeRate> m_feerate;
+    //! Override the wallet's m_pay_tx_fee if set
+    boost::optional<CAmount> m_total_fee;
     //! Override the default confirmation target if set
     boost::optional<unsigned int> m_confirm_target;
     //! Override the wallet's m_signal_rbf if set
