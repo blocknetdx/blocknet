@@ -4496,7 +4496,9 @@ int CMerkleTx::GetBlocksToMaturity(interfaces::Chain::Lock& locked_chain) const
     if (!IsCoinBase() && !IsCoinStake())
         return 0;
     int chain_depth = GetDepthInMainChain(locked_chain);
+    if (IsCoinBase()) { // only assert coinbase, PoS conflicted coinstakes should not assert
     assert(chain_depth >= 0); // coinbase tx should not be conflicted
+    }
     return std::max(0, (Params().GetConsensus().coinMaturity+1) - chain_depth);
 }
 
