@@ -1020,8 +1020,8 @@
         <translation>Znesek</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Vnesite naslov Bitcoin (npr. %1):</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Vnesite naslov Blocknet (npr. %1):</translation>
     </message>
     <message>
         <source>%1 d</source>

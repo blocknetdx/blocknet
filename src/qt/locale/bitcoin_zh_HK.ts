@@ -448,8 +448,8 @@
 <context>
     <name>QObject</name>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>輸入一個 Bitcoin 位址 (例如 %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>輸入一個 Blocknet 位址 (例如 %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

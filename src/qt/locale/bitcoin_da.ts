@@ -1470,8 +1470,8 @@
         <translation>Beløb</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Indtast en Bitcoin-adresse (fx %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Indtast en Blocknet-adresse (fx %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

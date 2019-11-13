@@ -1338,8 +1338,8 @@
         <translation>Cantidad</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Introducir una dirección Bitcoin (p. ej. %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Introducir una dirección Blocknet (p. ej. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

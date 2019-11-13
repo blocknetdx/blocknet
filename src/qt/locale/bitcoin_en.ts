@@ -1908,7 +1908,7 @@
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+107"/>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Blocknet address (e.g. %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

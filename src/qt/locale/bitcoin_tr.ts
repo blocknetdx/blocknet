@@ -1406,8 +1406,8 @@
         <translation>Tutar</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Bir Bitcoin adresi giriniz (mesela %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Bir Blocknet adresi giriniz (mesela %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

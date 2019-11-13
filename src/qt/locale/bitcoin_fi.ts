@@ -1442,8 +1442,8 @@
         <translation>Määrä</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Syötä Bitcoin-osoite (esim. %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Syötä Blocknet-osoite (esim. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

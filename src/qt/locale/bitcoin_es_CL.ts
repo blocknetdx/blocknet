@@ -1303,8 +1303,8 @@
         <translation>Cantidad</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Ingresa una dirección de Bitcoin (Ejemplo: %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Ingresa una dirección de Blocknet (Ejemplo: %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

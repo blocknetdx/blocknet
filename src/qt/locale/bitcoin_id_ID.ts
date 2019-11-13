@@ -1390,8 +1390,8 @@
         <translation>Nilai</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Masukkan alamat Bitcoin (contoh %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Masukkan alamat Blocknet (contoh %1)</translation>
     </message>
     <message>
         <source>%1 h</source>

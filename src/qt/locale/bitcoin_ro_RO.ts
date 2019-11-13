@@ -1422,8 +1422,8 @@
         <translation>Cantitate</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Introduceţi o adresă Bitcoin (de exemplu %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Introduceţi o adresă Blocknet (de exemplu %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

@@ -1120,8 +1120,8 @@
         <translation>Bedrag</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Voer in 'n Bitcoin adres (bv. %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Voer in 'n Blocknet adres (bv. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

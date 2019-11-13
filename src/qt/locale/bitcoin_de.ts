@@ -1494,8 +1494,8 @@
         <translation>Betrag</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Bitcoin-Adresse eingeben (z.B. %1)</translation>
+        <source>Enter a Blocknet address (e.g. %1)</source>
+        <translation>Blocknet-Adresse eingeben (z.B. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
