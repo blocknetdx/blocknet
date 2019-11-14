@@ -271,6 +271,8 @@ extern json_spirit::Value mnsync(const json_spirit::Array& params, bool fHelp);
     true
   * \endverbatim
   */
+extern json_spirit::Value dxGetNewTokenAddress(const json_spirit::Array& params, bool fHelp);
+
 extern json_spirit::Value dxLoadXBridgeConf(const json_spirit::Array& params, bool fHelp);
 
 /** \defgroup xBridgeAPI xBridge API
