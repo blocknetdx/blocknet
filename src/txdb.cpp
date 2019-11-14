@@ -284,6 +284,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 
     LogPrintf("Loading block index with %u thread%s\n", cores, cores > 1 ? "s" : "");
     LogPrintf("[0%%]...");
+    uiInterface.ShowProgress("Loading block index", 0, false);
 
     // Calculate hashes using thread group
     std::map<std::shared_ptr<CDiskBlockIndex>, uint256> hashes;
@@ -315,6 +316,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                     if (counter % shardpos == 0) {
                         int p = static_cast<int>((double)counter/(double)allIndices*80.0);
                         LogPrintf("[%u%%]...", p);
+                        uiInterface.ShowProgress("Loading block index", p, false);
                     }
                 }
 
@@ -323,6 +325,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     }
     tg.join_all();
 
+    counter = 0; // track progress on block index generation below
     for (auto & diskindex : blocks) {
         const auto & hash = hashes[diskindex];
         if (hash.IsNull())
@@ -352,9 +355,16 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
         pindexNew->nStakeAmount     = diskindex->nStakeAmount;
         pindexNew->hashStakeBlock   = diskindex->hashStakeBlock;
         pindexNew->hashProofOfStake = diskindex->hashProofOfStake;
+
+        ++counter;
+        if (counter % 20000 == 0) { // update ui message every 20k blocks
+            const int p = static_cast<int>((double)counter/(double)allIndices*20.0); // 20% of the effort left
+            uiInterface.ShowProgress("Loading block index", 80+p, false); // start at 80%
+        }
     }
 
     LogPrintf("[DONE].\n");
+    uiInterface.ShowProgress("Loading block index", 100, false);
 
     return true;
 }

@@ -338,6 +338,7 @@ void TxIndex::ThreadSync()
     const auto cores = GetNumCores();
     LogPrintf("Loading txindex with %u thread%s\n", cores, cores > 1 ? "s" : "");
     LogPrintf("Loading txindex [0%%]\n");
+    uiInterface.ShowProgress(_("Loading transaction index"), 0, false);
 
     // For small number of blocks use single thread
     if (totalBlocks < 1440) {
@@ -359,6 +360,7 @@ void TxIndex::ThreadSync()
         }
         writeBestBlock(startingHeight + totalBlocks);
         m_synced = true;
+        uiInterface.ShowProgress(_("Loading transaction index"), 100, false);
         return;
     }
 
@@ -423,6 +425,7 @@ void TxIndex::ThreadSync()
                         if (counter % shardpos == 0) {
                             int p = static_cast<int>((double)counter/(double)allIndices*100.0);
                             LogPrintf("Loading txindex [%u%%]\n", p);
+                            uiInterface.ShowProgress(_("Loading transaction index"), p, false);
                         }
                     }
 
