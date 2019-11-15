@@ -488,6 +488,13 @@ int GuiMain(int argc, char* argv[])
         return EXIT_SUCCESS;
     }
 
+    /// Load config files before asking user where datadir is (it could be set in conf)
+    if (!node->readConfigFiles(error)) {
+        QMessageBox::critical(nullptr, QObject::tr(PACKAGE_NAME),
+                              QObject::tr("Error: Cannot parse configuration file: %1.").arg(QString::fromStdString(error)));
+        return EXIT_FAILURE;
+    }
+
     /// 5. Now that settings and translations are available, ask user for data directory
     // User language is set up: pick a data directory
     if (!Intro::pickDataDirectory(*node))
@@ -499,11 +506,6 @@ int GuiMain(int argc, char* argv[])
     {
         QMessageBox::critical(nullptr, QObject::tr(PACKAGE_NAME),
             QObject::tr("Error: Specified data directory \"%1\" does not exist.").arg(QString::fromStdString(gArgs.GetArg("-datadir", ""))));
-        return EXIT_FAILURE;
-    }
-    if (!node->readConfigFiles(error)) {
-        QMessageBox::critical(nullptr, QObject::tr(PACKAGE_NAME),
-            QObject::tr("Error: Cannot parse configuration file: %1.").arg(QString::fromStdString(error)));
         return EXIT_FAILURE;
     }
 
