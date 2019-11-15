@@ -86,10 +86,10 @@ void AppTests::appTests()
 }
 
 //! Entry point for BitcoinGUI tests.
-void AppTests::guiTests(BitcoinGUI* window)
+void AppTests::guiTests(BitcoinGUIObj* window)
 {
     HandleCallback callback{"guiTests", *this};
-    connect(window, &BitcoinGUI::consoleShown, this, &AppTests::consoleTests);
+    connect(window, &BitcoinGUIObj::consoleShown, this, &AppTests::consoleTests);
     expectCallback("consoleTests");
     QAction* action = window->findChild<QAction*>("openRPCConsoleAction");
     action->activate(QAction::Trigger);

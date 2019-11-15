@@ -95,6 +95,7 @@ private:
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();
 
+public:
     QString lookupAddress(const std::string &address, bool tooltip) const;
     QVariant addressColor(const TransactionRecord *wtx) const;
     QString formatTxStatus(const TransactionRecord *wtx) const;

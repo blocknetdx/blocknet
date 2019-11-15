@@ -75,7 +75,7 @@ const std::string BitcoinGUI::DEFAULT_UIPLATFORM =
         ;
 
 BitcoinGUI::BitcoinGUI(interfaces::Node& node, const PlatformStyle *_platformStyle, const NetworkStyle *networkStyle, QWidget *parent) :
-    QMainWindow(parent),
+    BitcoinGUIObj(parent),
     m_node(node),
     trayIconMenu{new QMenu()},
     platformStyle(_platformStyle),

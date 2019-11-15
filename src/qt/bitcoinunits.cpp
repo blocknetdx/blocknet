@@ -7,6 +7,7 @@
 #include <primitives/transaction.h>
 
 #include <QStringList>
+#include <QSettings>
 
 BitcoinUnits::BitcoinUnits(QObject *parent):
         QAbstractListModel(parent),
@@ -143,6 +144,16 @@ QString BitcoinUnits::format(int unit, const CAmount& nIn, bool fPlus, Separator
 QString BitcoinUnits::formatWithUnit(int unit, const CAmount& amount, bool plussign, SeparatorStyle separators)
 {
     return format(unit, amount, plussign, separators) + QString(" ") + shortName(unit);
+}
+
+QString BitcoinUnits::floorWithUnit(int unit, const CAmount& amount, int digits, bool plussign, SeparatorStyle separators)
+{
+    QString result = format(unit, amount, plussign, separators);
+    if (decimals(unit) > digits)
+        result.chop(decimals(unit) - digits);
+    if (digits == 0 && result.endsWith(".")) // remove the "." if no digits specified
+        result.chop(1);
+    return result + QString(" ") + longName(unit);
 }
 
 QString BitcoinUnits::formatHtmlWithUnit(int unit, const CAmount& amount, bool plussign, SeparatorStyle separators)

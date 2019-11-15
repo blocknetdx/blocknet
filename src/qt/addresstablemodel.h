@@ -17,6 +17,23 @@ namespace interfaces {
 class Wallet;
 }
 
+struct AddressTableEntry
+{
+    enum Type {
+        Sending,
+        Receiving,
+        Hidden /* QSortFilterProxyModel will filter these out */
+    };
+
+    Type type;
+    QString label;
+    QString address;
+
+    AddressTableEntry() {}
+    AddressTableEntry(Type _type, const QString &_label, const QString &_address):
+            type(_type), label(_label), address(_address) {}
+};
+
 /**
    Qt model of the address book in the core. This allows views to access and modify the address book.
  */

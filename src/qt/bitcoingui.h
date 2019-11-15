@@ -57,11 +57,101 @@ class ClickableLabel;
 class ClickableProgressBar;
 }
 
+class BitcoinGUIObj : public QMainWindow {
+    Q_OBJECT
+public:
+    explicit BitcoinGUIObj(QWidget *parent=nullptr) : QMainWindow(parent) {}
+    ~BitcoinGUIObj() {}
+    virtual void setClientModel(ClientModel *clientModel) = 0;
+#ifdef ENABLE_WALLET
+    virtual void setWalletController(WalletController* wallet_controller) = 0;
+    virtual void addWallet(WalletModel* walletModel) = 0;
+    virtual void removeWallet(WalletModel* walletModel) = 0;
+    virtual void removeAllWallets() = 0;
+#endif // ENABLE_WALLET
+    virtual bool hasTrayIcon() const = 0;
+    virtual void unsubscribeFromCoreSignals() = 0;
+
+protected:
+    virtual void changeEvent(QEvent *e) = 0;
+    virtual void closeEvent(QCloseEvent *event) = 0;
+    virtual void showEvent(QShowEvent *event) = 0;
+    virtual void dragEnterEvent(QDragEnterEvent *event) = 0;
+    virtual void dropEvent(QDropEvent *event) = 0;
+    virtual bool eventFilter(QObject *object, QEvent *event) = 0;
+    virtual void createActions() = 0;
+    virtual void createMenuBar() = 0;
+    virtual void createToolBars() = 0;
+    virtual void createTrayIcon() = 0;
+    virtual void createTrayIconMenu() = 0;
+    virtual void setWalletActionsEnabled(bool enabled) = 0;
+    virtual void subscribeToCoreSignals() = 0;
+    virtual void updateNetworkState() = 0;
+    virtual void updateHeadersSyncProgressLabel() = 0;
+    virtual void openOptionsDialogWithTab(OptionsDialog::Tab tab) = 0;
+
+Q_SIGNALS:
+    void receivedURI(const QString &uri);
+    void consoleShown(RPCConsole* console);
+
+public Q_SLOTS:
+    virtual void setNumConnections(int count) = 0;
+    virtual void setNetworkActive(bool networkActive) = 0;
+    virtual void setNumBlocks(int count, const QDateTime& blockDate, double nVerificationProgress, bool headers) = 0;
+    virtual void message(const QString &title, const QString &message, unsigned int style, bool *ret = nullptr) = 0;
+
+#ifdef ENABLE_WALLET
+    virtual void setCurrentWallet(WalletModel* wallet_model) = 0;
+    virtual void setCurrentWalletBySelectorIndex(int index) = 0;
+    virtual void updateWalletStatus() = 0;
+
+protected:
+    virtual void setEncryptionStatus(int status) = 0;
+    virtual void setHDStatus(bool privkeyDisabled, int hdEnabled) = 0;
+
+public Q_SLOTS:
+    virtual bool handlePaymentRequest(const SendCoinsRecipient& recipient) = 0;
+    virtual void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type, const QString& address, const QString& label, const QString& walletName) = 0;
+#endif // ENABLE_WALLET
+
+protected:
+    virtual void updateProxyIcon() = 0;
+    virtual void updateWindowTitle() = 0;
+
+public Q_SLOTS:
+#ifdef ENABLE_WALLET
+    virtual void gotoOverviewPage() = 0;
+    virtual void gotoHistoryPage() = 0;
+    virtual void gotoReceiveCoinsPage() = 0;
+    virtual void gotoSendCoinsPage(QString addr = "") = 0;
+    virtual void gotoSignMessageTab(QString addr = "") = 0;
+    virtual void gotoVerifyMessageTab(QString addr = "") = 0;
+    virtual void openClicked() = 0;
+#endif // ENABLE_WALLET
+    virtual void optionsClicked() = 0;
+    virtual void aboutClicked() = 0;
+    virtual void showDebugWindow() = 0;
+    virtual void showDebugWindowActivateConsole() = 0;
+    virtual void showHelpMessageClicked() = 0;
+#ifndef Q_OS_MAC
+    virtual void trayIconActivated(QSystemTrayIcon::ActivationReason reason) = 0;
+#else
+    virtual void macosDockIconActivated() = 0;
+#endif
+    virtual void showNormalIfMinimized() = 0;
+    virtual void showNormalIfMinimized(bool fToggleHidden) = 0;
+    virtual void toggleHidden() = 0;
+    virtual void detectShutdown() = 0;
+    virtual void showProgress(const QString &title, int nProgress) = 0;
+    virtual void setTrayIconVisible(bool) = 0;
+    virtual void showModalOverlay() = 0;
+};
+
 /**
   Bitcoin GUI main class. This class represents the main window of the Bitcoin UI. It communicates with both the client and
   wallet models to give the user an up-to-date view of the current core state.
 */
-class BitcoinGUI : public QMainWindow
+class BitcoinGUI : public BitcoinGUIObj
 {
     Q_OBJECT
 

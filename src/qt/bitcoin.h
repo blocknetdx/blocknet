@@ -13,7 +13,7 @@
 #include <memory>
 #include <vector>
 
-class BitcoinGUI;
+class BitcoinGUIObj;
 class ClientModel;
 class NetworkStyle;
 class OptionsModel;
@@ -39,6 +39,7 @@ public:
 public Q_SLOTS:
     void initialize();
     void shutdown();
+    void restart(QStringList args);
 
 Q_SIGNALS:
     void initializeResult(bool success);
@@ -50,6 +51,9 @@ private:
     void handleRunawayException(const std::exception *e);
 
     interfaces::Node& m_node;
+
+    /// Flag indicating a restart
+    bool execute_restart;
 };
 
 /** Main Bitcoin application object */
@@ -59,6 +63,7 @@ class BitcoinApplication: public QApplication
 public:
     explicit BitcoinApplication(interfaces::Node& node, int &argc, char **argv);
     ~BitcoinApplication();
+    static bool isClassic();
 
 #ifdef ENABLE_WALLET
     /// Create payment server
@@ -99,14 +104,14 @@ Q_SIGNALS:
     void requestedInitialize();
     void requestedShutdown();
     void splashFinished();
-    void windowShown(BitcoinGUI* window);
+    void windowShown(BitcoinGUIObj* window);
 
 private:
     QThread *coreThread;
     interfaces::Node& m_node;
     OptionsModel *optionsModel;
     ClientModel *clientModel;
-    BitcoinGUI *window;
+    BitcoinGUIObj *window;
     QTimer *pollShutdownTimer;
 #ifdef ENABLE_WALLET
     PaymentServer* paymentServer{nullptr};

@@ -8,6 +8,7 @@
 
 #include <qt/bitcoin.h>
 #include <qt/bitcoingui.h>
+#include <qt/blocknetgui.h>
 
 #include <chainparams.h>
 #include <qt/clientmodel.h>
@@ -21,6 +22,8 @@
 #include <qt/splashscreen.h>
 #include <qt/utilitydialog.h>
 #include <qt/winshutdownmonitor.h>
+
+#include <qt/blocknetsplashscreen.h>
 
 #ifdef ENABLE_WALLET
 #include <qt/paymentserver.h>
@@ -48,6 +51,7 @@
 #include <QLibraryInfo>
 #include <QLocale>
 #include <QMessageBox>
+#include <QProcess>
 #include <QSettings>
 #include <QThread>
 #include <QTimer>
@@ -146,6 +150,8 @@ void BitcoinCore::handleRunawayException(const std::exception *e)
 
 void BitcoinCore::initialize()
 {
+    execute_restart = true;
+
     try
     {
         qDebug() << __func__ << ": Running initialization in thread";
@@ -155,6 +161,26 @@ void BitcoinCore::initialize()
         handleRunawayException(&e);
     } catch (...) {
         handleRunawayException(nullptr);
+    }
+}
+
+void BitcoinCore::restart(QStringList args)
+{
+    if (execute_restart) { // Only restart 1x, no matter how often a user clicks on a restart-button
+        execute_restart = false;
+        try {
+            qDebug() << __func__ << ": Running Shutdown in thread";
+            m_node.appShutdown();
+            qDebug() << __func__ << ": Shutdown finished";
+            Q_EMIT shutdownResult();
+            QProcess::startDetached(QApplication::applicationFilePath(), args);
+            qDebug() << __func__ << ": Restart initiated...";
+            QApplication::quit();
+        } catch (std::exception& e) {
+            handleRunawayException(&e);
+        } catch (...) {
+            handleRunawayException(nullptr);
+        }
     }
 }
 
@@ -238,20 +264,32 @@ void BitcoinApplication::createOptionsModel(bool resetSettings)
 
 void BitcoinApplication::createWindow(const NetworkStyle *networkStyle)
 {
+    if (isClassic())
     window = new BitcoinGUI(m_node, platformStyle, networkStyle, nullptr);
+    else
+        window = new BlocknetGUI(m_node, platformStyle, networkStyle, nullptr);
 
     pollShutdownTimer = new QTimer(window);
-    connect(pollShutdownTimer, &QTimer::timeout, window, &BitcoinGUI::detectShutdown);
+    connect(pollShutdownTimer, &QTimer::timeout, window, &BitcoinGUIObj::detectShutdown);
 }
 
 void BitcoinApplication::createSplashScreen(const NetworkStyle *networkStyle)
 {
+    if (isClassic()) {
     SplashScreen *splash = new SplashScreen(m_node, nullptr, networkStyle);
     // We don't hold a direct pointer to the splash screen after creation, but the splash
     // screen will take care of deleting itself when finish() happens.
     splash->show();
     connect(this, &BitcoinApplication::splashFinished, splash, &SplashScreen::finish);
     connect(this, &BitcoinApplication::requestedShutdown, splash, &QWidget::close);
+    } else {
+        auto *splash = new BlocknetSplashScreen(m_node, nullptr, networkStyle);
+        // We don't hold a direct pointer to the splash screen after creation, but the splash
+        // screen will take care of deleting itself when finish() happens.
+        splash->show();
+        connect(this, &BitcoinApplication::splashFinished, splash, &BlocknetSplashScreen::finish);
+        connect(this, &BitcoinApplication::requestedShutdown, splash, &QWidget::close);
+    }
 }
 
 bool BitcoinApplication::baseInitialize()
@@ -273,6 +311,8 @@ void BitcoinApplication::startThread()
     connect(executor, &BitcoinCore::runawayException, this, &BitcoinApplication::handleRunawayException);
     connect(this, &BitcoinApplication::requestedInitialize, executor, &BitcoinCore::initialize);
     connect(this, &BitcoinApplication::requestedShutdown, executor, &BitcoinCore::shutdown);
+    if (!isClassic())
+        connect(dynamic_cast<BlocknetGUI*>(window), &BlocknetGUI::requestedRestart, executor, &BitcoinCore::restart);
     /*  make sure executor object is deleted in its own thread */
     connect(coreThread, &QThread::finished, executor, &QObject::deleteLater);
 
@@ -367,8 +407,8 @@ void BitcoinApplication::initializeResult(bool success)
         // Now that initialization/startup is done, process any command-line
         // bitcoin: URIs or payment requests:
         if (paymentServer) {
-            connect(paymentServer, &PaymentServer::receivedPaymentRequest, window, &BitcoinGUI::handlePaymentRequest);
-            connect(window, &BitcoinGUI::receivedURI, paymentServer, &PaymentServer::handleURIOrFile);
+            connect(paymentServer, &PaymentServer::receivedPaymentRequest, window, &BitcoinGUIObj::handlePaymentRequest);
+            connect(window, &BitcoinGUIObj::receivedURI, paymentServer, &PaymentServer::handleURIOrFile);
             connect(paymentServer, &PaymentServer::message, [this](const QString& title, const QString& message, unsigned int style) {
                 window->message(title, message, style);
             });
@@ -401,10 +441,17 @@ WId BitcoinApplication::getMainWinId() const
     return window->winId();
 }
 
+bool BitcoinApplication::isClassic() {
+    return gArgs.GetBoolArg("-classic", false);
+}
+
 static void SetupUIArgs()
 {
 #if defined(ENABLE_WALLET) && defined(ENABLE_BIP70)
     gArgs.AddArg("-allowselfsignedrootcertificates", strprintf("Allow self signed root certificates (default: %u)", DEFAULT_SELFSIGNED_ROOTCERTS), true, OptionsCategory::GUI);
+#endif
+#if defined(ENABLE_WALLET)
+    gArgs.AddArg("-classic", "Show the Classic wallet user interface (gui)", false, OptionsCategory::GUI);
 #endif
     gArgs.AddArg("-choosedatadir", strprintf("Choose data directory on startup (default: %u)", DEFAULT_CHOOSE_DATADIR), false, OptionsCategory::GUI);
     gArgs.AddArg("-lang=<lang>", "Set language, for example \"de_DE\" (default: system locale)", false, OptionsCategory::GUI);

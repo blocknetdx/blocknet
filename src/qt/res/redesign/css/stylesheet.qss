@@ -1,0 +1,232 @@
+BlocknetLeftMenu { background-color: #051937; }
+BlocknetLeftMenu BlocknetIconLabel { border: none; text-align: left; }
+BlocknetLeftMenu BlocknetIconLabel QLabel { font-size: 11pt; font-family: "Roboto"; font-weight: normal; }
+BlocknetLeftMenu BlocknetIconLabel QLabel[selected=true] { color: #74B2FE; }
+BlocknetLeftMenu BlocknetIconLabel QLabel[selected=false] { color: #6F8097; }
+BlocknetLeftMenu BlocknetIconLabel#disabled QLabel { color: #0C2448; }
+BlocknetLeftMenu #balanceLbl { font-size: 9pt; color: #6F8097; font-family: "Roboto"; }
+BlocknetLeftMenu #balanceAmountLbl { font-size: 11pt; color: white; font-family: "Roboto"; }
+BlocknetLeftMenu #hdiv { border-top: 1px solid #172E48; height: 1px; }
+BlocknetLeftMenu #versionLbl { font-size: 7pt; color: #40526A; font-family: "Roboto"; }
+
+BlocknetToolBar { padding-right: 10px; }
+BlocknetToolBar #progress { background-color: #000E1C; }
+BlocknetToolBar #progress QProgressBar { font-size: 9pt; color: white; font-family: "Roboto"; background-color: transparent; }
+BlocknetToolBar #progress QProgressBar[os="win"] { color: black; }
+BlocknetToolBar #progress QProgressBar::chunk { background-color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); }
+BlocknetToolBar #peersLbl { font-size: 10pt; color: #74B2FE; font-family: "Roboto"; }
+BlocknetToolBar #lock { background-color: #016AFF; border-radius: 3px; }
+BlocknetToolBar #lock #timeLbl { font-size: 12pt; color: white; }
+
+BlocknetLockMenu { border: 1px solid #CCCCCC; background-color: white; }
+BlocknetLockMenu QPushButton { font-size: 11pt; font-family: "Roboto"; text-align: left; padding-left: 20px; border: none; }
+BlocknetLockMenu QPushButton:!hover { color: #016AFF; background-color: white; }
+BlocknetLockMenu QPushButton:hover { color: white; background-color: #016AFF; }
+BlocknetLockMenu #hdiv { background-color: #CCCCCC; }
+
+BlocknetDropdown { font-size: 10pt; font-family: "Roboto"; background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); selection-color: #FFFFFF; selection-background-color: #37475C; border: 1px solid #6F8097; color: #FFFFFF; }
+BlocknetDropdown::drop-down { width: 35px; border: 0px; }
+BlocknetDropdown QAbstractItemView { background: #6F8097; background-color: #6F8097; }
+
+BlocknetWallet #contentBox { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
+
+#h1 { font-size: 38pt; color: white; font-family: "Roboto"; font-weight: 25; }
+#h2 { font-size: 24pt; color: white; font-family: "Roboto"; font-weight: 25; }
+#h3 { font-size: 20pt; color: white; font-family: "Roboto"; font-weight: 25; }
+#h4 { font-size: 18pt; color: white; font-family: "Roboto"; font-weight: 25; }
+#h5 { font-size: 16pt; color: white; font-family: "Roboto"; }
+#h6 { font-size: 12pt; color: white; font-family: "Roboto"; font-weight: bold; }
+#body { font-size: 10pt; color: white; font-family: "Roboto"; }
+
+#hdiv { border: 1px solid #172E48; height: 1px; }
+#vdiv { border: 1px solid #172E48; width: 1px; }
+#coin { font-size: 10pt; color: white; font-family: "Roboto"; padding: 12px; background-color: #6F8097; text-align: left; }
+#header { font-size: 12pt; color: white; font-family: "Roboto"; }
+#standard { font-size: 12pt; color: white; font-family: "Roboto"; font-weight: 25; }
+#warning { font-size: 9pt; color: red; padding-left: 2px; margin-left: -2px; }
+#stretch { border: 0; background-color: transparent; }
+
+QMessageBox { background-color: #172F49; }
+QMessageBox QLabel { font-size: 13pt; color: white; font-family: "Roboto"; font-weight: 25; }
+QScrollArea, QScrollArea #scrollAreaWidgetContents, QScrollArea #content { border: 0; }
+QComboBox { padding-left: 5px; }
+QComboBox QAbstractItemView { background-color: #7b8ca2; font-size: 10pt; color: white; font-family: "Roboto"; selection-background-color: #016AFF; }
+QComboBox QAbstractItemView::item { background-color: #7b8ca2; font-size: 10pt; color: white; font-family: "Roboto"; }
+QRadioButton { font-size: 10pt; font-family: "Roboto"; color: white; spacing: 10px; }
+QRadioButton:disabled { color: #0C2448; }
+QRadioButton:indicator { width: 24px; height: 24px; border: 1px solid #6F8097; border-radius: 12px; }
+QRadioButton:indicator:checked { background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.52, stop:0 #016AFF, stop:0.65 #016AFF, stop:0.70 rgba(0,0,0,0), stop:1 rgba(0,0,0,0)); }
+QRadioButton:indicator:disabled { background-color: transparent; }
+QCheckBox { font-size: 10pt; font-family: "Roboto"; color: white; spacing: 10px; }
+QCheckBox::indicator:checked { image: url(:/redesign/checkmark-on); max-width: 20px; }
+QCheckBox::indicator:unchecked { image: url(:/redesign/checkmark-off); max-width: 20px; }
+QPushButton#linkBtn { font-size: 10pt; color: #016AFF; font-family: "Roboto"; border: none; }
+QDateTimeEdit { padding-left: 5px; padding-right: 5px; background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); selection-color: #FFFFFF; selection-background-color: #016AFF; border: 1px solid #6F8097; color: #FFFFFF; font-size: 13pt; font-family: "Roboto"; }
+QDateTimeEdit::drop-down { image: url(:/icons/accordion-arrow); width: 22px; border: 0; }
+QDateTimeEdit QAbstractItemView { background-color: #051937; }
+QCalendarWidget QWidget#qt_calendar_navigationbar { background-color: #051937; }
+QCalendarWidget QWidget { alternate-background-color: #051937; }
+QCalendarWidget QAbstractItemView:enabled { color: white; background-color: #051937; font-size: 13pt; font-family: "Roboto"; }
+QCalendarWidget QAbstractItemView:disabled { color: #666; }
+QCalendarWidget QMenu { color: white; background-color: #6F8097; font-size: 10pt; font-family: "Roboto"; }
+QCalendarWidget QSpinBox { color: white; background-color: #051937; font-size: 10pt; font-family: "Roboto"; }
+QCalendarWidget QToolButton { color: white; background-color: #051937; font-family: "Roboto"; }
+QTableView, QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; border-style: none; border: 0; }
+QTableView::item, QTableWidget::item { font-size: 10pt; font-family: "Roboto"; background-color: #172F49; }
+QTableView::item:alternate, QTableWidget::item:alternate { background-color: #0F2743; }
+QTableView::item::selected, QTableWidget::item::selected { color: white; background-color: #016AFF; }
+QTableView QHeaderView, QTableWidget QHeaderView, QTableWidget QHeaderView::section { background-color: #000D20; border-style: none; border: 0; }
+QTableView QHeaderView::section, QTableWidget QHeaderView::section { font-size: 9pt; color: #6F8097; font-family: "Roboto"; padding: 6px; }
+QTableView QHeaderView::section::selected, QTableWidget QHeaderView::section::selected { color: white; }
+QTableView::indicator:checked, QTableWidget::indicator:checked { image: url(:/redesign/checkmark-on); }
+QTableView::indicator:unchecked, QTableWidget::indicator:unchecked { image: url(:/redesign/checkmark-off); }
+QTableView QHeaderView::down-arrow, QTableView QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
+QTableView QHeaderView::up-arrow, QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
+
+BlocknetLineEdit, QLineEdit { font-size: 10pt; color: white; font-family: "Roboto"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
+BlocknetLineEdit:disabled, QLineEdit:disabled { border: 1px solid #666666; color: #666666; }
+BlocknetLineEdit[error=true] { border: 1px solid red; }
+BlocknetLineEditWithTitle #lineEditTitle { font-size: 9pt; font-family: "Roboto"; color: #6F8097 }
+BlocknetAddressEditor { font-size: 10pt; color: white; font-family: "Roboto"; padding-top: 3px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
+BlocknetAddressEditor:disabled { border: 1px solid #333333; color: #333333; }
+BlocknetAddressEditor #placeholder { font-size: 10pt; color: #666666; font-family: "Roboto"; }
+BlocknetFormBtn { font-size: 10pt; font-family: "Roboto"; color: white; background-color: #016AFF; border: 1px solid #095FD8; }
+BlocknetFormBtn:hover { background-color: #0051C3; }
+BlocknetFormBtn:disabled { background-color: #37475C; border: 1px solid #243040; color: #6F8097; }
+BlocknetFormBtn#cancel { background-color: rgba(0,0,0,0); }
+BlocknetFormBtn#cancel:hover { background-color: #016AFF; }
+BlocknetFormBtn#cancel:disabled { border: 1px solid #37475C; color: #6F8097; }
+BlocknetFormBtn#delete { background-color: #FF5656; border: 1px solid #FF4747; }
+BlocknetFormBtn#delete:hover { background-color: #FF3B3B; }
+BlocknetFormBtn#delete:disabled { border: 1px solid #37475C; color: #6F8097; }
+BlocknetActionBtn { background-color: transparent; }
+BlocknetActionBtn:hover { background-color: #37475C; }
+BlocknetBreadCrumb QPushButton { font-size: 10pt; color: #6F8097; font-family: "Roboto"; border: none; }
+BlocknetBreadCrumb QPushButton:checked { color: #74B2FE; }
+BlocknetIconBtn #title { font-size: 10pt; color: white; font-family: "Roboto"; }
+BlocknetLabelBtn { font-size: 10pt; font-family: "Roboto"; color: #016AFF; text-align: left; padding-left: 20px; border: none; background-color: transparent; }
+BlocknetLabelBtn:!hover { color: #016AFF; }
+BlocknetLabelBtn:hover { color: white; }
+BlocknetLabelBtn:pressed { color: white; }
+BlocknetLabelBtn:disabled { color: #6F8097; }
+BlocknetDialog { background-color: #172F49; }
+BlocknetDialog #h3 { background-color: #172F49; border: 0; }
+BlocknetTabBtn { font-size: 10pt; color: #6F8097; font-family: "Roboto"; background-color: transparent; }
+BlocknetTabBtn:checked { color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); background-color: transparent; }
+BlocknetTabBtn:pressed { background-color: transparent; }
+BlocknetTabBtn #subLine { background-color: QLinearGradient(x1: 0, x2: 1, stop: 0 #00C9FF, stop: 1 #4BF5C6); }
+BlocknetKeyDialog { background-color: #172F49; }
+BlocknetKeyDialog #h2 { background-color: #172F49; border: 0; }
+BlocknetKeyDialog #highlight { font-size: 10pt; font-family: "Roboto"; color: white; }
+BlocknetKeyDialog #note { font-size: 10pt; font-family: "Roboto"; color: #6F8097; }
+BlocknetAvatar #title { font-size: 13pt; font-family: "Roboto"; color: white; }
+
+BlocknetProposals #h4 { padding-left: 1px; }
+BlocknetProposals #title { font-size: 12pt; color: white; font-family: "Roboto"; }
+BlocknetProposals QTableWidget { color: white; background-color: transparent; }
+BlocknetProposals QTableWidget QHeaderView { color: #37475C; background-color: transparent; }
+BlocknetProposals QTableWidget QHeaderView::section { background-color: transparent; }
+BlocknetProposals QTableWidget #indicator[state="0"] { background-color: #4BF5C6; }
+BlocknetProposals QTableWidget #indicator[state="1"] { background-color: #F8BF1C; }
+BlocknetProposals QTableWidget #indicator[state="2"] { background-color: #FB7F70; }
+BlocknetProposals QTableWidget::item { padding: 3px; }
+BlocknetProposalsVoteDialog { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
+BlocknetProposalsVoteDialog #description { font-size: 10pt; color: #6F8097; font-family: "Roboto"; }
+BlocknetProposalsVoteDialog #value { font-size: 10pt; color: white; font-family: "Roboto"; bold: true; }
+BlocknetProposalsVoteDialog QRadioButton, BlocknetProposalsVoteDialog QCheckBox { font-size: 11pt; }
+BlocknetCreateProposalPage #h4 { font-size: 14pt; color: white; }
+BlocknetCreateProposalPage #detail { font-size: 11pt; color: white; }
+
+BlocknetDashboard #h4 { padding-left: 1px; }
+BlocknetDashboard #balanceLbl { font-size: 14pt; color: #6F8097; font-family: "Roboto"; padding-top: 40px; }
+BlocknetDashboard #pendingLbl { font-size: 10pt; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #pendingValueLbl { font-size: 10pt; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #immatureLbl { font-size: 10pt; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #immatureValueLbl { font-size: 10pt; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #totalLbl { font-size: 10pt; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #totalValueLbl { font-size: 10pt; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetDashboard #recentTransactionsLbl { font-size: 14pt; color: #6F8097; font-family: "Roboto"; }
+
+BlocknetSendFunds { padding-left: 30px; padding-right: 10px; }
+BlocknetSendFunds #contentScrollArea { min-width: 730px; background-color: transparent; }
+BlocknetSendFunds #sectionTitle { font-size: 14pt; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #sectionSubtitle { font-size: 9pt; color: #6F8097; padding-left: 2px; margin-left: -2px; }
+BlocknetSendFunds #descLbl { font-size: 10pt; color: #6F8097; font-family: "Roboto"; }
+BlocknetSendFunds #defaultRb { font-size: 12pt; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #radioBox #descLbl, BlocknetSendFunds #specificFeeBox { margin-left: 25px; }
+BlocknetSendFunds #totalLbl { font-size: 12pt; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #totalFeeLbl { font-size: 12pt; color: white; font-family: "Roboto"; font-weight: 25; }
+BlocknetSendFunds #coinControlSection { padding-top: 20px; padding-bottom: 25px; }
+BlocknetSendFunds #changeSection { padding-top: 10px; padding-bottom: 20px; max-width: 450px; }
+BlocknetSendFunds #changeSection #changeAddress { margin-left: 2px; }
+BlocknetSendFunds #buttonSection { padding-top: 30px; }
+BlocknetSendFunds QCheckBox#subtractFeeCb { font-size: 12pt; color: white; font-family: "Roboto"; }
+
+BlocknetSendFunds #sendFundsList { font-size: 10pt; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #sendFundsList #address { font-size: 10pt; color: white; font-family: "Roboto"; }
+BlocknetSendFunds #body { font-size: 9pt; color: #6F8097; font-family: "Roboto"; }
+
+BlocknetSendFunds4 #standard { font-size: 11pt; }
+
+BlocknetQuickSend #address { max-width: 500px; }
+
+BlocknetFundsMenu { border: 1px solid #CCCCCC; background-color: white; }
+BlocknetFundsMenu QPushButton { font-size: 13pt; font-family: "Roboto"; text-align: left; padding-left: 20px; border: none; }
+BlocknetFundsMenu QPushButton:!hover { color: #016AFF; background-color: white; }
+BlocknetFundsMenu QPushButton:hover { color: white; background-color: #016AFF; }
+
+BlocknetAddressBook #h4 { padding-left: 1px; }
+BlocknetAddressBook #title { font-size: 11pt; color: white; font-family: "Roboto"; }
+BlocknetAddressBook QTableWidget { color: white; background-color: transparent; }
+BlocknetAddressBook QTableWidget QHeaderView { color: #37475C; }
+BlocknetAddressBook QTableWidget::item { padding: 3px; }
+BlocknetAddressBook QTableWidget::item::selected BlocknetLabelBtn { color: white; }
+BlocknetAddressBookDialog { background-color: #172F49; }
+
+BlocknetAddressEditDialog, BlocknetAddressAddDialog { background-color: #172F49; }
+BlocknetAddressEditDialog #h2, BlocknetAddressAddDialog #h2 { background-color: #172F49; border: 0; }
+BlocknetAddressEditDialog #readOnly:disabled, BlocknetAddressAddDialog #readOnly:disabled { color: #CCCCCC; border: 1px solid #CCCCCC; }
+
+BlocknetTransactionHistory { border: 0; }
+BlocknetTransactionHistory::item { border: 0; qproperty-alignment:left; }
+BlocknetTransactionHistory::item:selected { color: white; selection-background-color: #016AFF; }
+BlocknetTransactionHistory QHeaderView { border: 0; background-color: #000D20; outline: 0; }
+BlocknetTransactionHistory QHeaderView::section { font-size: 10pt; border: 0; qproperty-alignment:left; background-color: #000D20; font-family: "Roboto"; color:#6F8097; }
+BlocknetTransactionHistory #dateRange QLabel { color: white; }
+
+BlocknetPeersList QTableView { color: white; background-color: transparent; }
+BlocknetPeersList QTableView QHeaderView { color: #37475C; background-color: transparent; }
+BlocknetPeersList QTableView QHeaderView::section { background-color: transparent; }
+BlocknetPeersList QTableView::item { padding: 3px; }
+BlocknetPeerDetails { border: 1px solid #37475C; background-color: #051937; }
+BlocknetPeerDetails #detailLbl { color: #6F8097; font-size: 12pt; }
+
+BlocknetCoinControl QTableWidget { color: white; }
+#coinControlDialog { background-color: #172F49; }
+#coinControlDialog #feePanel { background-color: #172F49; }
+#coinControlDialog #feePanel QLabel { font-size: 13pt; color: white; font-family: "Roboto"; }
+
+BlocknetBIP38Tool QScrollArea { background-color:transparent; }
+BlocknetBIP38Tool #contentFrame { background-color:transparent; }
+
+BlocknetAddressBtn { background-color: #016AFF; }
+
+BlocknetSettings QScrollArea { background-color:transparent; }
+BlocknetSettings BlocknetLabelBtn { padding-left: 5px; }
+BlocknetSettings #title { font-size: 10pt; color: white; font-family: "Roboto"; }
+BlocknetSettings #contentFrame { background-color:transparent; }
+BlocknetSettings #description { font-size: 10pt; color: #6F8097 }
+
+BlocknetDebugConsole #console { font-family: "Roboto Mono"; }
+BlocknetDebugConsole #consoleOutput { color: white; background-color: #172F49; padding: 10px 15px; font-family: "Roboto Mono"; border: 0; }
+BlocknetDebugConsole #consoleBox QLabel { color: white; font-family: "RobotoMono"; }
+BlocknetDebugConsole #consoleBox QLineEdit { font-size: 10pt; color: white; font-family: "Roboto Mono"; padding-left: 15px; border: 1px solid #6F8097; border-radius: 0; background-color: rgba(0,0,0,0); }
+
+BlocknetWalletRepair QScrollArea { background-color:transparent; }
+BlocknetWalletRepair #notes { font-size: 10pt; color: white; font-family: "Roboto"; }
+BlocknetWalletRepair #contentFrame { background-color:transparent; }
+BlocknetWalletRepair #title { font-size: 14pt; color: white; font-family: "Roboto"; }
+BlocknetWalletRepair #description { font-size: 10pt; color: #6F8097; font-family: "Roboto"; }
+
+AskPassphraseDialog, SignVerifyMessageDialog, SignVerifyMessageDialog QTabWidget, OptionsDialog, TransactionDescDialog { font-size: 10pt; background-color: #172F49; color: white; font-family: "Roboto"; }
+AskPassphraseDialog QLabel, SignVerifyMessageDialog QLabel, SignVerifyMessageDialog QTabWidget QLabel, OptionsDialog QLabel, TransactionDescDialog QLabel { font-size: 10pt; color: white; font-family: "Roboto"; }

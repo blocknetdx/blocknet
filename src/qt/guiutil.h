@@ -8,7 +8,9 @@
 #include <amount.h>
 #include <fs.h>
 
+#include <QDebug>
 #include <QEvent>
+#include <QFile>
 #include <QHeaderView>
 #include <QItemDelegate>
 #include <QMessageBox>
@@ -252,6 +254,20 @@ namespace GUIUtil
 
     // Fix known bugs in QProgressDialog class.
     void PolishProgressDialog(QProgressDialog* dialog);
+
+    static QString loadStyleSheet() {
+        static QString styleSheet;
+        try {
+            QFile qFile(":/redesign/css/default");
+            if (styleSheet.isEmpty() && qFile.open(QFile::ReadOnly)) {
+                styleSheet = QLatin1String(qFile.readAll());
+                qFile.close();
+            }
+        } catch (std::exception & e) {
+            qDebug() << QString(e.what());
+        }
+        return styleSheet;
+    }
 } // namespace GUIUtil
 
 #endif // BITCOIN_QT_GUIUTIL_H
