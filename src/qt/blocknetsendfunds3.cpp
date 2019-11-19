@@ -4,6 +4,7 @@
 
 #include <qt/blocknetsendfunds3.h>
 
+#include <qt/blocknetcheckbox.h>
 #include <qt/blocknethdiv.h>
 #include <qt/blocknetguiutil.h>
 
@@ -13,7 +14,6 @@
 #include <wallet/coincontrol.h>
 #include <validation.h>
 
-#include <QCheckBox>
 #include <QKeyEvent>
 #include <QMessageBox>
 
@@ -86,7 +86,7 @@ BlocknetSendFunds3::BlocknetSendFunds3(WalletModel *w, int id, QFrame *parent) :
     totalBoxLayout->addWidget(totalFeeLbl, 0, Qt::AlignLeft);
     totalBoxLayout->addStretch(1);
 
-    subtractFeeCb = new QCheckBox(tr("Subtract fee from total"));
+    subtractFeeCb = new BlocknetCheckBox(tr("Subtract fee from total"));
     subtractFeeCb->setObjectName("subtractFeeCb");
     subtractFeeCb->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 

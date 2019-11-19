@@ -5,6 +5,7 @@
 #include <qt/blocknetsendfunds2.h>
 
 #include <qt/blocknetavatar.h>
+#include <qt/blocknetcheckbox.h>
 #include <qt/blocknetclosebtn.h>
 #include <qt/blocknetguiutil.h>
 #include <qt/blocknethdiv.h>
@@ -16,7 +17,6 @@
 #include <memory>
 #include <validation.h>
 
-#include <QCheckBox>
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QScrollBar>
@@ -253,7 +253,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     changeSplitBoxLayout->setContentsMargins(QMargins());
     changeSplitBoxLayout->setSpacing(BGU::spi(20));
     changeSplitBox->setLayout(changeSplitBoxLayout);
-    ccSplitOutputCb = new QCheckBox(tr("Split Output"));
+    ccSplitOutputCb = new BlocknetCheckBox(tr("Split Output"));
     ccSplitOutputCb->setMinimumWidth(BGU::spi(100));
     ccSplitOutputTi = new BlocknetLineEdit(BGU::spi(100));
     ccSplitOutputTi->setPlaceholderText(tr("# of outputs"));

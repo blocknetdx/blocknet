@@ -23,10 +23,10 @@ BlocknetIconBtn::BlocknetIconBtn(const QString &title, const QString &img, QFram
     QPixmap pm(img);
     pm.setDevicePixelRatio(BGU::dpr());
 
-    auto *icon = new QLabel(this);
-    icon->setFixedSize(BGU::spi(56), BGU::spi(56));
-    icon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-    icon->setPixmap(pm.scaledToHeight(pm.height()*pm.devicePixelRatio(), Qt::SmoothTransformation));
+    icon = new QLabel(this);
+    icon->setFixedHeight(BGU::spi(56));
+    icon->setAlignment(Qt::AlignVCenter);
+    icon->setPixmap(pm.scaledToHeight(icon->height(), Qt::SmoothTransformation));
     icon->show();
 
     if (!title.isEmpty()) {
@@ -47,8 +47,8 @@ BlocknetIconBtn::BlocknetIconBtn(const QString &title, const QString &img, QFram
     auto sh = sizeHint();
     if (iconLbl)
         iconLbl->move(sh.width()/2 - iconLbl->width()/2, circleh);
-    else this->setFixedSize(sh.width(), sh.height());
-    icon->move(this->width()/2 - icon->width()/2, circleh/2 - icon->height()/2);
+    else
+        this->setFixedSize(sh.width(), sh.height());
 }
 
 BlocknetIconBtn::BlocknetIconBtn(const QString &img, QFrame *parent) : BlocknetIconBtn(QString(), img, parent) {}
@@ -82,6 +82,7 @@ void BlocknetIconBtn::paintEvent(QPaintEvent *event) {
         p.fillPath(path, QColor(0x01, 0x6A, 0xFF));
 
     p.drawPath(path);
+    icon->move(w/2 - icon->width()/2, ch/2 - icon->height()/2);
 }
 
 void BlocknetIconBtn::mouseReleaseEvent(QMouseEvent *event) {

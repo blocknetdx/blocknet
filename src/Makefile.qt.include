@@ -174,6 +174,7 @@ QT_MOC_CPP += \
   qt/moc_blocknetavatar.cpp \
   qt/moc_blocknetbip38tool.cpp \
   qt/moc_blocknetbreadcrumb.cpp \
+  qt/moc_blocknetcheckbox.cpp \
   qt/moc_blocknetcircle.cpp \
   qt/moc_blocknetclosebtn.cpp \
   qt/moc_blocknetcoincontrol.cpp \
@@ -315,6 +316,7 @@ BITCOIN_QT_H += \
   qt/blocknetavatar.h \
   qt/blocknetbip38tool.h \
   qt/blocknetbreadcrumb.h \
+  qt/blocknetcheckbox.h \
   qt/blocknetcircle.h \
   qt/blocknetclosebtn.h \
   qt/blocknetcoincontrol.h \
@@ -552,6 +554,7 @@ BITCOIN_QT_WALLET_CPP += \
   qt/blocknetavatar.cpp \
   qt/blocknetbip38tool.cpp \
   qt/blocknetbreadcrumb.cpp \
+  qt/blocknetcheckbox.cpp \
   qt/blocknetcircle.cpp \
   qt/blocknetclosebtn.cpp \
   qt/blocknetcoincontrol.cpp \

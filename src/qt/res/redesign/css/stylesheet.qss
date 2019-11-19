@@ -58,8 +58,6 @@ QRadioButton:indicator { width: 24px; height: 24px; border: 1px solid #6F8097; b
 QRadioButton:indicator:checked { background-color: qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.52, stop:0 #016AFF, stop:0.65 #016AFF, stop:0.70 rgba(0,0,0,0), stop:1 rgba(0,0,0,0)); }
 QRadioButton:indicator:disabled { background-color: transparent; }
 QCheckBox { font-size: 10pt; font-family: "Roboto"; color: white; spacing: 10px; }
-QCheckBox::indicator:checked { image: url(:/redesign/checkmark-on); max-width: 20px; }
-QCheckBox::indicator:unchecked { image: url(:/redesign/checkmark-off); max-width: 20px; }
 QPushButton#linkBtn { font-size: 10pt; color: #016AFF; font-family: "Roboto"; border: none; }
 QDateTimeEdit { padding-left: 5px; padding-right: 5px; background: QLinearGradient(x1: 1, y1: 0, x2: 1, y2: 1, stop: 0 #8899ad, stop: 1 #6F8097); selection-color: #FFFFFF; selection-background-color: #016AFF; border: 1px solid #6F8097; color: #FFFFFF; font-size: 13pt; font-family: "Roboto"; }
 QDateTimeEdit::drop-down { image: url(:/icons/accordion-arrow); width: 22px; border: 0; }

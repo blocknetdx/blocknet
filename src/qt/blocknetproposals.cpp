@@ -4,6 +4,7 @@
 
 #include <qt/blocknetproposals.h>
 
+#include <qt/blocknetcheckbox.h>
 #include <qt/blocknetcreateproposal.h>
 #include <qt/blocknetdropdown.h>
 #include <qt/blocknetguiutil.h>
@@ -22,7 +23,6 @@
 
 #include <QAbstractItemView>
 #include <QApplication>
-#include <QCheckBox>
 #include <QClipboard>
 #include <QFormLayout>
 #include <QHeaderView>
@@ -637,7 +637,7 @@ BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(BlocknetProposals::Bloc
     voteAllLbl->setObjectName("h5");
     auto *voteAllDescLbl = new QLabel(tr("If this is not a Service Node select \"Vote many\" below to vote remotely"));
     voteAllDescLbl->setObjectName("description");
-    auto *voteManyCb = new QCheckBox(tr("Vote many"));
+    auto *voteManyCb = new BlocknetCheckBox(tr("Vote many"));
     voteManyCb->setToolTip(tr("Vote with all the Service Nodes listed in your servicenode.conf"));
     voteManyCb->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
     voteAllBoxLayout->addWidget(voteAllLbl);

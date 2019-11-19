@@ -44,8 +44,8 @@ BlocknetWallet::BlocknetWallet(interfaces::Node & node, const PlatformStyle *pla
     toolbar = new BlocknetToolBar(this);
     contentBoxLayout->addWidget(toolbar, 0, Qt::AlignTop);
 
-    layout->addWidget(leftMenu, 0, Qt::AlignLeft);
-    layout->addWidget(contentBox);
+    layout->addWidget(leftMenu, 0);
+    layout->addWidget(contentBox, 1);
 
     connect(leftMenu, SIGNAL(menuChanged(BlocknetPage)), this, SLOT(setPage(BlocknetPage)));
     connect(toolbar, SIGNAL(passphrase()), this, SLOT(changePassphrase()));

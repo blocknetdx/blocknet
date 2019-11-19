@@ -41,6 +41,7 @@ private:
     const int circlew;
     const int circleh;
     bool hoverState;
+    QLabel *icon;
     QLabel *iconLbl;
 };
 

@@ -18,15 +18,15 @@
 
 BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new QVBoxLayout) {
     this->setLayout(layout);
+    this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     layout->setContentsMargins(0, BGU::spi(20), 0, 0);
     layout->setSpacing(BGU::spi(10));
-    this->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
 
     QPixmap pm(":/redesign/white_blocknet_logo.png");
     pm.setDevicePixelRatio(BGU::dpr());
     logo = new QLabel(tr("Blocknet Logo"));
-    logo->setFixedHeight(BGU::spi(30));
-    logo->setPixmap(pm.scaledToHeight(logo->height()*pm.devicePixelRatio(), Qt::SmoothTransformation));
+    logo->setMaximumSize(BGU::spi(200), BGU::spi(50));
+    logo->setPixmap(pm.scaledToHeight(logo->height(), Qt::SmoothTransformation));
 
     balanceLbl = new QLabel(tr("Total Balance:"));
     balanceLbl->setObjectName("balanceLbl");
@@ -95,11 +95,12 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     versionLbl = new QLabel(QString::fromStdString(FormatFullVersion()));
     versionLbl->setObjectName("versionLbl");
 
-    auto leftPadding = QMargins(BGU::spi(10), 0, 0, 0);
+    auto padding = QMargins(BGU::spi(10), 0, BGU::spi(10), 0);
 
     auto *box1 = new QFrame;
+    box1->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
     box1->setLayout(new QVBoxLayout);
-    box1->setContentsMargins(leftPadding);
+    box1->setContentsMargins(padding);
     auto *boxLogo = new QFrame;
     boxLogo->setLayout(new QVBoxLayout);
     boxLogo->layout()->setContentsMargins(QMargins());
@@ -111,39 +112,39 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     boxBalance->layout()->setSpacing(BGU::spi(2));
     boxBalance->layout()->addWidget(balanceLbl);
     boxBalance->layout()->addWidget(balanceAmountLbl);
-    box1->layout()->addWidget(boxLogo);
-    box1->layout()->addWidget(boxBalance);
+    dynamic_cast<QVBoxLayout*>(box1->layout())->addWidget(boxLogo, 0, Qt::AlignLeft);
+    dynamic_cast<QVBoxLayout*>(box1->layout())->addWidget(boxBalance, 0, Qt::AlignLeft);
 
     auto *box2 = new QFrame;
-    box2->setContentsMargins(leftPadding);
+    box2->setContentsMargins(padding);
     box2->setLayout(new QVBoxLayout);
     box2->layout()->setSpacing(BGU::spi(8));
     box2->layout()->addWidget(dashboard);
     box2->layout()->addWidget(addressBook);
 
     auto *box3 = new QFrame;
-    box3->setContentsMargins(leftPadding);
+    box3->setContentsMargins(padding);
     box3->setLayout(new QVBoxLayout);
     box3->layout()->setSpacing(BGU::spi(8));
     box3->layout()->addWidget(sendFunds);
 //    box3->layout()->addWidget(requestFunds);
     box3->layout()->addWidget(transactionHistory);
-    QSettings qSettings;
-    if (qSettings.value("fShowServicenodesTab").toBool()) {
-        box3->layout()->addWidget(snodes);
-    }
+//    QSettings qSettings; // TODO Blocknet Qt Service Nodes
+//    if (qSettings.value("fShowServicenodesTab").toBool()) {
+//        box3->layout()->addWidget(snodes);
+//    }
     box3->layout()->addWidget(proposals);
 //    box3->layout()->addWidget(announcements);
 
     auto *box4 = new QFrame;
-    box4->setContentsMargins(leftPadding);
+    box4->setContentsMargins(padding);
     box4->setLayout(new QVBoxLayout);
     box4->layout()->setSpacing(BGU::spi(8));
     box4->layout()->addWidget(settings);
     box4->layout()->addWidget(tools);
 
     auto *boxVersion = new QFrame;
-    boxVersion->setContentsMargins(leftPadding);
+    boxVersion->setContentsMargins(padding);
     boxVersion->setLayout(new QVBoxLayout);
     boxVersion->layout()->addWidget(versionLbl);
 
@@ -151,7 +152,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     auto *div3 = new BlocknetHDiv;
     auto *div4 = new BlocknetHDiv;
 
-    layout->addWidget(box1);
+    layout->addWidget(box1, 0, Qt::AlignCenter);
     layout->addWidget(div2);
     layout->addWidget(box2);
     layout->addWidget(div3);

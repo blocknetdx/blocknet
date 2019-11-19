@@ -19,10 +19,6 @@ public:
     void setIcon(const QString active, const QString disabled);
     void setLabel(const QString &label);
 
-Q_SIGNALS:
-
-public Q_SLOTS:
-
 protected:
     void paintEvent(QPaintEvent *e) override;
 

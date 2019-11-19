@@ -4,18 +4,19 @@
 
 #include <qt/blocknetsettings.h>
 
+#include <qt/blocknetcheckbox.h>
 #include <qt/blocknetdialog.h>
 #include <qt/blocknetguiutil.h>
 
 #include <qt/bitcoinunits.h>
 #include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
-#include <qt/utilitydialog.h>
 
+#include <qt/utilitydialog.h>
 #include <netbase.h>
 #include <txdb.h>
-#include <validation.h>
 
+#include <validation.h>
 #include <QApplication>
 #include <QDir>
 #include <QMessageBox>
@@ -30,7 +31,7 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
 
     content = new QFrame;
     content->setContentsMargins(BGU::spi(37), 0, BGU::spi(40), BGU::spi(40));
-    content->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    content->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Expanding);
     content->setObjectName("contentFrame");
     contentLayout = new QVBoxLayout;
     content->setLayout(contentLayout);
@@ -71,36 +72,42 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
     generalLbl = new QLabel(tr("General"));
     generalLbl->setObjectName("h2");
 
-    startWalletOnLoginCb = new QCheckBox(tr("Start Blocknet on system login"));
+    startWalletOnLoginCb = new BlocknetCheckBox(tr("Start Blocknet on system login"));
     startWalletOnLoginCb->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
 
-    auto *generalBox = new QFrame;
-    auto *generalBoxLayout = new QVBoxLayout;
+    auto *generalGrid = new QFrame;
+    generalGrid->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
+    generalGrid->setContentsMargins(QMargins());
+    auto *generalBoxLayout = new QGridLayout;
     generalBoxLayout->setContentsMargins(QMargins());
-    generalBox->setLayout(generalBoxLayout);
+    generalBoxLayout->setSizeConstraint(QLayout::SetMinimumSize);
+    generalGrid->setLayout(generalBoxLayout);
 
     auto *sizeDbCacheBox = new QFrame;
+    sizeDbCacheBox->setContentsMargins(QMargins());
     auto *sizeDbCacheLayout = new QHBoxLayout;
+    sizeDbCacheLayout->setContentsMargins(QMargins());
     sizeDbCacheBox->setLayout(sizeDbCacheLayout);
     sizeDbCacheLbl = new QLabel(tr("Size of database cache (in megabytes):"));
     sizeDbCacheLbl->setObjectName("title");
     dbCacheSb = new QSpinBox;
-    sizeDbCacheLayout->addWidget(sizeDbCacheLbl);
-    sizeDbCacheLayout->addWidget(dbCacheSb);
-    sizeDbCacheLayout->addStretch(1);
+    sizeDbCacheLayout->addWidget(sizeDbCacheLbl, 0, Qt::AlignLeft);
+    sizeDbCacheLayout->addWidget(dbCacheSb, 0, Qt::AlignLeft);
 
     auto *verificationThreadsBox = new QFrame;
+    verificationThreadsBox->setContentsMargins(QMargins());
     auto *verificationThreadsBoxLayout = new QHBoxLayout;
+    verificationThreadsBoxLayout->setContentsMargins(QMargins());
     verificationThreadsBox->setLayout(verificationThreadsBoxLayout);
     verificationThreadsLbl = new QLabel(tr("Number of script verification threads:"));
     verificationThreadsLbl->setObjectName("title");
     threadsSb = new QSpinBox;
-    verificationThreadsBoxLayout->addWidget(verificationThreadsLbl);
-    verificationThreadsBoxLayout->addWidget(threadsSb);
-    verificationThreadsBoxLayout->addStretch(1);
+    verificationThreadsBoxLayout->addWidget(verificationThreadsLbl, 0, Qt::AlignLeft);
+    verificationThreadsBoxLayout->addWidget(threadsSb, 0, Qt::AlignLeft);
 
-    generalBoxLayout->addWidget(sizeDbCacheBox);
-    generalBoxLayout->addWidget(verificationThreadsBox);
+    generalBoxLayout->addWidget(startWalletOnLoginCb, 0, 0, Qt::AlignLeft);
+    generalBoxLayout->addWidget(sizeDbCacheBox, 1, 0, Qt::AlignLeft);
+    generalBoxLayout->addWidget(verificationThreadsBox, 2, 0, Qt::AlignLeft);
 
     auto *generalDiv = new QLabel;
     generalDiv->setFixedHeight(1);
@@ -110,18 +117,18 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
     walletLbl->setObjectName("h2");
 
     auto *walletGrid = new QFrame;
+    walletGrid->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     walletGrid->setContentsMargins(QMargins());
     auto *walletLayout = new QGridLayout;
     walletLayout->setContentsMargins(QMargins());
     walletLayout->setColumnMinimumWidth(0, BGU::spi(200));
     walletGrid->setLayout(walletLayout);
 
-    spendChangeCb = new QCheckBox(tr("Spend unconfirmed change"));
-    spendChangeCb->setFixedWidth(BGU::spi(300));
-
+    spendChangeCb = new BlocknetCheckBox(tr("Spend unconfirmed change"));
     walletLayout->addWidget(spendChangeCb, 0, 0, Qt::AlignLeft);
 
     auto *buttonGrid = new QFrame;
+    buttonGrid->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     buttonGrid->setContentsMargins(QMargins());
     auto *buttonLayout = new QGridLayout;
     buttonLayout->setContentsMargins(QMargins());
@@ -141,31 +148,31 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
     networkLbl->setObjectName("h2");
 
     auto *networkGrid = new QFrame;
-    networkGrid->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    networkGrid->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     networkGrid->setContentsMargins(QMargins());
     auto *networkLayout = new QGridLayout;
     networkLayout->setContentsMargins(QMargins());
-    const int colWidth = BGU::spi(250);
-    networkLayout->setColumnMinimumWidth(0, colWidth);
-    networkLayout->setColumnMinimumWidth(1, colWidth);
-    networkLayout->setRowMinimumHeight(0, BGU::spi(35));
-    networkLayout->setRowMinimumHeight(1, BGU::spi(35));
-    networkLayout->setRowMinimumHeight(2, BGU::spi(50));
+//    const int colWidth = BGU::spi(100);
+//    networkLayout->setColumnMinimumWidth(0, colWidth);
+//    networkLayout->setColumnMinimumWidth(1, colWidth);
+//    networkLayout->setRowMinimumHeight(0, BGU::spi(35));
+//    networkLayout->setRowMinimumHeight(1, BGU::spi(35));
+//    networkLayout->setRowMinimumHeight(2, BGU::spi(50));
     networkGrid->setLayout(networkLayout);
 
-    upnpCb = new QCheckBox(tr("Map port using UPnP"));
-    allowIncomingCb = new QCheckBox(tr("Allow incoming connections"));
-    connectSocks5Cb = new QCheckBox(tr("Connect through SOCKS5 proxy (default proxy)"));
-    upnpCb->setMinimumWidth(colWidth);
-    allowIncomingCb->setMinimumWidth(colWidth);
-    connectSocks5Cb->setMinimumWidth(colWidth*2); // spans 2 columns
+    upnpCb = new BlocknetCheckBox(tr("Map port using UPnP"));
+    allowIncomingCb = new BlocknetCheckBox(tr("Allow incoming connections"));
+    connectSocks5Cb = new BlocknetCheckBox(tr("Connect through SOCKS5 proxy (default proxy)"));
+//    upnpCb->setMinimumWidth(colWidth);
+//    allowIncomingCb->setMinimumWidth(colWidth);
+//    connectSocks5Cb->setMinimumWidth(colWidth*2); // spans 2 columns
 
-    proxyTi = new BlocknetLineEditWithTitle(tr("Proxy IP"), tr("Enter proxy ip address..."), BGU::spi(200));
+    proxyTi = new BlocknetLineEditWithTitle(tr("Proxy IP"), tr("Enter proxy ip address..."), BGU::spi(100));
     proxyTi->setObjectName("address");
     proxyTi->lineEdit->setMaxLength(50);
     proxyTi->setEnabled(false); // default to disabled
 
-    portTi = new BlocknetLineEditWithTitle(tr("Port"), tr("Enter port number..."), BGU::spi(200));
+    portTi = new BlocknetLineEditWithTitle(tr("Port"), tr("Enter port number..."), BGU::spi(100));
     portTi->lineEdit->setValidator(new QIntValidator(1, 65535, this));
     portTi->setObjectName("address");
     portTi->setEnabled(false); // default to disabled
@@ -209,7 +216,6 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
 
     contributeLbl = new QLabel(tr("Language missing or translation incomplete? Help contributing translations"));
     contributeLbl->setObjectName("description");
-    contributeLbl->setFixedWidth(BGU::spi(425));
 
     contributeLblBtn = new BlocknetLabelBtn;
     contributeLblBtn->setText(tr("here."));
@@ -221,12 +227,14 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
     auto *unitsBox = new QFrame;
     auto *unitsLayout = new QHBoxLayout;
     unitsLayout->setContentsMargins(QMargins());
+    unitsLayout->setSizeConstraint(QLayout::SetMinimumSize);
     unitsBox->setLayout(unitsLayout);
 
     unitsLbl = new QLabel(tr("Units to show amounts in:"));
     unitsLbl->setObjectName("title");
 
     unitsDropdown = new BlocknetDropdown;
+    unitsDropdown->setMaximumWidth(BGU::spi(100));
     unitsDropdown->setModel(new BitcoinUnits(this));
 
     decimalLbl = new QLabel(tr("Decimal digits:"));
@@ -236,7 +244,7 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
 
     unitsLayout->addWidget(unitsLbl, 0, Qt::AlignLeft);
     unitsLayout->addWidget(unitsDropdown, 0, Qt::AlignLeft);
-    unitsLayout->addStretch(1);
+    unitsLayout->addStretch();
 //    unitsLayout->addWidget(decimalLbl);
 //    unitsLayout->addWidget(decimalDropdown); // TODO Blocknet Qt decimal dropdown
 
@@ -265,9 +273,7 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
     contentLayout->addSpacing(BGU::spi(15));
     contentLayout->addWidget(generalLbl);
     contentLayout->addSpacing(BGU::spi(15));
-    contentLayout->addWidget(startWalletOnLoginCb);
-    contentLayout->addSpacing(BGU::spi(15));
-    contentLayout->addWidget(generalBox);
+    contentLayout->addWidget(generalGrid);
     contentLayout->addSpacing(BGU::spi(15));
     contentLayout->addWidget(generalDiv);
     contentLayout->addSpacing(BGU::spi(15));

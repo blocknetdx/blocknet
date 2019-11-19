@@ -13,17 +13,18 @@
 BlocknetIconLabel::BlocknetIconLabel(QPushButton *parent) : QPushButton(parent),
     icon(new QLabel), label(new QLabel), layout(new QHBoxLayout)
 {
-    this->setMinimumHeight(BGU::spi(40));
     this->setCheckable(true);
     this->setFlat(true);
     this->setCursor(Qt::PointingHandCursor);
 
     icon->setFixedSize(BGU::spi(30), BGU::spi(30));
+    label->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
 
     layout->setContentsMargins(QMargins());
+    layout->setSizeConstraint(QLayout::SetMinimumSize);
     layout->setSpacing(BGU::spi(10));
-    layout->addWidget(icon, 0, Qt::AlignVCenter | Qt::AlignLeft);
-    layout->addWidget(label, 1, Qt::AlignVCenter | Qt::AlignLeft);
+    layout->addWidget(icon);
+    layout->addWidget(label);
 
     this->setLayout(layout);
 
@@ -58,7 +59,7 @@ void BlocknetIconLabel::paintEvent(QPaintEvent *e) {
 
         pm.setDevicePixelRatio(BGU::dpr());
         icon->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
-        icon->setPixmap(pm.scaledToHeight(pm.height()*pm.devicePixelRatio(), Qt::SmoothTransformation));
+        icon->setPixmap(pm.scaledToHeight(icon->height()*0.9*pm.devicePixelRatio(), Qt::SmoothTransformation));
     }
 
     QPushButton::paintEvent(e);
