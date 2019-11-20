@@ -709,7 +709,7 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
 {
     if (request.fHelp || !request.params.empty())
         throw std::runtime_error(
-            RPCHelpMan{"servicenodeping",
+            RPCHelpMan{"servicenodesendping",
                 "\nSends the service node ping to the Blocknet network for the active node. This updates the network "
                 "with the latest service node configs.\n",
                 {},
@@ -725,8 +725,8 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
                 "}\n"
                 },
                 RPCExamples{
-                    HelpExampleCli("servicenodeping", "")
-                  + HelpExampleRpc("servicenodeping", "")
+                    HelpExampleCli("servicenodesendping", "")
+                  + HelpExampleRpc("servicenodesendping", "")
                 },
             }.ToString());
 
