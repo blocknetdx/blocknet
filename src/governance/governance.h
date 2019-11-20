@@ -1550,9 +1550,7 @@ public:
 
         // If not voting transactions were created, return error
         if (txCounter == 0) {
-            *failReasonRet = strprintf("Failed to submit votes, no votes were created, is the wallet unlocked and have "
-                                       "sufficient funds? Did you already cast all available votes? Funds required: %s",
-                                       FormatMoney(params.voteBalance));
+            *failReasonRet = strprintf("Failed to submit votes, all unspent transaction inputs might already be in use");
             return error(failReasonRet->c_str());
         }
 
