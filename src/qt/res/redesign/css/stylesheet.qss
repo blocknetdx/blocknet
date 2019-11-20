@@ -128,10 +128,10 @@ BlocknetProposals QTableWidget #indicator[state="0"] { background-color: #4BF5C6
 BlocknetProposals QTableWidget #indicator[state="1"] { background-color: #F8BF1C; }
 BlocknetProposals QTableWidget #indicator[state="2"] { background-color: #FB7F70; }
 BlocknetProposals QTableWidget::item { padding: 3px; }
-BlocknetProposalsVoteDialog { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
-BlocknetProposalsVoteDialog #description { font-size: 10pt; color: #6F8097; font-family: "Roboto"; }
-BlocknetProposalsVoteDialog #value { font-size: 10pt; color: white; font-family: "Roboto"; bold: true; }
-BlocknetProposalsVoteDialog QRadioButton, BlocknetProposalsVoteDialog QCheckBox { font-size: 11pt; }
+BlocknetProposalsVoteDialog, BlocknetProposalsDetailsDialog { background-color: QLinearGradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #000D20, stop: 1 #0C2448); }
+BlocknetProposalsVoteDialog #description, BlocknetProposalsDetailsDialog #description { font-size: 10pt; color: #6F8097; font-family: "Roboto"; }
+BlocknetProposalsVoteDialog #value, BlocknetProposalsDetailsDialog #value { font-size: 10pt; color: white; font-family: "Roboto"; bold: true; }
+BlocknetProposalsVoteDialog QRadioButton, BlocknetProposalsDetailsDialog QRadioButton, BlocknetProposalsVoteDialog QCheckBox, BlocknetProposalsDetailsDialog QCheckBox { font-size: 11pt; }
 BlocknetCreateProposalPage #h4 { font-size: 14pt; color: white; }
 BlocknetCreateProposalPage #detail { font-size: 11pt; color: white; }
 

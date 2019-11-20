@@ -210,7 +210,7 @@ int BlocknetCreateProposal3::collateralConfirmations() {
     LOCK(cs_main);
     CBlockIndex *pindex = LookupBlockIndex(block);
     if (pindex)
-        return chainActive.Height() - pindex->nHeight;
+        return chainActive.Height() - pindex->nHeight + 1; // tip height - proposal height = 1 conf
 
     return -1;
 }

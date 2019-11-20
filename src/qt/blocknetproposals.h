@@ -53,6 +53,7 @@ public:
         QString results;
         gov::VoteType vote;
         QString voteString;
+        CAmount voteAmount;
     };
 
     void clear() {
@@ -77,10 +78,11 @@ public Q_SLOTS:
 private Q_SLOTS:
     void onItemChanged(QTableWidgetItem *item);
     void onFilter();
+    void showProposalDetails(const BlocknetProposal & proposal);
 
 private:
     int getChainHeight() const {
-        int height{0};
+        int height{std::numeric_limits<int>::max()};
         {
             LOCK(cs_main);
             height = chainActive.Height();
@@ -149,10 +151,20 @@ private:
 class BlocknetProposalsVoteDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit BlocknetProposalsVoteDialog(BlocknetProposals::BlocknetProposal & proposal, int displayUnit, QWidget *parent = nullptr);
+    explicit BlocknetProposalsVoteDialog(const BlocknetProposals::BlocknetProposal & proposal, int displayUnit, QWidget *parent = nullptr);
 
 Q_SIGNALS:
-    void submitVote(uint256 proposalHash, bool yes, bool no, bool abstain, bool voteMany);
+    void submitVote(uint256 proposalHash, bool yes, bool no, bool abstain);
+
+protected:
+
+private:
+};
+
+class BlocknetProposalsDetailsDialog : public QDialog {
+    Q_OBJECT
+public:
+    explicit BlocknetProposalsDetailsDialog(const BlocknetProposals::BlocknetProposal & proposal, int displayUnit, QWidget *parent = nullptr);
 
 protected:
 
