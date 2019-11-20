@@ -975,7 +975,7 @@ public:
      * @param consensus Chain params
      * @return
      */
-    std::tuple<int, VoteType> getMyVotes(const uint256 & hash, CCoinsViewCache *coinsTip,
+    std::tuple<int, VoteType, bool, CAmount> getMyVotes(const uint256 & hash, CCoinsViewCache *coinsTip,
             std::vector<std::shared_ptr<CWallet>> & wallets, const Consensus::Params & consensus)
     {
         std::map<uint256, Vote> copyVotes;
@@ -1000,10 +1000,13 @@ public:
             }
         }
 
+        bool voted{false};
         int voteCount{0};
-        if (voteAmount > 0)
+        if (voteAmount > 0) {
+            voted = true;
             voteCount = voteAmount/consensus.voteBalance;
-        return { voteCount, vtype };
+        }
+        return { voteCount, vtype, voted, voteAmount };
     }
 
     /**
