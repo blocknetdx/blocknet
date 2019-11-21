@@ -799,7 +799,7 @@ public:
             const int end = k == cores-1 ? blockHeight+1 // check bounds, +1 due to "<" logic below, ensure inclusion of last block
                                          : start+slice;
             tg.create_thread([start,end,&spentPrevouts,&failed,&failReasonRet,&chain,&chainMutex,&mut,this] {
-                RenameThread("bitcoin-governance");
+                RenameThread("blocknet-governance");
                 for (int blockNumber = start; blockNumber < end; ++blockNumber) {
                     if (ShutdownRequested()) { // don't hold up shutdown requests
                         failed = true;
@@ -862,7 +862,7 @@ public:
                                          : start+slice;
             try {
                 tg.create_thread([start,end,&tmpvotes,&spentPrevouts,&failed,&mut,this] {
-                    RenameThread("bitcoin-governance");
+                    RenameThread("blocknet-governance");
                     for (int i = start; i < end; ++i) {
                         if (ShutdownRequested()) { // don't hold up shutdown requests
                             failed = true;

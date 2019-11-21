@@ -293,7 +293,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     Mutex mu;
     for (const auto & shard : slices) {
         tg.create_thread([&shard,&hashes,&mu,&allIndices,&counter,consensusParams] {
-            RenameThread("bitcoin-blockindex");
+            RenameThread("blocknet-blockindex");
             for (auto & diskindex : shard) {
                 if (ShutdownRequested())
                     break;

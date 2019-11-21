@@ -396,7 +396,7 @@ void TxIndex::ThreadSync()
     for (const auto & shard : slices) {
         try {
             tg.create_thread([&shard,&mu,&allIndices,&counter,consensus,this] {
-                RenameThread("bitcoin-txindex");
+                RenameThread("blocknet-txindex");
                 for (int i = shard.begin; i <= shard.end; ++i) {
                     if (ShutdownRequested())
                         break;
