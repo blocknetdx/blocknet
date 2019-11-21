@@ -23,7 +23,7 @@ BlocknetLineEditWithTitle::BlocknetLineEditWithTitle(QString title, QString plac
     layout->addWidget(titleLbl);
 
     lineEdit = new BlocknetLineEdit(w);
-    lineEdit->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Minimum);
+    lineEdit->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Preferred);
     lineEdit->setPlaceholderText(placeholder);
     layout->addWidget(lineEdit, 1);
 
@@ -31,7 +31,7 @@ BlocknetLineEditWithTitle::BlocknetLineEditWithTitle(QString title, QString plac
 }
 
 QSize BlocknetLineEditWithTitle::sizeHint() const {
-    return { lineEdit->width(), lineEdit->height() + 3 + titleLbl->height() };
+    return { lineEdit->width(), BGU::spi(30) + layout->spacing() + titleLbl->height() };
 }
 
 bool BlocknetLineEditWithTitle::isEmpty() {
