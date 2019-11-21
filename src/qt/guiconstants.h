@@ -47,10 +47,10 @@ static const int MAX_URI_LENGTH = 255;
 #define SPINNER_FRAMES 36
 
 #define QAPP_ORG_NAME "Blocknet4"
-#define QAPP_ORG_DOMAIN "v4.blocknet.co"
-#define QAPP_APP_NAME_DEFAULT "Blocknet4"
-#define QAPP_APP_NAME_TESTNET "Blocknet4-testnet"
-#define QAPP_APP_NAME_REGTEST "Blocknet4-regtest"
+#define QAPP_ORG_DOMAIN "blocknet.co"
+#define QAPP_APP_NAME_DEFAULT "Blocknet"
+#define QAPP_APP_NAME_TESTNET "Blocknet-testnet"
+#define QAPP_APP_NAME_REGTEST "Blocknet-regtest"
 
 /* One gigabyte (GB) in bytes */
 static constexpr uint64_t GB_BYTES{1000000000};
