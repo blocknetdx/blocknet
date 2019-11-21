@@ -7,7 +7,6 @@
 
 BlocknetCheckBox::BlocknetCheckBox(const QString & text, QWidget *parent) : QCheckBox(text, parent) {
     this->setContentsMargins(QMargins());
-    this->setIconSize({BGU::spi(30), BGU::spi(30)});
 #ifndef Q_OS_MAC
     this->setStyleSheet("BlocknetCheckBox::indicator:checked { image: url(:/redesign/checkmark-on); background-color: #016AFF; border: 1px solid #cccccc; } "
             "BlocknetCheckBox::indicator:unchecked { image: url(:/redesign/checkmark-off); background-color: #016AFF; border: 1px solid #cccccc; }");
