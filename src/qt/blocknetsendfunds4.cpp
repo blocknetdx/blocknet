@@ -153,7 +153,7 @@ void BlocknetSendFunds4::fillWalletData() {
     feeValueLbl->setText(feeText(BitcoinUnits::formatWithUnit(displayUnit, fees)));
     if (model->subtractFee())
         total -= fees;
-    totalValueLbl->setText(totalText(BitcoinUnits::formatWithUnit(displayUnit, (walletModel->wallet().isLocked() ? fees : 0) + total)));
+    totalValueLbl->setText(totalText(BitcoinUnits::formatWithUnit(displayUnit, fees + total)));
 }
 
 /**
@@ -341,8 +341,13 @@ void BlocknetSendFunds4::onSubmit() {
         WalletModel::SendCoinsReturn sendStatus = model->txStatus();
         const auto feeMsg = BitcoinUnits::formatWithUnit(walletModel->getOptionsModel()->getDisplayUnit(),
                                                          model->txFees());
+        if (!model->hasWalletTx()) { // if we haven't prepared the tx yet, do it now
+            CCoinControl cc = model->getCoinControl(walletModel);
+            sendStatus = model->prepareFunds(walletModel, cc);
+        }
 
-        if (!model->hasWalletTx() || sendStatus.status != WalletModel::OK) {
+        // Check for bad status
+        if (sendStatus.status != WalletModel::OK) {
             // process prepareStatus and on error generate message shown to user
             auto res = BlocknetSendFundsPage::processSendCoinsReturn(walletModel, sendStatus, feeMsg);
             if (res.second)
