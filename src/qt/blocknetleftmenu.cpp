@@ -16,7 +16,7 @@
 #include <QSettings>
 #include <QSizePolicy>
 
-BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new QVBoxLayout) {
+BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new QVBoxLayout), selected(DASHBOARD) {
     this->setLayout(layout);
     this->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     layout->setContentsMargins(0, BGU::spi(20), 0, 0);
@@ -25,8 +25,12 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     QPixmap pm(":/redesign/white_blocknet_logo.png");
     pm.setDevicePixelRatio(BGU::dpr());
     logo = new QLabel(tr("Blocknet Logo"));
-    logo->setMaximumSize(BGU::spi(200), BGU::spi(50));
-    logo->setPixmap(pm.scaledToHeight(logo->height(), Qt::SmoothTransformation));
+    const auto lw = static_cast<qreal>(BGU::spi(150));
+    const auto pw = static_cast<qreal>(pm.width());
+    const auto ph = static_cast<qreal>(pm.height());
+    logo->setFixedSize((int)lw, (int)(ph / pw * lw));
+    logo->setPixmap(pm.scaled(logo->width()*pm.devicePixelRatio(), logo->height()*pm.devicePixelRatio(),
+            Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
     balanceLbl = new QLabel(tr("Total Balance:"));
     balanceLbl->setObjectName("balanceLbl");
@@ -101,18 +105,13 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     box1->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Preferred);
     box1->setLayout(new QVBoxLayout);
     box1->setContentsMargins(padding);
-    auto *boxLogo = new QFrame;
-    boxLogo->setLayout(new QVBoxLayout);
-    boxLogo->layout()->setContentsMargins(QMargins());
-    boxLogo->layout()->setSpacing(BGU::spi(14));
-    boxLogo->layout()->addWidget(logo);
     auto *boxBalance = new QFrame;
     boxBalance->setLayout(new QVBoxLayout);
     boxBalance->layout()->setContentsMargins(QMargins());
     boxBalance->layout()->setSpacing(BGU::spi(2));
     boxBalance->layout()->addWidget(balanceLbl);
     boxBalance->layout()->addWidget(balanceAmountLbl);
-    dynamic_cast<QVBoxLayout*>(box1->layout())->addWidget(boxLogo, 0, Qt::AlignLeft);
+    dynamic_cast<QVBoxLayout*>(box1->layout())->addWidget(logo, 0, Qt::AlignLeft);
     dynamic_cast<QVBoxLayout*>(box1->layout())->addWidget(boxBalance, 0, Qt::AlignLeft);
 
     auto *box2 = new QFrame;
