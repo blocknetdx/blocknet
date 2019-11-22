@@ -72,4 +72,19 @@ double WalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & exc
     return amount;
 }
 
+/**
+ * \brief Generate and return new wallet address
+ */
+std::string WalletConnector::getNewTokenAddress()
+{
+    std::string newaddress = "";
+    if (!getNewAddress(newaddress))
+    {
+        LOG() << "getNewAddress failed " << __FUNCTION__;
+        return "";
+    }
+
+    return newaddress;
+}
+
 } // namespace xbridge
