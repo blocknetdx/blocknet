@@ -389,4 +389,73 @@ public:
                        const bool fOffline = false);
 };
 
+/**
+ * Support relaying v18 Blocknet chain servicenodes
+ */
+class BlocknetServiceNode {
+public:
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(snodePubKey);
+        READWRITE(tier);
+        READWRITE(paymentAddress);
+        READWRITE(collateral);
+        READWRITE(bestBlock);
+        READWRITE(bestBlockHash);
+        READWRITE(signature);
+    }
+
+    uint256 GetHash() {
+        std::set<COutPoint> vs(collateral.begin(), collateral.end());
+        CHashWriter hw(SER_GETHASH, 0);
+        hw << snodePubKey << tier << paymentAddress << vs << bestBlock << bestBlockHash << HexStr(signature);
+        return hw.GetHash();
+    }
+
+protected: // included in network serialization
+    CPubKey snodePubKey;
+    uint8_t tier;
+    CKeyID paymentAddress;
+    std::vector<COutPoint> collateral;
+    uint32_t bestBlock;
+    uint256 bestBlockHash;
+    std::vector<unsigned char> signature;
+};
+
+/**
+ * Support relaying v18 Blocknet chain servicenodes
+ */
+class BlocknetServiceNodePing {
+public:
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action, int nType, int nVersion) {
+        READWRITE(snodePubKey);
+        READWRITE(bestBlock);
+        READWRITE(bestBlockHash);
+        READWRITE(pingTime);
+        READWRITE(config);
+        READWRITE(snode);
+        READWRITE(signature);
+    }
+
+    uint256 GetHash() {
+        CHashWriter hw(SER_GETHASH, 0);
+        hw << snodePubKey << bestBlock << bestBlockHash << pingTime << config << snode << HexStr(signature);
+        return hw.GetHash();
+    }
+
+protected:
+    CPubKey snodePubKey;
+    uint32_t bestBlock;
+    uint256 bestBlockHash;
+    uint32_t pingTime;
+    std::string config;
+    BlocknetServiceNode snode;
+    std::vector<unsigned char> signature;
+};
+
 #endif

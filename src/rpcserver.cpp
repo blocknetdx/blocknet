@@ -380,6 +380,7 @@ static const CRPCCommand vRPCCommands[] =
         {"xbridge", "dxGetOrders",                          &dxGetOrders,                false, true, true},
         {"xbridge", "dxGetOrder",                           &dxGetOrder,                 false, true, true},
         {"xbridge", "dxGetLocalTokens",                     &dxGetLocalTokens,           false, true, true},
+        {"xbridge", "dxGetNewTokenAddress",                 &dxGetNewTokenAddress,       false, true, true},
         {"xbridge", "dxLoadXBridgeConf",                    &dxLoadXBridgeConf,          false, true, true},
         {"xbridge", "dxGetNetworkTokens",                   &dxGetNetworkTokens,         false, true, true},
         {"xbridge", "dxMakeOrder",                          &dxMakeOrder,                false, true, true},

@@ -50,7 +50,30 @@ using ArrayIL           = std::initializer_list<ArrayValue>;
 
 namespace bpt           = boost::posix_time;
 
+//******************************************************************************
+//******************************************************************************
+Value dxGetNewTokenAddress(const Array & params, bool fHelp)
+{
+    if (fHelp)
+        throw runtime_error("dxGetNewTokenAddress\nget new address)");
 
+    if (params.size() != 1)
+        return util::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, 
+                               "(ticker)");
+
+    const auto currency = params[0].get_str();
+    Array res;
+
+    xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
+
+    if (conn) {
+        const auto addr = conn->getNewTokenAddress();
+        if (!addr.empty())
+            res.emplace_back(addr);
+    }
+
+    return res;
+}
 
 //******************************************************************************
 //******************************************************************************

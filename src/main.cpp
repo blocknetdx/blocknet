@@ -5611,6 +5611,51 @@ bool static ProcessMessage(CNode* pfrom, string strCommand, CDataStream& vRecv, 
             }
         }
     }
+
+    // Handle new v18 base chain servicenode registrations
+    else if (strCommand == "snr") {
+        static std::set<uint256> snr;
+        BlocknetServiceNode snode;
+        vRecv >> snode;
+        const auto hash = snode.GetHash();
+        LOCK(cs_vNodes);
+        if (!snr.count(hash)) {
+            snr.insert(hash);
+            // Relay packets we haven't seen before
+            for (CNode * pnode : vNodes) {
+                if (pfrom == pnode)
+                    continue;
+                const bool shouldRelay = pnode->SuccessfullyConnected() && !pnode->Disconnecting() && !pnode->isXRouter();
+                if (shouldRelay) // do not relay to xrouter nodes
+                    pnode->PushMessage("snr", snode);
+            }
+            if (snr.size() > 100000) // clean up
+                snr.clear();
+        }
+    }
+
+    // Handle new v18 base chain servicenode pings
+    else if (strCommand == "snp") {
+        static std::set<uint256> snp;
+        BlocknetServiceNodePing ping;
+        vRecv >> ping;
+        const auto hash = ping.GetHash();
+        LOCK(cs_vNodes);
+        if (!snp.count(hash)) {
+            snp.insert(hash);
+            // Relay packets we haven't seen before
+            for (CNode *pnode : vNodes) {
+                if (pfrom == pnode)
+                    continue;
+                const bool shouldRelay = pnode->SuccessfullyConnected() && !pnode->Disconnecting() && !pnode->isXRouter();
+                if (shouldRelay) // do not relay to xrouter nodes
+                    pnode->PushMessage("snp", ping);
+            }
+            if (snp.size() > 100000) // clean up
+                snp.clear();
+        }
+    }
+
     else
     {
         //probably one the extensions
