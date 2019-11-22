@@ -140,6 +140,40 @@ CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& 
     };
 }
 
+UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetNewTokenAddress",
+                "\nget new address\n",
+                {},
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetNewTokenAddress", "BTC")
+                  + HelpExampleRpc("dxGetNewTokenAddress", "BTC")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+
+    if (params.size() != 1)
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "(ticker)"));
+
+    const auto currency = params[0].get_str();
+    Array res;
+
+    xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
+
+    if (conn) {
+        const auto addr = conn->getNewTokenAddress();
+        if (!addr.empty())
+            res.emplace_back(addr);
+    }
+
+    return uret(res);
+}
+
 UniValue dxLoadXBridgeConf(const JSONRPCRequest& request)
 {
     if (request.fHelp)
@@ -1846,6 +1880,7 @@ static const CRPCCommand commands[] =
     { "xbridge",            "dxGetOrder",              &dxGetOrder,              {} },
     { "xbridge",            "dxGetLocalTokens",        &dxGetLocalTokens,        {} },
     { "xbridge",            "dxLoadXBridgeConf",       &dxLoadXBridgeConf,       {} },
+    { "xbridge",            "dxGetNewTokenAddress",    &dxGetNewTokenAddress,    {} },
     { "xbridge",            "dxGetNetworkTokens",      &dxGetNetworkTokens,      {} },
     { "xbridge",            "dxMakeOrder",             &dxMakeOrder,             {} },
     { "xbridge",            "dxTakeOrder",             &dxTakeOrder,             {} },
