@@ -30,6 +30,8 @@ struct XTxIn
     {}
 };
 
+static const uint32_t SEQUENCE_FINAL = 0xffffffff;
+
 //*****************************************************************************
 //*****************************************************************************
 namespace rpc
@@ -77,6 +79,8 @@ public:
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
     double getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
+
+    std::string getNewTokenAddress();
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
