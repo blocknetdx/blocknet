@@ -142,9 +142,8 @@ ServiceFlags GetDesirableServiceFlags(ServiceFlags services) {
         return ServiceFlags(NODE_NETWORK_LIMITED | NODE_WITNESS);
     }
 
-    // TODO Blocknet update seed nodes to support witness service flag
-//    return ServiceFlags(NODE_NETWORK | NODE_WITNESS);
-    return ServiceFlags(NODE_NETWORK);
+    // Blocknet update seed nodes to support witness service flag
+    return ServiceFlags(NODE_NETWORK | NODE_WITNESS);
 }
 
 void SetServiceFlagsIBDCache(bool state) {
