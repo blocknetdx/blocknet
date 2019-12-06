@@ -136,24 +136,24 @@ struct FeeCalculation
 class CBlockPolicyEstimator
 {
 private:
-    /** Track confirm delays up to 12 blocks for short horizon */
-    static constexpr unsigned int SHORT_BLOCK_PERIODS = 12;
+    /** Track confirm delays up to 5 blocks for short horizon */
+    static constexpr unsigned int SHORT_BLOCK_PERIODS = 5; // Blocknet 5 minutes
     static constexpr unsigned int SHORT_SCALE = 1;
-    /** Track confirm delays up to 48 blocks for medium horizon */
-    static constexpr unsigned int MED_BLOCK_PERIODS = 24;
+    /** Track confirm delays up to 10 blocks for medium horizon */
+    static constexpr unsigned int MED_BLOCK_PERIODS = 5; // Blocknet 10 minutes
     static constexpr unsigned int MED_SCALE = 2;
-    /** Track confirm delays up to 1008 blocks for long horizon */
-    static constexpr unsigned int LONG_BLOCK_PERIODS = 42;
-    static constexpr unsigned int LONG_SCALE = 24;
+    /** Track confirm delays up to 40 blocks for long horizon */
+    static constexpr unsigned int LONG_BLOCK_PERIODS = 10; // Blocknet 40 minutes
+    static constexpr unsigned int LONG_SCALE = 4;
     /** Historical estimates that are older than this aren't valid */
-    static const unsigned int OLDEST_ESTIMATE_HISTORY = 6 * 1008;
+    static const unsigned int OLDEST_ESTIMATE_HISTORY = 7200; // Blocknet 5 days
 
-    /** Decay of .962 is a half-life of 18 blocks or about 3 hours */
-    static constexpr double SHORT_DECAY = .962;
-    /** Decay of .998 is a half-life of 144 blocks or about 1 day */
-    static constexpr double MED_DECAY = .9952;
-    /** Decay of .9995 is a half-life of 1008 blocks or about 1 week */
-    static constexpr double LONG_DECAY = .99931;
+    /** Decay of .84 is a half-life of 5 blocks or about 5 minutes */
+    static constexpr double SHORT_DECAY = .84; // Blocknet short decay
+    /** Decay of .9259 is a half-life of 10 blocks or about 10 minutes */
+    static constexpr double MED_DECAY = .9259; // Blocknet medium decay
+    /** Decay of .9825 is a half-life of 40 blocks or about 40 minutes */
+    static constexpr double LONG_DECAY = .9825; // Blocknet long decay
 
     /** Require greater than 60% of X feerate transactions to be confirmed within Y/2 blocks*/
     static constexpr double HALF_SUCCESS_PCT = .6;
@@ -162,10 +162,10 @@ private:
     /** Require greater than 95% of X feerate transactions to be confirmed within 2 * Y blocks*/
     static constexpr double DOUBLE_SUCCESS_PCT = .95;
 
-    /** Require an avg of 0.1 tx in the combined feerate bucket per block to have stat significance */
-    static constexpr double SUFFICIENT_FEETXS = 0.1;
-    /** Require an avg of 0.5 tx when using short decay since there are fewer blocks considered*/
-    static constexpr double SUFFICIENT_TXS_SHORT = 0.5;
+    /** Require an avg of 0.03 tx in the combined feerate bucket per block to have stat significance */
+    static constexpr double SUFFICIENT_FEETXS = 0.03;
+    /** Require an avg of 0.035 tx when using short decay since there are fewer blocks considered*/
+    static constexpr double SUFFICIENT_TXS_SHORT = 0.035;
 
     /** Minimum and Maximum values for tracking feerates
      * The MIN_BUCKET_FEERATE should just be set to the lowest reasonable feerate we
