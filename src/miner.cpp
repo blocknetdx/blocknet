@@ -321,7 +321,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     pblock->vtx[1] = MakeTransactionRef(std::move(coinstakeTx));
 
     // Coinbase commitment
-    pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus()); // TODO Blocknet PoS handle coinbase commitment
+    pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     pblocktemplate->vTxFees[0] = -nFees;
 
     LogPrintf("Staking - block weight: %u txs: %u fees: %ld sigops %d\n", GetBlockWeight(*pblock), nBlockTx, nFees, nBlockSigOpsCost);
