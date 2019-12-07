@@ -3073,6 +3073,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
 
         // Send the ping out if we are a snode waiting for registration
         if (smgr.hasActiveSn() && smgr.getActiveSn().keyId() == snode.getSnodePubKey().GetID()) {
+            sn::ServiceNodeMgr::writeSnRegistration(snode);
             if (!smgr.sendPing(XROUTER_PROTOCOL_VERSION, xapp.myServicesJSON(), connman))
                 LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
         }
