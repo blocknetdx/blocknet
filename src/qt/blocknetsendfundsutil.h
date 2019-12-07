@@ -261,9 +261,11 @@ public:
         walletTx_ = new WalletModelTransaction(recipients);
 
         // Check that wallet is unlocked
-        WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-        if (!ctx.isValid())
-            return WalletModel::StatusCode::TransactionCreationFailed;
+        if (walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked) {
+            WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+            if (!ctx.isValid())
+                return WalletModel::StatusCode::TransactionCreationFailed;
+        }
 
         txStatus_ = walletModel->prepareTransaction(*walletTx_, coinControl);
         txFees_ = walletTx_->getTransactionFee();

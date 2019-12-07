@@ -17,6 +17,7 @@
 #include <QKeyEvent>
 #include <QMessageBox>
 #include <QPushButton>
+#include <util/system.h>
 
 AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
     QDialog(parent),
@@ -46,6 +47,7 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
             ui->warningLabel->setText(tr("Enter the new passphrase to the wallet.<br/>Please use a passphrase of <b>ten or more random characters</b>, or <b>eight or more words</b>."));
             ui->passLabel1->hide();
             ui->passEdit1->hide();
+            ui->toggleUnlockForStakingOnly->hide();
             setWindowTitle(tr("Encrypt wallet"));
             break;
         case Unlock: // Ask passphrase
@@ -62,11 +64,13 @@ AskPassphraseDialog::AskPassphraseDialog(Mode _mode, QWidget *parent) :
             ui->passEdit2->hide();
             ui->passLabel3->hide();
             ui->passEdit3->hide();
+            ui->toggleUnlockForStakingOnly->hide();
             setWindowTitle(tr("Decrypt wallet"));
             break;
         case ChangePass: // Ask old passphrase + new passphrase x2
             setWindowTitle(tr("Change passphrase"));
             ui->warningLabel->setText(tr("Enter the old passphrase and new passphrase to the wallet."));
+            ui->toggleUnlockForStakingOnly->hide();
             break;
     }
     textChanged();
@@ -85,6 +89,10 @@ AskPassphraseDialog::~AskPassphraseDialog()
 void AskPassphraseDialog::setModel(WalletModel *_model)
 {
     this->model = _model;
+}
+
+void AskPassphraseDialog::stakingOnly() {
+    ui->toggleUnlockForStakingOnly->setChecked(true);
 }
 
 void AskPassphraseDialog::accept()
@@ -157,6 +165,7 @@ void AskPassphraseDialog::accept()
                 QMessageBox::critical(this, tr("Wallet unlock failed"),
                                       tr("The passphrase entered for the wallet decryption was incorrect."));
             } else {
+                util::unlockedForStakingOnly = ui->toggleUnlockForStakingOnly->isChecked();
                 QDialog::accept(); // Success
             }
         } catch (const std::runtime_error& e) {
@@ -171,6 +180,7 @@ void AskPassphraseDialog::accept()
         }
         else
         {
+            util::unlockedForStakingOnly = false;
             QDialog::accept(); // Success
         }
         break;

@@ -34,6 +34,8 @@ public:
 
     void setModel(WalletModel *model);
 
+    void stakingOnly();
+
 private:
     Ui::AskPassphraseDialog *ui;
     Mode mode;

@@ -154,12 +154,12 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QWidget *parent) : QFrame(p
     layout->addWidget(btnBox);
     layout->addStretch(1);
 
-    connect(amountTi, &BlocknetLineEdit::editingFinished, this, &BlocknetQuickSend::onAmountChanged);
+    connect(amountTi, &BlocknetLineEdit::textEdited, this, [this](const QString & text) {
+        onAmountChanged();
+    });
     connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
     connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
     connect(addAddressBtn, SIGNAL(clicked()), this, SLOT(openAddressBook()));
-
-    onAmountChanged();
 }
 
 bool BlocknetQuickSend::validated() {
@@ -259,9 +259,22 @@ void BlocknetQuickSend::onSubmit() {
                 .arg(BitcoinUnits::formatWithUnit(displayUnit, ::minRelayTxFee.GetFeePerK())));
         return;
     }
-    WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-    if (!ctx.isValid())
+
+    // Unlock wallet context (for relock)
+    WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
+    if (encStatus == WalletModel::EncryptionStatus::Locked || util::unlockedForStakingOnly) {
+        const bool stateUnlockForStaking = util::unlockedForStakingOnly;
+        WalletModel::UnlockContext ctx(walletModel->requestUnlock());
+        if (!ctx.isValid() || util::unlockedForStakingOnly) {
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Failed to unlock the wallet")
+                    .arg(BitcoinUnits::formatWithUnit(displayUnit, ::minRelayTxFee.GetFeePerK())));
+        } else {
+            submitFunds();
+            util::unlockedForStakingOnly = stateUnlockForStaking; // restore unlocked for staking state
+        }
         return;
+    }
+
     submitFunds();
 }
 

@@ -10,6 +10,7 @@
 #include <qt/guiutil.h>
 
 #include <key_io.h>
+#include <util/system.h>
 #include <wallet/wallet.h>
 
 #include <QDoubleValidator>
@@ -78,7 +79,7 @@ void BlocknetAddressAddDialog::accept() {
         };
         // Request to unlock the wallet
         auto encStatus = walletModel->getEncryptionStatus();
-        if (encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForStakingOnly) {
+        if (encStatus == walletModel->Locked || util::unlockedForStakingOnly) {
             WalletModel::UnlockContext ctx(walletModel->requestUnlock());
             if (!ctx.isValid()) {
                 // Unlock wallet was cancelled

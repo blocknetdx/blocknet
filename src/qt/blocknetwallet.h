@@ -93,6 +93,7 @@ protected Q_SLOTS:
     void balanceChanged(const interfaces::WalletBalances & balances);
     void displayUnitChanged(int unit);
     void processNewTransaction(const QModelIndex& parent, int start, int /*end*/);
+    void onEncryptionStatus();
 
 private:
     interfaces::Node &node;

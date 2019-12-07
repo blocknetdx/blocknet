@@ -230,4 +230,3 @@ AskPassphraseDialog, SignVerifyMessageDialog, SignVerifyMessageDialog QTabWidget
 AskPassphraseDialog QLabel, SignVerifyMessageDialog QLabel, SignVerifyMessageDialog QTabWidget QLabel, OptionsDialog QLabel, TransactionDescDialog QLabel { font-size: 10pt; font-family: "Roboto"; }
 AddressBookPage QTableView { color: white; }
 AskPassphraseDialog QCheckBox { color: auto; }
-AskPassphraseDialog, AskPassphraseDialog QLabel { color: white; background-color: #172F49; }

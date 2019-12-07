@@ -21,6 +21,7 @@
 
 #include <interfaces/node.h>
 #include <ui_interface.h>
+#include <util/system.h>
 
 #include <QAction>
 #include <QActionGroup>
@@ -279,7 +280,7 @@ void WalletView::unlockWallet()
     if(!walletModel)
         return;
     // Unlock wallet when requested by wallet model
-    if (walletModel->getEncryptionStatus() == WalletModel::Locked)
+    if (walletModel->getEncryptionStatus() == WalletModel::Locked || util::unlockedForStakingOnly)
     {
         AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this);
         dlg.setModel(walletModel);
