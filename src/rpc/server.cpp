@@ -14,6 +14,7 @@
 #include <ui_interface.h>
 #include <util/strencodings.h>
 #include <util/system.h>
+#include <wallet/rpcwallet.h>
 
 #include <boost/signals2/signal.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -558,6 +559,10 @@ UniValue CRPCTable::execute(const JSONRPCRequest &request) const
     const CRPCCommand *pcmd = tableRPC[request.strMethod];
     if (!pcmd)
         throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Method not found");
+
+    // Check if locked for staking only
+    if (util::unlockedForStakingOnly && util::unlockedForStakingOnlyBlockRPC.count(request.strMethod))
+        throw JSONRPCError(RPC_METHOD_NOT_FOUND, "Wallet is locked for staking only");
 
     try
     {

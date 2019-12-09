@@ -18,6 +18,8 @@
 #include <qt/transactiontablemodel.h>
 #include <qt/transactionview.h>
 
+#include <util/system.h>
+
 #include <QSettings>
 
 BlocknetWallet::BlocknetWallet(interfaces::Node & node, const PlatformStyle *platformStyle, QFrame *parent)
@@ -59,6 +61,7 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
         disconnect(w->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
         disconnect(w, &WalletModel::requireUnlock, this, &BlocknetWallet::unlockWallet);
         disconnect(w, &WalletModel::showProgress, this, &BlocknetWallet::showProgress);
+        disconnect(w, &WalletModel::encryptionStatusChanged, this, &BlocknetWallet::onEncryptionStatus);
     }
 
     walletModel = wallets[name];
@@ -70,6 +73,7 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
     connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
     connect(walletModel, &WalletModel::requireUnlock, this, &BlocknetWallet::unlockWallet);
     connect(walletModel, &WalletModel::showProgress, this, &BlocknetWallet::showProgress);
+    connect(walletModel, &WalletModel::encryptionStatusChanged, this, &BlocknetWallet::onEncryptionStatus);
 
     // Send funds screen
     if (sendFunds == nullptr) {
@@ -89,7 +93,7 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
         dashboard->setWalletModel(walletModel);
 
     // wallet lock state
-    setLock(walletModel->getEncryptionStatus() == WalletModel::Locked, false); // TODO Blocknet Qt locked for staking only
+    setLock(walletModel->getEncryptionStatus() == WalletModel::Locked, util::unlockedForStakingOnly);
 
     // Update balances
     balanceChanged(walletModel->wallet().getBalances());
@@ -264,6 +268,7 @@ void BlocknetWallet::changePassphrase() {
     if (!walletModel)
         return;
     AskPassphraseDialog dlg(AskPassphraseDialog::ChangePass, this);
+    dlg.setObjectName("redesign");
     dlg.setModel(walletModel);
     dlg.exec();
 }
@@ -272,6 +277,7 @@ void BlocknetWallet::encryptWallet(bool status) {
     if (!walletModel)
         return;
     AskPassphraseDialog dlg(status ? AskPassphraseDialog::Encrypt : AskPassphraseDialog::Decrypt, this);
+    dlg.setObjectName("redesign");
     dlg.setModel(walletModel);
     dlg.exec();
 
@@ -293,14 +299,22 @@ void BlocknetWallet::backupWallet() {
 
 void BlocknetWallet::onLockRequest(bool locked, bool stakingOnly) {
     if (locked) {
+        util::unlockedForStakingOnly = false;
         walletModel->setWalletLocked(locked);
     } else {
         // Unlock wallet when requested by wallet model
         AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this);
+        dlg.setObjectName("redesign");
         dlg.setModel(walletModel);
+        if (stakingOnly)
+            dlg.stakingOnly();
         dlg.exec();
     }
     Q_EMIT encryptionStatusChanged(walletModel->getEncryptionStatus());
+}
+
+void BlocknetWallet::onEncryptionStatus() {
+    setLock(walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked, util::unlockedForStakingOnly);
 }
 
 void BlocknetWallet::usedSendingAddresses() {
@@ -321,8 +335,9 @@ void BlocknetWallet::unlockWallet() {
     if (!walletModel)
         return;
     // Unlock wallet when requested by wallet model
-    if (walletModel->getEncryptionStatus() == WalletModel::Locked) {
+    if (walletModel->getEncryptionStatus() == WalletModel::Locked || util::unlockedForStakingOnly) {
         AskPassphraseDialog dlg(AskPassphraseDialog::Unlock, this);
+        dlg.setObjectName("redesign");
         dlg.setModel(walletModel);
         dlg.exec();
     }

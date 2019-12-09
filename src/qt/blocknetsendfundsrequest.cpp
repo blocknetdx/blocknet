@@ -7,6 +7,7 @@
 #include <qt/bitcoinunits.h>
 #include <qt/optionsmodel.h>
 
+#include <util/system.h>
 #include <validation.h>
 
 #include <QMessageBox>
@@ -84,7 +85,7 @@ WalletModel::SendCoinsReturn BlocknetSendFundsRequest::send(QList<SendCoinsRecip
 
     // Request to unlock the wallet
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
-    if (encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForStakingOnly) {
+    if (encStatus == walletModel->Locked || util::unlockedForStakingOnly) {
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
         if (!ctx.isValid()) {
             // Unlock wallet was cancelled

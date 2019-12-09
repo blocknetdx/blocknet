@@ -11,6 +11,7 @@
 
 #include <qt/optionsmodel.h>
 
+#include <util/system.h>
 #include <validation.h>
 
 #include <QKeyEvent>
@@ -414,11 +415,15 @@ void BlocknetSendFunds4::onSubmit() {
 
     // Unlock wallet context (for relock)
     WalletModel::EncryptionStatus encStatus = walletModel->getEncryptionStatus();
-    if (encStatus == walletModel->Locked || encStatus == walletModel->UnlockedForStakingOnly) {
+    if (encStatus == WalletModel::EncryptionStatus::Locked || util::unlockedForStakingOnly) {
+        const bool stateUnlockForStaking = util::unlockedForStakingOnly;
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
-        if (!ctx.isValid()) {// Unlock wallet was cancelled
+        if (!ctx.isValid() || util::unlockedForStakingOnly) { // Unlock wallet was cancelled
             if (warningLbl) warningLbl->setText(tr("Wallet unlock failed, please try again"));
-        } else send();
+        } else {
+            send();
+            util::unlockedForStakingOnly = stateUnlockForStaking; // restore state after send
+        }
         return;
     }
 

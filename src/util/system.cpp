@@ -1273,4 +1273,39 @@ std::pair<int, char**> WinCmdLineArgs::get()
     return std::make_pair(argc, argv);
 }
 #endif
+std::atomic<bool> unlockedForStakingOnly{false};
+const std::set<std::string> unlockedForStakingOnlyBlockRPC = {
+    // wallet
+    "resendwallettransactions",
+    "fundrawtransaction",
+    "abandontransaction",
+    "addmultisigaddress",
+    "createwallet",
+    "dumpprivkey",
+    "dumpwallet",
+    "encryptwallet",
+    "importaddress",
+    "importmulti",
+    "importprivkey",
+    "importprunedfunds",
+    "importpubkey",
+    "importwallet",
+    "loadwallet",
+    "sendmany",
+    "sendtoaddress",
+    "sethdseed",
+    "setlabel",
+    "signmessage",
+    "signrawtransactionwithwallet",
+    "walletcreatefundedpsbt",
+    "walletpassphrasechange",
+    "walletprocesspsbt",
+    // util
+    "createmultisig",
+    "signmessagewithprivkey",
+    // raw transactions
+    "fundrawtransaction",
+    "sendrawtransaction",
+    "signrawtransactionwithkey",
+};
 } // namespace util

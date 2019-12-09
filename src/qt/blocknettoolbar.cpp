@@ -184,11 +184,10 @@ void BlocknetLockIndicator::setLock(const bool locked, const bool stakingOnly) {
     lockIcon = BlocknetToolBar::getIcon(icon, tr("Wallet lock state"), QSize(BGU::spi(20), BGU::spi(16)));
     layout->addWidget(lockIcon);
 
-    if (this->locked) {
-        this->setToolTip(this->stakingOnly ? tr("Locked for staking only") : tr("Wallet is locked"));
-    } else {
-        this->setToolTip(tr("Wallet is unlocked"));
-    }
+    if (this->locked)
+        this->setToolTip(tr("Wallet is locked"));
+    else
+        this->setToolTip(this->stakingOnly ? tr("Wallet is unlocked for staking only") : tr("Wallet is unlocked"));
 }
 
 void BlocknetLockIndicator::tick() {

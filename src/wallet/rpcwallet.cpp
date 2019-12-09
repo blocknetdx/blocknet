@@ -1915,7 +1915,7 @@ static UniValue walletpassphrase(const JSONRPCRequest& request)
         return NullUniValue;
     }
 
-    if (request.fHelp || request.params.size() != 2) {
+    if (request.fHelp || request.params.size() > 3) {
         throw std::runtime_error(
             RPCHelpMan{"walletpassphrase",
                 "\nStores the wallet decryption key in memory for 'timeout' seconds.\n"
@@ -1926,6 +1926,7 @@ static UniValue walletpassphrase(const JSONRPCRequest& request)
                 {
                     {"passphrase", RPCArg::Type::STR, RPCArg::Optional::NO, "The wallet passphrase"},
                     {"timeout", RPCArg::Type::NUM, RPCArg::Optional::NO, "The time to keep the decryption key in seconds; capped at 100000000 (~3 years)."},
+                    {"unlockforstakingonly", RPCArg::Type::BOOL, "false", "Unlock for staking only"},
                 },
                 RPCResults{},
                 RPCExamples{
@@ -1933,6 +1934,8 @@ static UniValue walletpassphrase(const JSONRPCRequest& request)
             + HelpExampleCli("walletpassphrase", "\"my pass phrase\" 60") +
             "\nLock the wallet again (before 60 seconds)\n"
             + HelpExampleCli("walletlock", "") +
+            "\nUnlock the wallet for staking only for 9000000 seconds\n"
+            + HelpExampleCli("walletpassphrase", "\"my pass phrase\" 9000000 true") +
             "\nAs a JSON-RPC call\n"
             + HelpExampleRpc("walletpassphrase", "\"my pass phrase\", 60")
                 },
@@ -1972,6 +1975,12 @@ static UniValue walletpassphrase(const JSONRPCRequest& request)
     if (!pwallet->Unlock(strWalletPass)) {
         throw JSONRPCError(RPC_WALLET_PASSPHRASE_INCORRECT, "Error: The wallet passphrase entered was incorrect.");
     }
+
+    // Unlock for staking only
+    bool unlockStakingOnly{false};
+    if (request.params.size() == 3)
+        unlockStakingOnly = request.params[2].get_bool();
+    util::unlockedForStakingOnly = unlockStakingOnly;
 
     pwallet->TopUpKeyPool();
 
@@ -4200,7 +4209,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "unloadwallet",                     &unloadwallet,                  {"wallet_name"} },
     { "wallet",             "walletcreatefundedpsbt",           &walletcreatefundedpsbt,        {"inputs","outputs","locktime","options","bip32derivs"} },
     { "wallet",             "walletlock",                       &walletlock,                    {} },
-    { "wallet",             "walletpassphrase",                 &walletpassphrase,              {"passphrase","timeout"} },
+    { "wallet",             "walletpassphrase",                 &walletpassphrase,              {"passphrase","timeout","unlockforstaking"} },
     { "wallet",             "walletpassphrasechange",           &walletpassphrasechange,        {"oldpassphrase","newpassphrase"} },
     { "wallet",             "walletprocesspsbt",                &walletprocesspsbt,             {"psbt","sign","sighashtype","bip32derivs"} },
 };

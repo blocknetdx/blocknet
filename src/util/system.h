@@ -388,6 +388,9 @@ private:
 };
 #endif
 
+extern std::atomic<bool> unlockedForStakingOnly;
+extern const std::set<std::string> unlockedForStakingOnlyBlockRPC;
+
 } // namespace util
 
 #endif // BITCOIN_UTIL_SYSTEM_H
