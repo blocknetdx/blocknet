@@ -147,7 +147,7 @@ struct TestChainPoS : public TestingSetup {
                     pindex = chainActive.Tip();
                 }
                 std::vector<std::shared_ptr<CWallet>> wallets{wallet};
-                if (pindex && staker.Update(wallets, pindex, Params().GetConsensus()) && staker.TryStake(pindex, Params())) {
+                if (pindex && staker.Update(wallets, pindex, Params().GetConsensus(), true) && staker.TryStake(pindex, Params())) {
                     LOCK(cs_main);
                     auto lc = wallet->chain().lock();
                     WalletRescanReserver reserver(wallet.get());
@@ -177,7 +177,7 @@ struct TestChainPoS : public TestingSetup {
                     pindex = chainActive.Tip();
                 }
                 std::vector<std::shared_ptr<CWallet>> wallets{wallet};
-                if (pindex && staker.Update(wallets, pindex, Params().GetConsensus())) {
+                if (pindex && staker.Update(wallets, pindex, Params().GetConsensus(), true)) {
                     return staker.GetStake();
                 }
             } catch (std::exception & e) {
