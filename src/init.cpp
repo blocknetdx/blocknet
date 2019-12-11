@@ -1914,8 +1914,18 @@ bool AppInitMain(InitInterfaces& interfaces)
                 } else if (!smgr.hasActiveSn())
                     LogPrintf("Failed to register service node %s because the collateral could not be found in the wallet.", snode.alias);
             }
-            if (smgr.hasActiveSn() && !smgr.sendPing(XROUTER_PROTOCOL_VERSION, xapp.myServicesJSON(), g_connman.get()))
-                LogPrintf("Service node ping failed after registration for %s\n", smgr.getActiveSn().alias);
+            // If we are a servicenode that's active try and register with the network from cache
+            if (smgr.hasActiveSn()) {
+                const auto & activesn = smgr.getActiveSn();
+                auto snode = smgr.getSn(activesn.key.GetPubKey());
+                // Try and load snode registration from disk only if snode wasn't recently registered above
+                // to avoid overwriting state.
+                if (snode.isNull() && !smgr.loadSnRegistrationFromDisk(snode))
+                    LogPrintf("Service node auto-registration failed for %s\n", activesn.alias);
+                // Send service ping if snode is registered
+                if (!snode.isNull() && !smgr.sendPing(XROUTER_PROTOCOL_VERSION, xapp.myServicesJSON(), g_connman.get()))
+                    LogPrintf("Service node ping failed after registration for %s\n", activesn.alias);
+            }
         }
 
         // Servicenode validation interface

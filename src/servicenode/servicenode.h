@@ -76,6 +76,10 @@ public:
      * Default collateral for SPV servicenodes.
      */
     static const CAmount COLLATERAL_SPV = 5000 * COIN;
+    /**
+     * Grace period in blocks for invalid servicenode collateral.
+     */
+    static const int VALID_GRACEPERIOD_BLOCKS = 2;
 
     /**
      * Supported Servicenode Tiers
@@ -224,11 +228,12 @@ public:
 
     /**
      * Returns true if the servicenode is running. A servicenode is considered
-     * running if its last ping time was less than 4 minutes ago.
+     * running if its last ping time was less than 5 minutes ago.
      * @return
      */
     bool running() const {
-        return !invalid && GetAdjustedTime() - pingtime < 240;
+        return (!invalid || (currentBlock - invalidBlock >= 0 && currentBlock - invalidBlock <= VALID_GRACEPERIOD_BLOCKS))
+               && GetAdjustedTime() - pingtime < 300;
     }
 
     /**
@@ -444,16 +449,46 @@ public:
     /**
      * Marks or unmarks this snode as invalid.
      * @param flag Invalid state
+     * @param blockNumber when this snode was marked invalid
      */
-    void markInvalid(const bool flag = true) {
+    void markInvalid(const bool flag = true, const int blockNumber = 0) {
         invalid = flag;
+        if (!flag)
+            invalidBlock = 0; // reset state
+        else
+            invalidBlock = blockNumber;
     }
 
     /**
      * Returns the invalid state.
+     * @return
      */
     bool getInvalid() const {
         return invalid;
+    }
+
+    /**
+     * Returns the block number of invalid state.
+     * @return
+     */
+    int getInvalidBlockNumber() const {
+        return invalidBlock;
+    }
+
+    /**
+     * Set the snode's last known current block number.
+     * @param blockNumber
+     */
+    void setCurrentBlock(const int blockNumber) {
+        currentBlock = blockNumber;
+    }
+
+    /**
+     * Returns the snode's last known current block number.
+     * @return
+     */
+    int getCurrentBlock() const {
+        return currentBlock;
     }
 
 protected:
@@ -550,6 +585,8 @@ protected: // in-memory only
     CService addr;
     std::vector<std::string> services;
     bool invalid{false};
+    int invalidBlock{0};
+    int currentBlock{0};
 };
 
 typedef std::shared_ptr<ServiceNode> ServiceNodePtr;

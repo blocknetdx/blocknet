@@ -130,6 +130,30 @@ public:
     }
 
     /**
+     * Process cached registration. This skips the stale snode check.
+     * @param ss
+     * @param snode
+     * @return
+     */
+    bool processCachedRegistration(CDataStream & ss, ServiceNode & snode) {
+        ServiceNode sn;
+        try {
+            ss >> sn;
+        } catch (...) {
+            return false;
+        }
+
+        // Skip the stale check on the cached registration because we've already validated this
+        // before and this is our own snode's registration packet.
+        auto snptr = addSn(sn, true, false);
+        if (!snptr)
+            return false;
+
+        snode = *snptr;
+        return true;
+    }
+
+    /**
      * Processes a servicenode ping message from the network.
      * @param ss
      * @param ping
@@ -271,6 +295,14 @@ public:
             const std::string errMsg = "service node registration failed";
             if (failReason) *failReason = errMsg;
             return error(errMsg.c_str()); // failed to add snode
+        }
+
+        // Write latest snode registration to disk if active snode matches registration
+        const auto & activesn = getActiveSn();
+        if (!activesn.isNull()) {
+            auto s = getSn(activesn.key.GetPubKey());
+            if (!s.isNull())
+                writeSnRegistration(s);
         }
 
         // Relay
@@ -428,7 +460,9 @@ public:
         if (!gArgs.GetBoolArg("-servicenode", false))
             return std::move(ServiceNodeConfigEntry{});
         LOCK(mu);
-        return *snodeEntries.begin();
+        if (!snodeEntries.empty())
+            return *snodeEntries.begin();
+        return std::move(ServiceNodeConfigEntry{});
     }
 
     /**
@@ -537,6 +571,14 @@ public:
     }
 
     /**
+     * Returns the servicenode registration file.
+     * @return
+     */
+    static boost::filesystem::path getServiceNodeRegistrationConf() {
+        return std::move(GetDataDir() / ".servicenoderegistration");
+    }
+
+    /**
      * Returns the collateral amount required for the specified tier.
      * @param tier
      * @return
@@ -638,6 +680,53 @@ public:
         return true;
     }
 
+    /**
+     * Writes the specified snode packet to disk if it's for the active service node.
+     * @param snode
+     * @return
+     */
+    static bool writeSnRegistration(const ServiceNode & snode) {
+        if (snode.isNull())
+            return false; // do not process if snode is null
+        boost::filesystem::path fp = getServiceNodeRegistrationConf();
+        try {
+            CDataStream ss(SER_DISK, 0);
+            ss << snode;
+            boost::filesystem::ofstream file;
+            file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+            std::ios_base::openmode opts = std::ios_base::binary;
+            file.open(fp, opts);
+            file.write(ss.str().c_str(), ss.size());
+        } catch (std::exception & e) {
+            LogPrint(BCLog::SNODE, "Failed to write to .servicenoderegistration: %s\n", e.what());
+            return false;
+        } catch (...) {
+            LogPrint(BCLog::SNODE, "Failed to write to .servicenoderegistration unknown error\n");
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Loads the snode packet from disk if it exists. Returns false if cached registration does not exist.
+     * Also returns false on error.
+     * @param snode
+     * @return
+     */
+    bool loadSnRegistrationFromDisk(ServiceNode & snode) {
+        boost::filesystem::path fp = getServiceNodeRegistrationConf();
+        boost::filesystem::ifstream fs(fp);
+        if (fs.good()) {
+            std::stringstream buffer;
+            buffer << fs.rdbuf();
+            auto str = buffer.str();
+            CDataStream ss(std::vector<char>(str.begin(), str.end()), SER_DISK, 0);
+            return processCachedRegistration(ss, snode);
+        }
+        return false;
+    }
+
 protected:
     /**
      * Returns the height of the longest chain.
@@ -681,10 +770,11 @@ protected:
      * Add servicenode if valid and returns the added snode, otherwise returns nullptr.
      * @param snode
      * @param checkValid default true, skips validity check if false
+     * @param staleCheck default true, skips stale check if false
      * @return
      */
-    ServiceNodePtr addSn(const ServiceNode & snode, const bool checkValid = true) {
-        if (checkValid && !snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
+    ServiceNodePtr addSn(const ServiceNode & snode, const bool checkValid = true, const bool staleCheck = true) {
+        if (checkValid && !snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc, staleCheck))
             return nullptr;
         removeSnWithCollateral(snode);
         auto ptr = std::make_shared<ServiceNode>(snode);
@@ -809,8 +899,8 @@ protected:
                 registrationCoins(*locked_chain, wallet.get(), coins);
             }
             for (const auto & coin : coins) {
-                if (coin.nDepth < 1)
-                    continue; // skip coin that doesn't have confirmations
+                if (coin.nDepth < 2)
+                    continue; // skip coin that doesn't have required confirmations
                 if (excludedUtxos.count(coin.GetInputCoin().outpoint) > 0)
                     continue; // skip coin already used in other snodes
                 CTxDestination destination;
@@ -945,7 +1035,7 @@ protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) override
     {
-        processValidationBlock(block, true);
+        processValidationBlock(block, true, pindex->nHeight);
     }
 
     void BlockDisconnected(const std::shared_ptr<const CBlock>& block) override {
@@ -953,9 +1043,16 @@ protected:
     }
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override {
+        if (fInitialDownload)
+            return; // do not try and register snode during initial download
+
         std::set<ServiceNodeConfigEntry> copyReregister;
         {
             LOCK(mu);
+            // Update current block number on snode list
+            for (auto & item : snodes)
+                item.second->setCurrentBlock(pindexNew->nHeight);
+            // Check if we need to re-register any snodes
             if (reregister.empty())
                 return;
             copyReregister = reregister;
@@ -965,10 +1062,11 @@ protected:
         auto wallets = GetWallets();
         for (auto & snode : copyReregister) {
             std::string failReason;
-            if (!registerSn(snode, g_connman.get(), wallets, &failReason))
-                LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
-            else
+            if (registerSn(snode, g_connman.get(), wallets, &failReason)) {
+                LogPrintf("Service node registration succeeded for %s\n", snode.alias);
                 remove.insert(snode);
+            } else
+                LogPrintf("Retrying service node %s registration on the next block\n", snode.alias);
         }
 
         // Erase successfully re-registered service nodes from the list
@@ -979,7 +1077,7 @@ protected:
         }
     }
 
-    void processValidationBlock(const std::shared_ptr<const CBlock>& block, const bool connected) {
+    void processValidationBlock(const std::shared_ptr<const CBlock>& block, const bool connected, const int blockNumber=0) {
         // Store all spent vins
         std::set<COutPoint> spent;
         for (const auto & tx : block->vtx) {
@@ -996,11 +1094,13 @@ protected:
         // Check that existing snodes are valid
         {
             LOCK(mu);
-            for (const auto & item : snodes) {
+            for (auto & item : snodes) {
                 auto snode = item.second;
                 for (const auto & collateral : snode->getCollateral()) {
-                    if (spent.count(collateral))
-                        snode->markInvalid();
+                    if (spent.count(collateral)) {
+                        snode->markInvalid(true, blockNumber);
+                        break;
+                    }
                 }
             }
         }
