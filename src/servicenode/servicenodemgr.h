@@ -460,7 +460,9 @@ public:
         if (!gArgs.GetBoolArg("-servicenode", false))
             return std::move(ServiceNodeConfigEntry{});
         LOCK(mu);
-        return *snodeEntries.begin();
+        if (!snodeEntries.empty())
+            return *snodeEntries.begin();
+        return std::move(ServiceNodeConfigEntry{});
     }
 
     /**
@@ -897,8 +899,8 @@ protected:
                 registrationCoins(*locked_chain, wallet.get(), coins);
             }
             for (const auto & coin : coins) {
-                if (coin.nDepth < 1)
-                    continue; // skip coin that doesn't have confirmations
+                if (coin.nDepth < 2)
+                    continue; // skip coin that doesn't have required confirmations
                 if (excludedUtxos.count(coin.GetInputCoin().outpoint) > 0)
                     continue; // skip coin already used in other snodes
                 CTxDestination destination;
@@ -1033,7 +1035,7 @@ protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) override
     {
-        processValidationBlock(block, true);
+        processValidationBlock(block, true, pindex->nHeight);
     }
 
     void BlockDisconnected(const std::shared_ptr<const CBlock>& block) override {
@@ -1047,6 +1049,10 @@ protected:
         std::set<ServiceNodeConfigEntry> copyReregister;
         {
             LOCK(mu);
+            // Update current block number on snode list
+            for (auto & item : snodes)
+                item.second->setCurrentBlock(pindexNew->nHeight);
+            // Check if we need to re-register any snodes
             if (reregister.empty())
                 return;
             copyReregister = reregister;
@@ -1056,10 +1062,11 @@ protected:
         auto wallets = GetWallets();
         for (auto & snode : copyReregister) {
             std::string failReason;
-            if (!registerSn(snode, g_connman.get(), wallets, &failReason))
-                LogPrintf("Failed to register service node %s\n", snode.alias);
-            else
+            if (registerSn(snode, g_connman.get(), wallets, &failReason)) {
+                LogPrintf("Service node registration succeeded for %s\n", snode.alias);
                 remove.insert(snode);
+            } else
+                LogPrintf("Retrying service node %s registration on the next block\n", snode.alias);
         }
 
         // Erase successfully re-registered service nodes from the list
@@ -1070,7 +1077,7 @@ protected:
         }
     }
 
-    void processValidationBlock(const std::shared_ptr<const CBlock>& block, const bool connected) {
+    void processValidationBlock(const std::shared_ptr<const CBlock>& block, const bool connected, const int blockNumber=0) {
         // Store all spent vins
         std::set<COutPoint> spent;
         for (const auto & tx : block->vtx) {
@@ -1087,11 +1094,13 @@ protected:
         // Check that existing snodes are valid
         {
             LOCK(mu);
-            for (const auto & item : snodes) {
+            for (auto & item : snodes) {
                 auto snode = item.second;
                 for (const auto & collateral : snode->getCollateral()) {
-                    if (spent.count(collateral))
-                        snode->markInvalid();
+                    if (spent.count(collateral)) {
+                        snode->markInvalid(true, blockNumber);
+                        break;
+                    }
                 }
             }
         }

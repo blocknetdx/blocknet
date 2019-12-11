@@ -5105,10 +5105,9 @@ CTransactionRef GetTxFunc(const COutPoint & out) {
     if (!GetTransaction(out.hash, tx, Params().GetConsensus(), hashBlock))
         return nullptr;
     {
-        LOCK2(cs_main, mempool.cs);
-        CCoinsViewMemPool view(pcoinsTip.get(), mempool);
+        LOCK(cs_main);
         Coin coin;
-        if (!view.GetCoin(out, coin) || mempool.isSpent(out))
+        if (!pcoinsTip->GetCoin(out, coin))
             return nullptr;
     }
     return tx;

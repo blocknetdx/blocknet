@@ -262,7 +262,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         // Deserialize servicenode obj from network stream
         sn::ServiceNode snode;
         BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
-        BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Should fail on spent collateral in mempool");
+        BOOST_CHECK_MESSAGE(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Should not fail on spent collateral in mempool");
     }
 
     // Servicenode should be marked invalid if collateral is spent
@@ -419,10 +419,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
         UpdateInput(mtx.vin[0], sigdata);
         uint256 txid; std::string errstr; const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
         BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to spend snode collateral: %s", errstr));
-        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        pos.StakeBlocks(2), SyncWithValidationInterfaceQueue();
 
         const auto checkSnode = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
-        BOOST_CHECK_MESSAGE(checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be auto-registered after spent utxo detected");
+        BOOST_CHECK_MESSAGE(checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be auto-registered after spent utxo detected (2 confirmations)");
         // make sure spent collateral not in the new registration
         for (const auto & utxo : checkSnode.getCollateral())
             BOOST_CHECK_MESSAGE(utxo != selUtxo, "snode spent utxo should not exist after new registration");
@@ -494,7 +494,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
             collateral.emplace_back(mtx.GetHash(), 0);
             collateralTotal += mtx.vout[0].nValue;
         }
-        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue(), rescanWallet(otherwallet.get());
+        // Stake 2 blocks since that's minimum snode collateral confirmations
+        pos.StakeBlocks(2), SyncWithValidationInterfaceQueue(), rescanWallet(otherwallet.get());
         // Generate the signature from sig hash
         const auto & sighash = sn::ServiceNode::CreateSigHash(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash());
         std::vector<unsigned char> sig;
@@ -536,8 +537,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
         uint256 txid; std::string errstr;
         const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
         BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send snode collateral tx: %s", errstr));
-        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
-
+        xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
+        const auto & jservices = xbridge::App::instance().myServicesJSON();
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Refresh snode ping before running state check");
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSn(snodePubKey).running(), "Service node with recently spent collateral in grace period should still be in running state");
+        pos.StakeBlocks(2), SyncWithValidationInterfaceQueue();
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSn(snodePubKey).isValid(GetTxFunc, IsServiceNodeBlockValidFunc),  "Service node with recently staked collateral should be valid");
         UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
     }
@@ -563,7 +567,6 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     pos.Init();
 
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
-    int addedSnodes{0};
 
     // Snode registration and ping w/ uncompressed key
     {
@@ -577,8 +580,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Snode ping w/ uncompressed key");
-        ++addedSnodes;
+        BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == 1);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
 
     // Snode registration and ping w/ compressed key
@@ -593,13 +597,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Snode ping w/ compressed key");
-        ++addedSnodes;
+        BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == 1);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        sn::ServiceNodeMgr::instance().reset();
     }
-
-    // Check snode count matches number added above
-    BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == addedSnodes);
-    sn::ServiceNodeMgr::instance().reset();
 
     // Check servicenoderegister all rpc
     {
