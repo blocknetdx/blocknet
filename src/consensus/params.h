@@ -10,6 +10,7 @@
 #include <amount.h>
 #include <limits>
 #include <map>
+#include <policy/feerate.h>
 #include <string>
 #include <functional>
 
@@ -98,6 +99,8 @@ struct Params {
     CAmount proposalFee{10 * COIN};
     CAmount voteBalance{5000 * COIN};
     CAmount voteMinUtxoAmount{100 * COIN};
+    /** Fallback fee **/
+    CFeeRate defaultFallbackFee;
 };
 } // namespace Consensus
 
