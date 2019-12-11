@@ -1268,11 +1268,20 @@ void CWallet::BlockConnected(const std::shared_ptr<const CBlock>& pblock, const 
 
 void CWallet::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock) {
     auto locked_chain = chain().lock();
+    {
     LOCK(cs_wallet);
 
     for (const CTransactionRef& ptx : pblock->vtx) {
         SyncTransaction(ptx, {} /* block hash */, 0 /* position in block */);
     }
+    }
+
+    // Blocknet abandon orphaned coinstake
+    if (pblock->vtx.size() < 2)
+        return;
+    const auto & ptx = pblock->vtx[1];
+    if (ptx->IsCoinStake() && IsMine(ptx->vin[0]) && TransactionCanBeAbandoned(ptx->GetHash()))
+        AbandonTransaction(*locked_chain, ptx->GetHash());
 }
 
 

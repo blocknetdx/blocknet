@@ -129,7 +129,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         while (true) {
             try {
                 std::vector<std::shared_ptr<CWallet>> wallets{wallet};
-                if (staker.Update(wallets, tip, Params().GetConsensus()))
+                if (staker.Update(wallets, tip, Params().GetConsensus(), true))
                     break;
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
@@ -351,6 +351,40 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
         BOOST_CHECK_EQUAL(blockHash, chainActive.Tip()->GetBlockHash()); // block should not be accepted
         BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex should not update on bad stake");
+    }
+
+    // Check that orphaned coinstakes are abandoned
+    {
+        CBlock block1;
+        {
+            CBlock block;
+            CMutableTransaction coinbaseTx;
+            CMutableTransaction coinstakeTx;
+            StakeMgr::StakeCoin nextStake;
+            BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+            createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
+            block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+            coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+            BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
+            block.vtx[1] = MakeTransactionRef(coinstakeTx);
+            block.hashMerkleRoot = BlockMerkleRoot(block);
+            BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+            block1 = block;
+        }
+
+        const auto walletBalance = wallet->GetBalance();
+        BOOST_CHECK(ProcessNewBlock(Params(), std::make_shared<CBlock>(block1), true, nullptr));
+        SyncWithValidationInterfaceQueue();
+        const auto newBalance = wallet->GetBalance();
+
+        // reset chain tip
+        CValidationState state;
+        InvalidateBlock(state, Params(), chainActive.Tip());
+        ActivateBestChain(state, Params());
+        SyncWithValidationInterfaceQueue();
+
+        BOOST_CHECK_MESSAGE(newBalance != wallet->GetBalance(), "Coinstake should add reward to wallet balance");
+        BOOST_CHECK_EQUAL(walletBalance, wallet->GetBalance()); // check that coinstake is properly abandoned when invalidated/disconnected
     }
 
     // Check forking via staking
