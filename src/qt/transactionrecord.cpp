@@ -70,6 +70,7 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
                 {
                     // Generated
                     sub.type = TransactionRecord::Generated;
+                    sub.debit = -wtx.debit; // Blocknet track debit amount for coinstakes
                 }
 
                 parts.append(sub);
