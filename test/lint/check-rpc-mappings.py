@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # Copyright (c) 2017-2018 The Bitcoin Core developers
+# Copyright (c) 2019 The Blocknet developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Check RPC argument consistency."""
@@ -18,6 +19,10 @@ SOURCES = [
     "src/rpc/net.cpp",
     "src/rpc/rawtransaction.cpp",
     "src/wallet/rpcwallet.cpp",
+    "src/xbridge/rpcxbridge.cpp",
+    "src/xrouter/rpcxrouter.cpp",
+    "src/rpc/servicenode.cpp",
+    "src/rpc/governance.cpp",
 ]
 # Source file (relative to root) containing conversion mapping
 SOURCE_CLIENT = 'src/rpc/client.cpp'
@@ -114,6 +119,8 @@ def main():
     # Check mapping consistency
     errors = 0
     for (cmdname, argidx, argname) in mapping:
+        if cmdname.startswith('xr') or cmdname.startswith('dx') or cmdname == 'gettradingdata':
+            continue # Blocknet skip legacy dx & xr cmds
         try:
             rargnames = cmds_by_name[cmdname].args[argidx].names
         except IndexError:
