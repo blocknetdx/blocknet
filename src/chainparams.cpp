@@ -188,7 +188,7 @@ public:
         consensus.proposalCutoff = 2880;
         consensus.votingCutoff = 60;
         consensus.proposalMaxAmount = 40000 * COIN;
-        consensus.governanceBlock = 1209601;
+        consensus.governanceBlock = 1252801;
 
         // subsidy func mainnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
