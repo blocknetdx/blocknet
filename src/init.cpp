@@ -567,6 +567,14 @@ void SetupServerArgs()
     gArgs.AddArg("-maxmempoolxbridge", strprintf("Maximum size in MB (megabytes) for the xbridge mempool (default: %dMB)", 128), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-rpcxbridgetimeout", strprintf("Timeout for internal XBridge RPC calls (default: %d seconds)", 120), false, OptionsCategory::XBRIDGE);
 
+    // XRouter
+    gArgs.AddArg("-xrouter", strprintf("Enable XRouter services (default: %u)", true), false, OptionsCategory::XROUTER);
+    gArgs.AddArg("-xrouterbanscore", strprintf("Ban XRouter nodes who's score is lower than this value (default: %u)", -200), false, OptionsCategory::XROUTER);
+    gArgs.AddArg("-rpcxroutertimeout", strprintf("Timeout for internal XRouter RPC calls (default: %d seconds)", 60), false, OptionsCategory::XROUTER);
+
+    // Misc
+    gArgs.AddArg("-printstakemodifier", strprintf("Prints the stake modifier to the log (default: %u)", false), false, OptionsCategory::HIDDEN);
+
 #if HAVE_DECL_DAEMON
     gArgs.AddArg("-daemon", "Run in the background as a daemon and accept commands", false, OptionsCategory::OPTIONS);
 #else
