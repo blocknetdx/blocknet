@@ -94,7 +94,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     // Manually handle the button events
     btns = group->buttons();
     for (auto *btn : btns)
-        connect(btn, SIGNAL(clicked(bool)), this, SLOT(onMenuClicked(bool)));
+        connect((BlocknetIconLabel*)btn, &BlocknetIconLabel::clicked, this, &BlocknetLeftMenu::onMenuClicked);
 
     versionLbl = new QLabel(QString::fromStdString(FormatFullVersion()));
     versionLbl->setObjectName("versionLbl");

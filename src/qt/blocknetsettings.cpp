@@ -364,8 +364,8 @@ BlocknetSettings::BlocknetSettings(interfaces::Node & node, QWidget *parent) : Q
         QMessageBox::information(this, tr("Restart Required"),
                 tr("Please restart the wallet for changes to take effect."));
     });
-    connect(connectSocks5Cb, SIGNAL(toggled(bool)), proxyTi, SLOT(setEnabled(bool)));
-    connect(connectSocks5Cb, SIGNAL(toggled(bool)), portTi, SLOT(setEnabled(bool)));
+    connect(connectSocks5Cb, &QCheckBox::toggled, proxyTi, &BlocknetLineEditWithTitle::setEnabled);
+    connect(connectSocks5Cb, &QCheckBox::toggled, portTi, &BlocknetLineEditWithTitle::setEnabled);
 }
 
 void BlocknetSettings::setWalletModel(WalletModel *w) {

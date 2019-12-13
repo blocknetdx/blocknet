@@ -24,8 +24,8 @@ BlocknetFundsMenu::BlocknetFundsMenu(QFrame *parent) : QFrame(parent), layout(ne
     setupBtn(sendFundsBtn);
     setupBtn(requestFundsBtn);
 
-    connect(sendFundsBtn, SIGNAL(clicked()), this, SLOT(onLockWallet()));
-    connect(requestFundsBtn, SIGNAL(clicked()), this, SLOT(onChangePw()));
+//    connect(sendFundsBtn, &QPushButton::clicked, this, &BlocknetFundsMenu::onLockWallet);
+//    connect(requestFundsBtn, &QPushButton::clicked, this, &BlocknetFundsMenu::onChangePw);
 }
 
 void BlocknetFundsMenu::show() {

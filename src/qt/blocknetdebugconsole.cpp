@@ -210,8 +210,8 @@ BlocknetDebugConsole::BlocknetDebugConsole(interfaces::Node& node, const Platfor
     // based timer interface
     m_node.rpcSetTimerInterfaceIfUnset(rpcTimerInterface);
 
-    connect(clearButton, SIGNAL(clicked()), this, SLOT(clear()));
-    connect(lineEdit, SIGNAL(returnPressed()), this, SLOT(on_lineEdit_returnPressed()));
+    connect(clearButton, &BlocknetLabelBtn::clicked, this, &BlocknetDebugConsole::clear);
+    connect(lineEdit, &QLineEdit::returnPressed, this, &BlocknetDebugConsole::on_lineEdit_returnPressed);
     connect(clearButton, &QPushButton::clicked, this, &BlocknetDebugConsole::clear);
     connect(fontBiggerButton, &QPushButton::clicked, this, &BlocknetDebugConsole::fontBigger);
     connect(fontSmallerButton, &QPushButton::clicked, this, &BlocknetDebugConsole::fontSmaller);

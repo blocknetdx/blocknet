@@ -39,7 +39,7 @@ Q_SIGNALS:
 private Q_SLOTS:
     void onFeeDesignation();
     void onSpecificFee();
-    void onEncryptionStatus(int encStatus);
+    void onEncryptionStatus();
     void onSubtractFee();
     void onDisplayUnit(int unit);
 

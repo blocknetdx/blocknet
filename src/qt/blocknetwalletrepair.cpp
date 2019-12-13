@@ -280,12 +280,12 @@ BlocknetWalletRepair::BlocknetWalletRepair(QWidget *popup, int id, QFrame *paren
 
     layout->addWidget(scrollArea, 1);
 
-    connect(salvageWalletBtn, SIGNAL(clicked()), this, SLOT(walletSalvage()));
-    connect(rescanBlockchainBtn, SIGNAL(clicked()), this, SLOT(walletRescan()));
-    connect(transaction1Btn, SIGNAL(clicked()), this, SLOT(walletZaptxes1()));
-    connect(transaction2Btn, SIGNAL(clicked()), this, SLOT(walletZaptxes2()));
-    connect(upgradeBtn, SIGNAL(clicked()), this, SLOT(walletUpgrade()));
-    connect(rebuildBtn, SIGNAL(clicked()), this, SLOT(walletReindex()));
+    connect(salvageWalletBtn, &BlocknetFormBtn::clicked, this, &BlocknetWalletRepair::walletSalvage);
+    connect(rescanBlockchainBtn, &BlocknetFormBtn::clicked, this, &BlocknetWalletRepair::walletRescan);
+    connect(transaction1Btn, &BlocknetFormBtn::clicked, this, &BlocknetWalletRepair::walletZaptxes1);
+    connect(transaction2Btn, &BlocknetFormBtn::clicked, this, &BlocknetWalletRepair::walletZaptxes2);
+    connect(upgradeBtn, &BlocknetFormBtn::clicked, this, &BlocknetWalletRepair::walletUpgrade);
+    connect(rebuildBtn, &BlocknetFormBtn::clicked, this, &BlocknetWalletRepair::walletReindex);
 }
 
 void BlocknetWalletRepair::setWalletModel(WalletModel *w) {

@@ -8,7 +8,7 @@
 
 #include <QPainter>
 #include <QPushButton>
-#include <QDebug>
+#include <QtGlobal>
 
 BlocknetBreadCrumb::BlocknetBreadCrumb(QFrame *parent) : QFrame(parent), layout(new QHBoxLayout) {
 //    this->setStyleSheet("border: 1px solid red");
@@ -22,7 +22,7 @@ BlocknetBreadCrumb::BlocknetBreadCrumb(QFrame *parent) : QFrame(parent), layout(
     group = new QButtonGroup;
     group->setExclusive(true);
 
-    connect(group, SIGNAL(buttonClicked(int)), this, SLOT(goToCrumb(int)));
+    connect(group, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), this, &BlocknetBreadCrumb::goToCrumb);
 }
 
 /**

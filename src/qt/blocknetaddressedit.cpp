@@ -277,12 +277,12 @@ BlocknetAddressEdit::BlocknetAddressEdit(bool editMode, const QString &t, const 
     layout->addStretch(1);
     layout->addWidget(buttonGrid, 0, Qt::AlignCenter);
 
-    connect(addressTi->lineEdit, SIGNAL(textEdited(const QString &)), this, SLOT(onAddressChanged(const QString &)));
-    connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onApply()));
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
-    connect(otherUserBtn, SIGNAL(toggled(bool)), this, SLOT(onOtherUser(bool)));
+    connect(addressTi->lineEdit, &BlocknetLineEdit::textEdited, this, &BlocknetAddressEdit::onAddressChanged);
+    connect(confirmBtn, &BlocknetFormBtn::clicked, this, &BlocknetAddressEdit::onApply);
+    connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetAddressEdit::onCancel);
+    connect(otherUserBtn, &QRadioButton::toggled, this, &BlocknetAddressEdit::onOtherUser);
     if (!editMode)
-        connect(createAddressTi->lineEdit, SIGNAL(textEdited(const QString &)), this, SLOT(onPrivateKey(const QString &)));
+        connect(createAddressTi->lineEdit, &BlocknetLineEdit::textEdited, this, &BlocknetAddressEdit::onPrivateKey);
 }
 
 QSize BlocknetAddressEdit::sizeHint() const {

@@ -178,40 +178,38 @@ BlocknetTransactionHistory::BlocknetTransactionHistory(WalletModel *w, QWidget *
     dateChanged(settings.value("transactionDate").toInt());
     typeChanged(settings.value("transactionType").toInt());
 
-    connect(copyAddressAction, SIGNAL(triggered()), this, SLOT(copyAddress()));
-    connect(copyLabelAction, SIGNAL(triggered()), this, SLOT(copyLabel()));
-    connect(copyAmountAction, SIGNAL(triggered()), this, SLOT(copyAmount()));
-    connect(copyTxIDAction, SIGNAL(triggered()), this, SLOT(copyTxID()));
-    connect(showDetailsAction, SIGNAL(triggered()), this, SLOT(showDetails()));
-    connect(dateFrom, SIGNAL(dateChanged(QDate)), this, SLOT(dateRangeChanged()));
-    connect(dateTo, SIGNAL(dateChanged(QDate)), this, SLOT(dateRangeChanged()));
-    connect(exportBtn, SIGNAL(clicked()), this, SLOT(exportClicked()));
-    connect(transactionsTbl->selectionModel(), SIGNAL(selectionChanged(const QItemSelection &, const QItemSelection &)), this,
-            SLOT(displayTotalSelected(const QItemSelection &, const QItemSelection &)));
+    connect(copyAddressAction, &QAction::triggered, this, &BlocknetTransactionHistory::copyAddress);
+    connect(copyLabelAction, &QAction::triggered, this, &BlocknetTransactionHistory::copyLabel);
+    connect(copyAmountAction, &QAction::triggered, this, &BlocknetTransactionHistory::copyAmount);
+    connect(copyTxIDAction, &QAction::triggered, this, &BlocknetTransactionHistory::copyTxID);
+    connect(showDetailsAction, &QAction::triggered, this, &BlocknetTransactionHistory::showDetails);
+    connect(dateFrom, &QDateTimeEdit::dateChanged, this, &BlocknetTransactionHistory::dateRangeChanged);
+    connect(dateTo, &QDateTimeEdit::dateChanged, this, &BlocknetTransactionHistory::dateRangeChanged);
+    connect(exportBtn, &BlocknetFormBtn::clicked, this, &BlocknetTransactionHistory::exportClicked);
+    connect(transactionsTbl->selectionModel(), &QItemSelectionModel::selectionChanged, this,
+            &BlocknetTransactionHistory::displayTotalSelected);
 }
 
 void BlocknetTransactionHistory::showEvent(QShowEvent *event) {
     QWidget::showEvent(event);
-    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
-    connect(addressTi, SIGNAL(textChanged(QString)), this, SLOT(addressChanged(QString)));
-    connect(amountTi, SIGNAL(textChanged(QString)), this, SLOT(amountChanged(QString)));
-    connect(dateCb, SIGNAL(activated(int)), this, SLOT(dateChanged(int)));
-    connect(typeCb, SIGNAL(activated(int)), this, SLOT(typeChanged(int)));
-    connect(transactionsTbl, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(showDetails()));
-    connect(transactionsTbl, SIGNAL(clicked(QModelIndex)), this, SLOT(computeSum()));
-    connect(transactionsTbl, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
+    connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetTransactionHistory::onDisplayUnit);
+    connect(addressTi, &BlocknetLineEdit::textChanged, this, &BlocknetTransactionHistory::addressChanged);
+    connect(amountTi, &BlocknetLineEdit::textChanged, this, &BlocknetTransactionHistory::amountChanged);
+    connect(dateCb, static_cast<void(BlocknetDropdown::*)(int)>(&BlocknetDropdown::activated), this, &BlocknetTransactionHistory::dateChanged);
+    connect(typeCb, static_cast<void(BlocknetDropdown::*)(int)>(&BlocknetDropdown::activated), this, &BlocknetTransactionHistory::typeChanged);
+    connect(transactionsTbl, &BlocknetTransactionHistoryTable::doubleClicked, this, &BlocknetTransactionHistory::showDetails);
+    connect(transactionsTbl, &BlocknetTransactionHistoryTable::customContextMenuRequested, this, &BlocknetTransactionHistory::contextualMenu);
 }
 
 void BlocknetTransactionHistory::hideEvent(QHideEvent *event) {
     QWidget::hideEvent(event);
-    disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
-    disconnect(addressTi, SIGNAL(textChanged(QString)), this, SLOT(addressChanged(QString)));
-    disconnect(amountTi, SIGNAL(textChanged(QString)), this, SLOT(amountChanged(QString)));
-    disconnect(dateCb, SIGNAL(activated(int)), this, SLOT(dateChanged(int)));
-    disconnect(typeCb, SIGNAL(activated(int)), this, SLOT(typeChanged(int)));
-    disconnect(transactionsTbl, SIGNAL(doubleClicked(const QModelIndex &)), this, SLOT(showDetails()));
-    disconnect(transactionsTbl, SIGNAL(clicked(QModelIndex)), this, SLOT(computeSum()));
-    disconnect(transactionsTbl, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(contextualMenu(QPoint)));
+    disconnect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetTransactionHistory::onDisplayUnit);
+    disconnect(addressTi, &BlocknetLineEdit::textChanged, this, &BlocknetTransactionHistory::addressChanged);
+    disconnect(amountTi, &BlocknetLineEdit::textChanged, this, &BlocknetTransactionHistory::amountChanged);
+    connect(dateCb, static_cast<void(BlocknetDropdown::*)(int)>(&BlocknetDropdown::activated), this, &BlocknetTransactionHistory::dateChanged);
+    connect(typeCb, static_cast<void(BlocknetDropdown::*)(int)>(&BlocknetDropdown::activated), this, &BlocknetTransactionHistory::typeChanged);
+    disconnect(transactionsTbl, &BlocknetTransactionHistoryTable::doubleClicked, this, &BlocknetTransactionHistory::showDetails);
+    disconnect(transactionsTbl, &BlocknetTransactionHistoryTable::customContextMenuRequested, this, &BlocknetTransactionHistory::contextualMenu);
 }
 
 void BlocknetTransactionHistory::onDisplayUnit(int unit) {

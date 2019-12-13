@@ -157,9 +157,9 @@ BlocknetQuickSend::BlocknetQuickSend(WalletModel *w, QWidget *parent) : QFrame(p
     connect(amountTi, &BlocknetLineEdit::textEdited, this, [this](const QString & text) {
         onAmountChanged();
     });
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
-    connect(confirmBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
-    connect(addAddressBtn, SIGNAL(clicked()), this, SLOT(openAddressBook()));
+    connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetQuickSend::onCancel);
+    connect(confirmBtn, &BlocknetFormBtn::clicked, this, &BlocknetQuickSend::onSubmit);
+    connect(addAddressBtn, &BlocknetIconBtn::clicked, this, &BlocknetQuickSend::openAddressBook);
 }
 
 bool BlocknetQuickSend::validated() {

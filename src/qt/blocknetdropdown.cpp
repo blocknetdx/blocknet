@@ -31,7 +31,7 @@ BlocknetDropdown::BlocknetDropdown(QWidget* parent) : QComboBox(parent), ddW(BGU
     label->adjustSize();
     layout->addWidget(label, 0, 0, Qt::AlignRight);
     this->setLayout(layout);
-    connect(this, SIGNAL(currentIndexChanged(int)), this, SLOT(handleSelectionChanged(int)));
+    connect(this, static_cast<void(QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &BlocknetDropdown::handleSelectionChanged);
 }
 
 QVariant BlocknetDropdown::value() const {

@@ -52,7 +52,7 @@ BlocknetToolBar::BlocknetToolBar(QWidget *popup, QFrame *parent) : QFrame(parent
     lockMenu->hOnTimedUnlock = [&]() { /*lockIndicator->setTime();*/ }; // TODO Blocknet Qt setTime
     lockMenu->hide();
 
-    connect(lockIndicator, SIGNAL(lockRequest(bool)), this, SLOT(onLockClicked(bool)));
+    connect(lockIndicator, &BlocknetLockIndicator::lockRequest, this, &BlocknetToolBar::onLockClicked);
 }
 
 QLabel* BlocknetToolBar::getIcon(QString path, QString description, QSize size) {
@@ -145,7 +145,7 @@ BlocknetLockIndicator::BlocknetLockIndicator(QPushButton *parent) : QPushButton(
     this->setCursor(Qt::PointingHandCursor);
     this->setCheckable(true);
     this->setLock(false);
-    connect(this, SIGNAL(clicked(bool)), this, SLOT(onClick(bool)));
+    connect(this, &BlocknetLockIndicator::clicked, this, &BlocknetLockIndicator::onClick);
 }
 
 /**
@@ -168,7 +168,7 @@ void BlocknetLockIndicator::setTime(const QDateTime time) {
 //            timer = new QTimer;
 //            timer->setInterval(1000);
 //            timer->setTimerType(Qt::CoarseTimer);
-//            connect(timer, SIGNAL(timeout()), this, SLOT(tick()));
+//            connect(timer, &QTimer::timeout, this, &BlocknettToolBar::tick);
 //        }
 //        timer->start();
 //    }

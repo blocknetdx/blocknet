@@ -139,16 +139,16 @@ BlocknetSendFunds3::BlocknetSendFunds3(WalletModel *w, int id, QFrame *parent) :
 
     recommendedRb->setChecked(true);
 
-    connect(recommendedRb, SIGNAL(toggled(bool)), this, SLOT(onFeeDesignation()));
-    connect(subtractFeeCb, SIGNAL(toggled(bool)), this, SLOT(onSubtractFee()));
-    connect(specificFeeTi, SIGNAL(editingFinished()), this, SLOT(onSpecificFee()));
+    connect(recommendedRb, &QRadioButton::toggled, this, &BlocknetSendFunds3::onFeeDesignation);
+    connect(subtractFeeCb, &QCheckBox::toggled, this, &BlocknetSendFunds3::onSubtractFee);
+    connect(specificFeeTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds3::onSpecificFee);
     connect(specificFeeTi, &QLineEdit::textEdited, [this](const QString &text) {
         if (text.isEmpty() && model->userFee() != 0)
             updateFee();
     });
-    connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
-    connect(backBtn, SIGNAL(clicked()), this, SLOT(onBack()));
+    connect(continueBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds3::onNext);
+    connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds3::onCancel);
+    connect(backBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds3::onBack);
 }
 
 /**
@@ -225,14 +225,14 @@ void BlocknetSendFunds3::keyPressEvent(QKeyEvent *event) {
 
 void BlocknetSendFunds3::showEvent(QShowEvent *event) {
     QWidget::showEvent(event);
-    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
-    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
+    connect(walletModel, &WalletModel::encryptionStatusChanged, this, &BlocknetSendFunds3::onEncryptionStatus);
+    connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetSendFunds3::onDisplayUnit);
 }
 
 void BlocknetSendFunds3::hideEvent(QHideEvent *event) {
     QWidget::hideEvent(event);
-    disconnect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
-    disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
+    disconnect(walletModel, &WalletModel::encryptionStatusChanged, this, &BlocknetSendFunds3::onEncryptionStatus);
+    disconnect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetSendFunds3::onDisplayUnit);
 }
 
 void BlocknetSendFunds3::onFeeDesignation() {
@@ -258,8 +258,8 @@ void BlocknetSendFunds3::onSpecificFee() {
         updateFee();
 }
 
-void BlocknetSendFunds3::onEncryptionStatus(int encStatus) {
-    if (!this->isHidden() && encStatus == WalletModel::Unlocked)
+void BlocknetSendFunds3::onEncryptionStatus() {
+    if (!this->isHidden() && walletModel->getEncryptionStatus() == WalletModel::Unlocked)
         updateFee();
 }
 

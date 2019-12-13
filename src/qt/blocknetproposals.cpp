@@ -17,6 +17,7 @@
 #include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
 
+#include <net.h>
 #include <uint256.h>
 
 #include <utility>
@@ -130,7 +131,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     });
     timer->start(timerInterval);
 
-    connect(createProposal, SIGNAL(clicked()), this, SLOT(onCreateProposal()));
+    connect(createProposal, &BlocknetIconBtn::clicked, this, &BlocknetProposals::onCreateProposal);
     connect(table, &QTableWidget::itemSelectionChanged, this, [this]() {
         lastSelection = QDateTime::currentMSecsSinceEpoch();
     });

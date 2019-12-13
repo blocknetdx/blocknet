@@ -51,6 +51,6 @@ BlocknetSendFundsDone::BlocknetSendFundsDone(QFrame *parent) : QFrame(parent), l
     layout->addWidget(btnBox);
     layout->addStretch(1);
 
-    connect(returnBtn, SIGNAL(clicked()), this, SLOT(onReturnToDashboard()));
-    connect(sendBtn, SIGNAL(clicked()), this, SLOT(onSendAnotherPayment()));
+    connect(returnBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFundsDone::onReturnToDashboard);
+    connect(sendBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFundsDone::onSendAnotherPayment);
 }

@@ -54,7 +54,7 @@ BlocknetTools::BlocknetTools(interfaces::Node & node, const PlatformStyle *platf
 //    tabBar->addTab(tr("Multisend"), MULTISEND); // TODO Multisend
     tabBar->show();
 
-    connect(tabBar, SIGNAL(tabChanged(int)), this, SLOT(tabChanged(int)));
+    connect(tabBar, &BlocknetTabBar::tabChanged, this, &BlocknetTools::tabChanged);
     connect(walletRepair, &BlocknetWalletRepair::handleRestart, this, [this](QStringList args) {
         Q_EMIT handleRestart(args);
     });

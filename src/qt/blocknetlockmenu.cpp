@@ -44,11 +44,11 @@ BlocknetLockMenu::BlocknetLockMenu(QFrame *parent) : QFrame(parent), layout(new 
     setupBtn(unlockForStakingBtn);
     setupBtn(timedUnlockBtn);
 
-    connect(lockWalletBtn, SIGNAL(clicked()), this, SLOT(onLockWallet()));
-    connect(changePwBtn, SIGNAL(clicked()), this, SLOT(onChangePw()));
-    connect(unlockWalletBtn, SIGNAL(clicked()), this, SLOT(onUnlockWallet()));
-    connect(unlockForStakingBtn, SIGNAL(clicked()), this, SLOT(onUnlockForStaking()));
-    connect(timedUnlockBtn, SIGNAL(clicked()), this, SLOT(onTimedUnlock()));
+    connect(lockWalletBtn, &QPushButton::clicked, this, &BlocknetLockMenu::onLockWallet);
+    connect(changePwBtn, &QPushButton::clicked, this, &BlocknetLockMenu::onChangePw);
+    connect(unlockWalletBtn, &QPushButton::clicked, this, &BlocknetLockMenu::onUnlockWallet);
+    connect(unlockForStakingBtn, &QPushButton::clicked, this, &BlocknetLockMenu::onUnlockForStaking);
+    connect(timedUnlockBtn, &QPushButton::clicked, this, &BlocknetLockMenu::onTimedUnlock);
 }
 
 void BlocknetLockMenu::show() {

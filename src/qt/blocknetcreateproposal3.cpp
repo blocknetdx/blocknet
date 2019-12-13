@@ -138,7 +138,7 @@ BlocknetCreateProposal3::BlocknetCreateProposal3(int id, QFrame *parent) : Block
     layout->addWidget(btnBox);
     layout->addSpacing(BGU::spi(20));
 
-    connect(doneBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
+    connect(doneBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal3::onSubmit);
     // Timer used to check for vote capabilities and refresh proposals
     int timerInterval = 30000;
     timer = new QTimer(this);

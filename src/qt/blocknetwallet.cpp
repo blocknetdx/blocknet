@@ -49,16 +49,16 @@ BlocknetWallet::BlocknetWallet(interfaces::Node & node, const PlatformStyle *pla
     layout->addWidget(leftMenu, 0);
     layout->addWidget(contentBox, 1);
 
-    connect(leftMenu, SIGNAL(menuChanged(BlocknetPage)), this, SLOT(setPage(BlocknetPage)));
-    connect(toolbar, SIGNAL(passphrase()), this, SLOT(changePassphrase()));
-    connect(toolbar, SIGNAL(lock(bool, bool)), this, SLOT(onLockRequest(bool, bool)));
+    connect(leftMenu, &BlocknetLeftMenu::menuChanged, this, &BlocknetWallet::setPage);
+    connect(toolbar, &BlocknetToolBar::passphrase, this, &BlocknetWallet::changePassphrase);
+    connect(toolbar, &BlocknetToolBar::lock, this, &BlocknetWallet::onLockRequest);
 }
 
 bool BlocknetWallet::setCurrentWallet(const QString & name) {
     for (WalletModel *w : wallets.values()) {
         disconnect(w, &WalletModel::balanceChanged, this, &BlocknetWallet::balanceChanged);
         disconnect(w->getTransactionTableModel(), &TransactionTableModel::rowsInserted, this, &BlocknetWallet::processNewTransaction);
-        disconnect(w->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
+        disconnect(w->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetWallet::displayUnitChanged);
         disconnect(w, &WalletModel::requireUnlock, this, &BlocknetWallet::unlockWallet);
         disconnect(w, &WalletModel::showProgress, this, &BlocknetWallet::showProgress);
         disconnect(w, &WalletModel::encryptionStatusChanged, this, &BlocknetWallet::onEncryptionStatus);
@@ -70,7 +70,7 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
 
     connect(walletModel->getTransactionTableModel(), &TransactionTableModel::rowsInserted, this, &BlocknetWallet::processNewTransaction);
     connect(walletModel, &WalletModel::balanceChanged, this, &BlocknetWallet::balanceChanged);
-    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
+    connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetWallet::displayUnitChanged);
     connect(walletModel, &WalletModel::requireUnlock, this, &BlocknetWallet::unlockWallet);
     connect(walletModel, &WalletModel::showProgress, this, &BlocknetWallet::showProgress);
     connect(walletModel, &WalletModel::encryptionStatusChanged, this, &BlocknetWallet::onEncryptionStatus);
@@ -78,7 +78,7 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
     // Send funds screen
     if (sendFunds == nullptr) {
         sendFunds = new BlocknetSendFunds(walletModel);
-        connect(sendFunds, SIGNAL(dashboard()), this, SLOT(goToDashboard()));
+        connect(sendFunds, &BlocknetSendFunds::dashboard, this, &BlocknetWallet::goToDashboard);
     } else
         sendFunds->setWalletModel(walletModel);
 
@@ -86,8 +86,8 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
     if (dashboard == nullptr) {
         dashboard = new BlocknetDashboard;
         dashboard->setWalletModel(walletModel);
-        connect(dashboard, SIGNAL(quicksend()), this, SLOT(goToQuickSend()));
-        connect(dashboard, SIGNAL(history()), this, SLOT(goToHistory()));
+        connect(dashboard, &BlocknetDashboard::quicksend, this, &BlocknetWallet::goToQuickSend);
+        connect(dashboard, &BlocknetDashboard::history, this, &BlocknetWallet::goToHistory);
         connect(this, &BlocknetWallet::balanceChanged, dashboard, &BlocknetDashboard::balanceChanged);
     } else
         dashboard->setWalletModel(walletModel);
@@ -141,7 +141,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
         case BlocknetPage::ADDRESSBOOK: {
             auto *addressBook = new BlocknetAddressBook;
             addressBook->setWalletModel(walletModel);
-            connect(addressBook, SIGNAL(send(const QString &)), this, SLOT(onSendToAddress(const QString &)));
+            connect(addressBook, &BlocknetAddressBook::send, this, &BlocknetWallet::onSendToAddress);
             screen = addressBook;
             break;
         }
@@ -152,8 +152,8 @@ void BlocknetWallet::setPage(BlocknetPage page) {
         }
         case BlocknetPage::QUICKSEND: {
             auto *quickSend = new BlocknetQuickSend(walletModel);
-            connect(quickSend, SIGNAL(submit()), this, SLOT(onSendFunds()));
-            connect(quickSend, SIGNAL(dashboard()), this, SLOT(goToDashboard()));
+            connect(quickSend, &BlocknetQuickSend::submit, this, &BlocknetWallet::onSendFunds);
+            connect(quickSend, &BlocknetQuickSend::dashboard, this, &BlocknetWallet::goToDashboard);
             screen = quickSend;
             break;
         }
@@ -184,7 +184,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
 //        }
         case BlocknetPage::PROPOSALS: {
             auto *proposals = new BlocknetProposals;
-            connect(proposals, SIGNAL(createProposal()), this, SLOT(goToCreateProposal()));
+            connect(proposals, &BlocknetProposals::createProposal, this, &BlocknetWallet::goToCreateProposal);
             proposals->setWalletModel(walletModel);
             screen = proposals;
             break;
@@ -192,7 +192,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
         case BlocknetPage::CREATEPROPOSAL: {
             if (createProposal == nullptr) {
                 createProposal = new BlocknetCreateProposal;
-                connect(createProposal, SIGNAL(done()), this, SLOT(goToProposals()));
+                connect(createProposal, &BlocknetCreateProposal::done, this, &BlocknetWallet::goToProposals);
             }
             createProposal->setWalletModel(walletModel);
             createProposal->show();

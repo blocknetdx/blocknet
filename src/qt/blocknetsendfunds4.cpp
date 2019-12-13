@@ -105,9 +105,9 @@ BlocknetSendFunds4::BlocknetSendFunds4(WalletModel *w, int id, QFrame *parent) :
     layout->addSpacing(BGU::spi(10));
     layout->addWidget(btnBox);
 
-    connect(continueBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
-    connect(backBtn, SIGNAL(clicked()), this, SLOT(onBack()));
+    connect(continueBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds4::onSubmit);
+    connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds4::onCancel);
+    connect(backBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds4::onBack);
 }
 
 /**
@@ -124,7 +124,7 @@ void BlocknetSendFunds4::setData(BlocknetSendFundsModel *model) {
     fillWalletData();
 }
 
-void BlocknetSendFunds4::onEncryptionStatus(int encStatus) {
+void BlocknetSendFunds4::onEncryptionStatus() {
     if (!this->isHidden() && walletModel && !walletModel->wallet().isLocked()) {
         CCoinControl cc; model->prepareFunds(walletModel, cc);
         fillWalletData();
@@ -205,14 +205,14 @@ void BlocknetSendFunds4::keyPressEvent(QKeyEvent *event) {
 
 void BlocknetSendFunds4::showEvent(QShowEvent *event) {
     QWidget::showEvent(event);
-    connect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
-    connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
+    connect(walletModel, &WalletModel::encryptionStatusChanged, this, &BlocknetSendFunds4::onEncryptionStatus);
+    connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetSendFunds4::onDisplayUnit);
 }
 
 void BlocknetSendFunds4::hideEvent(QHideEvent *event) {
     QWidget::hideEvent(event);
-    disconnect(walletModel, SIGNAL(encryptionStatusChanged(int)), this, SLOT(onEncryptionStatus(int)));
-    disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(onDisplayUnit(int)));
+    disconnect(walletModel, &WalletModel::encryptionStatusChanged, this, &BlocknetSendFunds4::onEncryptionStatus);
+    disconnect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetSendFunds4::onDisplayUnit);
 }
 
 /**
@@ -291,7 +291,7 @@ void BlocknetSendFunds4::displayMultiple() {
         auto *edit = new QPushButton(tr("Edit"));
         edit->setObjectName("linkBtn");
         edit->setCursor(Qt::PointingHandCursor);
-        connect(edit, SIGNAL(clicked()), this, SLOT(onEdit()));
+        connect(edit, &QPushButton::clicked, this, &BlocknetSendFunds4::onEdit);
         scrollcLayout->addWidget(edit, row, 10, Qt::AlignRight | Qt::AlignVCenter);  scrollcLayout->setColumnStretch(0, 2);
 
         scrollcLayout->setRowMinimumHeight(row, BGU::spi(40));

@@ -348,7 +348,7 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
         table->horizontalHeader()->setSortIndicator(s.value("nCoinControlSortColumn").toInt(),
                 static_cast<Qt::SortOrder>(s.value("nCoinControlSortOrder").toInt()));
 
-    connect(table, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(showContextMenu(QPoint)));
+    connect(table, &QTableWidget::customContextMenuRequested, this, &BlocknetCoinControl::showContextMenu);
     connect(table->horizontalHeader(), &QHeaderView::sortIndicatorChanged, this, [this](int column, Qt::SortOrder order) {
         QSettings settings;
         settings.setValue("nCoinControlSortOrder", table->horizontalHeader()->sortIndicatorOrder());

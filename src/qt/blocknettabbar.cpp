@@ -32,7 +32,7 @@ BlocknetTabBar::BlocknetTabBar(QFrame *parent) : QFrame(parent), mainLayout(new 
     mainLayout->addWidget(tabFrame);
     mainLayout->addWidget(hdiv, 0, Qt::AlignTop);
 
-    connect(group, SIGNAL(buttonClicked(int)), this, SLOT(goToTab(int)));
+    connect(group, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), this, &BlocknetTabBar::goToTab);
 }
 
 /**

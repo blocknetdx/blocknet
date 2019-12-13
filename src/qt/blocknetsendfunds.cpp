@@ -47,21 +47,21 @@ BlocknetSendFunds::BlocknetSendFunds(WalletModel *w, QFrame *parent) : QFrame(pa
     breadCrumb->addCrumb(tr("Review Payment"), REVIEW_PAYMENT);
     breadCrumb->show();
 
-    connect(breadCrumb, SIGNAL(crumbChanged(int)), this, SLOT(crumbChanged(int)));
-    connect(page1, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(page2, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(page3, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(page2, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
-    connect(page3, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
-    connect(page4, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
-    connect(page1, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
-    connect(page2, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
-    connect(page3, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
-    connect(page4, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
-    connect(page4, SIGNAL(edit()), this, SLOT(onEdit()));
-    connect(page4, SIGNAL(submit()), this, SLOT(onSendFunds()));
-    connect(done, SIGNAL(dashboard()), this, SLOT(onDoneDashboard()));
-    connect(done, SIGNAL(payment()), this, SLOT(reset()));
+    connect(breadCrumb, &BlocknetBreadCrumb::crumbChanged, this, &BlocknetSendFunds::crumbChanged);
+    connect(page1, &BlocknetSendFundsPage::next, this, &BlocknetSendFunds::nextCrumb);
+    connect(page2, &BlocknetSendFundsPage::next, this, &BlocknetSendFunds::nextCrumb);
+    connect(page3, &BlocknetSendFundsPage::next, this, &BlocknetSendFunds::nextCrumb);
+    connect(page2, &BlocknetSendFundsPage::back, this, &BlocknetSendFunds::prevCrumb);
+    connect(page3, &BlocknetSendFundsPage::back, this, &BlocknetSendFunds::prevCrumb);
+    connect(page4, &BlocknetSendFundsPage::back, this, &BlocknetSendFunds::prevCrumb);
+    connect(page1, &BlocknetSendFundsPage::cancel, this, &BlocknetSendFunds::onCancel);
+    connect(page2, &BlocknetSendFundsPage::cancel, this, &BlocknetSendFunds::onCancel);
+    connect(page3, &BlocknetSendFundsPage::cancel, this, &BlocknetSendFunds::onCancel);
+    connect(page4, &BlocknetSendFundsPage::cancel, this, &BlocknetSendFunds::onCancel);
+    connect(page4, &BlocknetSendFunds4::edit, this, &BlocknetSendFunds::onEdit);
+    connect(page4, &BlocknetSendFunds4::submit, this, &BlocknetSendFunds::onSendFunds);
+    connect(done, &BlocknetSendFundsDone::dashboard, this, &BlocknetSendFunds::onDoneDashboard);
+    connect(done, &BlocknetSendFundsDone::payment, this, &BlocknetSendFunds::reset);
 
     // Estimated position
     positionCrumb(QPoint(BGU::spi(175), BGU::spi(-4)));

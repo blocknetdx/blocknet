@@ -28,7 +28,7 @@ BlocknetIconLabel::BlocknetIconLabel(QPushButton *parent) : QPushButton(parent),
 
     this->setLayout(layout);
 
-    connect(this, SIGNAL(toggled(bool)), this, SLOT(onSelected(bool)));
+    connect(this, &BlocknetIconLabel::toggled, this, &BlocknetIconLabel::onSelected);
 
     onSelected(false);
 }

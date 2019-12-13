@@ -41,7 +41,7 @@ private Q_SLOTS:
     void onEdit();
     void onSubmit();
     void onDisplayUnit(int unit);
-    void onEncryptionStatus(int encStatus);
+    void onEncryptionStatus();
 
 private:
     int displayUnit;

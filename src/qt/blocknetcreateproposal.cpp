@@ -32,15 +32,15 @@ BlocknetCreateProposal::BlocknetCreateProposal(QWidget *parent) : QFrame(parent)
     breadCrumb->addCrumb(tr("Submit Proposal"), SUBMIT);
     breadCrumb->show();
 
-    connect(breadCrumb, SIGNAL(crumbChanged(int)), this, SLOT(crumbChanged(int)));
-    connect(page1, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(page2, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(page3, SIGNAL(next(int)), this, SLOT(nextCrumb(int)));
-    connect(page2, SIGNAL(back(int)), this, SLOT(prevCrumb(int)));
-    connect(page1, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
-    connect(page2, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
-    connect(page3, SIGNAL(cancel(int)), this, SLOT(onCancel(int)));
-    connect(page3, SIGNAL(done()), this, SLOT(onDone()));
+    connect(breadCrumb, &BlocknetBreadCrumb::crumbChanged, this, &BlocknetCreateProposal::crumbChanged);
+    connect(page1, &BlocknetCreateProposalPage::next, this, &BlocknetCreateProposal::nextCrumb);
+    connect(page2, &BlocknetCreateProposalPage::next, this, &BlocknetCreateProposal::nextCrumb);
+    connect(page3, &BlocknetCreateProposalPage::next, this, &BlocknetCreateProposal::nextCrumb);
+    connect(page2, &BlocknetCreateProposalPage::back, this, &BlocknetCreateProposal::prevCrumb);
+    connect(page1, &BlocknetCreateProposalPage::cancel, this, &BlocknetCreateProposal::onCancel);
+    connect(page2, &BlocknetCreateProposalPage::cancel, this, &BlocknetCreateProposal::onCancel);
+    connect(page3, &BlocknetCreateProposalPage::cancel, this, &BlocknetCreateProposal::onCancel);
+    connect(page3, &BlocknetCreateProposal3::done, this, &BlocknetCreateProposal::onDone);
 
     // Estimated position
     positionCrumb(QPoint(BGU::spi(175), BGU::spi(-4)));

@@ -35,8 +35,8 @@ BlocknetAddressEditor::BlocknetAddressEditor(int width, QTextEdit *parent) : QTe
     this->setAcceptRichText(true);
     this->setCursor(Qt::IBeamCursor);
     clipboard = QApplication::clipboard();
-    connect(this, SIGNAL(textChanged()), this, SLOT(onTextChanged()));
-    connect(this, SIGNAL(selectionChanged()), this, SLOT(onSelectionChanged()));
+    connect(this, &BlocknetAddressEditor::textChanged, this, &BlocknetAddressEditor::onTextChanged);
+    connect(this, &BlocknetAddressEditor::selectionChanged, this, &BlocknetAddressEditor::onSelectionChanged);
 }
 
 void BlocknetAddressEditor::keyPressEvent(QKeyEvent *event) {
@@ -128,7 +128,7 @@ void BlocknetAddressEditor::onTextChanged() {
         return;
     }
 
-    disconnect(this, SIGNAL(textChanged()), this, SLOT(onTextChanged()));
+    disconnect(this, &BlocknetAddressEditor::textChanged, this, &BlocknetAddressEditor::onTextChanged);
 
     // clear existing addresses
     addrs.clear();
@@ -220,7 +220,7 @@ void BlocknetAddressEditor::onTextChanged() {
     // Notify addresses changed
     Q_EMIT addresses();
 
-    connect(this, SIGNAL(textChanged()), this, SLOT(onTextChanged()));
+    connect(this, &BlocknetAddressEditor::textChanged, this, &BlocknetAddressEditor::onTextChanged);
 }
 
 /**
@@ -307,9 +307,9 @@ void BlocknetAddressEditor::focusOutEvent(QFocusEvent *e) {
  */
 void BlocknetAddressEditor::cbOn(bool on) {
     if (on)
-        connect(clipboard, SIGNAL(dataChanged()), this, SLOT(onClipboard()));
+        connect(clipboard, &QClipboard::dataChanged, this, &BlocknetAddressEditor::onClipboard);
     else
-        disconnect(clipboard, SIGNAL(dataChanged()), this, SLOT(onClipboard()));
+        disconnect(clipboard, &QClipboard::dataChanged, this, &BlocknetAddressEditor::onClipboard);
 }
 
 /**

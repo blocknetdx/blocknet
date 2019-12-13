@@ -55,11 +55,11 @@ BlocknetSendFunds1::BlocknetSendFunds1(WalletModel *w, int id, QFrame *parent) :
     layout->addWidget(continueBtn);
     layout->addStretch(1);
 
-    connect(addressTi, SIGNAL(textChanged()), this, SLOT(textChanged()));
-    connect(addressTi, SIGNAL(addresses()), this, SLOT(onAddressesChanged()));
-    connect(addressTi, SIGNAL(returnPressed()), this, SLOT(onNext()));
-    connect(addAddressBtn, SIGNAL(clicked()), this, SLOT(openAddressBook()));
-    connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
+    connect(addressTi, &BlocknetAddressEditor::textChanged, this, &BlocknetSendFunds1::textChanged);
+    connect(addressTi, &BlocknetAddressEditor::addresses, this, &BlocknetSendFunds1::onAddressesChanged);
+    connect(addressTi, &BlocknetAddressEditor::returnPressed, this, &BlocknetSendFunds1::onNext);
+    connect(addAddressBtn, &BlocknetIconBtn::clicked, this, &BlocknetSendFunds1::openAddressBook);
+    connect(continueBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds1::onNext);
 }
 
 void BlocknetSendFunds1::setData(BlocknetSendFundsModel *model) {

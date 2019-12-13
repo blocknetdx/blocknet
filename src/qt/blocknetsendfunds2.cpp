@@ -85,7 +85,7 @@ void BlocknetSendFunds2List::addRow(int row, const QString addr, const QString a
         if (amountTi)
             Q_EMIT this->amount(amountTi->getID(), amountTi->text());
     });
-    connect(closeBtn, SIGNAL(clicked()), this, SLOT(onRemove()));
+    connect(closeBtn, &BlocknetCloseBtn::clicked, this, &BlocknetSendFunds2List::onRemove);
 }
 
 void BlocknetSendFunds2List::clear() {
@@ -342,13 +342,13 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     ccDialog = new BlocknetCoinControlDialog(w, nullptr, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
     ccDialog->setStyleSheet(GUIUtil::loadStyleSheet());
 
-    connect(ccDefaultRb, SIGNAL(toggled(bool)), this, SLOT(onCoinControl()));
-    connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
-    connect(backBtn, SIGNAL(clicked()), this, SLOT(onBack()));
-    connect(changeAddrTi, SIGNAL(editingFinished()), this, SLOT(onChangeAddress()));
-    connect(ccSplitOutputCb, SIGNAL(toggled(bool)), this, SLOT(onSplitChanged()));
-    connect(ccSplitOutputTi, SIGNAL(editingFinished()), this, SLOT(onSplitChanged()));
+    connect(ccDefaultRb, &QRadioButton::toggled, this, &BlocknetSendFunds2::onCoinControl);
+    connect(continueBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onNext);
+    connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onCancel);
+    connect(backBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onBack);
+    connect(changeAddrTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds2::onChangeAddress);
+    connect(ccSplitOutputCb, &QCheckBox::toggled, this, &BlocknetSendFunds2::onSplitChanged);
+    connect(ccSplitOutputTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds2::onSplitChanged);
     connect(ccInputsBtn, &QPushButton::clicked, this, [this]() {
         updateCoinControl(); ccDialog->setPayAmount(model->totalRecipientsAmount()); ccDialog->show();
     });
@@ -640,9 +640,9 @@ void BlocknetSendFunds2::onRemove(const QString addr) {
  *        (UTXOs) in the wallet and store in a data model for use with the coin control dialog.
  */
 void BlocknetSendFunds2::updateCoinControl() {
-    disconnect(ccDialog, SIGNAL(accepted()), this, SLOT(ccAccepted()));
+    disconnect(ccDialog, &BlocknetCoinControlDialog::accepted, this, &BlocknetSendFunds2::ccAccepted);
     ccDialog->populateUnspentTransactions(model->txSelectedUtxos());
-    connect(ccDialog, SIGNAL(accepted()), this, SLOT(ccAccepted()));
+    connect(ccDialog, &BlocknetCoinControlDialog::accepted, this, &BlocknetSendFunds2::ccAccepted);
 }
 
 void BlocknetSendFunds2::ccAccepted() {

@@ -130,8 +130,8 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     layout->addWidget(buttonGrid);
     layout->addSpacing(BGU::spi(20));
 
-    connect(continueBtn, SIGNAL(clicked()), this, SLOT(onNext()));
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
+    connect(continueBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal1::onNext);
+    connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal1::onCancel);
 }
 
 bool BlocknetCreateProposal1::validated() {

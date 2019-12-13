@@ -145,8 +145,8 @@ BlocknetDashboard::BlocknetDashboard(QFrame *parent) : QFrame(parent), layout(ne
     layout->addWidget(recentTransactions, 1);
     layout->addSpacing(BGU::spi(20));
 
-    connect(quickSend, SIGNAL(clicked()), this, SLOT(onQuickSend()));
-    connect(viewAll, SIGNAL(clicked()), this, SLOT(onViewAll()));
+    connect(quickSend, &BlocknetIconBtn::clicked, this, &BlocknetDashboard::onQuickSend);
+    connect(viewAll, &QPushButton::clicked, this, &BlocknetDashboard::onViewAll);
 }
 
 void BlocknetDashboard::setWalletModel(WalletModel *w) {
@@ -214,10 +214,10 @@ void BlocknetDashboard::updateBalance() {
 void BlocknetDashboard::walletEvents(const bool on) {
     if (walletModel && on) {
         connect(walletModel, &WalletModel::balanceChanged, this, &BlocknetDashboard::balanceChanged);
-        connect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
+        connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetDashboard::displayUnitChanged);
     } else if (walletModel) {
         disconnect(walletModel, &WalletModel::balanceChanged, this, &BlocknetDashboard::balanceChanged);
-        disconnect(walletModel->getOptionsModel(), SIGNAL(displayUnitChanged(int)), this, SLOT(displayUnitChanged(int)));
+        disconnect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetDashboard::displayUnitChanged);
     }
 }
 

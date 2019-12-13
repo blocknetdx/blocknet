@@ -10,11 +10,12 @@
 #include <qt/bitcoinunits.h>
 
 #include <chainparams.h>
+#include <governance/governance.h>
+#include <net.h>
 #include <wallet/wallet.h>
 
 #include <QKeyEvent>
 #include <QMessageBox>
-#include <governance/governance.h>
 
 BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : BlocknetCreateProposalPage(id, parent),
                                                                            layout(new QVBoxLayout) {
@@ -181,9 +182,9 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
     layout->addWidget(btnBox);
     layout->addSpacing(BGU::spi(20));
 
-    connect(submitBtn, SIGNAL(clicked()), this, SLOT(onSubmit()));
-    connect(cancelBtn, SIGNAL(clicked()), this, SLOT(onCancel()));
-    connect(backBtn, SIGNAL(clicked()), this, SLOT(onBack()));
+    connect(submitBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal2::onSubmit);
+    connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal2::onCancel);
+    connect(backBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal2::onBack);
 }
 
 void BlocknetCreateProposal2::setModel(const BlocknetCreateProposalPageModel & m) {
@@ -223,11 +224,9 @@ void BlocknetCreateProposal2::onSubmit() {
 
     // Display message box
     auto fee = BitcoinUnits::floorWithUnit(0, Params().GetConsensus().proposalFee, 2, false, BitcoinUnits::separatorAlways);
-    QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Confirm Submission Fee"),
-                                                               tr("Are you sure you want to pay the proposal submission "
-                                                                  "fee of %1?\n\nThis cannot be undone").arg(fee),
-                                                               QMessageBox::Yes | QMessageBox::Cancel,
-                                                               QMessageBox::Cancel);
+    auto retval = static_cast<QMessageBox::StandardButton>(QMessageBox::question(this, tr("Confirm Submission Fee"),
+            tr("Are you sure you want to pay the proposal submission fee of %1?\n\nThis cannot be undone").arg(fee),
+            QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel));
 
     if (retval != QMessageBox::Yes) {
         disableButtons(false);
