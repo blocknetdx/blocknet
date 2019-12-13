@@ -21,6 +21,7 @@
 #include <json/json_spirit_utils.h>
 
 #include <boost/iostreams/concepts.hpp>
+#include <boost/lexical_cast.hpp>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -1473,9 +1474,9 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::init()
 {
     // convert prefixes
-    addrPrefix   = static_cast<char>(std::atoi(addrPrefix.data()));
-    scriptPrefix = static_cast<char>(std::atoi(scriptPrefix.data()));
-    secretPrefix = static_cast<char>(std::atoi(secretPrefix.data()));
+    addrPrefix   = static_cast<char>(boost::lexical_cast<int>(addrPrefix.data()));
+    scriptPrefix = static_cast<char>(boost::lexical_cast<int>(scriptPrefix.data()));
+    secretPrefix = static_cast<char>(boost::lexical_cast<int>(secretPrefix.data()));
 
     // wallet info
     rpc::WalletInfo info;

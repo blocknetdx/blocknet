@@ -458,7 +458,7 @@ std::string XRouterServer::processGetBlockHash(const std::string & currency, con
             }
         } else { // handle integer values
             try {
-                block_n = static_cast<uint32_t>(std::stoi(blockId));
+                block_n = boost::lexical_cast<uint32_t>(blockId);
             } catch (...) {
                 throw XRouterError("Problem with the specified block number, is it a number?", xrouter::INVALID_PARAMETERS);
             }
@@ -574,7 +574,7 @@ std::vector<std::string> XRouterServer::processGetTxBloomFilter(const std::strin
     std::string number_s(params[1]);
     if (!is_number(number_s))
         throw XRouterError("Incorrect block number: " + number_s, xrouter::INVALID_PARAMETERS);
-    int number = std::stoi(number_s);
+    int number = boost::lexical_cast<int>(number_s);
 
     App & app = App::instance();
     int fetchlimit = app.xrSettings()->commandFetchLimit(xrGetTxBloomFilter, currency);

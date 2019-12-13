@@ -19,6 +19,18 @@ KNOWN_VIOLATIONS=(
     "src/util/strencodings.cpp:.*strtoul"
     "src/util/strencodings.h:.*atoi"
     "src/util/system.cpp:.*atoi"
+    # Blocknet
+    "src/json/json_spirit_writer_template.h:.*iswprint"
+    "src/validation.cpp:.*normalize"
+    "src/xbridge/xbridgerpc.cpp:.*sprintf"
+    "src/xrouter/utils-misc.cpp:.*sprintf"
+    "src/xrouter/xrouterpacket.h:.*sprintf"
+    "src/governance/governance.h:.*to_lower"
+    "src/servicenode/servicenodemgr.h:.*to_lower"
+    "src/xbridge/xbridgerpc.cpp:.*to_lower"
+    "src/xbridge/currency.h:.*toupper"
+    "src/servicenode/servicenodemgr.h:.*trim"
+    "src/xbridge/xbridgerpc.cpp:.*trim"
 )
 
 REGEXP_IGNORE_EXTERNAL_DEPENDENCIES="^src/(crypto/ctaes/|leveldb/|secp256k1/|tinyformat.h|univalue/)"

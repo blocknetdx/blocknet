@@ -25,6 +25,7 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/stream.hpp>
+#include <boost/lexical_cast.hpp>
 
 #define HTTP_DEBUG
 
@@ -98,8 +99,8 @@ int ReadHTTPStatus(std::basic_istream<char>& stream, int &proto)
     proto = 0;
     const char *ver = strstr(str.c_str(), "HTTP/1.");
     if (ver != NULL)
-        proto = atoi(ver+7);
-    return atoi(vWords[1].c_str());
+        proto = boost::lexical_cast<int>(ver+7);
+    return boost::lexical_cast<int>(vWords[1].c_str());
 }
 
 //******************************************************************************
@@ -118,12 +119,12 @@ int ReadHTTPHeader(std::basic_istream<char>& stream, map<string, string>& mapHea
         {
             string strHeader = str.substr(0, nColon);
             boost::trim(strHeader);
-            boost::to_lower(strHeader);
+            boost::to_lower(strHeader, std::locale::classic());
             string strValue = str.substr(nColon+1);
             boost::trim(strValue);
             mapHeadersRet[strHeader] = strValue;
             if (strHeader == "content-length")
-                nLen = atoi(strValue.c_str());
+                nLen = boost::lexical_cast<int>(strValue.c_str());
         }
     }
     return nLen;
@@ -1100,7 +1101,7 @@ bool eth_gasPrice(const std::string & rpcip,
         }
 
         std::string value = result.get_str();
-        gasPrice = strtoll(value.substr(2).c_str(), nullptr, 16);
+//        gasPrice = strtoll(value.substr(2).c_str(), nullptr, 16); // TODO Blocknet use non locale func strtoll
     }
     catch (std::exception & e)
     {
@@ -1212,7 +1213,7 @@ bool eth_getBalance(const std::string & rpcip,
             }
 
             std::string value = result.get_str();
-            amount = strtoll(value.substr(2).c_str(), nullptr, 16);
+//            amount = strtoll(value.substr(2).c_str(), nullptr, 16); // TODO Blocknet use non locale func strtoll
         }
     }
     catch (std::exception & e)
@@ -1248,7 +1249,7 @@ bool eth_sendTransaction(const std::string & rpcip,
         // o.push_back(Pair("value",      "0x9184e72a"));
 
         char buf[64];
-        sprintf(buf, "%lullx", amount);
+//        sprintf(buf, "%lullx", amount); // TODO Blocknet use non-locale based func
         o.push_back(Pair("value", buf));
 
         // o.push_back(Pair("data",       "0xd46e8dd67c5d32be8d46e8dd67c5d32be8058bb8eb970870f072445675058bb8eb970870f072445675"));

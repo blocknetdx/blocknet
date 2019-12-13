@@ -11,6 +11,8 @@
 #include <json/json_spirit_reader_template.h>
 #include <json/json_spirit_writer_template.h>
 
+#include <boost/lexical_cast.hpp>
+
 using namespace json_spirit;
 
 namespace xrouter
@@ -34,7 +36,7 @@ static std::string dec2hex(const int & s) {
 }
 
 static std::string dec2hex(const std::string & s) {
-    return dec2hex(std::stoi(s));
+    return dec2hex(boost::lexical_cast<int>(s));
 }
 
 static int hex2dec(std::string s) {

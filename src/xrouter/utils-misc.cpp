@@ -13,6 +13,7 @@
 #include <json/json_spirit_utils.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace json_spirit;
 
@@ -144,15 +145,10 @@ bool xrsplit(const std::string & fqService, const std::string & del, std::vector
     return true;
 }
 
-bool is_number(std::string s)
+bool is_number(const std::string & s)
 {
     try {
-        std::string::size_type idx;
-        int res = std::stoi(s, &idx);
-        if (res < 0)
-            throw "";
-        if (idx != s.size())
-            throw "";
+        boost::lexical_cast<int>(s);
     } catch(...) {
         return false;
     }
@@ -176,29 +172,14 @@ bool is_hex(const std::string & hex)
     return std::regex_match(hex, m, r);
 }
 
-bool is_address(std::string s)
-{
-    for (size_t i = 0; i < s.size(); i++)
-        if (!std::isalnum(s[i]))
-            return false;
-    if (s.size() < 30)
-        return false;
-    return true;
-}
-
 bool hextodec(const std::string & hex, unsigned int & n) {
-    if (boost::algorithm::starts_with(hex, "0x")) {
-        try {
-            n = std::stoul(hex, nullptr, 16);
-        } catch(...) {
-            return false;
-        }
-    } else { // handle integer values
-        try {
-            n = static_cast<unsigned int>(std::stoi(hex));
-        } catch (...) {
-            return false;
-        }
+    std::string s = hex;
+    if (boost::algorithm::starts_with(s, "0x"))
+        s = hex.substr(2);
+    try {
+        n = boost::lexical_cast<unsigned int>(s);
+    } catch (...) {
+        return false;
     }
     return true;
 }

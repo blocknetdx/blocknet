@@ -119,10 +119,9 @@ double checkPayment(const std::string & rawtx, const std::string & address, cons
 
 // Miscellaneous functions
 CAmount to_amount(double val);
-bool is_number(std::string s);
+bool is_number(const std::string & s);
 bool is_hash(const std::string & hash);
 bool is_hex(const std::string & hex);
-bool is_address(std::string s);
 bool hextodec(const std::string & hex, unsigned int & n);
 std::string generateUUID();
 Object form_reply(const std::string & uuid, const Value & reply);

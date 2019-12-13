@@ -17,6 +17,7 @@
 #include <array>
 #include <stdio.h>
 
+#include <boost/lexical_cast.hpp>
 #include <json/json_spirit_writer_template.h>
 
 //*****************************************************************************
@@ -127,7 +128,7 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                       const std::string & jsonver)
 {
     const std::string & host = rpcip;
-    const int port = stoi(rpcport);
+    const int port = boost::lexical_cast<int>(rpcport);
 
     // Obtain event base
     raii_event_base base = obtain_event_base();

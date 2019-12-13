@@ -25,6 +25,8 @@
 #include <json/json_spirit_reader_template.h>
 #include <json/json_spirit_writer_template.h>
 
+#include <boost/lexical_cast.hpp>
+
 //*****************************************************************************
 //*****************************************************************************
 namespace xbridge
@@ -112,7 +114,7 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
                       const std::string & jsonver="")
 {
     const std::string & host = rpcip;
-    const int port = stoi(rpcport);
+    const int port = boost::lexical_cast<int>(rpcport);
 
     // Obtain event base
     raii_event_base base = obtain_event_base();
