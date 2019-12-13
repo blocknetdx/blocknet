@@ -1888,7 +1888,7 @@ bool AppInitMain(InitInterfaces& interfaces)
         sn::ServiceNodeMgr & smgr = sn::ServiceNodeMgr::instance();
         std::set<sn::ServiceNodeConfigEntry> entries;
         if (!smgr.loadSnConfig(entries))
-            LogPrint(BCLog::SNODE, "Failed to load service node entries from servicenode.conf");
+            LogPrint(BCLog::SNODE, "Failed to load service node entries from servicenode.conf\n");
 
         uiInterface.InitMessage(_("Starting xbridge service"));
         xbridge::App & xapp = xbridge::App::instance();
@@ -1920,7 +1920,7 @@ bool AppInitMain(InitInterfaces& interfaces)
                     if (!smgr.registerSn(snode, g_connman.get(), wallets, &failReason))
                         LogPrintf("Failed to register service node %s: %s\n", snode.alias, failReason);
                 } else if (!smgr.hasActiveSn())
-                    LogPrintf("Failed to register service node %s because the collateral could not be found in the wallet.", snode.alias);
+                    LogPrintf("Failed to register service node %s because the collateral could not be found in the wallet.\n", snode.alias);
             }
             // If we are a servicenode that's active try and register with the network from cache
             if (smgr.hasActiveSn()) {

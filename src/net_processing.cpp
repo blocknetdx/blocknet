@@ -3042,7 +3042,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 }
             }
         } catch (...) {
-            LogPrint(BCLog::XBRIDGE, "Fatal XBridge error detected");
+            LogPrint(BCLog::XBRIDGE, "Fatal XBridge error detected\n");
         }
 
         // Relay xbridge packets only if state is good

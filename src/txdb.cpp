@@ -286,7 +286,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     }
 
     LogPrintf("Loading block index with %u thread%s\n", cores, cores > 1 ? "s" : "");
-    LogPrintf("[0%%]...");
+    LogPrintf("[0%%]..."); /* Continued */
     uiInterface.ShowProgress("Loading block index", 0, false);
 
     // Calculate hashes using thread group
@@ -318,7 +318,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                     const int shardpos = allIndices < perticks ? 1 : static_cast<int>((double)allIndices/(double)perticks);
                     if (counter % shardpos == 0) {
                         int p = static_cast<int>((double)counter/(double)allIndices*80.0);
-                        LogPrintf("[%u%%]...", p);
+                        LogPrintf("[%u%%]...", p); /* Continued */
                         uiInterface.ShowProgress("Loading block index", p, false);
                     }
                 }
