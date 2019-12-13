@@ -493,3 +493,27 @@ bool IsProofOfStake(int blockHeight, const Consensus::Params & consensusParams) 
 bool IsProofOfStake(int blockHeight) {
     return IsProofOfStake(blockHeight, Params().GetConsensus());
 }
+
+bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore) {
+    // ppcoin: sign block
+    std::vector<std::vector<unsigned char>> vSolutions;
+    txnouttype whichType = Solver(stakeScript, vSolutions);
+
+    CKeyID keyID;
+    if (whichType == TX_PUBKEYHASH) {
+        keyID = CKeyID(uint160(vSolutions[0]));
+    } else if (whichType == TX_PUBKEY) {
+        keyID = CPubKey(vSolutions[0]).GetID();
+    } else {
+        return false; // unsupported type
+    }
+
+    CKey key;
+    if (!keystore.GetKey(keyID, key))
+        return false;
+
+    if (!key.Sign(block.GetHash(), block.vchBlockSig))
+        return false;
+
+    return true;
+}

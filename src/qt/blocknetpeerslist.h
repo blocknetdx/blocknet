@@ -6,7 +6,7 @@
 #define BLOCKNETPEERSLIST_H
 
 #include <qt/blocknetpeerdetails.h>
-#include <qt/blocknettools.h>
+#include <qt/blocknettoolspage.h>
 
 #include <qt/clientmodel.h>
 

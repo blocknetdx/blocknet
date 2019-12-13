@@ -15,6 +15,7 @@
 #include <xbridge/util/xseries.h>
 #include <xbridge/xbridgecryptoproviderbtc.h>
 #include <xbridge/xbridgeexchange.h>
+#include <xbridge/xbridgesession.h>
 #include <xbridge/xbridgewalletconnector.h>
 #include <xbridge/xbridgewalletconnectorbtc.h>
 #include <xbridge/xbridgewalletconnectorbch.h>
@@ -22,7 +23,6 @@
 #include <xbridge/xuiconnector.h>
 #include <xrouter/xrouterapp.h>
 
-#include <init.h>
 #include <net.h>
 #include <netmessagemaker.h>
 #include <rpc/server.h>
@@ -59,6 +59,10 @@ XUIConnector xuiConnector;
 //*****************************************************************************
 namespace xbridge
 {
+
+bool CanAffordFeePayment(const CAmount & fee) {
+    return App::instance().canAffordFeePayment(fee);
+}
 
 //*****************************************************************************
 //*****************************************************************************
@@ -2964,6 +2968,10 @@ std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
         << "USED INPUTS: " << std::endl << inputsStream.str();
 
     return out;
+}
+
+WalletConnectorPtr ConnectorByCurrency(const std::string & currency) {
+    return App::instance().connectorByCurrency(currency);
 }
 
 } // namespace xbridge

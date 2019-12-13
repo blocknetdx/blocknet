@@ -25,8 +25,6 @@ enum BToolsTabs {
     MULTISEND,
 };
 
-BlocknetToolsPage::BlocknetToolsPage(int id, QFrame *parent) : QFrame(parent), pageID(id) { }
-
 BlocknetTools::BlocknetTools(interfaces::Node & node, const PlatformStyle *platformStyle, QFrame *parent)
                             : QFrame(parent), layout(new QVBoxLayout)
 {

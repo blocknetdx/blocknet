@@ -33,6 +33,9 @@
 #include <queue>
 #include <utility>
 
+// from kernel.h
+bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore);
+
 int64_t UpdateTime(CBlockHeader* pblock, const Consensus::Params& consensusParams, const CBlockIndex* pindexPrev)
 {
     int64_t nOldTime = pblock->nTime;

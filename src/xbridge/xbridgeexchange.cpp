@@ -10,7 +10,8 @@
 #include <xbridge/bitcoinrpcconnector.h>
 #include <xbridge/util/logger.h>
 #include <xbridge/util/settings.h>
-#include <xbridge/xbridgeapp.h>
+#include <xbridge/util/xutil.h>
+#include <xbridge/xbridgewalletconnector.h>
 
 #include <chainparamsbase.h>
 #include <coinvalidator.h>
@@ -25,6 +26,13 @@
 //******************************************************************************
 namespace xbridge
 {
+
+// from xbridgeapp.h
+extern WalletConnectorPtr ConnectorByCurrency(const std::string & currency);
+
+bool ExchangeUtxos(const uint256 & txid, std::vector<wallet::UtxoEntry> & items) {
+    return Exchange::instance().getUtxoItems(txid, items);
+}
 
 //******************************************************************************
 //******************************************************************************
@@ -837,8 +845,7 @@ bool Exchange::makerUtxosAreStillValid(const TransactionPtr & tx)
 
     LOG() << "running automated maker utxo check on order " << tx->id().ToString() << " " << __FUNCTION__;
 
-    auto & xapp = xbridge::App::instance();
-    WalletConnectorPtr makerConn = xapp.connectorByCurrency(tx->a_currency());
+    WalletConnectorPtr makerConn = ConnectorByCurrency(tx->a_currency());
     if (!makerConn) // non-fatal just skip
         return true;
 

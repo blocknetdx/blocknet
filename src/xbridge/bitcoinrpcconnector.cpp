@@ -12,7 +12,6 @@
 
 #include <base58.h>
 #include <core_io.h>
-#include <init.h>
 #include <node/transaction.h>
 #include <rpc/client.h>
 #include <sync.h>

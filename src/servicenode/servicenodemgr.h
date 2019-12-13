@@ -31,6 +31,8 @@
  */
 namespace sn {
 
+extern CTxDestination ServiceNodePaymentAddress(const std::string & snode);
+
 /**
  * Service node configuration entry (from servicenode.conf).
  */

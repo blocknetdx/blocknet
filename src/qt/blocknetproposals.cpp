@@ -548,7 +548,7 @@ void BlocknetProposals::onVote() {
         gov::ProposalVote vote(proposal, yes ? gov::VoteType::YES : no ? gov::VoteType::NO : gov::VoteType::ABSTAIN);
         std::string failureReason;
         std::vector<CTransactionRef> txns;
-        if (!gov::Governance::instance().submitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, &failureReason))
+        if (!gov::Governance::instance().submitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, g_connman.get(), &failureReason))
             QMessageBox::warning(this, tr("Vote Submission Issue"), QString::fromStdString(failureReason));
         else {// close dialog if no errors
             dialog->close();

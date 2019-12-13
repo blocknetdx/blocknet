@@ -6,7 +6,7 @@
 #define BLOCKNETWALLETREPAIR_H
 
 #include <qt/blocknetformbtn.h>
-#include <qt/blocknettools.h>
+#include <qt/blocknettoolspage.h>
 
 #include <QFrame>
 #include <QHBoxLayout>

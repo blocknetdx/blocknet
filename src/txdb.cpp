@@ -7,7 +7,6 @@
 
 #include <chainparams.h>
 #include <hash.h>
-#include <kernel.h>
 #include <random.h>
 #include <pow.h>
 #include <shutdown.h>
@@ -18,6 +17,10 @@
 #include <stdint.h>
 
 #include <boost/thread.hpp>
+
+// from kernel.h
+bool IsProofOfStake(int blockHeight, const Consensus::Params & consensusParams);
+bool stakeTargetHit(uint256 hashProofOfStake, int64_t nValueIn, arith_uint256 bnTargetPerCoinDay);
 
 static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';

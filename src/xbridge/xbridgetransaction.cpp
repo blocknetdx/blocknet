@@ -7,11 +7,10 @@
 
 #include <xbridge/xbridgetransaction.h>
 
-#include <xbridge/xbridgeapp.h>
-#include <xbridge/xbridgeexchange.h>
 #include <xbridge/util/logger.h>
 #include <xbridge/util/settings.h>
 #include <xbridge/util/xutil.h>
+#include <xbridge/xbridgewalletconnector.h>
 
 #include <sync.h>
 #include <util/strencodings.h>
@@ -24,6 +23,10 @@
 //******************************************************************************
 namespace xbridge
 {
+// from xbridgeexchange.h
+extern bool ExchangeUtxos(const uint256 & txid, std::vector<wallet::UtxoEntry> & items);
+// from xbridgeapp.h
+extern WalletConnectorPtr ConnectorByCurrency(const std::string & currency);
 
 //*****************************************************************************
 //*****************************************************************************
@@ -553,16 +556,14 @@ std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
         return out;
     }
 
-    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(tx->a_currency());
-    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->b_currency());
+    xbridge::WalletConnectorPtr connFrom = ConnectorByCurrency(tx->a_currency());
+    xbridge::WalletConnectorPtr connTo   = ConnectorByCurrency(tx->b_currency());
 
     if (!connFrom || !connTo)
         out << "MISSING SOME CONNECTOR, NOT ALL ORDER INFO WILL BE LOGGED";
 
-    xbridge::Exchange & e = xbridge::Exchange::instance();
-
     std::vector<xbridge::wallet::UtxoEntry> items;
-    e.getUtxoItems(tx->id(), items);
+    ExchangeUtxos(tx->id(), items);
 
     std::ostringstream inputsStream;
     uint32_t count = 0;

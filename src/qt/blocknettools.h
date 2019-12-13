@@ -6,6 +6,7 @@
 #define BLOCKNETTOOLS_H
 
 #include <qt/blocknettabbar.h>
+#include <qt/blocknettoolspage.h>
 
 #include <qt/clientmodel.h>
 #include <qt/walletmodel.h>
@@ -14,16 +15,6 @@
 #include <QFrame>
 #include <QSet>
 #include <QVBoxLayout>
-
-class BlocknetToolsPage : public QFrame {
-    Q_OBJECT
-public:
-    explicit BlocknetToolsPage(int id, QFrame *parent = nullptr);
-
-protected:
-    WalletModel *walletModel;
-    int pageID{0};
-};
 
 class BlocknetDebugConsole;
 class BlocknetPeersList;

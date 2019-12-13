@@ -618,6 +618,7 @@ xrouter_libxrouter_a_SOURCES = \
   xrouter/xrouterpacket.cpp \
   xrouter/xrouterserver.cpp \
   xrouter/xroutersettings.cpp \
+  servicenode/servicenodemgr.cpp \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
 
@@ -779,6 +780,9 @@ CLEANFILES += wallet/*.gcda wallet/*.gcno
 CLEANFILES += wallet/test/*.gcda wallet/test/*.gcno
 CLEANFILES += zmq/*.gcda zmq/*.gcno
 CLEANFILES += xbridge/*.gcda xbridge/*.gcno
+CLEANFILES += xrouter/*.gcda xrouter/*.gcno
+CLEANFILES += servicenode/*.gcda servicenode/*.gcno
+CLEANFILES += governance/*.gcda governance/*.gcno
 CLEANFILES += obj/build.h
 
 EXTRA_DIST = $(CTAES_DIST)

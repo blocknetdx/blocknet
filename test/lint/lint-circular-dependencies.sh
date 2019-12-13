@@ -39,6 +39,13 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/signverifymessagedialog -> qt/addressbookpage"
     "qt/guiutil -> qt/walletmodel -> qt/optionsmodel -> qt/intro -> qt/guiutil"
     "qt/addressbookpage -> qt/bitcoingui -> qt/walletview -> qt/sendcoinsdialog -> qt/sendcoinsentry -> qt/addressbookpage"
+    # Blocknet
+    "pow -> validation -> pow"
+    "pow -> validation -> txdb -> pow"
+    "kernel -> miner -> validation -> kernel"
+    "governance/governance -> validation -> governance/governance"
+    "xbridge/xbridgeapp -> xbridge/xbridgesession -> xbridge/xbridgeapp"
+    "xrouter/xrouterapp -> xrouter/xrouterserver -> xrouter/xrouterapp"
 )
 
 EXIT_CODE=0

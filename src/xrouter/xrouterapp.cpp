@@ -4,7 +4,6 @@
 
 #include <xrouter/xrouterapp.h>
 
-#include <xbridge/xbridgeapp.h>
 #include <xrouter/xroutererror.h>
 #include <xrouter/xrouterlogger.h>
 
@@ -29,8 +28,14 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
+extern void Misbehaving(NodeId nodeid, int howmuch, const std::string& message="") EXCLUSIVE_LOCKS_REQUIRED(cs_main); // declared in net_processing.cpp
+
 //*****************************************************************************
 //*****************************************************************************
+namespace xbridge{
+extern bool CanAffordFeePayment(const CAmount & fee);
+}
+
 namespace xrouter
 {
 
@@ -400,7 +405,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                 LOG() << "Skipping node " << nodeAddr << " because its fee " << fee << " is higher than maxfee " << maxfee;
                 return true;
             }
-            if (!xbridge::App::instance().canAffordFeePayment(fee * COIN)) {
+            if (!xbridge::CanAffordFeePayment(fee * COIN)) {
                 LOG() << "Skipping node " << nodeAddr << " because there's not enough utxos to cover payment " << fee;
                 return true;
             }
@@ -872,7 +877,7 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
                 LOG() << "Skipping node " << snodeAddr << " because its fee " << fee << " is higher than maxfee " << maxfee;
                 continue;
             }
-            if (!xbridge::App::instance().canAffordFeePayment(fee * COIN)) {
+            if (!xbridge::CanAffordFeePayment(fee * COIN)) {
                 const auto & snodeAddr = EncodeDestination(CTxDestination(snodec[nodeAddr].getPaymentAddress()));
                 LOG() << "Skipping node " << snodeAddr << " because there's not enough utxos to cover payment " << fee;
                 continue;
@@ -2032,5 +2037,24 @@ void App::checkDoS(CValidationState & state, CNode *pnode) {
                  state.GetRejectReason());
     }
 };
+
+void App::updateScore(const NodeAddr & node, const int score) {
+    LOCK(mu);
+    if (!snodeScore.count(node))
+        snodeScore[node] = 0;
+    snodeScore[node] += score;
+    const auto scr = snodeScore[node];
+    int banscore = gArgs.GetArg("-xrouterbanscore", -200);
+    if (scr <= banscore) {
+        g_connman->ForEachNode([&node,scr,this](CNode *pnode) {
+            if (node == pnode->GetAddrName()) {
+                LOG() << strprintf("Banning XRouter Node %s because score is too low: %i", node, scr);
+                snodeScore[node] = -30; // default score when ban expires
+                LOCK(cs_main);
+                Misbehaving(pnode->GetId(), 100);
+            }
+        });
+    }
+}
 
 } // namespace xrouter

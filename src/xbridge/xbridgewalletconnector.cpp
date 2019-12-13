@@ -6,7 +6,7 @@
 //*****************************************************************************
 
 #include <xbridge/xbridgewalletconnector.h>
-#include <xbridge/xbridgetransactiondescr.h>
+#include <xbridge/util/logger.h>
 
 #include <base58.h>
 

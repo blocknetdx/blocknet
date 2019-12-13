@@ -8,9 +8,13 @@
 
 #include <arith_uint256.h>
 #include <chain.h>
-#include <kernel.h>
-#include <primitives/block.h>
-#include <uint256.h>
+#include <sync.h>
+#include <util/system.h>
+#include <validation.h>
+
+// from kernel.h
+bool IsProofOfStake(int blockHeight);
+bool CheckProofOfStake(const CBlockHeader & block, const CBlockIndex *pindexPrev, uint256 & hashProofOfStake, const Consensus::Params & consensusParams);
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader */*pblock*/, const Consensus::Params& params)
 {

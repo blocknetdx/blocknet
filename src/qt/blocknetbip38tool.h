@@ -6,9 +6,11 @@
 #define BLOCKNETBIP38TOOL_H
 
 #include <qt/blocknetaddressbtn.h>
-#include <qt/blocknettools.h>
 #include <qt/blocknetformbtn.h>
 #include <qt/blocknetlineeditwithtitle.h>
+#include <qt/blocknettoolspage.h>
+
+#include <qt/walletmodel.h>
 
 #include <QFrame>
 #include <QLabel>

@@ -7,7 +7,7 @@
 
 #include <qt/blocknetlabelbtn.h>
 #include <qt/blocknetpeerdetails.h>
-#include <qt/blocknettools.h>
+#include <qt/blocknettoolspage.h>
 
 #include <qt/platformstyle.h>
 

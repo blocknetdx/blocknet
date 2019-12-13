@@ -12,7 +12,6 @@
 #include <xbridge/util/xutil.h>
 #include <xbridge/xbridgedef.h>
 #include <xbridge/xbridgepacket.h>
-#include <xbridge/xbridgesession.h>
 #include <xbridge/xbridgetransactiondescr.h>
 #include <xbridge/xbridgewalletconnector.h>
 
@@ -42,6 +41,9 @@ class xSeriesCache;
 //*****************************************************************************
 namespace xbridge
 {
+
+extern bool CanAffordFeePayment(const CAmount & fee);
+extern WalletConnectorPtr ConnectorByCurrency(const std::string & currency);
 
 //*****************************************************************************
 //*****************************************************************************

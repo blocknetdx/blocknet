@@ -14,7 +14,6 @@
 #include <timedata.h>
 #include <logging.h>
 #include <util/system.h>
-#include <validation.h>
 #include <wallet/wallet.h>
 
 #include <boost/thread.hpp>
@@ -76,6 +75,7 @@ static std::string DateTimeStrFormat(const char* pszFormat, int64_t nTime) {
 }
 bool IsProofOfStake(int blockHeight, const Consensus::Params & consensusParams);
 bool IsProofOfStake(int blockHeight);
+bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore);
 
 class StakeMgr {
 public:

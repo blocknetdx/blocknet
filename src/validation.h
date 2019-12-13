@@ -14,7 +14,6 @@
 #include <coins.h>
 #include <crypto/common.h> // for ReadLE64
 #include <fs.h>
-#include <keystore.h>
 #include <key_io.h>
 #include <policy/feerate.h>
 #include <protocol.h> // For CMessageHeader::MessageStartChars
@@ -524,15 +523,6 @@ extern std::atomic<int> estimatedConnectedNodes;
  * @return
  */
 bool VerifySig(const CBlock & block, const CScript & stakeScript);
-
-/**
- * Produce the block signature required by the PoS protocol.
- * @param block
- * @param stakeScript
- * @param keystore
- * @return
- */
-bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore);
 
 /**
  * Only return transaction for utxo that hasn't been spent. If the utxo has been spent

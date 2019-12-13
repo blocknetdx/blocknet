@@ -6,11 +6,12 @@
 #define BLOCKNET_GOVERNANCE_H
 
 #include <amount.h>
+#include <chain.h>
+#include <coins.h>
 #include <consensus/params.h>
 #include <consensus/validation.h>
 #include <hash.h>
 #include <key_io.h>
-#include <net.h>
 #include <policy/policy.h>
 #include <script/standard.h>
 #include <shutdown.h>
@@ -1171,7 +1172,9 @@ public:
      * @return
      */
     bool submitProposal(const Proposal & proposal, const std::vector<std::shared_ptr<CWallet>> & wallets,
-                        const Consensus::Params & params, CTransactionRef & tx, std::string *failReasonRet) {
+                        const Consensus::Params & params, CTransactionRef & tx, CConnman *connman,
+                        std::string *failReasonRet)
+    {
         if (!proposal.isValid(params, failReasonRet))
             return error(failReasonRet->c_str());
 
@@ -1218,7 +1221,7 @@ public:
             if (balance <= params.proposalFee || wallet->IsLocked())
                 continue;
 
-            if (wallet->GetBroadcastTransactions() && !g_connman) {
+            if (wallet->GetBroadcastTransactions() && !connman) {
                 *failReasonRet = "Peer-to-peer functionality missing or disabled";
                 return error(failReasonRet->c_str());
             }
@@ -1283,7 +1286,7 @@ public:
             }
 
             CValidationState state;
-            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state)) {
+            if (!wallet->CommitTransaction(tx, {}, {}, reservekey, connman, state)) {
                 *failReasonRet = strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
                 return error(failReasonRet->c_str());
             }
@@ -1309,7 +1312,8 @@ public:
      * @return
      */
     bool submitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vector<std::shared_ptr<CWallet>> & wallets,
-                     const Consensus::Params & params, std::vector<CTransactionRef> & txsRet, std::string *failReasonRet)
+                     const Consensus::Params & params, std::vector<CTransactionRef> & txsRet, CConnman *connman,
+                     std::string *failReasonRet)
     {
         if (proposalVotes.empty())
             return false; // no proposals specified, reject
@@ -1527,13 +1531,13 @@ public:
 
                 // Send all voting transaction to the network. If there's a failure
                 // at any point in the process, bail out.
-                if (wallet->GetBroadcastTransactions() && !g_connman) {
+                if (wallet->GetBroadcastTransactions() && !connman) {
                     *failReasonRet = "Peer-to-peer functionality missing or disabled";
                     return error(failReasonRet->c_str());
                 }
 
                 CValidationState state;
-                if (!wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state)) {
+                if (!wallet->CommitTransaction(tx, {}, {}, reservekey, connman, state)) {
                     *failReasonRet = strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
                     return error(failReasonRet->c_str());
                 }

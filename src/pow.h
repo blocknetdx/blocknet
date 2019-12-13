@@ -9,7 +9,6 @@
 #include <consensus/params.h>
 #include <consensus/validation.h>
 #include <primitives/block.h>
-#include <validation.h>
 
 #include <stdint.h>
 

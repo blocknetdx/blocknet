@@ -14,10 +14,8 @@
 
 #include <banman.h>
 #include <hash.h>
-#include <init.h>
 #include <key_io.h>
 #include <net.h>
-#include <net_processing.h>
 #include <sync.h>
 #include <uint256.h>
 
@@ -573,24 +571,7 @@ private:
         LOCK(mu);
         return snodeScore.count(node);
     }
-    void updateScore(const NodeAddr & node, const int score) {
-        LOCK(mu);
-        if (!snodeScore.count(node))
-            snodeScore[node] = 0;
-        snodeScore[node] += score;
-        const auto scr = snodeScore[node];
-        int banscore = gArgs.GetArg("-xrouterbanscore", -200);
-        if (scr <= banscore) {
-            g_connman->ForEachNode([&node,scr,this](CNode *pnode) {
-                if (node == pnode->GetAddrName()) {
-                    LOG() << strprintf("Banning XRouter Node %s because score is too low: %i", node, scr);
-                    snodeScore[node] = -30; // default score when ban expires
-                    LOCK(cs_main);
-                    Misbehaving(pnode->GetId(), 100);
-                }
-            });
-        }
-    }
+    void updateScore(const NodeAddr & node, const int score);
     bool bestNode(const NodeAddr & a, const NodeAddr & b, const XRouterCommand & command, const std::string & service) {
         const auto & a_score = getScore(a);
         const auto & b_score = getScore(b);

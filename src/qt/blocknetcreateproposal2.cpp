@@ -244,7 +244,7 @@ void BlocknetCreateProposal2::onSubmit() {
             model.url, model.description);
     CTransactionRef tx;
     std::string failureReason;
-    if (!gov::Governance::instance().submitProposal(proposal, GetWallets(), Params().GetConsensus(), tx, &failureReason)) {
+    if (!gov::Governance::instance().submitProposal(proposal, GetWallets(), Params().GetConsensus(), tx, g_connman.get(), &failureReason)) {
         QMessageBox::warning(this->parentWidget(), tr("Issue"),
                 tr("The proposal was rejected: %1").arg(QString::fromStdString(failureReason)));
         disableButtons(false);

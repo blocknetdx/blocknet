@@ -219,6 +219,7 @@ QT_MOC_CPP += \
   qt/moc_blocknettabbtn.cpp \
   qt/moc_blocknettoolbar.cpp \
   qt/moc_blocknettools.cpp \
+  qt/moc_blocknettoolspage.cpp \
   qt/moc_blocknettransactionhistory.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetwalletrepair.cpp
@@ -361,6 +362,7 @@ BITCOIN_QT_H += \
   qt/blocknettabbtn.h \
   qt/blocknettoolbar.h \
   qt/blocknettools.h \
+  qt/blocknettoolspage.h \
   qt/blocknettransactionhistory.h \
   qt/blocknetvars.h \
   qt/blocknetwallet.h \

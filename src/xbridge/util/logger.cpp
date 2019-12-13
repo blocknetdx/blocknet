@@ -7,7 +7,6 @@
 
 #include <xbridge/util/logger.h>
 
-#include <xbridge/util/settings.h>
 #include <xbridge/xuiconnector.h>
 
 #include <util/system.h>

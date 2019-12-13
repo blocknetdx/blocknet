@@ -8,14 +8,19 @@
 #include <xrouter/xrouterlogger.h>
 #include <xrouter/xrouterutils.h>
 
+#include <chainparams.h>
+#include <key_io.h>
 #include <netbase.h>
-#include <servicenode/servicenodemgr.h>
 
 #include <algorithm>
 #include <iostream>
 #include <regex>
 
 #include <boost/algorithm/string.hpp>
+
+namespace sn {
+extern CTxDestination ServiceNodePaymentAddress(const std::string & snode);
+}
 
 namespace xrouter
 {
@@ -410,10 +415,10 @@ std::string XRouterSettings::paymentAddress(XRouterCommand c, const std::string 
             return get<std::string>(s_mainpaymentaddress, def);
     }
 
-    auto snode = sn::ServiceNodeMgr::instance().getSn(node);
+    auto addr = sn::ServiceNodePaymentAddress(node);
     // default payment address is snode vin address
-    if (!snode.isNull())
-        def = EncodeDestination(CTxDestination(snode.getPaymentAddress()));
+    if (!boost::get<CNoDestination>(&addr))
+        def = EncodeDestination(addr);
     auto res = get<std::string>(s_mainpaymentaddress, def);
     res = get<std::string>(std::string(XRouterCommand_ToString(c)) + "." + s_paymentaddress, res);
     if (!service.empty()) {

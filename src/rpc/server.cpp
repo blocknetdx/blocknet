@@ -14,7 +14,6 @@
 #include <ui_interface.h>
 #include <util/strencodings.h>
 #include <util/system.h>
-#include <wallet/rpcwallet.h>
 
 #include <boost/signals2/signal.hpp>
 #include <boost/algorithm/string/classification.hpp>

@@ -29,6 +29,8 @@
 namespace xbridge
 {
 
+extern bool ExchangeUtxos(const uint256 & txid, std::vector<wallet::UtxoEntry> & items);
+
 //*****************************************************************************
 //*****************************************************************************
 class Exchange
