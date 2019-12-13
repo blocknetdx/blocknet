@@ -302,7 +302,6 @@ BITCOIN_CORE_H += \
   xrouter/xroutererror.h \
   xrouter/xrouterlogger.h \
   xrouter/xrouterpacket.h \
-  xrouter/xrouterpeer.h \
   xrouter/xrouterserver.h \
   xrouter/xroutersettings.h \
   xrouter/xrouterutils.h
