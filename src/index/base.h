@@ -21,8 +21,7 @@
 class CBlockIndex;
 
 template<typename... Args>
-static void FatalError(const char* fmt, const Args&... args)
-{
+void FatalError(const char* fmt, const Args&... args) {
     std::string strMessage = tfm::format(fmt, args...);
     SetMiscWarning(strMessage);
     LogPrintf("*** %s\n", strMessage);

@@ -544,7 +544,7 @@ public:
 
             CKey key = DecodeSecret(skey);
             if (!key.IsValid()) {
-                LogPrintf("Failed to setup servicenode, bad servicenode.conf snodekey: %s %s %s\n", alias, saddress);
+                LogPrintf("Failed to setup servicenode, bad servicenode.conf snodekey: %s %s\n", alias, saddress);
                 continue;
             }
 
