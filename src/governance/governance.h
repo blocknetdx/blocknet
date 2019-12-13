@@ -1991,7 +1991,7 @@ protected:
                     // Only check the mempool and coincache for spent utxos if
                     // we're currently processing the chain tip.
                     LEAVE_CRITICAL_SECTION(mu);
-                    bool spent = processingChainTip && IsVoteSpent(vote, pindex->nHeight); // check that utxo is unspent
+                    bool spent = processingChainTip && IsVoteSpent(vote, true); // check that utxo is unspent
                     ENTER_CRITICAL_SECTION(mu);
                     if (spent)
                         continue;
