@@ -4,20 +4,20 @@
 
 #include <qt/blocknetsendfunds4.h>
 
+#include <qt/blocknetavatar.h>
 #include <qt/blocknetcircle.h>
 #include <qt/blocknetguiutil.h>
 #include <qt/blocknethdiv.h>
 #include <qt/blocknetsendfundsrequest.h>
 
 #include <qt/optionsmodel.h>
+#include <qt/sendcoinsdialog.h>
 
 #include <util/system.h>
 #include <validation.h>
 
 #include <QKeyEvent>
 #include <QMessageBox>
-#include "blocknetavatar.h"
-#include "sendcoinsdialog.h"
 
 BlocknetSendFunds4::BlocknetSendFunds4(WalletModel *w, int id, QFrame *parent) : BlocknetSendFundsPage(w, id, parent),
                                                                                  layout(new QVBoxLayout) {

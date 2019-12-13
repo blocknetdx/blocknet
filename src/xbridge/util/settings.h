@@ -7,8 +7,8 @@
 #ifndef BLOCKNET_XBRIDGE_UTIL_SETTINGS_H
 #define BLOCKNET_XBRIDGE_UTIL_SETTINGS_H
 
-#include "logger.h"
-#include "sync.h"
+#include <xbridge/util/logger.h>
+#include <sync.h>
 
 #include <vector>
 #include <string>

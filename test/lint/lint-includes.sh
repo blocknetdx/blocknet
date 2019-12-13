@@ -9,7 +9,7 @@
 # Check includes: Check for duplicate includes. Enforce bracket syntax includes.
 
 export LC_ALL=C
-IGNORE_REGEXP="/(leveldb|secp256k1|univalue)/"
+IGNORE_REGEXP="/(leveldb|secp256k1|univalue|json)/"
 
 filter_suffix() {
     git ls-files | grep -E "^src/.*\.${1}"'$' | grep -Ev "${IGNORE_REGEXP}"
@@ -72,6 +72,46 @@ EXPECTED_BOOST_INCLUDES=(
     boost/variant.hpp
     boost/variant/apply_visitor.hpp
     boost/variant/static_visitor.hpp
+    # Blocknet boost libs
+    boost/algorithm/string/join.hpp
+    boost/algorithm/string/predicate.hpp
+    boost/archive/iterators/base64_from_binary.hpp
+    boost/archive/iterators/binary_from_base64.hpp
+    boost/archive/iterators/ostream_iterator.hpp
+    boost/archive/iterators/transform_width.hpp
+    boost/asio.hpp
+    boost/asio/ssl.hpp
+    boost/assign/list_of.hpp
+    boost/bind.hpp
+    boost/config.hpp
+    boost/cstdint.hpp
+    boost/date_time/posix_time/conversion.hpp
+    boost/date_time/posix_time/posix_time_types.hpp
+    boost/date_time/posix_time/ptime.hpp
+    boost/date_time/time_facet.hpp
+    boost/filesystem/operations.hpp
+    boost/filesystem/path.hpp
+    boost/foreach.hpp
+    boost/function.hpp
+    boost/io/ios_state.hpp
+    boost/iostreams/concepts.hpp
+    boost/iostreams/stream.hpp
+    boost/lexical_cast.hpp
+    boost/locale.hpp
+    boost/noncopyable.hpp
+    boost/numeric/conversion/cast.hpp
+    boost/pool/pool_alloc.hpp
+    boost/preprocessor.hpp
+    boost/program_options.hpp
+    boost/property_tree/ini_parser.hpp
+    boost/property_tree/ptree.hpp
+    boost/rational.hpp
+    boost/shared_ptr.hpp
+    boost/thread/locks.hpp
+    boost/uuid/uuid.hpp
+    boost/uuid/uuid_generators.hpp
+    boost/uuid/uuid_io.hpp
+    boost/version.hpp
 )
 
 for BOOST_INCLUDE in $(git grep '^#include <boost/' -- "*.cpp" "*.h" | cut -f2 -d: | cut -f2 -d'<' | cut -f1 -d'>' | sort -u); do

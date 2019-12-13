@@ -21,6 +21,8 @@
 #include <QThread>
 #include <QTime>
 
+#include <boost/lexical_cast.hpp>
+
 const struct {
     const char *url;
     const char *source;
@@ -362,7 +364,7 @@ bool BlocknetDebugConsole::RPCParseCommandLine(interfaces::Node* node, std::stri
                                     for(char argch: curarg)
                                         if (!IsDigit(argch))
                                             throw std::runtime_error("Invalid result query");
-                                    subelement = lastResult[atoi(curarg.c_str())];
+                                    subelement = lastResult[boost::lexical_cast<int>(curarg.c_str())];
                                 }
                                 else if (lastResult.isObject())
                                     subelement = find_value(lastResult, curarg);
