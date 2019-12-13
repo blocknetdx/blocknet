@@ -903,7 +903,7 @@ private:
             // sort reply counts descending (most similar replies are more valuable)
             std::vector<std::pair<uint256, int> > tmp(counts.begin(), counts.end());
             std::sort(tmp.begin(), tmp.end(),
-                      [](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
+                      [](const std::pair<uint256, int> & a, const std::pair<uint256, int> & b) {
                           return a.second > b.second;
                       });
 
@@ -913,7 +913,7 @@ private:
                     const auto &r = hashes[tmp[0].first];
                     if (hasError(r)) { // in tie arrangements we don't want errors to take precendence
                         std::sort(tmp.begin(), tmp.end(), // sort descending
-                            [this, &hashes](std::pair<uint256, int> & a, std::pair<uint256, int> & b) {
+                            [this, &hashes](const std::pair<uint256, int> & a, const std::pair<uint256, int> & b) {
                                 const auto & ae = hasError(hashes[a.first]);
                                 const auto & be = hasError(hashes[b.first]);
                                 if ((!ae && !be) || (ae && be))

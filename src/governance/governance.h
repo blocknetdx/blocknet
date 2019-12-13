@@ -1007,7 +1007,7 @@ public:
             voted = true;
             voteCount = voteAmount/consensus.voteBalance;
         }
-        return { voteCount, vtype, voted, voteAmount };
+        return std::make_tuple(voteCount, vtype, voted, voteAmount);
     }
 
     /**
@@ -1246,7 +1246,7 @@ public:
                     CTxDestination dest;
                     if (!ExtractDestination(out.GetInputCoin().txout.scriptPubKey, dest))
                         continue;
-                    if (dest != address)
+                    if (!(dest == address))
                         continue; // skip if address isn't proposal address
                     cc.Select(out.GetInputCoin().outpoint);
                     selectedAmount += out.GetInputCoin().txout.nValue;
