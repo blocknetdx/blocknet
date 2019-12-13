@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNET_SERVICENODE_H
-#define BLOCKNET_SERVICENODE_H
+#ifndef BLOCKNET_SERVICENODE_SERVICENODE_H
+#define BLOCKNET_SERVICENODE_SERVICENODE_H
 
 #include <amount.h>
 #include <base58.h>
@@ -755,4 +755,4 @@ protected:
 
 }
 
-#endif //BLOCKNET_SERVICENODE_H
+#endif //BLOCKNET_SERVICENODE_SERVICENODE_H

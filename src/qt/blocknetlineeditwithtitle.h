@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETLINEEDITWITHTITLE_H
-#define BLOCKNETLINEEDITWITHTITLE_H
+#ifndef BLOCKNET_QT_BLOCKNETLINEEDITWITHTITLE_H
+#define BLOCKNET_QT_BLOCKNETLINEEDITWITHTITLE_H
 
 #include <qt/blocknetlineedit.h>
 
@@ -35,4 +35,4 @@ private:
     QVBoxLayout *layout;
 };
 
-#endif // BLOCKNETLINEEDITWITHTITLE_H
+#endif // BLOCKNET_QT_BLOCKNETLINEEDITWITHTITLE_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETKEYDIALOG_H
-#define BLOCKNETKEYDIALOG_H
+#ifndef BLOCKNET_QT_BLOCKNETKEYDIALOG_H
+#define BLOCKNET_QT_BLOCKNETKEYDIALOG_H
 
 #include <qt/blocknetformbtn.h>
 #include <qt/blocknetclosebtn.h>
@@ -27,4 +27,4 @@ private:
     QVBoxLayout *layout;
 };
 
-#endif // BLOCKNETKEYDIALOG_H
+#endif // BLOCKNET_QT_BLOCKNETKEYDIALOG_H

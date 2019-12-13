@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNET_XBRIDGE_POSIXTIMECONVERSION_H
-#define BLOCKNET_XBRIDGE_POSIXTIMECONVERSION_H
+#ifndef BLOCKNET_XBRIDGE_UTIL_POSIXTIMECONVERSION_H
+#define BLOCKNET_XBRIDGE_UTIL_POSIXTIMECONVERSION_H
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/version.hpp>
@@ -24,4 +24,4 @@ namespace boost {
 
 #endif
 
-#endif // BLOCKNET_XBRIDGE_POSIXTIMECONVERSION_H
+#endif // BLOCKNET_XBRIDGE_UTIL_POSIXTIMECONVERSION_H

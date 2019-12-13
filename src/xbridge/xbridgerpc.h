@@ -5,8 +5,8 @@
 //******************************************************************************
 //******************************************************************************
 
-#ifndef BLOCKNET_XBRIDGERPC_H
-#define BLOCKNET_XBRIDGERPC_H
+#ifndef BLOCKNET_XBRIDGE_XBRIDGERPC_H
+#define BLOCKNET_XBRIDGE_XBRIDGERPC_H
 
 #include <vector>
 #include <string>

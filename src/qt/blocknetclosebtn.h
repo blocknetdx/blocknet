@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETCLOSEBTN_H
-#define BLOCKNETCLOSEBTN_H
+#ifndef BLOCKNET_QT_BLOCKNETCLOSEBTN_H
+#define BLOCKNET_QT_BLOCKNETCLOSEBTN_H
 
 #include <qt/blocknetguiutil.h>
 
@@ -39,4 +39,4 @@ private:
     QString id;
 };
 
-#endif // BLOCKNETCLOSEBTN_H
+#endif // BLOCKNET_QT_BLOCKNETCLOSEBTN_H

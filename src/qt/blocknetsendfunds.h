@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETSENDFUNDS_H
-#define BLOCKNETSENDFUNDS_H
+#ifndef BLOCKNET_QT_BLOCKNETSENDFUNDS_H
+#define BLOCKNET_QT_BLOCKNETSENDFUNDS_H
 
 #include <qt/blocknetbreadcrumb.h>
 #include <qt/blocknetsendfunds1.h>
@@ -81,4 +81,4 @@ private:
     void goToDone();
 };
 
-#endif // BLOCKNETSENDFUNDS_H
+#endif // BLOCKNET_QT_BLOCKNETSENDFUNDS_H

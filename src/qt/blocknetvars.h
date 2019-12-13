@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETVARS_H
-#define BLOCKNETVARS_H
+#ifndef BLOCKNET_QT_BLOCKNETVARS_H
+#define BLOCKNET_QT_BLOCKNETVARS_H
 
 #include <amount.h>
 
@@ -29,4 +29,4 @@ enum BlocknetPage {
     TOOLS,
 };
 
-#endif // BLOCKNETVARS_H
+#endif // BLOCKNET_QT_BLOCKNETVARS_H

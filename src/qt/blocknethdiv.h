@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETHDIV_H
-#define BLOCKNETHDIV_H
+#ifndef BLOCKNET_QT_BLOCKNETHDIV_H
+#define BLOCKNET_QT_BLOCKNETHDIV_H
 
 #include <QLabel>
 
@@ -18,4 +18,4 @@ Q_SIGNALS:
 public Q_SLOTS:
 };
 
-#endif // BLOCKNETHDIV_H
+#endif // BLOCKNET_QT_BLOCKNETHDIV_H

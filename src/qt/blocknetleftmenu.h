@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETLEFTMENU_H
-#define BLOCKNETLEFTMENU_H
+#ifndef BLOCKNET_QT_BLOCKNETLEFTMENU_H
+#define BLOCKNET_QT_BLOCKNETLEFTMENU_H
 
 #include <qt/blockneticonlabel.h>
 #include <qt/blocknetvars.h>
@@ -55,4 +55,4 @@ private:
     int selected;
 };
 
-#endif // BLOCKNETLEFTMENU_H
+#endif // BLOCKNET_QT_BLOCKNETLEFTMENU_H

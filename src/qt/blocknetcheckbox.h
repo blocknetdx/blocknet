@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETCHECKBOX_H
-#define BLOCKNETCHECKBOX_H
+#ifndef BLOCKNET_QT_BLOCKNETCHECKBOX_H
+#define BLOCKNET_QT_BLOCKNETCHECKBOX_H
 
 #include <QCheckBox>
 
@@ -15,4 +15,4 @@ public:
 };
 
 
-#endif //BLOCKNETCHECKBOX_H
+#endif //BLOCKNET_QT_BLOCKNETCHECKBOX_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETCREATEPROPOSALUTIL_H
-#define BLOCKNETCREATEPROPOSALUTIL_H
+#ifndef BLOCKNET_QT_BLOCKNETCREATEPROPOSALUTIL_H
+#define BLOCKNET_QT_BLOCKNETCREATEPROPOSALUTIL_H
 
 #include <qt/walletmodel.h>
 
@@ -59,4 +59,4 @@ protected:
     WalletModel *walletModel = nullptr;
 };
 
-#endif //BLOCKNETCREATEPROPOSALUTIL_H
+#endif //BLOCKNET_QT_BLOCKNETCREATEPROPOSALUTIL_H

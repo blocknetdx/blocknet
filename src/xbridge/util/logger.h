@@ -5,8 +5,8 @@
 //******************************************************************************
 //******************************************************************************
 
-#ifndef BLOCKNET_XBRIDGE_LOGGER_H
-#define BLOCKNET_XBRIDGE_LOGGER_H
+#ifndef BLOCKNET_XBRIDGE_UTIL_LOGGER_H
+#define BLOCKNET_XBRIDGE_UTIL_LOGGER_H
 
 #include <sstream>
 
@@ -44,4 +44,4 @@ private:
     static std::string m_logFileName;
 };
 
-#endif // BLOCKNET_XBRIDGE_LOGGER_H
+#endif // BLOCKNET_XBRIDGE_UTIL_LOGGER_H

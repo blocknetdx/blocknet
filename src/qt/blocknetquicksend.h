@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETQUICKSEND_H
-#define BLOCKNETQUICKSEND_H
+#ifndef BLOCKNET_QT_BLOCKNETQUICKSEND_H
+#define BLOCKNET_QT_BLOCKNETQUICKSEND_H
 
 #include <qt/blocknetformbtn.h>
 #include <qt/blocknetlineedit.h>
@@ -68,4 +68,4 @@ private:
     WalletModel::SendCoinsReturn submitFunds();
 };
 
-#endif // BLOCKNETQUICKSEND_H
+#endif // BLOCKNET_QT_BLOCKNETQUICKSEND_H

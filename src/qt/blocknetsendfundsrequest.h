@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETSENDFUNDSREQUEST_H
-#define BLOCKNETSENDFUNDSREQUEST_H
+#ifndef BLOCKNET_QT_BLOCKNETSENDFUNDSREQUEST_H
+#define BLOCKNET_QT_BLOCKNETSENDFUNDSREQUEST_H
 
 #include <qt/walletmodel.h>
 
@@ -26,4 +26,4 @@ private:
     CCoinControl *coinControl = nullptr;
 };
 
-#endif //BLOCKNETSENDFUNDSREQUEST_H
+#endif //BLOCKNET_QT_BLOCKNETSENDFUNDSREQUEST_H

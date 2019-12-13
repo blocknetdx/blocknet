@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETPEERSLIST_H
-#define BLOCKNETPEERSLIST_H
+#ifndef BLOCKNET_QT_BLOCKNETPEERSLIST_H
+#define BLOCKNET_QT_BLOCKNETPEERSLIST_H
 
 #include <qt/blocknetpeerdetails.h>
 #include <qt/blocknettoolspage.h>
@@ -49,4 +49,4 @@ private:
     };
 };
 
-#endif // BLOCKNETPEERSLIST_H
+#endif // BLOCKNET_QT_BLOCKNETPEERSLIST_H

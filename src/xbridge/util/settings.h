@@ -4,8 +4,8 @@
 
 //******************************************************************************
 //******************************************************************************
-#ifndef BLOCKNET_XBRIDGE_SETTINGS_H
-#define BLOCKNET_XBRIDGE_SETTINGS_H
+#ifndef BLOCKNET_XBRIDGE_UTIL_SETTINGS_H
+#define BLOCKNET_XBRIDGE_UTIL_SETTINGS_H
 
 #include "logger.h"
 #include "sync.h"
@@ -117,4 +117,4 @@ private:
 
 Settings & settings();
 
-#endif // BLOCKNET_XBRIDGE_SETTINGS_H
+#endif // BLOCKNET_XBRIDGE_UTIL_SETTINGS_H

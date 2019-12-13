@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKFUNDSMENU_H
-#define BLOCKFUNDSMENU_H
+#ifndef BLOCKNET_QT_BLOCKNETFUNDSMENU_H
+#define BLOCKNET_QT_BLOCKNETFUNDSMENU_H
 
 #include <functional>
 
@@ -45,4 +45,4 @@ private:
 };
 
 
-#endif //BLOCKFUNDSMENU_H
+#endif //BLOCKNET_QT_BLOCKNETFUNDSMENU_H

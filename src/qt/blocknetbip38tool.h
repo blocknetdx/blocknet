@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETBIP38TOOL_H
-#define BLOCKNETBIP38TOOL_H
+#ifndef BLOCKNET_QT_BLOCKNETBIP38TOOL_H
+#define BLOCKNET_QT_BLOCKNETBIP38TOOL_H
 
 #include <qt/blocknetaddressbtn.h>
 #include <qt/blocknetformbtn.h>
@@ -44,4 +44,4 @@ private:
     BlocknetFormBtn *decryptBtn;
 };
 
-#endif // BLOCKNETBIP38TOOL_H
+#endif // BLOCKNET_QT_BLOCKNETBIP38TOOL_H

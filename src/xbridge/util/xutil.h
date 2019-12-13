@@ -5,8 +5,8 @@
 //*****************************************************************************
 //*****************************************************************************
 
-#ifndef BLOCKNET_XBRIDGE_UTIL_H
-#define BLOCKNET_XBRIDGE_UTIL_H
+#ifndef BLOCKNET_XBRIDGE_UTIL_XUTIL_H
+#define BLOCKNET_XBRIDGE_UTIL_XUTIL_H
 
 #include <xbridge/util/logger.h>
 #include <xbridge/util/xbridgeerror.h>
@@ -114,4 +114,4 @@ namespace xbridge
 
 } // namespace xbridge
 
-#endif // BLOCKNET_XBRIDGE_UTIL_H
+#endif // BLOCKNET_XBRIDGE_UTIL_XUTIL_H

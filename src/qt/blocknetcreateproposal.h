@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETCREATEPROPOSAL_H
-#define BLOCKNETCREATEPROPOSAL_H
+#ifndef BLOCKNET_QT_BLOCKNETCREATEPROPOSAL_H
+#define BLOCKNET_QT_BLOCKNETCREATEPROPOSAL_H
 
 #include <qt/blocknetbreadcrumb.h>
 #include <qt/blocknetcreateproposalutil.h>
@@ -60,4 +60,4 @@ private:
     void goToDone();
 };
 
-#endif // BLOCKNETCREATEPROPOSAL_H
+#endif // BLOCKNET_QT_BLOCKNETCREATEPROPOSAL_H

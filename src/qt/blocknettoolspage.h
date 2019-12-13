@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETTOOLSPAGE_H
-#define BLOCKNETTOOLSPAGE_H
+#ifndef BLOCKNET_QT_BLOCKNETTOOLSPAGE_H
+#define BLOCKNET_QT_BLOCKNETTOOLSPAGE_H
 
 #include <qt/blocknettabbar.h>
 
@@ -22,4 +22,4 @@ protected:
     int pageID{0};
 };
 
-#endif // BLOCKNETTOOLSPAGE_H
+#endif // BLOCKNET_QT_BLOCKNETTOOLSPAGE_H

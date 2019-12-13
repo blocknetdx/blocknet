@@ -5,8 +5,8 @@
 //******************************************************************************
 //******************************************************************************
 
-#ifndef BLOCKNET_XBRIDGE_XBRIDGEERROR_H
-#define BLOCKNET_XBRIDGE_XBRIDGEERROR_H
+#ifndef BLOCKNET_XBRIDGE_UTIL_XBRIDGEERROR_H
+#define BLOCKNET_XBRIDGE_UTIL_XBRIDGEERROR_H
 
 //******************************************************************************
 //******************************************************************************
@@ -58,4 +58,4 @@ namespace xbridge
 
 } // namespace xbridge
 
-#endif // BLOCKNET_XBRIDGE_XBRIDGEERROR_H
+#endif // BLOCKNET_XBRIDGE_UTIL_XBRIDGEERROR_H

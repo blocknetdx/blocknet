@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETAVATAR_H
-#define BLOCKNETAVATAR_H
+#ifndef BLOCKNET_QT_BLOCKNETAVATAR_H
+#define BLOCKNET_QT_BLOCKNETAVATAR_H
 
 #include <qt/blocknetguiutil.h>
 
@@ -43,4 +43,4 @@ public:
                             QWidget *parent = nullptr);
 };
 
-#endif // BLOCKNETAVATAR_H
+#endif // BLOCKNET_QT_BLOCKNETAVATAR_H

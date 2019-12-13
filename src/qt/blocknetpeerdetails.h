@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETPEERDETAILS_H
-#define BLOCKNETPEERDETAILS_H
+#ifndef BLOCKNET_QT_BLOCKNETPEERDETAILS_H
+#define BLOCKNET_QT_BLOCKNETPEERDETAILS_H
 
 #include <QEvent>
 #include <QFrame>
@@ -62,4 +62,4 @@ private:
     bool eventFilter(QObject *obj, QEvent *event) override;
 };
 
-#endif // BLOCKNETPEERDETAILS_H
+#endif // BLOCKNET_QT_BLOCKNETPEERDETAILS_H

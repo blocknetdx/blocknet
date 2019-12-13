@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETADDRESSBOOK_H
-#define BLOCKNETADDRESSBOOK_H
+#ifndef BLOCKNET_QT_BLOCKNETADDRESSBOOK_H
+#define BLOCKNET_QT_BLOCKNETADDRESSBOOK_H
 
 #include <qt/blocknetactionbtn.h>
 #include <qt/blocknetdropdown.h>
@@ -100,4 +100,4 @@ private:
     bool ssMode = false;
 };
 
-#endif // BLOCKNETADDRESSBOOK_H
+#endif // BLOCKNET_QT_BLOCKNETADDRESSBOOK_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETTABBTN_H
-#define BLOCKNETTABBTN_H
+#ifndef BLOCKNET_QT_BLOCKNETTABBTN_H
+#define BLOCKNET_QT_BLOCKNETTABBTN_H
 
 #include <QLabel>
 #include <QPushButton>
@@ -23,4 +23,4 @@ private:
     QLabel *subLine;
 };
 
-#endif // BLOCKNETTABBTN_H
+#endif // BLOCKNET_QT_BLOCKNETTABBTN_H

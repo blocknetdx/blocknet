@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETDEBUGCONSOLE_H
-#define BLOCKNETDEBUGCONSOLE_H
+#ifndef BLOCKNET_QT_BLOCKNETDEBUGCONSOLE_H
+#define BLOCKNET_QT_BLOCKNETDEBUGCONSOLE_H
 
 #include <qt/blocknetlabelbtn.h>
 #include <qt/blocknetpeerdetails.h>
@@ -136,4 +136,4 @@ private:
     WalletModel *m_last_wallet_model{nullptr};
 };
 
-#endif // BLOCKNETDEBUGCONSOLE_H
+#endif // BLOCKNET_QT_BLOCKNETDEBUGCONSOLE_H

@@ -32,8 +32,8 @@
  * @author   Thomas Pornin <thomas.pornin@cryptolog.com>
  */
 
-#ifndef SPH_GROESTL_H__
-#define SPH_GROESTL_H__
+#ifndef BITCOIN_CRYPTO_SPH_GROESTL_H
+#define BITCOIN_CRYPTO_SPH_GROESTL_H
 
 #ifdef __cplusplus
 extern "C"{

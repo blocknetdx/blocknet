@@ -33,8 +33,8 @@
  * @author   Thomas Pornin <thomas.pornin@cryptolog.com>
  */
 
-#ifndef SPH_BMW_H__
-#define SPH_BMW_H__
+#ifndef BITCOIN_CRYPTO_SPH_BMW_H
+#define BITCOIN_CRYPTO_SPH_BMW_H
 
 #ifdef __cplusplus
 extern "C"{

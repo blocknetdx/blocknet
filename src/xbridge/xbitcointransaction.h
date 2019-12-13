@@ -5,8 +5,8 @@
 //******************************************************************************
 //******************************************************************************
 
-#ifndef BLOCKNET_XBRIDGE_BITCOINTRANSACTION_H
-#define BLOCKNET_XBRIDGE_BITCOINTRANSACTION_H
+#ifndef BLOCKNET_XBRIDGE_XBITCOINTRANSACTION_H
+#define BLOCKNET_XBRIDGE_XBITCOINTRANSACTION_H
 
 #include <hash.h>
 #include <primitives/transaction.h>
@@ -284,4 +284,4 @@ public:
 
 } // namespace xbridge
 
-#endif // BLOCKNET_XBRIDGE_BITCOINTRANSACTION_H
+#endif // BLOCKNET_XBRIDGE_XBITCOINTRANSACTION_H

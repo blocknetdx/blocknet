@@ -34,8 +34,8 @@
  * @author   Thomas Pornin <thomas.pornin@cryptolog.com>
  */
 
-#ifndef SPH_BLAKE_H__
-#define SPH_BLAKE_H__
+#ifndef BITCOIN_CRYPTO_SPH_BLAKE_H
+#define BITCOIN_CRYPTO_SPH_BLAKE_H
 
 #ifdef __cplusplus
 extern "C"{

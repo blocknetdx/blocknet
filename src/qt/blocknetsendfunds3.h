@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETSENDFUNDS3_H
-#define BLOCKNETSENDFUNDS3_H
+#ifndef BLOCKNET_QT_BLOCKNETSENDFUNDS3_H
+#define BLOCKNET_QT_BLOCKNETSENDFUNDS3_H
 
 #include <qt/blocknetformbtn.h>
 #include <qt/blocknetlineedit.h>
@@ -64,4 +64,4 @@ private:
     void updateModelTxFees(CAmount fee);
 };
 
-#endif // BLOCKNETSENDFUNDS3_H
+#endif // BLOCKNET_QT_BLOCKNETSENDFUNDS3_H

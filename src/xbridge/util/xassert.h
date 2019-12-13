@@ -5,8 +5,8 @@
 //*****************************************************************************
 //*****************************************************************************
 
-#ifndef BLOCKNET_XBRIDGE_XASSERT_H
-#define BLOCKNET_XBRIDGE_XASSERT_H
+#ifndef BLOCKNET_XBRIDGE_UTIL_XASSERT_H
+#define BLOCKNET_XBRIDGE_UTIL_XASSERT_H
 
 #ifdef _XDEBUG
 #define xassert(__expr) assert(__expr)
@@ -14,4 +14,4 @@
 #define xassert(__expr) void(0)
 #endif
 
-#endif // BLOCKNET_XBRIDGE_XASSERT_H
+#endif // BLOCKNET_XBRIDGE_UTIL_XASSERT_H

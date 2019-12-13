@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETSETTINGS_H
-#define BLOCKNETSETTINGS_H
+#ifndef BLOCKNET_QT_BLOCKNETSETTINGS_H
+#define BLOCKNET_QT_BLOCKNETSETTINGS_H
 
 #include <qt/blocknetdropdown.h>
 #include <qt/blocknetformbtn.h>
@@ -73,4 +73,4 @@ private:
     BlocknetFormBtn *resetBtn;
 };
 
-#endif // BLOCKNETSETTINGS_H
+#endif // BLOCKNET_QT_BLOCKNETSETTINGS_H

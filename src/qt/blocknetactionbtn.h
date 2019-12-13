@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETACTIONBTN_H
-#define BLOCKNETACTIONBTN_H
+#ifndef BLOCKNET_QT_BLOCKNETACTIONBTN_H
+#define BLOCKNET_QT_BLOCKNETACTIONBTN_H
 
 #include <QPushButton>
 #include <QStyle>
@@ -28,4 +28,4 @@ private:
     qreal s;
 };
 
-#endif // BLOCKNETACTIONBTN_H
+#endif // BLOCKNET_QT_BLOCKNETACTIONBTN_H

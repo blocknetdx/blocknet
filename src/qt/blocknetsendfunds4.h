@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETSENDFUNDS4_H
-#define BLOCKNETSENDFUNDS4_H
+#ifndef BLOCKNET_QT_BLOCKNETSENDFUNDS4_H
+#define BLOCKNET_QT_BLOCKNETSENDFUNDS4_H
 
 #include <qt/blocknetformbtn.h>
 #include <qt/blocknetsendfundsutil.h>
@@ -65,4 +65,4 @@ private:
     QString totalText(QString total);
 };
 
-#endif // BLOCKNETSENDFUNDS4_H
+#endif // BLOCKNET_QT_BLOCKNETSENDFUNDS4_H

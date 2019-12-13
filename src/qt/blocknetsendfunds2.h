@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETSENDFUNDS2_H
-#define BLOCKNETSENDFUNDS2_H
+#ifndef BLOCKNET_QT_BLOCKNETSENDFUNDS2_H
+#define BLOCKNET_QT_BLOCKNETSENDFUNDS2_H
 
 #include <qt/blocknetcoincontrol.h>
 #include <qt/blocknetformbtn.h>
@@ -96,4 +96,4 @@ private:
     void updateDisplayUnit();
 };
 
-#endif // BLOCKNETSENDFUNDS2_H
+#endif // BLOCKNET_QT_BLOCKNETSENDFUNDS2_H

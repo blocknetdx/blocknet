@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETADDRESSEDIT_H
-#define BLOCKNETADDRESSEDIT_H
+#ifndef BLOCKNET_QT_BLOCKNETADDRESSEDIT_H
+#define BLOCKNET_QT_BLOCKNETADDRESSEDIT_H
 
 #include <qt/blocknetformbtn.h>
 #include <qt/blocknetlineeditwithtitle.h>
@@ -94,4 +94,4 @@ private:
     WalletModel *walletModel;
 };
 
-#endif // BLOCKNETADDRESSEDIT_H
+#endif // BLOCKNET_QT_BLOCKNETADDRESSEDIT_H

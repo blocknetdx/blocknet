@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETCREATEPROPOSAL2_H
-#define BLOCKNETCREATEPROPOSAL2_H
+#ifndef BLOCKNET_QT_BLOCKNETCREATEPROPOSAL2_H
+#define BLOCKNET_QT_BLOCKNETCREATEPROPOSAL2_H
 
 #include <qt/blocknetcreateproposalutil.h>
 #include <qt/blocknetformbtn.h>
@@ -55,4 +55,4 @@ private:
     void disableButtons(const bool &disable);
 };
 
-#endif // BLOCKNETCREATEPROPOSAL2_H
+#endif // BLOCKNET_QT_BLOCKNETCREATEPROPOSAL2_H

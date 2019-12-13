@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETDROPDOWN_H
-#define BLOCKNETDROPDOWN_H
+#ifndef BLOCKNET_QT_BLOCKNETDROPDOWN_H
+#define BLOCKNET_QT_BLOCKNETDROPDOWN_H
 
 #include <QComboBox>
 #include <QVariant>
@@ -38,4 +38,4 @@ private:
     const int ddH;
 };
 
-#endif // BLOCKNETDROPDOWN_H
+#endif // BLOCKNET_QT_BLOCKNETDROPDOWN_H

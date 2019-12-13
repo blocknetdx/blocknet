@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETICONBTN_H
-#define BLOCKNETICONBTN_H
+#ifndef BLOCKNET_QT_BLOCKNETICONBTN_H
+#define BLOCKNET_QT_BLOCKNETICONBTN_H
 
 #include <QFrame>
 #include <QLabel>
@@ -45,4 +45,4 @@ private:
     QLabel *iconLbl;
 };
 
-#endif // BLOCKNETICONBTN_H
+#endif // BLOCKNET_QT_BLOCKNETICONBTN_H

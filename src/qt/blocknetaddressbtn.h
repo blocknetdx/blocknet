@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETADDRESSBTN_H
-#define BLOCKNETADDRESSBTN_H
+#ifndef BLOCKNET_QT_BLOCKNETADDRESSBTN_H
+#define BLOCKNET_QT_BLOCKNETADDRESSBTN_H
 
 #include <QPushButton>
 
@@ -22,4 +22,4 @@ private:
     QString id;
 };
 
-#endif // BLOCKNETADDRESSBTN_H
+#endif // BLOCKNET_QT_BLOCKNETADDRESSBTN_H

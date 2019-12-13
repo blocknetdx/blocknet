@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETTOOLS_H
-#define BLOCKNETTOOLS_H
+#ifndef BLOCKNET_QT_BLOCKNETTOOLS_H
+#define BLOCKNET_QT_BLOCKNETTOOLS_H
 
 #include <qt/blocknettabbar.h>
 #include <qt/blocknettoolspage.h>
@@ -54,4 +54,4 @@ private:
     BlocknetToolsPage *screen = nullptr;
 };
 
-#endif // BLOCKNETTOOLS_H
+#endif // BLOCKNET_QT_BLOCKNETTOOLS_H

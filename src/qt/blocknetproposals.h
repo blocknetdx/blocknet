@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETPROPOSALS_H
-#define BLOCKNETPROPOSALS_H
+#ifndef BLOCKNET_QT_BLOCKNETPROPOSALS_H
+#define BLOCKNET_QT_BLOCKNETPROPOSALS_H
 
 #include <qt/blocknetdropdown.h>
 #include <qt/blocknetvars.h>
@@ -171,4 +171,4 @@ protected:
 private:
 };
 
-#endif // BLOCKNETPROPOSALS_H
+#endif // BLOCKNET_QT_BLOCKNETPROPOSALS_H

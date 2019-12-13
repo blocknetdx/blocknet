@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETLINEEDIT_H
-#define BLOCKNETLINEEDIT_H
+#ifndef BLOCKNET_QT_BLOCKNETLINEEDIT_H
+#define BLOCKNET_QT_BLOCKNETLINEEDIT_H
 
 #include <qt/blocknetguiutil.h>
 
@@ -25,4 +25,4 @@ private:
     QString id;
 };
 
-#endif // BLOCKNETLINEEDIT_H
+#endif // BLOCKNET_QT_BLOCKNETLINEEDIT_H

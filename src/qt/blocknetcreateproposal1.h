@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETCREATEPROPOSAL1_H
-#define BLOCKNETCREATEPROPOSAL1_H
+#ifndef BLOCKNET_QT_BLOCKNETCREATEPROPOSAL1_H
+#define BLOCKNET_QT_BLOCKNETCREATEPROPOSAL1_H
 
 #include <qt/blocknetcreateproposalutil.h>
 #include <qt/blocknetformbtn.h>
@@ -62,4 +62,4 @@ private:
     static int nextSuperblock();
 };
 
-#endif // BLOCKNETCREATEPROPOSAL1_H
+#endif // BLOCKNET_QT_BLOCKNETCREATEPROPOSAL1_H

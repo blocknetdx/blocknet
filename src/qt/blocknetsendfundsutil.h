@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNETSENDFUNDSUTIL_H
-#define BLOCKNETSENDFUNDSUTIL_H
+#ifndef BLOCKNET_QT_BLOCKNETSENDFUNDSUTIL_H
+#define BLOCKNET_QT_BLOCKNETSENDFUNDSUTIL_H
 
 #include <qt/blocknetvars.h>
 
@@ -569,4 +569,4 @@ static std::tuple<CAmount, CAmount, CAmount> BlocknetEstimateFee(WalletModel *wa
     return {nPayFee, nAfterFee, nChange};
 }
 
-#endif //BLOCKNETSENDFUNDSUTIL_H
+#endif //BLOCKNET_QT_BLOCKNETSENDFUNDSUTIL_H
