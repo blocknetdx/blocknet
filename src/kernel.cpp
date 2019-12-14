@@ -3,14 +3,15 @@
 // Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <boost/assign/list_of.hpp>
-#include <boost/lexical_cast.hpp>
-
-#include <db.h>
 #include <hash.h>
 #include <kernel.h>
 #include <script/interpreter.h>
-#include <timedata.h>
+#include <util/system.h>
+#include <validation.h>
+
+#include <boost/assign/list_of.hpp>
+#include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 
@@ -67,13 +68,9 @@ int64_t GetStakeModifierSelectionInterval()
 // select a block from the candidate blocks in vSortedByTimestamp, excluding
 // already selected blocks in vSelectedBlocks, and with timestamp up to
 // nSelectionIntervalStop.
-#include <boost/foreach.hpp>
-static bool SelectBlockFromCandidates(
-    vector<pair<int64_t, uint256> >& vSortedByTimestamp,
-    map<uint256, const CBlockIndex*>& mapSelectedBlocks,
-    int64_t nSelectionIntervalStop,
-    uint64_t nStakeModifierPrev,
-    const CBlockIndex** pindexSelected)
+static bool SelectBlockFromCandidates( vector<pair<int64_t, uint256> >& vSortedByTimestamp, map<uint256,
+        const CBlockIndex*>& mapSelectedBlocks, int64_t nSelectionIntervalStop, uint64_t nStakeModifierPrev,
+        const CBlockIndex** pindexSelected)
 {
     bool fModifierV2 = false;
     bool fModifierV3 = false;
@@ -492,28 +489,4 @@ bool IsProofOfStake(int blockHeight, const Consensus::Params & consensusParams) 
 }
 bool IsProofOfStake(int blockHeight) {
     return IsProofOfStake(blockHeight, Params().GetConsensus());
-}
-
-bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore) {
-    // ppcoin: sign block
-    std::vector<std::vector<unsigned char>> vSolutions;
-    txnouttype whichType = Solver(stakeScript, vSolutions);
-
-    CKeyID keyID;
-    if (whichType == TX_PUBKEYHASH) {
-        keyID = CKeyID(uint160(vSolutions[0]));
-    } else if (whichType == TX_PUBKEY) {
-        keyID = CPubKey(vSolutions[0]).GetID();
-    } else {
-        return false; // unsupported type
-    }
-
-    CKey key;
-    if (!keystore.GetKey(keyID, key))
-        return false;
-
-    if (!key.Sign(block.GetHash(), block.vchBlockSig))
-        return false;
-
-    return true;
 }

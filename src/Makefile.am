@@ -202,6 +202,7 @@ BITCOIN_CORE_H = \
   servicenode/servicenode.h \
   servicenode/servicenodemgr.h \
   shutdown.h \
+  stakemgr.h \
   streams.h \
   support/allocators/secure.h \
   support/allocators/zeroafterfree.h \
@@ -363,6 +364,7 @@ libbitcoin_server_a_SOURCES = \
   rpc/util.cpp \
   script/sigcache.cpp \
   shutdown.cpp \
+  stakemgr.cpp \
   timedata.cpp \
   torcontrol.cpp \
   txdb.cpp \
@@ -413,6 +415,7 @@ libbitcoin_wallet_a_SOURCES = \
   governance/governancewallet.cpp \
   servicenode/servicenode.cpp \
   servicenode/servicenodemgr.cpp \
+  stakemgr.cpp \
   $(BITCOIN_CORE_H)
 
 libbitcoin_wallet_tool_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)

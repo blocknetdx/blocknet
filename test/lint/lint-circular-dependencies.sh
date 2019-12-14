@@ -42,7 +42,7 @@ EXPECTED_CIRCULAR_DEPENDENCIES=(
     # Blocknet
     "pow -> validation -> pow"
     "pow -> validation -> txdb -> pow"
-    "kernel -> miner -> validation -> kernel"
+    "kernel -> validation -> kernel"
     "governance/governance -> validation -> governance/governance"
     "xbridge/xbridgeapp -> xbridge/xbridgesession -> xbridge/xbridgeapp"
     "xrouter/xrouterapp -> xrouter/xrouterserver -> xrouter/xrouterapp"

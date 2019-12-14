@@ -59,6 +59,9 @@
 
 #include <xbridge/xbridgeapp.h>
 #include <xrouter/xrouterapp.h>
+#ifdef ENABLE_WALLET
+#include <stakemgr.h>
+#endif
 
 #ifndef WIN32
 #include <attributes.h>
@@ -1874,9 +1877,11 @@ bool AppInitMain(InitInterfaces& interfaces)
         return false;
     }
 
+#ifdef ENABLE_WALLET
     // Start the staker
     if (gArgs.GetBoolArg("-staking", true))
         threadGroup.create_thread(&ThreadStakeMinter);
+#endif
 
     // ********************************************************* Step 13: finished
 

@@ -16,6 +16,7 @@
 #include <policy/policy.h>
 #include <pow.h>
 #include <rpc/server.h>
+#include <stakemgr.h>
 #include <timedata.h>
 #include <univalue.h>
 #include <validation.h>
