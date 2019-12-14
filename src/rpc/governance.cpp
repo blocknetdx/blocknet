@@ -10,8 +10,15 @@
 #include <rpc/util.h>
 #include <validation.h>
 
+#ifdef ENABLE_WALLET
+#include <governance/governancewallet.h>
+#endif // ENABLE_WALLET
+
 static UniValue createproposal(const JSONRPCRequest& request)
 {
+#ifndef ENABLE_WALLET
+    return "Wallet required";
+#endif // ENABLE_WALLET
     if (request.fHelp || request.params.size() < 4 || request.params.size() > 6)
         throw std::runtime_error(
             RPCHelpMan{"createproposal",
@@ -74,8 +81,10 @@ static UniValue createproposal(const JSONRPCRequest& request)
     }
 
     CTransactionRef tx;
-    if (!gov::Governance::instance().submitProposal(proposal, GetWallets(), Params().GetConsensus(), tx, g_connman.get(), &failReason))
+#ifdef ENABLE_WALLET
+    if (!gov::SubmitProposal(proposal, GetWallets(), Params().GetConsensus(), tx, g_connman.get(), &failReason))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal: %s", failReason));
+#endif // ENABLE_WALLET
 
     UniValue ret(UniValue::VOBJ);
     ret.pushKV("hash", proposal.getHash().ToString());
@@ -162,6 +171,9 @@ static UniValue listproposals(const JSONRPCRequest& request)
 
 static UniValue vote(const JSONRPCRequest& request)
 {
+#ifndef ENABLE_WALLET
+    return "Wallet required";
+#endif
     if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
         throw std::runtime_error(
             RPCHelpMan{"vote",
@@ -213,8 +225,10 @@ static UniValue vote(const JSONRPCRequest& request)
     gov::ProposalVote vote{proposal, castVote};
     std::vector<CTransactionRef> txns;
     std::string failReason;
-    if (!gov::Governance::instance().submitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, g_connman.get(), &failReason))
+#ifdef ENABLE_WALLET
+    if (!gov::SubmitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, g_connman.get(), &failReason))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit vote: %s", failReason));
+#endif // ENABLE_WALLET
 
     UniValue ret(UniValue::VOBJ);
     ret.pushKV("hash", proposal.getHash().ToString());

@@ -142,6 +142,7 @@ BITCOIN_CORE_H = \
   cuckoocache.h \
   fs.h \
   governance/governance.h \
+  governance/governancewallet.h \
   httprpc.h \
   httpserver.h \
   index/base.h \
@@ -406,6 +407,7 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/walletdb.cpp \
   wallet/walletutil.cpp \
   wallet/coinselection.cpp \
+  governance/governancewallet.cpp \
   $(BITCOIN_CORE_H)
 
 libbitcoin_wallet_tool_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
@@ -521,6 +523,7 @@ libbitcoin_common_a_SOURCES = \
   core_read.cpp \
   core_write.cpp \
   governance/governance.cpp \
+  governance/governancewallet.cpp \
   key.cpp \
   key_io.cpp \
   keystore.cpp \

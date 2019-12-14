@@ -17,6 +17,7 @@
 #include <qt/guiutil.h>
 #include <qt/optionsmodel.h>
 
+#include <governance/governancewallet.h>
 #include <net.h>
 #include <uint256.h>
 
@@ -273,8 +274,7 @@ void BlocknetProposals::initialize() {
         } else {
             // how many votes are mine?
             auto wallets = GetWallets();
-            const auto castVote = gov::Governance::instance().getMyVotes(proposal.getHash(), pcoinsTip.get(),
-                    wallets, Params().GetConsensus());
+            const auto castVote = gov::GetMyVotes(proposal.getHash(), pcoinsTip.get(), wallets, Params().GetConsensus());
             const auto votes = std::get<0>(castVote);
             const auto voteType = std::get<1>(castVote);
             const auto voted = std::get<2>(castVote);
@@ -549,7 +549,7 @@ void BlocknetProposals::onVote() {
         gov::ProposalVote vote(proposal, yes ? gov::VoteType::YES : no ? gov::VoteType::NO : gov::VoteType::ABSTAIN);
         std::string failureReason;
         std::vector<CTransactionRef> txns;
-        if (!gov::Governance::instance().submitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, g_connman.get(), &failureReason))
+        if (!gov::SubmitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, g_connman.get(), &failureReason))
             QMessageBox::warning(this, tr("Vote Submission Issue"), QString::fromStdString(failureReason));
         else {// close dialog if no errors
             dialog->close();
