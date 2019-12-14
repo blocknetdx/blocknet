@@ -566,7 +566,7 @@ static std::tuple<CAmount, CAmount, CAmount> BlocknetEstimateFee(WalletModel *wa
         nAfterFee = std::max<CAmount>(nAmount - nPayFee, 0);
     }
 
-    return {nPayFee, nAfterFee, nChange};
+    return std::make_tuple(nPayFee, nAfterFee, nChange);
 }
 
 #endif //BLOCKNET_QT_BLOCKNETSENDFUNDSUTIL_H
