@@ -3032,8 +3032,10 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
                 if (state.IsInvalid(dos)) {
                     LogPrint(BCLog::XBRIDGE, "invalid xbridge packet from peer=%d %s : %s\n", pfrom->GetId(),
                             pfrom->cleanSubVer, state.GetRejectReason());
-                    if (dos > 0)
+                    if (dos > 0) {
+                        LOCK(cs_main);
                         Misbehaving(pfrom->GetId(), dos);
+                    }
                 }
                 else if (state.IsError()) {
                     LogPrint(BCLog::XBRIDGE, "xbridge packet from peer=%d %s processed with error: %s\n",
