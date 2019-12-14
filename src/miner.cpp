@@ -28,7 +28,6 @@
 #include <util/strencodings.h>
 #include <util/system.h>
 #include <validationinterface.h>
-#include <wallet/wallet.h>
 
 #include <algorithm>
 #include <queue>
@@ -186,7 +185,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 }
 
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                                  const int64_t & stakeTime, CWallet *keystore,
+                                                                  const int64_t & stakeTime, CBasicKeyStore *keystore,
                                                                   const bool & disableValidationChecks)
 {
     int64_t nTimeStart = GetTimeMicros();
@@ -303,14 +302,18 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount, paymentScript); // staker payment
 
     // Sign stake input w/ keystore
-    auto signInput = [](CMutableTransaction & tx, CWallet *keystore) {
+    auto signInput = [&stakeInput](CMutableTransaction & tx, CBasicKeyStore *keystore) {
         SignatureData empty; // clean script sig on all inputs
-        for (auto & txin : tx.vin)
-            UpdateInput(txin, empty);
-        auto locked_chain = keystore->chain().lock();
-        LOCK(keystore->cs_wallet);
-        if (!keystore->SignTransaction(tx))
-            throw std::runtime_error(strprintf("%s: Failed to sign the staked input", __func__));
+        unsigned int nIn{0};
+        for (auto & txin : tx.vin) {
+            const CScript& scriptPubKey = stakeInput.txout.scriptPubKey;
+            const CAmount& amount = stakeInput.txout.nValue;
+            SignatureData sigdata;
+            if (!ProduceSignature(*keystore, MutableTransactionSignatureCreator(&tx, nIn, amount, SIGHASH_ALL), scriptPubKey, sigdata))
+                throw std::runtime_error(strprintf("%s: Failed to sign the staked input", __func__));
+            UpdateInput(txin, sigdata);
+            nIn++;
+        }
     };
 
     // Calculate network fee for coinbase/coinstake txs
