@@ -2878,7 +2878,7 @@ bool CWallet::CreateTransaction(interfaces::Chain::Lock& locked_chain, const std
             bool pick_new_inputs = true;
             CAmount nValueIn = 0;
             if (coin_control.m_total_fee) // user specified exact fee
-                nFeeRet = coin_control.m_total_fee.value();
+                nFeeRet = *(coin_control.m_total_fee);
 
             // BnB selector is the only selector used when this is true.
             // That should only happen on the first pass through the loop.
@@ -3024,7 +3024,7 @@ bool CWallet::CreateTransaction(interfaces::Chain::Lock& locked_chain, const std
 
                 if (coin_control.m_total_fee) {
                     // Reject if specified fee is smaller than minimum fee needed
-                    if (coin_control.m_total_fee.value() < nFeeNeeded) {
+                    if (*(coin_control.m_total_fee) < nFeeNeeded) {
                         strFailReason = _("Not enough fee specified to cover the minimum fee");
                         return false;
                     }
