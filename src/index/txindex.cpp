@@ -342,7 +342,7 @@ void TxIndex::ThreadSync()
 
     // For small number of blocks use single thread
     if (totalBlocks < 1440) {
-        for (int i = startingHeight; i < totalBlocks; ++i) {
+        for (int i = startingHeight; i <= startingHeight + totalBlocks; ++i) {
             CBlockIndex *blockIndex = nullptr;
             {
                 LOCK(cs_main);
