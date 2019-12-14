@@ -415,6 +415,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
                     BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
                     auto blockptr = std::make_shared<CBlock>(block);
                     if (ProcessNewBlock(Params(), blockptr, false, nullptr)) {
+                        LOCK(cs_main);
                         if (mapBlockIndex.count(block.GetHash()))
                             prevIndex = mapBlockIndex[block.GetHash()];
                     }
@@ -442,6 +443,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
                     BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
                     auto blockptr = std::make_shared<CBlock>(block);
                     if (ProcessNewBlock(Params(), blockptr, false, nullptr)) {
+                        LOCK(cs_main);
                         if (mapBlockIndex.count(block.GetHash()))
                             prevIndex = mapBlockIndex[block.GetHash()];
                     }
