@@ -851,9 +851,9 @@ public:
         // have the complete dataset in memory. Below the votes are sliced
         // up into shards and each available thread works on its own shard.
         std::vector<std::pair<uint256, Vote>> tmpvotes;
-        tmpvotes.reserve(votes.size());
         {
             LOCK(mu);
+            tmpvotes.reserve(votes.size());
             std::copy(votes.begin(), votes.end(), std::back_inserter(tmpvotes));
         }
         slice = static_cast<int>(tmpvotes.size()) / cores;
@@ -987,7 +987,7 @@ public:
 
         CAmount voteAmount{0};
         VoteType vtype{ABSTAIN};
-        for (const auto & item : votes) {
+        for (const auto & item : copyVotes) {
             const auto & vote = item.second;
             if (vote.getProposal() == hash && !vote.spent()) {
                 const auto & utxo = vote.getUtxo();
