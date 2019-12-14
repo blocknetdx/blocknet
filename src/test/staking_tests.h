@@ -89,6 +89,23 @@ struct TestChainPoS : public TestingSetup {
             m_coinbase_txns.push_back(b.vtx[0]);
         }
 
+        ReloadWallet();
+
+        // Turn on index for staking
+        g_txindex = MakeUnique<TxIndex>(1 << 20, true);
+        g_txindex->Start();
+        g_txindex->Sync();
+
+        // Stake some blocks
+        StakeBlocks(5);
+    }
+
+    void ReloadWallet() {
+        if (wallet) {
+            UnregisterValidationInterface(wallet.get());
+            RemoveWallet(wallet);
+        }
+
         bool firstRun;
         wallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
         AddWallet(wallet); // add wallet to global mgr
@@ -101,14 +118,6 @@ struct TestChainPoS : public TestingSetup {
         }
         wallet->SetBroadcastTransactions(true);
         RegisterValidationInterface(wallet.get());
-
-        // Turn on index for staking
-        g_txindex = MakeUnique<TxIndex>(1 << 20, true);
-        g_txindex->Start();
-        g_txindex->Sync();
-
-        // Stake some blocks
-        StakeBlocks(5);
     }
 
     CBlock CreateAndProcessBlock(const std::vector<CMutableTransaction>& txns, const CScript& scriptPubKey) {
