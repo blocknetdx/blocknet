@@ -10,6 +10,8 @@
 #include <net.h>
 #include <node/transaction.h>
 
+#include <boost/test/tools/interface.hpp>
+
 BOOST_AUTO_TEST_SUITE(governance_tests)
 
 int nextSuperblock(const int & block, const int & superblock) {
