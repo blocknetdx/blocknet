@@ -408,6 +408,8 @@ libbitcoin_wallet_a_SOURCES = \
   wallet/walletutil.cpp \
   wallet/coinselection.cpp \
   governance/governancewallet.cpp \
+  servicenode/servicenode.cpp \
+  servicenode/servicenodemgr.cpp \
   $(BITCOIN_CORE_H)
 
 libbitcoin_wallet_tool_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)

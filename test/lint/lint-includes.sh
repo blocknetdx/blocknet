@@ -107,7 +107,7 @@ EXPECTED_BOOST_INCLUDES=(
     boost/property_tree/ptree.hpp
     boost/rational.hpp
     boost/shared_ptr.hpp
-    boost/test/tools/interface.hpp
+    boost/test/test_tools.hpp
     boost/thread/locks.hpp
     boost/uuid/uuid.hpp
     boost/uuid/uuid_generators.hpp

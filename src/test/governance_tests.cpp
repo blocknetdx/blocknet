@@ -11,7 +11,7 @@
 #include <node/transaction.h>
 #include <wallet/coincontrol.h>
 
-#include <boost/test/tools/interface.hpp>
+#include <boost/test/test_tools.hpp>
 
 BOOST_AUTO_TEST_SUITE(governance_tests)
 

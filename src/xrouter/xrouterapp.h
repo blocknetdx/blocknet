@@ -5,7 +5,6 @@
 #ifndef BLOCKNET_XROUTER_XROUTERAPP_H
 #define BLOCKNET_XROUTER_XROUTERAPP_H
 
-#include <servicenode/servicenode.h>
 #include <xrouter/xrouterdef.h>
 #include <xrouter/xrouterpacket.h>
 #include <xrouter/xrouterserver.h>
@@ -16,8 +15,10 @@
 #include <hash.h>
 #include <key_io.h>
 #include <net.h>
+#include <servicenode/servicenode.h>
 #include <sync.h>
 #include <uint256.h>
+#include <wallet/wallet.h>
 
 #include <algorithm>
 #include <chrono>

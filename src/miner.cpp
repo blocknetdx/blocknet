@@ -28,6 +28,7 @@
 #include <util/strencodings.h>
 #include <util/system.h>
 #include <validationinterface.h>
+#include <wallet/wallet.h>
 
 #include <algorithm>
 #include <queue>
