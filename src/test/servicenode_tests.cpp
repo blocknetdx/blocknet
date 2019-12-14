@@ -31,6 +31,12 @@ void saveFile(const boost::filesystem::path& p, const std::string& str) {
     file.write(str.c_str(), str.size());
 }
 
+void cleanupSn() {
+    sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+    sn::ServiceNodeMgr::instance().reset();
+    mempool.clear();
+}
+
 BOOST_AUTO_TEST_SUITE(servicenode_tests)
 
 /// Check case where servicenode is properly validated under normal circumstances
@@ -68,6 +74,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
     sn::ServiceNode snode;
     BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
     BOOST_CHECK(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
+
+    cleanupSn();
 }
 
 /// Check open tier case
@@ -102,6 +110,8 @@ BOOST_FIXTURE_TEST_CASE(servicenode_tests_opentier, TestChainPoS)
         BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Failed on invalid snode key sig");
     }
+
+    cleanupSn();
 }
 
 /// Check case where duplicate collateral utxos are used
@@ -128,6 +138,8 @@ BOOST_FIXTURE_TEST_CASE(servicenode_tests_duplicate_collateral, TestChainPoS)
     sn::ServiceNode snode;
     BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
     BOOST_CHECK(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
+
+    cleanupSn();
 }
 
 /// Check case where there's not enough snode inputs
@@ -151,6 +163,8 @@ BOOST_FIXTURE_TEST_CASE(servicenode_tests_insufficient_collateral, TestChainPoS)
     sn::ServiceNode snode;
     BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
     BOOST_CHECK(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
+
+    cleanupSn();
 }
 
 /// Check case where collateral inputs are spent
@@ -164,6 +178,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         return 1 * COIN;
     };
     pos.Init();
+    pos.StakeBlocks(5), SyncWithValidationInterfaceQueue();
 
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
@@ -220,6 +235,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         sn::ServiceNode snode;
         BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Should fail on spent collateral");
+
+        cleanupSn();
     }
 
     // Check case where spent collateral is in mempool
@@ -263,6 +280,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         sn::ServiceNode snode;
         BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
         BOOST_CHECK_MESSAGE(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Should not fail on spent collateral in mempool");
+
+        cleanupSn();
     }
 
     // Servicenode should be marked invalid if collateral is spent
@@ -318,8 +337,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
             UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
         }
 
-        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        cleanupSn();
     }
 }
 
@@ -431,8 +449,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
     UnregisterValidationInterface(otherwallet.get());
     RemoveWallet(otherwallet);
     UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
-    sn::ServiceNodeMgr::instance().reset();
     gArgs.SoftSetBoolArg("-servicenode", false);
+    cleanupSn();
 }
 
 /// Check case where collateral inputs are immature
@@ -548,8 +566,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
 
     UnregisterValidationInterface(otherwallet.get());
     RemoveWallet(otherwallet);
-    sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-    sn::ServiceNodeMgr::instance().reset();
+    cleanupSn();
 }
 
 /// Servicenode registration and ping tests
@@ -700,9 +717,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
     }
 
-    sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-    sn::ServiceNodeMgr::instance().reset();
     gArgs.SoftSetBoolArg("-servicenode", false);
+    cleanupSn();
 }
 
 /// Check misc cases
@@ -961,6 +977,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
     }
+
+    cleanupSn();
 }
 
 /// Check rpc cases
@@ -1428,7 +1446,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 
         RemoveWallet(otherwallet);
     }
+
     gArgs.SoftSetBoolArg("-servicenode", false);
+    cleanupSn();
 }
 
 BOOST_AUTO_TEST_SUITE_END()
