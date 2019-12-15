@@ -31,6 +31,7 @@ KNOWN_VIOLATIONS=(
     "src/xbridge/currency.h:.*toupper"
     "src/servicenode/servicenodemgr.h:.*trim"
     "src/xbridge/xbridgerpc.cpp:.*trim"
+    "src/xbridge/util/xutil.cpp:.*strftime"
 )
 
 REGEXP_IGNORE_EXTERNAL_DEPENDENCIES="^src/(crypto/ctaes/|leveldb/|secp256k1/|tinyformat.h|univalue/)"
