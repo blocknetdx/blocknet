@@ -17,7 +17,7 @@
 #include <sync.h>
 #include <timedata.h>
 #include <univalue.h>
-#include <wallet/wallet.h>
+#include <util/time.h>
 
 #include <set>
 #include <utility>

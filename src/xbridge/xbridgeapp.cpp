@@ -2292,23 +2292,22 @@ void App::unlockCoins(const std::string & token, const std::vector<wallet::UtxoE
 //******************************************************************************
 //******************************************************************************
 bool App::canAffordFeePayment(const CAmount & fee) {
+#ifdef ENABLE_WALLET
     const auto & lockedUtxos = getAllLockedUtxos("BLOCK");
-    std::vector<COutput> coins = availableCoins(true, 1); // at least 1-conf
+    auto coins = availableCoins(true, 1); // at least 1-conf
 
     CAmount running{0};
     for (const auto & out : coins) {
-        if (!out.fSpendable)
-            continue;
         wallet::UtxoEntry entry;
-        entry.txId = out.tx->GetHash().ToString();
-        entry.vout = out.i;
+        entry.txId = out.first.hash.ToString();
+        entry.vout = out.first.n;
         if (!lockedUtxos.count(entry)) {
-            running += out.GetInputCoin().txout.nValue;
+            running += out.second.nValue;
             if (running >= fee)
                 return true;
         }
     }
-
+#endif
     return false;
 }
 

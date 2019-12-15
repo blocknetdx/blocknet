@@ -14,7 +14,6 @@
 #include <script/standard.h>
 #include <servicenode/servicenodemgr.h>
 #include <shutdown.h>
-#include <wallet/wallet.h>
 #include <univalue.h>
 
 #include <chrono>
@@ -57,15 +56,6 @@ static std::vector<CNode*> CopyNodes() {
         nodes.push_back(pnode);
     });
     return std::move(nodes);
-}
-
-/**
- * Returns the first wallet found.
- * @return
- */
-static std::shared_ptr<CWallet> GetWallet() {
-    auto wallets = GetWallets();
-    return wallets.front();
 }
 
 //*****************************************************************************

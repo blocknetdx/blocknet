@@ -364,7 +364,6 @@ libbitcoin_server_a_SOURCES = \
   rpc/util.cpp \
   script/sigcache.cpp \
   shutdown.cpp \
-  stakemgr.cpp \
   timedata.cpp \
   torcontrol.cpp \
   txdb.cpp \
@@ -537,7 +536,6 @@ libbitcoin_common_a_SOURCES = \
   core_read.cpp \
   core_write.cpp \
   governance/governance.cpp \
-  governance/governancewallet.cpp \
   key.cpp \
   key_io.cpp \
   keystore.cpp \

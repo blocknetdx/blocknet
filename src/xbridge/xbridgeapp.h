@@ -15,8 +15,13 @@
 #include <xbridge/xbridgetransactiondescr.h>
 #include <xbridge/xbridgewalletconnector.h>
 
+#include <amount.h>
+#include <consensus/validation.h>
+#include <primitives/transaction.h>
 #include <uint256.h>
+#ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
+#endif // ENABLE_WALLET
 
 #include <atomic>
 #include <functional>
@@ -615,18 +620,25 @@ private:
  * @param maxDepth
  * @return
  */
-static std::vector<COutput> availableCoins(const bool & onlySafe = true, const int & minDepth = 0,
-                                           const int & maxDepth = 9999999) {
-    std::vector<COutput> r;
+static std::vector<std::pair<COutPoint,CTxOut>> availableCoins(const bool & onlySafe = true, const int & minDepth = 0,
+        const int & maxDepth = 9999999)
+{
+    std::vector<std::pair<COutPoint,CTxOut>> r;
+#ifdef ENABLE_WALLET
     const auto wallets = GetWallets();
     for (const auto & wallet : wallets) {
         auto locked_chain = wallet->chain().lock();
         LOCK2(cs_main, wallet->cs_wallet);
         std::vector<COutput> coins;
         wallet->AvailableCoins(*locked_chain, coins, onlySafe, nullptr, 1, MAX_MONEY, MAX_MONEY, 0, minDepth, maxDepth);
-        if (!coins.empty())
-            r.insert(r.end(), coins.begin(), coins.end());
+        if (coins.empty())
+            continue;
+        for (auto & coin : coins) {
+            if (coin.fSpendable)
+                r.emplace_back(coin.GetInputCoin().outpoint, coin.GetInputCoin().txout);
+        }
     }
+#endif // ENABLE_WALLET
     return std::move(r);
 }
 
@@ -639,9 +651,11 @@ static std::vector<COutput> availableCoins(const bool & onlySafe = true, const i
  */
 static CAmount availableBalance() {
     CAmount balance{0};
+#ifdef ENABLE_WALLET
     const auto wallets = GetWallets();
     for (const auto & wallet : wallets)
         balance += wallet->GetBalance();
+#endif
     return balance;
 }
 

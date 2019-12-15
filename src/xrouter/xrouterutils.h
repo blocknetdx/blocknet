@@ -9,7 +9,6 @@
 #include <xrouter/xroutererror.h>
 
 #include <streams.h>
-#include <wallet/wallet.h>
 
 #include <vector>
 #include <string>

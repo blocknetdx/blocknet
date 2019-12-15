@@ -8,7 +8,9 @@
 
 #include <qt/bitcoin.h>
 #include <qt/bitcoingui.h>
+#ifdef ENABLE_WALLET
 #include <qt/blocknetgui.h>
+#endif // ENABLE_WALLET
 
 #include <chainparams.h>
 #include <qt/clientmodel.h>
@@ -266,8 +268,10 @@ void BitcoinApplication::createWindow(const NetworkStyle *networkStyle)
 {
     if (isClassic())
     window = new BitcoinGUI(m_node, platformStyle, networkStyle, nullptr);
+#ifdef ENABLE_WALLET
     else
         window = new BlocknetGUI(m_node, platformStyle, networkStyle, nullptr);
+#endif // ENABLE_WALLET
 
     pollShutdownTimer = new QTimer(window);
     connect(pollShutdownTimer, &QTimer::timeout, window, &BitcoinGUIObj::detectShutdown);
@@ -311,8 +315,10 @@ void BitcoinApplication::startThread()
     connect(executor, &BitcoinCore::runawayException, this, &BitcoinApplication::handleRunawayException);
     connect(this, &BitcoinApplication::requestedInitialize, executor, &BitcoinCore::initialize);
     connect(this, &BitcoinApplication::requestedShutdown, executor, &BitcoinCore::shutdown);
+#ifdef ENABLE_WALLET
     if (!isClassic())
         connect(dynamic_cast<BlocknetGUI*>(window), &BlocknetGUI::requestedRestart, executor, &BitcoinCore::restart);
+#endif // ENABLE_WALLET
     /*  make sure executor object is deleted in its own thread */
     connect(coreThread, &QThread::finished, executor, &QObject::deleteLater);
 
@@ -442,7 +448,11 @@ WId BitcoinApplication::getMainWinId() const
 }
 
 bool BitcoinApplication::isClassic() {
+#ifndef ENABLE_WALLET // only support classic if wallet not enabled
+    return true;
+#else
     return gArgs.GetBoolArg("-classic", false);
+#endif // ENABLE_WALLET
 }
 
 static void SetupUIArgs()

@@ -9,8 +9,12 @@
 #include <rpc/util.h>
 #include <servicenode/servicenodemgr.h>
 #include <util/moneystr.h>
+
+#ifdef ENABLE_WALLET
 #include <wallet/coincontrol.h>
 #include <wallet/rpcwallet.h>
+#endif // ENABLE_WALLET
+
 #include <xbridge/xbridgeapp.h>
 #include <xrouter/xrouterapp.h>
 
@@ -299,7 +303,9 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
                   + HelpExampleRpc("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1 2500")
                 },
             }.ToString());
-
+#ifndef ENABLE_WALLET
+    throw JSONRPCError(RPC_INVALID_REQUEST, R"(This rpc call requires the wallet to be enabled)");
+#else
     const std::string & saddr = request.params[0].get_str();
     int count{1};
     if (!request.params[1].isNull())
@@ -385,6 +391,7 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
     ret.pushKV("inputsize", inputSize);
     ret.pushKV("txid", tx->GetHash().ToString());
     return ret;
+#endif // ENABLE_WALLET
 }
 
 static UniValue servicenodegenkey(const JSONRPCRequest& request)
@@ -436,7 +443,9 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
                   + HelpExampleRpc("servicenoderegister", "snode0")
                 },
             }.ToString());
-
+#ifndef ENABLE_WALLET
+    throw JSONRPCError(RPC_INVALID_REQUEST, R"(This rpc call requires the wallet to be enabled)");
+#else
     std::string alias;
     if (!request.params[0].isNull())
         alias = request.params[0].get_str();
@@ -479,6 +488,7 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_MISC_ERROR, "No service nodes registered, is servicenode.conf populated?");
 
     return ret;
+#endif // ENABLE_WALLET
 }
 
 static UniValue servicenodeexport(const JSONRPCRequest& request)
@@ -528,7 +538,7 @@ static UniValue servicenodeexport(const JSONRPCRequest& request)
     obj.pushKV("address", EncodeDestination(selentry.address));
     const std::string & exportt = obj.write();
     std::vector<unsigned char> input(exportt.begin(), exportt.end());
-
+#ifdef ENABLE_WALLET
     std::vector<unsigned char> vchSalt = ParseHex("0000aabbccee0000"); // not using salt
     CCrypter crypt;
     crypt.SetKeyFromPassphrase(passphrase, vchSalt, 100, 0);
@@ -538,6 +548,9 @@ static UniValue servicenodeexport(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Bad passphrase %s", passphrase));
 
     ret.setStr(HexStr(cypher));
+#else
+    ret.setStr(HexStr(input));
+#endif // ENABLE_WALLET
     return ret;
 }
 
@@ -563,7 +576,7 @@ static UniValue servicenodeimport(const JSONRPCRequest& request)
     const std::vector<unsigned char> & input = ParseHex(request.params[0].get_str());
     SecureString passphrase; passphrase.reserve(100);
     passphrase = request.params[1].get_str().c_str();
-
+#ifdef ENABLE_WALLET
     std::vector<unsigned char> vchSalt = ParseHex("0000aabbccee0000"); // not using salt
     CCrypter crypt;
     crypt.SetKeyFromPassphrase(passphrase, vchSalt, 100, 0);
@@ -571,7 +584,9 @@ static UniValue servicenodeimport(const JSONRPCRequest& request)
     CKeyingMaterial plaintext;
     if (!crypt.Decrypt(input, plaintext))
         throw JSONRPCError(RPC_MISC_ERROR, strprintf("Bad passphrase %s", passphrase));
-
+#else
+    auto plaintext = input;
+#endif // ENABLE_WALLET
     UniValue snode(UniValue::VOBJ);
     if (!snode.read(std::string(plaintext.begin(), plaintext.end())))
         throw JSONRPCError(RPC_MISC_ERROR, "Failed to add the service node, is the password correct?");
@@ -729,7 +744,9 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
                   + HelpExampleRpc("servicenodesendping", "")
                 },
             }.ToString());
-
+#ifndef ENABLE_WALLET
+    throw JSONRPCError(RPC_INVALID_REQUEST, R"(This rpc call requires the wallet to be enabled)");
+#else
     if (!sn::ServiceNodeMgr::instance().hasActiveSn())
         throw JSONRPCError(RPC_INVALID_REQUEST, R"(No active service node, check servicenode.conf)");
 
@@ -760,6 +777,7 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
         uservices.push_back(service);
     obj.pushKV("services", uservices);
     return obj;
+#endif // ENABLE_WALLET
 }
 
 static UniValue servicenodelegacy(const JSONRPCRequest& request)

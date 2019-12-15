@@ -18,7 +18,9 @@
 #include <servicenode/servicenode.h>
 #include <sync.h>
 #include <uint256.h>
+#ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
+#endif
 
 #include <algorithm>
 #include <chrono>
@@ -433,6 +435,9 @@ public:
      * @return
      */
     std::string changeAddress() {
+#ifndef ENABLE_WALLET
+        return "";
+#else
         auto wallets = GetWallets();
         auto wallet = wallets.front();
         if (!wallet->IsLocked())
@@ -446,6 +451,7 @@ public:
         reservekey.KeepKey();
         CKeyID keyID = vchPubKey.GetID();
         return EncodeDestination(CTxDestination(keyID));
+#endif // ENABLE_WALLET
     }
 
     /**

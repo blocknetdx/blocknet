@@ -15,7 +15,9 @@
 #include <node/transaction.h>
 #include <rpc/client.h>
 #include <validation.h>
+#ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
+#endif // ENABLE_WALLET
 
 #include <boost/lexical_cast.hpp>
 
@@ -39,6 +41,9 @@ CMutableTransaction decodeTransaction(const std::string & tx)
 static CCriticalSection cs_rpcBlockchainStore;
 
 bool createAndSignTransaction(const std::string & toaddress, const CAmount & toamount, std::string & raw_tx) {
+#ifndef ENABLE_WALLET
+    return false;
+#else
     LOCK(cs_rpcBlockchainStore);
 
     raw_tx.clear(); // clean ret transaction tx
@@ -163,6 +168,7 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
     xbridge::App::instance().lockFeeUtxos(feeUtxos);
 
     return true;
+#endif // ENABLE_WALLET
 }
 
 void unlockOutputs(const std::string & tx) {

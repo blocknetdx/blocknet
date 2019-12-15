@@ -17,7 +17,9 @@
 #include <util/system.h>
 #include <validation.h>
 #include <validationinterface.h>
+#ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
+#endif // ENABLE_WALLET
 
 #include <iostream>
 #include <set>
@@ -177,6 +179,7 @@ public:
         return true;
     }
 
+#ifdef ENABLE_WALLET
     /**
      * Registers a snode on the network. This will also automatically search the wallet for required collateral.
      * This requires the wallet to be unlocked any snodes that are not "OPEN" (free) snodes.
@@ -317,6 +320,7 @@ public:
 
         return true;
     }
+#endif // ENABLE_WALLET
 
     /**
      * Submits a servicenode ping to the network. This method will also update our own servicenode
@@ -880,6 +884,7 @@ protected:
         }
     }
 
+#ifdef ENABLE_WALLET
     /**
      * Finds collateral for the specifed servicenode tier.
      * @param tier
@@ -1032,6 +1037,7 @@ protected:
             }
         }
     }
+#endif // ENABLE_WALLET
 
 protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
@@ -1045,6 +1051,9 @@ protected:
     }
 
     void UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *pindexFork, bool fInitialDownload) override {
+#ifndef ENABLE_WALLET
+        return;
+#else
         if (fInitialDownload)
             return; // do not try and register snode during initial download
 
@@ -1077,6 +1086,7 @@ protected:
             for (auto & snode : remove)
                 reregister.erase(snode);
         }
+#endif // ENABLE_WALLET
     }
 
     void processValidationBlock(const std::shared_ptr<const CBlock>& block, const bool connected, const int blockNumber=0) {

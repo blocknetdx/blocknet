@@ -16,7 +16,9 @@
 #include <rpc/client.h>
 #include <sync.h>
 #include <validation.h>
+#ifdef ENABLE_WALLET
 #include <wallet/wallet.h>
+#endif // ENABLE_WALLET
 
 #include <json/json_spirit_utils.h>
 
@@ -50,30 +52,37 @@ static CCriticalSection cs_rpcBlockchainStore;
  * @param maxDepth
  * @return
  */
-static std::vector<COutput> availableCoins(const bool & onlySafe = true, const int & minDepth = 0,
-                                           const int & maxDepth = 9999999) {
-    std::vector<COutput> r;
+static std::vector<std::pair<COutPoint,CTxOut>> availableCoins(const bool & onlySafe = true, const int & minDepth = 0,
+        const int & maxDepth = 9999999)
+{
+    std::vector<std::pair<COutPoint,CTxOut>> r;
+#ifdef ENABLE_WALLET
     const auto wallets = GetWallets();
     for (const auto & wallet : wallets) {
         auto locked_chain = wallet->chain().lock();
         LOCK2(cs_main, wallet->cs_wallet);
         std::vector<COutput> coins;
         wallet->AvailableCoins(*locked_chain, coins, onlySafe, nullptr, 1, MAX_MONEY, MAX_MONEY, 0, minDepth, maxDepth);
-        if (!coins.empty())
-            r.insert(r.end(), coins.begin(), coins.end());
+        if (coins.empty())
+            continue;
+        for (auto & coin : coins) {
+            if (coin.fSpendable)
+                r.emplace_back(coin.GetInputCoin().outpoint, coin.GetInputCoin().txout);
+        }
     }
+#endif // ENABLE_WALLET
     return std::move(r);
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool createFeeTransaction(const CScript & dstScript, const double amount,
-        const double feePerByte,
-        const std::vector<unsigned char> & data,
-        std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
-        std::set<xbridge::wallet::UtxoEntry> & feeUtxos,
-        std::string & rawTx)
+bool createFeeTransaction(const CScript & dstScript, const double amount, const double feePerByte,
+        const std::vector<unsigned char> & data, std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
+        std::set<xbridge::wallet::UtxoEntry> & feeUtxos, std::string & rawTx)
 {
+#ifndef ENABLE_WALLET
+    throw std::runtime_error("Cannot create fee transaction because it requires the wallet to be enabled");
+#else
     if (availUtxos.empty())
         throw std::runtime_error("Create transaction command finished with error, not enough utxos to cover fee");
 
@@ -267,6 +276,8 @@ bool createFeeTransaction(const CScript & dstScript, const double amount,
     }
 
     return true;
+
+#endif // ENABLE_WALLET
 }
 
 //*****************************************************************************
@@ -330,15 +341,12 @@ bool storeDataIntoBlockchain(const std::string & rawTx, std::string & txid)
 //*****************************************************************************
 bool unspentP2PKH(std::vector<xbridge::wallet::UtxoEntry> & utxos)
 {
-    vector<COutput> coins = availableCoins(true, 1);
-    for (const COutput & out : coins) {
-        if (!out.fSpendable)
-            continue;
-
+    auto coins = availableCoins(true, 1);
+    for (const std::pair<COutPoint, CTxOut> & out : coins) {
         wallet::UtxoEntry utxo;
 
         // Only support p2pkh (e.g. 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
-        const CScript & pk = out.GetInputCoin().txout.scriptPubKey;
+        const CScript & pk = out.second.scriptPubKey;
         std::vector<unsigned char> script(pk.begin(), pk.end());
         if (script.size() == 25 &&
             script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
@@ -353,9 +361,9 @@ bool unspentP2PKH(std::vector<xbridge::wallet::UtxoEntry> & utxos)
 
         } else continue; // ignore unsupported addresses (p2sh, p2pk, etc)
 
-        utxo.txId = out.tx->GetHash().GetHex();
-        utxo.vout = out.i;
-        utxo.amount = static_cast<double>(out.GetInputCoin().txout.nValue) / static_cast<double>(COIN);
+        utxo.txId = out.first.hash.GetHex();
+        utxo.vout = out.first.n;
+        utxo.amount = static_cast<double>(out.second.nValue) / static_cast<double>(COIN);
 
         utxos.push_back(utxo);
     }
