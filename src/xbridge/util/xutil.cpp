@@ -9,6 +9,7 @@
 
 #include <xbridge/xbridgetransactiondescr.h>
 
+#include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -184,7 +185,13 @@ std::string iso8601(const boost::posix_time::ptime &time)
     auto ms = time.time_of_day().total_milliseconds() % 1000;
     auto tm = to_tm(time);
     std::ostringstream ss;
+#if __GNUC__ < 5
+    char buf[sizeof "2019-12-15T12:00:00"];
+    strftime(buf, sizeof buf, "%Y-%m-%dT%H:%M:%S", &tm);
+    ss << std::string(buf);
+#else
     ss << std::put_time(&tm, "%Y-%m-%dT%H:%M:%S");
+#endif
     ss << '.' << std::setfill('0') << std::setw(3) << ms; // add milliseconds
     ss << 'Z';
     return ss.str();
