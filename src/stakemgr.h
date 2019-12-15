@@ -80,7 +80,6 @@ private:
     std::atomic<int> lastBlockHeight{0};
 };
 
-extern bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore);
 extern void ThreadStakeMinter();
 
 #endif // BITCOIN_STAKEMGR_H
