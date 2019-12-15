@@ -4,9 +4,9 @@
 
 #include <test/staking_tests.h>
 
-#include <governance/governancewallet.h>
 #include <consensus/tx_verify.h>
 #include <consensus/merkle.h>
+#include <governance/governancewallet.h>
 #include <net.h>
 #include <node/transaction.h>
 #include <wallet/coincontrol.h>

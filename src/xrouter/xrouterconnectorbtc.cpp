@@ -7,6 +7,7 @@
 #include <xrouter/xroutererror.h>
 
 #include <bloom.h>
+#include <util/strencodings.h>
 
 #include <json/json_spirit.h>
 #include <json/json_spirit_reader_template.h>

@@ -12,6 +12,7 @@
 #include <bloom.h>
 #include <core_io.h>
 #include <uint256.h>
+#include <util/strencodings.h>
 #include <rpc/util.h>
 
 #include <exception>

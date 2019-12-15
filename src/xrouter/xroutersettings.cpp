@@ -11,6 +11,7 @@
 #include <chainparams.h>
 #include <key_io.h>
 #include <netbase.h>
+#include <util/system.h>
 
 #include <algorithm>
 #include <iostream>

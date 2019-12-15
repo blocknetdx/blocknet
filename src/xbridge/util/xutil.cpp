@@ -9,6 +9,7 @@
 
 #include <xbridge/xbridgetransactiondescr.h>
 
+#include <iomanip>
 #include <sstream>
 #include <string>
 
