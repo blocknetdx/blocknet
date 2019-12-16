@@ -743,7 +743,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
         pos.wallet->AvailableCoins(*pos.locked_chain, coins, true, nullptr, 500 * COIN);
     }
     // sort largest coins first
-    std::sort(coins.begin(), coins.end(), [](COutput & a, COutput & b) {
+    std::sort(coins.begin(), coins.end(), [](const COutput & a, const COutput & b) {
         return a.GetInputCoin().txout.nValue > b.GetInputCoin().txout.nValue;
     });
     CAmount totalAmount{0};

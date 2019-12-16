@@ -123,7 +123,6 @@ QT_MOC_CPP = \
   qt/moc_bitcoinamountfield.cpp \
   qt/moc_bitcoin.cpp \
   qt/moc_bitcoingui.cpp \
-  qt/moc_blocknetgui.cpp \
   qt/moc_bitcoinunits.cpp \
   qt/moc_clientmodel.cpp \
   qt/moc_coincontroldialog.cpp \
@@ -166,6 +165,10 @@ QT_MOC_CPP = \
 
 # Blocknet moc files
 QT_MOC_CPP += \
+  qt/moc_blocknetguiutil.cpp \
+  qt/moc_blocknetsplashscreen.cpp
+if ENABLE_WALLET
+QT_MOC_CPP += \
   qt/moc_blocknetactionbtn.cpp \
   qt/moc_blocknetaddressbook.cpp \
   qt/moc_blocknetaddressbtn.cpp \
@@ -191,7 +194,6 @@ QT_MOC_CPP += \
   qt/moc_blocknetformbtn.cpp \
   qt/moc_blocknetfundsmenu.cpp \
   qt/moc_blocknetgui.cpp \
-  qt/moc_blocknetguiutil.cpp \
   qt/moc_blocknethdiv.cpp \
   qt/moc_blockneticonbtn.cpp \
   qt/moc_blockneticonlabel.cpp \
@@ -214,7 +216,6 @@ QT_MOC_CPP += \
   qt/moc_blocknetsendfundsrequest.cpp \
   qt/moc_blocknetsendfundsutil.cpp \
   qt/moc_blocknetsettings.cpp \
-  qt/moc_blocknetsplashscreen.cpp \
   qt/moc_blocknettabbar.cpp \
   qt/moc_blocknettabbtn.cpp \
   qt/moc_blocknettoolbar.cpp \
@@ -223,6 +224,7 @@ QT_MOC_CPP += \
   qt/moc_blocknettransactionhistory.cpp \
   qt/moc_blocknetwallet.cpp \
   qt/moc_blocknetwalletrepair.cpp
+endif
 
 BITCOIN_MM = \
   qt/macdockiconhandler.mm \
@@ -496,7 +498,6 @@ BITCOIN_QT_BASE_CPP = \
   qt/bitcoinamountfield.cpp \
   qt/bitcoingui.cpp \
   qt/bitcoinunits.cpp \
-  qt/blocknetgui.cpp \
   qt/blocknetsplashscreen.cpp \
   qt/clientmodel.cpp \
   qt/csvmodelwriter.cpp \
@@ -571,6 +572,7 @@ BITCOIN_QT_WALLET_CPP += \
   qt/blocknetfontmgr.cpp \
   qt/blocknetformbtn.cpp \
   qt/blocknetfundsmenu.cpp \
+  qt/blocknetgui.cpp \
   qt/blocknethdiv.cpp \
   qt/blockneticonbtn.cpp \
   qt/blockneticonlabel.cpp \
