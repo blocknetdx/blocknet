@@ -376,7 +376,7 @@ public:
         std::vector<ServiceNode> l; l.reserve(snodes.size());
         for (const auto & item : snodes)
            l.push_back(*item.second);
-        return std::move(l);
+        return l;
     }
 
     /**
@@ -419,7 +419,7 @@ public:
      */
     std::vector<ServiceNodeConfigEntry> getSnEntries() {
         LOCK(mu);
-        return std::move(std::vector<ServiceNodeConfigEntry>(snodeEntries.begin(), snodeEntries.end()));
+        return std::vector<ServiceNodeConfigEntry>(snodeEntries.begin(), snodeEntries.end());
     }
 
     /**
@@ -573,7 +573,7 @@ public:
      * @return
      */
     static boost::filesystem::path getServiceNodeConf() {
-        return std::move(GetDataDir() / "servicenode.conf");
+        return GetDataDir() / "servicenode.conf";
     }
 
     /**
@@ -581,7 +581,7 @@ public:
      * @return
      */
     static boost::filesystem::path getServiceNodeRegistrationConf() {
-        return std::move(GetDataDir() / ".servicenoderegistration");
+        return GetDataDir() / ".servicenoderegistration";
     }
 
     /**

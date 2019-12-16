@@ -933,7 +933,7 @@ public:
         props.reserve(proposals.size());
         for (const auto & item : proposals)
             props.push_back(item.second);
-        return std::move(props);
+        return props;
     }
 
     /**
@@ -965,7 +965,7 @@ public:
             if (!item.second.spent())
                 vos.push_back(item.second);
         }
-        return std::move(vos);
+        return vos;
     }
 
     /**
@@ -980,7 +980,7 @@ public:
             if (item.second.getProposal() == hash && !item.second.spent())
                 vos.push_back(item.second);
         }
-        return std::move(vos);
+        return vos;
     }
 
     /**
@@ -1072,7 +1072,7 @@ public:
     std::map<Proposal, Tally> getSuperblockResults(const int & superblock, const Consensus::Params & params) {
         std::map<Proposal, Tally> r;
         if (!isSuperblock(superblock, params))
-            return std::move(r);
+            return r;
 
         std::set<COutPoint> unique;
         std::vector<Proposal> ps;
@@ -1108,7 +1108,7 @@ public:
                 ++it;
         }
 
-        return std::move(r);
+        return r;
     }
 
     /**
@@ -1428,7 +1428,7 @@ public: // static
     static std::vector<CTxOut> getSuperblockPayees(const int & superblock, const std::map<Proposal, Tally> & results, const Consensus::Params & params) {
         std::vector<CTxOut> r;
         if (results.empty())
-            return std::move(r);
+            return r;
 
         // Superblock payees are sorted in the following manner:
         // 1) Net "yes" votes
@@ -1463,7 +1463,7 @@ public: // static
             props.erase(props.begin());
         } while (!props.empty());
 
-        return std::move(r);
+        return r;
     }
 
 protected:

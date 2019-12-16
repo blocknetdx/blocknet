@@ -639,7 +639,7 @@ static std::vector<std::pair<COutPoint,CTxOut>> availableCoins(const bool & only
         }
     }
 #endif // ENABLE_WALLET
-    return std::move(r);
+    return r;
 }
 
 /**
