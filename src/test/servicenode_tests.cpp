@@ -311,7 +311,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
         ss << s;
         sn::ServiceNode s2;
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().processRegistration(ss, s2), "snode registration should succeed");
+        auto success = sn::ServiceNodeMgr::instance().processRegistration(ss, s2);
+        BOOST_CHECK_MESSAGE(success, "snode registration should succeed");
 
         const auto snode = sn::ServiceNodeMgr::instance().getSn(snodePubKey);
         BOOST_CHECK_MESSAGE(!snode.isNull(), "snode registration should succeed");
@@ -557,8 +558,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
         BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send snode collateral tx: %s", errstr));
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Refresh snode ping before running state check");
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSn(snodePubKey).running(), "Service node with recently spent collateral in grace period should still be in running state");
+        auto success = sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get());
+        BOOST_CHECK_MESSAGE(success, "Refresh snode ping before running state check");
+        auto running = sn::ServiceNodeMgr::instance().getSn(snodePubKey).running();
+        BOOST_CHECK_MESSAGE(running, "Service node with recently spent collateral in grace period should still be in running state");
         pos.StakeBlocks(2), SyncWithValidationInterfaceQueue();
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSn(snodePubKey).isValid(GetTxFunc, IsServiceNodeBlockValidFunc),  "Service node with recently staked collateral should be valid");
         UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
@@ -596,7 +599,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         sn::ServiceNodeMgr::instance().loadSnConfig(entries);
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Snode ping w/ uncompressed key");
+        auto success = sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get());
+        BOOST_CHECK_MESSAGE(success, "Snode ping w/ uncompressed key");
         BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == 1);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
@@ -613,7 +617,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         sn::ServiceNodeMgr::instance().loadSnConfig(entries);
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get()), "Snode ping w/ compressed key");
+        auto success = sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get());
+        BOOST_CHECK_MESSAGE(success, "Snode ping w/ compressed key");
         BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == 1);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
         sn::ServiceNodeMgr::instance().reset();
