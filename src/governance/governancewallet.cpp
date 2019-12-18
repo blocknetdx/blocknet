@@ -53,7 +53,7 @@ bool SubmitProposal(const Proposal & proposal, const std::vector<std::shared_ptr
         return error(failReasonRet->c_str());
     }
 
-    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+    CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
     ss << proposal;
 
     std::string strAddress = gArgs.GetArg("-proposaladdress", "");
@@ -315,7 +315,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                     // Create and serialize the vote data and insert in OP_RETURN script. The vote
                     // is signed with the utxo that is representing that vote. The signing must
                     // happen before the vote object is serialized.
-                    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+                    CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
                     Vote vote(pv.proposal.getHash(), pv.vote, coin.GetInputCoin().outpoint,
                             makeVinHash(inputCoins[addr]->GetInputCoin().outpoint));
                     if (!vote.sign(key)) {

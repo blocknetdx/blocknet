@@ -203,7 +203,7 @@ public:
             if (failureReasonRet) *failureReasonRet = strprintf("Bad proposal network version, expected %d", NETWORK_VERSION);
             return false;
         }
-        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
         ss << version << type << name << superblock << amount << address << url << description;
         const int maxBytes = MAX_OP_RETURN_RELAY-3; // -1 for OP_RETURN -2 for pushdata opcodes
         if (ss.size() > maxBytes) {
@@ -485,7 +485,7 @@ public:
     }
 
     /**
-     * Proposal vote
+     * Proposal vote signature
      * @return
      */
     const std::vector<unsigned char> & getSignature() const {
@@ -509,7 +509,7 @@ public:
     }
 
     /**
-     * Proposal hash
+     * Vote hash
      * @return
      */
     uint256 getHash() const {
@@ -519,7 +519,7 @@ public:
     }
 
     /**
-     * Proposal signature hash
+     * Vote signature hash
      * @return
      */
     uint256 sigHash() const {
@@ -681,6 +681,12 @@ struct Tally {
     int netyes() const {
         return yes - no;
     }
+};
+/**
+ * Hasher used with unordered_map
+ */
+struct Hasher {
+    size_t operator()(const uint256 & hash) const { return ReadLE64(hash.begin()); }
 };
 
 /**
@@ -940,7 +946,7 @@ public:
      * Return copy of all votes.
      * @return
      */
-    std::map<uint256, Vote> copyVotes() {
+    std::unordered_map<uint256, Vote, Hasher> copyVotes() {
         LOCK(mu);
         return votes;
     }
@@ -949,7 +955,7 @@ public:
      * Return copy of all proposals.
      * @return
      */
-    std::map<uint256, Proposal> copyProposals() {
+    std::unordered_map<uint256, Proposal, Hasher> copyProposals() {
         LOCK(mu);
         return proposals;
     }
@@ -1013,13 +1019,13 @@ public:
                         break;
                 }
 
-                CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+                CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                 NetworkObject obj; ss >> obj;
                 if (!obj.isValid())
                     continue; // must match expected version
 
                 if (obj.getType() == PROPOSAL) {
-                    CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+                    CDataStream ss2(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                     Proposal proposal(blockIndex ? blockIndex->nHeight : 0); ss2 >> proposal;
                     // Skip the cutoff check if block index is not specified
                     if (proposal.isValid(params) && (!blockIndex || meetsProposalCutoff(proposal, blockIndex->nHeight, params)))
@@ -1031,7 +1037,7 @@ public:
                             vinHashes.insert(vhash);
                         }
                     }
-                    CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+                    CDataStream ss2(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                     Vote vote({tx->GetHash(), static_cast<uint32_t>(n)}, block->GetBlockTime(), blockIndex ? blockIndex->nHeight : 0);
                     ss2 >> vote;
                     // Check that the vote is associated with a valid proposal and
@@ -1268,10 +1274,10 @@ public: // static
             if (!data.empty())
                 break;
         }
-        CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
         NetworkObject obj; ss >> obj;
         if (obj.getType() == VOTE) {
-            CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+            CDataStream ss2(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
             ss2 >> vote;
             return true;
         }
@@ -1545,8 +1551,7 @@ protected:
             for (auto & proposal : ps) {
                 // Do not allow proposals with the same parameters to replace
                 // existing proposals.
-                if (!proposals.count(proposal.getHash()))
-                    proposals[proposal.getHash()] = proposal;
+                proposals.insert(std::make_pair(proposal.getHash(), proposal));
             }
             for (auto & vote : vs) {
                 if (processingChainTip && !proposals.count(vote.getProposal()))
@@ -1569,7 +1574,7 @@ protected:
                     // Only check the mempool and coincache for spent utxos if
                     // we're currently processing the chain tip.
                     LEAVE_CRITICAL_SECTION(mu);
-                    bool spent = processingChainTip && IsVoteSpent(vote, true); // check that utxo is unspent
+                    bool spent = processingChainTip && IsVoteSpent(vote, false); // check that utxo is unspent
                     ENTER_CRITICAL_SECTION(mu);
                     if (spent)
                         continue;
@@ -1603,8 +1608,8 @@ protected:
 
 protected:
     Mutex mu;
-    std::map<uint256, Proposal> proposals GUARDED_BY(mu);
-    std::map<uint256, Vote> votes GUARDED_BY(mu);
+    std::unordered_map<uint256, Proposal, Hasher> proposals GUARDED_BY(mu);
+    std::unordered_map<uint256, Vote, Hasher> votes GUARDED_BY(mu);
 };
 
 }

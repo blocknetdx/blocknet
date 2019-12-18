@@ -11,6 +11,9 @@
 
 static const int PROTOCOL_VERSION = 70713;
 
+//! Governance protocol version
+static const int GOV_PROTOCOL_VERSION = 70713;
+
 //! legacy protocol version
 static const int LEGACY_PROTOCOL_VERSION = 70712;
 

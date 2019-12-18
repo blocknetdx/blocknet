@@ -312,7 +312,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
         BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         BOOST_CHECK_MESSAGE(mempool.exists(tx->GetHash()), "Proposal submission tx should be in the mempool");
-        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
         ss << psubmit;
         bool found{false};
         for (const auto & out : tx->vout) {
@@ -539,7 +539,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
             CMutableTransaction mtx;
             mtx.vin.resize(1);
             mtx.vin[0] = CTxIn(outpoint);
-            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+            CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
             ss << vote;
             auto voteScript = CScript() << OP_RETURN << ToByteVector(ss);
             mtx.vout.resize(2);
@@ -605,7 +605,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
             CMutableTransaction mtx2;
             mtx2.vin.resize(1);
             mtx2.vin[0] = CTxIn(prevout);
-            CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+            CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
             ss << vote;
             auto voteScript = CScript() << OP_RETURN << ToByteVector(ss);
             mtx2.vout.resize(2);
@@ -784,7 +784,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
         mtx.vin.resize(1);
         mtx.vout.resize(2);
         mtx.vin[0] = CTxIn(coins.front().GetInputCoin().outpoint);
-        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
         ss << firstVote;
         auto script = CScript() << OP_RETURN << ToByteVector(ss);
         mtx.vout[0] = CTxOut(0, script);
@@ -823,7 +823,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
         mtx.vin.resize(1);
         mtx.vout.resize(2);
         mtx.vin[0] = CTxIn(selected.GetInputCoin().outpoint);
-        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
+        CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
         ss << firstVote;
         auto script = CScript() << OP_RETURN << ToByteVector(ss);
         mtx.vout[0] = CTxOut(0, script);
@@ -967,13 +967,13 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
                         break;
                 }
 
-                CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+                CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                 gov::NetworkObject obj; ss >> obj;
                 if (!obj.isValid())
                     continue; // must match expected version
 
                 BOOST_CHECK_MESSAGE(obj.getType() == gov::VOTE, "Invalid vote OP_RETURN type");
-                CDataStream ss2(data, SER_NETWORK, PROTOCOL_VERSION);
+                CDataStream ss2(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                 gov::Vote vote({txn->GetHash(), static_cast<uint32_t>(n)}, block.GetBlockTime());
                 ss2 >> vote;
                 bool valid = vote.isValid(vinHashes, consensus);
@@ -1023,6 +1023,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
     // Check that maxing out the votes per tx creates multiple transactions
     {
+        RegisterValidationInterface(&gov::Governance::instance());
         const auto resetBlocks = chainActive.Height();
         std::string failReason;
 
@@ -1079,10 +1080,12 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         // clean up
         cleanup(resetBlocks, wallet.get());
         ReloadWallet();
+        UnregisterValidationInterface(&gov::Governance::instance());
     }
 
     // Check situation where there's not enough vote balance
     {
+        RegisterValidationInterface(&gov::Governance::instance());
         const auto resetBlocks = chainActive.Height();
         std::string failReason;
 
@@ -1112,10 +1115,12 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         // clean up
         cleanup(resetBlocks, wallet.get());
         ReloadWallet();
+        UnregisterValidationInterface(&gov::Governance::instance());
     }
 
     // Check vote tally
     {
+        RegisterValidationInterface(&gov::Governance::instance());
         const auto resetBlocks = chainActive.Height();
         std::string failReason;
 
@@ -1201,9 +1206,9 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         otherwallet.reset();
         cleanup(resetBlocks, wallet.get());
         ReloadWallet();
+        UnregisterValidationInterface(&gov::Governance::instance());
     }
 
-    UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), wallet.get());
     ReloadWallet();
 }
@@ -2044,12 +2049,12 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata2)
                     if (!data.empty())
                         break;
                 }
-                CDataStream ss(data, SER_NETWORK, PROTOCOL_VERSION);
+                CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                 gov::NetworkObject obj; ss >> obj;
                 if (!obj.isValid())
                     continue; // must match expected version
                 if (obj.getType() == gov::VOTE) {
-                    CDataStream ssv(data, SER_NETWORK, PROTOCOL_VERSION);
+                    CDataStream ssv(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                     gov::Vote vote({tx->GetHash(), static_cast<uint32_t>(n)});
                     ssv >> vote;
                     if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, false))
