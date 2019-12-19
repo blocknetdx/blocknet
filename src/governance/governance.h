@@ -1177,7 +1177,7 @@ public:
             paymentsRet += payee.nValue;
 
         auto vouts = block->vtx[1]->vout;
-        if (vouts.size() - payees.size() > 2) // allow 1 vout for coinbase and 1 vout for the staker's payment
+        if (static_cast<int>(vouts.size()) - static_cast<int>(payees.size()) > 2) // allow 1 vout for coinbase and 1 vout for the staker's payment
             return false;
 
         vouts.erase(std::remove_if(vouts.begin(), vouts.end(),
