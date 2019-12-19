@@ -1106,7 +1106,8 @@ public:
         for (auto it = r.cbegin(); it != r.cend(); ) {
             const auto & tally = it->second;
             const int total = tally.yes+tally.no+tally.abstain;
-            if (static_cast<double>(tally.yes) / static_cast<double>(tally.yes+tally.no) < 0.6
+            const int yaynay = tally.yes + tally.no;
+            if (yaynay == 0 || static_cast<double>(tally.yes) / static_cast<double>(yaynay) < 0.6
               || static_cast<double>(total) < static_cast<double>(uniqueVotes) * 0.25
               || tally.yes <= 0)
                 r.erase(it++);
