@@ -5075,18 +5075,17 @@ bool VerifySig(const CBlock & block, const CScript & stakeScript) {
     return false;
 }
 
-CTransactionRef GetTxFunc(const COutPoint & out) {
-    CTransactionRef tx;
+bool GetTxFunc(const COutPoint & out, CTransactionRef & tx) {
     uint256 hashBlock;
     if (!GetTransaction(out.hash, tx, Params().GetConsensus(), hashBlock))
-        return nullptr;
+        return false;
     {
         LOCK(cs_main);
         Coin coin;
         if (!pcoinsTip->GetCoin(out, coin))
-            return nullptr;
+            return false;
     }
-    return tx;
+    return true;
 }
 
 bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale) {
@@ -5097,6 +5096,11 @@ bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & b
     if (!block)
         return false; // fail if block wasn't found
     return block->GetBlockHash() == blockHash;
+}
+
+int GetChainTipHeight() {
+    LOCK(cs_main);
+    return chainActive.Height();
 }
 
 Mutex muMapProofOfStake;

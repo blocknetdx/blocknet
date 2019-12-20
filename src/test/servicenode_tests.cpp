@@ -57,7 +57,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
     CAmount totalAmount{0};
     std::vector<COutPoint> collateral;
     for (const auto & tx : pos.m_coinbase_txns) {
-        if (!GetTxFunc({tx->GetHash(), 0})) // make sure tx exists
+        CTransactionRef txx;
+        if (!GetTxFunc({tx->GetHash(), 0}, txx)) // make sure tx exists
             continue;
         totalAmount += tx->vout[0].nValue;
         collateral.emplace_back(tx->GetHash(), 0);
@@ -333,8 +334,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
             BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to spend snode collateral: %s", errstr));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             const auto checkSnode = sn::ServiceNodeMgr::instance().getSn(snodePubKey);
-            BOOST_CHECK_MESSAGE(!checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be invalid because collateral was spent");
+            BOOST_CHECK_MESSAGE(checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be valid because collateral was spent but we're still in grace period");
             BOOST_CHECK_MESSAGE(checkSnode.getInvalid(), "snode should be marked invalid in the validation interface event (connect block)");
+            BOOST_CHECK_MESSAGE(checkSnode.getInvalidBlockNumber() == chainActive.Height(), "snode invalid block number should match chain tip");
+            pos.StakeBlocks(sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS), SyncWithValidationInterfaceQueue(); // make sure snode grace period expires
+            BOOST_CHECK_MESSAGE(!checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be invalid because collateral was spent and grace period expired");
             UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
         }
 
@@ -467,6 +471,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
     params->consensus.coinMaturity = 10;
     pos.Init();
 
+    gArgs.SoftSetBoolArg("-servicenode", true);
+
     CKey key; key.MakeNewKey(true);
     const auto snodePubKey = key.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
@@ -556,6 +562,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
         uint256 txid; std::string errstr;
         const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
         BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send snode collateral tx: %s", errstr));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
         auto success = sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get());
@@ -570,6 +577,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
     UnregisterValidationInterface(otherwallet.get());
     RemoveWallet(otherwallet);
     cleanupSn();
+    gArgs.SoftSetBoolArg("-servicenode", false);
 }
 
 /// Servicenode registration and ping tests

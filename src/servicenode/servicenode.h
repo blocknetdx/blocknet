@@ -30,12 +30,14 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
 
+extern int GetChainTipHeight();
+
 /**
  * Servicenode namepsace
  */
 namespace sn {
 
-typedef std::function<CTransactionRef(const COutPoint & out)> TxFunc;
+typedef std::function<bool(const COutPoint & out, CTransactionRef & tx)> TxFunc;
 typedef std::function<bool(const uint32_t & blockNumber, const uint256 & blockHash, const bool & checkStale)> BlockValidFunc;
 
 /**
@@ -233,7 +235,7 @@ public:
      * @return
      */
     bool running() const {
-        return (!invalid || (currentBlock - invalidBlock >= 0 && currentBlock - invalidBlock <= VALID_GRACEPERIOD_BLOCKS))
+        return (!invalid || (currentBlock - invalidBlock >= 0 && currentBlock - invalidBlock < VALID_GRACEPERIOD_BLOCKS))
                && GetAdjustedTime() - pingtime < 300;
     }
 
@@ -415,8 +417,14 @@ public:
 
         // Determine if all collateral utxos validate the sig
         for (const auto & op : collateral) {
-            CTransactionRef tx = getTxFunc(op);
+            CTransactionRef tx;
+            auto success = getTxFunc(op, tx);
             if (!tx)
+                return false;
+            if (invalidBlock > 0) {
+                if (GetChainTipHeight() - invalidBlock >= VALID_GRACEPERIOD_BLOCKS)
+                    return false; // if grace period has expired
+            } else if (!success)
                 return false; // not valid if no transaction found or utxo is already spent
 
             if (tx->vout.size() <= op.n)

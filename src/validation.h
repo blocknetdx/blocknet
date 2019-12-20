@@ -528,9 +528,10 @@ bool VerifySig(const CBlock & block, const CScript & stakeScript);
  * Only return transaction for utxo that hasn't been spent. If the utxo has been spent
  * this will return nullptr. This method will check the mempool.
  * @param out
- * @return CTransactionRef
+ * @param tx
+ * @return bool
  */
-CTransactionRef GetTxFunc(const COutPoint & out);
+bool GetTxFunc(const COutPoint & out, CTransactionRef & tx);
 
 /**
  * Returns true if the specified block is found in the chain tip.
@@ -541,6 +542,12 @@ CTransactionRef GetTxFunc(const COutPoint & out);
  */
 static const int SNODE_STALE_BLOCKS = 5; // number of blocks to allow before a snode is marked "stale"
 bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale=true);
+
+/**
+ * Return the chain tip.
+ * @return
+ */
+extern int GetChainTipHeight();
 
 /** hashProofOfStake management */
 uint256 GetHashProofOfStake(const uint256 & blockHash);
