@@ -640,7 +640,7 @@ protected: // memory only
  * @param mempoolCheck Will check the mempool for spent votes
  * @return
  */
-static bool IsVoteSpent(const Vote & vote, const bool & mempoolCheck = true) {
+static bool IsVoteSpent(const Vote & vote, const bool & mempoolCheck = false) {
     Coin coin;
     if (mempoolCheck) {
         LOCK2(cs_main, mempool.cs);
@@ -1011,13 +1011,18 @@ public:
                     continue; // no proposal data
                 CScript::const_iterator pc = out.scriptPubKey.begin();
                 std::vector<unsigned char> data;
+                opcodetype opcode{OP_FALSE};
+                bool ispushdata{false};
                 while (pc < out.scriptPubKey.end()) {
-                    opcodetype opcode;
+                    opcode = OP_FALSE;
                     if (!out.scriptPubKey.GetOp(pc, opcode, data))
                         break;
-                    if (!data.empty())
+                    ispushdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4);
+                    if (ispushdata && !data.empty())
                         break;
                 }
+                if (!ispushdata || data.empty())
+                    continue; // skip if no data
 
                 CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                 NetworkObject obj; ss >> obj;

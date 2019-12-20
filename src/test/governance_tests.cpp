@@ -2042,13 +2042,18 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata2)
                 const auto & out = tx->vout[n];
                 CScript::const_iterator pc = out.scriptPubKey.begin();
                 std::vector<unsigned char> data;
+                opcodetype opcode{OP_FALSE};
+                bool ispushdata{false};
                 while (pc < out.scriptPubKey.end()) {
-                    opcodetype opcode;
+                    opcode = OP_FALSE;
                     if (!out.scriptPubKey.GetOp(pc, opcode, data))
                         break;
-                    if (!data.empty())
+                    ispushdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4);
+                    if (ispushdata && !data.empty())
                         break;
                 }
+                if (!ispushdata || data.empty())
+                    continue;
                 CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                 gov::NetworkObject obj; ss >> obj;
                 if (!obj.isValid())
