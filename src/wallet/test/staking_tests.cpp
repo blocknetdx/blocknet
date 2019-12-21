@@ -8,8 +8,19 @@
 #include <core_io.h>
 #include <node/transaction.h>
 
+std::map<std::string, std::shared_ptr<TestChainPoSData>> g_CachedTestChainPoS;
+
 // Proof-of-Stake tests
-BOOST_AUTO_TEST_SUITE(staking_tests)
+struct StakingSetupFixture {
+    explicit StakingSetupFixture() {
+        chain_default();
+    }
+    void chain_default() {
+        TestChainPoS pos(true);
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(staking_tests, StakingSetupFixture)
 
 /// Ensure that the mempool won't accept coinstake transactions.
 BOOST_FIXTURE_TEST_CASE(staking_tests_nocoinstake, TestChainPoS)

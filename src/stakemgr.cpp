@@ -41,7 +41,7 @@ void ThreadStakeMinter() {
 }
 
 bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBlockIndex *tip, const Consensus::Params & params, const bool & skipPeerRequirement) {
-    if (IsInitialBlockDownload())
+    if (!skipPeerRequirement && IsInitialBlockDownload())
         return false;
     {
         LOCK(cs_main);

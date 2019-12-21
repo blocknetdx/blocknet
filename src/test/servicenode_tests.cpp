@@ -37,7 +37,34 @@ void cleanupSn() {
     mempool.clear();
 }
 
-BOOST_AUTO_TEST_SUITE(servicenode_tests)
+struct ServiceNodeSetupFixture {
+    explicit ServiceNodeSetupFixture() {
+        chain_1000_50();
+        chain_1250_50();
+    }
+    void chain_1000_50() {
+        TestChainPoS pos(false);
+        auto *params = (CChainParams*)&Params();
+        params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+            if (blockHeight <= consensusParams.lastPOWBlock)
+                return 1000 * COIN;
+            return 50 * COIN;
+        };
+        pos.Init("1000,50");
+    }
+    void chain_1250_50() {
+        TestChainPoS pos(false);
+        auto *params = (CChainParams*)&Params();
+        params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+            if (blockHeight <= consensusParams.lastPOWBlock)
+                return 1250 * COIN;
+            return 50 * COIN;
+        };
+        pos.Init("1250,50");
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServiceNodeSetupFixture)
 
 /// Check case where servicenode is properly validated under normal circumstances
 BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
@@ -47,9 +74,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
             return 1000 * COIN;
-        return 1 * COIN;
+        return 50 * COIN;
     };
-    pos.Init();
+    pos.Init("1000,50");
 
     const auto snodePubKey = pos.coinbaseKey.GetPubKey();
     const auto tier = sn::ServiceNode::Tier::SPV;
@@ -176,9 +203,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
             return 1000 * COIN;
-        return 1 * COIN;
+        return 50 * COIN;
     };
-    pos.Init();
+    pos.Init("1000,50");
     pos.StakeBlocks(5), SyncWithValidationInterfaceQueue();
 
     CKey key; key.MakeNewKey(true);
@@ -354,11 +381,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
-            return 1001 * COIN;
-        return 1 * COIN;
+            return 1000 * COIN;
+        return 50 * COIN;
     };
     params->consensus.coinMaturity = 10;
-    pos.Init();
+    pos.Init("1000,50");
     sn::ServiceNodeMgr::instance().reset();
     RegisterValidationInterface(&sn::ServiceNodeMgr::instance());
 
@@ -465,11 +492,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
-            return 1001 * COIN;
-        return 1 * COIN;
+            return 1000 * COIN;
+        return 50 * COIN;
     };
     params->consensus.coinMaturity = 10;
-    pos.Init();
+    pos.Init("1000,50");
 
     gArgs.SoftSetBoolArg("-servicenode", true);
 
@@ -589,10 +616,10 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
             return 1000 * COIN;
-        return 1 * COIN;
+        return 50 * COIN;
     };
     params->consensus.coinMaturity = 10;
-    pos.Init();
+    pos.Init("1000,50");
 
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
 
@@ -742,9 +769,9 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
             return 1000 * COIN;
-        return 1 * COIN;
+        return 50 * COIN;
     };
-    pos.Init();
+    pos.Init("1000,50");
 
     auto & smgr = sn::ServiceNodeMgr::instance();
     CKey key; key.MakeNewKey(true);
@@ -1005,7 +1032,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
             return 1250 * COIN;
         return 50 * COIN;
     };
-    pos.Init();
+    pos.Init("1250,50");
 
     auto & smgr = sn::ServiceNodeMgr::instance();
     const auto snodePubKey = pos.coinbaseKey.GetPubKey();

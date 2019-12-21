@@ -54,19 +54,64 @@ static void rescanWallet(CWallet *w) {
 /**
  * Proof-of-Stake test chain.
  */
+struct TestChainPoSData {
+    std::string coinbase;
+    std::vector<CBlock> blocks;
+    int64_t mockTimeAfter;
+    explicit TestChainPoSData() {
+        CKey key;
+        key.MakeNewKey(true);
+        coinbase = EncodeSecret(key);
+    }
+};
+extern std::map<std::string, std::shared_ptr<TestChainPoSData>> g_CachedTestChainPoS;
 struct TestChainPoS : public TestingSetup {
-    explicit TestChainPoS(bool init = true) : TestingSetup(CBaseChainParams::REGTEST) {
+
+    explicit TestChainPoS(const bool & init = true) : TestingSetup(CBaseChainParams::REGTEST) {
         if (init)
-            Init();
+            Init("default"); // use default cached chain
     }
 
-    void Init() {
+    /**
+     * A cached version of the named chain will be used if available. First time a name
+     * is used to create a sample chain, the chain is cached for use in other unit tests.
+     * Specifying an empty string will not cache the chain.
+     * @param name
+     * @return
+     */
+    std::shared_ptr<TestChainPoSData> Init(const std::string & name="") {
         gov::Governance::instance().reset();
+
+        if (!name.empty() && g_CachedTestChainPoS.count(name) && !g_CachedTestChainPoS[name]->blocks.empty()) {
+            auto cachedChain = g_CachedTestChainPoS[name];
+            coinbaseKey = DecodeSecret(cachedChain->coinbase);
+            for (const auto & block : cachedChain->blocks) {
+                auto blockptr = std::make_shared<const CBlock>(block);
+                SetMockTime(blockptr->GetBlockTime());
+                ProcessNewBlock(Params(), blockptr, true, nullptr);
+                m_coinbase_txns.push_back(blockptr->vtx[0]);
+            }
+            SetMockTime(cachedChain->mockTimeAfter);
+
+            ReloadWallet();
+
+            // Turn on index for staking
+            g_txindex = MakeUnique<TxIndex>(1 << 20, true);
+            g_txindex->Start();
+            g_txindex->Sync();
+
+            // Stake some blocks
+            StakeBlocks(5);
+            return cachedChain;
+        }
+
+        auto cachedChain = std::make_shared<TestChainPoSData>();
+
         // set coin maturity to something small to help staking tests
         coinbaseKey.MakeNewKey(true);
+        cachedChain->coinbase = EncodeSecret(coinbaseKey);
         CBasicKeyStore keystore; // temp used to spend coinbases
         keystore.AddKey(coinbaseKey);
-
         CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
         for (int i = 0; i < Params().GetConsensus().lastPOWBlock; ++i) {
             SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing); // prevent difficulty from increasing too rapidly
@@ -89,8 +134,13 @@ struct TestChainPoS : public TestingSetup {
                 txs.push_back(mtx);
             }
             CBlock b = CreateAndProcessBlock(txs, scriptPubKey);
+            cachedChain->blocks.push_back(b);
             m_coinbase_txns.push_back(b.vtx[0]);
         }
+        cachedChain->mockTimeAfter = GetAdjustedTime();
+
+        if (!name.empty())
+            g_CachedTestChainPoS[name] = cachedChain;
 
         ReloadWallet();
 
@@ -101,6 +151,7 @@ struct TestChainPoS : public TestingSetup {
 
         // Stake some blocks
         StakeBlocks(5);
+        return cachedChain;
     }
 
     void ReloadWallet() {
@@ -144,8 +195,7 @@ struct TestChainPoS : public TestingSetup {
         std::shared_ptr<const CBlock> shared_pblock = std::make_shared<const CBlock>(block);
         ProcessNewBlock(chainparams, shared_pblock, true, nullptr);
 
-        CBlock result = block;
-        return result;
+        return block;
     }
 
     void StakeBlocks(const int blockCount) {
@@ -174,7 +224,10 @@ struct TestChainPoS : public TestingSetup {
             }
             if (++tries > 1000)
                 throw std::runtime_error("Staker failed to find stake");
-            SetMockTime(staker.LastUpdateTime() + MAX_FUTURE_BLOCK_TIME_POS);
+            auto stime = staker.LastUpdateTime();
+            if (stime == 0)
+                stime = GetAdjustedTime();
+            SetMockTime(stime + MAX_FUTURE_BLOCK_TIME_POS);
         }
     }
 
@@ -200,7 +253,10 @@ struct TestChainPoS : public TestingSetup {
             }
             if (++tries > 1000)
                 throw std::runtime_error("Staker failed to find stake");
-            SetMockTime(staker.LastUpdateTime() + MAX_FUTURE_BLOCK_TIME_POS);
+            auto stime = staker.LastUpdateTime();
+            if (stime == 0)
+                stime = GetAdjustedTime();
+            SetMockTime(stime + MAX_FUTURE_BLOCK_TIME_POS);
         }
         return std::move(StakeMgr::StakeCoin{});
     }

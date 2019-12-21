@@ -13,7 +13,38 @@
 
 #include <boost/test/test_tools.hpp>
 
-BOOST_AUTO_TEST_SUITE(governance_tests)
+struct GovernanceSetupFixture {
+    explicit GovernanceSetupFixture() {
+        chain_100_40001_50();
+        chain_200_40001_50();
+    }
+    void chain_100_40001_50() {
+        TestChainPoS pos(false);
+        auto *params = (CChainParams*)&Params();
+        params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+            if (blockHeight <= consensusParams.lastPOWBlock)
+                return 100 * COIN;
+            else if (blockHeight % consensusParams.superblock == 0)
+                return 40001 * COIN;
+            return 50 * COIN;
+        };
+        pos.Init("100,40001,50");
+    }
+    void chain_200_40001_50() {
+        TestChainPoS pos(false);
+        auto *params = (CChainParams*)&Params();
+        params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+            if (blockHeight <= consensusParams.lastPOWBlock)
+                return 200 * COIN;
+            else if (blockHeight % consensusParams.superblock == 0)
+                return 40001 * COIN;
+            return 50 * COIN;
+        };
+        pos.Init("200,40001,50");
+    }
+};
+
+BOOST_FIXTURE_TEST_SUITE(governance_tests, GovernanceSetupFixture)
 
 int nextSuperblock(const int & block, const int & superblock) {
     return block + (superblock - block % superblock);
@@ -651,7 +682,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
         return 50 * COIN;
     };
     const auto & consensus = params->GetConsensus();
-    pos.Init();
+    pos.Init("200,40001,50");
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
     bool success{false};
 
@@ -1229,7 +1260,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
         return 50 * COIN;
     };
     const auto & consensus = params->GetConsensus();
-    pos.Init();
+    pos.Init("200,40001,50");
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
 
     // Create voting wallet
@@ -1634,7 +1665,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
         return 50 * COIN;
     };
     const auto & consensus = params->GetConsensus();
-    pos.Init();
+    pos.Init("200,40001,50");
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
 
     // Create voting wallet
@@ -1901,7 +1932,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata)
         return 50 * COIN;
     };
     const auto & consensus = params->GetConsensus();
-    pos.Init();
+    pos.Init("100,40001,50");
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
 
     // Check preloading governance proposal data
@@ -1951,13 +1982,13 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata2)
     params->consensus.voteBalance = 500*COIN;
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
-            return 100 * COIN;
+            return 200 * COIN;
         else if (blockHeight % consensusParams.superblock == 0)
             return 40001 * COIN;
         return 50 * COIN;
     };
     const auto & consensus = params->GetConsensus();
-    pos.Init();
+    pos.Init("200,40001,50");
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
 
     // Create voting wallet
@@ -2113,10 +2144,10 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
             return 100 * COIN;
         else if (blockHeight % consensusParams.superblock == 0)
             return 40001 * COIN;
-        return 25 * COIN;
+        return 50 * COIN;
     };
     const auto & consensus = params->GetConsensus();
-    pos.Init();
+    pos.Init("100,40001,50");
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
 
     // Prep vote utxo
