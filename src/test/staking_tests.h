@@ -10,6 +10,7 @@
 #define protected public // for overridding protected fields in CChainParams
 #include <chainparams.h>
 #undef protected
+#include <governance/governance.h>
 #include <index/txindex.h>
 #include <kernel.h>
 #include <miner.h>
@@ -60,6 +61,7 @@ struct TestChainPoS : public TestingSetup {
     }
 
     void Init() {
+        gov::Governance::instance().reset();
         // set coin maturity to something small to help staking tests
         coinbaseKey.MakeNewKey(true);
         CBasicKeyStore keystore; // temp used to spend coinbases

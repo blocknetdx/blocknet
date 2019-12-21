@@ -1014,8 +1014,6 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
 
 BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 {
-    RegisterValidationInterface(&gov::Governance::instance());
-
     auto *params = (CChainParams*)&Params();
     const auto & consensus = params->GetConsensus();
     CTxDestination dest(coinbaseKey.GetPubKey().GetID());
@@ -1093,7 +1091,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         params->consensus.voteBalance = 50000*COIN;
 
         // Create and submit proposal
-        gov::Proposal proposal("Test proposal 1", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
+        gov::Proposal proposal("Test proposal vote balance", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
                                EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
