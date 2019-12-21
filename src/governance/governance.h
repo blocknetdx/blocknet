@@ -454,6 +454,7 @@ public:
     bool unspend(const int & block, const uint256 & txhash) {
         if (spentBlock == block && spentHash == txhash) {
             spentBlock = 0;
+            spentHash.SetNull();
             return true;
         }
         return false;
