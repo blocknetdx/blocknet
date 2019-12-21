@@ -1076,13 +1076,14 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         BOOST_CHECK_MESSAGE(foundVoteTx, "Vote transaction failed to be accepted in block");
 
         // clean up
-        cleanup(resetBlocks, wallet.get());
         ReloadWallet();
         UnregisterValidationInterface(&gov::Governance::instance());
+        gov::Governance::instance().reset();
     }
 
     // Check situation where there's not enough vote balance
     {
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
         RegisterValidationInterface(&gov::Governance::instance());
         const auto resetBlocks = chainActive.Height();
         std::string failReason;
@@ -1111,13 +1112,14 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         BOOST_CHECK_MESSAGE(txns.empty(), "Expected transactions list to be empty");
 
         // clean up
-        cleanup(resetBlocks, wallet.get());
         ReloadWallet();
         UnregisterValidationInterface(&gov::Governance::instance());
+        gov::Governance::instance().reset();
     }
 
     // Check vote tally
     {
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
         RegisterValidationInterface(&gov::Governance::instance());
         const auto resetBlocks = chainActive.Height();
         std::string failReason;
@@ -1202,9 +1204,9 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         // clean up
         UnregisterValidationInterface(otherwallet.get());
         otherwallet.reset();
-        cleanup(resetBlocks, wallet.get());
         ReloadWallet();
         UnregisterValidationInterface(&gov::Governance::instance());
+        gov::Governance::instance().reset();
     }
 
     cleanup(chainActive.Height(), wallet.get());
