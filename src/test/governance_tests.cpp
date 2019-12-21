@@ -2025,50 +2025,72 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata2)
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         }
 
-        failReason.clear();
-        auto govsuccess = gov::Governance::instance().loadGovernanceData(chainActive, cs_main, consensus, failReason);
-        BOOST_CHECK_MESSAGE(govsuccess, strprintf("Failed to load governance data from the chain: %s", failReason));
-        BOOST_CHECK_MESSAGE(failReason.empty(), "loadGovernanceData fail reason should be empty");
-
-        auto gvotes = gov::Governance::instance().getVotes();
-        int expecting{0};
-        int spent{0};
-        for (const auto & tx : txns) { // only count valid votes
-            if (tx->IsCoinBase() || tx->IsCoinStake())
-                continue;
-            for (int n = 0; n < (int)tx->vout.size(); ++n) {
-                const auto & out = tx->vout[n];
-                CScript::const_iterator pc = out.scriptPubKey.begin();
-                std::vector<unsigned char> data;
-                opcodetype opcode{OP_FALSE};
-                bool ispushdata{false};
-                while (pc < out.scriptPubKey.end()) {
-                    opcode = OP_FALSE;
-                    if (!out.scriptPubKey.GetOp(pc, opcode, data))
-                        break;
-                    ispushdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4);
-                    if (ispushdata && !data.empty())
-                        break;
-                }
-                if (!ispushdata || data.empty())
+        auto countVotes = [consensus](const std::vector<gov::Vote> & votes, const std::vector<CTransactionRef> & txns, int & expecting, int & spent) {
+            for (const auto & tx : txns) { // only count valid votes
+                if (tx->IsCoinBase() || tx->IsCoinStake())
                     continue;
-                CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
-                gov::NetworkObject obj; ss >> obj;
-                if (!obj.isValid())
-                    continue; // must match expected version
-                if (obj.getType() == gov::VOTE) {
-                    CDataStream ssv(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
-                    gov::Vote vote({tx->GetHash(), static_cast<uint32_t>(n)});
-                    ssv >> vote;
-                    if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, false))
-                        ++expecting;
-                    else
-                        ++spent;
+                for (int n = 0; n < (int)tx->vout.size(); ++n) {
+                    const auto & out = tx->vout[n];
+                    CScript::const_iterator pc = out.scriptPubKey.begin();
+                    std::vector<unsigned char> data;
+                    opcodetype opcode{OP_FALSE};
+                    bool ispushdata{false};
+                    while (pc < out.scriptPubKey.end()) {
+                        opcode = OP_FALSE;
+                        if (!out.scriptPubKey.GetOp(pc, opcode, data))
+                            break;
+                        ispushdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4);
+                        if (ispushdata && !data.empty())
+                            break;
+                    }
+                    if (!ispushdata || data.empty())
+                        continue;
+                    CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
+                    gov::NetworkObject obj; ss >> obj;
+                    if (!obj.isValid())
+                        continue; // must match expected version
+                    if (obj.getType() == gov::VOTE) {
+                        CDataStream ssv(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
+                        gov::Vote vote({tx->GetHash(), static_cast<uint32_t>(n)});
+                        ssv >> vote;
+                        if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, false))
+                            ++expecting;
+                        else
+                            ++spent;
+                    }
                 }
             }
+        };
+
+        // Load governance data with single thread
+        {
+            gov::Governance::instance().reset();
+            failReason.clear();
+            auto govsuccess = gov::Governance::instance().loadGovernanceData(chainActive, cs_main, consensus, failReason, 1);
+            BOOST_CHECK_MESSAGE(govsuccess, strprintf("Failed to load governance data from the chain: %s", failReason));
+            BOOST_CHECK_MESSAGE(failReason.empty(), "loadGovernanceData fail reason should be empty");
+            auto gvotes = gov::Governance::instance().getVotes();
+            int expecting{0};
+            int spent{0};
+            countVotes(gvotes, txns, expecting, spent);
+            BOOST_CHECK_MESSAGE(gvotes.size() == expecting, strprintf("Failed to load governance data votes, found %u "
+                                                                      "expected %u, spent or invalid %u", gvotes.size(), expecting, spent));
         }
-        BOOST_CHECK_MESSAGE(gvotes.size() == expecting, strprintf("Failed to load governance data votes, found %u "
-                                                                  "expected %u, spent or invalid %u", gvotes.size(), expecting, spent));
+
+        // Load governance data with default multiple threads
+        if (GetNumCores() >= 4) {
+            gov::Governance::instance().reset();
+            failReason.clear();
+            auto govsuccess = gov::Governance::instance().loadGovernanceData(chainActive, cs_main, consensus, failReason, 0);
+            BOOST_CHECK_MESSAGE(govsuccess, strprintf("Failed to load governance data from the chain via multiple threads: %s", failReason));
+            BOOST_CHECK_MESSAGE(failReason.empty(), "loadGovernanceData fail reason should be empty");
+            auto gvotes = gov::Governance::instance().getVotes();
+            int expecting{0};
+            int spent{0};
+            countVotes(gvotes, txns, expecting, spent);
+            BOOST_CHECK_MESSAGE(gvotes.size() == expecting, strprintf("Failed to load governance data votes via multiple threads, found %u "
+                                                                      "expected %u, spent or invalid %u", gvotes.size(), expecting, spent));
+        }
     }
 
     // clean up

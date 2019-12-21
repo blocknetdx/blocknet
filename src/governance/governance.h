@@ -779,7 +779,7 @@ public:
      * @return
      */
     bool loadGovernanceData(const CChain & chain, CCriticalSection & chainMutex,
-                            const Consensus::Params & consensus, std::string & failReasonRet)
+                            const Consensus::Params & consensus, std::string & failReasonRet, const int & nthreads=0)
     {
         int blockHeight{0};
         {
@@ -791,59 +791,86 @@ public:
         if (blockHeight == 0 || blockHeight < consensus.governanceBlock)
             return true;
 
-        // Shard the blocks into num_cores slices
         boost::thread_group tg;
-        const auto cores = GetNumCores();
-        std::map<COutPoint, std::pair<uint256, int>> spentPrevouts; // pair<txhash, blockheight>
         Mutex mut; // manage access to shared data
+        const auto cores = nthreads == 0 ? GetNumCores() : nthreads;
+        std::map<COutPoint, std::pair<uint256, int>> spentPrevouts; // pair<txhash, blockheight>
+        bool useThreadGroup{false};
 
+        // Shard the blocks into num equivalent to available cores
         const int totalBlocks = blockHeight - consensus.governanceBlock;
         int slice = totalBlocks / cores;
         bool failed{false};
+
+        auto p1 = [&spentPrevouts,&failed,&failReasonRet,&chain,&chainMutex,&mut,this]
+                  (const int start, const int end, const Consensus::Params & consensus) -> bool
+        {
+            for (int blockNumber = start; blockNumber < end; ++blockNumber) {
+                if (ShutdownRequested()) { // don't hold up shutdown requests
+                    LOCK(mut);
+                    failed = true;
+                    return false;
+                }
+
+                CBlockIndex *blockIndex;
+                {
+                    LOCK(chainMutex);
+                    blockIndex = chain[blockNumber];
+                }
+                if (!blockIndex) {
+                    LOCK(mut);
+                    failed = true;
+                    failReasonRet += strprintf("Failed to read block index for block %d\n", blockNumber);
+                    return false;
+                }
+
+                CBlock block;
+                if (!ReadBlockFromDisk(block, blockIndex, consensus)) {
+                    LOCK(mut);
+                    failed = true;
+                    failReasonRet += strprintf("Failed to read block from disk for block %d\n", blockNumber);
+                    return false;
+                }
+                // Store all vins in order to use as a lookup for spent votes
+                for (const auto & tx : block.vtx) {
+                    LOCK(mut);
+                    for (const auto & vin : tx->vin)
+                        spentPrevouts[vin.prevout] = {tx->GetHash(), blockIndex->nHeight};
+                }
+                // Process block
+                processBlock(&block, blockIndex, consensus, false);
+            }
+            return true;
+        };
+
         for (int k = 0; k < cores; ++k) {
             const int start = consensus.governanceBlock + k*slice;
             const int end = k == cores-1 ? blockHeight+1 // check bounds, +1 due to "<" logic below, ensure inclusion of last block
                                          : start+slice;
-            tg.create_thread([start,end,&spentPrevouts,&failed,&failReasonRet,&chain,&chainMutex,&mut,this] {
-                RenameThread("blocknet-governance");
-                for (int blockNumber = start; blockNumber < end; ++blockNumber) {
-                    if (ShutdownRequested()) { // don't hold up shutdown requests
-                        failed = true;
-                        break;
-                    }
-
-                    CBlockIndex *blockIndex;
-                    {
-                        LOCK(chainMutex);
-                        blockIndex = chain[blockNumber];
-                    }
-                    if (!blockIndex) {
-                        LOCK(mut);
-                        failed = true;
-                        failReasonRet += strprintf("Failed to read block index for block %d\n", blockNumber);
-                        return;
-                    }
-
-                    CBlock block;
-                    if (!ReadBlockFromDisk(block, blockIndex, Params().GetConsensus())) {
-                        LOCK(mut);
-                        failed = true;
-                        failReasonRet += strprintf("Failed to read block from disk for block %d\n", blockNumber);
-                        return;
-                    }
-                    // Store all vins in order to use as a lookup for spent votes
-                    for (const auto & tx : block.vtx) {
-                        LOCK(mut);
-                        for (const auto & vin : tx->vin)
-                            spentPrevouts[vin.prevout] = {tx->GetHash(), blockIndex->nHeight};
-                    }
-                    // Process block
-                    processBlock(&block, blockIndex, Params().GetConsensus(), false);
+            // try single threaded on failure
+            try {
+                if (cores > 1) {
+                    tg.create_thread([start,end,consensus,&p1] {
+                        RenameThread("blocknet-governance");
+                        p1(start, end, consensus);
+                    });
+                    useThreadGroup = true;
+                } else
+                    p1(start, end, consensus);
+            } catch (...) {
+                try {
+                    p1(start, end, consensus);
+                } catch (std::exception & e) {
+                    failed = true;
+                    failReasonRet += strprintf("Failed to create thread to load governance data: %s\n", e.what());
+                    return false; // fatal error
                 }
-            });
+            }
         }
+
         // Wait for all threads to complete
-        tg.join_all();
+        if (useThreadGroup)
+            tg.join_all();
 
         {
             LOCK(mu);
@@ -861,47 +888,69 @@ public:
             tmpvotes.reserve(votes.size());
             std::copy(votes.begin(), votes.end(), std::back_inserter(tmpvotes));
         }
+
+        auto p2 = [&tmpvotes,&spentPrevouts,&failed,&mut,this](const int start, const int end,
+                const Consensus::Params & consensus) -> bool
+        {
+            for (int i = start; i < end; ++i) {
+                if (ShutdownRequested()) { // don't hold up shutdown requests
+                    LOCK(mut);
+                    failed = true;
+                    return false;
+                }
+                Vote vote;
+                {
+                    LOCK(mut);
+                    vote = tmpvotes[i].second;
+                }
+                // Record vote if it has an associated proposal
+                if (hasProposal(vote.getProposal(), vote.getBlockNumber())) {
+                    // Mark vote as spent if its utxo is spent before or on the
+                    // associated proposal's superblock.
+                    {
+                        LOCK(mut);
+                        if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= getProposal(vote.getProposal()).getSuperblock())
+                            vote.spend(spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first);
+                    }
+                    {
+                        LOCK(mu);
+                        votes[vote.getHash()] = vote;
+                    }
+                }
+            }
+            return true;
+        };
+
+        useThreadGroup = false; // initial state
+
         slice = static_cast<int>(tmpvotes.size()) / cores;
         for (int k = 0; k < cores; ++k) {
             const int start = k*slice;
             const int end = k == cores-1 ? static_cast<int>(tmpvotes.size())
                                          : start+slice;
+            // try single threaded on failure
             try {
-                tg.create_thread([start,end,&tmpvotes,&spentPrevouts,&failed,&mut,this] {
-                    RenameThread("blocknet-governance");
-                    for (int i = start; i < end; ++i) {
-                        if (ShutdownRequested()) { // don't hold up shutdown requests
-                            failed = true;
-                            break;
-                        }
-                        Vote vote;
-                        {
-                            LOCK(mut);
-                            vote = tmpvotes[i].second;
-                        }
-                        // Record vote if it has an associated proposal
-                        if (hasProposal(vote.getProposal(), vote.getBlockNumber())) {
-                            // Mark vote as spent if its utxo is spent before or on the
-                            // associated proposal's superblock.
-                            {
-                                LOCK(mut);
-                                if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= getProposal(vote.getProposal()).getSuperblock())
-                                    vote.spend(spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first);
-                            }
-                            {
-                                LOCK(mu);
-                                votes[vote.getHash()] = vote;
-                            }
-                        }
-                    }
-                });
-            } catch (std::exception & e) {
-                failed = true;
-                failReasonRet += strprintf("Failed to create thread to load governance data: %s\n", e.what());
+                if (cores > 1) {
+                    tg.create_thread([start,end,consensus,&p2] {
+                        RenameThread("blocknet-governance");
+                        p2(start, end, consensus);
+                    });
+                    useThreadGroup = true;
+                } else
+                    p2(start, end, consensus);
+            } catch (...) {
+                try {
+                    p2(start, end, consensus);
+                } catch (std::exception & e) {
+                    failed = true;
+                    failReasonRet += strprintf("Failed to create thread to load governance votes: %s\n", e.what());
+                    return false; // fatal error
+                }
             }
         }
         // Wait for all threads to complete
-        tg.join_all();
+        if (useThreadGroup)
+            tg.join_all();
 
         return !failed;
     }
