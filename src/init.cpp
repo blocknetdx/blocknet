@@ -1298,6 +1298,16 @@ bool AppInitMain(InitInterfaces& interfaces)
     LogPrintf("Default data directory %s\n", GetDefaultDataDir().string());
     LogPrintf("Using data directory %s\n", GetDataDir().string());
 
+    // Blocknet create default conf
+    auto p = GetConfigFile(BITCOIN_CONF_FILENAME);
+    if (!fs::exists(p)) {
+        fsbridge::ofstream configFile(p, std::ios_base::app);
+        if (configFile.good())
+            configFile.close();
+        else
+            LogPrintf("Unable to create default conf file: %s\n", p.string());
+    }
+
     // Only log conf file usage message if conf file actually exists.
     fs::path config_file_path = GetConfigFile(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME));
     if (fs::exists(config_file_path)) {
