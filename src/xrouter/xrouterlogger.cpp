@@ -58,12 +58,12 @@ LOG::~LOG()
 {
     boost::lock_guard<boost::mutex> lock(logLocker);
 
-    static boost::gregorian::date day = boost::gregorian::day_clock::local_day();
-    if (m_logFileName.empty())
-        m_logFileName = makeFileName();
-
     try
     {
+        static boost::gregorian::date day = boost::gregorian::day_clock::local_day();
+        if (m_logFileName.empty())
+            m_logFileName = makeFileName();
+
         if (!filenameOverride.empty()) {
             boost::filesystem::path directory = GetDataDir(false) / "log";
             boost::filesystem::create_directory(directory);
@@ -87,10 +87,9 @@ LOG::~LOG()
 
 //******************************************************************************
 //******************************************************************************
-// static
 std::string LOG::makeFileName()
 {
-    boost::filesystem::path directory = GetDataDir(false) / "log";
+    static boost::filesystem::path directory = GetDataDir(false) / "log";
     boost::filesystem::create_directory(directory);
 
     auto lt = boost::posix_time::second_clock::local_time();

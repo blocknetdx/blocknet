@@ -105,9 +105,10 @@ public:
 
     /**
      * @brief stop - stopped services
+     * @param safeCleanup specify false to indicate potential unsafe cleanup
      * @return
      */
-    bool stop();
+    bool stop(const bool safeCleanup = true);
 
     /**
      * @brief Returns true if XRouter configs have finished loading.
@@ -1101,6 +1102,7 @@ private:
 
     QueryMgr queryMgr;
     PendingConnectionMgr pendingConnMgr;
+    std::atomic<bool> stopped{false};
 };
 
 } // namespace xrouter

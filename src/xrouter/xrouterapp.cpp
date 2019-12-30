@@ -69,6 +69,7 @@ App::App() : timerThread(boost::bind(&boost::asio::io_service::run, &timerIo))
 //*****************************************************************************
 App::~App()
 {
+    stop(false);
 }
 
 //*****************************************************************************
@@ -304,6 +305,7 @@ bool App::start()
         xrouterIsReady = true;
     }
 
+    stopped = false;
     return true;
 }
 
@@ -790,20 +792,27 @@ std::string App::printConfigs()
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::stop()
+bool App::stop(const bool safeCleanup)
 {
+    if (stopped)
+        return true;
+    stopped = true;
+
+    if (safeCleanup)
+        LOG() << "stopping xrouter threads...";
+
     timer.cancel();
     timerIo.stop();
     timerThread.join();
 
-    if (!isEnabled() || !isReady())
+    if (safeCleanup && (!isEnabled() || !isReady()))
         return false;
 
     // shutdown threads
     requestHandlers.interrupt_all();
     requestHandlers.join_all();
 
-    if (!server->stop())
+    if (server && !server->stop())
         return false;
 
     return true;

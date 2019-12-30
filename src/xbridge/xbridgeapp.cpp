@@ -97,9 +97,10 @@ protected:
     bool start();
     /**
      * @brief stop stopped service, timer, secp stop
+     * @param safeCleanup specify false to indicate potential unsafe cleanup, defaults to true
      * @return true
      */
-    bool stop();
+    bool stop(const bool safeCleanup = true);
 
 protected:
     /**
@@ -241,6 +242,8 @@ protected:
     CCriticalSection                                   m_watchTradersLocker;
     std::map<uint256, TransactionPtr>                  m_watchTraders;
     bool                                               m_watchingTraders{false};
+
+    std::atomic<bool>                                  m_stopped{false};
 };
 
 //*****************************************************************************
@@ -264,6 +267,7 @@ App::App()
 //*****************************************************************************
 App::~App()
 {
+    m_p->stop(false);
 }
 
 //*****************************************************************************
@@ -338,6 +342,7 @@ bool App::Impl::start()
         ERR() << __FUNCTION__;
     }
 
+    m_stopped = false;
     return true;
 }
 
@@ -430,9 +435,14 @@ bool App::loadSettings()
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::Impl::stop()
+bool App::Impl::stop(const bool log)
 {
-    LOG() << "stopping xbridge threads...";
+    if (m_stopped)
+        return true;
+    m_stopped = true;
+
+    if (log)
+        LOG() << "stopping xbridge threads...";
 
     m_timer.cancel();
     m_timerIo.stop();
