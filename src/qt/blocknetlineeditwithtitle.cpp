@@ -53,3 +53,8 @@ void BlocknetLineEditWithTitle::setError(bool flag) {
 void BlocknetLineEditWithTitle::setTitle(const QString &title) {
     titleLbl->setText(title);
 }
+
+void BlocknetLineEditWithTitle::setExpanding() {
+    this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    this->lineEdit->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+}

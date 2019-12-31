@@ -33,17 +33,20 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
 
     proposalTi = new BlocknetLineEditWithTitle(tr("Proposal name"), tr("Enter proposal name..."));
     proposalTi->setObjectName("proposal");
+    proposalTi->setExpanding();
     proposalTi->lineEdit->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
     proposalTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9-_]+"), this));
     proposalTi->lineEdit->setMaxLength(50);
 
     urlTi = new BlocknetLineEditWithTitle(tr("URL must start with http:// or https://"), tr("Enter URL..."));
     urlTi->setObjectName("url");
+    urlTi->setExpanding();
     urlTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"), this));
     urlTi->lineEdit->setMaxLength(150);
 
     descriptionTi = new BlocknetLineEditWithTitle(tr("Description"), tr("Brief proposal description..."));
     descriptionTi->setObjectName("description");
+    descriptionTi->setExpanding();
     descriptionTi->lineEdit->setMaxLength(250);
 
     auto *compactGrid = new QFrame;
@@ -56,16 +59,19 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     auto superblockStr = superblock == -1 ? QString() : QString::number(superblock);
     superBlockTi = new BlocknetLineEditWithTitle(tr("Superblock #: Next is %1").arg(superblockStr), tr("Enter Superblock #..."), BGU::spi(50));
     superBlockTi->setObjectName("block");
+    superBlockTi->setExpanding();
     superBlockTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9]+"), this));
     superBlockTi->lineEdit->setText(superblockStr);
 
     amountTi = new BlocknetLineEditWithTitle(tr("Amount (%1 minimum)").arg(Params().GetConsensus().proposalMinAmount/COIN), tr("Enter amount..."), BGU::spi(50));
     amountTi->setObjectName("amount");
+    amountTi->setExpanding();
     amountTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[0-9]+"), this));
     amountTi->lineEdit->setMaxLength(std::to_string(Params().GetConsensus().proposalMaxAmount / COIN).length());
 
     paymentAddrTi = new BlocknetLineEditWithTitle(tr("Payment address"), tr("Enter payment address..."));
     paymentAddrTi->setObjectName("address");
+    paymentAddrTi->setExpanding();
     paymentAddrTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]{33,35}"), this));
     paymentAddrTi->lineEdit->setMaxLength(35);
 
