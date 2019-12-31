@@ -46,6 +46,7 @@ enum Type : uint8_t {
 static const uint8_t NETWORK_VERSION = 0x01;
 static const CAmount VOTING_UTXO_INPUT_AMOUNT = 0.1 * COIN;
 static const int VINHASH_SIZE = 12;
+static const int PROPOSAL_USERDEFINED_LIMIT = 139;
 typedef std::array<unsigned char, VINHASH_SIZE> VinHash;
 
 /**
@@ -206,8 +207,11 @@ public:
         CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
         ss << version << type << name << superblock << amount << address << url << description;
         const int maxBytes = MAX_OP_RETURN_RELAY-3; // -1 for OP_RETURN -2 for pushdata opcodes
+        // If this protocol changes update PROPOSAL_USERDEFINED_LIMIT so that gui can understand that limit
+        const int nonUserBytes = 14;
+        const int packetBytes = 4;
         if (ss.size() > maxBytes) {
-            if (failureReasonRet) *failureReasonRet = strprintf("Proposal data is too long, try reducing the description by %d characters, expected total of %d bytes, received %d", ss.size()-maxBytes, maxBytes, ss.size());
+            if (failureReasonRet) *failureReasonRet = strprintf("Proposal input is too long, try reducing the description by %u characters. You can use a combined total of %u characters across proposal name, url, description, and payment address fields.", ss.size()-maxBytes, maxBytes-nonUserBytes-packetBytes);
             return false;
         }
         return true;

@@ -36,18 +36,18 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     proposalTi->setExpanding();
     proposalTi->lineEdit->setFocusPolicy(Qt::FocusPolicy::StrongFocus);
     proposalTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9-_]+"), this));
-    proposalTi->lineEdit->setMaxLength(50);
+    proposalTi->lineEdit->setMaxLength(100);
 
     urlTi = new BlocknetLineEditWithTitle(tr("URL must start with http:// or https://"), tr("Enter URL..."));
     urlTi->setObjectName("url");
     urlTi->setExpanding();
     urlTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)"), this));
-    urlTi->lineEdit->setMaxLength(150);
+    urlTi->lineEdit->setMaxLength(120);
 
     descriptionTi = new BlocknetLineEditWithTitle(tr("Description"), tr("Brief proposal description..."));
     descriptionTi->setObjectName("description");
     descriptionTi->setExpanding();
-    descriptionTi->lineEdit->setMaxLength(250);
+    descriptionTi->lineEdit->setMaxLength(120);
 
     auto *compactGrid = new QFrame;
     auto *gridLayout = new QGridLayout;
@@ -72,8 +72,8 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     paymentAddrTi = new BlocknetLineEditWithTitle(tr("Payment address"), tr("Enter payment address..."));
     paymentAddrTi->setObjectName("address");
     paymentAddrTi->setExpanding();
-    paymentAddrTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]{33,35}"), this));
-    paymentAddrTi->lineEdit->setMaxLength(35);
+    paymentAddrTi->lineEdit->setValidator(new QRegExpValidator(QRegExp("[a-zA-Z0-9]+"), this));
+    paymentAddrTi->lineEdit->setMaxLength(50);
 
     gridLayout->addWidget(superBlockTi, 0, 0);
     gridLayout->addWidget(amountTi, 0, 1);
@@ -96,6 +96,9 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     feeLayout->addWidget(feeLbl, 0, 1, Qt::AlignRight);
 
     auto *div2 = new BlocknetHDiv;
+
+    charCountLbl = new QLabel;
+    charCountLbl->setObjectName("charcount");
 
     auto *buttonGrid = new QFrame;
     buttonGrid->setContentsMargins(QMargins());
@@ -131,13 +134,19 @@ BlocknetCreateProposal1::BlocknetCreateProposal1(int id, QFrame *parent) : Block
     layout->addWidget(feeGrid);
     layout->addSpacing(BGU::spi(10));
     layout->addWidget(div2);
-    layout->addSpacing(BGU::spi(20));
+    layout->addSpacing(BGU::spi(10));
+    layout->addWidget(charCountLbl);
+    layout->addSpacing(BGU::spi(10));
     layout->addStretch(1);
     layout->addWidget(buttonGrid);
     layout->addSpacing(BGU::spi(20));
 
     connect(continueBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal1::onNext);
     connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetCreateProposal1::onCancel);
+    connect(proposalTi->lineEdit, &BlocknetLineEdit::textEdited, this, &BlocknetCreateProposal1::inputChanged);
+    connect(urlTi->lineEdit, &BlocknetLineEdit::textEdited, this, &BlocknetCreateProposal1::inputChanged);
+    connect(descriptionTi->lineEdit, &BlocknetLineEdit::textEdited, this, &BlocknetCreateProposal1::inputChanged);
+    connect(paymentAddrTi->lineEdit, &BlocknetLineEdit::textEdited, this, &BlocknetCreateProposal1::inputChanged);
 }
 
 bool BlocknetCreateProposal1::validated() {
@@ -153,8 +162,8 @@ bool BlocknetCreateProposal1::validated() {
     }
 
     auto proposal = proposalTi->lineEdit->text();
-    if (proposal.length() > 20) {
-        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad name, it's too long. The name is limited to 20 characters"));
+    if (proposal.length() < 2) {
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad name, it's too short. The name must be at least 2 characters long"));
         return false;
     }
 
@@ -164,8 +173,8 @@ bool BlocknetCreateProposal1::validated() {
         QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad proposal url"));
         return false;
     }
-    if (url.length() > 64) {
-        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad url, it's too long. The url is limited to 64 characters"));
+    if (url.length() < 7) {
+        QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad url, it's too short. The url must be at least 7 characters"));
         return false;
     }
 
@@ -241,6 +250,13 @@ void BlocknetCreateProposal1::keyPressEvent(QKeyEvent *event) {
         return;
     if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
         onNext();
+}
+
+void BlocknetCreateProposal1::inputChanged(const QString &) {
+    static int maxCharsForEntryFields = gov::PROPOSAL_USERDEFINED_LIMIT;
+    const int totalChars = proposalTi->lineEdit->text().size() + urlTi->lineEdit->text().size() +
+                           descriptionTi->lineEdit->text().size() + paymentAddrTi->lineEdit->text().size();
+    charCountLbl->setText(tr("Characters remaining on this proposal: %1").arg(maxCharsForEntryFields - totalChars));
 }
 
 void BlocknetCreateProposal1::clear() {

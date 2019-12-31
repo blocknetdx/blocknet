@@ -44,12 +44,14 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void focusInEvent(QFocusEvent *event) override;
     void showEvent(QShowEvent *event) override;
+    void inputChanged(const QString &);
 
 private:
     QVBoxLayout *layout;
     QLabel *titleLbl;
     QLabel *feeTitleLbl;
     QLabel *feeLbl;
+    QLabel *charCountLbl;
     BlocknetLineEditWithTitle *proposalTi;
     BlocknetLineEditWithTitle *urlTi;
     BlocknetLineEditWithTitle *descriptionTi;
