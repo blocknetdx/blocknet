@@ -197,7 +197,14 @@ bool Intro::pickDataDirectory(interfaces::Node& node)
     /* 2) Allow QSettings to override default dir */
     dataDir = settings.value("strDataDir", dataDir).toString();
 
-    if(!fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || gArgs.GetBoolArg("-choosedatadir", DEFAULT_CHOOSE_DATADIR) || settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false))
+    bool askUser{false};
+    QString confDataDir;
+    if (getDataDirFromConfFile(QString::fromStdString(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME)), confDataDir))
+        dataDir = confDataDir;
+    else
+        askUser = settings.value("strDataDir").isNull();
+
+    if(!fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || askUser || gArgs.GetBoolArg("-choosedatadir", DEFAULT_CHOOSE_DATADIR) || settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false))
     {
         /* Use selectParams here to guarantee Params() can be used by node interface */
         try {
@@ -336,4 +343,28 @@ QString Intro::getPathToCheck()
     signalled = false; /* new request can be queued now */
     mutex.unlock();
     return retval;
+}
+
+bool Intro::getDataDirFromConfFile(const QString & confFile, QString & confDataDir) {
+    const std::string confPath = confFile.toStdString();
+    fsbridge::ifstream stream((fs::path(confPath)));
+    if (!stream.good())
+        return false;
+
+    QRegExp re("^\\s*datadir\\s*=\\s*(.*)\\s*$");
+    re.setPatternSyntax(QRegExp::RegExp2);
+    std::string str;
+    std::string::size_type pos;
+    while (std::getline(stream, str)) {
+        if ((pos = str.find('#')) != std::string::npos)
+            str = str.substr(0, pos);
+        if (re.exactMatch(QString::fromStdString(str))) {
+            confDataDir = re.cap(1);
+            break;
+        }
+    }
+
+    stream.close();
+
+    return !confDataDir.isEmpty();
 }
