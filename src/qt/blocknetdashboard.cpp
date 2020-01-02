@@ -39,7 +39,7 @@ BlocknetDashboard::BlocknetDashboard(QFrame *parent) : QFrame(parent), layout(ne
     auto *balanceBoxLayout = new QVBoxLayout;
     balanceBoxLayout->setContentsMargins(QMargins());
     balanceBox->setLayout(balanceBoxLayout);
-    balanceLbl = new QLabel(tr("Blocknet Balance"));
+    balanceLbl = new QLabel(tr("Available Balance"));
     balanceLbl->setObjectName("balanceLbl");
     balanceValueLbl = new QLabel;
     balanceValueLbl->setObjectName("h1");

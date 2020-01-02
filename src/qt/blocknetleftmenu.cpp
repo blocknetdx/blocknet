@@ -32,7 +32,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     logo->setPixmap(pm.scaled(logo->width()*pm.devicePixelRatio(), logo->height()*pm.devicePixelRatio(),
             Qt::KeepAspectRatio, Qt::SmoothTransformation));
 
-    balanceLbl = new QLabel(tr("Total Balance:"));
+    balanceLbl = new QLabel(tr("Available Balance:"));
     balanceLbl->setObjectName("balanceLbl");
     balanceAmountLbl = new QLabel;
     balanceAmountLbl->setObjectName("balanceAmountLbl");
