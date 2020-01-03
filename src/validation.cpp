@@ -1351,6 +1351,8 @@ void UpdateCoins(const CTransaction& tx, CCoinsViewCache& inputs, int nHeight)
 bool CScriptCheck::operator()() {
     const CScript &scriptSig = ptxTo->vin[nIn].scriptSig;
     const CScriptWitness *witness = &ptxTo->vin[nIn].scriptWitness;
+    if (!witnessEnabled)
+        witness = nullptr; // no witness if disabled
     return VerifyScript(scriptSig, m_tx_out.scriptPubKey, witness, nFlags, CachingTransactionSignatureChecker(ptxTo, nIn, m_tx_out.nValue, cacheStore, *txdata), &error);
 }
 
@@ -1931,6 +1933,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
     CBlockUndo blockundo;
 
     CCheckQueueControl<CScriptCheck> control(fScriptChecks && nScriptCheckThreads ? &scriptcheckqueue : nullptr);
+    const bool witnessEnabled = IsWitnessEnabled(pindex, chainparams.GetConsensus());
 
     std::vector<int> prevheights;
     CAmount nFees = 0;
@@ -1996,6 +1999,11 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
             if (!CheckInputs(tx, state, view, fScriptChecks, flags, fCacheResults, fCacheResults, txdata[i], nScriptCheckThreads ? &vChecks : nullptr))
                 return error("ConnectBlock(): CheckInputs on %s failed with %s",
                     tx.GetHash().ToString(), FormatStateMessage(state));
+            // Blocknet indicate that witness is enabled on the chain
+            if (!witnessEnabled) {
+                for (auto & check : vChecks)
+                    check.DisableWitnessCheck();
+            }
             control.Add(vChecks);
         }
 
