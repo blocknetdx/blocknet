@@ -24,6 +24,7 @@ public:
     bool isEmpty();
     QSize sizeHint() const override;
     BlocknetLineEdit *lineEdit;
+    void setExpanding();
 
 Q_SIGNALS:
 
