@@ -39,7 +39,7 @@ BlocknetDashboard::BlocknetDashboard(QFrame *parent) : QFrame(parent), layout(ne
     auto *balanceBoxLayout = new QVBoxLayout;
     balanceBoxLayout->setContentsMargins(QMargins());
     balanceBox->setLayout(balanceBoxLayout);
-    balanceLbl = new QLabel(tr("Blocknet Balance"));
+    balanceLbl = new QLabel(tr("Available Balance"));
     balanceLbl->setObjectName("balanceLbl");
     balanceValueLbl = new QLabel;
     balanceValueLbl->setObjectName("h1");
@@ -205,10 +205,10 @@ void BlocknetDashboard::displayUnitChanged(int unit) {
 }
 
 void BlocknetDashboard::updateBalance() {
-    balanceValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, walletBalance - immatureBalance, false, BitcoinUnits::separatorAlways));
+    balanceValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, walletBalance, false, BitcoinUnits::separatorAlways));
     pendingValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, unconfirmedBalance, false, BitcoinUnits::separatorAlways));
     immatureValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, immatureBalance, false, BitcoinUnits::separatorAlways));
-    totalValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, walletBalance + unconfirmedBalance, false, BitcoinUnits::separatorAlways));
+    totalValueLbl->setText(BitcoinUnits::formatWithUnit(displayUnit, walletBalance + unconfirmedBalance + immatureBalance, false, BitcoinUnits::separatorAlways));
 }
 
 void BlocknetDashboard::walletEvents(const bool on) {
