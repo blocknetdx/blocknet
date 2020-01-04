@@ -53,6 +53,14 @@ public:
      */
     static QString getDefaultDataDirectory();
 
+    /**
+     * Reads the conf file and returns the datadir if it's valid.
+     * @param confFile
+     * @param confDataDir
+     * @return
+     */
+    static bool getDataDirFromConfFile(const QString & confFile, QString & confDataDir);
+
 Q_SIGNALS:
     void requestCheck();
 
