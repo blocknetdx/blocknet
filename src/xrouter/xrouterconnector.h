@@ -95,6 +95,7 @@ public:
         txWithTimeField         = other.txWithTimeField;
         isLockCoinsSupported    = other.isLockCoinsSupported;
         jsonver                 = other.jsonver;
+        contenttype             = other.contenttype;
 
         return *this;
     }
@@ -143,6 +144,8 @@ public:
 
     // json version for use with rpc
     std::string                  jsonver;
+    // content type
+    std::string                  contenttype;
 };
 
 class WalletConnectorXRouter : public WalletParam

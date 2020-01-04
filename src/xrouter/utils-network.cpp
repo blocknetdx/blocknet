@@ -117,7 +117,7 @@ UniValue XRouterJSONRPCRequestObj(const std::string& strMethod, const UniValue& 
 }
 
 std::string CallRPC(const std::string & rpcip, const std::string & rpcport, const std::string & strMethod,
-                    const Array & params, const std::string & jsonver)
+                    const Array & params, const std::string & jsonver, const std::string & contenttype)
 {
     return std::move(CallRPC("", "", rpcip, rpcport, strMethod, params, jsonver));
 }
@@ -125,7 +125,7 @@ std::string CallRPC(const std::string & rpcip, const std::string & rpcport, cons
 std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                       const std::string & rpcip, const std::string & rpcport,
                       const std::string & strMethod, const json_spirit::Array & params,
-                      const std::string & jsonver)
+                      const std::string & jsonver, const std::string & contenttype)
 {
     const std::string & host = rpcip;
     const int port = boost::lexical_cast<int>(rpcport);
@@ -145,14 +145,18 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     evhttp_request_set_error_cb(req.get(), http_error_cb);
 #endif
 
-    // Get credentials
-    std::string strRPCUserColonPass = rpcuser + ":" + rpcpasswd;
-
     struct evkeyvalq* output_headers = evhttp_request_get_output_headers(req.get());
     assert(output_headers);
     evhttp_add_header(output_headers, "Host", host.c_str());
     evhttp_add_header(output_headers, "Connection", "close");
-    evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
+    // Set content type
+    if (!contenttype.empty())
+        evhttp_add_header(output_headers, "Content-Type", contenttype.c_str());
+    // Set credentials
+    if (!rpcuser.empty() || !rpcpasswd.empty()) {
+        std::string strRPCUserColonPass = rpcuser + ":" + rpcpasswd;
+        evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
+    }
 
     // Attach request data
     const auto tostring = json_spirit::write_string(json_spirit::Value(params), json_spirit::none, 8);
@@ -182,7 +186,7 @@ std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
     } else if (response.status == HTTP_UNAUTHORIZED) {
         throw std::runtime_error("Authorization failed: Incorrect rpcuser or rpcpassword");
     } else if (response.status >= 400 && response.status != HTTP_BAD_REQUEST && response.status != HTTP_NOT_FOUND && response.status != HTTP_INTERNAL_SERVER_ERROR)
-        throw std::runtime_error(strprintf("server returned HTTP error %d", response.status));
+        throw std::runtime_error(strprintf("server returned HTTP error %d: %s", response.status, response.body));
     else if (response.body.empty())
         throw std::runtime_error("no response from server");
 

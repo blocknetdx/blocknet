@@ -103,11 +103,11 @@ XRouterReply CallXRouterUrl(const std::string & host, const int & port, const st
 std::string CallCMD(const std::string & cmd, int & exit);
 std::string CallRPC(const std::string & rpcip, const std::string & rpcport,
                            const std::string & strMethod, const Array & params,
-                           const std::string & jsonver="");
+                           const std::string & jsonver="", const std::string & contenttype="");
 std::string CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                            const std::string & rpcip, const std::string & rpcport,
                            const std::string & strMethod, const Array & params,
-                           const std::string & jsonver="");
+                           const std::string & jsonver="", const std::string & contenttype="");
 
 // Payment functions
 bool createAndSignTransaction(const std::string & address, const CAmount & amount, std::string & raw_tx);

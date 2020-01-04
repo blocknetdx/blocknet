@@ -76,37 +76,29 @@ bool XRouterServer::createConnectors() {
             wp.blockTime                   = s.get<int>(*i + ".BlockTime", 0);
             wp.requiredConfirmations       = s.get<int>(*i + ".Confirmations", 0);
             wp.jsonver                     = s.get<std::string>(*i + ".JSONVersion", "");
+            wp.contenttype                 = s.get<std::string>(*i + ".ContentType", "");
 
-            if (wp.m_ip.empty() || wp.m_port.empty() ||
-                wp.m_user.empty() || wp.m_passwd.empty() ||
-                wp.COIN == 0 || wp.blockTime == 0)
-            {
-                LOG() << "Skipping currency " << wp.method << " because of missing credentials, COIN or BlockTime parameters";
+            if (wp.m_user.empty() || wp.m_passwd.empty())
+                LOG() << "Warning currency " << wp.method << " has empty credentials";
+
+            if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) {
+                LOG() << "Skipping currency " << wp.method << " because of bad Ip, Port, COIN or BlockTime parameters";
                 continue;
             }
 
             LOG() << "Adding connector to " << wp.currency;
 
             xrouter::WalletConnectorXRouterPtr conn;
-            if ((wp.method == "ETH") || (wp.method == "ETHER"))
-            {
+            if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM") {
                 conn.reset(new EthWalletConnectorXRouter);
                 *conn = wp;
-            }
-            else if ((wp.method == "BTC") || (wp.method == "BLOCK"))
-            {
+            } else {
                 conn.reset(new BtcWalletConnectorXRouter);
                 *conn = wp;
             }
-            else
-            {
-                conn.reset(new BtcWalletConnectorXRouter);
-                *conn = wp;
-            }
+
             if (!conn)
-            {
                 continue;
-            }
 
             this->addConnector(conn);
         }
@@ -406,7 +398,7 @@ void XRouterServer::onMessageReceived(CNode* node, XRouterPacketPtr packet, CVal
                 throw e;
             } catch (std::exception & e) {
                 state.DoS(1, error("XRouter: server error"), REJECT_INVALID, "xrouter-error"); // prevent abuse
-                ERR() << "Failed to process " << fqService << "from node " << nodeAddr << " " << e.what();
+                ERR() << "Failed to process " << fqService << " from node " << nodeAddr << " " << e.what();
                 throw XRouterError("Internal Server Error: Bad connector for " + fqService, xrouter::BAD_CONNECTOR);
             }
 

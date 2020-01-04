@@ -124,12 +124,13 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         uint64_t    minAmount  = s.get<uint64_t>(*i + ".MinimumAmount", 0);
         uint32_t    txVersion  = s.get<uint32_t>(*i + ".TxVersion", 1);
         std::string jsonver    = s.get<std::string>(*i + ".JSONVersion", "");
+        std::string contenttype = s.get<std::string>(*i + ".ContentType", "");
 
+        if (user.empty() || passwd.empty())
+            WARN() << *i << " \"" << label << "\"" << " has empty credentials";
 
-        if (/*address.empty() || */ip.empty() || port.empty() ||
-                                   user.empty() || passwd.empty())
-        {
-            WARN() << *i << " \"" << label << "\"" << " Failed to load the config";
+        if (ip.empty() || port.empty()) {
+            WARN() << *i << " \"" << label << "\"" << " failed to load config: Ip and Port is required";
             continue;
         }
 
@@ -143,6 +144,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         wp.dustAmount = minAmount;
         wp.txVersion  = txVersion;
         wp.jsonver    = jsonver;
+        wp.contenttype = contenttype;
     }
 
     return true;
