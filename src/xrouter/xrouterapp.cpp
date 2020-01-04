@@ -186,6 +186,7 @@ bool App::createConf()
                 "private::rpcport=8370"                                                                             + eol +
                 "private::rpcuser=sysuser"                                                                          + eol +
                 "private::rpcpassword=sysuser_pass"                                                                 + eol +
+                "private::rpccommand=getblockcount"                                                                 + eol +
                 ""                                                                                                  + eol +
                 "#! Disable this sample plugin"                                                                     + eol +
                 "disabled=1"                                                                                        + eol
