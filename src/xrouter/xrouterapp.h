@@ -641,9 +641,18 @@ private:
             return snodeConfigs[node];
         return nullptr;
     }
-    void updateConfig(const NodeAddr & node, XRouterSettingsPtr config) {
+    void updateConfig(const sn::ServiceNode & snode, XRouterSettingsPtr & config) {
+        if (snode.isNull())
+            return;
         LOCK(mu);
-        snodeConfigs[node] = config;
+        // Remove existing configs that are associated with the snode pubkey
+        for(auto it = snodeConfigs.begin(); it != snodeConfigs.end(); ) {
+            if (it->second->getSnodePubKey() == snode.getSnodePubKey())
+                snodeConfigs.erase(it++);
+            else
+                it++;
+        }
+        snodeConfigs[snode.getHost()] = config;
     }
     bool needConfigUpdate(const NodeAddr & node, const bool & isServer = false) {
         const auto & service = XRouterCommand_ToString(xrGetConfig);

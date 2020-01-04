@@ -122,7 +122,7 @@ bool IniConfig::write(const char * fileName)
 //******************************************************************************
 //******************************************************************************
 
-XRouterSettings::XRouterSettings(const bool & ismine) : ismine(ismine) { }
+XRouterSettings::XRouterSettings(const CPubKey & pubkey, const bool & ismine) : snodePubKey(pubkey), ismine(ismine) { }
 
 bool XRouterSettings::init(const boost::filesystem::path & configPath) {
     if (!read(configPath)) {

@@ -144,7 +144,7 @@ private:
 class XRouterSettings : public IniConfig
 {
 public:
-    explicit XRouterSettings(const bool & ismine = true);
+    explicit XRouterSettings(const CPubKey & pubkey, const bool & ismine = true);
 
     bool init(const boost::filesystem::path & configPath);
     bool init(const std::string & config);
@@ -184,6 +184,11 @@ public:
         return plugins[name];
     }
 
+    CPubKey getSnodePubKey() {
+        LOCK(mu);
+        return snodePubKey;
+    }
+
     bool isAvailableCommand(XRouterCommand c, const std::string & service);
     std::string host(XRouterCommand c, const std::string & service="");
     int port(XRouterCommand c, const std::string & service="");
@@ -213,6 +218,7 @@ private:
     CService addr;
     std::string node;
     bool ismine{true}; // indicating if the config is our own
+    CPubKey snodePubKey;
 };
 
 } // namespace
