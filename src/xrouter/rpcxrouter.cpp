@@ -28,8 +28,13 @@ using namespace json_spirit;
 
 static UniValue uret_xr(const json_spirit::Value & o) {
     UniValue uv;
-    if (!uv.read(json_spirit::write_string(o, json_spirit::none, 8)))
-        throw std::runtime_error("Unknown server error: failed to process request");
+    const auto str = json_spirit::write_string(o, json_spirit::none, 8);
+    try {
+        if (!uv.read(str))
+            uv.setStr(str);
+    } catch (...) {
+        uv.setStr(str);
+    }
     return uv;
 }
 
