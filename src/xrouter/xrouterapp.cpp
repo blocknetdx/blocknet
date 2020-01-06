@@ -1385,6 +1385,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                                     snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
                                     snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
+                            json_spirit::Object obj;
+                            obj.emplace_back("error", e.what());
+                            obj.emplace_back("code", xrouter::Error::BAD_REQUEST);
+                            obj.emplace_back("reply", "");
+                            queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(obj)));
+                            queryMgr.purge(uuid, addr);
                             return; // failed to connect
                         }
 
