@@ -188,6 +188,10 @@ bool App::createConf()
                 "private::rpcpassword=sysuser_pass"                                                                 + eol +
                 "private::rpccommand=getblockcount"                                                                 + eol +
                 ""                                                                                                  + eol +
+                "#! JSON version and Content Type can be set on the rpc call:"                                      + eol +
+                "#!private::rpcjsonversion=2.0"                                                                     + eol +
+                "#!private::rpccontenttype=application/json"                                                        + eol +
+                ""                                                                                                  + eol +
                 "#! Disable this sample plugin"                                                                     + eol +
                 "disabled=1"                                                                                        + eol
             );

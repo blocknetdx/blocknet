@@ -682,7 +682,9 @@ std::string XRouterServer::processServiceCall(const std::string & name, const st
         const auto & ip       = psettings->stringParam("rpcip", "127.0.0.1");
         const auto & port     = psettings->stringParam("rpcport");
         const auto & command  = psettings->stringParam("rpccommand");
-        result = CallRPC(user, passwd, ip, port, command, jsonparams);
+        const auto & jsonver  = psettings->stringParam("rpcjsonversion");
+        const auto & contype  = psettings->stringParam("rpccontenttype");
+        result = CallRPC(user, passwd, ip, port, command, jsonparams, jsonver, contype);
 
         if (psettings->hasCustomResponse())
             return psettings->customResponse();
