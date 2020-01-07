@@ -38,7 +38,7 @@ BlocknetSplashScreen::BlocknetSplashScreen(interfaces::Node& node, Qt::WindowFla
     QString titleText = tr(PACKAGE_NAME);
     QString versionText = QString(tr("Version %1")).arg(QString::fromStdString(FormatFullVersion()));
     QString copyrightTextBtc = QChar(0xA9) + QString(" 2009-2019 ") + QString(tr("The Bitcoin Core developers"));
-    QString copyrightTextBlocknet = QChar(0xA9) + QString(" 2015-2019 ") + QString(tr("The Blocknet developers"));
+    QString copyrightTextBlocknet = QChar(0xA9) + QString(" 2015-2020 ") + QString(tr("The Blocknet developers"));
     const QString &titleAddText = networkStyle->getTitleAddText();
 
     QString font = QApplication::font().toString();
