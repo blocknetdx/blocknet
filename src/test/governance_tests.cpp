@@ -1606,6 +1606,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
         {
             // Stake to a few blocks after the proposal cutoff
             const auto nextSb = gov::NextSuperblock(consensus);
+            BOOST_CHECK_MESSAGE(!gov::Governance::insideVoteCutoff(nextSb, chainActive.Height(), params->GetConsensus()), strprintf("Chain tip should not be inside the vote cutoff (chain height %u, next superblock %u)", chainActive.Height(), nextSb));
             const auto blks = nextSb - chainActive.Height() - consensus.votingCutoff;
             pos.StakeBlocks(blks), SyncWithValidationInterfaceQueue();
             gov::ProposalVote proposalVote{voteCutoffProposal, gov::YES};
@@ -1618,7 +1619,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             std::vector<gov::Proposal> allProposalsB;
             std::vector<gov::Vote> allVotesB;
             gov::Governance::instance().getProposalsForSuperblock(nextSb, allProposalsB, allVotesB);
+            BOOST_CHECK_MESSAGE(gov::Governance::insideVoteCutoff(nextSb, chainActive.Height(), params->GetConsensus()), strprintf("Chain tip should be inside the vote cutoff (chain height %u, next superblock %u)", chainActive.Height(), nextSb));
             BOOST_CHECK_MESSAGE(votesB.size() == allVotesB.size(), "Votes should not be accepted if they're submitted after the cutoff");
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().utxoInVoteCutoff(allVotesB.front().getUtxo(), chainActive.Height(), params->GetConsensus()), "Utxo should be inside the vote cutoff");
         }
 
         // Check that the superblock payout is valid
@@ -1640,6 +1643,17 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             BOOST_CHECK_MESSAGE(payees.size() == expectedPayees, "Superblock payees should match expected proposals");
             BOOST_CHECK_MESSAGE(gov::Governance::instance().isValidSuperblock(&block, chainActive.Height(), consensus, superblockPayment), "Expected superblock payout to be valid");
             BOOST_CHECK_MESSAGE(gov::Governance::isSuperblock(chainActive.Height(), consensus), "Expected superblock to be accepted");
+        }
+
+        // Check vote cutoff period ends properly after superblock
+        {
+            pos.StakeBlocks(5), SyncWithValidationInterfaceQueue();
+            const int prevSB = gov::PreviousSuperblock(params->GetConsensus(), chainActive.Height());
+            BOOST_CHECK_MESSAGE(!gov::Governance::insideVoteCutoff(prevSB, chainActive.Height(), params->GetConsensus()), strprintf("Chain tip should not be inside the vote cutoff after the superblock ends (chain height %u, previous superblock %u)", chainActive.Height(), prevSB));
+            std::vector<gov::Proposal> allProposals;
+            std::vector<gov::Vote> allVotes;
+            gov::Governance::instance().getProposalsForSuperblock(prevSB, allProposals, allVotes);
+            BOOST_CHECK_MESSAGE(!gov::Governance::instance().utxoInVoteCutoff(allVotes.front().getUtxo(), chainActive.Height(), params->GetConsensus()), "Utxo should not be inside the vote cutoff");
         }
     }
 

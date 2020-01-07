@@ -5,6 +5,7 @@
 
 #include <stakemgr.h>
 
+#include <governance/governance.h>
 #include <kernel.h>
 #include <miner.h>
 #include <shutdown.h>
@@ -87,6 +88,7 @@ bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBl
         }
 
         // Find suitable staking coins
+        const int tipHeight = tip->nHeight;
         for (const COutput & out : coins) {
             if (GetAdjustedTime() - out.tx->GetTxTime() < params.stakeMinAge) // skip coins that don't meet stake age
                 continue;
@@ -95,6 +97,10 @@ bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBl
             if (out.nDepth < coinMaturity) // skip non-mature coins
                 continue;
             if (!out.fSpendable) // skip coin we don't have keys for
+                continue;
+            // Remove all coins participating in the current superblock's vote cutoff zone
+            // to avoid staking a vote and causing invalidation.
+            if (gov::Governance::instance().utxoInVoteCutoff(out.GetInputCoin().outpoint, tipHeight, params))
                 continue;
             selected.emplace_back(std::make_shared<COutput>(out), pwallet);
         }
