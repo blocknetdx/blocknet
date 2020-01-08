@@ -1258,6 +1258,31 @@ public:
         return vouts.size() <= 2 && payees.empty();
     }
 
+    /**
+     * Returns true if the specified utxo exists in an active and validd proposal who's voting period has ended.
+     * @param utxo
+     * @param tipHeight
+     * @param params
+     * @return
+     */
+    bool utxoInVoteCutoff(const COutPoint & utxo, const int & tipHeight, const Consensus::Params & params) {
+        const auto superblock = NextSuperblock(params, tipHeight);
+        if (!insideVoteCutoff(superblock, tipHeight, params))
+            return false; // if tip isn't in the non-voting period then return
+
+        // Check if the utxo is in a valid proposal who's voting period has ended
+        std::vector<Proposal> sproposals;
+        std::vector<Vote> svotes;
+        getProposalsForSuperblock(superblock, sproposals, svotes);
+
+        for (const auto & vote : svotes) {
+            if (utxo == vote.getUtxo())
+                return true;
+        }
+
+        return false;
+    }
+
 public: // static
 
     /**
@@ -1376,6 +1401,17 @@ public: // static
         // cutoff for a block number that's prior to the superblock of its
         // associated proposal.
         return blockNumber <= proposal.getSuperblock() - params.votingCutoff;
+    }
+
+    /**
+     * Returns true if the block number is in the vote cutoff.
+     * @param superblock
+     * @param blockNumber
+     * @param params
+     * @return
+     */
+    static bool insideVoteCutoff(const int & superblock, const int & blockNumber, const Consensus::Params & params) {
+        return blockNumber > superblock - params.votingCutoff && blockNumber <= superblock;
     }
 
     /**
