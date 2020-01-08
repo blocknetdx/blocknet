@@ -79,19 +79,19 @@ static double parseVout(Value vout, std::string account)
 std::string BtcWalletConnectorXRouter::getBlockCount() const
 {
     std::string command("getblockcount");
-    return CallRPC(m_user, m_passwd, m_ip, m_port, command, {});
+    return CallRPC(m_user, m_passwd, m_ip, m_port, command, {}, jsonver, contenttype);
 }
 
 std::string BtcWalletConnectorXRouter::getBlockHash(const int & block) const
 {
     std::string command("getblockhash");
-    return CallRPC(m_user, m_passwd, m_ip, m_port, command, { block });
+    return CallRPC(m_user, m_passwd, m_ip, m_port, command, { block }, jsonver, contenttype);
 }
 
 std::string BtcWalletConnectorXRouter::getBlock(const std::string & blockHash) const
 {
     static const std::string command("getblock");
-    return CallRPC(m_user, m_passwd, m_ip, m_port, command, { blockHash });
+    return CallRPC(m_user, m_passwd, m_ip, m_port, command, { blockHash }, jsonver, contenttype);
 }
 
 std::vector<std::string> BtcWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const
@@ -114,7 +114,7 @@ std::vector<std::string> BtcWalletConnectorXRouter::getBlocks(const std::vector<
 std::string BtcWalletConnectorXRouter::getTransaction(const std::string & hash) const
 {
     static const std::string commandGRT("getrawtransaction");
-    const auto & rawTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, { hash });
+    const auto & rawTr = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, { hash }, jsonver, contenttype);
 
     if (hasError(rawTr)) {
         return rawTr;
@@ -125,7 +125,7 @@ std::string BtcWalletConnectorXRouter::getTransaction(const std::string & hash) 
             return "";
         hex = rawTr_val.get_str();
         static const std::string commandDRT("decoderawtransaction");
-        return CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { hex });
+        return CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { hex }, jsonver, contenttype);
     }
 }
 
@@ -150,7 +150,7 @@ std::vector<std::string> BtcWalletConnectorXRouter::getTransactions(const std::v
 std::string BtcWalletConnectorXRouter::decodeRawTransaction(const std::string & hex) const
 {
     static const std::string commandDRT("decoderawtransaction");
-    return CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { hex });
+    return CallRPC(m_user, m_passwd, m_ip, m_port, commandDRT, { hex }, jsonver, contenttype);
 }
 
 std::vector<std::string> BtcWalletConnectorXRouter::getTransactionsBloomFilter(const int & number, CDataStream & stream, const int & fetchlimit) const
@@ -168,7 +168,7 @@ std::vector<std::string> BtcWalletConnectorXRouter::getTransactionsBloomFilter(c
 
     std::vector<std::string> results;
 
-    const auto & blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array());
+    const auto & blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBC, Array(), jsonver, contenttype);
     int blockcount = getResult(blockCountObj).get_int();
 
     if ((fetchlimit > 0) && (blockcount - number > fetchlimit)) {
@@ -177,16 +177,16 @@ std::vector<std::string> BtcWalletConnectorXRouter::getTransactionsBloomFilter(c
     
     for (int id = number; id <= blockcount; id++)
     {
-        const auto & blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, { id });
+        const auto & blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGBH, { id }, jsonver, contenttype);
         const auto & hash = getResult(blockHashObj).get_str();
-        const auto & blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, { hash });
+        const auto & blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGB, { hash }, jsonver, contenttype);
         Object block = getResult(blockObj).get_obj();
 
         Array txs = find_value(block, "tx").get_array();
 
         for (const auto & j : txs) {
             const auto & txid = Value(j).get_str();
-            const auto & rawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, { txid });
+            const auto & rawTrObj = CallRPC(m_user, m_passwd, m_ip, m_port, commandGRT, { txid }, jsonver, contenttype);
             const auto & txData_str = getResult(rawTrObj).get_str();
 
             std::vector<unsigned char> txData(ParseHex(txData_str));
@@ -207,12 +207,12 @@ std::vector<std::string> BtcWalletConnectorXRouter::getTransactionsBloomFilter(c
 std::string BtcWalletConnectorXRouter::sendTransaction(const std::string & transaction) const
 {
     static const std::string command("sendrawtransaction");
-    return checkError(CallRPC(m_user, m_passwd, m_ip, m_port, command, { transaction }), BAD_REQUEST);
+    return checkError(CallRPC(m_user, m_passwd, m_ip, m_port, command, { transaction }, jsonver, contenttype), BAD_REQUEST);
 }
 
 std::string BtcWalletConnectorXRouter::convertTimeToBlockCount(const std::string & timestamp) const
 {
-//    const auto & blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockcount", {});
+//    const auto & blockCountObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockcount", {}, jsonver, contenttype);
 //    Value res = getResult(blockCountObj);
 //    int blockcount = res.get_int();
 //    if (blockcount <= 51)
@@ -220,18 +220,18 @@ std::string BtcWalletConnectorXRouter::convertTimeToBlockCount(const std::string
 //
 //    // Estimate average block creation time from the last 10 blocks
 //    Array paramsGBH { blockcount };
-//    Object blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH);
+//    Object blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH, jsonver, contenttype);
 //    std::string hash = getResult(blockHashObj).get_str();
 //    Array paramsGB { hash };
-//    Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB);
+//    Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB, jsonver, contenttype);
 //    Object block = getResult(blockObj).get_obj();
 //    int curblocktime = find_value(block, "time").get_int();
 //
 //    Array paramsGBH2 { blockcount-50 };
-//    blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH2);
+//    blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH2, jsonver, contenttype);
 //    hash = getResult(blockHashObj).get_str();
 //    Array paramsGB2 { hash };
-//    blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB2);
+//    blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB2, jsonver, contenttype);
 //    block = getResult(blockObj).get_obj();
 //    int blocktime50ago = find_value(block, "time").get_int();
 //
@@ -247,10 +247,10 @@ std::string BtcWalletConnectorXRouter::convertTimeToBlockCount(const std::string
 //        return "0";
 //
 //    Array paramsGBH3 { blockEstimate };
-//    blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH3);
+//    blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH3, jsonver, contenttype);
 //    hash = getResult(blockHashObj).get_str();
 //    Array paramsGB3 { hash };
-//    blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB3);
+//    blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB3, jsonver, contenttype);
 //    block = getResult(blockObj).get_obj();
 //    int cur_estimate = find_value(block, "time").get_int();
 //
@@ -261,10 +261,10 @@ std::string BtcWalletConnectorXRouter::convertTimeToBlockCount(const std::string
 //    while (true) {
 //        blockEstimate += sign;
 //        Array paramsGBH { blockEstimate };
-//        Object blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH);
+//        Object blockHashObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblockhash", paramsGBH, jsonver, contenttype);
 //        std::string hash = getResult(blockHashObj).get_str();
 //        Array paramsGB { hash };
-//        Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB);
+//        Object blockObj = CallRPC(m_user, m_passwd, m_ip, m_port, "getblock", paramsGB, jsonver, contenttype);
 //        Object block = getResult(blockObj).get_obj();
 //        int new_estimate = find_value(block, "time").get_int();
 //        //std::cout << blockEstimate << " " << new_estimate << " " << cur_estimate << " " << (new_estimate - time) << " " << (cur_estimate - time) << " " << (cur_estimate - time) * (new_estimate - time) << std::endl << std::flush;

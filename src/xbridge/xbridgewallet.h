@@ -112,6 +112,7 @@ public:
         txWithTimeField             = other.txWithTimeField;
         isLockCoinsSupported        = other.isLockCoinsSupported;
         jsonver                     = other.jsonver;
+        contenttype                 = other.contenttype;
 
         return *this;
     }
@@ -160,6 +161,8 @@ public:
 
     // json version for use with rpc
     std::string                  jsonver;
+    // content type for rpc requests
+    std::string                  contenttype;
 };
 
 } // namespace xbridge

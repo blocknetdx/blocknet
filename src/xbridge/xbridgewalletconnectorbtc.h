@@ -111,7 +111,7 @@ static UniValue XBridgeJSONRPCRequestObj(const std::string& strMethod, const Uni
 static json_spirit::Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
                       const std::string & rpcip, const std::string & rpcport,
                       const std::string & strMethod, const json_spirit::Array & params,
-                      const std::string & jsonver="")
+                      const std::string & jsonver="", const std::string & contenttype="")
 {
     const std::string & host = rpcip;
     const int port = boost::lexical_cast<int>(rpcport);
@@ -131,14 +131,18 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
     evhttp_request_set_error_cb(req.get(), http_error_cb);
 #endif
 
-    // Get credentials
-    std::string strRPCUserColonPass = rpcuser + ":" + rpcpasswd;
-
     struct evkeyvalq* output_headers = evhttp_request_get_output_headers(req.get());
     assert(output_headers);
     evhttp_add_header(output_headers, "Host", host.c_str());
     evhttp_add_header(output_headers, "Connection", "close");
-    evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
+    // Set content type
+    if (!contenttype.empty())
+        evhttp_add_header(output_headers, "Content-Type", contenttype.c_str());
+    // Set credentials
+    if (!rpcuser.empty() || !rpcpasswd.empty()) {
+        std::string strRPCUserColonPass = rpcuser + ":" + rpcpasswd;
+        evhttp_add_header(output_headers, "Authorization", (std::string("Basic ") + EncodeBase64(strRPCUserColonPass)).c_str());
+    }
 
     // Attach request data
     const auto tostring = json_spirit::write_string(json_spirit::Value(params), json_spirit::none, 8);

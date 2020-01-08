@@ -539,7 +539,7 @@ protected:
                     return false; // do not continue processing if bad config format
 
                 // Parse config
-                xrouter::XRouterSettings settings(false); // not our config
+                xrouter::XRouterSettings settings(snodePubKey, false); // not our config
                 if (!settings.init(uxrconf.get_str()))
                     return false;
 

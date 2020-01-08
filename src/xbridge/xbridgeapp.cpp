@@ -909,11 +909,13 @@ void App::updateActiveWallets()
         wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
         wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
         wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
+        wp.jsonver                     = s.get<std::string>(*i + ".JSONVersion", "");
+        wp.contenttype                 = s.get<std::string>(*i + ".ContentType", "");
 
-        if (wp.m_ip.empty() || wp.m_port.empty() ||
-            wp.m_user.empty() || wp.m_passwd.empty() ||
-            wp.COIN == 0 || wp.blockTime == 0)
-        {
+        if (wp.m_user.empty() || wp.m_passwd.empty())
+            WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
+
+        if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
             removeConnector(wp.currency);
             continue;
@@ -925,10 +927,9 @@ void App::updateActiveWallets()
         }
 
         xbridge::WalletConnectorPtr conn;
-        if (wp.method == "ETHER")
-        {
-            LOG() << "wp.method ETHER not implemented" << __FUNCTION__;
-            // session.reset(new XBridgeSessionEthereum(wp));
+        if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM") {
+            LOG() << "ETH connector is not supported on XBridge at this time";
+            continue;
         }
         else if (wp.method == "BTC" || wp.method == "SYS")
         {

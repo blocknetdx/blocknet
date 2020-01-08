@@ -186,6 +186,11 @@ bool App::createConf()
                 "private::rpcport=8370"                                                                             + eol +
                 "private::rpcuser=sysuser"                                                                          + eol +
                 "private::rpcpassword=sysuser_pass"                                                                 + eol +
+                "private::rpccommand=getblockcount"                                                                 + eol +
+                ""                                                                                                  + eol +
+                "#! JSON version and Content Type can be set on the rpc call:"                                      + eol +
+                "#!private::rpcjsonversion=2.0"                                                                     + eol +
+                "#!private::rpccontenttype=application/json"                                                        + eol +
                 ""                                                                                                  + eol +
                 "#! Disable this sample plugin"                                                                     + eol +
                 "disabled=1"                                                                                        + eol
@@ -259,7 +264,7 @@ bool App::init()
     // Load the xrouter configuration
     try {
         xrouterpath = GetDataDir(false) / "xrouter.conf";
-        xrsettings = std::make_shared<XRouterSettings>();
+        xrsettings = std::make_shared<XRouterSettings>(CPubKey{});
         if (!xrsettings->init(xrouterpath))
             return false;
     } catch (...) {
@@ -522,7 +527,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             }
             LOG() << "Connected to servicenode " << EncodeDestination(CTxDestination(snode.getPaymentAddress()));
             addNode(node); // store the node connection
-            if (!hasConfig(snodeAddr) || needConfigUpdate(snodeAddr))
+            if (!hasConfig(snodeAddr))
                 fetchConfig(node, snode);
             else
                 addSelected(snodeAddr);
@@ -1015,7 +1020,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         std::string config = find_value(reply_obj, "config").get_str();
         Object plugins = find_value(reply_obj, "plugins").get_obj();
 
-        auto settings = std::make_shared<XRouterSettings>(false); // not our config
+        auto settings = std::make_shared<XRouterSettings>(CPubKey(spubkey.begin(), spubkey.end()), false); // not our config
         auto configInit = settings->init(config);
         if (!configInit) {
             ERR() << "Failed to read config on query " << uuid << " from node " << nodeAddr;
@@ -1038,7 +1043,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         }
 
         // Update settings for node
-        updateConfig(nodeAddr, settings);
+        updateConfig(sn::ServiceNodeMgr::instance().getSn(nodeAddr), settings);
         queryMgr.addReply(uuid, nodeAddr, reply);
         queryMgr.purge(uuid, nodeAddr);
 
@@ -1066,7 +1071,7 @@ bool App::processConfigMessage(const sn::ServiceNode & snode) {
     if (!uv.read(rawconfig))
         return false;
 
-    auto settings = std::make_shared<XRouterSettings>(false); // not our config
+    auto settings = std::make_shared<XRouterSettings>(snode.getSnodePubKey(), false); // not our config
     try {
         const auto uvconf = find_value(uv, "config");
         if (uvconf.isNull() || !uvconf.isStr())
@@ -1092,7 +1097,7 @@ bool App::processConfigMessage(const sn::ServiceNode & snode) {
     }
 
     // Update settings for node
-    updateConfig(settings->getNode(), settings);
+    updateConfig(snode, settings);
     return true;
 }
 
@@ -1384,6 +1389,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                                     snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
                                     snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
+                            json_spirit::Object obj;
+                            obj.emplace_back("error", e.what());
+                            obj.emplace_back("code", xrouter::Error::BAD_REQUEST);
+                            obj.emplace_back("reply", "");
+                            queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(obj)));
+                            queryMgr.purge(uuid, addr);
                             return; // failed to connect
                         }
 
