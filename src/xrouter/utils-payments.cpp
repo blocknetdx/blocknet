@@ -53,7 +53,7 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
     // Available utxos from from wallet
     std::vector<xbridge::wallet::UtxoEntry> inputs;
     std::vector<xbridge::wallet::UtxoEntry> outputsForUse;
-    std::map<COutPoint, std::pair<const COutput*, std::shared_ptr<CWallet>>> coinLookup;
+    std::map<COutPoint, std::pair<CTxOut, std::shared_ptr<CWallet>>> coinLookup;
 
     try {
         std::vector<COutput> coins;
@@ -67,7 +67,7 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
             wallet->AvailableCoins(*lockedChain, coi, true, nullptr);
             coins.insert(coins.end(), coi.begin(), coi.end());
             for (const auto & coin : coi)
-                coinLookup[coin.GetInputCoin().outpoint] = std::make_pair(&coin, wallet);
+                coinLookup[coin.GetInputCoin().outpoint] = std::make_pair(coin.GetInputCoin().txout, wallet);
         }
         if (coins.empty())
             return false; // not enough inputs
@@ -155,9 +155,10 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
     // Sign transaction
     for (int i = 0; i < (int)mtx.vin.size(); ++i) {
         const auto & item = coinLookup[mtx.vin[i].prevout];
-        SignatureData sigdata = DataFromTransaction(mtx, i, item.first->GetInputCoin().txout);
-        ProduceSignature(*item.second, MutableTransactionSignatureCreator(&mtx, i, item.first->GetInputCoin().txout.nValue, SIGHASH_ALL),
-                item.first->GetInputCoin().txout.scriptPubKey, sigdata);
+        const auto & txout = item.first;
+        SignatureData sigdata = DataFromTransaction(mtx, i, txout);
+        ProduceSignature(*item.second, MutableTransactionSignatureCreator(&mtx, i, txout.nValue, SIGHASH_ALL),
+                txout.scriptPubKey, sigdata);
         UpdateInput(mtx.vin[i], sigdata);
     }
     const CTransaction txConst(mtx);
