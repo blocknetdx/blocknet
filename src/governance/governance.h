@@ -1066,16 +1066,17 @@ public:
                 CScript::const_iterator pc = out.scriptPubKey.begin();
                 std::vector<unsigned char> data;
                 opcodetype opcode{OP_FALSE};
-                bool ispushdata{false};
+                bool checkdata{false};
                 while (pc < out.scriptPubKey.end()) {
                     opcode = OP_FALSE;
                     if (!out.scriptPubKey.GetOp(pc, opcode, data))
                         break;
-                    ispushdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4);
-                    if (ispushdata && !data.empty())
+                    checkdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4)
+                            || (opcode < OP_PUSHDATA1 && opcode == data.size());
+                    if (checkdata && !data.empty())
                         break;
                 }
-                if (!ispushdata || data.empty())
+                if (!checkdata || data.empty())
                     continue; // skip if no data
 
                 CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);

@@ -358,6 +358,23 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
         ReloadWallet();
     }
 
+    // Check proposal that is under the pushdata1 requirements should be properly processed
+    {
+        const auto resetBlocks = chainActive.Height();
+        gov::Proposal psubmit("tt", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
+                              EncodeDestination(dest), "", "");
+        CTransactionRef tx = nullptr;
+        std::string failReason;
+        auto success = gov::SubmitProposal(psubmit, {wallet}, consensus, tx, g_connman.get(), &failReason);
+        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
+        BOOST_CHECK_MESSAGE(mempool.exists(tx->GetHash()), "Proposal submission tx should be in the mempool");
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        BOOST_CHECK_MESSAGE(!gov::Governance::instance().getProposal(psubmit.getHash()).isNull(), "Very small proposal should exist");
+        cleanup(resetBlocks, wallet.get());
+        ReloadWallet();
+    }
+
     // Check -proposaladdress config option
     {
         const auto resetBlocks = chainActive.Height();
@@ -2081,17 +2098,18 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata2)
                     CScript::const_iterator pc = out.scriptPubKey.begin();
                     std::vector<unsigned char> data;
                     opcodetype opcode{OP_FALSE};
-                    bool ispushdata{false};
+                    bool checkdata{false};
                     while (pc < out.scriptPubKey.end()) {
                         opcode = OP_FALSE;
                         if (!out.scriptPubKey.GetOp(pc, opcode, data))
                             break;
-                        ispushdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4);
-                        if (ispushdata && !data.empty())
+                        checkdata = (opcode == OP_PUSHDATA1 || opcode == OP_PUSHDATA2 || opcode == OP_PUSHDATA4)
+                                    || (opcode < OP_PUSHDATA1 && opcode == data.size());
+                        if (checkdata && !data.empty())
                             break;
                     }
-                    if (!ispushdata || data.empty())
-                        continue;
+                    if (!checkdata || data.empty())
+                        continue; // skip if no data
                     CDataStream ss(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                     gov::NetworkObject obj; ss >> obj;
                     if (!obj.isValid())
