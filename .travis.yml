@@ -100,16 +100,6 @@ jobs:
         BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports CXXFLAGS=-Wno-psabi"
 
     - stage: test
-      name: 'Win32  [GOAL: deploy]  [no gui or functional tests]'
-      env: >-
-        HOST=i686-w64-mingw32
-        DPKG_ADD_ARCH="i386"
-        PACKAGES="python3 nsis g++-mingw-w64-i686 wine-binfmt wine32"
-        RUN_FUNCTIONAL_TESTS=false
-        GOAL="deploy"
-        BITCOIN_CONFIG="--enable-reduce-exports --disable-gui-tests"
-
-    - stage: test
       name: 'Win64  [GOAL: deploy]  [no gui or functional tests]'
       env: >-
         HOST=x86_64-w64-mingw32
@@ -117,16 +107,6 @@ jobs:
         RUN_FUNCTIONAL_TESTS=false
         GOAL="deploy"
         BITCOIN_CONFIG="--enable-reduce-exports --disable-gui-tests"
-
-    - stage: test
-      name: '32-bit + dash  [GOAL: install]  [GUI: no BIP70]'
-      env: >-
-        HOST=i686-pc-linux-gnu
-        PACKAGES="g++-multilib python3-zmq"
-        RUN_FUNCTIONAL_TESTS=false
-        GOAL="install"
-        BITCOIN_CONFIG="--enable-zmq --with-gui=qt5 --disable-bip70 --enable-glibc-back-compat --enable-reduce-exports LDFLAGS=-static-libstdc++"
-        CONFIG_SHELL="/bin/dash"
 
     - stage: test
       name: 'x86_64 Linux  [GOAL: install]  [bionic]  [uses qt5 dev package instead of depends Qt to speed up build and avoid timeout]'
