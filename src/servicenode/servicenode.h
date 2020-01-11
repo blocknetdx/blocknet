@@ -549,7 +549,7 @@ protected:
                 uxrplugins.getObjMap(kv);
                 for (const auto & item : kv) {
                     const auto plugin = item.first;
-                    const auto pluginconf = item.second.write();
+                    const auto pluginconf = item.second.get_str();
                     try {
                         auto psettings = std::make_shared<xrouter::XRouterPluginSettings>(false); // not our config
                         psettings->read(pluginconf);
