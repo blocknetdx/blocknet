@@ -330,6 +330,14 @@ public:
                                                                      vinhash(vinhash) {
         loadKeyID();
     }
+    explicit Vote(const uint256 & proposal, const VoteType & vote,
+                  const COutPoint & utxo, const VinHash & vinhash,
+                  const CKeyID & keyid, const CAmount & amount) : proposal(proposal),
+                                                                  vote(vote),
+                                                                  utxo(utxo),
+                                                                  vinhash(vinhash),
+                                                                  keyid(keyid),
+                                                                  amount(amount) { }
     explicit Vote(const COutPoint & outpoint, const int64_t & time = 0, const int & blockNumber = 0) : outpoint(outpoint),
                                                                                                        time(time),
                                                                                                        blockNumber(blockNumber) {}

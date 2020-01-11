@@ -49,6 +49,20 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                  const Consensus::Params & params, std::vector<CTransactionRef> & txsRet, CConnman *connman,
                  std::string *failReasonRet);
 
+/**
+ * Applies new votes for all proposals associated with this utxo.
+ * @param stakedHeight (i.e. chaintip + 1)
+ * @param utxo Old voting utxo
+ * @param key Private key of staking utxo
+ * @param stakeUtxo Utxo of the new stake
+ * @param wallet Contains stake key
+ * @param tx Voting transaction
+ * @param params Chain params
+ * @return
+ */
+bool RevoteOnStake(const int & stakedHeight, const COutPoint & utxo, const CKey & key, std::pair<CTxOut,COutPoint> stakeUtxo,
+                   CWallet *wallet, CTransactionRef & tx, const Consensus::Params & params);
+
 }
 
 #endif //BLOCKNET_GOVERNANCE_GOVERNANCEWALLET_H

@@ -33,6 +33,10 @@
 #include <queue>
 #include <utility>
 
+#ifdef ENABLE_WALLET
+#include <governance/governancewallet.h>
+#endif // ENABLE_WALLET
+
 bool SignBlock(CBlock & block, const CScript & stakeScript, const CKeyStore & keystore) {
     // ppcoin: sign block
     std::vector<std::vector<unsigned char>> vSolutions;
@@ -205,8 +209,9 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
     return std::move(pblocktemplate);
 }
 
+#ifdef ENABLE_WALLET
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                                  const int64_t & stakeTime, CBasicKeyStore *keystore,
+                                                                  const int64_t & stakeTime, CWallet *keystore,
                                                                   const bool & disableValidationChecks)
 {
     int64_t nTimeStart = GetTimeMicros();
@@ -348,6 +353,16 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     // Assign coinstake tx
     pblock->vtx[1] = MakeTransactionRef(std::move(coinstakeTx));
 
+    // Recast governance votes if vote staked
+    CKey stakeKey;
+    keystore->GetKey(keyid, stakeKey);
+    CTransactionRef votingTx;
+    auto stakeOut = pblock->vtx[1]->vout[1];
+    auto stakeOutpt = COutPoint{pblock->vtx[1]->GetHash(), 1};
+    std::pair<CTxOut,COutPoint> stakeUtxo = std::make_pair(stakeOut, stakeOutpt);
+    if (gov::RevoteOnStake(nHeight, stakeInput.outpoint, stakeKey, stakeUtxo, keystore, votingTx, chainparams.GetConsensus()))
+        pblock->vtx.push_back(votingTx);
+
     // Coinbase commitment
     pblocktemplate->vchCoinbaseCommitment = GenerateCoinbaseCommitment(*pblock, pindexPrev, chainparams.GetConsensus());
     pblocktemplate->vTxFees[0] = -nFees;
@@ -383,6 +398,7 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
 
     return std::move(pblocktemplate);
 }
+#endif // ENABLE_WALLET
 
 void BlockAssembler::onlyUnconfirmed(CTxMemPool::setEntries& testSet)
 {

@@ -19,6 +19,10 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/ordered_index.hpp>
 
+#ifdef ENABLE_WALLET
+#include <wallet/wallet.h>
+#endif // ENABLE_WALLET
+
 class CBlockIndex;
 class CChainParams;
 class CScript;
@@ -162,10 +166,12 @@ public:
 
     /** Construct a new block template with coinbase to scriptPubKeyIn */
     std::unique_ptr<CBlockTemplate> CreateNewBlock(const CScript& scriptPubKeyIn);
+#ifdef ENABLE_WALLET
     /** Construct new PoS block */
     std::unique_ptr<CBlockTemplate> CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                      const int64_t & stakeTime, CBasicKeyStore *keystore,
+                                                      const int64_t & stakeTime, CWallet *keystore,
                                                       const bool & disableValidationChecks = false);
+#endif // ENABLE_WALLET
 
     static Optional<int64_t> m_last_block_num_txs;
     static Optional<int64_t> m_last_block_weight;

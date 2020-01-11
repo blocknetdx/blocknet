@@ -377,6 +377,11 @@ libbitcoin_server_a_SOURCES = \
 # Blocknet requires json spirit library
 libbitcoin_server_a_SOURCES += $(JSON_H)
 
+# Blocknet governance wallet methods
+if ENABLE_WALLET
+libbitcoin_server_a_SOURCES += governance/governancewallet.cpp
+endif
+
 if !ENABLE_WALLET
 libbitcoin_server_a_SOURCES += dummywallet.cpp
 endif
