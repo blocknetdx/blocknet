@@ -1087,7 +1087,7 @@ bool App::processConfigMessage(const sn::ServiceNode & snode) {
         std::map<std::string, UniValue> kv; plugins.getObjMap(kv);
         for (const auto & item : kv) {
             const auto & plugin = item.first;
-            const auto & config = item.second.write();
+            const auto & config = item.second.get_str();
             try {
                 auto psettings = std::make_shared<XRouterPluginSettings>(false); // not our config
                 psettings->read(config);
