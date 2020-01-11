@@ -201,7 +201,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
             *failReasonRet = "All wallets must be unlocked to vote";
             return error(failReasonRet->c_str());
         }
-        totalBalance += wallet->GetBalance();
+        totalBalance += wallet->GetBalance() + wallet->GetImmatureBalance();
     }
     if (totalBalance < params.voteBalance) {
         *failReasonRet = strprintf("Not enough coin to cast a vote, %s is required", FormatMoney(params.voteBalance));
