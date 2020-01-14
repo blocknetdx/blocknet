@@ -43,7 +43,7 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("servicenodesetup", R"("Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "snode0")")
-                  + HelpExampleRpc("servicenodesetup", R"("Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "snode0")")
+                  + HelpExampleRpc("servicenodesetup", R"("Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa", "snode0")")
                 },
             }.ToString());
 
@@ -244,7 +244,7 @@ static UniValue servicenoderemove(const JSONRPCRequest& request)
                     HelpExampleCli("servicenoderemove", "")
                   + HelpExampleRpc("servicenoderemove", "")
                   + HelpExampleCli("servicenoderemove", "snode0")
-                  + HelpExampleRpc("servicenoderemove", "snode0")
+                  + HelpExampleRpc("servicenoderemove", "\"snode0\"")
                 },
             }.ToString());
 
@@ -296,11 +296,11 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1")
-                  + HelpExampleRpc("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1")
+                  + HelpExampleRpc("servicenodecreateinputs", R"("BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS", 1)")
                   + HelpExampleCli("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 5")
-                  + HelpExampleRpc("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 5")
+                  + HelpExampleRpc("servicenodecreateinputs", R"("BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS", 5)")
                   + HelpExampleCli("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1 2500")
-                  + HelpExampleRpc("servicenodecreateinputs", "BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS 1 2500")
+                  + HelpExampleRpc("servicenodecreateinputs", R"("BoH7E2KtFqJzGnPjS7qAA4gpnkvo5FBUeS", 1, 2500)")
                 },
             }.ToString());
 #ifndef ENABLE_WALLET
@@ -440,7 +440,7 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
                     HelpExampleCli("servicenoderegister", "")
                   + HelpExampleRpc("servicenoderegister", "")
                   + HelpExampleCli("servicenoderegister", "snode0")
-                  + HelpExampleRpc("servicenoderegister", "snode0")
+                  + HelpExampleRpc("servicenoderegister", "\"snode0\"")
                 },
             }.ToString());
 #ifndef ENABLE_WALLET
@@ -506,7 +506,7 @@ static UniValue servicenodeexport(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("servicenodeexport", "snode0 mypassword1")
-                  + HelpExampleRpc("servicenodeexport", "snode0 mypassword1")
+                  + HelpExampleRpc("servicenodeexport", R"("snode0", "mypassword1")")
                 },
             }.ToString());
 
@@ -569,7 +569,7 @@ static UniValue servicenodeimport(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("servicenodeimport", "aae6d7aedaed54ade57da4eda3e5d4a7de8a67d8e7a8d768ea567da5e467d4ea7a6d7a6d7a6d75a7d5a757da5 mypassword1")
-                  + HelpExampleRpc("servicenodeimport", "aae6d7aedaed54ade57da4eda3e5d4a7de8a67d8e7a8d768ea567da5e467d4ea7a6d7a6d7a6d75a7d5a757da5 mypassword1")
+                  + HelpExampleRpc("servicenodeimport", R"("aae6d7aedaed54ade57da4eda3e5d4a7de8a67d8e7a8d768ea567da5e467d4ea7a6d7a6d7a6d75a7d5a757da5", "mypassword1")")
                 },
             }.ToString());
 
@@ -812,13 +812,13 @@ static UniValue servicenodelegacy(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("servicenode", "status")
-                  + HelpExampleRpc("servicenode", "status")
+                  + HelpExampleRpc("servicenode", "\"status\"")
                   + HelpExampleCli("servicenode", "list")
-                  + HelpExampleRpc("servicenode", "list")
+                  + HelpExampleRpc("servicenode", "\"list\"")
                   + HelpExampleCli("servicenode", "start snode0")
-                  + HelpExampleRpc("servicenode", "start snode0")
+                  + HelpExampleRpc("servicenode", "\"start\", \"snode0\"")
                   + HelpExampleCli("servicenode", "start-all")
-                  + HelpExampleRpc("servicenode", "start-all")
+                  + HelpExampleRpc("servicenode", "\"start-all\"")
                 },
             }.ToString());
 
