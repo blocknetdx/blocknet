@@ -751,6 +751,8 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
     AddKey(*otherwallet, voteDestKey);
     otherwallet->SetBroadcastTransactions(true);
     rescanWallet(otherwallet.get());
+    const int voteInputs{2};
+    const CAmount voteInputAmount{1*COIN};
     const CAmount totalVoteAmount = consensus.voteBalance*2;
     const auto voteUtxoCount = static_cast<int>(totalVoteAmount/consensus.voteMinUtxoAmount);
     const auto maxVotes = totalVoteAmount/consensus.voteBalance;
@@ -780,25 +782,25 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
         int coinpos{0};
         std::vector<CTxOut> txouts;
         std::vector<COutPoint> outs;
-        while (runningAmount < totalVoteAmount) {
+        while (runningAmount < totalVoteAmount + voteInputAmount*voteInputs) {
             outs.push_back(coins[coinpos].GetInputCoin().outpoint);
             txouts.push_back(coins[coinpos].GetInputCoin().txout);
             runningAmount += coins[coinpos].GetInputCoin().txout.nValue;
             ++coinpos;
         }
-        outs.emplace_back(coins[coinpos].GetInputCoin().outpoint); // Cover fee
-        txouts.emplace_back(coins[coinpos].GetInputCoin().txout); // Cover fee
         votetx.vin.resize(outs.size());
         for (int i = 0; i < (int)outs.size(); ++i)
             votetx.vin[i] = CTxIn(outs[i]);
-        const CAmount fees = votetx.vin.size()*2*::minRelayTxFee.GetFee(250);
-        const CAmount voteInputUtxoAmount = 5 * COIN;
-        const CAmount change = txouts[txouts.size()-1].nValue - fees - voteInputUtxoAmount; // fee input change
+        const CAmount fees = 1 * COIN;
+        const CAmount voteInputTotal = voteInputAmount * voteInputs;
+        const CAmount change = runningAmount - consensus.voteMinUtxoAmount*voteUtxoCount - voteInputs*voteInputAmount - fees;
         // Create vouts
         for (int i = 0; i < voteUtxoCount; ++i)
             votetx.vout.emplace_back(consensus.voteMinUtxoAmount, GetScriptForDestination(voteDest));
-        votetx.vout.emplace_back(change, stakerScriptPubKey); // change back to staker
-        votetx.vout.emplace_back(voteInputUtxoAmount, GetScriptForDestination(voteDest)); // use this for vote inputs
+        if (change > 10000)
+            votetx.vout.emplace_back(change, stakerScriptPubKey); // change back to staker
+        for (int i = 0; i < voteInputs; ++i) // create vote inputs
+            votetx.vout.emplace_back(voteInputAmount, GetScriptForDestination(voteDest));
         // Sign the tx inputs
         for (int i = 0; i < (int)votetx.vin.size(); ++i) {
             auto & vin = votetx.vin[i];
@@ -810,10 +812,10 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
         CReserveKey reservekey(pos.wallet.get());
         CValidationState state;
         BOOST_CHECK(pos.wallet->CommitTransaction(MakeTransactionRef(votetx), {}, {}, reservekey, g_connman.get(), state));
-        BOOST_CHECK_MESSAGE(state.IsValid(), "Failed to submit tx for otherwallet vote utxos");
+        BOOST_CHECK_MESSAGE(state.IsValid(), strprintf("Failed to submit tx for otherwallet vote utxos: %s", state.GetRejectReason()));
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         rescanWallet(otherwallet.get());
-        BOOST_REQUIRE_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputUtxoAmount, otherwallet->GetBalance()));
+        BOOST_REQUIRE_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputTotal, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputTotal, otherwallet->GetBalance()));
     }
 
     gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
@@ -1117,7 +1119,8 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
         // Prep vote utxo
         CTransactionRef sendtx;
-        bool accepted = sendToAddress(wallet.get(), dest, 1 * COIN, sendtx);
+        bool accepted = sendToAddress(wallet.get(), dest, 5 * COIN, sendtx)
+                        && sendToAddress(wallet.get(), dest, 5 * COIN, sendtx);
         BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
         BOOST_REQUIRE_MESSAGE(accepted, "Proposal fee account should confirm to the network before continuing");
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -1306,8 +1309,8 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
-    params->consensus.voteMinUtxoAmount = 20*COIN;
-    params->consensus.voteBalance = 500*COIN;
+    params->consensus.voteMinUtxoAmount = 50*COIN;
+    params->consensus.voteBalance = 1250*COIN;
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
             return 200 * COIN;
@@ -1331,6 +1334,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
     const CAmount totalVoteAmount = consensus.voteBalance*2;
     const auto voteUtxoCount = static_cast<int>(totalVoteAmount/consensus.voteMinUtxoAmount);
     const auto maxVotes = totalVoteAmount/consensus.voteBalance;
+    const CAmount voteInputUtxoAmount{consensus.voteMinUtxoAmount - 10 * COIN};
+    const int voteInputUtxoCount{2};
+    const auto totalTxAmount = totalVoteAmount + voteInputUtxoAmount*voteInputUtxoCount;
     CMutableTransaction votetx;
 
     // Prepare the utxos to use for votes
@@ -1349,47 +1355,43 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
         std::sort(coins.begin(), coins.end(), [](const COutput & a, const COutput & b) {
             return a.GetInputCoin().txout.nValue > b.GetInputCoin().txout.nValue;
         });
-        // Staker script
-        const auto stakerScriptPubKey = coins[0].GetInputCoin().txout.scriptPubKey;
         // Create vins
         CAmount runningAmount{0};
         int coinpos{0};
         std::vector<CTxOut> txouts;
         std::vector<COutPoint> outs;
-        while (runningAmount < totalVoteAmount) {
+        while (runningAmount < totalVoteAmount + voteInputUtxoAmount*voteInputUtxoCount) {
             outs.push_back(coins[coinpos].GetInputCoin().outpoint);
             txouts.push_back(coins[coinpos].GetInputCoin().txout);
             runningAmount += coins[coinpos].GetInputCoin().txout.nValue;
             ++coinpos;
         }
-        outs.emplace_back(coins[coinpos].GetInputCoin().outpoint); // Cover fee
-        txouts.emplace_back(coins[coinpos].GetInputCoin().txout); // Cover fee
         votetx.vin.resize(outs.size());
         for (int i = 0; i < (int)outs.size(); ++i)
             votetx.vin[i] = CTxIn(outs[i]);
-        const CAmount fees = votetx.vin.size()*2*::minRelayTxFee.GetFee(250); // use 150 bytes per vin/vout
-        const CAmount voteInputUtxoAmount = 5 * COIN;
-        const CAmount change = txouts[txouts.size()-1].nValue - fees - voteInputUtxoAmount; // fee input change
         // Create vouts
         for (int i = 0; i < voteUtxoCount; ++i)
             votetx.vout.emplace_back(consensus.voteMinUtxoAmount, GetScriptForDestination(voteDest));
-        votetx.vout.emplace_back(change, stakerScriptPubKey); // change back to staker
-        votetx.vout.emplace_back(voteInputUtxoAmount, GetScriptForDestination(voteDest)); // use this for vote inputs
+        for (int i = 0; i < voteInputUtxoCount; ++i)
+            votetx.vout.emplace_back(voteInputUtxoAmount, GetScriptForDestination(voteDest)); // use this for vote inputs
+        const auto changeScript = coins[0].GetInputCoin().txout.scriptPubKey;
+        const CAmount fees = 3000 * (votetx.vin.size()*180 + votetx.vout.size()*230); // estimate bytes per vin/vout
+        votetx.vout.emplace_back(runningAmount - totalVoteAmount - voteInputUtxoAmount*voteInputUtxoCount - fees, changeScript); // change back to staker
         // Sign the tx inputs
         for (int i = 0; i < (int)votetx.vin.size(); ++i) {
             auto & vin = votetx.vin[i];
             SignatureData sigdata = DataFromTransaction(votetx, i, txouts[i]);
-            ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&votetx, i, txouts[i].nValue, SIGHASH_ALL), stakerScriptPubKey, sigdata);
+            ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&votetx, i, txouts[i].nValue, SIGHASH_ALL), changeScript, sigdata);
             UpdateInput(vin, sigdata);
         }
         // Send transaction
         CReserveKey reservekey(pos.wallet.get());
         CValidationState state;
         BOOST_CHECK(pos.wallet->CommitTransaction(MakeTransactionRef(votetx), {}, {}, reservekey, g_connman.get(), state));
-        BOOST_CHECK_MESSAGE(state.IsValid(), "Failed to submit tx for otherwallet vote utxos");
+        BOOST_CHECK_MESSAGE(state.IsValid(), strprintf("Failed to submit tx for otherwallet vote utxos: %s", state.GetRejectReason()));
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         rescanWallet(otherwallet.get());
-        BOOST_REQUIRE_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputUtxoAmount, otherwallet->GetBalance()));
+        BOOST_REQUIRE_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount*voteInputUtxoCount, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputUtxoAmount*voteInputUtxoCount, otherwallet->GetBalance()));
     }
 
     // Check superblock proposal and votes
@@ -1420,7 +1422,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
                 BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
-                // Submit votes
+                // Submit votes with otherwallet
                 gov::ProposalVote proposalVote{proposal, gov::YES};
                 std::vector<CTransactionRef> txns;
                 failReason.clear();
@@ -1434,6 +1436,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 std::set<gov::Proposal> ps;
                 std::set<gov::Vote> vs;
                 gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+                BOOST_CHECK_MESSAGE(vs.size() == voteUtxoCount, strprintf("Expecting total votes cast to be %u found %u", voteUtxoCount, vs.size()));
                 votes.insert(vs.begin(), vs.end());
             }
 
@@ -1494,7 +1497,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
                 BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
-                // Submit votes
+                // Submit votes with otherwallet
                 gov::ProposalVote proposalVote{proposal, gov::YES};
                 std::vector<CTransactionRef> txns;
                 failReason.clear();
@@ -1508,6 +1511,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 std::set<gov::Proposal> ps;
                 std::set<gov::Vote> vs;
                 gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+                BOOST_CHECK_MESSAGE(vs.size() == voteUtxoCount, strprintf("Expecting total votes cast to be %u found %u", voteUtxoCount, vs.size()));
                 votes.insert(vs.begin(), vs.end());
             }
 
@@ -1750,6 +1754,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
     const CAmount totalVoteAmount = consensus.voteBalance*2;
     const auto voteUtxoCount = static_cast<int>(totalVoteAmount/consensus.voteMinUtxoAmount);
     const auto maxVotes = totalVoteAmount/consensus.voteBalance;
+    const CAmount voteInputUtxoAmount{consensus.voteMinUtxoAmount - 10 * COIN};
+    const int voteInputUtxoCount{2};
+    const auto totalTxAmount = totalVoteAmount + voteInputUtxoAmount*voteInputUtxoCount;
     CMutableTransaction votetx;
 
     // Prepare the utxos to use for votes
@@ -1768,47 +1775,43 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
         std::sort(coins.begin(), coins.end(), [](const COutput & a, const COutput & b) {
             return a.GetInputCoin().txout.nValue > b.GetInputCoin().txout.nValue;
         });
-        // Staker script
-        const auto stakerScriptPubKey = coins[0].GetInputCoin().txout.scriptPubKey;
         // Create vins
         CAmount runningAmount{0};
         int coinpos{0};
         std::vector<CTxOut> txouts;
         std::vector<COutPoint> outs;
-        while (runningAmount < totalVoteAmount) {
+        while (runningAmount < totalVoteAmount + voteInputUtxoAmount*voteInputUtxoCount) {
             outs.push_back(coins[coinpos].GetInputCoin().outpoint);
             txouts.push_back(coins[coinpos].GetInputCoin().txout);
             runningAmount += coins[coinpos].GetInputCoin().txout.nValue;
             ++coinpos;
         }
-        outs.emplace_back(coins[coinpos].GetInputCoin().outpoint); // Cover fee
-        txouts.emplace_back(coins[coinpos].GetInputCoin().txout); // Cover fee
         votetx.vin.resize(outs.size());
         for (int i = 0; i < (int)outs.size(); ++i)
             votetx.vin[i] = CTxIn(outs[i]);
-        const CAmount fees = votetx.vin.size()*2*::minRelayTxFee.GetFee(250);
-        const CAmount voteInputUtxoAmount = 5 * COIN;
-        const CAmount change = txouts[txouts.size()-1].nValue - fees - voteInputUtxoAmount; // fee input change
         // Create vouts
         for (int i = 0; i < voteUtxoCount; ++i)
             votetx.vout.emplace_back(consensus.voteMinUtxoAmount, GetScriptForDestination(voteDest));
-        votetx.vout.emplace_back(change, stakerScriptPubKey); // change back to staker
-        votetx.vout.emplace_back(voteInputUtxoAmount, GetScriptForDestination(voteDest)); // use this for vote inputs
+        for (int i = 0; i < voteInputUtxoCount; ++i)
+            votetx.vout.emplace_back(voteInputUtxoAmount, GetScriptForDestination(voteDest)); // use this for vote inputs
+        const auto changeScript = coins[0].GetInputCoin().txout.scriptPubKey;
+        const CAmount fees = 3000 * (votetx.vin.size()*180 + votetx.vout.size()*230); // estimate bytes per vin/vout
+        votetx.vout.emplace_back(runningAmount - totalVoteAmount - voteInputUtxoAmount*voteInputUtxoCount - fees, changeScript); // change back to staker
         // Sign the tx inputs
         for (int i = 0; i < (int)votetx.vin.size(); ++i) {
             auto & vin = votetx.vin[i];
             SignatureData sigdata = DataFromTransaction(votetx, i, txouts[i]);
-            ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&votetx, i, txouts[i].nValue, SIGHASH_ALL), stakerScriptPubKey, sigdata);
+            ProduceSignature(*pos.wallet, MutableTransactionSignatureCreator(&votetx, i, txouts[i].nValue, SIGHASH_ALL), changeScript, sigdata);
             UpdateInput(vin, sigdata);
         }
         // Send transaction
         CReserveKey reservekey(pos.wallet.get());
         CValidationState state;
         BOOST_CHECK(pos.wallet->CommitTransaction(MakeTransactionRef(votetx), {}, {}, reservekey, g_connman.get(), state));
-        BOOST_CHECK_MESSAGE(state.IsValid(), "Failed to submit tx for otherwallet vote utxos");
+        BOOST_CHECK_MESSAGE(state.IsValid(), strprintf("Failed to submit tx for otherwallet vote utxos: %s", state.GetRejectReason()));
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         rescanWallet(otherwallet.get());
-        BOOST_REQUIRE_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputUtxoAmount, otherwallet->GetBalance()));
+        BOOST_REQUIRE_MESSAGE(otherwallet->GetBalance() == totalVoteAmount+voteInputUtxoAmount*voteInputUtxoCount, strprintf("other wallet expects a balance of %d, only has %d", totalVoteAmount+voteInputUtxoAmount*voteInputUtxoCount, otherwallet->GetBalance()));
     }
 
     // Check superblock proposal and votes

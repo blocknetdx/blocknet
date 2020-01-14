@@ -44,7 +44,7 @@ enum Type : uint8_t {
 };
 
 static const uint8_t NETWORK_VERSION = 0x01;
-static const CAmount VOTING_UTXO_INPUT_AMOUNT = 0.1 * COIN;
+static const CAmount VOTING_UTXO_INPUT_AMOUNT = 1 * COIN;
 static const int VINHASH_SIZE = 12;
 static const int PROPOSAL_USERDEFINED_LIMIT = 139;
 typedef std::array<unsigned char, VINHASH_SIZE> VinHash;
@@ -1670,11 +1670,12 @@ protected:
                 // The best way to handle this is to build the voting client
                 // to require waiting at least 1 block between vote changes.
                 // Changes to this code below must also be applied to "dataFromBlock()"
-                if (votes.count(vote.getHash())) {
-                    if (vote.getTime() > votes[vote.getHash()].getTime())
-                        votes[vote.getHash()] = vote;
-                    else if (UintToArith256(vote.sigHash()) > UintToArith256(votes[vote.getHash()].sigHash()))
-                        votes[vote.getHash()] = vote;
+                const auto voteHash = vote.getHash();
+                if (votes.count(voteHash)) {
+                    if (vote.getTime() > votes[voteHash].getTime())
+                        votes[voteHash] = vote;
+                    else if (UintToArith256(vote.sigHash()) > UintToArith256(votes[voteHash].sigHash()))
+                        votes[voteHash] = vote;
                 } else {
                     // Only check the mempool and coincache for spent utxos if
                     // we're currently processing the chain tip.
@@ -1683,7 +1684,7 @@ protected:
                     ENTER_CRITICAL_SECTION(mu);
                     if (spent)
                         continue;
-                    votes[vote.getHash()] = vote;
+                    votes[voteHash] = vote;
                 }
             }
 

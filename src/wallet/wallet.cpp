@@ -2429,6 +2429,65 @@ void CWallet::AvailableCoins(interfaces::Chain::Lock& locked_chain, std::vector<
     }
 }
 
+void CWallet::VotingCoins(interfaces::Chain::Lock& locked_chain, std::vector<COutput> &vCoins, const CAmount & minAmount) const
+{
+    AssertLockHeld(cs_main);
+    AssertLockHeld(cs_wallet);
+
+    vCoins.clear();
+    CAmount nTotal = 0;
+
+    for (const auto& entry : mapWallet)
+    {
+        const uint256& wtxid = entry.first;
+        const CWalletTx* pcoin = &entry.second;
+
+        if (!CheckFinalTx(*pcoin->tx))
+            continue;
+
+        int nDepth = pcoin->GetDepthInMainChain(locked_chain);
+        if (nDepth < 0)
+            continue;
+
+        // We should not consider coins which aren't at least in our mempool
+        // It's possible for these to be conflicted via ancestors which we may never be able to detect
+        if (nDepth == 0 && !pcoin->InMempool())
+            continue;
+
+        bool safeTx = pcoin->IsTrusted(locked_chain);
+
+        if (nDepth == 0 && pcoin->mapValue.count("replaces_txid")) {
+            safeTx = false;
+        }
+
+        if (nDepth == 0 && pcoin->mapValue.count("replaced_by_txid")) {
+            safeTx = false;
+        }
+
+        if (!safeTx) {
+            continue;
+        }
+
+        for (unsigned int i = 0; i < pcoin->tx->vout.size(); i++) {
+            if (IsSpent(locked_chain, wtxid, i))
+                continue;
+
+            isminetype mine = IsMine(pcoin->tx->vout[i]);
+
+            if (mine == ISMINE_NO) {
+                continue;
+            }
+
+            bool solvable = IsSolvable(*this, pcoin->tx->vout[i].scriptPubKey);
+            bool spendable = ((mine & ISMINE_SPENDABLE) != ISMINE_NO) || ((mine & ISMINE_WATCH_ONLY) != ISMINE_NO);
+
+            // Coin value must be larger than minimum
+            if (pcoin->tx->vout[i].nValue >= minAmount)
+                vCoins.push_back(COutput(pcoin, i, nDepth, spendable, solvable, safeTx));
+        }
+    }
+}
+
 std::map<CTxDestination, std::vector<COutput>> CWallet::ListCoins(interfaces::Chain::Lock& locked_chain) const
 {
     AssertLockHeld(cs_main);
