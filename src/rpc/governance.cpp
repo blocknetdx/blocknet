@@ -45,7 +45,7 @@ static UniValue createproposal(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("createproposal", R"("Dev Proposal" 43200 750 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "https://forum.blocknet.co" "Dev proposal for building xyz")")
-                  + HelpExampleRpc("createproposal", R"("Dev Proposal" 43200 750 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "https://forum.blocknet.co" "Dev proposal for building xyz")")
+                  + HelpExampleRpc("createproposal", R"("Dev Proposal", 43200, 750, "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa", "https://forum.blocknet.co", "Dev proposal for building xyz")")
                 },
             }.ToString());
 
@@ -201,9 +201,9 @@ static UniValue vote(const JSONRPCRequest& request)
                     HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "yes")")
                   + HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "no")")
                   + HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "abstain")")
-                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "yes")")
-                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "no")")
-                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "abstain")")
+                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "yes")")
+                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "no")")
+                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "abstain")")
                 },
             }.ToString());
 
