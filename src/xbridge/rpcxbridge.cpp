@@ -1885,6 +1885,140 @@ UniValue gettradingdata(const JSONRPCRequest& request)
     return uret(records);
 }
 
+UniValue dxGetTradingData(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() > 1)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetTradingData",
+                "\nReturns an object of XBridge trading records. This information is "
+                "pulled from on-chain history so pulling a large amount of blocks will "
+                "result in longer response times.\n",
+                {
+                    {"blocks", RPCArg::Type::NUM, "43200", "The number of blocks to return trade records for (60s block time)."},
+                    // {"errors", RPCArg::Type::BOOL, "false", "show errors"}, // this parameter currently does not work
+                },
+                RPCResult{
+                R"(
+    [
+      {
+        "timestamp": 1559970139,
+        "fee_txid": "4b409e5c5fb1986930cf7c19afec2c89ac2ad4fddc13c1d5479b66ddf4a8fefb",
+        "nodepubkey": "Bqtms8j1zrE65kcpsEorE5JDzDaHidMtLG",
+        "id": "9eb57bac331eab34f3daefd8364cdb2bb05259c407d805d0bd0c",
+        "taker": "BLOCK",
+        "taker_size": 0.001111,
+        "maker": "SYS",
+        "maker_size": 0.001000
+      },
+      {
+        "timestamp": 1559970139,
+        "fee_txid": "3de7479e8a88ebed986d3b7e7e135291d3fd10e4e6d4c6238663db42c5019286",
+        "nodepubkey": "Bqtms8j1zrE65kcpsEorE5JDzDaHidMtLG",
+        "id": "fd0fed3ee9fe557d5735768c9bdcd4ab2908165353e0f0cef0d5",
+        "taker": "BLOCK",
+        "taker_size": 0.001577,
+        "maker": "SYS",
+        "maker_size": 0.001420
+      },
+      {
+        "timestamp": 1559970139,
+        "fee_txid": "9cc4a0dae46f2f1849b3ab6f93ea1c59aeaf0e95662d90398814113f12127eae",
+        "nodepubkey": "BbrQKtutGBLuWHvq26EmHKuNaztnfBFWVB",
+        "id": "f74c614489bd77efe545c239d1f9a57363c5428e7401b2018d350",
+        "taker": "BLOCK",
+        "taker_size": 0.000231,
+        "maker": "SYS",
+        "maker_size": 0.001100
+      }
+    ]
+
+    Key          | Type | Description
+    -------------|------|----------------------------------------------------------------
+    timestamp    | int  | Unix epoch timestamp of when the trade took place.
+    fee_txid     | str  | The Blocknet trade fee transaction ID.
+    nodepubkey   | str  | The pubkey of the service node that received the trade fee.
+    id           | str  | The order ID.
+    taker        | str  | Taker trading asset; the ticker of the asset being sold by the taker.
+    taker_size   | int  | Taker trading size.
+    maker        | str  | Maker trading asset; the ticker of the asset being sold by the maker.
+    maker_size   | int  | Maker trading size.
+                )"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetTradingData", "")
+                  + HelpExampleRpc("dxGetTradingData", "")
+                  + HelpExampleCli("dxGetTradingData", "43200")
+                  + HelpExampleRpc("dxGetTradingData", "43200")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+
+    uint32_t countOfBlocks = std::numeric_limits<uint32_t>::max();
+    if (params.size() >= 1)
+    {
+        RPCTypeCheck(request.params, {UniValue::VNUM});
+        countOfBlocks = params[0].get_int();
+    }
+    bool showErrors = false;
+    if (params.size() == 2) {
+        RPCTypeCheck(request.params, {UniValue::VBOOL});
+        showErrors = params[1].get_bool();
+    }
+
+    LOCK(cs_main);
+
+    Array records;
+
+    CBlockIndex * pindex = chainActive.Tip();
+    int64_t timeBegin = chainActive.Tip()->GetBlockTime();
+    for (; pindex->pprev && pindex->GetBlockTime() > (timeBegin-30*24*60*60) && countOfBlocks > 0;
+             pindex = pindex->pprev, --countOfBlocks)
+    {
+        CBlock block;
+        if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus()))
+        {
+            // throw
+            continue;
+        }
+        const auto timestamp = block.GetBlockTime();
+        for (const CTransactionRef & tx : block.vtx)
+        {
+            const auto txid = tx->GetHash().GetHex();
+            std::string snode_pubkey{};
+
+            const CurrencyPair p = TxOutToCurrencyPair(tx->vout, snode_pubkey);
+            switch(p.tag) {
+            case CurrencyPair::Tag::Error:
+                // Show errors
+                if (showErrors)
+                    records.emplace_back(Object{
+                        Pair{"timestamp",  timestamp},
+                        Pair{"fee_txid",   txid},
+                        Pair{"id",         p.error()}
+                    });
+                break;
+            case CurrencyPair::Tag::Valid:
+                records.emplace_back(Object{
+                            Pair{"timestamp",  timestamp},
+                            Pair{"fee_txid",   txid},
+                            Pair{"nodepubkey", snode_pubkey},
+                            Pair{"id",         p.xid()},
+                            Pair{"taker",      p.from.currency().to_string()},
+                            Pair{"taker_size", p.from.amount<double>()},
+                            Pair{"maker",      p.to.currency().to_string()},
+                            Pair{"maker_size", p.to.amount<double>()},
+                            });
+                break;
+            case CurrencyPair::Tag::Empty:
+            default:
+                break;
+            }
+        }
+    }
+
+    return uret(records);
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                       actor (function)          argNames
@@ -1906,6 +2040,7 @@ static const CRPCCommand commands[] =
     { "xbridge",            "dxGetLockedUtxos",        &dxGetLockedUtxos,        {} },
     { "xbridge",            "dxFlushCancelledOrders",  &dxFlushCancelledOrders,  {} },
     { "xbridge",            "gettradingdata",          &gettradingdata,          {} },
+    { "xbridge",            "dxGetTradingData",        &dxGetTradingData,        {} },
 };
 // clang-format on
 
