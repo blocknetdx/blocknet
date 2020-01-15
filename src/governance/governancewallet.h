@@ -21,8 +21,8 @@ namespace gov {
  * @param consensus Chain params
  * @return
  */
-std::tuple<int, VoteType, bool, CAmount> GetMyVotes(const uint256 & hash, CCoinsViewCache *coinsTip,
-        std::vector<std::shared_ptr<CWallet>> & wallets, const Consensus::Params & consensus);
+std::tuple<int, VoteType, bool, CAmount> GetMyVotes(const uint256 & hash, std::vector<std::shared_ptr<CWallet>> & wallets,
+        const Consensus::Params & consensus);
 
 /**
  * Submits a proposal to the network and returns true. If there's an issue with the proposal or it's

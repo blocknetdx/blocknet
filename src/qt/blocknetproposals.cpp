@@ -274,7 +274,7 @@ void BlocknetProposals::initialize() {
         } else {
             // how many votes are mine?
             auto wallets = GetWallets();
-            const auto castVote = gov::GetMyVotes(proposal.getHash(), pcoinsTip.get(), wallets, Params().GetConsensus());
+            const auto castVote = gov::GetMyVotes(proposal.getHash(), wallets, Params().GetConsensus());
             const auto votes = std::get<0>(castVote);
             const auto voteType = std::get<1>(castVote);
             const auto voted = std::get<2>(castVote);

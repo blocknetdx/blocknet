@@ -9,22 +9,19 @@
 
 namespace gov {
 
-std::tuple<int, VoteType, bool, CAmount> GetMyVotes(const uint256 & hash, CCoinsViewCache *coinsTip,
-        std::vector<std::shared_ptr<CWallet>> & wallets, const Consensus::Params & consensus)
+std::tuple<int, VoteType, bool, CAmount> GetMyVotes(const uint256 & proposalHash, std::vector<std::shared_ptr<CWallet>> & wallets,
+        const Consensus::Params & consensus)
 {
-    auto copyVotes = Governance::instance().copyVotes();
+    auto copyVotes = Governance::instance().getVotes(proposalHash);
     CAmount voteAmount{0};
     VoteType vtype{ABSTAIN};
-    for (const auto & item : copyVotes) {
-        const auto & vote = item.second;
-        if (vote.getProposal() == hash && !vote.spent()) {
-            const auto & utxo = vote.getUtxo();
-            for (auto & w : wallets) {
-                if (w->HaveKey(vote.getKeyID())) {
-                    vtype = vote.getVote();
-                    voteAmount += vote.getAmount();
-                    break;
-                }
+    for (const auto & vote : copyVotes) {
+        const auto & utxo = vote.getUtxo();
+        for (auto & w : wallets) {
+            if (w->HaveKey(vote.getKeyID())) {
+                vtype = vote.getVote();
+                voteAmount += vote.getAmount();
+                break;
             }
         }
     }
