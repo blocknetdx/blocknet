@@ -45,23 +45,56 @@ static UniValue xrGetBlockCount(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetBlockCount",
-                "\nBlock count for the longest chain in the specified blockchain.\n",
+                "\nReturns the block count for the longest chain in the specified blockchain.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                "{\n"
-                "  \"reply\" : n,        (numeric) Block count\n"
-                "  \"uuid\" : \"xxxx\"   (string) Request uuid\n"
-                "}\n"
+                R"(
+    {
+      "reply": 611620,
+      "allreplies": [
+        {
+          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
+          "score": 35,
+          "reply": 611620
+        },
+        {
+          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
+          "score": 80,
+          "reply": 611620
+        }
+      ],
+      "uuid": "34d0998e-a950-4fd8-b1d6-7571c83abb50"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | int  | The latest block number of the specified blockchain. If using
+                 |      | a "node_count" greater than 1, this returns the most common
+                 |      | reply within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | int  | The latest block number of the specified blockchain from the
+                 |      | respective node.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+    * This is only returned if using a "node_count" greater than 1.
+                )"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrGetBlockCount", "BTC 1")
-                  + HelpExampleRpc("xrGetBlockCount", "BTC 1")
+                    HelpExampleCli("xrGetBlockCount", "BTC")
+                  + HelpExampleRpc("xrGetBlockCount", "\"BTC\"")
+                  + HelpExampleCli("xrGetBlockCount", "BTC 2")
+                  + HelpExampleRpc("xrGetBlockCount", "\"BTC\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -69,7 +102,7 @@ static UniValue xrGetBlockCount(const JSONRPCRequest& request)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -79,7 +112,7 @@ static UniValue xrGetBlockCount(const JSONRPCRequest& request)
         consensus = params[1].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -96,24 +129,57 @@ static UniValue xrGetBlockHash(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetBlockHash",
-                "\nHash of block with the specified block number.\n",
+                "\nReturns the block hash of the specified block and blockchain.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"block_number", RPCArg::Type::STR, RPCArg::Optional::NO, "Block number or hex string"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"block_number", RPCArg::Type::STR, RPCArg::Optional::NO, "The block number or hex."},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                "{\n"
-                "  \"reply\" : \"xxxx\", (numeric) Block hash\n"
-                "  \"uuid\" : \"xxxx\"   (string) Request uuid\n"
-                "}\n"
+                R"(
+    {
+      "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
+      "allreplies": [
+        {
+          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
+          "score": 0,
+          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
+        },
+        {
+          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
+          "score": 0,
+          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
+        }
+      ],
+      "uuid": "3c84d025-8a03-4b64-848f-99892fe481ff"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | int  | The latest block hash of the specified blockchain. If using a
+                 |      | "node_count" greater than 1, this returns the most common reply
+                 |      | within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | int  | The latest block hash of the specified blockchain from the
+                 |      | respective node.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+    * This is only returned if using a "node_count" greater than 1.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrGetBlockHash", "BTC 1")
-                  + HelpExampleRpc("xrGetBlockHash", "BTC 1")
+                  + HelpExampleRpc("xrGetBlockHash", "\"BTC\", \"1\"")
+                  + HelpExampleCli("xrGetBlockHash", "BTC 1 2")
+                  + HelpExampleRpc("xrGetBlockHash", "\"BTC\", \"1\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -121,7 +187,7 @@ static UniValue xrGetBlockHash(const JSONRPCRequest& request)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -129,7 +195,7 @@ static UniValue xrGetBlockHash(const JSONRPCRequest& request)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Block number not specified");
+        error.emplace_back("error", "block_number not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -139,7 +205,7 @@ static UniValue xrGetBlockHash(const JSONRPCRequest& request)
         consensus = params[2].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -163,44 +229,123 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetBlock",
-                "\nGet block data by hash in json format.\n",
+                "\nReturns the block data for the specified block hash and blockchain in JSON format.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"hash", RPCArg::Type::STR, RPCArg::Optional::NO, "Block hash"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"block_hash", RPCArg::Type::STR, RPCArg::Optional::NO, "The block hash."},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                R"({
-                    "reply" : {
-                        "hash" : "d6f34e5b35c640ce443310cc975f13d31efb7b36a6d5fd6b1abb1bec9da578df",
-                        "confirmations" : 10,
-                        "size" : 429,
-                        "height" : 1120075,
-                        "version" : 3,
-                        "merkleroot" : "74f66a41138d8f2c62cb5ee9191cd847b39bdc31e4d7a7d84806ddaf1ae9390b",
-                        "tx" : [
-                            "8d9a4f1406a1ee9394ffafaf091e6a506ca1d771b24802d570c92ec5375be497",
-                            "97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e"
-                        ],
-                        "time" : 1570043635,
-                        "nonce" : 0,
-                        "bits" : "1b04122f",
-                        "difficulty" : 16097.89302059,
-                        "chainwork" : "0000000000000000000000000000000000000000000000033ae7bf6cdd8e381d",
-                        "previousblockhash" : "9ddfa9802278b95a6fd01d5a2dd298ae3236c4d66fc00b86305562fb4c53436f",
-                        "nextblockhash" : "4d9b19d031d22ba36c676fa6773d594ca1c7db57c4aeba868ac3bf0cb167dafa"
-                    },
-                    "uuid" : "cced23b0-a992-4012-8230-6a869a7f0ac8"
-                })"
+                R"(
+    {
+      "reply": {
+        "hash": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
+        "confirmations": 611649,
+        "strippedsize": 215,
+        "size": 215,
+        "weight": 860,
+        "height": 1,
+        "version": 1,
+        "versionHex": "00000001",
+        "merkleroot": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
+        "tx": [
+          "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098"
+        ],
+        "time": 1231469665,
+        "mediantime": 1231469665,
+        "nonce": 2573394689,
+        "bits": "1d00ffff",
+        "difficulty": 1,
+        "chainwork": "0000000000000000000000000000000000000000000000000000000200020002",
+        "nTx": 1,
+        "previousblockhash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
+        "nextblockhash": "000000006a625f06636b8bb6ac7b960a8d03705d1ace08b1a19da3fdcc99ddbd"
+      },
+      "allreplies": [
+        {
+          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
+          "score": 80,
+          "reply": {
+            "hash": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
+            "confirmations": 611649,
+            "strippedsize": 215,
+            "size": 215,
+            "weight": 860,
+            "height": 1,
+            "version": 1,
+            "versionHex": "00000001",
+            "merkleroot": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
+            "tx": [
+              "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098"
+            ],
+            "time": 1231469665,
+            "mediantime": 1231469665,
+            "nonce": 2573394689,
+            "bits": "1d00ffff",
+            "difficulty": 1,
+            "chainwork": "0000000000000000000000000000000000000000000000000000000200020002",
+            "nTx": 1,
+            "previousblockhash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
+            "nextblockhash": "000000006a625f06636b8bb6ac7b960a8d03705d1ace08b1a19da3fdcc99ddbd"
+          }
+        },
+        {
+          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
+          "score": 34,
+          "reply": {
+            "hash": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
+            "confirmations": 611649,
+            "strippedsize": 215,
+            "size": 215,
+            "weight": 860,
+            "height": 1,
+            "version": 1,
+            "versionHex": "00000001",
+            "merkleroot": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
+            "tx": [
+              "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098"
+            ],
+            "time": 1231469665,
+            "mediantime": 1231469665,
+            "nonce": 2573394689,
+            "bits": "1d00ffff",
+            "difficulty": 1,
+            "chainwork": "0000000000000000000000000000000000000000000000000000000200020002",
+            "nTx": 1,
+            "previousblockhash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
+            "nextblockhash": "000000006a625f06636b8bb6ac7b960a8d03705d1ace08b1a19da3fdcc99ddbd"
+          }
+        }
+      ],
+      "uuid": "24D5B4EB-8BB2-4FF6-8C82-9D52726494CF"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | obj  | An object containing the block data for the specified block
+                 |      | hash and blockchain. If using a "node_count" greater than 1,
+                 |      | this  returns the most common reply within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | obj  | An object containing the block data for the specified block hash
+                 |      | and blockchain from the respective node.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+    * This is only returned if using a "node_count" greater than 1.
+                )"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrGetBlock", "BLOCK d6f34e5b35c640ce443310cc975f13d31efb7b36a6d5fd6b1abb1bec9da578df")
-                  + HelpExampleRpc("xrGetBlock", "BLOCK d6f34e5b35c640ce443310cc975f13d31efb7b36a6d5fd6b1abb1bec9da578df")
-                  + HelpExampleCli("xrGetBlock", "BLOCK d6f34e5b35c640ce443310cc975f13d31efb7b36a6d5fd6b1abb1bec9da578df 2")
-                  + HelpExampleRpc("xrGetBlock", "BLOCK d6f34e5b35c640ce443310cc975f13d31efb7b36a6d5fd6b1abb1bec9da578df 2")
+                    HelpExampleCli("xrGetBlock", "BTC 00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048")
+                  + HelpExampleRpc("xrGetBlock", "\"BTC\", \"00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048\"")
+                  + HelpExampleCli("xrGetBlock", "BTC 00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048 2")
+                  + HelpExampleRpc("xrGetBlock", "\"BTC\", \"00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -208,7 +353,7 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
     if (params.size() < 1 || (params.size() == 1 && xrouter::is_hash(params[0].get_str())))
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -216,7 +361,7 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Block hash not specified");
+        error.emplace_back("error", "block_hash not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -224,7 +369,7 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
     const auto & hash = params[1].get_str();
     if (!xrouter::is_hash(hash)) {
         Object error;
-        error.emplace_back("error", "Block hash is bad");
+        error.emplace_back("error", "block_hash is bad");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -234,7 +379,7 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
         consensus = params[2].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -251,78 +396,97 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetTransaction",
-                "\nGet transaction data in json format.\n",
+                "\nReturns the transaction data for the specified transaction ID (hash) and blockchain.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"hash", RPCArg::Type::STR, RPCArg::Optional::NO, "Transaction hash"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"tx_id", RPCArg::Type::STR, RPCArg::Optional::NO, "The transaction ID (hash)."},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                R"({
-                    "reply" : {
-                        "txid" : "97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e",
-                        "version" : 1,
-                        "locktime" : 0,
-                        "vin" : [
-                            {
-                                "txid" : "4bee60384e3ada36feacb0e2c71a26846c67a5f7faeb9e40725821e446c3d288",
-                                "vout" : 1,
-                                "scriptSig" : {
-                                    "asm" : "304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01",
-                                    "hex" : "47304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01"
-                                },
-                                "sequence" : 4294967295
-                            }
-                        ],
-                        "vout" : [
-                            {
-                                "value" : 0.00000000,
-                                "n" : 0,
-                                "scriptPubKey" : {
-                                    "asm" : "",
-                                    "hex" : "",
-                                    "type" : "nonstandard"
-                                }
-                            },
-                            {
-                                "value" : 901.19451902,
-                                "n" : 1,
-                                "scriptPubKey" : {
-                                    "asm" : "03f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855 OP_CHECKSIG",
-                                    "hex" : "2103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac",
-                                    "reqSigs" : 1,
-                                    "type" : "pubkey",
-                                    "addresses" : [
-                                        "BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j"
-                                    ]
-                                }
-                            },
-                            {
-                                "value" : 0.70000000,
-                                "n" : 2,
-                                "scriptPubKey" : {
-                                    "asm" : "OP_DUP OP_HASH160 6499ceebaa0d586c95271575780b3f9590f9f8ca OP_EQUALVERIFY OP_CHECKSIG",
-                                    "hex" : "76a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac",
-                                    "reqSigs" : 1,
-                                    "type" : "pubkeyhash",
-                                    "addresses" : [
-                                        "BcxcRo1L5Pk5e2UuabzAJcbs9NKzsMTsuu"
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    "uuid" : "b334b5ee-0585-425b-86a4-02d2fecbf67b"
-                })"
+                R"(
+    {
+      "reply": {
+        "txid": "97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e",
+        "version": 1,
+        "locktime": 0,
+        "vin": [
+          {
+            "txid": "4bee60384e3ada36feacb0e2c71a26846c67a5f7faeb9e40725821e446c3d288",
+            "vout": 1,
+            "scriptSig": {
+              "asm": "304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01",
+              "hex": "47304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01"
+            },
+            "sequence": 4294967295
+          }
+        ],
+        "vout": [
+          {
+            "value": 0.00000000,
+            "n": 0,
+            "scriptPubKey": {
+              "asm": "",
+              "hex": "",
+              "type": "nonstandard"
+            }
+          },
+          {
+            "value": 901.19451902,
+            "n": 1,
+            "scriptPubKey": {
+              "asm": "03f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855 OP_CHECKSIG",
+              "hex": "2103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac",
+              "reqSigs": 1,
+              "type": "pubkey",
+              "addresses": [
+                "BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j"
+              ]
+            }
+          },
+          {
+            "value": 0.70000000,
+            "n": 2,
+            "scriptPubKey": {
+              "asm": "OP_DUP OP_HASH160 6499ceebaa0d586c95271575780b3f9590f9f8ca OP_EQUALVERIFY OP_CHECKSIG",
+              "hex": "76a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac",
+              "reqSigs": 1,
+              "type": "pubkeyhash",
+              "addresses": [
+                "BcxcRo1L5Pk5e2UuabzAJcbs9NKzsMTsuu"
+              ]
+            }
+          }
+        ]
+      },
+      "uuid": "b334b5ee-0585-425b-86a4-02d2fecbf67b"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | obj  | An object containing the transaction data for the specified
+                 |      | transaction ID and blockchain. If using a "node_count" greater
+                 |      | than 1, this returns the most common reply within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | obj  | An object containing the transaction data for the specified
+                 |      | transaction ID and blockchain from the respective node.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+    * This is only returned if using a "node_count" greater than 1.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrGetTransaction", "BLOCK 97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e")
-                  + HelpExampleRpc("xrGetTransaction", "BLOCK 97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e")
+                  + HelpExampleRpc("xrGetTransaction", "\"BLOCK\", \"97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e\"")
                   + HelpExampleCli("xrGetTransaction", "BLOCK 97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e 2")
-                  + HelpExampleRpc("xrGetTransaction", "BLOCK 97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e 2")
+                  + HelpExampleRpc("xrGetTransaction", "\"BLOCK\", \"97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -330,7 +494,7 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
     if (params.size() < 1 || (params.size() == 1 && xrouter::is_hash(params[0].get_str())))
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -338,7 +502,7 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Transaction hash not specified");
+        error.emplace_back("error", "tx_id not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -346,7 +510,7 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
     const auto & hash = params[1].get_str();
     if (!xrouter::is_hash(hash)) {
         Object error;
-        error.emplace_back("error", "Transaction hash is bad");
+        error.emplace_back("error", "tx_id is bad");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -356,7 +520,7 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
         consensus = params[2].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -373,78 +537,98 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrDecodeRawTransaction",
-                "\nDecodes the specified transaction hex and returns the transaction data in json format.\n",
+                "\nDecodes the specified transaction HEX and returns the transaction data in JSON format.\n",
+
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"hex", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Raw transaction hex string"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"tx_hex", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The raw transaction HEX to decode."},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                R"({
-                    "reply" : {
-                        "txid" : "97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e",
-                        "version" : 1,
-                        "locktime" : 0,
-                        "vin" : [
-                            {
-                                "txid" : "4bee60384e3ada36feacb0e2c71a26846c67a5f7faeb9e40725821e446c3d288",
-                                "vout" : 1,
-                                "scriptSig" : {
-                                    "asm" : "304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01",
-                                    "hex" : "47304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01"
-                                },
-                                "sequence" : 4294967295
-                            }
-                        ],
-                        "vout" : [
-                            {
-                                "value" : 0.00000000,
-                                "n" : 0,
-                                "scriptPubKey" : {
-                                    "asm" : "",
-                                    "hex" : "",
-                                    "type" : "nonstandard"
-                                }
-                            },
-                            {
-                                "value" : 901.19451902,
-                                "n" : 1,
-                                "scriptPubKey" : {
-                                    "asm" : "03f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855 OP_CHECKSIG",
-                                    "hex" : "2103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac",
-                                    "reqSigs" : 1,
-                                    "type" : "pubkey",
-                                    "addresses" : [
-                                        "BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j"
-                                    ]
-                                }
-                            },
-                            {
-                                "value" : 0.70000000,
-                                "n" : 2,
-                                "scriptPubKey" : {
-                                    "asm" : "OP_DUP OP_HASH160 6499ceebaa0d586c95271575780b3f9590f9f8ca OP_EQUALVERIFY OP_CHECKSIG",
-                                    "hex" : "76a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac",
-                                    "reqSigs" : 1,
-                                    "type" : "pubkeyhash",
-                                    "addresses" : [
-                                        "BcxcRo1L5Pk5e2UuabzAJcbs9NKzsMTsuu"
-                                    ]
-                                }
-                            }
-                        ]
-                    },
-                    "uuid" : "b334b5ee-0585-425b-86a4-02d2fecbf67b"
-                })"
+                R"(
+    {
+      "reply": {
+        "txid": "97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e",
+        "version": 1,
+        "locktime": 0,
+        "vin": [
+          {
+            "txid": "4bee60384e3ada36feacb0e2c71a26846c67a5f7faeb9e40725821e446c3d288",
+            "vout": 1,
+            "scriptSig": {
+              "asm": "304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01",
+              "hex": "47304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01"
+            },
+            "sequence": 4294967295
+          }
+        ],
+        "vout": [
+          {
+            "value": 0.00000000,
+            "n": 0,
+            "scriptPubKey": {
+              "asm": "",
+              "hex": "",
+              "type": "nonstandard"
+            }
+          },
+          {
+            "value": 901.19451902,
+            "n": 1,
+            "scriptPubKey": {
+              "asm": "03f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855 OP_CHECKSIG",
+              "hex": "2103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac",
+              "reqSigs": 1,
+              "type": "pubkey",
+              "addresses": [
+                "BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j"
+              ]
+            }
+          },
+          {
+            "value": 0.70000000,
+            "n": 2,
+            "scriptPubKey": {
+              "asm": "OP_DUP OP_HASH160 6499ceebaa0d586c95271575780b3f9590f9f8ca OP_EQUALVERIFY OP_CHECKSIG",
+              "hex": "76a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac",
+              "reqSigs": 1,
+              "type": "pubkeyhash",
+              "addresses": [
+                "BcxcRo1L5Pk5e2UuabzAJcbs9NKzsMTsuu"
+              ]
+            }
+          }
+        ]
+      },
+      "uuid": "b334b5ee-0585-425b-86a4-02d2fecbf67b"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | obj  | An object containing the decoded transaction data. If using a
+                 |      | "node_count" greater than 1, this returns the most common reply
+                 |      | within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | obj  | An object containing the decoded transaction data from the
+                 |      | respective node.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+    * This is only returned if using a "node_count" greater than 1.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrDecodeRawTransaction", "BLOCK 010000000188d2c346e4215872409eebfaf7a5676c84261ac7e2b0acfe36da3a4e3860ee4b010000004847304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01ffffffff03000000000000000000feb489fb14000000232103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac801d2c04000000001976a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac00000000")
-                  + HelpExampleRpc("xrDecodeRawTransaction", "BLOCK 010000000188d2c346e4215872409eebfaf7a5676c84261ac7e2b0acfe36da3a4e3860ee4b010000004847304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01ffffffff03000000000000000000feb489fb14000000232103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac801d2c04000000001976a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac00000000")
+                  + HelpExampleRpc("xrDecodeRawTransaction", "\"BLOCK\", \"010000000188d2c346e4215872409eebfaf7a5676c84261ac7e2b0acfe36da3a4e3860ee4b010000004847304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01ffffffff03000000000000000000feb489fb14000000232103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac801d2c04000000001976a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac00000000\"")
                   + HelpExampleCli("xrDecodeRawTransaction", "BLOCK 010000000188d2c346e4215872409eebfaf7a5676c84261ac7e2b0acfe36da3a4e3860ee4b010000004847304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01ffffffff03000000000000000000feb489fb14000000232103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac801d2c04000000001976a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac00000000 2")
-                  + HelpExampleRpc("xrDecodeRawTransaction", "BLOCK 010000000188d2c346e4215872409eebfaf7a5676c84261ac7e2b0acfe36da3a4e3860ee4b010000004847304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01ffffffff03000000000000000000feb489fb14000000232103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac801d2c04000000001976a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac00000000 2")
+                  + HelpExampleRpc("xrDecodeRawTransaction", "\"BLOCK\", \"010000000188d2c346e4215872409eebfaf7a5676c84261ac7e2b0acfe36da3a4e3860ee4b010000004847304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01ffffffff03000000000000000000feb489fb14000000232103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac801d2c04000000001976a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac00000000\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -452,7 +636,7 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
     if (params.size() < 1 || (params.size() == 1 && xrouter::is_hex(params[0].get_str())))
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -460,7 +644,7 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Transaction hex not specified");
+        error.emplace_back("error", "tx_hex not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -468,7 +652,7 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
     const auto & hex = params[1].get_str();
     if (hex.empty() || !xrouter::is_hex(hex)) {
         Object error;
-        error.emplace_back("error", "Transaction hex is bad");
+        error.emplace_back("error", "tx_hex is bad");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -478,7 +662,7 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
         consensus = params[2].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -495,79 +679,101 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetBlocks",
-                "\nList of blocks in json format for the specified block hashes.\n",
+                "\nReturns an array of block data in JSON format for the specified block hashes and blockchain. "
+                "Currently the maximum request is 50 blocks, although a node may set this limit to less.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"blockhashes", RPCArg::Type::STR, RPCArg::Optional::NO, "Comma delimited list of block hashes, example: blockhash1,blockhash2,blockhash3"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"block_hashes", RPCArg::Type::STR, RPCArg::Optional::NO, "A comma-delimited string of block hashes for the blocks of interest. "
+                                                                              "The hashes must be separated by a comma with no spaces. "
+                                                                              "Example: \"blockhash1,blockhash2,blockhash3\""},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                R"({
-                    "reply" : [
-                        {
-                            "hash" : "39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf",
-                            "confirmations" : 259225,
-                            "size" : 429,
-                            "height" : 860877,
-                            "version" : 3,
-                            "merkleroot" : "0ad8234849f7cda3bc88ea55cba58a93c9f903db7fd76ce9aae1787fb6b36465",
-                            "tx" : [
-                                "5f7aafd0a1c0835b2602305dacba03c8f34f942d9f3d624456d551d730d55207",
-                                "f046ae548f88c166259b3f9a37088abc44b7aee8cacc0efe66fad34f31173af2"
-                            ],
-                            "time" : 1554330467,
-                            "nonce" : 0,
-                            "bits" : "1b068aa1",
-                            "difficulty" : 10018.31506514,
-                            "chainwork" : "000000000000000000000000000000000000000000000002859b1c301496c1f3",
-                            "previousblockhash" : "3c547690a4960e2c4c10b4868125cbbac3b345a333ef7f225a9f8247f2856ad3",
-                            "nextblockhash" : "7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c"
-                        },
-                        {
-                            "hash" : "7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c",
-                            "confirmations" : 259225,
-                            "size" : 430,
-                            "height" : 860878,
-                            "version" : 3,
-                            "merkleroot" : "6b965ec6025a45b0b9dbf9f61b985f37c52f1b81239a1018c71e5a4216040c2f",
-                            "tx" : [
-                                "7f5586a47e24b16e7440652009660347087cdd847cbc4447f288a5df3662fe05",
-                                "f8adadaa5af9ba5df9a2e3a21fa6b7052c85e0b446bc1a1b4764417deb0d3407"
-                            ],
-                            "time" : 1554330514,
-                            "nonce" : 0,
-                            "bits" : "1b0670c2",
-                            "difficulty" : 10175.51508948,
-                            "chainwork" : "000000000000000000000000000000000000000000000002859b43efc033551c",
-                            "previousblockhash" : "39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf",
-                            "nextblockhash" : "ac55708898c88f34c76840bf28371df097359bbc9b09cc25255e3880336e7bd4"
-                        }
-                    ],
-                    "uuid" : "b334b5ee-0585-425b-86a4-02d2fecbf67b"
-                })"
+                R"(
+    {
+      "reply": [
+        {
+          "hash": "39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf",
+          "confirmations": 259225,
+          "size": 429,
+          "height": 860877,
+          "version": 3,
+          "merkleroot": "0ad8234849f7cda3bc88ea55cba58a93c9f903db7fd76ce9aae1787fb6b36465",
+          "tx": [
+            "5f7aafd0a1c0835b2602305dacba03c8f34f942d9f3d624456d551d730d55207",
+            "f046ae548f88c166259b3f9a37088abc44b7aee8cacc0efe66fad34f31173af2"
+          ],
+          "time": 1554330467,
+          "nonce": 0,
+          "bits": "1b068aa1",
+          "difficulty": 10018.31506514,
+          "chainwork": "000000000000000000000000000000000000000000000002859b1c301496c1f3",
+          "previousblockhash": "3c547690a4960e2c4c10b4868125cbbac3b345a333ef7f225a9f8247f2856ad3",
+          "nextblockhash": "7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c"
+        },
+        {
+          "hash": "7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c",
+          "confirmations": 259225,
+          "size": 430,
+          "height": 860878,
+          "version": 3,
+          "merkleroot": "6b965ec6025a45b0b9dbf9f61b985f37c52f1b81239a1018c71e5a4216040c2f",
+          "tx": [
+            "7f5586a47e24b16e7440652009660347087cdd847cbc4447f288a5df3662fe05",
+            "f8adadaa5af9ba5df9a2e3a21fa6b7052c85e0b446bc1a1b4764417deb0d3407"
+          ],
+          "time": 1554330514,
+          "nonce": 0,
+          "bits": "1b0670c2",
+          "difficulty": 10175.51508948,
+          "chainwork": "000000000000000000000000000000000000000000000002859b43efc033551c",
+          "previousblockhash": "39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf",
+          "nextblockhash": "ac55708898c88f34c76840bf28371df097359bbc9b09cc25255e3880336e7bd4"
+        }
+      ],
+      "uuid": "b334b5ee-0585-425b-86a4-02d2fecbf67b"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | arr  | An array containing objects of the block data for each requested
+                 |      | block on the specified blockchain. If using a "node_count" greater
+                 |      | than 1, this returns the most common reply within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | arr  | An array containing objects of the block data for each requested
+                 |      | block on the specified blockchain from the respective node.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+    * This is only returned if using a "node_count" greater than 1.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\"")
-                  + HelpExampleRpc("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\"")
+                  + HelpExampleRpc("xrGetBlocks", "\"BLOCK\", \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\"")
                   + HelpExampleCli("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\" 2")
-                  + HelpExampleRpc("xrGetBlocks", "BLOCK \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\" 2")
+                  + HelpExampleRpc("xrGetBlocks", "\"BLOCK\", \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if (params.size() < 1 || boost::algorithm::contains(params[0].get_str(), ",")) {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
 
     if (params.size() < 2) {
         Object error;
-        error.emplace_back("error", "Block hashes not specified (comma delimited list)");
+        error.emplace_back("error", "block_hashes not specified (comma-delimited list)");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -578,7 +784,7 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
     for (const auto & hash : blockHashes) {
         if (hash.empty() || hash.find(',') != std::string::npos) {
             Object error;
-            error.emplace_back("error", "Block hashes must be specified in a comma delimited list with no spaces.\n"
+            error.emplace_back("error", "block_hashes must be specified in a comma-delimited string with no spaces.\n"
                                         "Example: xrGetBlocks BLOCK \"302a309d6b6c4a65e4b9ff06c7ea81bb17e985d00abdb01978ace62cc5e18421,"
                                         "175d2a428b5649c2a4732113e7f348ba22a0e69cc0a87631449d1d77cd6e1b04,"
                                         "34989eca8ed66ff53631294519e147a12f4860123b4bdba36feac6da8db492ab\"");
@@ -592,7 +798,7 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
         consensus = params[2].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -609,81 +815,106 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetTransactions",
-                "\nList of blocks in json format for the specified block hashes.\n",
+                "\nReturns an array of transaction data for the specified transaction IDs (hashes) and "
+                "blockchain. Currently the maximum request is 50 transactions, although a node may set "
+                "this limit to less.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"txhashes", RPCArg::Type::STR, RPCArg::Optional::NO, "Comma delimited list of transaction hashes, example: txhash1,txhash2,txhash3"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"tx_ids", RPCArg::Type::STR, RPCArg::Optional::NO, "A comma-delimited string of transaction IDs (hashes) for the transactions "
+                                                                        "of interest. The hashes must be separated by a comma with no spaces. "
+                                                                        "Example: \"txhash1,txhash2,txhash3\""},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                R"({
-                    "reply" : [
-                        {
-                            "hex" : "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff06034372010101ffffffff0100000000000000000000000000",
-                            "txid" : "6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7",
-                            "version" : 1,
-                            "locktime" : 0,
-                            "vin" : [
-                                {
-                                    "coinbase" : "034372010101",
-                                    "sequence" : 4294967295
-                                }
-                            ],
-                            "vout" : [
-                                {
-                                    "value" : 0.00000000,
-                                    "n" : 0,
-                                    "scriptPubKey" : {
-                                        "asm" : "",
-                                        "hex" : "",
-                                        "type" : "nonstandard"
-                                    }
-                                }
-                            ],
-                            "blockhash" : "04f6f17d2f20ab122e9277d595d32c751e544755ee662ec5351663c6593118e6",
-                            "confirmations" : 1025319,
-                            "time" : 1507944959,
-                            "blocktime" : 1507944959
-                        },
-                        {
-                            "hex" : "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff06034472010101ffffffff0100000000000000000000000000",
-                            "txid" : "379ba9539afbd08b5ce4351be287addd090dce57ac3429e5ed600860714df05a",
-                            "version" : 1,
-                            "locktime" : 0,
-                            "vin" : [
-                                {
-                                    "coinbase" : "034472010101",
-                                    "sequence" : 4294967295
-                                }
-                            ],
-                            "vout" : [
-                                {
-                                    "value" : 0.00000000,
-                                    "n" : 0,
-                                    "scriptPubKey" : {
-                                        "asm" : "",
-                                        "hex" : "",
-                                        "type" : "nonstandard"
-                                    }
-                                }
-                            ],
-                            "blockhash" : "56675a208311e44d8eaaed8b1dedd240a07de554e79a1c7bcb43a7728e7d6c7f",
-                            "confirmations" : 1025322,
-                            "time" : 1507945040,
-                            "blocktime" : 1507945040
-                        }
-                    ],
-                    "uuid" : "b334b5ee-0585-425b-86a4-02d2fecbf67b"
-                })"
+                R"(
+    {
+      "reply": [
+        {
+          "hex": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff06034372010101ffffffff0100000000000000000000000000",
+          "txid": "6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7",
+          "version": 1,
+          "locktime": 0,
+          "vin": [
+            {
+              "coinbase": "034372010101",
+              "sequence": 4294967295
+            }
+          ],
+          "vout": [
+            {
+              "value": 0.00000000,
+              "n": 0,
+              "scriptPubKey": {
+                "asm": "",
+                "hex": "",
+                "type": "nonstandard"
+              }
+            }
+          ],
+          "blockhash": "04f6f17d2f20ab122e9277d595d32c751e544755ee662ec5351663c6593118e6",
+          "confirmations": 1025319,
+          "time": 1507944959,
+          "blocktime": 1507944959
+        },
+        {
+          "hex": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff06034472010101ffffffff0100000000000000000000000000",
+          "txid": "379ba9539afbd08b5ce4351be287addd090dce57ac3429e5ed600860714df05a",
+          "version": 1,
+          "locktime": 0,
+          "vin": [
+            {
+              "coinbase": "034472010101",
+              "sequence": 4294967295
+            }
+          ],
+          "vout": [
+            {
+              "value": 0.00000000,
+              "n": 0,
+              "scriptPubKey": {
+                "asm": "",
+                "hex": "",
+                "type": "nonstandard"
+              }
+            }
+          ],
+          "blockhash": "56675a208311e44d8eaaed8b1dedd240a07de554e79a1c7bcb43a7728e7d6c7f",
+          "confirmations": 1025322,
+          "time": 1507945040,
+          "blocktime": 1507945040
+        }
+      ],
+      "uuid": "b334b5ee-0585-425b-86a4-02d2fecbf67b"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | arr  | An array containing objects with the transaction data for each
+                 |      | requested transaction on the specified blockchain. If using a
+                 |      | "node_count" greater than 1, this returns the most common reply
+                 |      | within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | arr  | An array containing objects with the transaction data for each
+                 |      | requested transaction on the specified blockchain from the
+                 |      | respective node.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+    * This is only returned if using a "node_count" greater than 1.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\"")
-                  + HelpExampleRpc("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\"")
+                  + HelpExampleRpc("xrGetTransactions", "\"BLOCK\", \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\"")
                   + HelpExampleCli("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\" 2")
-                  + HelpExampleRpc("xrGetTransactions", "BLOCK \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\" 2")
+                  + HelpExampleRpc("xrGetTransactions", "\"BLOCK\", \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -691,7 +922,7 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -699,7 +930,7 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Transaction hashes not specified (comma delimited list)");
+        error.emplace_back("error", "tx_ids not specified (comma-delimited list)");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -710,7 +941,7 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
     for (const auto & hash : txHashes) {
         if (hash.empty() || hash.find(',') != std::string::npos) {
             Object error;
-            error.emplace_back("error", "Transaction hashes must be specified in a comma delimited list with no spaces.\n"
+            error.emplace_back("error", "tx_ids must be specified in a comma-delimited string with no spaces.\n"
                                         "Example: xrGetTransactions BLOCK \"24ff5506a30772acfb65012f1b3309d62786bc386be3b6ea853a798a71c010c8,"
                                         "24b6bcb44f045d7a4cf8cd47c94a14cc609352851ea973f8a47b20578391629f,"
                                         "66a5809c7090456965fe30280b88f69943e620894e1c4538a724ed9a89c769be\"");
@@ -724,7 +955,7 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
         consensus = params[2].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -743,21 +974,20 @@ static UniValue xrGetTxBloomFilter(const JSONRPCRequest& request)
             RPCHelpMan{"xrGetTxBloomFilter",
                 "\nLists transactions in json format matching bloom filter starting with block number.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
                     {"filter", RPCArg::Type::STR, RPCArg::Optional::NO, "Bloom filter"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
                 "\n"
                 },
                 RPCExamples{
                     HelpExampleCli("xrGetTxBloomFilter", "BLOCK 0x0000000018")
-                  + HelpExampleRpc("xrGetTxBloomFilter", "BLOCK 0x0000000018")
+                  + HelpExampleRpc("xrGetTxBloomFilter", "\"BLOCK\", \"0x0000000018\"")
                   + HelpExampleCli("xrGetTxBloomFilter", "BLOCK 0x0000000018 2")
-                  + HelpExampleRpc("xrGetTxBloomFilter", "BLOCK 0x0000000018 2")
+                  + HelpExampleRpc("xrGetTxBloomFilter", "\"BLOCK\", \"0x0000000018\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -765,7 +995,7 @@ static UniValue xrGetTxBloomFilter(const JSONRPCRequest& request)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -773,7 +1003,7 @@ static UniValue xrGetTxBloomFilter(const JSONRPCRequest& request)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Filter not specified");
+        error.emplace_back("error", "filter not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -787,7 +1017,7 @@ static UniValue xrGetTxBloomFilter(const JSONRPCRequest& request)
         consensus = params[3].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -807,21 +1037,20 @@ static UniValue xrGenerateBloomFilter(const JSONRPCRequest& request)
             RPCHelpMan{"xrGenerateBloomFilter",
                 "\nGenerates a bloom filter for given base58 addresses.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"addresses", RPCArg::Type::STR, RPCArg::Optional::NO, "Comma delimited list of base58 address to generate a bloom filter for, example: address1,address2"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus). To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"addresses", RPCArg::Type::STR, RPCArg::Optional::NO, "Comma-delimited list of base58 address to generate a bloom filter for, example: address1,address2"},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
                 "\n"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrGenerateBloomFilter", "BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX")
-                  + HelpExampleRpc("xrGenerateBloomFilter", "BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX")
-                  + HelpExampleCli("xrGenerateBloomFilter", "BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX 2")
-                  + HelpExampleRpc("xrGenerateBloomFilter", "BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX 2")
+                    HelpExampleCli("xrGenerateBloomFilter", "BLOCK \"BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX\"")
+                  + HelpExampleRpc("xrGenerateBloomFilter", "\"BLOCK\", \"BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX\"")
+                  + HelpExampleCli("xrGenerateBloomFilter", "BLOCK \"BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX\" 2")
+                  + HelpExampleRpc("xrGenerateBloomFilter", "\"BLOCK\", \"BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -882,27 +1111,41 @@ static UniValue xrService(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrService",
-                "\nSend request to the service with the specified name. XRouter services are "
+                "\nSend a request to the service with the specified name. XRouter services are "
                 "custom plugins that XRouter node operators advertise on the network. Anyone "
                 "capable of running a service node can create or install custom XRouter "
                 "services or plugins and provide access to them for free or for a fee. This "
                 "is a great way to earn fees for your custom plugin.\n",
                 {
-                    {"service_name", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"parameters", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Array of parameters. Refer to the plugin documentation for "
-                                                                                 "parameter requirements. Information about a custom XRouter "
-                                                                                 "service can be viewed in the plugin configuration. Use "
-                                                                                 "xrConnect to find a node with the plugin, then use "
-                                                                                 "xrConnectedNodes to review plugin information."},
+                    {"service_name", RPCArg::Type::STR, RPCArg::Optional::NO, "The service name. xrGetNetworkServices can be used to browse services with the xrs:: namespace."},
+                    {"parameters", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Refer to the plugin documentation for parameter requirements. "
+                                                                                 "Information about a custom XRouter service can be viewed in "
+                                                                                 "the plugin configuration. Use xrConnect to find a node with the "
+                                                                                 "plugin, then use xrConnectedNodes to review plugin information."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+      "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6",
+      "error": null,
+      "id": 1,
+      "uuid": "54b6ec00-8b06-4c2c-9e56-acdff4da69fe"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | any  | The service's response data.
+    error        | obj  | The native error response if an error occurred, otherwise a
+                 |      | successful response will contain a null error.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+                )"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrService", "xrs::GetBestBlockHashBTC")
-                  + HelpExampleRpc("xrService", "xrs::GetBestBlockHashBTC")
+                    HelpExampleCli("xrService", "xrs::BTCgetbestblockhash")
+                  + HelpExampleRpc("xrService", "\"xrs::BTCgetbestblockhash\"")
                   + HelpExampleCli("xrService", "xrs::SomeXCloudPlugin param1 param2")
-                  + HelpExampleRpc("xrService", "xrs::SomeXCloudPlugin param1 param2")
+                  + HelpExampleRpc("xrService", "\"xrs::SomeXCloudPlugin\", \"param1\", \"param2\"")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -930,32 +1173,66 @@ static UniValue xrServiceConsensus(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrServiceConsensus",
-                "\nSend requests to number of nodes indicated by node_count that are hosting the "
+                "\nSend requests to a number of nodes indicated by node_count that are hosting the "
                 "service. If all nodes cannot be found an error is returned. XRouter services are "
                 "custom plugins that XRouter node operators advertise on the network. Anyone "
                 "capable of running a service node can create or install custom XRouter services "
                 "or plugins and provide access to them for free or for a fee. This is a great way "
                 "to earn fees for your custom plugin.\n",
                 {
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::NO, "Number of XRouter nodes to query (default=1) "
-                                                                             "The most common reply will be returned (i.e. the reply "
-                                                                             "with the most consensus). To see all reply results use "
-                                                                             "xrGetReply uuid."},
-                    {"service_name", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to query"},
-                    {"parameters", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Array of parameters. Refer to the plugin documentation for "
-                                                                                 "parameter requirements. Information about a custom XRouter "
-                                                                                 "service can be viewed in the plugin configuration. Use "
-                                                                                 "xrConnect to find a node with the plugin, then use "
-                                                                                 "xrConnectedNodes to review plugin information."},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::NO, "Number of XRouter nodes to query. The most common response will be "
+                                                                            "returned as \"reply\" (i.e. the response with the most consensus). "
+                                                                            "Defaults to 1 if no consensus= setting in xrouter.conf."},
+                    {"service_name", RPCArg::Type::STR, RPCArg::Optional::NO, "The service name. xrGetNetworkServices can be used to browse services with the xrs:: namespace."},
+                    {"parameters", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Refer to the plugin documentation for parameter requirements. "
+                                                                                 "Information about a custom XRouter service can be viewed in "
+                                                                                 "the plugin configuration. Use xrConnect to find a node with the "
+                                                                                 "plugin, then use xrConnectedNodes to review plugin information."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+      "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6",
+      "allreplies": [
+        {
+          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
+          "score": 250,
+          "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6"
+        },
+        {
+          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
+          "score": 300,
+          "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6"
+        }
+      ],
+      "error": null,
+      "id": 1,
+      "uuid": "2ab8ea00-3b16-9a4b-e69a-b4a3dac9abfe"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | any  | The service's response data. If using a "node_count" greater
+                 |      | than 1, this returns the most common reply within "allreplies".
+    allreplies*  | arr  | An array of objects with responses from each node. This can be
+                 |      | useful if you wanted to do your own analysis/filtering of the
+                 |      | responses.
+    nodepubkey*  | str  | The node ID.
+    score*       | int  | The respective node's score based on quality of service. A score
+                 |      | of -200 will ban the node for a 24hr period. You can change the
+                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
+    reply*       | arr  | The service's response data from the respective node.
+    error        | obj  | The native error response if an error occurred, otherwise a
+                 |      | successful response will contain a null error.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+                )"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrServiceConsensus", "2 xrs::GetBestBlockHashBTC")
-                  + HelpExampleRpc("xrServiceConsensus", "2 xrs::GetBestBlockHashBTC")
+                    HelpExampleCli("xrServiceConsensus", "2 xrs::BTCgetbestblockhash")
+                  + HelpExampleRpc("xrServiceConsensus", "2, \"xrs::BTCgetbestblockhash\"")
                   + HelpExampleCli("xrServiceConsensus", "3 xrs::SomeXCloudPlugin param1 param2")
-                  + HelpExampleRpc("xrServiceConsensus", "3 xrs::SomeXCloudPlugin param1 param2")
+                  + HelpExampleRpc("xrServiceConsensus", "3, \"xrs::SomeXCloudPlugin\", \"param1\", \"param2\"")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -963,7 +1240,7 @@ static UniValue xrServiceConsensus(const JSONRPCRequest& request)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "Consensus number not specified, must specify at least 1");
+        error.emplace_back("error", "node_count not specified, must be an integer >= 1");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -981,7 +1258,7 @@ static UniValue xrServiceConsensus(const JSONRPCRequest& request)
 
     if (consensus < 1) {
         Object error;
-        error.emplace_back("error", "Consensus must be at least 1");
+        error.emplace_back("error", "node_count must be an integer >= 1");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -1000,23 +1277,34 @@ static UniValue xrSendTransaction(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrSendTransaction",
-                "\nSend a signed transaction to any supported blockchain network. "
-                "This is useful if you want to send transactions to a blockchain without having "
-                "to download the entire chain, or if you are running a lite-wallet/multi-wallet.\n",
+                "\nSend a signed transaction to any supported blockchain network. This is useful if you "
+                "want to send transactions to a blockchain without having to download the entire chain, "
+                "or if you are running a lite-wallet/multi-wallet.\n",
                 {
-                    {"currency", RPCArg::Type::STR, RPCArg::Optional::NO, "Blockchain to submit transaction to"},
-                    {"signed_transaction_hex", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Signed raw transaction hex string"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                             "The most common reply will be returned (i.e. the reply "
-                                                                             "with the most consensus). To see all reply results use "
-                                                                             "xrGetReply uuid."},
+                    {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain to submit the transaction to, represented "
+                                                                            "by the asset's ticker (BTC, LTC, SYS, etc.)."},
+                    {"signed_tx_hex", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Signed raw transaction hex string"},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be returned "
+                                                                                 "as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+      "reply": "9f978c31840adbc4e044395f8f893cb7369c48e2ce831a90c32090bf71ae29ae",
+      "uuid": "ACA0874C-C45F-4F40-94AD-794A7E18085A"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | obj  | The transaction hash of the sent transaction.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrSendTransaction", "BLOCK 010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000")
-                  + HelpExampleRpc("xrSendTransaction", "BLOCK 010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000")
+                  + HelpExampleRpc("xrSendTransaction", "\"BLOCK\", \"010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000\"")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -1024,7 +1312,7 @@ static UniValue xrSendTransaction(const JSONRPCRequest& request)
     if (params.size() < 1)
     {
         Object error;
-        error.emplace_back("error", "Currency not specified");
+        error.emplace_back("error", "blockchain not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -1032,7 +1320,7 @@ static UniValue xrSendTransaction(const JSONRPCRequest& request)
     if (params.size() < 2)
     {
         Object error;
-        error.emplace_back("error", "Transaction data not specified");
+        error.emplace_back("error", "signed_tx_hex not specified");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -1042,7 +1330,7 @@ static UniValue xrSendTransaction(const JSONRPCRequest& request)
         consensus = params[2].get_int();
         if (consensus < 1) {
             Object error;
-            error.emplace_back("error", "Consensus must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -1060,18 +1348,41 @@ static UniValue xrGetReply(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetReply",
-                "\nReturns all the replies from XRouter nodes matching the specified query uuid. "
-                "Useful to lookup previous calls without having to request from the XRouter"
-                "network.\n",
+                "\nUsed to look up responses from previous XRouter calls without having to request them "
+                "from the network. These are cached responses from your current session.\n"
+                "There are no fees for this call.\n",
                 {
-                    {"uuid", RPCArg::Type::STR, RPCArg::Optional::NO, "Reply id"},
+                    {"uuid", RPCArg::Type::STR, RPCArg::Optional::NO, "Reply ID of previous call in current session."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+      "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
+      "allreplies": [
+        {
+          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
+          "score": 35,
+          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
+        },
+        {
+          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
+          "score": 80,
+          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
+        }
+      ],
+      "uuid": "3c84d025-8a03-4b64-848f-99892fe481ff"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    reply        | arr  | The response for the previous call associated with the UUID.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+                )"
                 },
                 RPCExamples{
-                    HelpExampleCli("xrGetReply", "cc25f823-06a9-48e7-8245-f04991c09d6a")
-                  + HelpExampleRpc("xrGetReply", "cc25f823-06a9-48e7-8245-f04991c09d6a")
+                    HelpExampleCli("xrGetReply", "3c84d025-8a03-4b64-848f-99892fe481ff")
+                  + HelpExampleRpc("xrGetReply", "\"3c84d025-8a03-4b64-848f-99892fe481ff\"")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -1098,7 +1409,32 @@ static UniValue xrShowConfigs(const JSONRPCRequest& request)
                 "\nShows the raw configurations received from XRouter nodes.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    [
+      {
+        "nodepubkey": "03ca15d619cf36fdc043892b12a3881dd08f2d3905e2ff399ac39cf34b28a995c7",
+        "paymentaddress": "BiBbLf8wDyYcSAzsX1SNzZKrc2zZQjS2pa",
+        "config": "[Main]\nwallets=BTC,ETH,LTC,BLOCK,CRW,MERGE,TRC\nmaxfee=0\n[BTC::xrGetBlocks]\n#fee=0.1\n#clientrequestlimit=-1\ndisabled=0\nfetchlimit=50\n\n\n",
+        "plugins": {
+        }
+      },
+      {
+        "nodepubkey": "0252d7959e25a8f1a15b4e3e487d310211534dd71ca3316abe463d40a5cf0d67ca",
+        "paymentaddress": "BXhndtvEEM5Yh9UEPzrzpBLksjZReGV6Kv",
+        "config": "[Main]\nwallets=BLOCK,LTC,BTC,PIVX,MON\nmaxfee=0\nconsensus=1\ntimeout=30\npaymentaddress=BXhndtvEEM5Yh9UEPzrzpBLksjZReGV6Kv\n\n\n",
+        "plugins": {
+        }
+      }
+    ]
+
+    Key            | Type | Description
+    ---------------|------|-------------------------------------------------------------
+    nodepubkey     | str  | The node ID.
+    paymentaddress | str  | The node's payment address, may also be specific per command.
+    config         | str  | The raw text contents of your xrouter.conf.
+    plugins        | obj  | An object containing the raw configuration text contents for
+                   |      | each of this node's plugins.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrShowConfigs", "")
@@ -1117,11 +1453,17 @@ static UniValue xrReloadConfigs(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrReloadConfigs",
-                "\nReloads the xrouter.conf and all associated plugin configs. If a plugin conf is changed while "
-                "the client is running call this to apply those changes.\n",
+                "\nReloads xrouter.conf and all associated configurations. If a configuration is changed "
+                "while the client is running, use this call to apply those changes.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    true
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    true         | bool | A confirmation that `xrouter.conf` has been reloaded.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrReloadConfigs", "")
@@ -1140,10 +1482,26 @@ static UniValue xrStatus(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrStatus",
-                "\nPrints your XRouter node configuration.\n",
+                "\nReturns your XRouter configurations.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    {
+      "xrouter": true,
+      "servicenode": false,
+      "config": "[Main]\ntimeout=30\nconsensus=1\nmaxfee=0.5"
+    }
+
+    Key          | Type | Description
+    -------------|------|-------------------------------------------------------------
+    xrouter      | bool | Signifies XRouter activation.
+                 |      | true: XRouter is enabled.
+                 |      | false: XRouter is disabled.
+    servicenode  | bool | Signifies if your client is a Service Node.
+                 |      | true: Client is a Service Node.
+                 |      | false: Client is not a Service Node.
+    config       | str  | The raw text contents of your xrouter.conf.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrStatus", "")
@@ -1162,11 +1520,60 @@ static UniValue xrConnectedNodes(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrConnectedNodes",
-                "\nLists all the data about current and previously connected nodes. This information includes "
-                "supported blockchains, services, and fee schedules.\n",
+                "\nLists all the data about current and previously connected nodes. This information "
+                "includes supported blockchains, services, and fee schedules.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    Key            | Type  | Description
+    ---------------|-------|-------------------------------------------------------------
+    reply          | arr   | An array of nodes, supported services, and their respective
+                   |       | configs.
+    nodepubkey     | str   | The node ID.
+    score          | int   | The node's score based on quality of service. A score of -200
+                   |       | will ban the node for a 24hr period. You can change the ban
+                   |       | threshold with the xrouterbanscore setting in blocknet.conf.
+    banned         | bool  | Signifies if the node is currently banned.
+                   |       | true: Node is banned
+                   |       | false: Node is not banned
+    paymentaddress | str   | The node's payment address.
+    spvwallets     | arr   | An array of supported SPV wallets, represented by the asset's
+                   |       | ticker.
+    spvconfigs     | arr   | An array of each SPV wallet and command configurations.
+    spvwallet      | str   | The SPV wallet that the configurations under "commands" pertains to.
+    commands       | arr   | An array of each SPV wallet command and respective configs.
+    command        | str   | The SPV command.
+    fee            | float | The command fee, overrides the "feedefault" and "fees" values.
+                   |       | This priority has already been accounted for in this value.
+    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
+                   |       | of -1 means there is no limit. If you exceed this value you
+                   |       | will be penalized and eventually banned by this specific node.
+    paymentaddress | str   | The node's payment address for this specific command.
+    disabled       | bool  | Signifies if the node has disabled this command.
+                   |       | true: Call is disabled and not supported.
+                   |       | false: Call is enabled and supported.
+    feedefault     | float | The node's default service fee. This fee is overridden by the
+                   |       | values specified in "fees", SPV command configuration "fee",
+                   |       | and XCloud service command configuration "fee".
+    fees           | obj   | Object of SPV commands and respective fees. These values are
+                   |       | overridden by the SPV wallet-specific configuration "fee".
+    services       | obj   | Object of the node's XCloud service calls with respective properties.
+    parameters     | str   | Information on the parameters the command takes.
+    fee            | float | The service command fee. This overrides the "feedefault" value.
+    paymentaddress | str   | The node's payment address for this specific command.
+    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
+                   |       | of -1 means there is no limit. If you exceed this value you
+                   |       | will be penalized and eventually banned by this specific node.
+    fetchlimit     | int   | The maximum number of records returned. This pertains to calls
+                   |       | such as xrGetBlocks and xrGetTransactions where multiple
+                   |       | records are returned. A value of -1 means there is no limit. A
+                   |       | value of 0 means no blocks will be processed.
+    timeout        | int   | The value for "timeout" you set in xrouter.conf for this call.
+                   |       | Defines how long (in seconds) your client waits for a response
+                   |       | from a Service Node. The default value is 30.
+    uuid           | str   | The response ID, which can be used to view this response again
+                   |       | with xrGetReply.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrConnectedNodes", "")
@@ -1202,34 +1609,82 @@ static UniValue xrConnect(const JSONRPCRequest& request)
                 "also useful to \"warm up\" connections. By connecting to nodes immediately before "
                 "making a large request it can speed up the reponse time (since those connections "
                 "will be open). However, XRouter nodes do close inactive connections after 15 seconds "
-                "so keep that in mind. After connecting call xrConnectedNodes to display information "
+                "so keep that in mind. After connecting, call xrConnectedNodes to display information "
                 "about these XRouter nodes.\n",
                 {
                     {"fully_qualified_service_name", RPCArg::Type::STR, RPCArg::Optional::NO, "Service name including the namespace. Must specify "
                                                                                               "xr:: for SPV commands and xrs:: for plugin commands. "
-                                                                                              "Example: xr::BLOCK or xrs::GetBestBlockHashBTC"},
-                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query (default=1) "
-                                                                                  "The most common reply will be returned (i.e. the reply "
-                                                                                  "with the most consensus. To see all reply results use "
-                                                                                  "xrGetReply uuid."},
+                                                                                              "Example: xr::BTC or xrs::BTCgetbestblockhashBTC"},
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "Number of XRouter nodes to query. The most common response will be "
+                                                                                 "returned as \"reply\" (i.e. the response with the most consensus). "
+                                                                                 "Defaults to 1 if no consensus= setting in xrouter.conf."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    Key            | Type  | Description
+    ---------------|-------|-------------------------------------------------------------
+    reply          | arr   | An array of nodes providing the specified service, along with
+                   |       | their configs.
+    nodepubkey     | str   | The node ID.
+    score          | int   | The node's score based on quality of service. A score of -200
+                   |       | will ban the node for a 24hr period. You can change the ban
+                   |       | threshold with the xrouterbanscore setting in blocknet.conf.
+    banned         | bool  | Signifies if the node is currently banned.
+                   |       | true: Node is banned
+                   |       | false: Node is not banned
+    paymentaddress | str   | The node's payment address.
+    spvwallets     | arr   | An array of supported SPV wallets, represented by the asset's
+                   |       | ticker.
+    spvconfigs     | arr   | An array of each SPV wallet and command configurations.
+    spvwallet      | str   | The SPV wallet that the configurations under "commands" pertains to.
+    commands       | arr   | An array of each SPV wallet command and respective configs.
+    command        | str   | The SPV command.
+    fee            | float | The command fee, overrides the "feedefault" and "fees" values.
+                   |       | This priority has already been accounted for in this value.
+    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
+                   |       | of -1 means there is no limit. If you exceed this value you
+                   |       | will be penalized and eventually banned by this specific node.
+    paymentaddress | str   | The node's payment address for this specific command.
+    disabled       | bool  | Signifies if the node has disabled this command.
+                   |       | true: Call is disabled and not supported.
+                   |       | false: Call is enabled and supported.
+    feedefault     | float | The node's default service fee. This fee is overridden by the
+                   |       | values specified in "fees", SPV command configuration "fee",
+                   |       | and XCloud service command configuration "fee".
+    fees           | obj   | Object of SPV commands and respective fees. These values are
+                   |       | overridden by the SPV wallet-specific configuration "fee".
+    services       | obj   | Object of the node's XCloud service calls with respective properties.
+    parameters     | str   | Information on the parameters the command takes.
+    fee            | float | The service command fee. This overrides the "feedefault" value.
+    paymentaddress | str   | The node's payment address for this specific command.
+    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
+                   |       | of -1 means there is no limit. If you exceed this value you
+                   |       | will be penalized and eventually banned by this specific node.
+    fetchlimit     | int   | The maximum number of records returned. This pertains to calls
+                   |       | such as xrGetBlocks and xrGetTransactions where multiple
+                   |       | records are returned. A value of -1 means there is no limit. A
+                   |       | value of 0 means no blocks will be processed.
+    timeout        | int   | The value for "timeout" you set in xrouter.conf for this call.
+                   |       | Defines how long (in seconds) your client waits for a response
+                   |       | from a Service Node. The default value is 30.
+    uuid           | str   | The response ID, which can be used to view this response again
+                   |       | with xrGetReply.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrConnect", "xr::BTC")
-                  + HelpExampleRpc("xrConnect", "xr::BTC")
+                  + HelpExampleRpc("xrConnect", "\"xr::BTC\"")
                   + HelpExampleCli("xrConnect", "xr::BTC 2")
-                  + HelpExampleRpc("xrConnect", "xr::BTC 2")
+                  + HelpExampleRpc("xrConnect", "\"xr::BTC\", 2")
                   + HelpExampleCli("xrConnect", "xrs::CustomXCloudPlugin 2")
-                  + HelpExampleRpc("xrConnect", "xrs::CustomXCloudPlugin 2")
+                  + HelpExampleRpc("xrConnect", "\"xrs::CustomXCloudPlugin\", 2")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
     if (params.size() < 1) {
         Object error;
-        error.emplace_back("error", "Service not specified. Example: xrConnect xr::BLOCK");
+        error.emplace_back("error", "Service not specified. Example: xrConnect xr::BTC");
         error.emplace_back("code", xrouter::INVALID_PARAMETERS);
         return uret_xr(error);
     }
@@ -1247,7 +1702,7 @@ static UniValue xrConnect(const JSONRPCRequest& request)
         nodeCount = params[1].get_int();
         if (nodeCount < 1) {
             Object error;
-            error.emplace_back("error", "nodeCount must be at least 1");
+            error.emplace_back("error", "node_count must be an integer >= 1");
             error.emplace_back("code", xrouter::INVALID_PARAMETERS);
             return uret_xr(error);
         }
@@ -1291,10 +1746,50 @@ static UniValue xrGetNetworkServices(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrGetNetworkServices",
-                "\nLists all the XRouter services on the network.\n",
+                "\nList all the XRouter SPV and plugin services currently supported on the network, along "
+                "with the number of nodes supporting each service. XRouter SPV calls use the xr:: namespace. "
+                "XRouter services (XCloud) use the xrs:: namespace and can be called using xrService and "
+                "xrServiceConsensus.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    {
+      "reply": {
+        "spvwallets": [ "xr::BLOCK", "xr::BTC", "xr::LTC", "xr::MNP", "xr::SYS" ],
+        "services": [ "xrs::BTCgetbestblockhash", "xrs::BTCgetblockhash", "xrs::BTCgettransaction", "xrs::SYSgetbestblockhash", "xrs::SYSgetblock", "xrs::SYSgetgovernanceinfo", "xrs::SYSgetmempool", "xrs::SYSlistoffers", "xrs::SYSofferinfo", "xrs::twilio" ],
+        "nodecounts": {
+          "xr::BLOCK": 27,
+          "xr::BTC": 13,
+          "xr::LTC": 21,
+          "xr::MNP": 1,
+          "xr::SYS": 9,
+          "xrs::BTCgetbestblockhash": 12,
+          "xrs::BTCgetblockhash": 12,
+          "xrs::BTCgettransaction": 5,
+          "xrs::SYSgetbestblockhash": 7,
+          "xrs::SYSgetblock": 6,
+          "xrs::SYSgetgovernanceinfo": 4,
+          "xrs::SYSgetmempool": 4,
+          "xrs::SYSlistoffers": 4,
+          "xrs::SYSofferinfo": 4,
+          "xrs::twilio": 1
+        }
+      },
+      "uuid": "cd408df7-0ff8-4e29-b5cf-0148af83f93a"
+    }
+
+    Key          | Type | Description
+    -------------|------|---------------------------------------
+    reply        | obj  | An object containing information on supported services.
+    spvwallets   | arr  | An array of supported SPV wallets, represented by the asset's
+                 |      | ticker.
+    services     | arr  | An array of supported XCloud services.
+    nodecounts   | obj  | An object of supported SPV wallets and XCloud services with how many nodes support each.
+    -- key       | str  | The SPV wallet or XCloud service with it's namespace.
+    -- value     | int  | The amount of nodes supporting each respective service.
+    uuid         | str  | The response ID, which can be used to view this response again
+                 |      | with xrGetReply.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrGetNetworkServices", "")
@@ -1373,16 +1868,16 @@ static const CRPCCommand commands[] =
 
     { "xrouter",      "xrConnect",                       &xrConnect,                      {} },
     { "xrouter",      "xrConnectedNodes",                &xrConnectedNodes,               {} },
-    { "xrouter",      "xrGenerateBloomFilter",           &xrGenerateBloomFilter,          {} },
+    // { "xrouter",      "xrGenerateBloomFilter",           &xrGenerateBloomFilter,          {} },
     { "xrouter",      "xrGetNetworkServices",            &xrGetNetworkServices,           {} },
     { "xrouter",      "xrGetReply",                      &xrGetReply,                     {} },
-    { "xrouter",      "xrGetTxBloomFilter",              &xrGetTxBloomFilter,             {} },
+    // { "xrouter",      "xrGetTxBloomFilter",              &xrGetTxBloomFilter,             {} },
     { "xrouter",      "xrReloadConfigs",                 &xrReloadConfigs,                {} },
     { "xrouter",      "xrService",                       &xrService,                      {} },
     { "xrouter",      "xrServiceConsensus",              &xrServiceConsensus,             {} },
     { "xrouter",      "xrShowConfigs",                   &xrShowConfigs,                  {} },
     { "xrouter",      "xrStatus",                        &xrStatus,                       {} },
-    { "xrouter",      "xrTest",                          &xrTest,                         {} },
+    // { "xrouter",      "xrTest",                          &xrTest,                         {} },
 };
 // clang-format on
 

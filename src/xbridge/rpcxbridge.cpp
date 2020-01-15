@@ -435,7 +435,7 @@ UniValue dxGetOrderHistory(const JSONRPCRequest& request)
                     {"granularity", RPCArg::Type::NUM, RPCArg::Optional::NO, "Time interval slice in seconds. The slice options are: " + xQuery::supported_seconds_csv()},
                     {"order_ids", RPCArg::Type::BOOL, "false", "If true, returns the IDs of all filled orders in each slice. If false, IDs are omitted."},
                     {"with_inverse", RPCArg::Type::BOOL, "false", "If false, returns the order history for the specified market. If true, also returns the orders in the inverse pair too (e.g. if LTC SYS then SYS LTC would be returned as well)."},
-                    {"limit", RPCArg::Type::NUM, std::to_string(xQuery::IntervalLimit{}.count()), std::to_string(xQuery::IntervalLimit{}.count()), "The max number of interval slices returned. maximum=" + std::to_string(xQuery::IntervalLimit::max())},
+                    {"limit", RPCArg::Type::NUM, std::to_string(xQuery::IntervalLimit{}.count()), "The max number of interval slices returned. maximum=" + std::to_string(xQuery::IntervalLimit::max())},
                     // {"interval_timestamp", RPCArg::Type::STR, "at_start", "The timestamp at start of the interval. The options are [at_start | at_end]."},
                 },
                 RPCResult{
