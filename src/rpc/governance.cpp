@@ -222,6 +222,9 @@ static UniValue vote(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("'vote' parameter %s is invalid, expected yes/no/abstain", voteType));
 
     const gov::Proposal & proposal = gov::Governance::instance().getProposal(proposalHash);
+    if (!gov::Governance::outsideVotingCutoff(proposal, chainActive.Height(), Params().GetConsensus()))
+        throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit the vote because the voting period for this proposal has ended");
+
     gov::ProposalVote vote{proposal, castVote};
     std::vector<CTransactionRef> txns;
     std::string failReason;
