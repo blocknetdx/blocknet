@@ -443,7 +443,7 @@ void BlocknetProposals::setData(QVector<BlocknetProposal> data) {
         }
 
         // Only show vote button if proposal voting is in progress
-        if (getChainHeight() <= d.superblock - Params().GetConsensus().proposalCutoff) {
+        if (getChainHeight() < d.superblock - Params().GetConsensus().votingCutoff) {
             auto *button = new BlocknetFormBtn;
             button->setText(voteText.isEmpty() ? tr("Vote") : tr("Change Vote"));
             button->setToolTip(tr("Vote status updates as votes are confirmed"));
