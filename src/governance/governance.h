@@ -1579,7 +1579,7 @@ public: // static
         // is created for a future superblock. As a result, a proposal meets
         // the cutoff if it's included in a block that's prior to its scheduled
         // superblock.
-        return blockNumber <= proposal.getSuperblock() - params.proposalCutoff;
+        return blockNumber < proposal.getSuperblock() - params.proposalCutoff;
     }
 
     /**
@@ -1596,18 +1596,19 @@ public: // static
         // created for a future superblock. As a result, a vote meets the
         // cutoff for a block number that's prior to the superblock of its
         // associated proposal.
-        return blockNumber <= proposal.getSuperblock() - params.votingCutoff;
+        return blockNumber < proposal.getSuperblock() - params.votingCutoff;
     }
 
     /**
-     * Returns true if the block number is in the vote cutoff.
+     * Returns true if the block number is in the vote cutoff. The vote cutoff is considered 1 block
+     * prior to the protocol's cutoff since at least 1 block is required to confirm.
      * @param superblock
      * @param blockNumber
      * @param params
      * @return
      */
     static bool insideVoteCutoff(const int & superblock, const int & blockNumber, const Consensus::Params & params) {
-        return blockNumber > superblock - params.votingCutoff && blockNumber <= superblock;
+        return blockNumber >= superblock - params.votingCutoff && blockNumber <= superblock;
     }
 
     /**
