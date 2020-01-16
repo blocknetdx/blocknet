@@ -33,7 +33,9 @@
 #include <QVariant>
 
 BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(new QVBoxLayout),
-                                                       walletModel(nullptr), contextMenu(new QMenu) {
+                                                       clientModel(nullptr), walletModel(nullptr),
+                                                       contextMenu(new QMenu)
+{
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     layout->setContentsMargins(BGU::spi(46), BGU::spi(10), BGU::spi(50), 0);
     this->setLayout(layout);
@@ -317,13 +319,21 @@ void BlocknetProposals::initialize() {
     this->setData(dataModel);
 }
 
-void BlocknetProposals::setWalletModel(WalletModel *w) {
-    if (walletModel == w)
+void BlocknetProposals::setModels(ClientModel *c, WalletModel *w) {
+    if (walletModel == w && clientModel == c)
         return;
 
     walletModel = w;
     if (!walletModel || !walletModel->getOptionsModel())
         return;
+
+    if (clientModel)
+        disconnect(clientModel, &ClientModel::numBlocksChanged, this, &BlocknetProposals::setNumBlocks);
+
+    clientModel = c;
+    if (!clientModel)
+        return;
+    connect(clientModel, &ClientModel::numBlocksChanged, this, &BlocknetProposals::setNumBlocks);
 
     initialize();
 }
@@ -422,6 +432,7 @@ void BlocknetProposals::setData(QVector<BlocknetProposal> data) {
         voteLbl->setObjectName("h6");
         voteLbl->setWordWrap(true);
         voteLbl->setAlignment(Qt::AlignCenter);
+        voteLbl->setToolTip(tr("Vote status updates as votes are confirmed"));
         if (!voteText.isEmpty()) {
             voteLbl->setText(voteText);
             boxLayout->addWidget(voteLbl, 0, Qt::AlignCenter);
@@ -435,6 +446,7 @@ void BlocknetProposals::setData(QVector<BlocknetProposal> data) {
         if (getChainHeight() <= d.superblock - Params().GetConsensus().proposalCutoff) {
             auto *button = new BlocknetFormBtn;
             button->setText(voteText.isEmpty() ? tr("Vote") : tr("Change Vote"));
+            button->setToolTip(tr("Vote status updates as votes are confirmed"));
             button->setFixedSize(BGU::spi(100), BGU::spi(25));
             button->setID(QString::fromStdString(d.hash.GetHex()));
             boxLayout->addWidget(button, 0, Qt::AlignCenter);
@@ -591,6 +603,20 @@ void BlocknetProposals::showProposalDetails(const BlocknetProposal & proposal) {
     auto *dialog = new BlocknetProposalsDetailsDialog(proposal, walletModel->getOptionsModel()->getDisplayUnit());
     dialog->setStyleSheet(GUIUtil::loadStyleSheet());
     dialog->exec();
+}
+
+void BlocknetProposals::setNumBlocks(int count, const QDateTime &blockDate, double nVerificationProgress,
+                                     bool header)
+{
+    // Only refresh proposal data if the cache changes
+    const auto newVotes = static_cast<int>(gov::Governance::instance().getVotes(gov::NextSuperblock(Params().GetConsensus(), count)).size());
+    const auto newProposals = static_cast<int>(gov::Governance::instance().getProposals().size());
+    if (lastVotes != newVotes || dataModel.size() != newProposals) {
+        lastVotes = newVotes;
+        // refresh data
+        initialize();
+        onFilter();
+    }
 }
 
 /**

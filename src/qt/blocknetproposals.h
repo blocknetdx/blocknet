@@ -8,6 +8,7 @@
 #include <qt/blocknetdropdown.h>
 #include <qt/blocknetvars.h>
 
+#include <qt/clientmodel.h>
 #include <qt/walletmodel.h>
 
 #include <governance/governance.h>
@@ -33,7 +34,7 @@ class BlocknetProposals : public QFrame
 
 public:
     explicit BlocknetProposals(QFrame *parent = nullptr);
-    void setWalletModel(WalletModel *w);
+    void setModels(ClientModel *c, WalletModel *w);
 
     enum statusflags {
         STATUS_PASSED = 0,
@@ -79,6 +80,7 @@ private Q_SLOTS:
     void onItemChanged(QTableWidgetItem *item);
     void onFilter();
     void showProposalDetails(const BlocknetProposal & proposal);
+    void setNumBlocks(int count, const QDateTime & blockDate, double nVerificationProgress, bool header);
 
 private:
     int getChainHeight() const {
@@ -92,6 +94,7 @@ private:
 
 private:
     QVBoxLayout *layout;
+    ClientModel *clientModel;
     WalletModel *walletModel;
     QLabel *titleLbl;
     QLabel *buttonLbl;
@@ -106,6 +109,7 @@ private:
     int lastRow = -1;
     qint64 lastSelection = 0;
     bool syncInProgress = false;
+    int lastVotes{0};
 
     void initialize();
     void setData(QVector<BlocknetProposal> data);
