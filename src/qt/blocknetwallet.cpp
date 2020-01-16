@@ -68,8 +68,8 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
     if (!walletModel)
         return false;
 
-    connect(walletModel->getTransactionTableModel(), &TransactionTableModel::rowsInserted, this, &BlocknetWallet::processNewTransaction);
     connect(walletModel, &WalletModel::balanceChanged, this, &BlocknetWallet::balanceChanged);
+    connect(walletModel->getTransactionTableModel(), &TransactionTableModel::rowsInserted, this, &BlocknetWallet::processNewTransaction);
     connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetWallet::displayUnitChanged);
     connect(walletModel, &WalletModel::requireUnlock, this, &BlocknetWallet::unlockWallet);
     connect(walletModel, &WalletModel::showProgress, this, &BlocknetWallet::showProgress);
@@ -88,7 +88,6 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
         dashboard->setWalletModel(walletModel);
         connect(dashboard, &BlocknetDashboard::quicksend, this, &BlocknetWallet::goToQuickSend);
         connect(dashboard, &BlocknetDashboard::history, this, &BlocknetWallet::goToHistory);
-        connect(this, &BlocknetWallet::balanceChanged, dashboard, &BlocknetDashboard::balanceChanged);
     } else
         dashboard->setWalletModel(walletModel);
 
@@ -256,7 +255,6 @@ void BlocknetWallet::goToCreateProposal() {
 }
 
 void BlocknetWallet::balanceChanged(const interfaces::WalletBalances & balances) {
-    Q_EMIT balance(balances);
     leftMenu->setBalance(balances.balance, walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : 0);
 }
 

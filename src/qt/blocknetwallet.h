@@ -53,7 +53,6 @@ public:
 
 Q_SIGNALS:
     void encryptionStatusChanged(WalletModel::EncryptionStatus encryptStatus);
-    void balance(const interfaces::WalletBalances & balances);
     void addressbook();
     void request();
     void tools();
