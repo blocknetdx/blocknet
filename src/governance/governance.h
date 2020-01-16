@@ -1283,7 +1283,7 @@ public:
                     CDataStream ss2(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                     Proposal proposal(blockIndex ? blockIndex->nHeight : 0); ss2 >> proposal;
                     // Skip the cutoff check if block index is not specified
-                    if (proposal.isValid(params) && (!blockIndex || meetsProposalCutoff(proposal, blockIndex->nHeight, params)))
+                    if (proposal.isValid(params) && (!blockIndex || outsideProposalCutoff(proposal, blockIndex->nHeight, params)))
                         proposalsRet.insert(proposal);
                 } else if (obj.getType() == VOTE) {
                     if (vinHashes.empty()) { // initialize vin hashes
@@ -1301,7 +1301,7 @@ public:
                     // otherwise the vote is discarded.
                     if ((blockIndex && checkProposal && !hasProposal(vote.getProposal(), blockIndex->nHeight))
                         || !vote.isValid(vinHashes, params)
-                        || (blockIndex && !meetsVotingCutoff(getProposal(vote.getProposal()), blockIndex->nHeight, params)))
+                        || (blockIndex && !outsideVotingCutoff(getProposal(vote.getProposal()), blockIndex->nHeight, params)))
                         continue;
                     // Handle vote changes, if a vote already exists and the user
                     // is submitting a change, only count the vote with the most
@@ -1566,13 +1566,13 @@ public: // static
     }
 
     /**
-     * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
+     * Returns true if the proposal is not yet in the cutoff period. Make sure mutex (mu) is not held.
      * @param proposal
      * @param blockNumber
      * @param params
      * @return
      */
-    static bool meetsProposalCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
+    static bool outsideProposalCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
         if (proposal.isNull()) // check if valid
             return false;
         // Proposals can happen multiple superblocks in advance if a proposal
@@ -1583,13 +1583,13 @@ public: // static
     }
 
     /**
-     * Returns true if the vote meets the requirements for the cutoff. Make sure mutex (mu) is not held.
+     * Returns true if the vote is not yet in the cutoff period. Make sure mutex (mu) is not held.
      * @param proposal
      * @param blockNumber
      * @param params
      * @return
      */
-    static bool meetsVotingCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
+    static bool outsideVotingCutoff(const Proposal & proposal, const int & blockNumber, const Consensus::Params & params) {
         if (proposal.isNull()) // check if valid
             return false;
         // Votes can happen multiple superblocks in advance if a proposal is

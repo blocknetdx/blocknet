@@ -71,7 +71,7 @@ static UniValue createproposal(const JSONRPCRequest& request)
     if (currentBlockHeight == 0)
         throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit proposal because current block height is invalid");
 
-    if (!gov::Governance::meetsProposalCutoff(proposal, currentBlockHeight, Params().GetConsensus())) {
+    if (!gov::Governance::outsideProposalCutoff(proposal, currentBlockHeight, Params().GetConsensus())) {
         const int nextsb = gov::Governance::nextSuperblock(Params().GetConsensus(), superblock + 1);
         if (shouldPickNextSuperblock)
             throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal for Superblock %u because the proposal cutoff time has passed. "
