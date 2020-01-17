@@ -91,17 +91,17 @@ public:
         // Deployment of SegWit (BIP141, BIP143, and BIP147)
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 1574100000; // November 18, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1583085600; // March 1, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1586973600; // April 15, 2020
 
         // Deployment of staker network fees
         consensus.vDeployments[Consensus::DEPLOYMENT_NETWORKFEES].bit = 25;
         consensus.vDeployments[Consensus::DEPLOYMENT_NETWORKFEES].nStartTime = 1559692800; // June 5, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_NETWORKFEES].nTimeout = 1583085600; // March 1, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_NETWORKFEES].nTimeout = 1586973600; // April 15, 2020
 
         // Deployment of staker p2pkh support
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].bit = 24;
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nStartTime = 1559692800; // June 5, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1583085600; // March 1, 2020
+        consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1586973600; // April 15, 2020
 
         // The best chain should have at least this much work.
         consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000038acf2f1ff6e2a66a"); // block 1212162
