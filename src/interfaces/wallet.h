@@ -220,6 +220,9 @@ public:
     //! Return wallet transaction output information.
     virtual std::vector<WalletTxOut> getCoins(const std::vector<COutPoint>& outputs) = 0;
 
+    //! Return known utxo count
+    virtual int getCoinCount() = 0;
+
     //! Get required fee.
     virtual CAmount getRequiredFee(unsigned int tx_bytes) = 0;
 
