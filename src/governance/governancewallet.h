@@ -60,7 +60,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
  * @param params Chain params
  * @return
  */
-bool RevoteOnStake(const int & stakedHeight, const COutPoint & utxo, const CKey & key, std::pair<CTxOut,COutPoint> stakeUtxo,
+bool RevoteOnStake(const int & stakedHeight, const COutPoint & utxo, const CKey & key, const std::pair<CTxOut,COutPoint> & stakeUtxo,
                    CWallet *wallet, CTransactionRef & tx, const Consensus::Params & params);
 
 }

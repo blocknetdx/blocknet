@@ -1455,7 +1455,7 @@ public:
     }
 
     /**
-     * Returns true if the specified utxo exists in an active and validd proposal who's voting period has ended.
+     * Returns true if the specified utxo exists in an active and valid proposal who's voting period has ended.
      * @param utxo
      * @param tipHeight
      * @param params
@@ -1477,6 +1477,45 @@ public:
         }
 
         return false;
+    }
+
+    /**
+     * Returns true if the specified utxo is associated with a vote in an active and valid proposal.
+     * @param utxo
+     * @param blockHeight
+     * @param params
+     * @return
+     */
+    bool utxoInVote(const COutPoint & utxo, const int & blockHeight, const Consensus::Params & params) {
+        const auto sproposals = getProposalsSince(blockHeight);
+        for (const auto & proposal : sproposals) {
+            const auto svotes = getVotes(proposal.getHash());
+            for (const auto & vote : svotes) {
+                if (utxo == vote.getUtxo())
+                    return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Returns a list of utxos from a set that are associated with a vote in an active and valid proposal.
+     * @param utxos
+     * @param blockHeight
+     * @param utxosRet Filtered with utxos that were found in votes
+     * @param params
+     * @return
+     */
+    void utxosInVotes(const std::set<COutPoint> & utxos, const int & blockHeight, std::set<COutPoint> & utxosRet, const Consensus::Params & params) {
+        utxosRet.clear();
+        const auto sproposals = getProposalsSince(blockHeight);
+        for (const auto & proposal : sproposals) {
+            const auto svotes = getVotes(proposal.getHash());
+            for (const auto & vote : svotes) {
+                if (utxos.count(vote.getUtxo()))
+                    utxosRet.insert(vote.getUtxo());
+            }
+        }
     }
 
 public: // static
