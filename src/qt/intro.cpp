@@ -201,8 +201,13 @@ bool Intro::pickDataDirectory(interfaces::Node& node)
     QString confDataDir;
     if (getDataDirFromConfFile(QString::fromStdString(gArgs.GetArg("-conf", BITCOIN_CONF_FILENAME)), confDataDir))
         dataDir = confDataDir;
-    else
+    else {
         askUser = settings.value("strDataDir").isNull();
+        if (dataDir.endsWith("BlocknetDX")) { // extra check on v3 dir to avoid chain corruption
+            askUser = true;
+            dataDir = getDefaultDataDirectory();
+        }
+    }
 
     if(!fs::exists(GUIUtil::qstringToBoostPath(dataDir)) || askUser || gArgs.GetBoolArg("-choosedatadir", DEFAULT_CHOOSE_DATADIR) || settings.value("fReset", false).toBool() || gArgs.GetBoolArg("-resetguisettings", false))
     {
@@ -249,6 +254,8 @@ bool Intro::pickDataDirectory(interfaces::Node& node)
     if(dataDir != getDefaultDataDirectory()) {
         node.softSetArg("-datadir", GUIUtil::qstringToBoostPath(dataDir).string()); // use OS locale for path setting
     }
+
+    settings.sync();
     return true;
 }
 
