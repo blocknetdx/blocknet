@@ -450,6 +450,10 @@ static UniValue servicenoderegister(const JSONRPCRequest& request)
     if (!request.params[0].isNull())
         alias = request.params[0].get_str();
 
+    std::set<sn::ServiceNodeConfigEntry> snentries;
+    if (!sn::ServiceNodeMgr::instance().loadSnConfig(snentries))
+        throw JSONRPCError(RPC_MISC_ERROR, "failed to load config, check servicenode.conf");
+
     UniValue ret(UniValue::VARR);
     const auto entries = sn::ServiceNodeMgr::instance().getSnEntries();
     for (const auto & entry : entries) {
