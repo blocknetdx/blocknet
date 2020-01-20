@@ -9,6 +9,7 @@
 #include <key.h>
 #include <serialize.h>
 #include <script/standard.h>
+#include <sync.h>
 
 #if defined(HAVE_CONFIG_H)
 #include <config/bitcoin-config.h>
@@ -22,6 +23,7 @@
 #include <interfaces/wallet.h>
 #include <support/allocators/secure.h>
 
+#include <atomic>
 #include <map>
 #include <vector>
 
@@ -253,6 +255,9 @@ private:
     int cachedNumBlocks;
 
     QTimer *pollTimer;
+    std::atomic<bool> pollActive{false};
+    int pollCount{0};
+    int pollCoinCount{0};
 
     void subscribeToCoreSignals();
     void unsubscribeFromCoreSignals();

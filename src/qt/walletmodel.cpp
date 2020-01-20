@@ -46,7 +46,23 @@ WalletModel::WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces:
 
     // This timer will be fired repeatedly to update the balance
     pollTimer = new QTimer(this);
-    connect(pollTimer, &QTimer::timeout, this, &WalletModel::pollBalanceChanged);
+    pollCount = 300000; // default to max
+    connect(pollTimer, &QTimer::timeout, this, [this]{
+        if (pollActive)
+            return;
+        // Check coin count every 5 mins
+        if (pollCount % 300000 == 0) {
+            pollCount = 0;
+            pollCoinCount = m_wallet->getCoinCount();
+        }
+        pollCount += MODEL_UPDATE_DELAY;
+        // If coin count is small use default interval, otherwise decrease check interval by 10x
+        if (pollCoinCount < 7500 || pollCount % (MODEL_UPDATE_DELAY*10 + MODEL_UPDATE_DELAY) == 0) {
+            pollActive = true;
+            std::thread t([this](){ pollBalanceChanged(); });
+            t.detach(); // thread runs free
+        }
+    });
     pollTimer->start(MODEL_UPDATE_DELAY);
 
     subscribeToCoreSignals();
@@ -75,6 +91,7 @@ void WalletModel::pollBalanceChanged()
     interfaces::WalletBalances new_balances;
     int numBlocks = -1;
     if (!m_wallet->tryGetBalances(new_balances, numBlocks)) {
+        pollActive = false;
         return;
     }
 
@@ -89,6 +106,8 @@ void WalletModel::pollBalanceChanged()
         if(transactionTableModel)
             transactionTableModel->updateConfirmations();
     }
+
+    pollActive = false;
 }
 
 void WalletModel::checkBalanceChanged(const interfaces::WalletBalances& new_balances)
