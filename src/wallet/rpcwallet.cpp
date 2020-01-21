@@ -768,7 +768,7 @@ static UniValue getbalance(const JSONRPCRequest& request)
         filter = filter | ISMINE_WATCH_ONLY;
     }
 
-    return ValueFromAmount(pwallet->GetBalance(filter, min_depth));
+    return ValueFromAmount(pwallet->GetBalance(filter, min_depth) + pwallet->GetImmatureBalance()); // Blocknet PoS show immature balance
 }
 
 static UniValue getunconfirmedbalance(const JSONRPCRequest &request)
