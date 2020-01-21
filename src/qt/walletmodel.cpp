@@ -19,6 +19,7 @@
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
 #include <key_io.h>
+#include <shutdown.h>
 #include <ui_interface.h>
 #include <util/system.h> // for GetBoolArg
 #include <wallet/coincontrol.h>
@@ -48,8 +49,8 @@ WalletModel::WalletModel(std::unique_ptr<interfaces::Wallet> wallet, interfaces:
     pollTimer = new QTimer(this);
     pollCount = 300000; // default to max
     connect(pollTimer, &QTimer::timeout, this, [this]{
-        if (pollActive)
-            return;
+        if (pollActive || ShutdownRequested())
+            return; // do not continue if shutdown requested
         // Check coin count every 5 mins
         if (pollCount % 300000 == 0) {
             pollCount = 0;
