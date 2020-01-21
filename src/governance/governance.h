@@ -1099,11 +1099,12 @@ public:
     }
 
     /**
-     * Fetch all votes for the specified proposal that haven't been spent.
+     * Fetch all votes for the specified proposal that haven't been spent. Optionally return spent votes.
      * @param proposalHash Proposal hash
+     * @param returnSpent Includes spent votes, defaults to false
      * @return
      */
-    std::vector<Vote*> getMutableSBVotes(const uint256 & proposalHash) {
+    std::vector<Vote*> getMutableSBVotes(const uint256 & proposalHash, const bool & returnSpent = false) {
         LOCK(mu);
         std::vector<Vote*> vos;
         if (!proposals.count(proposalHash))
@@ -1115,7 +1116,7 @@ public:
 
         auto & vs = sbvotes[proposal.getSuperblock()];
         for (auto & item : vs) {
-            if (item.second.getProposal() == proposalHash && !item.second.spent())
+            if (item.second.getProposal() == proposalHash && (returnSpent || !item.second.spent()))
                 vos.push_back(&item.second);
         }
         return vos;
@@ -1867,11 +1868,11 @@ protected:
         // Obtain all votes for these proposals
         std::vector<Vote*> svotes;
         for (const auto & p : sprops) {
-            auto s = getMutableSBVotes(p.getHash());
+            auto s = getMutableSBVotes(p.getHash(), true);
             svotes.insert(svotes.end(), s.begin(), s.end());
         }
-
-        {
+        // Spend votes that match spent vins
+        if (!svotes.empty()) {
             LOCK(mu);
             for (auto & v : svotes) {
                 if (!prevouts.count(v->getUtxo()))
@@ -1955,8 +1956,8 @@ protected:
             auto s = getMutableSBVotes(p.getHash());
             svotes.insert(svotes.end(), s.begin(), s.end());
         }
-
-        {
+        // Spend votes that match spent vins
+        if (!svotes.empty()) {
             LOCK(mu);
             for (auto & v : svotes) {
                 if (!prevouts.count(v->getUtxo()))

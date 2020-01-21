@@ -419,10 +419,12 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                 inputsTotal += inputItem.second->GetInputCoin().txout.nValue;
 
                 // Distribute fees equally across the change addresses (paid back to input addresses minus fee)
-                const auto changeAmt = inputItem.second->GetInputCoin().txout.nValue - estimatedFeePerInput;
-                const auto script = GetScriptForDestination({inputItem.first});
-                if (!IsDust(CTxOut(changeAmt, script), ::dustRelayFee))
-                    voteOuts.push_back({script, changeAmt, false});
+                if (CTxDestination(inputItem.first) != cc.destChange) { // let coin control handle change to default addr
+                    const auto changeAmt = inputItem.second->GetInputCoin().txout.nValue - estimatedFeePerInput;
+                    const auto script = GetScriptForDestination({inputItem.first});
+                    if (!IsDust(CTxOut(changeAmt, script), ::dustRelayFee))
+                        voteOuts.push_back({script, changeAmt, false});
+                }
             }
 
             // Do not create voting transaction if inputs do not cover fees

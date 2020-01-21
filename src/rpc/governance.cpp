@@ -141,10 +141,8 @@ static UniValue listproposals(const JSONRPCRequest& request)
 
     std::vector<gov::Proposal> proposals;
     std::vector<gov::Vote> votes;
-    auto ps = gov::Governance::instance().getProposals();
+    auto ps = gov::Governance::instance().getProposalsSince(sinceBlock);
     for (const auto & proposal : ps) {
-        if (proposal.getSuperblock() < sinceBlock) // skip proposals prior to the since block
-            continue;
         proposals.push_back(proposal);
         const auto & v = gov::Governance::instance().getVotes(proposal.getHash());
         votes.insert(votes.end(), v.begin(), v.end());
