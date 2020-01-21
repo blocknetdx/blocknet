@@ -199,6 +199,7 @@ void BlocknetTransactionHistory::showEvent(QShowEvent *event) {
     connect(typeCb, static_cast<void(BlocknetDropdown::*)(int)>(&BlocknetDropdown::activated), this, &BlocknetTransactionHistory::typeChanged);
     connect(transactionsTbl, &BlocknetTransactionHistoryTable::doubleClicked, this, &BlocknetTransactionHistory::showDetails);
     connect(transactionsTbl, &BlocknetTransactionHistoryTable::customContextMenuRequested, this, &BlocknetTransactionHistory::contextualMenu);
+    onDisplayUnit(walletModel->getOptionsModel()->getDisplayUnit());
 }
 
 void BlocknetTransactionHistory::hideEvent(QHideEvent *event) {
