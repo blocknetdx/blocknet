@@ -1802,6 +1802,7 @@ bool AppInitMain(InitInterfaces& interfaces)
     // ********************************************************* Step 12: start node
 
     // Load governance data from chain data
+    uiInterface.InitMessage(_("Loading Governance data..."));
     std::string failReason;
     if (!gov::Governance::instance().loadGovernanceData(chainActive, cs_main, Params().GetConsensus(), failReason)) {
         LogPrintf("ERROR: Failed to load Governance data: %s\n", failReason);

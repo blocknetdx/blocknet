@@ -792,8 +792,8 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
             StakeBlocks(1), SyncWithValidationInterfaceQueue();
             auto vs = gov::Governance::instance().getVotes(proposal.getHash());
             BOOST_CHECK_MESSAGE(vs.empty(), strprintf("Expecting 0 votes, found %u", vs.size()));
-            auto pvs = gov::Governance::instance().getMutableSBVotes(proposal.getHash(), true);
-            BOOST_CHECK_MESSAGE(pvs.size() == 1 && pvs[0]->spent(), "Expecting 1 spent vote");
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_CHECK_MESSAGE(pvs.size() == 1 && pvs[0].spent(), "Expecting 1 spent vote");
         }
         // 3) Simulate block invalidation/disconnect and make sure votes are properly unspent
         {
@@ -802,16 +802,16 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
             SyncWithValidationInterfaceQueue(); mempool.clear();
             auto vs = gov::Governance::instance().getVotes(proposal.getHash());
             BOOST_CHECK_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
-            auto pvs = gov::Governance::instance().getMutableSBVotes(proposal.getHash());
-            BOOST_CHECK_MESSAGE(pvs.size() == 1 && !pvs[0]->spent(), "Expecting 1 unspent vote");
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_CHECK_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
         }
         // 4) Check vote is valid after new block
         {
             StakeBlocks(1), SyncWithValidationInterfaceQueue();
             auto vs = gov::Governance::instance().getVotes(proposal.getHash());
             BOOST_CHECK_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
-            auto pvs = gov::Governance::instance().getMutableSBVotes(proposal.getHash());
-            BOOST_CHECK_MESSAGE(pvs.size() == 1 && !pvs[0]->spent(), "Expecting 1 unspent vote");
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_CHECK_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
         }
         // Clean up
         UnregisterValidationInterface(otherwallet.get());
@@ -1172,7 +1172,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
                 BOOST_CHECK_MESSAGE(vote.getProposal() == proposal.getHash(), "Vote data should match the expected proposal hash");
                 BOOST_CHECK_MESSAGE(vote.getVote() == proposalVote.vote, "Vote data should match the expected vote type");
                 if (vote.getUtxo() == block.vtx[1]->vin[0].prevout) { // staked inputs associated with votes should be invalid
-                    BOOST_CHECK_MESSAGE(gov::IsVoteSpent(vote, false), "Vote should be marked as spent when its utxo stakes");
+                    BOOST_CHECK_MESSAGE(gov::IsVoteSpent(vote, consensus.governanceBlock, false), "Vote should be marked as spent when its utxo stakes");
                     BOOST_CHECK_MESSAGE(!gov::Governance::instance().hasVote(vote.getHash()), "Governance manager should not know about spent votes");
                     continue;
                 } else {
@@ -2639,7 +2639,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
                         CDataStream ssv(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                         gov::Vote vote({tx->GetHash(), static_cast<uint32_t>(n)});
                         ssv >> vote;
-                        if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, false))
+                        if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, consensus.governanceBlock, false))
                             ++expecting;
                         else
                             ++spent;
