@@ -184,7 +184,7 @@ void BlocknetWallet::setPage(BlocknetPage page) {
         case BlocknetPage::PROPOSALS: {
             auto *proposals = new BlocknetProposals;
             connect(proposals, &BlocknetProposals::createProposal, this, &BlocknetWallet::goToCreateProposal);
-            proposals->setWalletModel(walletModel);
+            proposals->setModels(clientModel, walletModel);
             screen = proposals;
             break;
         }

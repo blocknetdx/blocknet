@@ -45,7 +45,7 @@ static UniValue createproposal(const JSONRPCRequest& request)
                 },
                 RPCExamples{
                     HelpExampleCli("createproposal", R"("Dev Proposal" 43200 750 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "https://forum.blocknet.co" "Dev proposal for building xyz")")
-                  + HelpExampleRpc("createproposal", R"("Dev Proposal" 43200 750 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "https://forum.blocknet.co" "Dev proposal for building xyz")")
+                  + HelpExampleRpc("createproposal", R"("Dev Proposal", 43200, 750, "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa", "https://forum.blocknet.co", "Dev proposal for building xyz")")
                 },
             }.ToString());
 
@@ -71,7 +71,7 @@ static UniValue createproposal(const JSONRPCRequest& request)
     if (currentBlockHeight == 0)
         throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit proposal because current block height is invalid");
 
-    if (!gov::Governance::meetsProposalCutoff(proposal, currentBlockHeight, Params().GetConsensus())) {
+    if (!gov::Governance::outsideProposalCutoff(proposal, currentBlockHeight, Params().GetConsensus())) {
         const int nextsb = gov::Governance::nextSuperblock(Params().GetConsensus(), superblock + 1);
         if (shouldPickNextSuperblock)
             throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to submit proposal for Superblock %u because the proposal cutoff time has passed. "
@@ -141,10 +141,8 @@ static UniValue listproposals(const JSONRPCRequest& request)
 
     std::vector<gov::Proposal> proposals;
     std::vector<gov::Vote> votes;
-    auto ps = gov::Governance::instance().getProposals();
+    auto ps = gov::Governance::instance().getProposalsSince(sinceBlock);
     for (const auto & proposal : ps) {
-        if (proposal.getSuperblock() < sinceBlock) // skip proposals prior to the since block
-            continue;
         proposals.push_back(proposal);
         const auto & v = gov::Governance::instance().getVotes(proposal.getHash());
         votes.insert(votes.end(), v.begin(), v.end());
@@ -201,9 +199,9 @@ static UniValue vote(const JSONRPCRequest& request)
                     HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "yes")")
                   + HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "no")")
                   + HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "abstain")")
-                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "yes")")
-                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "no")")
-                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "abstain")")
+                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "yes")")
+                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "no")")
+                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "abstain")")
                 },
             }.ToString());
 
@@ -222,6 +220,9 @@ static UniValue vote(const JSONRPCRequest& request)
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("'vote' parameter %s is invalid, expected yes/no/abstain", voteType));
 
     const gov::Proposal & proposal = gov::Governance::instance().getProposal(proposalHash);
+    if (!gov::Governance::outsideVotingCutoff(proposal, chainActive.Height(), Params().GetConsensus()))
+        throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit the vote because the voting period for this proposal has ended");
+
     gov::ProposalVote vote{proposal, castVote};
     std::vector<CTransactionRef> txns;
     std::string failReason;

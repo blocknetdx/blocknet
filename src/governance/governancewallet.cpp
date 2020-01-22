@@ -9,22 +9,19 @@
 
 namespace gov {
 
-std::tuple<int, VoteType, bool, CAmount> GetMyVotes(const uint256 & hash, CCoinsViewCache *coinsTip,
-        std::vector<std::shared_ptr<CWallet>> & wallets, const Consensus::Params & consensus)
+std::tuple<int, VoteType, bool, CAmount> GetMyVotes(const uint256 & proposalHash, std::vector<std::shared_ptr<CWallet>> & wallets,
+        const Consensus::Params & consensus)
 {
-    auto copyVotes = Governance::instance().copyVotes();
+    auto copyVotes = Governance::instance().getVotes(proposalHash);
     CAmount voteAmount{0};
     VoteType vtype{ABSTAIN};
-    for (const auto & item : copyVotes) {
-        const auto & vote = item.second;
-        if (vote.getProposal() == hash && !vote.spent()) {
-            const auto & utxo = vote.getUtxo();
-            for (auto & w : wallets) {
-                if (w->HaveKey(vote.getKeyID())) {
-                    vtype = vote.getVote();
-                    voteAmount += vote.getAmount();
-                    break;
-                }
+    for (const auto & vote : copyVotes) {
+        const auto & utxo = vote.getUtxo();
+        for (auto & w : wallets) {
+            if (w->HaveKey(vote.getKeyID())) {
+                vtype = vote.getVote();
+                voteAmount += vote.getAmount();
+                break;
             }
         }
     }
@@ -201,7 +198,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
             *failReasonRet = "All wallets must be unlocked to vote";
             return error(failReasonRet->c_str());
         }
-        totalBalance += wallet->GetBalance();
+        totalBalance += wallet->GetBalance() + wallet->GetImmatureBalance();
     }
     if (totalBalance < params.voteBalance) {
         *failReasonRet = strprintf("Not enough coin to cast a vote, %s is required", FormatMoney(params.voteBalance));
@@ -224,8 +221,8 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
     // Store the utxos that are associated with votes map<utxo, proposal hash>
     std::map<COutPoint, std::set<uint256>> usedUtxos;
 
-    // Minimum vote input amount
-    const auto voteMinAmount = static_cast<CAmount>(gArgs.GetArg("-voteinputamount", VOTING_UTXO_INPUT_AMOUNT));
+    // Desired vote input amount
+    const auto desiredVoteInputAmt = static_cast<CAmount>(gArgs.GetArg("-voteinputamount", VOTING_UTXO_INPUT_AMOUNT));
 
     for (auto & wallet : wallets) {
         auto locked_chain = wallet->chain().lock();
@@ -234,14 +231,15 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
         bool completelyDone{false}; // no votes left
         do {
             // Obtain all valid coin from this wallet that can be used in casting votes
-            std::vector<COutput> coins;
-            wallet->AvailableCoins(*locked_chain, coins);
-            std::sort(coins.begin(), coins.end(), [](const COutput & out1, const COutput & out2) -> bool { // sort ascending (smallest first)
+            std::vector<COutput> iptcoins;
+            wallet->AvailableCoins(*locked_chain, iptcoins, false);
+            // sort ascending (smallest first)
+            std::sort(iptcoins.begin(), iptcoins.end(), [](const COutput & out1, const COutput & out2) -> bool {
                 return out1.GetInputCoin().txout.nValue < out2.GetInputCoin().txout.nValue;
             });
 
             // Do not proceed if no inputs were found
-            if (coins.empty())
+            if (iptcoins.empty())
                 break;
 
             // Filter the coins that meet the minimum requirement for utxo amount. These
@@ -253,29 +251,55 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
             // associated with the votes being used in this tx.
             std::map<CKeyID, const COutput*> inputsInUse;
 
+            // Other input coins available for use in case we need more coins to cover fees
+            std::vector<const COutput*> otherInputCoins;
+
             // Select the coin set that meets the utxo amount requirements for use with
             // vote outputs in the tx.
-            std::vector<COutput> filtered;
-            for (const auto & coin : coins) {
+            std::map<CKeyID, CAmount> inputDiffs;
+            for (const auto & coin : iptcoins) {
                 if (!coin.fSpendable)
                     continue;
                 CTxDestination dest;
                 if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
                     continue;
-                // Input selection assumes "coins" is sorted ascending by nValue
-                const auto & addr = boost::get<CKeyID>(dest);
-                if (!inputCoins.count(addr) && coin.GetInputCoin().txout.nValue >= static_cast<CAmount>((double)voteMinAmount*0.6)) {
-                    inputCoins[addr] = &coin; // store smallest coin meeting vote input amount requirement
-                    continue; // do not use in the vote b/c it's being used in the input
+                // Add coin to other inputs for use to cover extra fees
+                otherInputCoins.push_back(&coin);
+                // Find ideal input size
+                const auto & addr = *boost::get<CKeyID>(&dest);
+                auto inputDiff = std::numeric_limits<CAmount>::max();
+                if (inputDiffs.count(addr))
+                    inputDiff = inputDiffs[addr];
+                // Find the coin closest to the desired vote input amount
+                const auto cdiff = static_cast<CAmount>(abs(coin.GetInputCoin().txout.nValue - desiredVoteInputAmt));
+                if (cdiff < inputDiff)  {
+                    inputDiff = cdiff;
+                    inputDiffs[addr] = inputDiff;
+                    inputCoins[addr] = &coin;
                 }
-                if (coin.GetInputCoin().txout.nValue < params.voteMinUtxoAmount)
-                    continue;
-                filtered.push_back(coin);
             }
 
-            // Do not proceed if no coins or inputs were found
-            if (filtered.empty() || inputCoins.empty())
+            if (inputCoins.empty())
                 break;
+
+            // Select coins for use with voting
+            std::vector<COutput> votingCoins;
+            wallet->VotingCoins(*locked_chain, votingCoins, params.voteMinUtxoAmount);
+
+            // Add voting utxos and filter out any ones being used as tx inputs
+            std::vector<COutput> filteredVotingCoins;
+            for (const auto & coin : votingCoins) {
+                CTxDestination dest;
+                if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
+                    continue;
+                // Do not add vote utxos that are being used as vote inputs
+                const auto & addr = *boost::get<CKeyID>(&dest);
+                if (inputCoins.count(addr) && inputCoins[addr]->GetInputCoin().outpoint != coin.GetInputCoin().outpoint)
+                    filteredVotingCoins.push_back(coin);
+            }
+
+            if (filteredVotingCoins.empty())
+                break; // Do not proceed if no coins or inputs were found
 
             // Store all the votes for each proposal across all participating utxos. Each
             // utxo can be used to vote towards each proposal.
@@ -284,14 +308,14 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
             bool doneWithPendingVotes{false}; // do we have any votes left
 
             // Create all votes, i.e. as many that will fit in a single transaction
-            for (int i = 0; i < static_cast<int>(filtered.size()); ++i) {
-                const auto &coin = filtered[i];
+            for (int i = 0; i < static_cast<int>(filteredVotingCoins.size()); ++i) {
+                const auto & coin = filteredVotingCoins[i];
 
                 CTxDestination dest;
                 if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
                     continue;
 
-                const auto & addr = boost::get<CKeyID>(dest);
+                const auto & addr = *boost::get<CKeyID>(&dest);
 
                 CKey key; // utxo private key
                 {
@@ -302,6 +326,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                         continue;
                 }
 
+                // Cast all votes
                 for (int j = 0; j < static_cast<int>(proposalVotes.size()); ++j) {
                     const auto & pv = proposalVotes[j];
                     const bool utxoAlreadyUsed = usedUtxos.count(coin.GetInputCoin().outpoint) > 0 &&
@@ -337,7 +362,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                     usedUtxos[coin.GetInputCoin().outpoint].insert(pv.proposal.getHash());
 
                     // Track whether we're on the last vote, used to break out while loop
-                    completelyDone = (i == filtered.size() - 1 && j == proposalVotes.size() - 1);
+                    completelyDone = (i == filteredVotingCoins.size() - 1 && j == proposalVotes.size() - 1);
 
                     if (voteOuts.size() == MAX_OP_RETURN_IN_TRANSACTION) {
                         doneWithPendingVotes = !completelyDone;
@@ -352,10 +377,25 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
             }
 
             // At this point the code assumes that MAX_OP_RETURN_IN_TRANSACTION is reached
-            // or that we've reached the last known vote (last item in all iterations)
+            // or that we've reached the last known vote (last voting utxo in all iterations)
 
             if (voteOuts.empty()) // Handle case where no votes were produced
                 break;
+
+            // Exclude other inputs used in votes or used in selected vote input coins
+            otherInputCoins.erase(std::remove_if(otherInputCoins.begin(), otherInputCoins.end(), [&usedUtxos,&inputsInUse](const COutput *coin) -> bool {
+                if (usedUtxos.count(coin->GetInputCoin().outpoint) > 0)
+                    return true;
+                for (const auto & c : inputsInUse) {
+                    if (c.second->GetInputCoin().outpoint == coin->GetInputCoin().outpoint)
+                        return true;
+                }
+                return false;
+            }), otherInputCoins.end());
+            // Sort other input coins ascending (smallest first)
+            std::sort(otherInputCoins.begin(), otherInputCoins.end(), [](const COutput *coin1, const COutput *coin2) -> bool {
+                return coin1->GetInputCoin().txout.nValue < coin2->GetInputCoin().txout.nValue;
+            });
 
             // Select the inputs for use with the transaction. Also add separate outputs to pay
             // back the vote inputs to their own addresses as change (requires estimating fees).
@@ -363,17 +403,45 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
             cc.fAllowOtherInputs = false;
             cc.destChange = CTxDestination(inputsInUse.begin()->first); // pay change to the first input coin
             FeeCalculation feeCalc;
-            const auto feeBytes = static_cast<unsigned int>(inputsInUse.size()*175) + // TODO Blocknet accurate input size estimation required
-                                  static_cast<unsigned int>(voteOuts.size()*(MAX_OP_RETURN_RELAY+75));
+            // TODO Blocknet accurate input size estimation required
+            const auto feeBytes = static_cast<unsigned int>(inputsInUse.size()*180) // inputs (~180 bytes)
+                                  + static_cast<unsigned int>(voteOuts.size()*(MAX_OP_RETURN_RELAY+75)) // vote outs (~235 bytes)
+                                  + static_cast<unsigned int>(inputsInUse.size()*50); // change, 1 per input (~50 bytes)
             CAmount payFee = GetMinimumFee(*wallet, feeBytes, cc, ::mempool, ::feeEstimator, &feeCalc);
             CAmount estimatedFeePerInput = payFee/static_cast<CAmount>(inputsInUse.size());
 
-            // Select inputs and distribute fees equally across the change addresses (paid back to input addresses minus fee)
+            // Add up input amounts total
+            CAmount inputsTotal{0};
+
+            // Coin control select inputs
             for (const auto & inputItem : inputsInUse) {
-                cc.Select(inputItem.second->GetInputCoin().outpoint);
-                voteOuts.push_back({GetScriptForDestination({inputItem.first}),
-                                    inputItem.second->GetInputCoin().txout.nValue - estimatedFeePerInput,
-                                    false});
+                cc.Select(inputItem.second->GetInputCoin().outpoint); // make sure coincontrol uses our vote inputs
+                inputsTotal += inputItem.second->GetInputCoin().txout.nValue;
+
+                // Distribute fees equally across the change addresses (paid back to input addresses minus fee)
+                if (CTxDestination(inputItem.first) != cc.destChange) { // let coin control handle change to default addr
+                    const auto changeAmt = inputItem.second->GetInputCoin().txout.nValue - estimatedFeePerInput;
+                    const auto script = GetScriptForDestination({inputItem.first});
+                    if (!IsDust(CTxOut(changeAmt, script), ::dustRelayFee))
+                        voteOuts.push_back({script, changeAmt, false});
+                }
+            }
+
+            // Do not create voting transaction if inputs do not cover fees
+            if (inputsTotal < payFee) {
+                // Add additional other inputs to cover fee if necessary
+                for (const auto & coin : otherInputCoins) {
+                    if (inputsTotal >= payFee)
+                        break;
+                    cc.Select(coin->GetInputCoin().outpoint);
+                    inputsTotal += coin->GetInputCoin().txout.nValue;
+                }
+                // If we're still under the required amount to cover fees, then abort with error
+                if (inputsTotal < payFee) {
+                    std::string reason = strprintf("Voting inputs do not cover fees: received %s, require %s", FormatMoney(inputsTotal), FormatMoney(payFee));
+                    *failReasonRet = strprintf("Failed to create the vote submission transaction: %s", reason);
+                    return error(failReasonRet->c_str());
+                }
             }
 
             // Create and send the transaction
@@ -383,7 +451,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
             int nChangePosRet = -1;
             CTransactionRef tx;
             if (!wallet->CreateTransaction(*locked_chain, voteOuts, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc)) {
-                *failReasonRet = strprintf("Failed to create the proposal submission transaction: %s", strError);
+                *failReasonRet = strprintf("Failed to create the vote submission transaction: %s", strError);
                 return error(failReasonRet->c_str());
             }
 
@@ -396,7 +464,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
 
             CValidationState state;
             if (!wallet->CommitTransaction(tx, {}, {}, reservekey, connman, state)) {
-                *failReasonRet = strprintf("Failed to create the proposal submission transaction, it was rejected: %s", FormatStateMessage(state));
+                *failReasonRet = strprintf("Failed to create the vote submission transaction, it was rejected: %s", FormatStateMessage(state));
                 return error(failReasonRet->c_str());
             }
 
@@ -414,6 +482,168 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
     if (txCounter == 0) {
         *failReasonRet = strprintf("Failed to submit votes, all unspent transaction inputs might already be in use");
         return error(failReasonRet->c_str());
+    }
+
+    return true;
+}
+
+bool RevoteOnStake(const int & stakedHeight, const COutPoint & utxo, const CKey & key, const std::pair<CTxOut,COutPoint> & stakeUtxo,
+        CWallet *wallet, CTransactionRef & tx, const Consensus::Params & params)
+{
+    auto props = Governance::instance().getProposals(); // copy
+    std::vector<std::pair<Proposal, Vote>> selprops;
+    // Find all proposals in current or future superblock that have votes that
+    // match the staked utxo
+    for (auto & ps : props) {
+        // Are we in a current or future proposal
+        if (ps.getSuperblock() > stakedHeight && !Governance::insideVoteCutoff(ps.getSuperblock(), stakedHeight, params)) {
+            auto vvs = Governance::instance().getVotes(ps.getHash()); // copy
+            for (const auto & vs : vvs) {
+                if (vs.getUtxo() == utxo && ps.isValid(params)) {
+                    selprops.emplace_back(ps, vs);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (selprops.empty())
+        return false; // no votes to change
+
+    // Find vote input that matches the staking address
+    std::vector<std::pair<CTxOut,COutPoint>> coins;
+    std::vector<std::pair<CTxOut,COutPoint>> otherCoins;
+    {
+        auto locked_chain = wallet->chain().lock();
+        LOCK(wallet->cs_wallet);
+
+        // Obtain all valid coin from this wallet that can be used in casting votes
+        std::vector<COutput> cs;
+        wallet->AvailableCoins(*locked_chain, cs);
+
+        // Do not proceed if not enough inputs were found (expecting at least 2, one for vote input, one for vote utxo)
+        if (cs.empty() || cs.size() < 2)
+            return false;
+
+        for (auto & c : cs) {
+            if (c.GetInputCoin().outpoint == utxo) // if coin matches utxo of staked input, skip
+                continue;
+            CTxDestination dest;
+            if (!ExtractDestination(c.GetInputCoin().txout.scriptPubKey, dest))
+                continue;
+            auto keyid = *boost::get<CKeyID>(&dest);
+            if (keyid == key.GetPubKey().GetID()) // this dest matches keyid of staking input
+                coins.emplace_back(c.GetInputCoin().txout, c.GetInputCoin().outpoint);
+            else
+                otherCoins.emplace_back(c.GetInputCoin().txout, c.GetInputCoin().outpoint);
+        }
+    }
+
+    // Need 1 coin for vote input
+    if (coins.empty())
+        return false; // not enough inputs!
+
+    // sort ascending (smallest first)
+    std::sort(coins.begin(), coins.end(),
+        [](const std::pair<CTxOut,COutPoint> & out1, const std::pair<CTxOut,COutPoint> & out2) -> bool {
+            return out1.first.nValue < out2.first.nValue;
+        });
+    std::sort(otherCoins.begin(), otherCoins.end(),
+        [](const std::pair<CTxOut,COutPoint> & out1, const std::pair<CTxOut,COutPoint> & out2) -> bool {
+            return out1.first.nValue < out2.first.nValue;
+        });
+
+    // Desired vote input amount
+    const auto voteInputDesiredAmount = static_cast<CAmount>(gArgs.GetArg("-voteinputamount", VOTING_UTXO_INPUT_AMOUNT));
+    // Find suitable sized input
+    auto selinput = coins.front();
+    // Only search for a larger sized coin if the smallest one is less than the target input amount
+    auto smallestInputBounds = abs(selinput.first.nValue - voteInputDesiredAmount);
+    if (selinput.first.nValue < voteInputDesiredAmount && coins.size() > 1) {
+        for (auto & item : coins) {
+            if (selinput == item)
+                continue;
+            auto sbounds = abs(item.first.nValue - voteInputDesiredAmount);
+            if (sbounds > smallestInputBounds)
+                break; // go with the smallest if the next one is further from desired input size
+            smallestInputBounds = sbounds;
+            selinput = item;
+        }
+    }
+
+    // Create all votes (limited by max OP_RETURN in tx)
+    std::vector<CRecipient> voteOuts;
+    for (auto & item : selprops) {
+        const auto & selproposal = item.first;
+        const auto & selvote = item.second;
+
+        // Create and serialize the vote data and insert in OP_RETURN script. The vote
+        // is signed with the utxo that is representing that vote. The signing must
+        // happen before the vote object is serialized.
+        CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
+        Vote vote(selproposal.getHash(), selvote.getVote(), stakeUtxo.second, gov::makeVinHash(selinput.second), key.GetPubKey().GetID(), stakeUtxo.first.nValue);
+        if (!vote.sign(key)) {
+            LogPrint(BCLog::GOVERNANCE, "WARNING: Failed to vote on {%s} proposal in stake, utxo signing failed %s\n", selproposal.getName(), stakeUtxo.second.ToString());
+            continue;
+        }
+        if (!vote.isValid(params)) { // validate vote
+            LogPrint(BCLog::GOVERNANCE, "WARNING: Failed to vote on {%s} proposal in stake, validation failed\n", selproposal.getName());
+            continue;
+        }
+        ss << vote;
+
+        voteOuts.push_back({CScript() << OP_RETURN << ToByteVector(ss), 0, false});
+        if (voteOuts.size() == MAX_OP_RETURN_IN_TRANSACTION)
+            break; // no more room
+    }
+
+    if (voteOuts.empty())
+        return false; // no votes
+
+    CMutableTransaction votetx;
+    CCoinControl cc;
+    cc.fAllowOtherInputs = false;
+    cc.destChange = CTxDestination(key.GetPubKey().GetID()); // pay change to address of staking utxo
+    // Select first voting input
+    cc.Select(selinput.second);
+
+    CReserveKey reservekey(wallet);
+    CAmount nFeeRequired{0};
+    std::string strError;
+    int nChangePosRet = -1;
+    auto locked_chain = wallet->chain().lock();
+    if (!wallet->CreateTransaction(*locked_chain, voteOuts, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc)) {
+        // If default input isn't enough to cover the fee, create another transaction with additional inputs
+        auto allcoins = coins;
+        allcoins.insert(allcoins.end(), otherCoins.begin(), otherCoins.end());
+        std::set<COutPoint> sallcoins;
+        for (const auto & c : allcoins)
+            sallcoins.insert(c.second);
+        // We want to exclude spending any inputs that are already being used in other votes
+        std::set<COutPoint> excluded;
+        gov::Governance::instance().utxosInVotes(sallcoins, stakedHeight, excluded, params);
+
+        CAmount inputAmt = selinput.first.nValue;
+        if (inputAmt <= nFeeRequired && allcoins.size() > 1) {
+            for (const auto & vin : allcoins) {
+                // Skip already selected input and inputs already used in other votes
+                if (vin.second == selinput.second || excluded.count(vin.second))
+                    continue;
+                inputAmt += vin.first.nValue;
+                cc.Select(vin.second);
+                if (inputAmt > nFeeRequired)
+                    break;
+            }
+            // If we have enough inputs to cover fee, try creating new transaction
+            if (inputAmt > nFeeRequired) {
+                strError.clear();
+                if (wallet->CreateTransaction(*locked_chain, voteOuts, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
+                    return true;
+            }
+        }
+
+        // unrecoverable error
+        return error("Failed to create vote transaction on stake: %s", strError);
     }
 
     return true;
