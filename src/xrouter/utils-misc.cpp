@@ -89,7 +89,7 @@ bool removeNamespace(const std::string & service, std::string & result) {
 }
 bool hasWalletNamespace(const std::string & service) {
     const std::string s{xr + xrdelimiter};
-    std::regex r("^"+s+"[a-zA-Z0-9\\-:\\$]+$");
+    std::regex r("^"+s+"[a-zA-Z0-9_\\-:\\$]+$");
     std::smatch m;
     return std::regex_match(service, m, r);
 }
@@ -98,12 +98,12 @@ std::string pluginCommandKey(const std::string & service) {
 }
 bool hasPluginNamespace(const std::string & service) {
     const std::string s{xrs + xrdelimiter};
-    std::regex r("^"+s+"[a-zA-Z0-9\\-:\\$]+$");
+    std::regex r("^"+s+"[a-zA-Z0-9_\\-:\\$]+$");
     std::smatch m;
     return std::regex_match(service, m, r);
 }
 bool commandFromNamespace(const std::string & fqService, std::string & command) {
-    std::regex r(".*?::([a-zA-Z0-9\\-:\\$]+)$");
+    std::regex r(".*?::([a-zA-Z0-9_\\-:\\$]+)$");
     std::smatch m;
     std::regex_search(fqService, m, r);
     if (m.size() > 1) {
@@ -114,7 +114,7 @@ bool commandFromNamespace(const std::string & fqService, std::string & command) 
 }
 bool xrsplit(const std::string & fqService, const std::string & del, std::vector<std::string> & vout) {
     vout.clear();
-    std::regex r("^[a-zA-Z0-9\\-:\\$]+$");
+    std::regex r("^[a-zA-Z0-9_\\-:\\$]+$");
     std::smatch m;
     std::vector<std::string> v;
 
