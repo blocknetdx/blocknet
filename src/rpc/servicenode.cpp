@@ -79,7 +79,7 @@ static UniValue servicenodesetup(const JSONRPCRequest& request)
     if (snodeAlias.empty())
         throw JSONRPCError(RPC_MISC_ERROR, "Bad service node alias, it's empty");
 
-    std::regex re("^[a-zA-Z0-9\\-\\_]+$");
+    std::regex re("^[a-zA-Z0-9_\\-]+$");
     std::smatch m;
     if (!std::regex_match(snodeAlias, m, re))
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad service node alias, only alpha numeric aliases are allowed with no spaces: %s", snodeAlias));
@@ -163,7 +163,7 @@ static UniValue servicenodesetuplist(const JSONRPCRequest& request)
         usedAliases.insert(entry.alias);
 
     // alias regex
-    std::regex re("^[a-zA-Z0-9\\-\\_]+$");
+    std::regex re("^[a-zA-Z0-9_\\-]+$");
 
     std::vector<sn::ServiceNodeConfigEntry> tmpEntries;
     for (int i = 0; i < static_cast<int>(arr.size()); ++i) {
