@@ -183,7 +183,7 @@ bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBl
 
     lastBlockHeight = tip->nHeight;
     lastUpdateTime = endTime;
-    LogPrintf("Staker: %u\n", lastBlockHeight); // TODO Blocknet PoS move to debug category
+    LogPrint(BCLog::ALL, "Staker: %u\n", lastBlockHeight);
     return !stakeTimes.empty();
 }
 
