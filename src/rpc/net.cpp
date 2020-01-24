@@ -22,6 +22,8 @@
 #include <validation.h>
 #include <version.h>
 #include <warnings.h>
+#include <xbridge/version.h>
+#include <xrouter/version.h>
 
 #include <univalue.h>
 
@@ -454,6 +456,8 @@ static UniValue getnetworkinfo(const JSONRPCRequest& request)
             "  \"version\": xxxxx,                      (numeric) the server version\n"
             "  \"subversion\": \"/Satoshi:x.x.x/\",     (string) the server subversion string\n"
             "  \"protocolversion\": xxxxx,              (numeric) the protocol version\n"
+            "  \"xbridgeprotocolversion\": xxxxx,       (numeric) the XBridge protocol version\n"
+            "  \"xrouterprotocolversion\": xxxxx,       (numeric) the XRouter protocol version\n"
             "  \"localservices\": \"xxxxxxxxxxxxxxxx\", (string) the services we offer to the network\n"
             "  \"localrelay\": true|false,              (bool) true if transaction relay is requested from peers\n"
             "  \"timeoffset\": xxxxx,                   (numeric) the time offset\n"
@@ -493,6 +497,8 @@ static UniValue getnetworkinfo(const JSONRPCRequest& request)
     obj.pushKV("version",       CLIENT_VERSION);
     obj.pushKV("subversion",    strSubVersion);
     obj.pushKV("protocolversion",PROTOCOL_VERSION);
+    obj.pushKV("xbridgeprotocolversion", static_cast<int64_t>(XBRIDGE_PROTOCOL_VERSION));
+    obj.pushKV("xrouterprotocolversion", static_cast<int64_t>(XROUTER_PROTOCOL_VERSION));
     if(g_connman)
         obj.pushKV("localservices", strprintf("%016x", g_connman->GetLocalServices()));
     obj.pushKV("localrelay",     fRelayTxes);
