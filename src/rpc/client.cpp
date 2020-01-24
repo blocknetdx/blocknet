@@ -184,6 +184,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "dxFlushCancelledOrders", 1, "arg1" },
     { "gettradingdata", 0, "arg0" },
     { "gettradingdata", 1, "arg1" },
+    { "dxGetTradingData", 0, "arg0" },
+    { "dxGetTradingData", 1, "arg1" },
     { "xrGetBlockCount",1, "arg1" },
     { "xrGetBlockHash", 2, "arg2" },
     { "xrGetBlock", 2, "arg2" },

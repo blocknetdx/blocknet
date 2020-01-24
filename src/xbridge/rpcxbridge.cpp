@@ -115,7 +115,7 @@ CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& 
 
     json_spirit::Value val;
     if (not json_spirit::read_string(json, val) || val.type() != json_spirit::array_type)
-        return {"Unknown chain data, json error"};
+        return {}; // not order data, ignore
     json_spirit::Array xtx = val.get_array();
     if (xtx.size() != 5)
         return {"Unknown chain data, bad records count"};
@@ -1788,7 +1788,7 @@ UniValue dxGetLockedUtxos(const JSONRPCRequest& request)
 
 UniValue gettradingdata(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 1)
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error(
             RPCHelpMan{"gettradingdata",
                 "\nReturns an object of XBridge trading records. This information is\n"
@@ -1796,7 +1796,7 @@ UniValue gettradingdata(const JSONRPCRequest& request)
                 "result in longer response times.\n",
                 {
                     {"blocks", RPCArg::Type::NUM, "43200", "The number of blocks to return trade records for (60s block time)."},
-                    // {"errors", RPCArg::Type::BOOL, "false", "show errors"}, // this parameter currently does not work
+                    {"errors", RPCArg::Type::BOOL, "false", "show errors"},
                 },
                 RPCResult{
                 "{\n"
@@ -1815,20 +1815,21 @@ UniValue gettradingdata(const JSONRPCRequest& request)
                   + HelpExampleRpc("gettradingdata", "")
                   + HelpExampleCli("gettradingdata", "86400")
                   + HelpExampleRpc("gettradingdata", "86400")
+                  + HelpExampleCli("gettradingdata", "86400 true")
+                  + HelpExampleRpc("gettradingdata", "86400, true")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    uint32_t countOfBlocks = std::numeric_limits<uint32_t>::max();
-    if (params.size() >= 1)
-    {
-        RPCTypeCheck(request.params, {UniValue::VNUM});
-        countOfBlocks = params[0].get_int();
-    }
+    uint32_t countOfBlocks = 43200;
     bool showErrors = false;
-    if (params.size() == 2) {
-        RPCTypeCheck(request.params, {UniValue::VBOOL});
-        showErrors = params[1].get_bool();
+    if (params.size() >= 1) {
+        if (params.size() == 2) {
+            RPCTypeCheck(request.params, {UniValue::VNUM, UniValue::VBOOL});
+            showErrors = params[1].get_bool();
+        } else
+            RPCTypeCheck(request.params, {UniValue::VNUM});
+        countOfBlocks = params[0].get_int();
     }
 
     LOCK(cs_main);
@@ -1887,7 +1888,7 @@ UniValue gettradingdata(const JSONRPCRequest& request)
 
 UniValue dxGetTradingData(const JSONRPCRequest& request)
 {
-    if (request.fHelp || request.params.size() > 1)
+    if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error(
             RPCHelpMan{"dxGetTradingData",
                 "\nReturns an object of XBridge trading records. This information is "
@@ -1895,7 +1896,7 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
                 "result in longer response times.\n",
                 {
                     {"blocks", RPCArg::Type::NUM, "43200", "The number of blocks to return trade records for (60s block time)."},
-                    // {"errors", RPCArg::Type::BOOL, "false", "show errors"}, // this parameter currently does not work
+                    {"errors", RPCArg::Type::BOOL, "false", "show errors"},
                 },
                 RPCResult{
                 R"(
@@ -1949,20 +1950,21 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
                   + HelpExampleRpc("dxGetTradingData", "")
                   + HelpExampleCli("dxGetTradingData", "43200")
                   + HelpExampleRpc("dxGetTradingData", "43200")
+                  + HelpExampleCli("dxGetTradingData", "43200 true")
+                  + HelpExampleRpc("dxGetTradingData", "43200, true")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    uint32_t countOfBlocks = std::numeric_limits<uint32_t>::max();
-    if (params.size() >= 1)
-    {
-        RPCTypeCheck(request.params, {UniValue::VNUM});
-        countOfBlocks = params[0].get_int();
-    }
+    uint32_t countOfBlocks = 43200;
     bool showErrors = false;
-    if (params.size() == 2) {
-        RPCTypeCheck(request.params, {UniValue::VBOOL});
-        showErrors = params[1].get_bool();
+    if (params.size() >= 1) {
+        if (params.size() == 2) {
+            RPCTypeCheck(request.params, {UniValue::VNUM, UniValue::VBOOL});
+            showErrors = params[1].get_bool();
+        } else
+            RPCTypeCheck(request.params, {UniValue::VNUM});
+        countOfBlocks = params[0].get_int();
     }
 
     LOCK(cs_main);
