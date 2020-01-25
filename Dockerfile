@@ -2,7 +2,7 @@
 # docker build --build-arg cores=8 -t blocknetdx/blocknet:4.0.0 .
 FROM ubuntu:bionic
 
-ARG cores=1
+ARG cores=4
 ENV ecores=$cores
 
 RUN apt update \
@@ -51,7 +51,7 @@ RUN mkdir -p /opt/blockchain/config \
   && make -j$ecores \
   && make install
 
-# Write default blocknetdx.conf (can be overridden on commandline)
+# Write default blocknet.conf (can be overridden on commandline)
 RUN echo "datadir=/opt/blockchain/data    \n\
                                           \n\
 dbcache=256                               \n\
