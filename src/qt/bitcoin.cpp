@@ -34,6 +34,7 @@
 
 #include <interfaces/handler.h>
 #include <interfaces/node.h>
+#include <interfaces/wallet.h>
 #include <noui.h>
 #include <rpc/server.h>
 #include <ui_interface.h>
@@ -511,6 +512,8 @@ int GuiMain(int argc, char* argv[])
     qRegisterMetaType< CAmount >("CAmount");
     qRegisterMetaType< std::function<void()> >("std::function<void()>");
     qRegisterMetaType<QMessageBox::Icon>("QMessageBox::Icon");
+    qRegisterMetaType< QVector<int> >("QVector<int>");
+    qRegisterMetaType<interfaces::WalletBalances>("interfaces::WalletBalances");
     /// 2. Parse command-line options. We do this after qt in order to show an error if there are problems parsing these
     // Command-line options take precedence:
     node->setupServerArgs();
