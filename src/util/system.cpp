@@ -713,6 +713,32 @@ fs::path GetDefaultDataDir()
 #endif
 }
 
+fs::path GetDefaultDataDirLegacy()
+{
+    // Windows < Vista: C:\Documents and Settings\Username\Application Data\BlocknetDX
+    // Windows >= Vista: C:\Users\Username\AppData\Roaming\BlocknetDX
+    // Mac: ~/Library/Application Support/BlocknetDX
+    // Unix: ~/.blocknetdx
+#ifdef WIN32
+    // Windows
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "BlocknetDX";
+#else
+    fs::path pathRet;
+    char* pszHome = getenv("HOME");
+    if (pszHome == NULL || strlen(pszHome) == 0)
+        pathRet = fs::path("/");
+    else
+        pathRet = fs::path(pszHome);
+#ifdef MAC_OSX
+    // Mac
+    return pathRet / "Library/Application Support/BlocknetDX";
+#else
+    // Unix
+    return pathRet / ".blocknetdx";
+#endif
+#endif
+}
+
 static fs::path g_blocks_path_cache_net_specific;
 static fs::path pathCached;
 static fs::path pathCachedNetSpecific;

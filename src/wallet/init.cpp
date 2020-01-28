@@ -184,6 +184,16 @@ void WalletInit::Construct(InitInterfaces& interfaces) const
         LogPrintf("Wallet disabled!\n");
         return;
     }
+    // Blocknet copies the legacy wallet if no wallets exist for the new client
+    const auto defaultWalletFile1 = (GetDataDir() / "wallet.dat").string();
+    const auto defaultWalletFile2 = (GetWalletDir() / "wallet.dat").string();
+    WalletLocation defaultWallet1(defaultWalletFile1);
+    WalletLocation defaultWallet2(defaultWalletFile2);
+    WalletLocation legacyWallet((GetDefaultDataDirLegacy() / "wallet.dat").string());
+    if (!defaultWallet1.Exists() && !defaultWallet2.Exists() && legacyWallet.Exists()) {
+        LogPrintf("Copying legacy wallet file [%s] to %s\n", legacyWallet.GetPath(), defaultWallet2.GetPath());
+        fs::copy_file(legacyWallet.GetPath(), defaultWallet2.GetPath(), fs::copy_option::fail_if_exists);
+    }
     gArgs.SoftSetArg("-wallet", "");
     interfaces.chain_clients.emplace_back(interfaces::MakeWalletClient(*interfaces.chain, gArgs.GetArgs("-wallet")));
 }
