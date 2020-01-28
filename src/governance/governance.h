@@ -650,11 +650,12 @@ protected: // memory only
 /**
  * Check that utxo isn't already spent
  * @param vote
+ * @param currentBlock If utxo is confirmed after this block number it is marked spent
  * @param governanceStart Block at which the governance system starts
  * @param mempoolCheck Will check the mempool for spent votes
  * @return
  */
-static bool IsVoteSpent(const Vote & vote, const int & governanceStart, const bool & mempoolCheck = false) {
+static bool IsVoteSpent(const Vote & vote, const int & currentBlock, const int & governanceStart, const bool & mempoolCheck = false) {
     Coin coin;
     if (mempoolCheck) {
         LOCK2(cs_main, mempool.cs);
@@ -665,7 +666,7 @@ static bool IsVoteSpent(const Vote & vote, const int & governanceStart, const bo
         LOCK(cs_main);
         if (!pcoinsTip->GetCoin(vote.getUtxo(), coin))
             return true;
-        if (coin.nHeight < governanceStart)
+        if (coin.nHeight < governanceStart || coin.nHeight > currentBlock)
             return true;
     }
     return false;
@@ -820,7 +821,7 @@ public:
         Mutex mut; // manage access to shared data
         const auto cores = nthreads == 0 ? GetNumCores() : nthreads;
         std::unordered_map<COutPoint, std::pair<uint256, int>, Hasher> spentPrevouts; // pair<txhash, blockheight>
-        std::unordered_set<COutPoint, Hasher> unspentVouts;
+        std::unordered_set<COutPoint, Hasher> chainVouts;
         bool useThreadGroup{false};
 
         // Shard the blocks into num equivalent to available cores
@@ -828,7 +829,7 @@ public:
         int slice = totalBlocks / cores;
         bool failed{false};
 
-        auto p1 = [&spentPrevouts,&unspentVouts,&failed,&failReasonRet,&chain,&chainMutex,&mut,this]
+        auto p1 = [&spentPrevouts,&chainVouts,&failed,&failReasonRet,&chain,&chainMutex,&mut,this]
                   (const int start, const int end, const Consensus::Params & consensus) -> bool
         {
             for (int blockNumber = start; blockNumber < end; ++blockNumber) {
@@ -864,7 +865,7 @@ public:
                     for (const auto & vin : tx->vin)
                         spentPrevouts[vin.prevout] = {txhash, blockIndex->nHeight};
                     for (int i = 0; i < tx->vout.size(); ++i)
-                        unspentVouts.insert(COutPoint{txhash, static_cast<uint32_t>(i)});
+                        chainVouts.insert(COutPoint{txhash, static_cast<uint32_t>(i)});
                 }
                 // Process block
                 processBlock(&block, blockIndex, consensus, false);
@@ -918,7 +919,7 @@ public:
             std::copy(votes.cbegin(), votes.cend(), std::back_inserter(tmpvotes));
         }
 
-        auto p2 = [&tmpvotes,&spentPrevouts,&unspentVouts,&failed,&mut,this](const int start, const int end,
+        auto p2 = [&tmpvotes,&spentPrevouts,&chainVouts,&failed,&mut,this](const int start, const int end,
                 const Consensus::Params & consensus) -> bool
         {
             for (int i = start; i < end; ++i) {
@@ -927,21 +928,56 @@ public:
                     failed = true;
                     return false;
                 }
+
                 const auto & vote = tmpvotes[i].second;
+
                 // Remove votes that are not associated with a proposal
                 if (!hasProposal(vote.getProposal(), vote.getBlockNumber())) {
                     LOCK(mu);
                     removeVote(vote);
                     continue;
                 }
-                // Spend votes that have spent utxos
+
                 // Mark vote as spent if its utxo is spent before or on the associated proposal's superblock.
                 if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= getProposal(vote.getProposal()).getSuperblock()) {
                     LOCK(mu);
                     spendVote(vote.getHash(), spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first);
-                } else if (unspentVouts.count(vote.getUtxo())) {
+                    continue;
+                }
+
+                // Prevent voting on utxos in the future, all votes must reference utxos already confirmed on-chain.
+                // a) Find the block height where vote utxo was included on chain.
+                // b) The vote is ignored if this height is after the height where the vote was included on chain.
+                CTransactionRef tx;
+                uint256 hashBlock;
+                if (!GetTransaction(vote.getUtxo().hash, tx, Params().GetConsensus(), hashBlock)) {
+                    LOCK(mu);
+                    removeVote(vote);
+                    continue;
+                }
+                CBlockIndex *pindex = nullptr;
+                {
+                    LOCK(cs_main);
+                    pindex = LookupBlockIndex(hashBlock);
+                }
+                if (!pindex || pindex->nHeight > vote.getBlockNumber()) {
+                    LOCK(mu);
+                    removeVote(vote);
+                    continue;
+                }
+
+                // Chain vouts also includes spent vins (prevouts), however, the spent vin check
+                // happens above so those coins are already excluded. This will ensure that votes
+                // are counted for valid proposals during the superblock period in the past. Any
+                // vote utxos spent after the superblock period are still counted for that period,
+                // therefore any "spent vote utxos" at this point are moot to the protocol which is
+                // why we can just do a lookup here to verify that a vote utxo does in fact exist.
+                // Keep in mind that chainVouts only starts tracking utxos after the governance
+                // start block. This means you can't vote with "old" utxos. Utxos participating in
+                // votes must have been created on or after the governance start block.
+                if (chainVouts.count(vote.getUtxo()))
                     continue; // if vote utxo is associated with a valid vout then continue
-                } else {
+                else {
                     // Can't use pcoinsTip here to support utxos created prior to governance start block because
                     // we'd need to know if the coin was spent at a certain point before the vote's superblock
                     // and current chainstate implementation doesn't provide an efficient way to obtain this info.
@@ -950,6 +986,7 @@ public:
                     // Remove votes with stale utxos (existed prior to governance start block)
                     LOCK(mu);
                     removeVote(vote);
+                    continue;
                 }
             }
             return true;
@@ -1880,7 +1917,7 @@ protected:
                     // Only check the mempool and coincache for spent utxos if
                     // we're currently processing the chain tip.
                     LEAVE_CRITICAL_SECTION(mu);
-                    bool spent = processingChainTip && IsVoteSpent(vote, params.governanceBlock, false); // check that utxo is unspent
+                    bool spent = processingChainTip && IsVoteSpent(vote, pindex->nHeight, params.governanceBlock, false); // check that utxo is unspent
                     ENTER_CRITICAL_SECTION(mu);
                     if (spent)
                         continue;
