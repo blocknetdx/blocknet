@@ -626,7 +626,7 @@ static void BlockNotifyCallback(bool initialSync, const CBlockIndex *pBlockIndex
 static bool fHaveGenesis = false;
 static Mutex g_genesis_wait_mutex;
 static std::condition_variable g_genesis_wait_cv;
-static bool fTxIndexReady = true;
+static bool fTxIndexReady = false;
 static Mutex g_wait_index_mutex;
 static std::condition_variable g_wait_index_cv;
 
@@ -1530,7 +1530,6 @@ bool AppInitMain(InitInterfaces& interfaces)
     LogPrintf("* Using %.1f MiB for in-memory UTXO set (plus up to %.1f MiB of unused mempool space)\n", nCoinCacheUsage * (1.0 / 1024 / 1024), nMempoolSizeMax * (1.0 / 1024 / 1024));
 
     // Blocknet PoS requires txindex
-    fTxIndexReady = !fReindex;
     g_txindex = MakeUnique<TxIndex>(nTxIndexCache, false, fReindex);
 
     bool fLoaded = false;
