@@ -41,7 +41,9 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     // define text to place
     QString titleText       = tr(PACKAGE_NAME);
     QString versionText     = QString("Version %1").arg(QString::fromStdString(FormatFullVersion()));
-    QString copyrightText   = QString::fromUtf8(CopyrightHolders(strprintf("\xc2\xA9 %u-%u ", 2009, COPYRIGHT_YEAR)).c_str());
+    QString copyrightTextBtc = QChar(0xA9) + QString(" 2009-2019 ") + QString(tr("The Bitcoin Core developers"));
+    QString copyrightTextBlocknet = QChar(0xA9) + QString(" 2014-2020 ") + QString(tr("The Blocknet developers"));
+    QString copyrightText   = copyrightTextBtc + QString("\n") + copyrightTextBlocknet;
     QString titleAddText    = networkStyle->getTitleAddText();
 
     QString font            = QApplication::font().toString();
@@ -64,9 +66,9 @@ SplashScreen::SplashScreen(interfaces::Node& node, Qt::WindowFlags f, const Netw
     pixPaint.fillRect(rGradient, gradient);
 
     // draw the bitcoin icon, expected size of PNG: 1024x1024
-    QRect rectIcon(QPoint(-150,-122), QSize(430,430));
+    QRect rectIcon(QPoint(), QSize(256,256));
 
-    const QSize requiredSize(1024,1024);
+    const QSize requiredSize(256,256);
     QPixmap icon(networkStyle->getAppIcon().pixmap(requiredSize));
 
     pixPaint.drawPixmap(rectIcon, icon);
