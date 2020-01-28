@@ -266,8 +266,8 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
 
     ccRightBoxLayout->addWidget(ccSummaryLbl, 0, Qt::AlignLeft | Qt::AlignTop);
     ccRightBoxLayout->addWidget(ccSummary2Lbl, 0, Qt::AlignLeft);
-    ccRightBoxLayout->addSpacing(BGU::spi(9));
-    ccRightBoxLayout->addWidget(changeSplitBox, 0, Qt::AlignLeft);
+//    ccRightBoxLayout->addSpacing(BGU::spi(9));
+//    ccRightBoxLayout->addWidget(changeSplitBox, 0, Qt::AlignLeft);
     ccRightBoxLayout->addStretch(1);
 
 //    auto *ccListTreeBox = new QFrame;
@@ -347,8 +347,8 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onCancel);
     connect(backBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onBack);
     connect(changeAddrTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds2::onChangeAddress);
-    connect(ccSplitOutputCb, &QCheckBox::toggled, this, &BlocknetSendFunds2::onSplitChanged);
-    connect(ccSplitOutputTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds2::onSplitChanged);
+//    connect(ccSplitOutputCb, &QCheckBox::toggled, this, &BlocknetSendFunds2::onSplitChanged);
+//    connect(ccSplitOutputTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds2::onSplitChanged);
     connect(ccInputsBtn, &QPushButton::clicked, this, [this]() {
         updateCoinControl(); ccDialog->setPayAmount(model->totalRecipientsAmount()); ccDialog->show();
     });
