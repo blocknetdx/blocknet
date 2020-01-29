@@ -527,8 +527,10 @@ protected:
             const auto uxb = find_value(uv, "xbridge");
             if (!uxb.isNull() && uxb.isArray()) {
                 auto us = uxb.getValues();
-                for (const auto & s : us)
-                    services.push_back(s.get_str());
+                for (const auto & s : us) {
+                    if (tier == SPV) // xbridge only supports SPV nodes
+                        services.push_back(s.get_str());
+                }
             }
 
             // Parse xrouter config if it's specified
@@ -553,15 +555,19 @@ protected:
                     try {
                         auto psettings = std::make_shared<xrouter::XRouterPluginSettings>(false); // not our config
                         psettings->read(pluginconf);
-                        settings.addPlugin(plugin, psettings);
+                        // Only add plugins on OPEN tier if they are free
+                        if (!(tier == Tier::OPEN && psettings->fee() > std::numeric_limits<double>::epsilon()))
+                            settings.addPlugin(plugin, psettings);
                     } catch (...) { }
                 }
 
                 addr = settings.getAddr();
                 services.push_back(xrouter::xr); // add the general xrouter service
 
-                for (const auto & s : settings.getWallets())
-                    services.push_back(xrouter::walletCommandKey(s));
+                for (const auto & s : settings.getWallets()) {
+                    if (tier == Tier::SPV) // Wallets only supported on SPV snodes
+                        services.push_back(xrouter::walletCommandKey(s));
+                }
 
                 for (const auto & p : settings.getPlugins()) {
                     if (!settings.isAvailableCommand(xrouter::xrService, p)) // exclude any disabled plugins

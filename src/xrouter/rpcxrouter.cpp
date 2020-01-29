@@ -1710,7 +1710,7 @@ static UniValue xrConnect(const JSONRPCRequest& request)
 
     const std::string & uuid = xrouter::generateUUID();
     auto & app = xrouter::App::instance();
-    std::map<std::string, xrouter::XRouterSettingsPtr> configs;
+    std::map<std::string, std::pair<xrouter::XRouterSettingsPtr, sn::ServiceNode::Tier>> configs;
 
     Array data;
 

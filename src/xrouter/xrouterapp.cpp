@@ -576,8 +576,8 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         if (nodec.count(snodeAddr) || connectedSnodes.count(snodeAddr) || snodesNeedConfig.count(snodeAddr))
             continue; // already processed, skip
 
-        // only connect if snode is in the list
-        if (snodec.count(snodeAddr) && (config->hasWallet(service) || config->hasPlugin(service)))
+        // only connect if snode is in the list, it has the specified plugin or it is an SPV node with the specified wallet
+        if (snodec.count(snodeAddr) && (config.first->hasPlugin(service) || (config.second == sn::ServiceNode::SPV && config.first->hasWallet(service))))
             needConnectionsHaveConfigs[snodeAddr] = snodec[snodeAddr];
     }
 
@@ -777,14 +777,15 @@ std::string App::printConfigs()
     Array result;
 
     for (const auto & it : snodeConfigs) {
+        auto settings = it.second.first;
         Object val;
-        std::vector<unsigned char> spubkey; servicenodePubKey(it.second->getNode(), spubkey);
+        std::vector<unsigned char> spubkey; servicenodePubKey(settings->getNode(), spubkey);
         val.emplace_back("nodepubkey", HexStr(spubkey));
-        val.emplace_back("paymentaddress", it.second->paymentAddress(xrGetConfig));
-        val.emplace_back("config", it.second->publicText());
+        val.emplace_back("paymentaddress", settings->paymentAddress(xrGetConfig));
+        val.emplace_back("config", settings->publicText());
         Object p_val;
-        for (const auto & p : it.second->getPlugins()) {
-            auto pp = it.second->getPluginSettings(p);
+        for (const auto & p : settings->getPlugins()) {
+            auto pp = settings->getPluginSettings(p);
             if (pp)
                 p_val.emplace_back(p, pp->publicText());
         }
@@ -846,7 +847,7 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
     // Look through known xrouter node configs and select those that support command/service/fees
     for (const auto & item : sconfigs) {
         const auto & nodeAddr = item.first;
-        auto settings = item.second;
+        auto settings = item.second.first;
 
         // fully qualified command e.g. xr::ServiceName
         const auto & commandStr = XRouterCommand_ToString(command);
@@ -1009,6 +1010,8 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         return false;
     }
 
+    const auto snode = sn::ServiceNodeMgr::instance().getSn(nodeAddr);
+
     uint32_t offset = 0;
     std::string reply((const char *)packet->data()+offset);
     offset += reply.size() + 1;
@@ -1035,7 +1038,9 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
             try {
                 auto psettings = std::make_shared<XRouterPluginSettings>(false); // not our config
                 psettings->read(plugin.value_.get_str());
-                settings->addPlugin(plugin.name_, psettings);
+                // Exclude open tier paid services
+                if (!(snode.getTier() == sn::ServiceNode::OPEN && psettings->fee() > std::numeric_limits<double>::epsilon()))
+                    settings->addPlugin(plugin.name_, psettings);
             } catch (...) {
                 ERR() << "Failed to read plugin " << plugin.name_ << " on query " << uuid << " from node " << nodeAddr;
                 updateScore(nodeAddr, -2);
@@ -1043,7 +1048,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         }
 
         // Update settings for node
-        updateConfig(sn::ServiceNodeMgr::instance().getSn(nodeAddr), settings);
+        updateConfig(snode, settings);
         queryMgr.addReply(uuid, nodeAddr, reply);
         queryMgr.purge(uuid, nodeAddr);
 
@@ -1091,7 +1096,9 @@ bool App::processConfigMessage(const sn::ServiceNode & snode) {
             try {
                 auto psettings = std::make_shared<XRouterPluginSettings>(false); // not our config
                 psettings->read(config);
-                settings->addPlugin(plugin, psettings);
+                // Exclude open tier paid services
+                if (!(snode.getTier() == sn::ServiceNode::OPEN && psettings->fee() > std::numeric_limits<double>::epsilon()))
+                    settings->addPlugin(plugin, psettings);
             } catch (...) { }
         }
     }
@@ -1778,8 +1785,8 @@ CPubKey App::getPaymentPubkey(CNode* node)
     return CPubKey();
 }
 
-std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqService, const int & count, uint32_t & foundCount) {
-    std::map<NodeAddr, XRouterSettingsPtr> selectedConfigs;
+std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> App::xrConnect(const std::string & fqService, const int & count, uint32_t & foundCount) {
+    std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> selectedConfigs;
     std::vector<std::string> nparts;
     if (!xrsplit(fqService, xrdelimiter, nparts))
         throw XRouterError("Bad service name, acceptable characters [a-z A-Z 0-9 $], sample format: xrs::ExampleServiceName123", BAD_REQUEST);
@@ -1810,13 +1817,14 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
     const auto configs = getNodeConfigs(); // get configs and store matching ones
     for (const auto & item : configs) {
         const auto & snode = sn::ServiceNodeMgr::instance().getSn(item.first);
+        auto settings = item.second.first;
         if (g_banman->IsBanned(static_cast<CNetAddr>(snode.getHostAddr()))) // exclude banned
             continue;
-        if (command != xrService && item.second->hasWallet(service)) {
+        if (command != xrService && snode.getTier() == sn::ServiceNode::SPV && settings->hasWallet(service)) {
             selectedConfigs.insert(item);
             continue;
         }
-        if (item.second->hasPlugin(service))
+        if (settings->hasPlugin(service))
             selectedConfigs.insert(item);
     }
 
@@ -1824,30 +1832,34 @@ std::map<NodeAddr, XRouterSettingsPtr> App::xrConnect(const std::string & fqServ
     return selectedConfigs;
 }
 
-void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs, json_spirit::Array & data) {
+void App::snodeConfigJSON(const std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> & configs, json_spirit::Array & data) {
     if (configs.empty()) // no configs
         return;
 
     for (const auto & item : configs) { // Iterate over all node configs
-        if (item.second == nullptr)
+        auto settings = item.second.first;
+        const auto tier = item.second.second;
+        if (settings == nullptr)
             continue;
 
         Object o;
 
         // pubkey
         std::vector<unsigned char> spubkey;
-        servicenodePubKey(item.second->getNode(), spubkey);
+        servicenodePubKey(settings->getNode(), spubkey);
         o.emplace_back("nodepubkey", HexStr(spubkey));
 
         // score
         o.emplace_back("score", getScore(item.first));
         // banned
-        o.emplace_back("banned", g_banman->IsBanned(item.second->getAddr()));
+        o.emplace_back("banned", g_banman->IsBanned(settings->getAddr()));
         // payment address
-        o.emplace_back("paymentaddress", item.second->paymentAddress(xrGetConfig));
+        o.emplace_back("paymentaddress", settings->paymentAddress(xrGetConfig));
+        // tier
+        o.emplace_back("tier", sn::ServiceNodeMgr::tierString(tier));
 
         // wallets
-        const auto & wallets = item.second->getWallets();
+        const auto & wallets = settings->getWallets();
         o.emplace_back("spvwallets", Array(wallets.begin(), wallets.end()));
 
         // wallet configs
@@ -1858,14 +1870,16 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
             Array cmds;
             const auto xrcommands = XRouterCommands();
             for (const auto & cmd : xrcommands) {
+                if (tier == sn::ServiceNode::OPEN)
+                    continue; // exclude open tier xr:: wallets
                 Object co;
                 co.emplace_back("command", XRouterCommand_ToString(cmd));
-                co.emplace_back("fee", item.second->commandFee(cmd, w));
-                co.emplace_back("paymentaddress", item.second->paymentAddress(cmd, w));
-                co.emplace_back("requestlimit", item.second->clientRequestLimit(cmd, w));
-                co.emplace_back("fetchlimit", item.second->commandFetchLimit(cmd, w));
-                co.emplace_back("timeout", item.second->commandTimeout(cmd, w));
-                co.emplace_back("disabled", !item.second->isAvailableCommand(cmd, w));
+                co.emplace_back("fee", settings->commandFee(cmd, w));
+                co.emplace_back("paymentaddress", settings->paymentAddress(cmd, w));
+                co.emplace_back("requestlimit", settings->clientRequestLimit(cmd, w));
+                co.emplace_back("fetchlimit", settings->commandFetchLimit(cmd, w));
+                co.emplace_back("timeout", settings->commandTimeout(cmd, w));
+                co.emplace_back("disabled", !settings->isAvailableCommand(cmd, w));
                 cmds.push_back(co);
             }
             wlg.emplace_back("commands", cmds);
@@ -1874,26 +1888,28 @@ void App::snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs
         o.emplace_back("spvconfigs", wc);
 
         // fees
-        o.emplace_back("feedefault", item.second->defaultFee());
+        o.emplace_back("feedefault", settings->defaultFee());
         Object ofs;
-        const auto & schedule = item.second->feeSchedule();
+        const auto & schedule = settings->feeSchedule();
         for (const auto & s : schedule)
             ofs.emplace_back(s.first,  s.second);
         o.emplace_back("fees", ofs);
 
         // plugins
         Object plugins;
-        for (const auto & plugin : item.second->getPlugins()) {
-            auto pls = item.second->getPluginSettings(plugin);
+        for (const auto & plugin : settings->getPlugins()) {
+            auto pls = settings->getPluginSettings(plugin);
             if (pls) {
+                if (tier == sn::ServiceNode::OPEN && pls->fee() > std::numeric_limits<double>::epsilon())
+                    continue; // exclude open tier paid services
                 Object plg;
                 plg.emplace_back("parameters", boost::algorithm::join(pls->parameters(), ","));
-                plg.emplace_back("fee", item.second->commandFee(xrService, plugin));
-                plg.emplace_back("paymentaddress", item.second->paymentAddress(xrService, plugin));
-                plg.emplace_back("requestlimit", item.second->clientRequestLimit(xrService, plugin));
-                plg.emplace_back("fetchlimit", item.second->commandFetchLimit(xrService, plugin));
-                plg.emplace_back("timeout", item.second->commandTimeout(xrService, plugin));
-                plg.emplace_back("disabled", !item.second->isAvailableCommand(xrService, plugin));
+                plg.emplace_back("fee", settings->commandFee(xrService, plugin));
+                plg.emplace_back("paymentaddress", settings->paymentAddress(xrService, plugin));
+                plg.emplace_back("requestlimit", settings->clientRequestLimit(xrService, plugin));
+                plg.emplace_back("fetchlimit", settings->commandFetchLimit(xrService, plugin));
+                plg.emplace_back("timeout", settings->commandTimeout(xrService, plugin));
+                plg.emplace_back("disabled", !settings->isAvailableCommand(xrService, plugin));
                 plugins.emplace_back(plugin, plg);
             }
         }
@@ -1959,8 +1975,8 @@ std::string App::getStatus() {
     if (sn::ServiceNodeMgr::instance().hasActiveSn()) {
         const auto & entry = sn::ServiceNodeMgr::instance().getActiveSn();
         const auto & snode = sn::ServiceNodeMgr::instance().getSn(entry.key.GetPubKey());
-        std::map<NodeAddr, XRouterSettingsPtr> my;
-        my[snode.getHost()] = xrsettings;
+        std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> my;
+        my[snode.getHost()] = std::make_pair(xrsettings, snode.getTier());
 
         Array data;
         snodeConfigJSON(my, data);

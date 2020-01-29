@@ -285,7 +285,7 @@ public:
      * @param foundCount Number of service nodes that were found.
      * @return
      */
-    std::map<NodeAddr, XRouterSettingsPtr> xrConnect(const std::string & service, const int & count, uint32_t & foundCount);
+    std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> xrConnect(const std::string & service, const int & count, uint32_t & foundCount);
 
     /**
      * @brief fetches the reply to the giver request
@@ -300,13 +300,13 @@ public:
      * @param data Array with json output.
      * @return
      */
-    void snodeConfigJSON(const std::map<NodeAddr, XRouterSettingsPtr> & configs, json_spirit::Array & data);
+    void snodeConfigJSON(const std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> & configs, json_spirit::Array & data);
 
     /**
      * Returns a map of connected node configurations.
      * @return
      */
-    std::map<NodeAddr, XRouterSettingsPtr> getNodeConfigs() {
+    std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> getNodeConfigs() {
         return getConfigs();
     }
 
@@ -594,7 +594,7 @@ private:
         return sa->commandFee(command, service) < sb->commandFee(command, service);
     }
 
-    std::map<NodeAddr, XRouterSettingsPtr> getConfigs() {
+    std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> getConfigs() {
         LOCK(mu);
         return snodeConfigs;
     }
@@ -638,7 +638,7 @@ private:
     XRouterSettingsPtr getConfig(const NodeAddr & node) {
         LOCK(mu);
         if (snodeConfigs.count(node))
-            return snodeConfigs[node];
+            return snodeConfigs[node].first;
         return nullptr;
     }
     void updateConfig(const sn::ServiceNode & snode, XRouterSettingsPtr & config) {
@@ -647,12 +647,12 @@ private:
         LOCK(mu);
         // Remove existing configs that are associated with the snode pubkey
         for(auto it = snodeConfigs.begin(); it != snodeConfigs.end(); ) {
-            if (it->second->getSnodePubKey() == snode.getSnodePubKey())
+            if (it->second.first->getSnodePubKey() == snode.getSnodePubKey())
                 snodeConfigs.erase(it++);
             else
                 it++;
         }
-        snodeConfigs[snode.getHost()] = config;
+        snodeConfigs[snode.getHost()] = std::make_pair(config, snode.getTier());
     }
     bool needConfigUpdate(const NodeAddr & node, const bool & isServer = false) {
         const auto & service = XRouterCommand_ToString(xrGetConfig);
@@ -1089,7 +1089,7 @@ private:
 
     std::map<std::string, std::set<NodeAddr> > configQueries;
     std::map<NodeAddr, std::map<std::string, std::chrono::time_point<std::chrono::system_clock> > > lastPacketsSent;
-    std::map<NodeAddr, XRouterSettingsPtr> snodeConfigs;
+    std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> snodeConfigs;
     std::map<std::string, NodeAddr> snodeDomains;
 
     boost::filesystem::path xrouterpath;
