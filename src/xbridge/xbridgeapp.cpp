@@ -41,6 +41,7 @@
 #include <boost/algorithm/string/join.hpp>
 #include <boost/chrono/chrono.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem/path.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
 
@@ -289,6 +290,59 @@ std::string App::versionStr() {
     std::ostringstream o;
     o << XBRIDGE_PROTOCOL_VERSION;
     return o.str();
+}
+bool App::createConf()
+{
+    try {
+        std::string eol = "\n";
+#ifdef WIN32
+        eol = "\r\n";
+#endif
+        auto p = GetDataDir(false) / "xbridge.conf";
+        if (!boost::filesystem::exists(p)) {
+            saveConf(p,
+                "# For a complete list of configuration files for each supported token"        + eol +
+                "# please visit: https://github.com/blocknetdx/blockchain-configuration-files" + eol +
+                ""                                                                             + eol +
+                "[Main]"                                                                       + eol +
+                "ExchangeWallets="                                                             + eol +
+                "FullLog=true"                                                                 + eol +
+                ""                                                                             + eol +
+                "# Sample configuration:"                                                      + eol +
+                "# [BLOCK]"                                                                    + eol +
+                "# Title=Blocknet"                                                             + eol +
+                "# Address="                                                                   + eol +
+                "# Ip=127.0.0.1"                                                               + eol +
+                "# Port=41414"                                                                 + eol +
+                "# Username=test"                                                              + eol +
+                "# Password=testpassword"                                                      + eol +
+                "# AddressPrefix=26"                                                           + eol +
+                "# ScriptPrefix=28"                                                            + eol +
+                "# SecretPrefix=154"                                                           + eol +
+                "# COIN=100000000"                                                             + eol +
+                "# MinimumAmount=0"                                                            + eol +
+                "# TxVersion=1"                                                                + eol +
+                "# DustAmount=0"                                                               + eol +
+                "# CreateTxMethod=BTC"                                                         + eol +
+                "# GetNewKeySupported=true"                                                    + eol +
+                "# ImportWithNoScanSupported=true"                                             + eol +
+                "# MinTxFee=10000"                                                             + eol +
+                "# BlockTime=60"                                                               + eol +
+                "# FeePerByte=20"                                                              + eol +
+                "# Confirmations=2"                                                            + eol +
+                "# TxWithTimeField=false"                                                      + eol +
+                "# LockCoinsSupported=false"                                                   + eol +
+                "# JSONVersion="                                                               + eol +
+                "# ContentType="                                                               + eol
+            );
+        }
+
+        return true;
+
+    } catch (...) {
+        ERR() << "XBridge failed to create default xbridge.conf";
+    }
+    return false;
 }
 
 //*****************************************************************************

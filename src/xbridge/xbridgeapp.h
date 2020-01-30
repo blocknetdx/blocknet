@@ -33,6 +33,8 @@
 #include <utility>
 #include <vector>
 
+#include <boost/filesystem/fstream.hpp>
+
 #ifdef WIN32
 // #include <Ws2tcpip.h>
 #endif
@@ -86,6 +88,22 @@ public:
      * @return current version of application
      */
     static std::string versionStr();
+
+    /**
+     * @brief createConf creates an empty xrouter.conf if one is not found
+     * @return true if created otherwise false
+     */
+    static bool createConf();
+
+    /**
+     * Save configuration files to the specified path.
+     */
+    static void saveConf(const boost::filesystem::path& p, const std::string& str) {
+        boost::filesystem::ofstream file;
+        file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+        file.open(p, std::ios_base::binary);
+        file.write(str.c_str(), str.size());
+    }
 
     /**
      * @brief isEnabled

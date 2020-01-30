@@ -1909,6 +1909,7 @@ bool AppInitMain(InitInterfaces& interfaces)
 
         uiInterface.InitMessage(_("Starting xbridge service"));
         xbridge::App & xapp = xbridge::App::instance();
+        xbridge::App::createConf(); // create config if it doesn't exist
         xapp.init(); // init xbridge
         xapp.start(); // start xbridge
 
