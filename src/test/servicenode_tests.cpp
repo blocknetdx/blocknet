@@ -123,7 +123,8 @@ BOOST_FIXTURE_TEST_CASE(servicenode_tests_opentier, TestChainPoS)
         // Deserialize servicenode obj from network stream
         sn::ServiceNode snode;
         BOOST_CHECK_NO_THROW(snode = snodeNetwork(snodePubKey, tier, snodePubKey.GetID(), collateral, chainActive.Height(), chainActive.Tip()->GetBlockHash(), sig));
-        BOOST_CHECK_MESSAGE(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Failed on valid snode key sig");
+        // TODO Blocknet OPEN tier snodes, support non-SPV snode tiers (invert the isValid check below)
+        BOOST_CHECK_MESSAGE(!snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "OPEN tier should not be supported at this time");
     }
 
     // Case where wrong key is used to generate sig. For the open tier the snode private key
@@ -739,23 +740,24 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         sn::ServiceNodeMgr::instance().reset();
     }
 
-    // Snode ping should fail on open tier with xr:: namespace
-    {
-        CKey key; key.MakeNewKey(true);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::OPEN, EncodeDestination(dest), g_connman.get(), {}), "Register OPEN tier snode");
-        const auto bestBlock = chainActive.Height();
-        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
-        auto snode = sn::ServiceNodeMgr::instance().getSn(key.GetPubKey());
-        sn::ServiceNodePing pingValid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
-                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
-        pingValid.sign(key);
-        BOOST_CHECK_MESSAGE(pingValid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be valid for open tier xrs services");
-        sn::ServiceNodePing pingInvalid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
-                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=BLOCK,LTC\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
-        pingInvalid.sign(key);
-        BOOST_CHECK_MESSAGE(!pingInvalid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be invalid for open tier non-xrs services");
-        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-    }
+    // TODO Blocknet OPEN tier snodes, support non-SPV snode tiers (enable unit tests)
+//    // Snode ping should fail on open tier with xr:: namespace
+//    {
+//        CKey key; key.MakeNewKey(true);
+//        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::OPEN, EncodeDestination(dest), g_connman.get(), {}), "Register OPEN tier snode");
+//        const auto bestBlock = chainActive.Height();
+//        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
+//        auto snode = sn::ServiceNodeMgr::instance().getSn(key.GetPubKey());
+//        sn::ServiceNodePing pingValid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
+//                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+//        pingValid.sign(key);
+//        BOOST_CHECK_MESSAGE(pingValid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be valid for open tier xrs services");
+//        sn::ServiceNodePing pingInvalid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
+//                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=BLOCK,LTC\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+//        pingInvalid.sign(key);
+//        BOOST_CHECK_MESSAGE(!pingInvalid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be invalid for open tier non-xrs services");
+//        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+//    }
 
     gArgs.SoftSetBoolArg("-servicenode", false);
     cleanupSn();

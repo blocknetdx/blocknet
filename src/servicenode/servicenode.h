@@ -381,6 +381,10 @@ public:
         if (!snodePubKey.IsFullyValid())
             return false;
 
+        // TODO Blocknet OPEN tier snodes, support non-SPV snode tiers (enable unit tests)
+        if (tier != ServiceNode::Tier::SPV)
+            return false;
+
         // If open tier, the signature should be generated from the snode pubkey
         if (tier == Tier::OPEN) {
             const auto & sighash = sigHash();
@@ -727,6 +731,10 @@ public:
     bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid) const {
         if (!isBlockValid(bestBlock, bestBlockHash, true))
             return false; // fail if ping is stale
+
+        // TODO Blocknet OPEN tier snodes, support non-SPV snode tiers (enable unit tests)
+        if (snode.getTier() != ServiceNode::Tier::SPV)
+            return false;
 
         // Ensure ping key matches snode key
         if (!snodePubKey.IsFullyValid() || snodePubKey != snode.getSnodePubKey())
