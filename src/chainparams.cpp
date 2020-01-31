@@ -104,10 +104,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1589565600; // May 15, 2020
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000038acf2f1ff6e2a66a"); // block 1212162
+        consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000003cdd5efecbcb5d9b9"); // block 1301200
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x3e16a50c22e23f7c6b93567a540e2e830f3ac774755896d12234dce30d1db06a");
+        consensus.defaultAssumeValid = uint256S("0x016477330d5f04aeb7f93971ef7fb8c4c15aedc4281f43753aee4fa13a54ccd5");
 
         // Last POW block
         consensus.lastPOWBlock = 2000;
@@ -169,14 +169,15 @@ public:
                 {900000, uint256S("0x40cf476ac051614b28a35ccbf55bcddb9691966a391ec5aa74bb4b8152e072b3")},
                 {1110080, uint256S("0x566452bd3fd8608f83a6af45711af88877e54a137cac030ef3d9d134124c0c05")},
                 {1212162, uint256S("0x3e16a50c22e23f7c6b93567a540e2e830f3ac774755896d12234dce30d1db06a")},
+                {1301200, uint256S("0x016477330d5f04aeb7f93971ef7fb8c4c15aedc4281f43753aee4fa13a54ccd5")},
             }
         };
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats 43200 [block_hash]
-            /* nTime    */ 1575574010,
-            /* nTxCount */ 2733058,
-            /* dTxRate  */ 0.03367524079599384
+            /* nTime    */ 1580429226,
+            /* nTxCount */ 2915295,
+            /* dTxRate  */ 0.03785580143119947
         };
 
         /* enable fallback fee on mainnet */
