@@ -73,7 +73,7 @@ information or see https://opensource.org/licenses/MIT.
 
 The MIT License (MIT)
 
-Copyright (c) 2014-2020 The Blocknet Developers, see LICENSE for additional detail.
+Copyright (c) 2014-2020 The Blocknet Developers
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
