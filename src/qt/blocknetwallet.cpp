@@ -97,6 +97,9 @@ bool BlocknetWallet::setCurrentWallet(const QString & name) {
     // Update balances
     balanceChanged(walletModel->wallet().getBalances());
 
+    // Staking
+    updateStakingStatus(walletModel);
+
     return true;
 }
 
@@ -104,8 +107,19 @@ void BlocknetWallet::setProgress(int progress, const QString &msg, int maximum) 
     toolbar->setProgress(progress, msg, maximum);
 }
 
-void BlocknetWallet::setStakingStatus(bool on, const QString &msg) {
-    toolbar->setStaking(on, msg);
+void BlocknetWallet::updateStakingStatus(WalletModel *w) {
+    const auto staking = gArgs.GetBoolArg("-staking", true);
+    auto msg = tr("Staking is off");
+    const auto canStake = staking && w->wallet().getBalance() > 0
+            && (util::unlockedForStakingOnly || w->getEncryptionStatus() == WalletModel::EncryptionStatus::Unlocked
+                                             || w->getEncryptionStatus() == WalletModel::EncryptionStatus::Unencrypted);
+    if (canStake)
+        msg = tr("Staking is active");
+    else if (staking && w->wallet().getBalance() <= 0)
+        msg = tr("Staking is off, your staking balance is 0");
+    else if (staking)
+        msg = tr("Staking is pending, please unlock the wallet to stake funds");
+    toolbar->setStaking(canStake , msg);
 }
 
 void BlocknetWallet::setPeers(const int peers) {
@@ -313,6 +327,7 @@ void BlocknetWallet::onLockRequest(bool locked, bool stakingOnly) {
 
 void BlocknetWallet::onEncryptionStatus() {
     setLock(walletModel->getEncryptionStatus() == WalletModel::EncryptionStatus::Locked, util::unlockedForStakingOnly);
+    updateStakingStatus(walletModel);
 }
 
 void BlocknetWallet::usedSendingAddresses() {

@@ -94,8 +94,6 @@ BlocknetGUI::BlocknetGUI(interfaces::Node& node, const PlatformStyle *_platformS
         walletFrame = new BlocknetWallet(node, _platformStyle);
         walletFrame->setStyleSheet(GUIUtil::loadStyleSheet());
         setCentralWidget(walletFrame);
-        const auto staking = gArgs.GetBoolArg("-staking", true);
-        walletFrame->setStakingStatus(staking, staking ? tr("Staking is active") : tr("Staking is off"));
     } else
 #endif // ENABLE_WALLET
     {

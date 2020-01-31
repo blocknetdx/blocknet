@@ -47,7 +47,7 @@ public:
     WalletModel* currentWalletModel() const { return walletModel; };
 
     void setProgress(int progress, const QString &msg, int maximum = 100);
-    void setStakingStatus(bool on, const QString &msg);
+    void updateStakingStatus(WalletModel *w);
     void setPeers(int peers);
     void setLock(bool lock, bool stakingOnly = false); // TODO Handle timed unlock
 
