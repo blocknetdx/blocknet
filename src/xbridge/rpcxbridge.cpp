@@ -940,7 +940,7 @@ UniValue dxCancelOrder(const JSONRPCRequest& request)
 
     LOG() << "rpc cancel order " << __FUNCTION__;
     const auto sid = params[0].get_str();
-    if (sid.size() != 32 || uint256S(sid).IsNull())
+    if (uint256S(sid).IsNull())
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, strprintf("Invalid order id [%s]", sid)));
 
     uint256 id = uint256S(sid);
