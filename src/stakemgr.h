@@ -60,6 +60,7 @@ public:
     bool NextStake(std::vector<StakeCoin> & nextStakes, const CBlockIndex *tip, const CChainParams & chainparams);
     bool StakeBlock(const StakeCoin & stakeCoin, const CChainParams & chainparams);
     int64_t LastUpdateTime() const;
+    int LastBlockHeight() const;
     const StakeCoin & GetStake();
 
 private:
@@ -81,5 +82,6 @@ private:
 };
 
 extern void ThreadStakeMinter();
+extern std::unique_ptr<StakeMgr> g_staker;
 
 #endif // BITCOIN_STAKEMGR_H

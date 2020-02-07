@@ -12,10 +12,12 @@
 #include <timedata.h>
 #include <validation.h>
 
+std::unique_ptr<StakeMgr> g_staker;
+
 void ThreadStakeMinter() {
     RenameThread("blocknet-staker");
     LogPrintf("Staker has started\n");
-    StakeMgr staker;
+    g_staker = MakeUnique<StakeMgr>();
     while (!ShutdownRequested()) {
         const int sleepTimeSeconds{1};
         if (IsInitialBlockDownload()) { // do not stake during initial download
@@ -29,9 +31,9 @@ void ThreadStakeMinter() {
                 LOCK(cs_main);
                 pindex = chainActive.Tip();
             }
-            if (pindex && staker.Update(wallets, pindex, Params().GetConsensus())) {
+            if (pindex && g_staker->Update(wallets, pindex, Params().GetConsensus())) {
                 boost::this_thread::interruption_point();
-                staker.TryStake(pindex, Params());
+                g_staker->TryStake(pindex, Params());
             }
         } catch (std::exception & e) {
             LogPrintf("Staker ran into an exception: %s\n", e.what());
@@ -264,6 +266,10 @@ bool StakeMgr::StakeBlock(const StakeCoin & stakeCoin, const CChainParams & chai
 
 int64_t StakeMgr::LastUpdateTime() const {
     return lastUpdateTime;
+}
+
+int StakeMgr::LastBlockHeight() const {
+    return lastBlockHeight;
 }
 
 const StakeMgr::StakeCoin & StakeMgr::GetStake() {

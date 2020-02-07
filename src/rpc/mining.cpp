@@ -31,6 +31,12 @@
 #include <memory>
 #include <stdint.h>
 
+#ifdef ENABLE_WALLET
+#include <stakemgr.h>
+#include <wallet/wallet.h>
+#include <xbridge/util/xutil.h>
+#endif // ENABLE_WALLET
+
 /**
  * Return average network hashes per second based on the last 'lookup' blocks,
  * or from the last difficulty change if 'lookup' is nonpositive.
@@ -972,6 +978,78 @@ static UniValue estimaterawfee(const JSONRPCRequest& request)
     return result;
 }
 
+
+static UniValue getstakingstatus(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 0) {
+        throw std::runtime_error(
+            RPCHelpMan{"getstakingstatus",
+                "\nReturns the staking status.",
+                {},
+                RPCResult{
+                    "{\n"
+                    "  \"staking\": bool,           (boolean) Indicates if staking is active (true) or inactive (false)\n"
+                    "  \"lastupdated\": n,          (numeric) Unix time the staker was last updated\n"
+                    "  \"lastupdatedstr\": \"xxx\", (string) Human readable last updated time\n"
+                    "  \"lastblockprocessed\": n,   (numeric) Last block processed for staking\n"
+                    "  \"status\": \"xxx\",         (string) Status message\n"
+                    "}\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("getstakingstatus", "")
+                  + HelpExampleRpc("getstakingstatus", "")
+                },
+            }.ToString());
+    }
+
+    UniValue obj(UniValue::VOBJ);
+
+#ifdef ENABLE_WALLET
+    const auto stakingEnabled = gArgs.GetBoolArg("-staking", true);
+    const auto lastUpdatedTime = g_staker ? g_staker->LastUpdateTime() : 0;
+    const auto lastUpdatedStr = xbridge::iso8601(boost::posix_time::from_time_t(lastUpdatedTime));
+    const auto lastBlock = g_staker ? g_staker->LastBlockHeight() : 0;
+
+    CAmount balance{0};
+    bool allLocked{true};
+    for (const auto & pwallet : GetWallets()) {
+        if (!pwallet->IsLocked())
+            allLocked = false;
+        balance += pwallet->GetBalance();
+    }
+
+    const auto staking = stakingEnabled && !allLocked && balance > 0 && !IsInitialBlockDownload();
+
+    std::string msg;
+    if (!stakingEnabled)
+        msg = "Staking is disabled in the config";
+    else if (stakingEnabled && IsInitialBlockDownload())
+        msg = "Staking will resume once the initial block download completes";
+    else if (allLocked)
+        msg = "Wallet is locked, unlock the wallet to resume staking";
+    else if (balance <= 0)
+        msg = "Available staking balance is 0. Staking will resume once the staking balance > 0 and staking inputs are mature";
+    else if (staking)
+        msg = "Staking is active";
+
+    obj.pushKV("staking", staking);
+    obj.pushKV("lastupdated", lastUpdatedTime);
+    obj.pushKV("lastupdatedstr", lastUpdatedStr);
+    obj.pushKV("lastblockprocessed", lastBlock);
+    obj.pushKV("status", msg);
+    return obj;
+#else
+    obj.pushKV("staking", false);
+    obj.pushKV("lastupdated", 0);
+    obj.pushKV("lastupdatedstr", "");
+    obj.pushKV("lastblockprocessed", 0);
+    obj.pushKV("status", "Staking is inactive because the wallet is disabled");
+    return obj;
+#endif // ENABLE_WALLET
+
+}
+
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
@@ -982,6 +1060,7 @@ static const CRPCCommand commands[] =
     { "mining",             "getblocktemplate",       &getblocktemplate,       {"template_request"} },
     { "mining",             "submitblock",            &submitblock,            {"hexdata","dummy"} },
     { "mining",             "submitheader",           &submitheader,           {"hexdata"} },
+    { "mining",             "getstakingstatus",       &getstakingstatus,       {} },
 
 
     { "generating",         "generatetoaddress",      &generatetoaddress,      {"nblocks","address","maxtries"} },
