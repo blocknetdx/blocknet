@@ -2939,7 +2939,9 @@ void App::Impl::onTimer()
                 watchCounter = 0;
                 io->post(boost::bind(&Impl::watchTraderDeposits, this));
             }
+        }
 
+        if (sn::ServiceNodeMgr::instance().hasActiveSn()) { // send ping if active snode
             // Send service ping every 3 minutes
             static int pingCounter{0};
             if (++pingCounter % 12 == 0) {
