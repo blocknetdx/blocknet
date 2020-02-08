@@ -1,5 +1,5 @@
 # Build via docker:
-# docker build --build-arg cores=8 -t blocknetdx/blocknet:4.0.0 .
+# docker build --build-arg cores=8 -t blocknetdx/blocknet:latest .
 FROM ubuntu:bionic
 
 ARG cores=4
@@ -35,7 +35,7 @@ ENV HOST=x86_64-pc-linux-gnu
 # Copy source files
 RUN mkdir -p /opt/blocknet \
   && cd /opt/blocknet \
-  && git clone --depth 1 --branch 4.0.0 https://github.com/blocknetdx/blocknet.git
+  && git clone --depth 1 --branch 4.0.2 https://github.com/blocknetdx/blocknet.git
 
 # Build source
 RUN mkdir -p /opt/blockchain/config \
@@ -54,8 +54,6 @@ RUN mkdir -p /opt/blockchain/config \
 # Write default blocknet.conf (can be overridden on commandline)
 RUN echo "datadir=/opt/blockchain/data    \n\
                                           \n\
-dbcache=256                               \n\
-maxmempool=512                            \n\
 maxmempoolxbridge=128                     \n\
                                           \n\
 port=41412    # testnet: 41474            \n\
@@ -65,9 +63,10 @@ server=1                                  \n\
 logtimestamps=1                           \n\
 logips=1                                  \n\
                                           \n\
+rpcbind=0.0.0.0                           \n\
 rpcallowip=127.0.0.1                      \n\
-rpctimeout=15                             \n\
-rpcclienttimeout=15" > /opt/blockchain/config/blocknet.conf
+rpctimeout=60                             \n\
+rpcclienttimeout=30" > /opt/blockchain/config/blocknet.conf
 
 WORKDIR /opt/blockchain/
 VOLUME ["/opt/blockchain/config", "/opt/blockchain/data"]
