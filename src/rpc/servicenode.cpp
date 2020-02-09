@@ -784,6 +784,44 @@ static UniValue servicenodesendping(const JSONRPCRequest& request)
 #endif // ENABLE_WALLET
 }
 
+static UniValue servicenodecount(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error(
+            RPCHelpMan{"servicenodecount",
+                "\nLists service node counts on the network.\n",
+                {},
+                RPCResult{
+                "{\n"
+                "  \"total\": n,    (numeric) Total service nodes on the network\n"
+                "  \"online\": n,   (numeric) Total online service nodes\n"
+                "  \"offline\": n,  (numeric) Total offline service nodes\n"
+                "}\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("servicenodecount", "")
+                  + HelpExampleRpc("servicenodecount", "")
+                },
+            }.ToString());
+
+    const auto & list = sn::ServiceNodeMgr::instance().list();
+    const auto total = static_cast<int>(list.size());
+    int online{0};
+    int offline{0};
+    for (const auto & s : list) {
+        if (s.running())
+            ++online;
+        else
+            ++offline;
+    }
+
+    UniValue obj(UniValue::VOBJ);
+    obj.pushKV("total", total);
+    obj.pushKV("online", online);
+    obj.pushKV("offline", offline);
+    return obj;
+}
+
 static UniValue servicenodelegacy(const JSONRPCRequest& request)
 {
     if (request.fHelp || request.params.size() != 1)
@@ -793,11 +831,13 @@ static UniValue servicenodelegacy(const JSONRPCRequest& request)
                 "    servicenode status\n"
                 "    servicenode list\n"
                 "    servicenode start\n"
+                "    servicenode count\n"
                 "\n"
                 "\"status\" lists your running service nodes\n"
                 "\"list\" lists all running service nodes registered on the Blocknet network\n"
                 "\"start\" starts specified service node by registering it with the Blocknet network\n"
-                "\"start-all\" starts all known service nodes by registering it with the Blocknet network\n",
+                "\"start-all\" starts all known service nodes by registering it with the Blocknet network\n"
+                "\"count\" lists the number of service nodes\n",
                 {
                     {"command", RPCArg::Type::STR, RPCArg::Optional::NO, "Legacy service node command to run"},
                 },
@@ -823,6 +863,8 @@ static UniValue servicenodelegacy(const JSONRPCRequest& request)
                   + HelpExampleRpc("servicenode", "\"start\", \"snode0\"")
                   + HelpExampleCli("servicenode", "start-all")
                   + HelpExampleRpc("servicenode", "\"start-all\"")
+                  + HelpExampleCli("servicenode", "count")
+                  + HelpExampleRpc("servicenode", "\"count\"")
                 },
             }.ToString());
 
@@ -841,6 +883,8 @@ static UniValue servicenodelegacy(const JSONRPCRequest& request)
             reqcopy.params.push_back(request.params[1]);
         return servicenoderegister(reqcopy);
     }
+    else if (command == "count")
+        return servicenodecount(reqcopy);
     else
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Unsupported command: %s", command));
 }
@@ -860,6 +904,7 @@ static const CRPCCommand commands[] =
     { "servicenode",        "servicenodelist",         &servicenodelist,         {} },
     { "servicenode",        "servicenodesendping",     &servicenodesendping,     {} },
     { "servicenode",        "servicenoderemove",       &servicenoderemove,       {"alias"} },
+    { "servicenode",        "servicenodecount",        &servicenodecount,        {} },
     { "servicenode",        "servicenode",             &servicenodelegacy,       {"command"} },
 };
 // clang-format on
