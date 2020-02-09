@@ -268,6 +268,27 @@ static UniValue proposalfee(const JSONRPCRequest& request)
     return ret;
 }
 
+static UniValue nextsuperblock(const JSONRPCRequest& request)
+{
+    if (request.fHelp || !request.params.empty())
+        throw std::runtime_error(
+            RPCHelpMan{"nextsuperblock",
+                "\nReturns the next superblock\n",
+                {},
+                RPCResult{
+                "43200\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("nextsuperblock", "")
+                  + HelpExampleRpc("nextsuperblock", "")
+                },
+            }.ToString());
+
+    UniValue ret(UniValue::VNUM);
+    ret.setInt(gov::Governance::nextSuperblock(Params().GetConsensus()));
+    return ret;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         argNames
@@ -276,6 +297,7 @@ static const CRPCCommand commands[] =
     { "governance",         "listproposals",          &listproposals,          {"sinceblock"} },
     { "governance",         "vote",                   &vote,                   {"proposal", "vote"} },
     { "governance",         "proposalfee",            &proposalfee,            {} },
+    { "governance",         "nextsuperblock",         &nextsuperblock,         {} },
 };
 // clang-format on
 
