@@ -114,7 +114,7 @@ struct TestChainPoS : public TestingSetup {
         keystore.AddKey(coinbaseKey);
         CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
         for (int i = 0; i < Params().GetConsensus().lastPOWBlock; ++i) {
-            SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing); // prevent difficulty from increasing too rapidly
+            SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing);
             std::vector<CMutableTransaction> txs;
             if (i > Params().GetConsensus().coinMaturity) {
                 int j = i - Params().GetConsensus().coinMaturity;
@@ -262,10 +262,15 @@ struct TestChainPoS : public TestingSetup {
     }
 
     ~TestChainPoS() {
-        UnregisterValidationInterface(wallet.get());
-        RemoveWallet(wallet);
-        g_txindex->Stop();
-        g_txindex.reset();
+        if (g_txindex) {
+            g_txindex->Stop();
+            g_txindex.reset();
+        }
+        if (wallet) {
+            UnregisterValidationInterface(wallet.get());
+            RemoveWallet(wallet);
+            wallet.reset();
+        }
     };
 
     std::unique_ptr<interfaces::Chain> chain = interfaces::MakeChain();

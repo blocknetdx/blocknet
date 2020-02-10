@@ -11,12 +11,15 @@
 std::map<std::string, std::shared_ptr<TestChainPoSData>> g_CachedTestChainPoS;
 
 // Proof-of-Stake tests
+bool StakingSetupFixtureSetup{false};
 struct StakingSetupFixture {
     explicit StakingSetupFixture() {
+        if (StakingSetupFixtureSetup) return; StakingSetupFixtureSetup = true;
         chain_default();
     }
     void chain_default() {
-        TestChainPoS pos(true);
+        auto pos_ptr = std::make_shared<TestChainPoS>(true);
+        pos_ptr.reset();
     }
 };
 
@@ -67,69 +70,120 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_nocoinstake, TestChainPoS)
 /// Check that v03 staking modifier doesn't change for each new selection interval
 BOOST_AUTO_TEST_CASE(staking_tests_v03modifier)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
+    params->consensus.lastPOWBlock = 150;
+    params->consensus.governanceBlock = 10000; // disable governance
     params->consensus.stakingV05UpgradeTime = std::numeric_limits<int>::max(); // set far into future
-    pos.Init();
-    pos.StakeBlocks(40);
+    params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
+    pos.Init("150");
+    const int blocks{100};
+    // 4 selection intervals worth of blocks
+    while (chainActive.Height() < blocks) {
+        pos.StakeBlocks(blocks/4);
+        SetMockTime(GetAdjustedTime() + GetStakeModifierSelectionInterval());
+    }
 
-    const auto endTime = GetAdjustedTime() + GetStakeModifierSelectionInterval()*20;
+    const auto endTime = GetAdjustedTime() + params->consensus.nPowTargetSpacing*blocks; // 100 blocks worth of selection intervals
     uint64_t firstStakeModifier{0};
-    const auto stakeIndex = chainActive[chainActive.Height() - 40];
+    const auto stakeIndex = chainActive[chainActive.Height() - blocks + 10];
     CBlock stakeBlock; BOOST_CHECK(ReadBlockFromDisk(stakeBlock, stakeIndex, params->consensus));
     while (GetAdjustedTime() < endTime) {
         int64_t runningTime = GetAdjustedTime();
         uint64_t nStakeModifier{0};
         int nStakeModifierHeight{0};
         int64_t nStakeModifierTime{0};
-        BOOST_CHECK(GetKernelStakeModifier(chainActive.Tip(), stakeBlock.GetHash(), runningTime, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, false));
+        BOOST_CHECK(GetKernelStakeModifier(chainActive.Tip(), stakeIndex, runningTime, nStakeModifier, nStakeModifierHeight, nStakeModifierTime));
         if (firstStakeModifier == 0)
             firstStakeModifier = nStakeModifier;
         else BOOST_CHECK_MESSAGE(nStakeModifier == firstStakeModifier, "Stake modifier v03 should be the same indefinitely");
         pos.StakeBlocks(1);
     }
+
+    pos_ptr.reset();
 }
 
 /// Check that v05 staking modifier changes for each new selection interval
 BOOST_AUTO_TEST_CASE(staking_tests_v05modifier)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
+    params->consensus.lastPOWBlock = 150;
+    params->consensus.governanceBlock = 10000; // disable governance
     params->consensus.stakingV05UpgradeTime = GetAdjustedTime(); // set to current
-    pos.Init();
-    pos.StakeBlocks(15);
+    params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
+    pos.Init("150");
+    const int blocks{100};
+    // 4 selection intervals worth of blocks
+    while (chainActive.Height() < blocks) {
+        pos.StakeBlocks(blocks/4);
+        SetMockTime(GetAdjustedTime() + GetStakeModifierSelectionInterval());
+    }
 
-    const auto endTime = GetAdjustedTime() + GetStakeModifierSelectionInterval()*20;
+    const auto endTime = GetAdjustedTime() + params->consensus.nPowTargetSpacing*blocks; // 100 blocks worth of selection intervals
     uint64_t lastStakeModifier{0};
-    const auto stakeIndex = chainActive[chainActive.Height() - 10];
+    const auto stakeIndex = chainActive[chainActive.Height() - blocks + 10];
     CBlock stakeBlock; BOOST_CHECK(ReadBlockFromDisk(stakeBlock, stakeIndex, params->consensus));
     while (GetAdjustedTime() < endTime) {
         int64_t runningTime = GetAdjustedTime();
         uint64_t nStakeModifier{0};
         int nStakeModifierHeight{0};
         int64_t nStakeModifierTime{0};
-        BOOST_CHECK(GetKernelStakeModifier(chainActive.Tip(), stakeBlock.GetHash(), runningTime, nStakeModifier, nStakeModifierHeight, nStakeModifierTime, false));
+        BOOST_CHECK(GetKernelStakeModifier(chainActive.Tip(), stakeIndex, runningTime, nStakeModifier, nStakeModifierHeight, nStakeModifierTime));
         if (lastStakeModifier > 0 && chainActive.Height() % 3 == 0) {
             BOOST_CHECK_MESSAGE(nStakeModifier != lastStakeModifier, strprintf("Stake modifier should be different for every new selection interval: new modifier %d vs previous %d", nStakeModifier, lastStakeModifier));
             lastStakeModifier = nStakeModifier;
         }
         pos.StakeBlocks(1);
     }
+
+    pos_ptr.reset();
 }
 
-/// Check that the v05 staking protocol upgrade works properly
-BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade)
+/// Check that the v03 to v05 staking protocol upgrade works properly
+BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade_v05)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
-    params->consensus.stakingV05UpgradeTime = std::numeric_limits<int>::max();
-    pos.Init();
+    params->consensus.lastPOWBlock = 150;
+    params->consensus.governanceBlock = 10000; // disable governance
+    params->consensus.stakingV05UpgradeTime = std::numeric_limits<int>::max(); // disable v05
+    params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
+    pos.Init("150");
+    pos.StakeBlocks(25);
 
     // Switch on the upgrade
     params->consensus.stakingV05UpgradeTime = GetAdjustedTime() + params->GetConsensus().nPowTargetSpacing * 10; // set 10 min in future (~10 blocks)
     int blocks = chainActive.Height();
     pos.StakeBlocks(25); // make sure seemless upgrade to v05 staking protocol occurs
     BOOST_CHECK_EQUAL(chainActive.Height(), blocks + 25);
+
+    pos_ptr.reset();
+}
+
+/// Check that the v05 to v06 staking protocol upgrade works properly
+BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade_v06)
+{
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
+    auto *params = (CChainParams*)&Params();
+    params->consensus.lastPOWBlock = 150;
+    params->consensus.governanceBlock = 10000; // disable governance
+    params->consensus.stakingV05UpgradeTime = GetAdjustedTime();
+    params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
+    pos.Init("150");
+    pos.StakeBlocks(25);
+
+    // Switch on the upgrade
+    params->consensus.stakingV06UpgradeTime = GetAdjustedTime() + params->GetConsensus().nPowTargetSpacing * 10; // set 10 min in future (~10 blocks)
+    int blocks = chainActive.Height();
+    pos.StakeBlocks(25); // make sure seemless upgrade to v06 staking protocol occurs
+    BOOST_CHECK_EQUAL(chainActive.Height(), blocks + 25);
+
+    pos_ptr.reset();
 }
 
 /// Ensure that bad stakes are not accepted by the protocol.
@@ -178,13 +232,19 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         if (Params().MineBlocksOnDemand())
             block.nVersion = gArgs.GetArg("-blockversion", block.nVersion);
         block.hashPrevBlock  = tip->GetBlockHash();
-        block.nTime          = static_cast<uint32_t>(nextStake.time);
         block.nBits          = GetNextWorkRequired(tip, nullptr, Params().GetConsensus());
-        block.nNonce         = 0;
         block.hashStake      = nextStake.coin->outpoint.hash;
         block.nStakeIndex    = nextStake.coin->outpoint.n;
         block.nStakeAmount   = nextStake.coin->txout.nValue;
         block.hashStakeBlock = nextStake.hashBlock;
+        // Staking protocol v6 upgrade, set block time to current time and nonce to stake time
+        if (IsProtocolV06(nextStake.blockTime, Params().GetConsensus())) {
+            block.nTime = nextStake.blockTime;
+            block.nNonce = static_cast<uint32_t>(nextStake.time);
+        } else { // v05 and lower
+            block.nTime = static_cast<uint32_t>(nextStake.time);
+            block.nNonce = 0;
+        }
     };
 
     auto signCoinstake = [](CMutableTransaction & coinstakeTx, CWallet *wallet) -> bool {

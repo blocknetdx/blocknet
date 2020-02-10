@@ -415,7 +415,8 @@ void SetupServerArgs()
     gArgs.AddArg("-prune=<n>", "Pruning is not supported", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex", "Rebuild chain state and block index from the blk*.dat files on disk", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex-chainstate", "Rebuild chain state from the currently indexed blocks. When in pruning mode or if blocks on disk might be corrupted, use full -reindex instead.", false, OptionsCategory::OPTIONS);
-    gArgs.AddArg("-staking", "Mine blocks on this node (default: 1)", false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-staking", "Mine blocks on this node (default: 1). Can be used to specify search interval, staking=number_of_seconds (default: 15)", false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-stakingwithoutpeers", "Proceeds with staking even though no peers were detected. Mainly used for testing, this could put you on a fork. (default: 0)", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-minstakeamount", strprintf("Only stakes UTXOs greater than or equal to this amount (default: %d)", 0), false, OptionsCategory::OPTIONS);
 #ifndef WIN32
     gArgs.AddArg("-sysperms", "Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)", false, OptionsCategory::OPTIONS);

@@ -21,15 +21,16 @@ public:
         std::shared_ptr<CInputCoin> coin;
         std::shared_ptr<CWallet> wallet;
         int64_t time;
+        int64_t blockTime;
         uint256 hashBlock;
         int64_t hashBlockTime;
         uint256 hashProofOfStake;
         explicit StakeCoin() {
             SetNull();
         }
-        explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time,
+        explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time, int64_t blockTime,
                            uint256 hashBlock, int64_t hashBlockTime, uint256 hashProofOfStake)
-                                          : coin(coin), wallet(wallet), time(time),
+                                          : coin(coin), wallet(wallet), time(time), blockTime(blockTime),
                                             hashBlock(hashBlock), hashBlockTime(hashBlockTime),
                                             hashProofOfStake(hashProofOfStake) { }
         bool IsNull() {
@@ -39,6 +40,7 @@ public:
             coin = nullptr;
             wallet = nullptr;
             time = 0;
+            blockTime = 0;
             hashBlock.SetNull();
             hashBlockTime = 0;
             hashProofOfStake.SetNull();

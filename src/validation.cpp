@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2018 The Bitcoin Core developers
-// Copyright (c) 2018-2019 The Blocknet developers
+// Copyright (c) 2018-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -1119,8 +1119,8 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     if (!ReadBlockFromDisk(block, blockPos, consensusParams))
         return false;
 
-    // Check the header
-    if (block.IsProofOfStake()) { // TODO Blocknet check PoS here
+    // Check PoS
+    if (block.IsProofOfStake()) {
         uint256 hashProofOfStake;
         if (!CheckProofOfStake(block, pindex->pprev, hashProofOfStake, consensusParams))
             return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): proof of stake check failed on block %u", pindex->nHeight);
@@ -1860,6 +1860,16 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         // TODO Blocknet PoS verify that the stake input sig matches the signer of the block, i.e. staker must be the block signer
         if (!VerifySig(block, txStake->vout[txin.prevout.n].scriptPubKey) && !VerifySig(block, block.vtx[1]->vout[1].scriptPubKey))
             return state.DoS(100, false, REJECT_INVALID, "bad-stake-signer", false, "bad block sig staker must be signer");
+        if (IsProtocolV06(block.GetBlockTime(), chainparams.GetConsensus())) {
+            const auto lastBlockTime = pindex->pprev->GetBlockTime();
+            // Check that block time is not less than the previous block time
+            if (block.GetBlockTime() <= lastBlockTime)
+                return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
+            // Other PoS nonce checks happen in CheckBlock above
+            // Ensure nonce is not less than or equal to the last block time
+            if (block.nNonce <= lastBlockTime)
+                return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
+        }
     }
 
     // PoS check that only PoW are allowed
@@ -2955,8 +2965,8 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
         // ppcoin: compute stake modifier
         uint64_t stakeModifier = 0;
         bool didGenStakeModifier = false;
-        if (!ComputeNextStakeModifier(pindexNew->pprev, stakeModifier, didGenStakeModifier))
-            LogPrintf("ComputeNextStakeModifier() failed for %s\n", pindexNew->GetBlockHash().ToString());
+        if (!ComputeNextStakeModifier(pindexNew->pprev, stakeModifier, didGenStakeModifier, Params().GetConsensus()))
+            LogPrintf("ComputeNextStakeModifier failed for %s\n", pindexNew->GetBlockHash().ToString());
         pindexNew->SetStakeModifier(stakeModifier, didGenStakeModifier);
     }
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
@@ -3181,6 +3191,11 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         // PoS: Second transaction must be coinstake
         if (!block.vtx[1]->IsCoinStake())
             return state.DoS(100, false, REJECT_INVALID, "bad-cs-missing", false, "second tx must be coinstake");
+        // Check v6 staking protocol
+        if (IsProtocolV06(block.GetBlockTime(), consensusParams)) {
+            if (block.nNonce <= 0 || block.nNonce > GetAdjustedTime() + consensusParams.PoSFutureBlockTimeLimit())
+                return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
+        }
     }
 
     // Check transactions
@@ -3305,13 +3320,31 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.DoS(100, error("%s: forked chain older than last checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-checkpoint");
     }
 
+    // Blocknet staking protocol doesn't allow blocks prior to the previous
+    // stake's block time.
+    if (IsProofOfStake(nHeight, consensusParams) && IsProtocolV06(block.GetBlockTime(), params.GetConsensus())) {
+        // Check timestamp against prev (not less than half target spacing)
+        if (block.GetBlockTime() <= pindexPrev->GetBlockTime())
+            return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
+        // Check that stake time is valid: nonce can't be less or equal to previous block time or more than
+        // future block time limit.
+        if (block.nNonce <= 0 || block.nNonce <= pindexPrev->GetBlockTime() || block.nNonce > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit())
+            return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
+    } else {
     // Check timestamp against prev
     if (block.GetBlockTime() <= pindexPrev->GetMedianTimePast())
         return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
+    } // end else
 
+    if (IsProofOfStake(nHeight)) {
+        assert(params.GetConsensus().PoSFutureBlockTimeLimit() == MAX_FUTURE_BLOCK_TIME_POS);
+        if (block.GetBlockTime() > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit())
+            return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
+    } else {
     // Check timestamp
-    if (block.GetBlockTime() > nAdjustedTime + (IsProofOfStake(nHeight) ? MAX_FUTURE_BLOCK_TIME_POS : MAX_FUTURE_BLOCK_TIME))
+    if (block.GetBlockTime() > nAdjustedTime + MAX_FUTURE_BLOCK_TIME)
         return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
+    } // end else
 
     // Reject outdated version blocks
     if (block.nVersion < 3)

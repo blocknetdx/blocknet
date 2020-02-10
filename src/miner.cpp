@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2019 The Bitcoin Core developers
-// Copyright (c) 2019 The Blocknet developers
+// Copyright (c) 2019-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -211,8 +211,8 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript& sc
 
 #ifdef ENABLE_WALLET
 std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                                  const int64_t & stakeTime, CWallet *keystore,
-                                                                  const bool & disableValidationChecks)
+                                                                  const int64_t & stakeTime, const int64_t & blockTime,
+                                                                  CWallet *keystore, const bool & disableValidationChecks)
 {
     int64_t nTimeStart = GetTimeMicros();
 
@@ -378,6 +378,12 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
     pblock->nStakeIndex    = stakeInput.outpoint.n;
     pblock->nStakeAmount   = stakeInput.txout.nValue;
     pblock->hashStakeBlock = stakeBlockHash;
+
+    // Staking protocol v6 upgrade, set block time to current time and nonce to stake time
+    if (blockTime >= chainparams.GetConsensus().stakingV06UpgradeTime) {
+        pblock->nTime = blockTime;
+        pblock->nNonce = static_cast<uint32_t>(stakeTime);
+    }
 
     pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
     pblocktemplate->vTxSigOpsCost[0] = WITNESS_SCALE_FACTOR * GetLegacySigOpCount(*pblock->vtx[0]);

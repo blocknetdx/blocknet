@@ -20,7 +20,9 @@
 
 // from kernel.h
 bool IsProofOfStake(int blockHeight, const Consensus::Params & consensusParams);
-bool stakeTargetHit(uint256 hashProofOfStake, int64_t nValueIn, arith_uint256 bnTargetPerCoinDay);
+bool stakeTargetHit(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
+bool IsProtocolV06(uint64_t nTimeTx, const Consensus::Params & consensusParams);
+bool stakeTargetHitV06(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
 
 static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';
@@ -305,7 +307,10 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 
                 if (IsProofOfStake(diskindex->nHeight, consensusParams)) { // Blocknet PoS check work
                     arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(diskindex->nBits);
-                    if (!stakeTargetHit(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay))
+                    if (IsProtocolV06(diskindex->GetBlockTime(), consensusParams)) {
+                        if (!stakeTargetHitV06(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay))
+                            continue;
+                    } else if (!stakeTargetHit(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay))
                         continue;
                 } else if (!IsProofOfStake(diskindex->nHeight, consensusParams) && !CheckProofOfWork(hash, diskindex->nBits, consensusParams))
                     continue;
