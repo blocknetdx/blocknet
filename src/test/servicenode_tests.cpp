@@ -37,30 +37,34 @@ void cleanupSn() {
     mempool.clear();
 }
 
+bool ServiceNodeSetupFixtureSetup{false};
 struct ServiceNodeSetupFixture {
     explicit ServiceNodeSetupFixture() {
+        if (ServiceNodeSetupFixtureSetup) return; ServiceNodeSetupFixtureSetup = true;
         chain_1000_50();
         chain_1250_50();
     }
     void chain_1000_50() {
-        TestChainPoS pos(false);
+        auto pos = std::make_shared<TestChainPoS>(false);
         auto *params = (CChainParams*)&Params();
         params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
                 return 1000 * COIN;
             return 50 * COIN;
         };
-        pos.Init("1000,50");
+        pos->Init("1000,50");
+        pos.reset();
     }
     void chain_1250_50() {
-        TestChainPoS pos(false);
+        auto pos = std::make_shared<TestChainPoS>(false);
         auto *params = (CChainParams*)&Params();
         params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
                 return 1250 * COIN;
             return 50 * COIN;
         };
-        pos.Init("1250,50");
+        pos->Init("1250,50");
+        pos.reset();
     }
 };
 
@@ -69,7 +73,8 @@ BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServiceNodeSetupFixture)
 /// Check case where servicenode is properly validated under normal circumstances
 BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -104,6 +109,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
     BOOST_CHECK(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
 
     cleanupSn();
+    pos_ptr.reset();
 }
 
 /// Check open tier case
@@ -199,7 +205,8 @@ BOOST_FIXTURE_TEST_CASE(servicenode_tests_insufficient_collateral, TestChainPoS)
 /// Check case where collateral inputs are spent
 BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -372,13 +379,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 
         cleanupSn();
     }
+    pos_ptr.reset();
 }
 
 /// Check case where servicenode is re-registered on spent collateral
 BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
 {
     gArgs.SoftSetBoolArg("-servicenode", true);
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -484,12 +493,14 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
     UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
     gArgs.SoftSetBoolArg("-servicenode", false);
     cleanupSn();
+    pos_ptr.reset();
 }
 
 /// Check case where collateral inputs are immature
 BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -606,13 +617,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
     RemoveWallet(otherwallet);
     cleanupSn();
     gArgs.SoftSetBoolArg("-servicenode", false);
+    pos_ptr.reset();
 }
 
 /// Servicenode registration and ping tests
 BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 {
     gArgs.SoftSetBoolArg("-servicenode", true);
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -761,12 +774,14 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 
     gArgs.SoftSetBoolArg("-servicenode", false);
     cleanupSn();
+    pos_ptr.reset();
 }
 
 /// Check misc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -1021,13 +1036,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     }
 
     cleanupSn();
+    pos_ptr.reset();
 }
 
 /// Check rpc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 {
     gArgs.SoftSetBoolArg("-servicenode", true);
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -1491,6 +1508,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 
     gArgs.SoftSetBoolArg("-servicenode", false);
     cleanupSn();
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

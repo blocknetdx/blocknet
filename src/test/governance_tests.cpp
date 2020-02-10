@@ -13,13 +13,15 @@
 
 #include <boost/test/test_tools.hpp>
 
+bool GovernanceSetupFixtureSetup{false};
 struct GovernanceSetupFixture {
     explicit GovernanceSetupFixture() {
+        if (GovernanceSetupFixtureSetup) return; GovernanceSetupFixtureSetup = true;
         chain_100_40001_50();
         chain_200_40001_50();
     }
     void chain_100_40001_50() {
-        TestChainPoS pos(false);
+        auto pos = std::make_shared<TestChainPoS>(false);
         auto *params = (CChainParams*)&Params();
         params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
@@ -28,10 +30,11 @@ struct GovernanceSetupFixture {
                 return 40001 * COIN;
             return 50 * COIN;
         };
-        pos.Init("100,40001,50");
+        pos->Init("100,40001,50");
+        pos.reset();
     }
     void chain_200_40001_50() {
-        TestChainPoS pos(false);
+        auto pos = std::make_shared<TestChainPoS>(false);
         auto *params = (CChainParams*)&Params();
         params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
@@ -40,7 +43,8 @@ struct GovernanceSetupFixture {
                 return 40001 * COIN;
             return 50 * COIN;
         };
-        pos.Init("200,40001,50");
+        pos->Init("200,40001,50");
+        pos.reset();
     }
 };
 
@@ -827,7 +831,8 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
 
 BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -1044,6 +1049,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), pos.wallet.get());
     pos.ReloadWallet();
+    pos_ptr.reset();
 }
 
 BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
@@ -1408,7 +1414,8 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
 BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -1824,11 +1831,13 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), pos.wallet.get());
     pos.ReloadWallet();
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -1960,7 +1969,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // Valid superblock payees list should succeed
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 const auto & payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -1976,7 +1985,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // Staker paying himself the superblock remainder should fail
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 const auto & payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -1996,7 +2005,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // Bad superblock payees list should fail
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -2012,7 +2021,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // Bad superblock payee amount should fail
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -2027,7 +2036,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // Extra superblock payee should fail
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -2042,7 +2051,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // Duplicate superblock payee should fail
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -2057,7 +2066,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // Missing superblock payee should fail
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -2072,7 +2081,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
             // All superblock payees missing should fail
             {
-                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.wallet.get(), true);
+                auto blocktemplate = BlockAssembler(*params).CreateNewBlockPoS(*stake.coin, stake.hashBlock, stake.time, stake.blockTime, stake.wallet.get(), true);
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
@@ -2092,11 +2101,13 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), pos.wallet.get());
     pos.ReloadWallet();
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -2212,12 +2223,14 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), pos.wallet.get());
     pos.ReloadWallet();
+    pos_ptr.reset();
 }
 
 /// Check vote on stake across multiple proposals
 BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -2433,11 +2446,13 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), pos.wallet.get());
     pos.ReloadWallet();
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_proposals)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.voteMinUtxoAmount = 20*COIN;
     params->consensus.voteBalance = 1000*COIN;
@@ -2489,11 +2504,13 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_proposals)
 
     cleanup(chainActive.Height(), pos.wallet.get());
     pos.ReloadWallet();
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.voteMinUtxoAmount = 20*COIN;
     params->consensus.voteBalance = 500*COIN;
@@ -2702,11 +2719,13 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
     RemoveWallet(otherwallet);
     UnregisterValidationInterface(otherwallet.get());
     cleanup(chainActive.Height(), pos.wallet.get());
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_CASE(governance_tests_rpc)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
     auto *params = (CChainParams*)&Params();
     params->consensus.voteMinUtxoAmount = 20*COIN;
@@ -3011,6 +3030,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), pos.wallet.get());
     pos.ReloadWallet();
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

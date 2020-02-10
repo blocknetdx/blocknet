@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -86,7 +87,10 @@ struct Params {
     int stakeMinAge;
     int stakingModiferV2Block;
     int coinMaturity;
+    int64_t stakingPoSTargetTimespan{60*40};
     int64_t stakingV05UpgradeTime{0};
+    int64_t stakingV06UpgradeTime{0};
+    int64_t PoSFutureBlockTimeLimit() const { return nPowTargetSpacing * 3; } // changing this will break consensus!
     /** Service node parameters */
     int snMaxCollateralCount{10}; // max utxos for use with service node collateral
     /** Governance parameters */
