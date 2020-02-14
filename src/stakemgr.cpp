@@ -72,131 +72,36 @@ bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBl
     }
 
     std::vector<StakeOutput> selected; // selected coins that meet criteria for staking
-    const int coinMaturity = params.coinMaturity;
     const auto argStakeAmount = static_cast<CAmount>(gArgs.GetArg("-minstakeamount", 0));
     const auto minStakeAmount = argStakeAmount == 0 ? 1 : argStakeAmount * COIN;
     const auto tipHeight = tip->nHeight;
-    const auto stakeHeight = tip->nHeight + 1;
 
     for (const auto & pwallet : wallets) {
-        std::vector<COutput> coins; // all confirmed coins
-        {
-            auto locked_chain = pwallet->chain().lock();
-            LOCK2(cs_main, pwallet->cs_wallet);
-            if (pwallet->IsLocked()) {
-                LogPrintf("Wallet is locked not staking inputs: %s\n", pwallet->GetDisplayName());
-                continue; // skip locked wallets
-            }
-            pwallet->AvailableCoins(*locked_chain, coins, true, nullptr, minStakeAmount, MAX_MONEY, MAX_MONEY, 0);
-        }
-
+        const std::vector<COutput> & coins = StakeOutputs(pwallet.get(), minStakeAmount);
         // Find suitable staking coins
         for (const COutput & out : coins) {
-            if (out.tx->IsCoinBase()) // can't stake coinbase
-                continue;
-            if (out.tx->IsCoinStake() && out.nDepth < coinMaturity) // skip non-mature coinstakes
-                continue;
-            if (!out.fSpendable) // skip coin we don't have keys for
-                continue;
-            // Remove all coins participating in the current superblock's vote cutoff zone
-            // to avoid staking a vote and causing invalidation.
-            if (gov::Governance::instance().utxoInVoteCutoff(out.GetInputCoin().outpoint, tipHeight, params))
-                continue;
-            selected.emplace_back(std::make_shared<COutput>(out), pwallet);
+            if (SuitableCoin(out, tipHeight, params))
+                selected.emplace_back(std::make_shared<COutput>(out), pwallet);
         }
     }
 
     // Always search for stake from last block time if the tip changed
     lastUpdateTime = tipChanged ? tip->GetBlockTime() + 1 : lastUpdateTime + 1;
 
-    arith_uint256 bnTargetPerCoinDay;
-    bnTargetPerCoinDay.SetCompact(tip->nBits);
-
     // Cache all possible stakes between last update and few seconds into the future
     for (const auto & item : selected) {
         boost::this_thread::interruption_point();
         const auto out = item.out;
-        if (lastUpdateTime - out->tx->GetTxTime() < params.stakeMinAge) // skip coins that don't meet stake age
+        auto wallet = item.wallet;
+        std::map<int64_t, std::vector<StakeCoin>> stakes;
+        const int64_t adjustedTime = GetAdjustedTime();
+        const auto blockTime = std::max(tip->GetBlockTime()+1, adjustedTime);
+        if (!GetStakesMeetingTarget(out, wallet, tip, adjustedTime, blockTime, lastUpdateTime, endTime, stakes, params))
             continue;
-
-        CBlockIndex *pindexStake = nullptr;
-        {
-            LOCK(cs_main);
-            pindexStake = LookupBlockIndex(out->tx->hashBlock);
-            if (!pindexStake)
-                continue; // skip txs with block that can't be found
+        if (!stakes.empty()) {
+            LOCK(mu);
+            stakeTimes.insert(stakes.begin(), stakes.end());
         }
-
-        const int hashBlockTime = pindexStake->GetBlockTime();
-        const auto & txInBlockHash = pindexStake->GetBlockHash();
-
-        if (IsProtocolV05(lastUpdateTime)) { // Protocol v5+
-            const auto estBlockTime = std::max(tip->GetBlockTime()+1, GetAdjustedTime());
-            if (estBlockTime - params.stakeMinAge <= hashBlockTime) // valid modifier time check
-                continue;
-
-            int64_t i = lastUpdateTime;
-            for (; i < endTime; ++i) {
-                if (i - out->tx->GetTxTime() < params.stakeMinAge)
-                    continue; // skip coins that don't meet stake age
-                uint64_t stakeModifier{0};
-                int stakeModifierHeight{0};
-                int64_t stakeModifierTime{0};
-                if (!GetKernelStakeModifier(tip, pindexStake, estBlockTime, stakeModifier, stakeModifierHeight, stakeModifierTime))
-                    continue;
-
-                CDataStream ss(SER_GETHASH, 0);
-                ss << stakeModifier;
-
-                uint256 hashProofOfStake;
-                if (IsProtocolV06(estBlockTime, params)) {
-                    hashProofOfStake = stakeHashV06(ss, txInBlockHash, hashBlockTime, stakeHeight, out->i, i);
-                    if (!stakeTargetHitV06(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
-                        continue;
-                } else {
-                    hashProofOfStake = stakeHashV05(ss, hashBlockTime, stakeHeight, out->i, i);
-                    if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
-                        continue;
-                }
-
-                {
-                    LOCK(mu);
-                    stakeTimes[i].emplace_back(std::make_shared<CInputCoin>(out->GetInputCoin()), item.wallet, i,
-                            estBlockTime, txInBlockHash, hashBlockTime, hashProofOfStake);
-                    break;
-                }
-            }
-        } else {
-            uint64_t stakeModifier = HasStakeModifier(txInBlockHash) ? GetStakeModifier(txInBlockHash) : 0;
-            int stakeModifierHeight{0};
-            int64_t stakeModifierTime{0};
-            const unsigned int stakeTime{0}; // this is not used here by v03 staking protocol (see GetKernelStakeModifierV03)
-            if (stakeModifier == 0 && !GetKernelStakeModifier(tip, pindexStake, stakeTime, stakeModifier, stakeModifierHeight, stakeModifierTime))
-                continue;
-
-            if (!HasStakeModifier(txInBlockHash)) {
-                LOCK(mu);
-                stakeModifiers[txInBlockHash] = stakeModifier;
-            }
-            CDataStream ss(SER_GETHASH, 0);
-            ss << stakeModifier;
-
-            int64_t i = lastUpdateTime;
-            for (; i < endTime; ++i) {
-                if (i - out->tx->GetTxTime() < params.stakeMinAge) // skip coins that don't meet stake age
-                    continue;
-                const auto hashProofOfStake = stakeHash(i, ss, out->i, out->tx->GetHash(), hashBlockTime);
-                if (!stakeTargetHit(hashProofOfStake, out->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
-                    continue;
-                {
-                    LOCK(mu);
-                    stakeTimes[i].emplace_back(std::make_shared<CInputCoin>(out->GetInputCoin()), item.wallet, i, 0,
-                                               out->tx->hashBlock, hashBlockTime, hashProofOfStake);
-                    break;
-                }
-            }
-        }
-
     }
 
     lastBlockHeight = tipHeight;
@@ -298,3 +203,112 @@ const StakeMgr::StakeCoin & StakeMgr::GetStake() {
     return std::move(StakeCoin{});
 }
 
+bool StakeMgr::SuitableCoin(const COutput & coin, const int & tipHeight, const Consensus::Params & params) const {
+    if (coin.tx->IsCoinBase()) // can't stake coinbase
+        return false;
+    if (coin.tx->IsCoinStake() && coin.nDepth < params.coinMaturity) // skip non-mature coinstakes
+        return false;
+    if (!coin.fSpendable) // skip coin we don't have keys for
+        return false;
+    // Remove all coins participating in the current superblock's vote cutoff zone
+    // to avoid staking a vote and causing invalidation.
+    if (gov::Governance::instance().utxoInVoteCutoff(coin.GetInputCoin().outpoint, tipHeight, params))
+        return false;
+    return true;
+}
+
+std::vector<COutput> StakeMgr::StakeOutputs(CWallet *wallet, const CAmount & minStakeAmount) const {
+    std::vector<COutput> coins; // all confirmed coins
+    auto locked_chain = wallet->chain().lock();
+    LOCK2(cs_main, wallet->cs_wallet);
+    if (wallet->IsLocked()) {
+        LogPrintf("Wallet is locked not staking inputs: %s\n", wallet->GetDisplayName());
+        return coins; // skip locked wallets
+    }
+    wallet->AvailableCoins(*locked_chain, coins, true, nullptr, minStakeAmount, MAX_MONEY, MAX_MONEY, 0);
+    return coins;
+}
+
+bool StakeMgr::GetStakesMeetingTarget(const std::shared_ptr<COutput> & coin, std::shared_ptr<CWallet> & wallet,
+        const CBlockIndex *tip, const int64_t & adjustedTime, const int64_t & blockTime, const int64_t & fromTime,
+        const int64_t & toTime, std::map<int64_t, std::vector<StakeCoin>> & stakes, const Consensus::Params & params)
+{
+    if (fromTime - coin->tx->GetTxTime() < params.stakeMinAge) // skip coins that don't meet stake age
+        return false;
+
+    CBlockIndex *pindexStake = nullptr;
+    {
+        LOCK(cs_main);
+        pindexStake = LookupBlockIndex(coin->tx->hashBlock);
+        if (!pindexStake)
+            return false; // skip txs with block that can't be found
+    }
+
+    const auto stakeHeight = tip->nHeight + 1;
+    const int hashBlockTime = pindexStake->GetBlockTime();
+    const auto & txInBlockHash = pindexStake->GetBlockHash();
+    const auto txTime = coin->tx->GetTxTime();
+
+    arith_uint256 bnTargetPerCoinDay;
+    bnTargetPerCoinDay.SetCompact(tip->nBits);
+
+    if (IsProtocolV05(fromTime)) { // Protocol v5+
+        if (blockTime - params.stakeMinAge <= hashBlockTime) // valid modifier time check
+            return false;
+
+        int64_t i = fromTime;
+        for (; i < toTime; ++i) {
+            if (i - txTime < params.stakeMinAge)
+                continue; // skip coins that don't meet stake age
+            uint64_t stakeModifier{0};
+            int stakeModifierHeight{0};
+            int64_t stakeModifierTime{0};
+            if (!GetKernelStakeModifier(tip, pindexStake, blockTime, stakeModifier, stakeModifierHeight, stakeModifierTime))
+                continue;
+
+            CDataStream ss(SER_GETHASH, 0);
+            ss << stakeModifier;
+
+            uint256 hashProofOfStake;
+            if (IsProtocolV06(blockTime, params)) {
+                hashProofOfStake = stakeHashV06(ss, txInBlockHash, hashBlockTime, stakeHeight, coin->i, i);
+                if (!stakeTargetHitV06(hashProofOfStake, coin->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
+                    continue;
+            } else {
+                hashProofOfStake = stakeHashV05(ss, hashBlockTime, stakeHeight, coin->i, i);
+                if (!stakeTargetHit(hashProofOfStake, coin->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
+                    continue;
+            }
+            stakes[i].emplace_back(std::make_shared<CInputCoin>(coin->GetInputCoin()), wallet, i,
+                    blockTime, txInBlockHash, hashBlockTime, hashProofOfStake);
+            break;
+        }
+    } else {
+        uint64_t stakeModifier = HasStakeModifier(txInBlockHash) ? GetStakeModifier(txInBlockHash) : 0;
+        int stakeModifierHeight{0};
+        int64_t stakeModifierTime{0};
+        const unsigned int stakeTime{0}; // this is not used here by v03 staking protocol (see GetKernelStakeModifierV03)
+        if (stakeModifier == 0 && !GetKernelStakeModifier(tip, pindexStake, stakeTime, stakeModifier, stakeModifierHeight, stakeModifierTime))
+            return false;
+
+        if (!HasStakeModifier(txInBlockHash))
+            UpdateStakeModifier(txInBlockHash, stakeModifier);
+
+        CDataStream ss(SER_GETHASH, 0);
+        ss << stakeModifier;
+
+        int64_t i = fromTime;
+        for (; i < toTime; ++i) {
+            if (i - txTime < params.stakeMinAge) // skip coins that don't meet stake age
+                continue;
+            const auto hashProofOfStake = stakeHash(i, ss, coin->i, coin->tx->GetHash(), hashBlockTime);
+            if (!stakeTargetHit(hashProofOfStake, coin->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
+                continue;
+            stakes[i].emplace_back(std::make_shared<CInputCoin>(coin->GetInputCoin()), wallet, i, 0,
+                                       coin->tx->hashBlock, hashBlockTime, hashProofOfStake);
+            break;
+        }
+    }
+
+    return true;
+}

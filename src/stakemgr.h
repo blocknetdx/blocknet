@@ -64,6 +64,11 @@ public:
     int64_t LastUpdateTime() const;
     int LastBlockHeight() const;
     const StakeCoin & GetStake();
+    bool SuitableCoin(const COutput & coin, const int & tipHeight, const Consensus::Params & params) const;
+    std::vector<COutput> StakeOutputs(CWallet *wallet, const CAmount & minStakeAmount) const;
+    bool GetStakesMeetingTarget(const std::shared_ptr<COutput> & coin, std::shared_ptr<CWallet> & wallet,
+        const CBlockIndex *tip, const int64_t & adjustedTime, const int64_t & blockTime, const int64_t & fromTime,
+        const int64_t & toTime, std::map<int64_t, std::vector<StakeCoin>> & stakes, const Consensus::Params & params);
 
 private:
     bool HasStakeModifier(const uint256 & blockHash) {
@@ -73,6 +78,10 @@ private:
     uint64_t GetStakeModifier(const uint256 & blockHash) {
         LOCK(mu);
         return stakeModifiers.count(blockHash) ? stakeModifiers[blockHash] : 0;
+    }
+    void UpdateStakeModifier(const uint256 & blockHash, const uint64_t & stakeModifier) {
+        LOCK(mu);
+        stakeModifiers[blockHash] = stakeModifier;
     }
 
 private:

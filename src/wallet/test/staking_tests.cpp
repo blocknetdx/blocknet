@@ -210,6 +210,33 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         return true;
     };
 
+    auto findStakeInPast = [](StakeMgr::StakeCoin & nextStake, StakeMgr & staker, const CBlockIndex *tip, std::shared_ptr<CWallet> wallet) -> bool {
+        const auto & params = Params().GetConsensus();
+        const auto blockTime = tip->GetBlockTime()-1; // always select a block time that's prior to the latest chain tip
+        const auto tipHeight = tip->nHeight;
+        const auto adjustedTime = GetAdjustedTime();
+        const auto fromTime = tip->GetBlockTime() + 1;
+        const auto toTime = adjustedTime + params.PoSFutureBlockTimeLimit();
+        std::vector<StakeMgr::StakeOutput> selected;
+        const std::vector<COutput> & coins = staker.StakeOutputs(wallet.get(), 1);
+        for (const COutput & out : coins) {
+            if (staker.SuitableCoin(out, tipHeight, params))
+                selected.emplace_back(std::make_shared<COutput>(out), wallet);
+        }
+        StakeMgr::StakeCoin stake;
+        for (const auto & item : selected) {
+            const auto out = item.out;
+            std::map<int64_t, std::vector<StakeMgr::StakeCoin>> stakes;
+            if (!staker.GetStakesMeetingTarget(out, wallet, tip, adjustedTime, blockTime, fromTime, toTime, stakes, params))
+                continue;
+            if (!stakes.empty()) {
+                nextStake = stakes.begin()->second.front();
+                return true;
+            }
+        }
+        return false;
+    };
+
     auto createStakeBlock = [](const StakeMgr::StakeCoin & nextStake, const CBlockIndex *tip, CBlock & block, CMutableTransaction & coinbaseTx, CMutableTransaction & coinstakeTx) {
         // Create coinbase transaction.
         coinbaseTx.vin.resize(1);
@@ -526,6 +553,56 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
 
             StakeBlocks(1), SyncWithValidationInterfaceQueue();
         }
+    }
+
+    // Check stakes meet v6 staking protocol
+    {
+        CBlock block;
+        CMutableTransaction coinbaseTx;
+        CMutableTransaction coinstakeTx;
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
+        block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+        coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+        BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
+        block.vtx[1] = MakeTransactionRef(coinstakeTx);
+        block.hashMerkleRoot = BlockMerkleRoot(block);
+        BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+        const auto currentIndex1 = chainActive.Tip();
+        const auto validNonce = block.nNonce;
+        block.nNonce = 0;
+        BOOST_CHECK_MESSAGE(!ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake should not be accepted with nonce of 0");
+        block.nNonce = -1;
+        BOOST_CHECK_MESSAGE(!ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake should not be accepted with nonce less than 0");
+        block.nNonce = GetAdjustedTime() + Params().GetConsensus().PoSFutureBlockTimeLimit() + 10;
+        BOOST_CHECK_MESSAGE(!ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake should not be accepted with nonce greater than adjusted time + max future stake time");
+        block.nNonce = validNonce;
+        BOOST_CHECK_MESSAGE(ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake with valid nonce should be accepted");
+        BOOST_CHECK(currentIndex1 != chainActive.Tip()); // chain tip should not match previous
+        BOOST_CHECK_EQUAL(block.GetHash(), chainActive.Tip()->GetBlockHash()); // block should be accepted
+        BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex failed to update on stake");
+    }
+
+    // Check stakes meet v6 staking protocol, block submitted with timestamp prior to the
+    // current chain tip should not be accepted
+    {
+        CBlock block;
+        CMutableTransaction coinbaseTx;
+        CMutableTransaction coinstakeTx;
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStakeInPast(nextStake, staker, chainActive.Tip(), wallet));
+        createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
+        block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+        coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+        BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
+        block.vtx[1] = MakeTransactionRef(coinstakeTx);
+        block.hashMerkleRoot = BlockMerkleRoot(block);
+        BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
+        const auto currentIndex1 = chainActive.Tip();
+        BOOST_CHECK_MESSAGE(!ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake should not be accepted with block time prior to current tip");
+        BOOST_CHECK(currentIndex1 == chainActive.Tip()); // chain tip should match previous
+        BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex failed to update on stake");
     }
 
     // TODO Blocknet PoS unit test for p2pkh stakes
