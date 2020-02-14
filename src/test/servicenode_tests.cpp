@@ -294,9 +294,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, c.GetInputCoin().txout.nValue, SIGHASH_ALL), c.GetInputCoin().txout.scriptPubKey, sigdata);
         UpdateInput(mtx.vin[0], sigdata);
 
-        CValidationState state;
-        LOCK(cs_main);
-        BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx), nullptr, nullptr, false, 0));
+        {
+            CValidationState state;
+            LOCK(cs_main);
+            BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx), nullptr, nullptr, false, 0));
+        }
         CAmount totalAmount{0};
         std::vector<COutPoint> collateral;
         for (int i = 0; i < coins.size(); ++i) { // start at 1 (ignore first spent coinbase)
@@ -496,6 +498,131 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
     pos_ptr.reset();
 }
 
+/// Check case where servicenode is valid on reorg (block disconnect)
+BOOST_AUTO_TEST_CASE(servicenode_tests_valid_onreorg)
+{
+    gArgs.SoftSetBoolArg("-servicenode", true);
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 1000 * COIN;
+        return 50 * COIN;
+    };
+    params->consensus.coinMaturity = 10;
+    pos.Init("1000,50");
+    sn::ServiceNodeMgr::instance().reset();
+    RegisterValidationInterface(&sn::ServiceNodeMgr::instance());
+
+    CKey key; key.MakeNewKey(true);
+    const auto saddr = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
+
+    bool firstRun;
+    auto otherwallet = std::make_shared<CWallet>(*pos.chain, WalletLocation(), WalletDatabase::CreateMock());
+    otherwallet->LoadWallet(firstRun);
+    otherwallet->SetBroadcastTransactions(true);
+    AddKey(*otherwallet, key);
+    AddWallet(otherwallet); // add wallet to global mgr
+    RegisterValidationInterface(otherwallet.get());
+
+    CBasicKeyStore keystore; // temp used to spend inputs
+    keystore.AddKey(key);
+    keystore.AddKey(pos.coinbaseKey);
+
+    // Check that snode is valid after spent collateral is orphaned
+    {
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins, true, nullptr, 1000 * COIN);
+        }
+        std::vector<COutPoint> collateral;
+        CAmount collateralTotal{0};
+        for (auto & c : coins) {
+            if (collateralTotal >= sn::ServiceNode::COLLATERAL_SPV)
+                break;
+            CMutableTransaction mtx;
+            mtx.vin.resize(1);
+            mtx.vin[0] = CTxIn(c.GetInputCoin().outpoint);
+            mtx.vout.resize(1);
+            mtx.vout[0].scriptPubKey = GetScriptForDestination(saddr);
+            mtx.vout[0].nValue = c.GetInputCoin().txout.nValue - CENT;
+            SignatureData sigdata = DataFromTransaction(mtx, 0, c.GetInputCoin().txout);
+            ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, c.GetInputCoin().txout.nValue, SIGHASH_ALL), c.GetInputCoin().txout.scriptPubKey, sigdata);
+            UpdateInput(mtx.vin[0], sigdata);
+            // Send transaction
+            uint256 txid; std::string errstr;
+            const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+            BOOST_REQUIRE_MESSAGE(err == TransactionError::OK, strprintf("Failed to send snode collateral tx: %s", errstr));
+            collateral.emplace_back(mtx.GetHash(), 0);
+            collateralTotal += mtx.vout[0].nValue;
+        }
+        pos.StakeBlocks(params->GetConsensus().coinMaturity), SyncWithValidationInterfaceQueue();
+        rescanWallet(otherwallet.get());
+
+        // Setup snode
+        UniValue rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ EncodeDestination(saddr), "snode0" });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
+        const auto snodeEntry = sn::ServiceNodeMgr::instance().getActiveSn();
+        const auto snode = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        // Find collateral that is spendable
+        COutPoint selUtxo;
+        for (const auto & col : snode.getCollateral()) {
+            Coin c;
+            if (pcoinsTip->GetCoin(col, c) && c.nHeight >= params->GetConsensus().coinMaturity) {
+                selUtxo = col;
+                break;
+            }
+        }
+        BOOST_REQUIRE_MESSAGE(!selUtxo.IsNull(), "Failed to find collateral utxo");
+
+        // Simulate that the snode is someone elses, remove it from our local state
+        sn::ServiceNodeMgr::instance().removeSnEntry(snodeEntry);
+        auto ss = CDataStream(SER_NETWORK, PROTOCOL_VERSION);
+        ss << snode;
+        sn::ServiceNode snodetmp;
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().processRegistration(ss, snodetmp), "failed to process snode registration");
+
+        // Spend one of the collateral utxos
+        CTransactionRef tx; uint256 hashBlock;
+        BOOST_CHECK_MESSAGE(GetTransaction(selUtxo.hash, tx, params->GetConsensus(), hashBlock), "failed to get snode collateral");
+        CMutableTransaction mtx;
+        mtx.vin.resize(1); mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(selUtxo);
+        mtx.vout[0] = CTxOut(tx->vout[selUtxo.n].nValue - CENT, tx->vout[selUtxo.n].scriptPubKey);
+        SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[selUtxo.n]);
+        ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, tx->vout[selUtxo.n].nValue, SIGHASH_ALL), tx->vout[selUtxo.n].scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[0], sigdata);
+        uint256 txid; std::string errstr; const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to spend snode collateral: %s", errstr));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        pos.StakeBlocks(sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS), SyncWithValidationInterfaceQueue();
+        const auto checkSnode = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        BOOST_CHECK_MESSAGE(checkSnode.getInvalid(), "snode should be marked invalid since collateral was spent");
+        BOOST_CHECK_MESSAGE(!checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be invalid");
+
+        // Now disconnect spent collateral blocks and verify that snode is still valid
+        CValidationState state;
+        for (int i = 0; i <= sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS; ++i)
+            InvalidateBlock(state, *params, chainActive.Tip());
+        SyncWithValidationInterfaceQueue();
+        const auto checkSnode2 = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        BOOST_CHECK_MESSAGE(checkSnode2.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should still be valid after block disconnects");
+    }
+
+    UnregisterValidationInterface(otherwallet.get());
+    RemoveWallet(otherwallet);
+    UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
+    gArgs.SoftSetBoolArg("-servicenode", false);
+    cleanupSn();
+}
+
 /// Check case where collateral inputs are immature
 BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
 {
@@ -608,7 +735,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
         BOOST_CHECK_MESSAGE(success, "Refresh snode ping before running state check");
         auto running = sn::ServiceNodeMgr::instance().getSn(snodePubKey).running();
         BOOST_CHECK_MESSAGE(running, "Service node with recently spent collateral in grace period should still be in running state");
-        pos.StakeBlocks(2), SyncWithValidationInterfaceQueue();
+        pos.StakeBlocks(sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS), SyncWithValidationInterfaceQueue();
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSn(snodePubKey).isValid(GetTxFunc, IsServiceNodeBlockValidFunc),  "Service node with recently staked collateral should be valid");
         UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
     }
