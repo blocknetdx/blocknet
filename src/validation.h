@@ -544,7 +544,7 @@ bool GetTxFunc(const COutPoint & out, CTransactionRef & tx);
  * @param checkStale
  * @return bool
  */
-static const int SNODE_STALE_BLOCKS = 5; // number of blocks to allow before a snode is marked "stale"
+static const int SNODE_STALE_BLOCKS = 10; // number of blocks to allow before a snode is marked "stale"
 bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale=true);
 
 /**
