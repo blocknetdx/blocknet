@@ -161,7 +161,11 @@ unsigned int BlocknetGetNextWorkRequired(const CBlockIndex* pindexLast, const Co
 
     // Use algo for non-POW blocks
     if (pindexLast->nHeight > params.lastPOWBlock) {
-        const arith_uint256 bnTargetLimit = UintToArith256(uint256S("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        arith_uint256 bnTargetLimit = UintToArith256(uint256S("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        // Support minimum difficulty blocks if flag set
+        if (params.stakingAllowsMinDifficultyBlocks && pindexLast->GetBlockTime() - pindexLast->pprev->GetBlockTime() > params.nPowTargetSpacing)
+            bnTargetLimit = UintToArith256(params.powLimit);
+
         int64_t nActualSpacing = 0;
         if (pindexLast->nHeight != 0)
             nActualSpacing = pindexLast->GetBlockTime() - pindexLast->pprev->GetBlockTime();

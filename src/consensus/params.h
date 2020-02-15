@@ -87,6 +87,7 @@ struct Params {
     int stakeMinAge;
     int stakingModiferV2Block;
     int coinMaturity;
+    bool stakingAllowsMinDifficultyBlocks{false};
     int64_t stakingPoSTargetTimespan{60*40};
     int64_t stakingV05UpgradeTime{0};
     int64_t stakingV06UpgradeTime{0};

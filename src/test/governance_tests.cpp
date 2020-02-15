@@ -73,6 +73,7 @@ bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount &
 }
 
 bool newWalletAddress(CWallet *wallet, CTxDestination & dest) {
+    wallet->TopUpKeyPool();
     CPubKey newKey;
     if (!wallet->GetKeyFromPool(newKey))
         return false;
@@ -208,25 +209,41 @@ bool applySuperblockPayees(TestChainPoS & pos, CBlockTemplate *blocktemplate, co
 }
 
 bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COutPoint & stakeInput, const int & tryiter) {
+    const CChainParams & params = Params();
     int tries{0};
     const int currentBlockHeight = chainActive.Height();
     while (chainActive.Height() < currentBlockHeight + 1) {
         try {
-            CBlockIndex *pindex = nullptr;
+            CBlockIndex *tip = nullptr;
+            CBlockIndex *stakeIndex = nullptr;
+            std::shared_ptr<COutput> output = nullptr;
+            CTransactionRef tx;
+            uint256 block;
             {
                 LOCK(cs_main);
-                pindex = chainActive.Tip();
+                tip = chainActive.Tip();
+                if (!GetTransaction(stakeInput.hash, tx, params.GetConsensus(), block))
+                    return false;
+                stakeIndex = LookupBlockIndex(block);
+                if (!stakeIndex)
+                    return false;
+                {
+                    LOCK(wallet->cs_wallet);
+                    const CWalletTx *wtx = wallet->GetWalletTx(tx->GetHash());
+                    output = std::make_shared<COutput>(wtx, stakeInput.n, tip->nHeight - stakeIndex->nHeight, true, true, true);
+                }
             }
-            std::vector<std::shared_ptr<CWallet>> wallets{wallet};
-            if (pindex && staker.Update(wallets, pindex, Params().GetConsensus(), true)) {
-                std::vector<StakeMgr::StakeCoin> nextStakes;
-                if (!staker.NextStake(nextStakes, pindex, Params()))
-                    continue;
-                for (auto & sc : nextStakes) {
-                    if (sc.coin->outpoint == stakeInput) {
-                        if (staker.StakeBlock(sc, Params()))
+            const auto adjustedTime = GetAdjustedTime();
+            const auto fromTime = std::max(tip->GetBlockTime()+1, adjustedTime);
+            const auto toTime = fromTime + params.GetConsensus().PoSFutureBlockTimeLimit();
+            const auto blockTime = fromTime;
+            std::map<int64_t, std::vector<StakeMgr::StakeCoin>> stakes;
+            if (staker.GetStakesMeetingTarget(output, wallet, tip, adjustedTime, blockTime, fromTime, toTime,
+                                              stakes, params.GetConsensus())) {
+                for (auto & item : stakes) {
+                    for (auto & sc : item.second) {
+                        if (staker.StakeBlock(sc, params))
                             return true;
-                        break;
                     }
                 }
             }
@@ -238,10 +255,7 @@ bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COu
         }
         if (++tries > tryiter)
             throw std::runtime_error("Staker failed to find stake");
-        auto stime = staker.LastUpdateTime();
-        if (stime == 0)
-            stime = GetAdjustedTime();
-        SetMockTime(stime + MAX_FUTURE_BLOCK_TIME_POS);
+        SetMockTime(GetAdjustedTime() + params.GetConsensus().PoSFutureBlockTimeLimit());
     }
     return false;
 }
@@ -1976,11 +1990,14 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
-                BOOST_CHECK_MESSAGE(ProcessNewBlock(*params, block, true, &fNewBlock), "Valid superblock payee list should be accepted");
-                CValidationState state;
-                InvalidateBlock(state, *params, chainActive.Tip());
-                ActivateBestChain(state, *params);
-                SyncWithValidationInterfaceQueue();
+                bool success = ProcessNewBlock(*params, block, true, &fNewBlock);
+                BOOST_CHECK_MESSAGE(success, "Valid superblock payee list should be accepted");
+                if (success) {
+                    CValidationState state;
+                    InvalidateBlock(state, *params, chainActive.Tip());
+                    ActivateBestChain(state, *params);
+                    SyncWithValidationInterfaceQueue();
+                }
             }
 
             // Staker paying himself the superblock remainder should fail
@@ -2136,7 +2153,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
     {
         const auto resetBlocks = chainActive.Height();
         CKey key; key.MakeNewKey(true);
-        const auto & newDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);bool firstRun;
+        const auto & newDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
         auto nchain = interfaces::MakeChain();
         auto nwallet = std::make_shared<CWallet>(*nchain, WalletLocation(), WalletDatabase::CreateMock());
         bool fr; nwallet->LoadWallet(fr);
@@ -2198,9 +2215,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
         BOOST_CHECK_MESSAGE(gov::Governance::instance().hasVote(vote.getHash()), "Vote should be accepted");
 
         // Stake the vote utxo to test revotes
-        WalletRescanReserver reserver(nwallet.get());
-        reserver.reserve();
-        nwallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
+        {
+            WalletRescanReserver reserver(nwallet.get());
+            reserver.reserve();
+            nwallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
+        }
         auto currentHeight = chainActive.Height();
         BOOST_CHECK_MESSAGE(stakeWallet(nwallet, pos.staker, voteUtxo, 1000), "Failed to stake vote utxo");
         SyncWithValidationInterfaceQueue();
@@ -2259,7 +2278,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
     {
         const auto resetBlocks = chainActive.Height();
         CKey key; key.MakeNewKey(true);
-        const auto & newDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);bool firstRun;
+        const auto & newDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
         auto nchain = interfaces::MakeChain();
         auto nwallet = std::make_shared<CWallet>(*nchain, WalletLocation(), WalletDatabase::CreateMock());
         bool fr; nwallet->LoadWallet(fr);
@@ -2347,6 +2366,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
         BOOST_CHECK_MESSAGE(gov::Governance::instance().hasVote(vote1b.getHash()), "Vote1b should be accepted");
         BOOST_CHECK_MESSAGE(gov::Governance::instance().hasVote(vote2a.getHash()), "Vote2a should be accepted");
         BOOST_CHECK_MESSAGE(gov::Governance::instance().hasVote(vote2b.getHash()), "Vote2b should be accepted");
+
+        // Make sure we have sufficient coin maturity
+        pos.StakeBlocks(consensus.coinMaturity), SyncWithValidationInterfaceQueue();
 
         // Stake the vote utxo to test revotes
         {
@@ -2718,6 +2740,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
     // clean up
     RemoveWallet(otherwallet);
     UnregisterValidationInterface(otherwallet.get());
+    otherwallet.reset();
     cleanup(chainActive.Height(), pos.wallet.get());
     pos_ptr.reset();
 }
