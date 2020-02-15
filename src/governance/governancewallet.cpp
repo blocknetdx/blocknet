@@ -200,8 +200,10 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
         }
         totalBalance += wallet->GetBalance() + wallet->GetImmatureBalance();
     }
-    if (totalBalance < params.voteBalance) {
-        *failReasonRet = strprintf("Not enough coin to cast a vote, %s is required", FormatMoney(params.voteBalance));
+    if (totalBalance <= params.voteBalance) {
+        *failReasonRet = strprintf("Not enough coin to cast a vote, more than %s BLOCK is required in order to cover "
+                                   "small voting input to cover fees (transaction fee for vote submission)",
+                                   FormatMoney(params.voteBalance));
         return error(failReasonRet->c_str());
     }
 
