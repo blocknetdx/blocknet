@@ -158,6 +158,7 @@ struct TestChainPoS : public TestingSetup {
         if (wallet) {
             UnregisterValidationInterface(wallet.get());
             RemoveWallet(wallet);
+            wallet.reset();
         }
 
         bool firstRun;
@@ -231,26 +232,32 @@ struct TestChainPoS : public TestingSetup {
         }
     }
 
-    const StakeMgr::StakeCoin & FindStake() {
-        int tries{0};
+    StakeMgr::StakeCoin FindStake() {
         const int currentBlockHeight = chainActive.Height();
-        while (chainActive.Height() < currentBlockHeight + 1) {
+        CBlockIndex *tip = nullptr;
+        {
+            LOCK(cs_main);
+            tip = chainActive.Tip();
+        }
+        int tries{0};
+        const CChainParams & params = Params();
+        while (true) {
             try {
-                CBlockIndex *pindex = nullptr;
-                {
-                    LOCK(cs_main);
-                    pindex = chainActive.Tip();
-                }
                 std::vector<std::shared_ptr<CWallet>> wallets{wallet};
-                if (pindex && staker.Update(wallets, pindex, Params().GetConsensus(), true)) {
-                    return staker.GetStake();
+                if (staker.Update(wallets, tip, params.GetConsensus(), true)) {
+                    std::vector<StakeMgr::StakeCoin> nextStakes;
+                    if (!staker.NextStake(nextStakes, tip, params))
+                        continue;
+                    for (const auto & ns : nextStakes) {
+                        auto blocktemplate = BlockAssembler(params).CreateNewBlockPoS(*ns.coin, ns.hashBlock, ns.time, ns.blockTime, ns.wallet.get(), true);
+                        uint256 haspos;
+                        if (CheckProofOfStake(blocktemplate->block, tip, haspos, params.GetConsensus()))
+                            return ns;
+                    }
                 }
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
-                throw e;
-            } catch (...) {
-                throw std::runtime_error("Staker unknown error");
-            }
+            } catch (...) { }
             if (++tries > 1000)
                 throw std::runtime_error("Staker failed to find stake");
             auto stime = staker.LastUpdateTime();
@@ -258,7 +265,6 @@ struct TestChainPoS : public TestingSetup {
                 stime = GetAdjustedTime();
             SetMockTime(stime + MAX_FUTURE_BLOCK_TIME_POS);
         }
-        return std::move(StakeMgr::StakeCoin{});
     }
 
     ~TestChainPoS() {
@@ -271,6 +277,9 @@ struct TestChainPoS : public TestingSetup {
             RemoveWallet(wallet);
             wallet.reset();
         }
+        m_coinbase_txns.clear();
+        locked_chain.reset();
+        chain.reset();
     };
 
     std::unique_ptr<interfaces::Chain> chain = interfaces::MakeChain();

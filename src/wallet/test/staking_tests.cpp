@@ -189,54 +189,6 @@ BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade_v06)
 /// Ensure that bad stakes are not accepted by the protocol.
 BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
 {
-    // Find a stake
-    auto findStake = [](StakeMgr::StakeCoin & nextStake, StakeMgr & staker, const CBlockIndex *tip, std::shared_ptr<CWallet> wallet) -> bool {
-        while (true) {
-            try {
-                std::vector<std::shared_ptr<CWallet>> wallets{wallet};
-                if (staker.Update(wallets, tip, Params().GetConsensus(), true))
-                    break;
-            } catch (std::exception & e) {
-                LogPrintf("Staker ran into an exception: %s\n", e.what());
-            } catch (...) { }
-            SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing);
-        }
-
-        // Get a valid stake and then modify it to try and cheat the protocol
-        std::vector<StakeMgr::StakeCoin> nextStakes;
-        if (!staker.NextStake(nextStakes, tip, Params()))
-            return false;
-        nextStake = nextStakes.front();
-        return true;
-    };
-
-    auto findStakeInPast = [](StakeMgr::StakeCoin & nextStake, StakeMgr & staker, const CBlockIndex *tip, std::shared_ptr<CWallet> wallet) -> bool {
-        const auto & params = Params().GetConsensus();
-        const auto blockTime = tip->GetBlockTime()-1; // always select a block time that's prior to the latest chain tip
-        const auto tipHeight = tip->nHeight;
-        const auto adjustedTime = GetAdjustedTime();
-        const auto fromTime = tip->GetBlockTime() + 1;
-        const auto toTime = adjustedTime + params.PoSFutureBlockTimeLimit();
-        std::vector<StakeMgr::StakeOutput> selected;
-        const std::vector<COutput> & coins = staker.StakeOutputs(wallet.get(), 1);
-        for (const COutput & out : coins) {
-            if (staker.SuitableCoin(out, tipHeight, params))
-                selected.emplace_back(std::make_shared<COutput>(out), wallet);
-        }
-        StakeMgr::StakeCoin stake;
-        for (const auto & item : selected) {
-            const auto out = item.out;
-            std::map<int64_t, std::vector<StakeMgr::StakeCoin>> stakes;
-            if (!staker.GetStakesMeetingTarget(out, wallet, tip, adjustedTime, blockTime, fromTime, toTime, stakes, params))
-                continue;
-            if (!stakes.empty()) {
-                nextStake = stakes.begin()->second.front();
-                return true;
-            }
-        }
-        return false;
-    };
-
     auto createStakeBlock = [](const StakeMgr::StakeCoin & nextStake, const CBlockIndex *tip, CBlock & block, CMutableTransaction & coinbaseTx, CMutableTransaction & coinstakeTx) {
         // Create coinbase transaction.
         coinbaseTx.vin.resize(1);
@@ -274,6 +226,70 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         }
     };
 
+    // Find a stake
+    auto findStake = [&createStakeBlock](StakeMgr::StakeCoin & nextStake, StakeMgr & staker,
+            const CBlockIndex *tip, const std::shared_ptr<CWallet> & wallet, const CAmount & stakeAmount,
+            const CScript & paymentScript) -> bool
+    {
+        while (true) {
+            try {
+                std::vector<std::shared_ptr<CWallet>> wallets{wallet};
+                if (staker.Update(wallets, tip, Params().GetConsensus(), true)) {
+                    std::vector<StakeMgr::StakeCoin> nextStakes;
+                    if (!staker.NextStake(nextStakes, tip, Params()))
+                        continue;
+                    for (const auto & ns : nextStakes) {
+                        CBlock block;
+                        CMutableTransaction coinbaseTx;
+                        CMutableTransaction coinstakeTx;
+                        createStakeBlock(ns, tip, block, coinbaseTx, coinstakeTx);
+                        block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+                        coinstakeTx.vout[1] = CTxOut(ns.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+                        block.vtx[1] = MakeTransactionRef(coinstakeTx);
+                        block.hashMerkleRoot = BlockMerkleRoot(block);
+                        uint256 haspos;
+                        if (CheckProofOfStake(block, tip, haspos, Params().GetConsensus())) {
+                            nextStake = ns;
+                            return true;
+                        }
+                    }
+                }
+            } catch (std::exception & e) {
+                LogPrintf("Staker ran into an exception: %s\n", e.what());
+            } catch (...) { }
+            SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing);
+        }
+
+        return false;
+    };
+
+    auto findStakeInPast = [](StakeMgr::StakeCoin & nextStake, StakeMgr & staker, const CBlockIndex *tip, std::shared_ptr<CWallet> wallet) -> bool {
+        const auto & params = Params().GetConsensus();
+        const auto blockTime = tip->GetBlockTime()-1; // always select a block time that's prior to the latest chain tip
+        const auto tipHeight = tip->nHeight;
+        const auto adjustedTime = GetAdjustedTime();
+        const auto fromTime = tip->GetBlockTime() + 1;
+        const auto toTime = adjustedTime + params.PoSFutureBlockTimeLimit();
+        std::vector<StakeMgr::StakeOutput> selected;
+        const std::vector<COutput> & coins = staker.StakeOutputs(wallet.get(), 1);
+        for (const COutput & out : coins) {
+            if (staker.SuitableCoin(out, tipHeight, params))
+                selected.emplace_back(std::make_shared<COutput>(out), wallet);
+        }
+        StakeMgr::StakeCoin stake;
+        for (const auto & item : selected) {
+            const auto out = item.out;
+            std::map<int64_t, std::vector<StakeMgr::StakeCoin>> stakes;
+            if (!staker.GetStakesMeetingTarget(out, wallet, tip, adjustedTime, blockTime, fromTime, toTime, stakes, params))
+                continue;
+            if (!stakes.empty()) {
+                nextStake = stakes.begin()->second.front();
+                return true;
+            }
+        }
+        return false;
+    };
+
     auto signCoinstake = [](CMutableTransaction & coinstakeTx, CWallet *wallet) -> bool {
         // Sign stake input w/ keystore
         auto locked_chain = wallet->chain().lock();
@@ -302,7 +318,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
     // Find a stake
     {
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
     }
 
     // Check valid coinstake
@@ -312,7 +328,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         CMutableTransaction coinbaseTx;
         CMutableTransaction coinstakeTx;
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
         block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
         coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
@@ -334,7 +350,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         CMutableTransaction coinbaseTx;
         CMutableTransaction coinstakeTx;
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
         block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
         coinstakeTx.vout[0] = CTxOut(stakeAmount, paymentScript);
@@ -356,7 +372,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         CMutableTransaction coinbaseTx;
         CMutableTransaction coinstakeTx1;
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx1);
         CMutableTransaction coinstakeTx2 = coinstakeTx1;
         block.vtx.resize(3);
@@ -382,7 +398,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         CMutableTransaction coinbaseTx;
         CMutableTransaction coinstakeTx;
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
         block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
         coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount*100, paymentScript); // staker payment
@@ -404,7 +420,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         CMutableTransaction coinbaseTx;
         CMutableTransaction coinstakeTx;
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
         block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
         coinstakeTx.vout[1] = CTxOut(-1 * (nextStake.coin->txout.nValue + stakeAmount), paymentScript); // staker payment
@@ -426,7 +442,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         CMutableTransaction coinbaseTx;
         CMutableTransaction coinstakeTx;
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
         block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
         CTransactionRef anotherInput = nullptr;
@@ -453,26 +469,8 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
 
     // Check that orphaned coinstakes are abandoned
     {
-        CBlock block1;
-        {
-            CBlock block;
-            CMutableTransaction coinbaseTx;
-            CMutableTransaction coinstakeTx;
-            StakeMgr::StakeCoin nextStake;
-            BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
-            createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
-            block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
-            coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
-            BOOST_CHECK(signCoinstake(coinstakeTx, wallet.get()));
-            block.vtx[1] = MakeTransactionRef(coinstakeTx);
-            block.hashMerkleRoot = BlockMerkleRoot(block);
-            BOOST_CHECK(SignBlock(block, nextStake.coin->txout.scriptPubKey, *wallet));
-            block1 = block;
-        }
-
         const auto walletBalance = wallet->GetBalance();
-        BOOST_CHECK(ProcessNewBlock(Params(), std::make_shared<CBlock>(block1), true, nullptr));
-        SyncWithValidationInterfaceQueue();
+        StakeBlocks(1); SyncWithValidationInterfaceQueue();
         const auto newBalance = wallet->GetBalance();
 
         // reset chain tip
@@ -503,7 +501,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
                     CMutableTransaction coinbaseTx;
                     CMutableTransaction coinstakeTx;
                     StakeMgr::StakeCoin nextStake;
-                    BOOST_CHECK(findStake(nextStake, staker, prevIndex, wallet));
+                    BOOST_CHECK(findStake(nextStake, staker, prevIndex, wallet, stakeAmount, paymentScript));
                     createStakeBlock(nextStake, prevIndex, block, coinbaseTx, coinstakeTx);
                     block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
                     coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
@@ -517,8 +515,6 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
                         if (mapBlockIndex.count(block.GetHash()))
                             prevIndex = mapBlockIndex[block.GetHash()];
                     }
-//                    else
-//                        BOOST_TEST_MESSAGE("ProcessNewBlock failed");
                     forkA[i] = blockptr;
                 }
             }
@@ -531,7 +527,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
                     CMutableTransaction coinbaseTx;
                     CMutableTransaction coinstakeTx;
                     StakeMgr::StakeCoin nextStake;
-                    BOOST_CHECK(findStake(nextStake, staker, prevIndex, wallet));
+                    BOOST_CHECK(findStake(nextStake, staker, prevIndex, wallet, stakeAmount, paymentScript));
                     createStakeBlock(nextStake, prevIndex, block, coinbaseTx, coinstakeTx);
                     block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
                     coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
@@ -545,8 +541,6 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
                         if (mapBlockIndex.count(block.GetHash()))
                             prevIndex = mapBlockIndex[block.GetHash()];
                     }
-//                    else
-//                        BOOST_TEST_MESSAGE("ProcessNewBlock failed");
                     forkB[i] = blockptr;
                 }
             }
@@ -561,7 +555,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         CMutableTransaction coinbaseTx;
         CMutableTransaction coinstakeTx;
         StakeMgr::StakeCoin nextStake;
-        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet));
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
         createStakeBlock(nextStake, chainActive.Tip(), block, coinbaseTx, coinstakeTx);
         block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
         coinstakeTx.vout[1] = CTxOut(nextStake.coin->txout.nValue + stakeAmount, paymentScript); // staker payment

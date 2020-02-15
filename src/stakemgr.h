@@ -33,6 +33,15 @@ public:
                                           : coin(coin), wallet(wallet), time(time), blockTime(blockTime),
                                             hashBlock(hashBlock), hashBlockTime(hashBlockTime),
                                             hashProofOfStake(hashProofOfStake) { }
+        StakeCoin(const StakeCoin & stakeCoin) {
+            coin = stakeCoin.coin;
+            wallet = stakeCoin.wallet;
+            time = stakeCoin.time;
+            blockTime = stakeCoin.blockTime;
+            hashBlock = stakeCoin.hashBlock;
+            hashBlockTime = stakeCoin.hashBlockTime;
+            hashProofOfStake = stakeCoin.hashProofOfStake;
+        }
         bool IsNull() {
             return coin == nullptr;
         }
@@ -45,14 +54,25 @@ public:
             hashBlockTime = 0;
             hashProofOfStake.SetNull();
         }
+        ~StakeCoin() {
+            SetNull();
+        }
     };
     struct StakeOutput {
         std::shared_ptr<COutput> out;
         std::shared_ptr<CWallet> wallet;
         explicit StakeOutput() : out(nullptr), wallet(nullptr) {}
         explicit StakeOutput(std::shared_ptr<COutput> out, std::shared_ptr<CWallet> wallet) : out(out), wallet(wallet) {}
+        StakeOutput(const StakeOutput & stakeOutput) {
+            out = stakeOutput.out;
+            wallet = stakeOutput.wallet;
+        }
         bool IsNull() {
             return out == nullptr;
+        }
+        ~StakeOutput() {
+            out = nullptr;
+            wallet = nullptr;
         }
     };
 

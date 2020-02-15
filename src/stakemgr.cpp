@@ -118,11 +118,16 @@ bool StakeMgr::TryStake(const CBlockIndex *tip, const CChainParams & chainparams
     if (!NextStake(nextStakes, tip, chainparams))
         return false;
 
-    stakeTimes.clear(); // reset stake selections on success or error
+    {
+        LOCK(mu);
+        stakeTimes.clear(); // reset stake selections after trying stakes
+    }
+
     for (const auto & nextStake : nextStakes) {
         if (StakeBlock(nextStake, chainparams))
             return true;
     }
+
     return false;
 }
 
