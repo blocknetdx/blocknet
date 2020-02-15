@@ -273,10 +273,9 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                 if (inputDiffs.count(addr))
                     inputDiff = inputDiffs[addr];
                 // Find the coin closest to the desired vote input amount
-                const auto cdiff = static_cast<CAmount>(abs(coin.GetInputCoin().txout.nValue - desiredVoteInputAmt));
+                const auto cdiff = static_cast<CAmount>(llabs(coin.GetInputCoin().txout.nValue - desiredVoteInputAmt));
                 if (cdiff < inputDiff)  {
-                    inputDiff = cdiff;
-                    inputDiffs[addr] = inputDiff;
+                    inputDiffs[addr] = cdiff;
                     inputCoins[addr] = &coin;
                 }
             }
