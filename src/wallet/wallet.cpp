@@ -11,6 +11,7 @@
 #include <consensus/consensus.h>
 #include <consensus/validation.h>
 #include <fs.h>
+#include <governance/governance.h>
 #include <interfaces/chain.h>
 #include <key.h>
 #include <key_io.h>
@@ -1280,8 +1281,28 @@ void CWallet::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock) {
     if (pblock->vtx.size() < 2)
         return;
     const auto & ptx = pblock->vtx[1];
-    if (ptx->IsCoinStake() && IsMine(ptx->vin[0]) && TransactionCanBeAbandoned(ptx->GetHash()))
-        AbandonTransaction(*locked_chain, ptx->GetHash());
+    if (ptx->IsCoinStake() && IsMine(ptx->vin[0])) {
+        if (TransactionCanBeAbandoned(ptx->GetHash()))
+            AbandonTransaction(*locked_chain, ptx->GetHash());
+        // Abandon any votes that were orphaned
+        if (pblock->vtx.size() < 3)
+            return;
+        std::set<gov::Proposal> ps;
+        std::set<gov::Vote> vs;
+        gov::Governance::instance().dataFromBlock(pblock.get(), ps, vs, Params().GetConsensus(), nullptr, false);
+        if (vs.empty())
+            return; // no votes, then done
+        // Any votes cast based on abandoned coinstake implies we can abandon this vote tx
+        for (const auto & v : vs) {
+            if (v.getUtxo().hash == ptx->GetHash()) {
+                const auto & vtx = pblock->vtx[2];
+                if (TransactionCanBeAbandoned(vtx->GetHash())) {
+                    AbandonTransaction(*locked_chain, vtx->GetHash());
+                    return;
+                }
+            }
+        }
+    }
 }
 
 
