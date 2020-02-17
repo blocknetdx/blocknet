@@ -651,7 +651,7 @@ static UniValue servicenodestatus(const JSONRPCRequest& request)
                 },
             }.ToString());
 
-    if (!sn::ServiceNodeMgr::instance().hasActiveSn())
+    if (!sn::ServiceNodeMgr::instance().hasActiveSn() && sn::ServiceNodeMgr::instance().getSnEntries().empty())
         throw JSONRPCError(RPC_INVALID_REQUEST, R"(No Service Node is running, check servicenode.conf or run the "servicenodesetup" command)");
 
     UniValue ret(UniValue::VARR);
