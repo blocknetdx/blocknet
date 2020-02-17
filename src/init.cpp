@@ -1960,6 +1960,12 @@ bool AppInitMain(InitInterfaces& interfaces)
     }
 #endif
 
+    // Clear v3 header index if chaintip is ahead of that protocol
+    if (IsProtocolV05(chainActive.Tip()->GetBlockTime())) {
+        LOCK(cs_main);
+        mapHeaderIndex.clear();
+    }
+
     uiInterface.InitMessage(_("Done loading"));
 
     for (const auto& client : interfaces.chain_clients) {
