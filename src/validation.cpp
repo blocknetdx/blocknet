@@ -2978,7 +2978,8 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
     setDirtyBlockIndex.insert(pindexNew);
 
     // Store in header index
-    mapHeaderIndex[pindexNew->nHeight] = pindexNew;
+    if (!IsProtocolV05(pindexNew->GetBlockTime()))
+        mapHeaderIndex[pindexNew->nHeight] = pindexNew;
     if (pindexNew->nHeight % 10000 == 0)
         LogPrintf("Processing block indices at %u %s\n", pindexNew->nHeight, pindexNew->GetBlockHash().ToString());
 
@@ -4025,7 +4026,8 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
             pindexBestHeader = pindex;
 
         // Store in header index
-        mapHeaderIndex[pindex->nHeight] = pindex;
+        if (!IsProtocolV05(pindex->GetBlockTime()))
+            mapHeaderIndex[pindex->nHeight] = pindex;
     }
 
     return true;
