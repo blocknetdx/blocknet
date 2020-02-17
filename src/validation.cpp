@@ -4030,6 +4030,9 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
             mapHeaderIndex[pindex->nHeight] = pindex;
     }
 
+    LogPrintf("[DONE].\n");
+    uiInterface.ShowProgress("Loading block index", 100, false);
+
     return true;
 }
 

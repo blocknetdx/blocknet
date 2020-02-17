@@ -174,6 +174,11 @@ public:
                 {1301200, uint256S("0x016477330d5f04aeb7f93971ef7fb8c4c15aedc4281f43753aee4fa13a54ccd5")},
             }
         };
+        // Assign last checkpoint height, used to estimate initial load time
+        for (const auto & item : checkpointData.mapCheckpoints) {
+            if (item.first > consensus.lastCheckpointHeight)
+                consensus.lastCheckpointHeight = item.first;
+        }
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats 43200 [block_hash]
@@ -324,6 +329,11 @@ public:
                 {302806, uint256S("0x54d0094600b90ae113cd54360058206b00eb1db2a5a9ae9a95e40f553edb2042")},
             }
         };
+        // Assign last checkpoint height, used to estimate initial load time
+        for (const auto & item : checkpointData.mapCheckpoints) {
+            if (item.first > consensus.lastCheckpointHeight)
+                consensus.lastCheckpointHeight = item.first;
+        }
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats
