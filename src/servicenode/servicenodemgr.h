@@ -464,11 +464,11 @@ public:
      */
     ServiceNodeConfigEntry getActiveSn() {
         if (!gArgs.GetBoolArg("-servicenode", false))
-            return std::move(ServiceNodeConfigEntry{});
+            return ServiceNodeConfigEntry{};
         LOCK(mu);
         if (!snodeEntries.empty())
             return *snodeEntries.begin();
-        return std::move(ServiceNodeConfigEntry{});
+        return ServiceNodeConfigEntry{};
     }
 
     /**
@@ -1057,34 +1057,50 @@ protected:
         if (fInitialDownload)
             return; // do not try and register snode during initial download
 
-        std::set<ServiceNodeConfigEntry> copyReregister;
+        // Check if any of our snodes have inputs that were spent and/or staked
+        std::set<ServiceNodeConfigEntry> entries;
         {
             LOCK(mu);
             // Update current block number on snode list
             for (auto & item : snodes)
                 item.second->setCurrentBlock(pindexNew->nHeight);
-            // Check if we need to re-register any snodes
-            if (reregister.empty())
-                return;
-            copyReregister = reregister;
+            // copy entries
+            entries = snodeEntries;
         }
+        if (entries.empty())
+            return; // do not proceed if no snode entries
 
-        std::set<ServiceNodeConfigEntry> remove;
+        // Only consider re-registration attempts on snode entries that have collateral
+        // inputs associated with a key in our wallet.
         auto wallets = GetWallets();
-        for (auto & snode : copyReregister) {
-            std::string failReason;
-            if (registerSn(snode, g_connman.get(), wallets, &failReason)) {
-                LogPrintf("Service node registration succeeded for %s\n", snode.alias);
-                remove.insert(snode);
-            } else
-                LogPrintf("Retrying service node %s registration on the next block\n", snode.alias);
-        }
+        for (const auto & entry : entries) {
+            const auto & snode = getSn(entry.key.GetPubKey());
+            if (snode.isNull())
+                continue; // skip snodes we don't know about
 
-        // Erase successfully re-registered service nodes from the list
-        {
-            LOCK(mu);
-            for (auto & snode : remove)
-                reregister.erase(snode);
+            if (!snode.getInvalid() && snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
+                continue; // skip valid snodes
+
+            // At this point we want to try and re-register any snodes that are marked
+            // invalid.
+
+            // Make sure the snode collateral is in our wallet
+            bool haveAddr{false};
+            for (auto & w : wallets) {
+                if (w->HaveKey(boost::get<CKeyID>(entry.address))) {
+                    haveAddr = true;
+                    break;
+                }
+            }
+            if (!haveAddr)
+                continue; // snode collateral not in wallet
+
+            // Try re-registering
+            std::string failReason;
+            if (registerSn(entry, g_connman.get(), wallets, &failReason))
+                LogPrintf("Service node registration succeeded for %s\n", entry.alias);
+            else
+                LogPrintf("Retrying service node %s registration on the next block\n", entry.alias);
         }
 #endif // ENABLE_WALLET
     }
@@ -1093,7 +1109,7 @@ protected:
         // Store all spent vins
         std::set<COutPoint> spent;
         for (const auto & tx : block->vtx) {
-            if (connected) { // when block is being added check for spend utxos in vin list
+            if (connected) { // when block is being added check for spent utxos in vin list
                 for (const auto & vin : tx->vin)
                     spent.insert(vin.prevout);
             } else { // when block is being disconnected mark utxos in the vout list as spent
@@ -1114,31 +1130,12 @@ protected:
                         break;
                     }
                 }
+                // Re-validate snodes on potential reorg (on block disconnected)
+                if (!connected) {
+                    snode->markInvalid(false); // reset state before is valid check
+                    snode->markInvalid(!snode->isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
+                }
             }
-        }
-
-        // Check if any of our snodes have inputs that were spent and/or staked
-        std::set<ServiceNodeConfigEntry> entries;
-        {
-            LOCK(mu);
-            entries = snodeEntries;
-        }
-
-        std::set<ServiceNodeConfigEntry> requiresRegistration;
-        for (const auto & entry : entries) {
-            const auto & snode = getSn(entry.key.GetPubKey());
-            for (const auto & utxo : snode.getCollateral()) {
-                if (spent.count(utxo) && !requiresRegistration.count(entry))
-                    requiresRegistration.insert(entry);
-            }
-        }
-
-        if (requiresRegistration.empty())
-            return;
-
-        {
-            LOCK(mu);
-            reregister.insert(requiresRegistration.begin(), requiresRegistration.end());
         }
     }
 
@@ -1147,7 +1144,6 @@ protected:
     std::map<CPubKey, ServiceNodePtr> snodes;
     std::set<uint256> seenPackets;
     std::set<ServiceNodeConfigEntry> snodeEntries;
-    std::set<ServiceNodeConfigEntry> reregister;
 };
 
 }
