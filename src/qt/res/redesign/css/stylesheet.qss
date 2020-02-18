@@ -136,6 +136,20 @@ BlocknetCreateProposalPage #h4 { font-size: 14pt; color: white; }
 BlocknetCreateProposalPage #detail { font-size: 11pt; color: white; }
 BlocknetCreateProposalPage #charcount { font-size: 10pt; color: white; font-family: "Roboto"; }
 
+BlocknetServiceNodes #h4 { padding-left: 1px; }
+BlocknetServiceNodes #title { font-size: 12pt; color: white; font-family: "Roboto"; }
+BlocknetServiceNodes QTableWidget { color: white; background-color: transparent; }
+BlocknetServiceNodes QTableWidget QHeaderView { color: #37475C; background-color: transparent; }
+BlocknetServiceNodes QTableWidget QHeaderView::section { background-color: transparent; }
+BlocknetServiceNodes QTableWidget #indicator[state="0"] { background-color: #4BF5C6; }
+BlocknetServiceNodes QTableWidget #indicator[state="1"] { background-color: #F8BF1C; }
+BlocknetServiceNodes QTableWidget #indicator[state="2"] { background-color: #FB7F70; }
+BlocknetServiceNodes QTableWidget::item { padding: 3px; }
+BlocknetServiceNodeDetailsDialog { background-color: #172F49; }
+BlocknetServiceNodeDetailsDialog #description { font-size: 11pt; color: white; font-weight: bold; }
+BlocknetServiceNodeDetailsDialog #value { font-size: 10pt; color: white; font-family: "Roboto"; }
+BlocknetServiceNodeDetailsDialog QLabel { font-size: 13pt; color: white; font-family: "Roboto"; }
+
 BlocknetDashboard #h4 { padding-left: 1px; }
 BlocknetDashboard #balanceLbl { font-size: 14pt; color: #6F8097; font-family: "Roboto"; padding-top: 40px; }
 BlocknetDashboard #pendingLbl { font-size: 10pt; color: #6F8097; font-family: "Roboto"; font-weight: 25; }
