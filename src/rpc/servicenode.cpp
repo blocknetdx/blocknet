@@ -15,6 +15,7 @@
 #include <wallet/rpcwallet.h>
 #endif // ENABLE_WALLET
 
+#include <governance/governance.h>
 #include <xbridge/xbridgeapp.h>
 #include <xrouter/xrouterapp.h>
 
@@ -279,7 +280,8 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
     if (request.fHelp || request.params.empty() || request.params.size() > 3)
         throw std::runtime_error(
             RPCHelpMan{"servicenodecreateinputs",
-                "\nCreates service node unspent transaction outputs prior to snode registration.\n",
+                strprintf("\nCreates service node unspent transaction outputs prior to snode registration. This will also create "
+                "a %s BLOCK voting input. The voting input is separate from the service node UTXOs and is used to cast votes.\n", FormatMoney(gov::VOTING_UTXO_INPUT_AMOUNT)),
                 {
                     {"nodeaddress", RPCArg::Type::STR, RPCArg::Optional::NO, "Blocknet address for the service node. Funds will be sent here from the wallet."},
                     {"nodecount", RPCArg::Type::NUM, "1", "Number of service nodes to create"},
@@ -340,30 +342,35 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
     // Check balance
     const CAmount inputAmount = inputSize * COIN;
     const CAmount leftOver = (sn::ServiceNode::COLLATERAL_SPV * static_cast<CAmount>(count)) % inputAmount;
-    const CAmount requiredBalance = sn::ServiceNode::COLLATERAL_SPV * count + leftOver;
+    const CAmount votingInput = gov::VOTING_UTXO_INPUT_AMOUNT;
+    const CAmount requiredBalance = sn::ServiceNode::COLLATERAL_SPV * count + leftOver + votingInput;
     CAmount balance = wallet->GetBalance();
     if (balance <= requiredBalance) {
         const std::string extra = leftOver > 0 ?
                 strprintf("\nWe noticed that your input size %u isn't ideal, use an input size "
-                          "that divides the required collateral amount %d with no remainder "
-                          "(e.g. use %u)", inputSize, defaultInputSize, FormatMoney(requiredBalance)) : "";
+                          "that divides the required collateral amount %s with no remainder "
+                          "(e.g. use %u or %u)", inputSize, FormatMoney(sn::ServiceNode::COLLATERAL_SPV * count), defaultInputSize, defaultInputSize*2) : "";
         throw JSONRPCError(RPC_INVALID_PARAMS, strprintf("Not enough coin (%s) in wallet containing the snode address. "
                                                          "Unable to create %u service node(s). Require more than %s to "
-                                                         "cover snode inputs + fee %s", FormatMoney(balance),
-                                                         count, FormatMoney(requiredBalance), extra));
+                                                         "cover snode utxos, voting input, and transaction fee for "
+                                                         "network submission.", FormatMoney(balance),
+                                                         count, FormatMoney(requiredBalance)));
     }
 
     EnsureWalletIsUnlocked(wallet.get());
 
     CCoinControl cc;
     cc.fAllowOtherInputs = true;
+    cc.destChange = dest;
 
     CAmount running{0};
     std::vector<CRecipient> vouts;
-    while (running < requiredBalance) {
+    while (running < requiredBalance - votingInput) {
         vouts.push_back({GetScriptForDestination(dest), inputAmount, false});
         running += inputAmount;
     }
+    // Add voting input
+    vouts.push_back({GetScriptForDestination(dest), votingInput, false});
 
     // Create and send the transaction
     CReserveKey reservekey(wallet.get());
@@ -387,7 +394,7 @@ static UniValue servicenodecreateinputs(const JSONRPCRequest& request)
     UniValue ret(UniValue::VOBJ);
     ret.pushKV("nodeaddress", saddr);
     ret.pushKV("nodecount", count);
-    ret.pushKV("collateral", requiredBalance/COIN);
+    ret.pushKV("collateral", (requiredBalance-votingInput)/COIN);
     ret.pushKV("inputsize", inputSize);
     ret.pushKV("txid", tx->GetHash().ToString());
     return ret;

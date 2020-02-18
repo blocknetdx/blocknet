@@ -1520,8 +1520,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
                                     false};
             vecSend.push_back(recipient);
         }
-        // For fee
-        vecSend.push_back({GetScriptForDestination(dest), COIN, false});
+        vecSend.push_back({GetScriptForDestination(dest), COIN, false}); // For voting input
+        vecSend.push_back({GetScriptForDestination(dest), COIN, false}); // For fee
         CCoinControl cc;
         CTransactionRef tx;
         {
