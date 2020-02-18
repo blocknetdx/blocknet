@@ -3984,13 +3984,29 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
     if (!blocktree.LoadBlockIndexGuts(consensus_params, [this](const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs_main) { return this->InsertBlockIndex(hash); }))
         return false;
 
+    std::atomic<int> counter{0};
+    std::atomic<double> pcounter{90};
+    const int totalprogress{100};
+    auto progress = [&counter,&pcounter,totalprogress](const double & unit, const double & total, const double & percent) {
+        ++counter;
+        pcounter = pcounter + unit/total * percent;
+        if (counter % 100000 == 0) {
+            int p = static_cast<int>(pcounter);
+            if (p >= totalprogress) p = totalprogress;
+            LogPrintf("[%u%%]...", p); /* Continued */
+            uiInterface.ShowProgress("Loading block index", p, false);
+        }
+    };
+
     // Calculate nChainWork
     std::vector<std::pair<int, CBlockIndex*> > vSortedByHeight;
-    vSortedByHeight.reserve(mapBlockIndex.size());
+    const int & mbiCount = mapBlockIndex.size();
+    vSortedByHeight.reserve(mbiCount);
     for (const std::pair<const uint256, CBlockIndex*>& item : mapBlockIndex)
     {
         CBlockIndex* pindex = item.second;
         vSortedByHeight.push_back(std::make_pair(pindex->nHeight, pindex));
+        progress(1, mbiCount, 3); // total progress in LoadBlockIndex must be <= 10
     }
     sort(vSortedByHeight.begin(), vSortedByHeight.end());
     for (const std::pair<int, CBlockIndex*>& item : vSortedByHeight)
@@ -4028,6 +4044,8 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
         // Store in header index
         if (!IsProtocolV05(pindex->GetBlockTime()))
             mapHeaderIndex[pindex->nHeight] = pindex;
+
+        progress(1, mbiCount, 7); // total progress in LoadBlockIndex must be <= 10
     }
 
     LogPrintf("[DONE].\n");
