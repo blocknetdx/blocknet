@@ -267,10 +267,23 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     LogPrintf("[0%%]..."); /* Continued */
     uiInterface.ShowProgress("Loading block index", 0, false);
 
-    const int group{100000};
-    std::atomic<int> counter{0};
+    const int group{100000}; // shard count
 
-    auto loadIndices = [&insertBlockIndex](const std::vector<CDiskBlockIndex> & blocks, const std::unordered_set<uint256, TXDBHasher> & invalidBlocks) {
+    std::atomic<int> counter{0};
+    std::atomic<double> pcounter{0};
+    const int totalprogress{90};
+    auto progress = [&counter,&pcounter,totalprogress](const double & unit, const double & total, const double & percent) {
+        ++counter;
+        pcounter = pcounter + unit/total * percent;
+        if (counter % 10000 == 0) {
+            int p = static_cast<int>(pcounter);
+            if (p >= totalprogress) p = totalprogress;
+            LogPrintf("[%u%%]...", p); /* Continued */
+            uiInterface.ShowProgress("Loading block index", p, false);
+        }
+    };
+
+    auto loadIndices = [&insertBlockIndex,&progress,consensusParams](const std::vector<CDiskBlockIndex> & blocks, const std::unordered_set<uint256, TXDBHasher> & invalidBlocks) {
         // Construct block index objects
         for (const auto & diskindex : blocks) {
             const auto & hash = diskindex.GetBlockHash();
@@ -298,10 +311,12 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             pindexNew->nStakeAmount     = diskindex.nStakeAmount;
             pindexNew->hashStakeBlock   = diskindex.hashStakeBlock;
             pindexNew->hashProofOfStake = diskindex.hashProofOfStake;
+
+            progress(1, consensusParams.lastCheckpointHeight*1.15, 45);
         }
     };
 
-    auto checkWork = [group,&insertBlockIndex,&counter,consensusParams,this](const std::vector<CDiskBlockIndex> & blocks,
+    auto checkWork = [group,&insertBlockIndex,&progress,consensusParams,this](const std::vector<CDiskBlockIndex> & blocks,
             std::unordered_set<uint256, TXDBHasher> & invalidBlocks)
     {
         boost::thread_group tg;
@@ -315,7 +330,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             if (to > blocks.size())
                 to = blocks.size();
 
-            tg.create_thread([from,to,&blocks,&invalidBlocks,&insertBlockIndex,&counter,&mu,group,consensusParams,this] {
+            tg.create_thread([from,to,&blocks,&invalidBlocks,&insertBlockIndex,&mu,&progress,group,consensusParams,this] {
                 RenameThread("blocknet-blockindex");
 
                 // Blocknet PoS check work
@@ -344,13 +359,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                         continue;
                     }
 
-                    ++counter;
-                    if (counter % group == 0) {
-                        auto p = static_cast<int>(90*(double)counter/(double)consensusParams.lastCheckpointHeight);
-                        if (p >= 90) p = 90; // cap at 90%, remaining 10% is reserved for chainstate (see LoadBlockIndex)
-                        LogPrintf("[%u%%]...", p); /* Continued */
-                        uiInterface.ShowProgress("Loading block index", p, false);
-                    }
+                    progress(1, consensusParams.lastCheckpointHeight*1.15, 45);
                 }
             });
         }
