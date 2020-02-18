@@ -42,7 +42,7 @@ struct ServiceNodeConfigEntry {
     std::string alias;
     ServiceNode::Tier tier;
     CKey key;
-    CTxDestination address;
+    CTxDestination address{CNoDestination()};
     ServiceNodeConfigEntry() : tier(ServiceNode::Tier::OPEN) {}
     ServiceNodeConfigEntry(std::string alias, ServiceNode::Tier tier, CKey key, CTxDestination address)
                                                    : alias(std::move(alias)), tier(tier),
@@ -52,7 +52,7 @@ struct ServiceNodeConfigEntry {
     friend inline bool operator!=(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return !(a.key == b.key); }
     friend inline bool operator<(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.alias.compare(b.alias) < 0; }
     bool isNull() const {
-        return !address.empty();
+        return boost::get<CNoDestination>(&address);
     }
     CKeyID keyId() const {
         return key.GetPubKey().GetID();
@@ -420,6 +420,37 @@ public:
     std::vector<ServiceNodeConfigEntry> getSnEntries() {
         LOCK(mu);
         return std::vector<ServiceNodeConfigEntry>(snodeEntries.begin(), snodeEntries.end());
+    }
+
+    /**
+     * Returns the specific entry if it exists, otherwise returns a null entry. See isNull()
+     * @param id The CKeyID of the service node entry you want.
+     * @return
+     */
+    ServiceNodeConfigEntry getSnEntry(const CKeyID & id) {
+        LOCK(mu);
+        for (const auto & entry : snodeEntries) {
+            if (id == entry.keyId())
+                return entry;
+        }
+        return ServiceNodeConfigEntry{};
+    }
+
+    /**
+     * Returns true if the snode is one of ours.
+     * @param snode
+     * @param entryRet Return the matched snode entry
+     * @return
+     */
+    bool isMine(const ServiceNode & snode, ServiceNodeConfigEntry & entryRet) {
+        LOCK(mu);
+        for (const auto & entry : snodeEntries) {
+            if (entry.keyId() == snode.getSnodePubKey().GetID()) {
+                entryRet = entry;
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

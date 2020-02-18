@@ -128,10 +128,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     box3->layout()->addWidget(sendFunds);
 //    box3->layout()->addWidget(requestFunds);
     box3->layout()->addWidget(transactionHistory);
-//    QSettings qSettings; // TODO Blocknet Qt Service Nodes
-//    if (qSettings.value("fShowServicenodesTab").toBool()) {
-//        box3->layout()->addWidget(snodes);
-//    }
+    box3->layout()->addWidget(snodes);
     box3->layout()->addWidget(proposals);
 //    box3->layout()->addWidget(announcements);
 
