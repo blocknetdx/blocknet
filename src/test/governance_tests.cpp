@@ -2233,6 +2233,45 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
         ReadBlockFromDisk(block, chainActive.Tip(), consensus);
         BOOST_CHECK_MESSAGE(votes.front().getUtxo() == COutPoint(block.vtx[1]->GetHash(), 1), "Recast vote utxo should match latest block's coinstake outpoint");
 
+        // Invalidate last block and ensure vote tx is abandoned
+        {
+            {
+                LOCK(nwallet->cs_wallet);
+                nwallet->AddKey(key);
+            }
+            AddWallet(nwallet);
+            RegisterValidationInterface(nwallet.get());
+            {
+                WalletRescanReserver reserver(nwallet.get());
+                reserver.reserve();
+                nwallet->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
+            }
+
+            CTransactionRef votecstx;
+            CTransactionRef votetx;
+            uint256 hashvotecstx;
+            uint256 hashvotetx;
+            GetTransaction(block.vtx[1]->GetHash(), votecstx, consensus, hashvotecstx);
+            GetTransaction(block.vtx[2]->GetHash(), votetx, consensus, hashvotetx);
+            CBlockIndex *votecsidx = nullptr;
+            CBlockIndex *voteidx = nullptr;
+            {
+                LOCK(cs_main);
+                votecsidx = LookupBlockIndex(hashvotecstx);
+                voteidx = LookupBlockIndex(hashvotetx);
+            }
+
+            CValidationState state;
+            InvalidateBlock(state, *params, chainActive.Tip());
+            ActivateBestChain(state, *params);
+            SyncWithValidationInterfaceQueue();
+            BOOST_CHECK_MESSAGE(!chainActive.Contains(votecsidx), "Revote coinstake should be abandoned");
+            BOOST_CHECK_MESSAGE(!chainActive.Contains(voteidx), "Revote tx should be abandoned");
+
+            UnregisterValidationInterface(nwallet.get());
+            RemoveWallet(nwallet);
+        }
+
         // Clean up
         nwallet.reset();
         cleanup(resetBlocks, pos.wallet.get());
