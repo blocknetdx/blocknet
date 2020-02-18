@@ -270,6 +270,8 @@ void BlocknetWallet::goToCreateProposal() {
 
 void BlocknetWallet::balanceChanged(const interfaces::WalletBalances & balances) {
     leftMenu->setBalance(balances.balance, walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : 0);
+    if (dashboard)
+        dashboard->balanceChanged(balances);
 }
 
 void BlocknetWallet::displayUnitChanged(const int unit) {

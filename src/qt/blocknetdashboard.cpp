@@ -213,11 +213,9 @@ void BlocknetDashboard::updateBalance() {
 
 void BlocknetDashboard::walletEvents(const bool on) {
     if (walletModel && on) {
-        connect(walletModel, &WalletModel::balanceChanged, this, &BlocknetDashboard::balanceChanged);
         connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetDashboard::displayUnitChanged);
-        balanceChanged(walletModel->wallet().getBalances()); // show latest balance
+        displayUnitChanged(walletModel->getOptionsModel()->getDisplayUnit());
     } else if (walletModel) {
-        disconnect(walletModel, &WalletModel::balanceChanged, this, &BlocknetDashboard::balanceChanged);
         disconnect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetDashboard::displayUnitChanged);
     }
 }
