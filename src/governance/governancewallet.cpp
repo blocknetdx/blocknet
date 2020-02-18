@@ -200,8 +200,10 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
         }
         totalBalance += wallet->GetBalance() + wallet->GetImmatureBalance();
     }
-    if (totalBalance < params.voteBalance) {
-        *failReasonRet = strprintf("Not enough coin to cast a vote, %s is required", FormatMoney(params.voteBalance));
+    if (totalBalance <= params.voteBalance) {
+        *failReasonRet = strprintf("Not enough coin to cast a vote, more than %s BLOCK is required in order to cover "
+                                   "small voting input to cover fees (transaction fee for vote submission)",
+                                   FormatMoney(params.voteBalance));
         return error(failReasonRet->c_str());
     }
 
@@ -271,10 +273,9 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                 if (inputDiffs.count(addr))
                     inputDiff = inputDiffs[addr];
                 // Find the coin closest to the desired vote input amount
-                const auto cdiff = static_cast<CAmount>(abs(coin.GetInputCoin().txout.nValue - desiredVoteInputAmt));
+                const auto cdiff = static_cast<CAmount>(llabs(coin.GetInputCoin().txout.nValue - desiredVoteInputAmt));
                 if (cdiff < inputDiff)  {
-                    inputDiff = cdiff;
-                    inputDiffs[addr] = inputDiff;
+                    inputDiffs[addr] = cdiff;
                     inputCoins[addr] = &coin;
                 }
             }
