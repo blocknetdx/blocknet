@@ -89,9 +89,13 @@ public:
 Q_SIGNALS:
     void lock(bool locked, bool stakingOnly = false);
     void passphrase();
+    void progressClicked();
 
 public Q_SLOTS:
     void onLockClicked(bool lock);
+
+protected:
+    bool eventFilter(QObject *object, QEvent *event);
 
 private:
     QHBoxLayout *layout;

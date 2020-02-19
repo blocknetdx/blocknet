@@ -52,6 +52,9 @@ BlocknetWallet::BlocknetWallet(interfaces::Node & node, const PlatformStyle *pla
     connect(leftMenu, &BlocknetLeftMenu::menuChanged, this, &BlocknetWallet::setPage);
     connect(toolbar, &BlocknetToolBar::passphrase, this, &BlocknetWallet::changePassphrase);
     connect(toolbar, &BlocknetToolBar::lock, this, &BlocknetWallet::onLockRequest);
+    connect(toolbar, &BlocknetToolBar::progressClicked, this, [this]{
+        Q_EMIT progressClicked();
+    });
 }
 
 bool BlocknetWallet::setCurrentWallet(const QString & name) {

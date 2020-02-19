@@ -53,6 +53,13 @@ BlocknetToolBar::BlocknetToolBar(QWidget *popup, QFrame *parent) : QFrame(parent
     lockMenu->hide();
 
     connect(lockIndicator, &BlocknetLockIndicator::lockRequest, this, &BlocknetToolBar::onLockClicked);
+    progressIndicator->installEventFilter(this);
+}
+
+bool BlocknetToolBar::eventFilter(QObject *object, QEvent *event) {
+    if (object == progressIndicator && event->type() == QEvent::MouseButtonRelease)
+        Q_EMIT progressClicked();
+    return QFrame::eventFilter(object, event);
 }
 
 QLabel* BlocknetToolBar::getIcon(QString path, QString description, QSize size) {
