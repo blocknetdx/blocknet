@@ -336,7 +336,7 @@ static std::vector<sn::ServiceNode> getServiceNodes() {
 }
 
 bool App::createConnectors() {
-    if (gArgs.GetBoolArg("-servicenode", false) && isEnabled())
+    if (gArgs.GetBoolArg("-servicenode", false) && isEnabled() && server)
         return server->createConnectors();
     ERR() << "Failed to load wallets: Must be a servicenode with xrouter=1 specified in config";
     return false;
@@ -1963,10 +1963,14 @@ std::string App::sendXRouterConfigRequestSync(CNode* node) {
     return reply;
 }
 
-void App::reloadConfigs() {
+bool App::reloadConfigs() {
+    if (!server) {
+        LOG() << "Failed to reload xrouter config, xrouter server is not running (is host= set?)";
+        return false;
+    }
     LOG() << "Reloading xrouter config from file " << xrouterpath.string();
     xrsettings->init(xrouterpath);
-    createConnectors();
+    return createConnectors();
 }
 
 std::string App::getStatus() {

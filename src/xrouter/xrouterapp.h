@@ -312,8 +312,9 @@ public:
 
     /**
      * @brief reload xrouter.conf and plugin configs from disks
+     * @return true on success
      */
-    void reloadConfigs();
+    bool reloadConfigs();
 
     /**
      * Loads the exchange wallets specified in settings.
