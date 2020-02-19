@@ -1379,6 +1379,7 @@ static void ListTransactions(interfaces::Chain::Lock& locked_chain, CWallet* con
             entry.pushKV("amount", ValueFromAmount(r.amount));
             if (pwallet->mapAddressBook.count(r.destination)) {
                 entry.pushKV("label", label);
+                entry.pushKV("account", label);
             }
             entry.pushKV("vout", r.vout);
             if (fLong)
