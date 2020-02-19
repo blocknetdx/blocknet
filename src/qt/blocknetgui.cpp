@@ -197,7 +197,8 @@ BlocknetGUI::BlocknetGUI(interfaces::Node& node, const PlatformStyle *_platformS
 #ifdef ENABLE_WALLET
     if(enableWallet) {
         connect(labelBlocksIcon, &GUIUtil::ClickableLabel::clicked, this, &BlocknetGUI::showModalOverlay);
-        connect(progressBar, &GUIUtil::ClickableProgressBar::clicked, this, &BlocknetGUI::showModalOverlay);
+//        connect(progressBar, &GUIUtil::ClickableProgressBar::clicked, this, &BlocknetGUI::showModalOverlay);
+        connect(walletFrame, &BlocknetWallet::progressClicked, this, &BlocknetGUI::showModalOverlay);
         connect(walletFrame, &BlocknetWallet::incomingTransaction, this, &BlocknetGUI::incomingTransaction);
     }
 #endif
@@ -1403,7 +1404,7 @@ void BlocknetGUI::setTrayIconVisible(bool fHideTrayIcon)
 
 void BlocknetGUI::showModalOverlay()
 {
-    if (modalOverlay && (progressBar->isVisible() || modalOverlay->isLayerVisible()))
+    if (modalOverlay)
         modalOverlay->toggleVisibility();
 }
 
