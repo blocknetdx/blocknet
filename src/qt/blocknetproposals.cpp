@@ -856,7 +856,7 @@ BlocknetProposalsDetailsDialog::BlocknetProposalsDetailsDialog(const BlocknetPro
     auto *voteMsgNotesLbl = new QLabel(tr("Votes are associated with unspent coin. Spending coin after casting votes may "
                                           "cause those votes to be invalidated. Only p2pkh or p2pk inputs can be used in "
                                           "votes. Casting votes submits transactions to the network and as a result will "
-                                          "incur minimal network fees. The ideal way to vote is to put a small 0.01 UTXO "
+                                          "incur minimal network fees. The ideal way to vote is to put a small 1 BLOCK UTXO "
                                           "in each voting address so that this is used to pay the network fee (instead of "
                                           "larger voting inputs). Any voting inputs used to pay for network fees will not "
                                           "be counted towards a proposal vote."));
