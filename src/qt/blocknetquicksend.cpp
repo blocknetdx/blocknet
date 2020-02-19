@@ -266,8 +266,7 @@ void BlocknetQuickSend::onSubmit() {
         const bool stateUnlockForStaking = util::unlockedForStakingOnly;
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
         if (!ctx.isValid() || util::unlockedForStakingOnly) {
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Failed to unlock the wallet")
-                    .arg(BitcoinUnits::formatWithUnit(displayUnit, ::minRelayTxFee.GetFeePerK())));
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Failed to unlock the wallet"));
         } else {
             submitFunds();
             util::unlockedForStakingOnly = stateUnlockForStaking; // restore unlocked for staking state
