@@ -1473,8 +1473,7 @@ static UniValue xrReloadConfigs(const JSONRPCRequest& request)
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
     
     Object result;
-    xrouter::App::instance().reloadConfigs();
-    return true;
+    return xrouter::App::instance().reloadConfigs();
 }
 
 static UniValue xrStatus(const JSONRPCRequest& request)
