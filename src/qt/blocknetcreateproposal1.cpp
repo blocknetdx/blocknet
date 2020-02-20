@@ -256,7 +256,10 @@ void BlocknetCreateProposal1::inputChanged(const QString &) {
     static int maxCharsForEntryFields = gov::PROPOSAL_USERDEFINED_LIMIT;
     const int totalChars = proposalTi->lineEdit->text().size() + urlTi->lineEdit->text().size() +
                            descriptionTi->lineEdit->text().size() + paymentAddrTi->lineEdit->text().size();
-    charCountLbl->setText(tr("Characters remaining on this proposal: %1").arg(maxCharsForEntryFields - totalChars));
+    if (totalChars == 0)
+        charCountLbl->setText("");
+    else
+        charCountLbl->setText(tr("Characters remaining on this proposal: %1").arg(maxCharsForEntryFields - totalChars));
 }
 
 void BlocknetCreateProposal1::clear() {
@@ -266,6 +269,7 @@ void BlocknetCreateProposal1::clear() {
     superBlockTi->lineEdit->clear();
     amountTi->lineEdit->clear();
     paymentAddrTi->lineEdit->clear();
+    inputChanged(QString()); // reset remaining proposal char count
 }
 
 int BlocknetCreateProposal1::nextSuperblock() {
