@@ -200,6 +200,12 @@ public:
     //! Get available balance.
     virtual CAmount getAvailableBalance(const CCoinControl& coin_control) = 0;
 
+    //! Get immature balance.
+    virtual CAmount getImmatureBalance() = 0;
+
+    //! Get unconfirmed balance.
+    virtual CAmount getUnconfirmedBalance() = 0;
+
     //! Return whether transaction input belongs to wallet.
     virtual isminetype txinIsMine(const CTxIn& txin) = 0;
 
