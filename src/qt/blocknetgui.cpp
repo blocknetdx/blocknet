@@ -313,6 +313,10 @@ void BlocknetGUI::createActions()
     signMessageAction->setStatusTip(tr("Sign messages with your Blocknet addresses to prove you own them"));
     verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified Blocknet addresses"));
+    lockWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_closed"), tr("&Lock Wallet..."), this);
+    lockWalletAction->setStatusTip(tr("Lock the wallet. Requires encryption to be enabled."));
+    unlockWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_open"), tr("&Unlock Wallet..."), this);
+    unlockWalletAction->setStatusTip(tr("Unlock the wallet. Requires encryption to be enabled."));
 
     openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&Debug window"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
@@ -369,6 +373,8 @@ void BlocknetGUI::createActions()
             ccDialog->show();
         });
         connect(encryptWalletAction, &QAction::triggered, wf, &BlocknetWallet::encryptWallet);
+        connect(lockWalletAction, &QAction::triggered, wf, [this]{ walletFrame->onLockRequest(true, false); });
+        connect(unlockWalletAction, &QAction::triggered, wf, [this]{ walletFrame->onLockRequest(false, false); });
         connect(backupWalletAction, &QAction::triggered, wf, &BlocknetWallet::backupWallet);
         connect(changePassphraseAction, &QAction::triggered, wf, &BlocknetWallet::changePassphrase);
         connect(signMessageAction, &QAction::triggered, [this]{ showNormalIfMinimized(); });
@@ -455,6 +461,8 @@ void BlocknetGUI::createMenuBar()
     {
         settings->addAction(encryptWalletAction);
         settings->addAction(changePassphraseAction);
+        settings->addAction(lockWalletAction);
+        settings->addAction(unlockWalletAction);
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
@@ -689,6 +697,7 @@ void BlocknetGUI::setCurrentWallet(WalletModel* wallet_model)
     updateWindowTitle();
     walletFrame->gotoOverviewPage();
     updateWalletStatus();
+    setEncryptionStatus(wallet_model->getEncryptionStatus());
 }
 
 void BlocknetGUI::setCurrentWalletBySelectorIndex(int index)
@@ -1245,6 +1254,10 @@ void BlocknetGUI::setHDStatus(bool privkeyDisabled, int hdEnabled)
 
 void BlocknetGUI::setEncryptionStatus(int status)
 {
+    const auto encrypted = status != WalletModel::Unencrypted;
+    unlockWalletAction->setVisible(encrypted);
+    lockWalletAction->setVisible(encrypted);
+
     switch(status)
     {
     case WalletModel::Unencrypted:
@@ -1275,6 +1288,14 @@ void BlocknetGUI::setEncryptionStatus(int status)
         if (walletFrame)
             walletFrame->setLock(true, false);
         break;
+    }
+
+    if (status == WalletModel::Unlocked) {
+        unlockWalletAction->setEnabled(util::unlockedForStakingOnly && status != WalletModel::Unencrypted);
+        lockWalletAction->setEnabled(status == WalletModel::Unlocked);
+    } else if (status == WalletModel::Locked) {
+        unlockWalletAction->setEnabled(true);
+        lockWalletAction->setEnabled(false);
     }
 }
 

@@ -320,6 +320,10 @@ void BitcoinGUI::createActions()
     signMessageAction->setStatusTip(tr("Sign messages with your Blocknet addresses to prove you own them"));
     verifyMessageAction = new QAction(platformStyle->TextColorIcon(":/icons/verify"), tr("&Verify message..."), this);
     verifyMessageAction->setStatusTip(tr("Verify messages to ensure they were signed with specified Blocknet addresses"));
+    lockWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_closed"), tr("&Lock Wallet..."), this);
+    lockWalletAction->setStatusTip(tr("Lock the wallet. Requires encryption to be enabled."));
+    unlockWalletAction = new QAction(platformStyle->TextColorIcon(":/icons/lock_open"), tr("&Unlock Wallet..."), this);
+    unlockWalletAction->setStatusTip(tr("Unlock the wallet. Requires encryption to be enabled."));
 
     openRPCConsoleAction = new QAction(platformStyle->TextColorIcon(":/icons/debugwindow"), tr("&Debug window"), this);
     openRPCConsoleAction->setStatusTip(tr("Open debugging and diagnostic console"));
@@ -360,6 +364,8 @@ void BitcoinGUI::createActions()
     if(walletFrame)
     {
         connect(encryptWalletAction, &QAction::triggered, walletFrame, &WalletFrame::encryptWallet);
+        connect(lockWalletAction, &QAction::triggered, walletFrame, [this]{ walletFrame->currentWalletModel()->setWalletLocked(true); });
+        connect(unlockWalletAction, &QAction::triggered, walletFrame, [this]{ walletFrame->unlockWallet(); });
         connect(backupWalletAction, &QAction::triggered, walletFrame, &WalletFrame::backupWallet);
         connect(changePassphraseAction, &QAction::triggered, walletFrame, &WalletFrame::changePassphrase);
         connect(signMessageAction, &QAction::triggered, [this]{ showNormalIfMinimized(); });
@@ -442,6 +448,8 @@ void BitcoinGUI::createMenuBar()
     {
         settings->addAction(encryptWalletAction);
         settings->addAction(changePassphraseAction);
+        settings->addAction(lockWalletAction);
+        settings->addAction(unlockWalletAction);
         settings->addSeparator();
     }
     settings->addAction(optionsAction);
@@ -670,6 +678,7 @@ void BitcoinGUI::setCurrentWallet(WalletModel* wallet_model)
         }
     }
     updateWindowTitle();
+    setEncryptionStatus(wallet_model->getEncryptionStatus());
 }
 
 void BitcoinGUI::setCurrentWalletBySelectorIndex(int index)
@@ -1212,6 +1221,10 @@ void BitcoinGUI::setHDStatus(bool privkeyDisabled, int hdEnabled)
 
 void BitcoinGUI::setEncryptionStatus(int status)
 {
+    const auto encrypted = status != WalletModel::Unencrypted;
+    unlockWalletAction->setVisible(encrypted);
+    lockWalletAction->setVisible(encrypted);
+
     switch(status)
     {
     case WalletModel::Unencrypted:
@@ -1236,6 +1249,14 @@ void BitcoinGUI::setEncryptionStatus(int status)
         changePassphraseAction->setEnabled(true);
         encryptWalletAction->setEnabled(false); // TODO: decrypt currently not supported
         break;
+    }
+
+    if (status == WalletModel::Unlocked) {
+        unlockWalletAction->setEnabled(util::unlockedForStakingOnly && status != WalletModel::Unencrypted);
+        lockWalletAction->setEnabled(status == WalletModel::Unlocked);
+    } else if (status == WalletModel::Locked) {
+        unlockWalletAction->setEnabled(true);
+        lockWalletAction->setEnabled(false);
     }
 }
 
