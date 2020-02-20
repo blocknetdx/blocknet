@@ -159,10 +159,10 @@ BlocknetGUI::BlocknetGUI(interfaces::Node& node, const PlatformStyle *_platformS
 
     // Progress bar and label for blocks download
     progressBarLabel = new QLabel();
-    progressBarLabel->setVisible(false);
+    progressBarLabel->setVisible(false); // not using visibility (using text though)
     progressBar = new GUIUtil::ProgressBar();
     progressBar->setAlignment(Qt::AlignCenter);
-    progressBar->setVisible(false);
+    progressBar->setVisible(false); // not using visibility (using text though)
 
     // Override style sheet for progress bar for styles that have a segmented progress bar,
     // as they make the text unreadable (workaround for issue #1071)
@@ -197,7 +197,6 @@ BlocknetGUI::BlocknetGUI(interfaces::Node& node, const PlatformStyle *_platformS
 #ifdef ENABLE_WALLET
     if(enableWallet) {
         connect(labelBlocksIcon, &GUIUtil::ClickableLabel::clicked, this, &BlocknetGUI::showModalOverlay);
-//        connect(progressBar, &GUIUtil::ClickableProgressBar::clicked, this, &BlocknetGUI::showModalOverlay);
         connect(walletFrame, &BlocknetWallet::progressClicked, this, &BlocknetGUI::showModalOverlay);
         connect(walletFrame, &BlocknetWallet::incomingTransaction, this, &BlocknetGUI::incomingTransaction);
     }
@@ -967,12 +966,14 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
         case BlockSource::NETWORK:
             if (header) {
                 updateHeadersSyncProgressLabel();
-                const int headerHeight = clientModel->getHeaderTipHeight();
-                const int headerTime = clientModel->getHeaderTipTime();
-                const int estHeadersLeft = (GetTime()-headerTime) / Params().GetConsensus().nPowTargetSpacing;
-                const auto p = 100.0 / (headerHeight + estHeadersLeft) * headerHeight;
-                const auto headerText = tr("Syncing Headers %1 (%2%)...").arg(QString::number(headerHeight), QString::number(p, 'f', 1));
-                walletFrame->setProgress(p, headerText, 100);
+                if (prevBlocks == 0) {
+                    const int headerHeight = clientModel->getHeaderTipHeight();
+                    const int headerTime = clientModel->getHeaderTipTime();
+                    const int estHeadersLeft = (GetTime()-static_cast<int64_t>(headerTime)) / Params().GetConsensus().nPowTargetSpacing;
+                    const auto p = 100.0 / (headerHeight + estHeadersLeft) * headerHeight;
+                    const auto headerText = tr("Syncing Headers %1 (%2%)...").arg(QString::number(headerHeight), QString::number(p, 'f', 1));
+                    walletFrame->setProgress(p, headerText, 100);
+                }
                 return;
             }
             progressBarLabel->setText(tr("Synchronizing with network..."));
@@ -1020,9 +1021,6 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
         }
 #endif // ENABLE_WALLET
 
-        progressBarLabel->setVisible(false);
-        progressBar->setVisible(false);
-
         if (walletFrame) {
             LOCK(cs_main);
             walletFrame->setProgress(1000000000, tr("Fully synced: block %1").arg(chainActive.Height()), 1000000000);
@@ -1032,17 +1030,12 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
     {
         QString timeBehindText = GUIUtil::formatNiceTimeOffset(secs);
 
-        progressBarLabel->setVisible(false);
         progressBar->setFormat(tr("%1 behind").arg(timeBehindText));
         progressBar->setMaximum(1000000000);
         progressBar->setValue(nVerificationProgress * 1000000000.0 + 0.5);
-        progressBar->setVisible(false);
 
-        if (walletFrame) {
+        if (walletFrame)
             walletFrame->setProgress(nVerificationProgress * 1000000000.0 + 0.5, progressBar->text(), 1000000000);
-            progressBarLabel->setVisible(false);
-            progressBar->setVisible(false);
-        }
 
         tooltip = tr("Catching up...") + QString("<br>") + tooltip;
         if(count != prevBlocks)
