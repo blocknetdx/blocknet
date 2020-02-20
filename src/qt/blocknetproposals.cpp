@@ -20,6 +20,7 @@
 #include <governance/governancewallet.h>
 #include <net.h>
 #include <uint256.h>
+#include <wallet/coincontrol.h>
 
 #include <utility>
 
@@ -149,8 +150,9 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     connect(table, &QTableWidget::cellDoubleClicked, this, [this](int row, int column) {
         if (row >= filteredData.size())
             return;
-        auto data = filteredData[row];
-        showProposalDetails(data);
+        auto *hashItem = table->item(row, COLUMN_HASH);
+        if (hashItem)
+            showProposalDetails(proposalForHash(hashItem->data(Qt::DisplayRole).toString()));
     });
     connect(table, &QTableWidget::customContextMenuRequested, this, &BlocknetProposals::showContextMenu);
     connect(proposalsDropdown, &BlocknetDropdown::valueChanged, this, &BlocknetProposals::onFilter);
@@ -158,25 +160,26 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     connect(viewDetails, &QAction::triggered, this, [this]() {
         if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
-        auto data = filteredData[contextItem->row()];
-        showProposalDetails(data);
+        auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
+        if (hashItem)
+            showProposalDetails(proposalForHash(hashItem->data(Qt::DisplayRole).toString()));
     });
     connect(copyName, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *nameItem = table->item(contextItem->row(), COLUMN_NAME);
         if (nameItem)
             QApplication::clipboard()->setText(nameItem->data(Qt::DisplayRole).toString(), QClipboard::Clipboard);
     });
     connect(copyUrl, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *urlItem = table->item(contextItem->row(), COLUMN_URL);
         if (urlItem)
             QApplication::clipboard()->setText(urlItem->data(Qt::DisplayRole).toString(), QClipboard::Clipboard);
     });
     connect(copyHash, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
         if (hashItem) {
@@ -185,7 +188,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
         }
     });
     connect(copyYes, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
         if (hashItem) {
@@ -194,7 +197,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
         }
     });
     connect(copyNo, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
         if (hashItem) {
@@ -503,7 +506,11 @@ QVector<BlocknetProposals::BlocknetProposal> BlocknetProposals::filtered(int fil
 }
 
 bool BlocknetProposals::canVote() {
-    return walletModel->wallet().getBalance() >= Params().GetConsensus().voteBalance;
+    const auto balance = walletModel->wallet().getBalance() + walletModel->wallet().getImmatureBalance()
+            + walletModel->wallet().getUnconfirmedBalance();
+    CCoinControl cc;
+    const auto available = walletModel->wallet().getAvailableBalance(cc);
+    return  balance > Params().GetConsensus().voteBalance && available > 0;
 }
 
 /**
@@ -617,6 +624,15 @@ void BlocknetProposals::setNumBlocks(int count, const QDateTime &blockDate, doub
         initialize();
         onFilter();
     }
+}
+
+BlocknetProposals::BlocknetProposal BlocknetProposals::proposalForHash(const QString & propHash) {
+    const auto & hash = uint256S(propHash.toStdString());
+    for (const auto & proposal : filteredData) {
+        if (proposal.hash == hash)
+            return proposal;
+    }
+    return BlocknetProposal{};
 }
 
 /**
