@@ -172,7 +172,7 @@ static UniValue vote(const JSONRPCRequest& request)
 #ifndef ENABLE_WALLET
     return "Wallet required";
 #endif
-    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 3)
         throw std::runtime_error(
             RPCHelpMan{"vote",
                 "\nVote on a proposal. Specify the proposal's hash and the vote type to cast the vote. This will\n"
@@ -181,6 +181,7 @@ static UniValue vote(const JSONRPCRequest& request)
                 {
                     {"proposal", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Proposal hash to cast votes for"},
                     {"vote", RPCArg::Type::STR, RPCArg::Optional::NO, "Vote options: yes/no/abstain"},
+                    {"address", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Only vote with funds from this address"},
                 },
                 RPCResult{
                 "{\n"
@@ -199,9 +200,11 @@ static UniValue vote(const JSONRPCRequest& request)
                     HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "yes")")
                   + HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "no")")
                   + HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "abstain")")
+                  + HelpExampleCli("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3" "yes" "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa")")
                   + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "yes")")
                   + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "no")")
                   + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "abstain")")
+                  + HelpExampleRpc("vote", R"("cd28d4830f5510d64b2b3df7781d316825045b85f6d7ce8622eec0a42039b6e3", "yes", "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa")")
                 },
             }.ToString());
 
@@ -223,7 +226,15 @@ static UniValue vote(const JSONRPCRequest& request)
     if (!gov::Governance::outsideVotingCutoff(proposal, chainActive.Height(), Params().GetConsensus()))
         throw JSONRPCError(RPC_MISC_ERROR, "Failed to submit the vote because the voting period for this proposal has ended");
 
-    gov::ProposalVote vote{proposal, castVote};
+    CTxDestination dest{CNoDestination()};
+    if (!request.params[2].isNull()) {
+        const auto & address = request.params[2].get_str();
+        CTxDestination destination = DecodeDestination(address);
+        if (!IsValidDestination(destination))
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("'address' parameter %s is invalid", address));
+        dest = destination;
+    }
+    gov::ProposalVote vote{proposal, castVote, dest};
     std::vector<CTransactionRef> txns;
     std::string failReason;
 #ifdef ENABLE_WALLET
@@ -295,7 +306,7 @@ static const CRPCCommand commands[] =
   //  --------------------- ------------------------  -----------------------  ----------
     { "governance",         "createproposal",         &createproposal,         {"name", "superblock", "amount", "address", "url", "description"} },
     { "governance",         "listproposals",          &listproposals,          {"sinceblock"} },
-    { "governance",         "vote",                   &vote,                   {"proposal", "vote"} },
+    { "governance",         "vote",                   &vote,                   {"proposal", "vote", "address"} },
     { "governance",         "proposalfee",            &proposalfee,            {} },
     { "governance",         "nextsuperblock",         &nextsuperblock,         {} },
 };

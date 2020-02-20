@@ -678,8 +678,10 @@ static bool IsVoteSpent(const Vote & vote, const int & currentBlock, const int &
 struct ProposalVote {
     Proposal proposal;
     VoteType vote{ABSTAIN};
+    CTxDestination dest;
     explicit ProposalVote() = default;
-    explicit ProposalVote(const Proposal & proposal, const VoteType & vote) : proposal(proposal), vote(vote) {}
+    explicit ProposalVote(const Proposal & proposal, const VoteType & vote) : proposal(proposal), vote(vote), dest(CNoDestination()) {}
+    explicit ProposalVote(const Proposal & proposal, const VoteType & vote, const CTxDestination & dest) : proposal(proposal), vote(vote), dest(dest) {}
 };
 /**
  * Way to obtain all votes for a specific proposal
@@ -700,7 +702,7 @@ struct Tally {
     }
 };
 /**
- * Hasher used with unordered_map
+ * Hasher used with unordered_map and unordered_set
  */
 struct Hasher {
     size_t operator()(const CKeyID & keyID) const { return ReadLE64(keyID.begin()); }
