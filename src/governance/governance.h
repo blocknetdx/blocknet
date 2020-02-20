@@ -703,6 +703,7 @@ struct Tally {
  * Hasher used with unordered_map
  */
 struct Hasher {
+    size_t operator()(const CKeyID & keyID) const { return ReadLE64(keyID.begin()); }
     size_t operator()(const uint256 & hash) const { return ReadLE64(hash.begin()); }
     size_t operator()(const COutPoint & out) const { return (CHashWriter(SER_GETHASH, 0) << out).GetCheapHash(); }
 };

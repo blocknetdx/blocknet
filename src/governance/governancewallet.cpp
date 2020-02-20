@@ -289,18 +289,43 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
 
             // Add voting utxos and filter out any ones being used as tx inputs
             std::vector<COutput> filteredVotingCoins;
+            std::unordered_map<CKeyID, CAmount, Hasher> tallyForEachAddress;
             for (const auto & coin : votingCoins) {
                 CTxDestination dest;
                 if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
                     continue;
                 // Do not add vote utxos that are being used as vote inputs
                 const auto & addr = *boost::get<CKeyID>(&dest);
-                if (inputCoins.count(addr) && inputCoins[addr]->GetInputCoin().outpoint != coin.GetInputCoin().outpoint)
+                if (inputCoins.count(addr) && inputCoins[addr]->GetInputCoin().outpoint != coin.GetInputCoin().outpoint) {
                     filteredVotingCoins.push_back(coin);
+                    // Add up all valid vote utxo amounts
+                    if (coin.GetInputCoin().txout.nValue >= params.voteMinUtxoAmount)
+                        tallyForEachAddress[addr] += coin.GetInputCoin().txout.nValue;
+                }
             }
 
             if (filteredVotingCoins.empty())
                 break; // Do not proceed if no coins or inputs were found
+
+            // Remove any coins from addresses that don't have more than minimum required vote balance
+            auto removeCoin = [&tallyForEachAddress,params](const COutput & coin) {
+                CTxDestination dest;
+                if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, dest))
+                    return true; // remove if address is bad
+                const auto & addr = *boost::get<CKeyID>(&dest);
+                return tallyForEachAddress[addr] <= params.voteBalance;
+            };
+            auto removeCoinPtr = [&tallyForEachAddress,params](const COutput * coin) {
+                CTxDestination dest;
+                if (!ExtractDestination(coin->GetInputCoin().txout.scriptPubKey, dest))
+                    return true; // remove if address is bad
+                const auto & addr = *boost::get<CKeyID>(&dest);
+                return tallyForEachAddress[addr] <= params.voteBalance;
+            };
+            filteredVotingCoins.erase(std::remove_if(filteredVotingCoins.begin(), filteredVotingCoins.end(),removeCoin), filteredVotingCoins.end());
+            otherInputCoins.erase(std::remove_if(otherInputCoins.begin(), otherInputCoins.end(), removeCoinPtr), otherInputCoins.end());
+            for (const auto & item : tallyForEachAddress)
+                inputCoins.erase(item.first);
 
             // Store all the votes for each proposal across all participating utxos. Each
             // utxo can be used to vote towards each proposal.
