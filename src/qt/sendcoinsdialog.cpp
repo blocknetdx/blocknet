@@ -244,7 +244,7 @@ void SendCoinsDialog::on_sendButton_clicked()
 
     fNewRecipientAllowed = false;
     WalletModel::UnlockContext ctx(model->requestUnlock());
-    if(!ctx.isValid())
+    if(!ctx.isValid() || util::unlockedForStakingOnly)
     {
         // Unlock wallet was cancelled
         fNewRecipientAllowed = true;
