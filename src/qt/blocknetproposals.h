@@ -119,6 +119,7 @@ private:
     bool canVote();
     void refresh(bool force = false);
     void showContextMenu(QPoint pt);
+    BlocknetProposal proposalForHash(const QString & propHash);
 
     enum {
         COLUMN_HASH,
