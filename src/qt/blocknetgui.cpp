@@ -197,7 +197,8 @@ BlocknetGUI::BlocknetGUI(interfaces::Node& node, const PlatformStyle *_platformS
 #ifdef ENABLE_WALLET
     if(enableWallet) {
         connect(labelBlocksIcon, &GUIUtil::ClickableLabel::clicked, this, &BlocknetGUI::showModalOverlay);
-        connect(progressBar, &GUIUtil::ClickableProgressBar::clicked, this, &BlocknetGUI::showModalOverlay);
+//        connect(progressBar, &GUIUtil::ClickableProgressBar::clicked, this, &BlocknetGUI::showModalOverlay);
+        connect(walletFrame, &BlocknetWallet::progressClicked, this, &BlocknetGUI::showModalOverlay);
         connect(walletFrame, &BlocknetWallet::incomingTransaction, this, &BlocknetGUI::incomingTransaction);
     }
 #endif
@@ -966,6 +967,12 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
         case BlockSource::NETWORK:
             if (header) {
                 updateHeadersSyncProgressLabel();
+                const int headerHeight = clientModel->getHeaderTipHeight();
+                const int headerTime = clientModel->getHeaderTipTime();
+                const int estHeadersLeft = (GetTime()-headerTime) / Params().GetConsensus().nPowTargetSpacing;
+                const auto p = 100.0 / (headerHeight + estHeadersLeft) * headerHeight;
+                const auto headerText = tr("Syncing Headers %1 (%2%)...").arg(QString::number(headerHeight), QString::number(p, 'f', 1));
+                walletFrame->setProgress(p, headerText, 100);
                 return;
             }
             progressBarLabel->setText(tr("Synchronizing with network..."));
@@ -974,18 +981,22 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
         case BlockSource::DISK:
             if (header) {
                 progressBarLabel->setText(tr("Indexing blocks on disk..."));
+                walletFrame->setProgress(0, progressBarLabel->text(), 100);
             } else {
                 progressBarLabel->setText(tr("Processing blocks on disk..."));
+                walletFrame->setProgress(0, progressBarLabel->text(), 100);
             }
             break;
         case BlockSource::REINDEX:
             progressBarLabel->setText(tr("Reindexing blocks on disk..."));
+            walletFrame->setProgress(0, progressBarLabel->text(), 100);
             break;
         case BlockSource::NONE:
             if (header) {
                 return;
             }
             progressBarLabel->setText(tr("Connecting to peers..."));
+            walletFrame->setProgress(0, progressBarLabel->text(), 100);
             break;
     }
 
@@ -1028,7 +1039,7 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
         progressBar->setVisible(false);
 
         if (walletFrame) {
-            walletFrame->setProgress(nVerificationProgress * 1000000000.0 + 0.5, progressBarLabel->text(), 1000000000);
+            walletFrame->setProgress(nVerificationProgress * 1000000000.0 + 0.5, progressBar->text(), 1000000000);
             progressBarLabel->setVisible(false);
             progressBar->setVisible(false);
         }
@@ -1403,7 +1414,7 @@ void BlocknetGUI::setTrayIconVisible(bool fHideTrayIcon)
 
 void BlocknetGUI::showModalOverlay()
 {
-    if (modalOverlay && (progressBar->isVisible() || modalOverlay->isLayerVisible()))
+    if (modalOverlay)
         modalOverlay->toggleVisibility();
 }
 

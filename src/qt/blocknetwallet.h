@@ -61,6 +61,7 @@ Q_SIGNALS:
     /** Notify that a new transaction appeared */
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type,
             const QString& address, const QString& label, const QString& walletName);
+    void progressClicked();
 
 
 public Q_SLOTS:
