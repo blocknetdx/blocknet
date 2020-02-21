@@ -4505,6 +4505,7 @@ void UnloadBlockIndex()
     pindexBestInvalid = nullptr;
     pindexBestHeader = nullptr;
     pindexBestForkTip = nullptr;
+    pindexBestForkBase = nullptr;
     mempool.clear();
     mapBlocksUnlinked.clear();
     vinfoBlockFile.clear();
