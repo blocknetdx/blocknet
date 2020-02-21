@@ -6,6 +6,7 @@
 #define BLOCKNET_QT_BLOCKNETPROPOSALS_H
 
 #include <qt/blocknetdropdown.h>
+#include <qt/blocknetformbtn.h>
 #include <qt/blocknetvars.h>
 
 #include <qt/clientmodel.h>
@@ -48,6 +49,7 @@ public:
         QString name;
         int superblock;
         CAmount amount;
+        gov::Tally tally;
         QString url;
         QString description;
         QString status;
@@ -97,9 +99,9 @@ private:
     ClientModel *clientModel;
     WalletModel *walletModel;
     QLabel *titleLbl;
-    QLabel *buttonLbl;
     QLabel *filterLbl;
     QTableWidget *table;
+    BlocknetFormBtn *voteBtn;
     QMenu *contextMenu;
     QTableWidgetItem *contextItem = nullptr;
     BlocknetDropdown *proposalsDropdown;
@@ -128,6 +130,7 @@ private:
         COLUMN_NAME,
         COLUMN_SUPERBLOCK,
         COLUMN_AMOUNT,
+        COLUMN_TALLY,
         COLUMN_URL,
         COLUMN_DESCRIPTION,
         COLUMN_STATUS,
@@ -156,14 +159,13 @@ private:
 class BlocknetProposalsVoteDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit BlocknetProposalsVoteDialog(const BlocknetProposals::BlocknetProposal & proposal, int displayUnit, QWidget *parent = nullptr);
+    explicit BlocknetProposalsVoteDialog(QVector<BlocknetProposals::BlocknetProposal> proposals, int displayUnit, QWidget *parent = nullptr);
 
 Q_SIGNALS:
-    void submitVote(uint256 proposalHash, bool yes, bool no, bool abstain);
-
-protected:
+    void submitVotes(const std::vector<gov::ProposalVote> & votes);
 
 private:
+    std::map<uint256, QButtonGroup*> approveButtons;
 };
 
 class BlocknetProposalsDetailsDialog : public QDialog {

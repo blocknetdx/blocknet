@@ -132,6 +132,7 @@ BlocknetProposalsVoteDialog, BlocknetProposalsDetailsDialog { background-color: 
 BlocknetProposalsVoteDialog #description, BlocknetProposalsDetailsDialog #description { font-size: 10pt; color: #6F8097; font-family: "Roboto"; }
 BlocknetProposalsVoteDialog #value, BlocknetProposalsDetailsDialog #value { font-size: 10pt; color: white; font-family: "Roboto"; bold: true; }
 BlocknetProposalsVoteDialog QRadioButton, BlocknetProposalsDetailsDialog QRadioButton, BlocknetProposalsVoteDialog QCheckBox, BlocknetProposalsDetailsDialog QCheckBox { font-size: 11pt; }
+BlocknetProposalsVoteDialog QScrollArea, BlocknetProposalsVoteDialog #contentFrame { background-color:transparent; }
 BlocknetCreateProposalPage #h4 { font-size: 14pt; color: white; }
 BlocknetCreateProposalPage #detail { font-size: 11pt; color: white; }
 BlocknetCreateProposalPage #charcount { font-size: 10pt; color: white; font-family: "Roboto"; }
