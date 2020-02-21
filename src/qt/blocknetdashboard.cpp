@@ -255,6 +255,7 @@ void BlocknetDashboardTable::leave() {
 void BlocknetDashboardTable::enter() {
     this->blockSignals(false);
     model()->blockSignals(false);
+    setModel(model());
 }
 
 BlocknetDashboardFilterProxy::BlocknetDashboardFilterProxy(OptionsModel *o, QObject *parent) : QSortFilterProxyModel(parent),
