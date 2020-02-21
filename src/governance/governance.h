@@ -694,6 +694,7 @@ struct Tally {
     int yes{0};
     int no{0};
     int abstain{0};
+    bool payout{false};
     double passing() const {
         return static_cast<double>(yes) / static_cast<double>(yes + no);
     }
@@ -1324,9 +1325,11 @@ public:
      * Return the superblock results for all the proposals scheduled for the specified superblock.
      * @param superblock
      * @param params
+     * @param includeExcluded If this flag is set, the tallies for proposals that didn't make the
+     *        superblock will be returned.
      * @return
      */
-    std::map<Proposal, Tally> getSuperblockResults(const int & superblock, const Consensus::Params & params) {
+    std::map<Proposal, Tally> getSuperblockResults(const int & superblock, const Consensus::Params & params, const bool & includeExcluded = false) {
         std::map<Proposal, Tally> r;
         if (!isSuperblock(superblock, params))
             return r;
@@ -1354,16 +1357,20 @@ public:
         //    votes. i.e. at least 25% of all votes cast this superblock must have
         //    voted on this proposal.
         // c) Exclude proposals with 0 yes votes in all circumstances
-        for (auto it = r.cbegin(); it != r.cend(); ) {
+        for (auto it = r.begin(); it != r.end(); ) {
             const auto & tally = it->second;
             const int total = tally.yes+tally.no+tally.abstain;
             const int yaynay = tally.yes + tally.no;
-            if (yaynay == 0 || static_cast<double>(tally.yes) / static_cast<double>(yaynay) < 0.6
+            if ((yaynay == 0 || static_cast<double>(tally.yes) / static_cast<double>(yaynay) < 0.6
               || static_cast<double>(total) < static_cast<double>(uniqueVotes) * 0.25
-              || tally.yes <= 0)
-                r.erase(it++);
-            else
-                ++it;
+              || tally.yes <= 0)) {
+                if (!includeExcluded) {
+                    r.erase(it++);
+                    continue;
+                }
+            } else
+                it->second.payout = true;
+            ++it;
         }
 
         return r;
