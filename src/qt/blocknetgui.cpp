@@ -194,6 +194,7 @@ BlocknetGUI::BlocknetGUI(interfaces::Node& node, const PlatformStyle *_platformS
     });
 
     modalOverlay = new ModalOverlay(this->centralWidget());
+    modalOverlay->showHide(true, false);
 #ifdef ENABLE_WALLET
     if(enableWallet) {
         connect(labelBlocksIcon, &GUIUtil::ClickableLabel::clicked, this, &BlocknetGUI::showModalOverlay);
@@ -947,12 +948,21 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
     (m_node.isInitialBlockDownload() || m_node.getReindex() || m_node.getImporting()) ? m_app_nap_inhibitor->disableAppNap() : m_app_nap_inhibitor->enableAppNap();
 #endif
 
+    QDateTime currentDate = QDateTime::currentDateTime();
+    qint64 secs = blockDate.secsTo(currentDate);
+
     if (modalOverlay)
     {
         if (header)
             modalOverlay->setKnownBestHeight(count, blockDate);
         else
             modalOverlay->tipUpdate(count, blockDate, nVerificationProgress);
+
+        const auto modalVisible = secs > 6*3600; // only show the modal if more than 6 hours of headers expected
+        if (header && showHeaderSyncModal && !modalVisible) {
+            showHeaderSyncModal = false;
+            modalOverlay->showHide(true, false);
+        }
     }
     if (!clientModel)
         return;
@@ -972,7 +982,10 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
                     const int estHeadersLeft = (GetTime()-static_cast<int64_t>(headerTime)) / Params().GetConsensus().nPowTargetSpacing;
                     const auto p = 100.0 / (headerHeight + estHeadersLeft) * headerHeight;
                     const auto headerText = tr("Syncing Headers %1 (%2%)...").arg(QString::number(headerHeight), QString::number(p, 'f', 1));
-                    walletFrame->setProgress(p, headerText, 100);
+                    if (p < 100)
+                        walletFrame->setProgress(p, headerText, 100);
+                    else if (GetTime() - m_node.getLastBlockTime() < 10*60) // 10 minutes
+                        walletFrame->setProgress(100, tr("Fully synced: block %1").arg(QString::number(m_node.getNumBlocks())), 100);
                 }
                 return;
             }
@@ -1003,9 +1016,6 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
 
     QString tooltip;
 
-    QDateTime currentDate = QDateTime::currentDateTime();
-    qint64 secs = blockDate.secsTo(currentDate);
-
     tooltip = tr("Processed %n block(s) of transaction history.", "", count);
 
     // Set icon state: spinning if catching up, tick otherwise
@@ -1017,14 +1027,13 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
         if(walletFrame)
         {
             walletFrame->showOutOfSyncWarning(false);
-            modalOverlay->showHide(true, true);
+            if (showHeaderSyncModal)
+                modalOverlay->showHide(true, true);
         }
 #endif // ENABLE_WALLET
 
-        if (walletFrame) {
-            LOCK(cs_main);
-            walletFrame->setProgress(1000000000, tr("Fully synced: block %1").arg(chainActive.Height()), 1000000000);
-        }
+        if (walletFrame)
+            walletFrame->setProgress(1000000000, tr("Fully synced: block %1").arg(m_node.getNumBlocks()), 1000000000);
     }
     else
     {
@@ -1051,7 +1060,8 @@ void BlocknetGUI::setNumBlocks(int count, const QDateTime& blockDate, double nVe
         if(walletFrame)
         {
             walletFrame->showOutOfSyncWarning(true);
-            modalOverlay->showHide();
+            if (showHeaderSyncModal)
+                modalOverlay->showHide();
         }
 #endif // ENABLE_WALLET
 
