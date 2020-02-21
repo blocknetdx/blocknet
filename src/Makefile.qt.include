@@ -215,6 +215,7 @@ QT_MOC_CPP += \
   qt/moc_blocknetsendfundsdone.cpp \
   qt/moc_blocknetsendfundsrequest.cpp \
   qt/moc_blocknetsendfundsutil.cpp \
+  qt/moc_blocknetservicenodes.cpp \
   qt/moc_blocknetsettings.cpp \
   qt/moc_blocknettabbar.cpp \
   qt/moc_blocknettabbtn.cpp \
@@ -358,6 +359,7 @@ BITCOIN_QT_H += \
   qt/blocknetsendfundsdone.h \
   qt/blocknetsendfundsrequest.h \
   qt/blocknetsendfundsutil.h \
+  qt/blocknetservicenodes.h \
   qt/blocknetsettings.h \
   qt/blocknetsplashscreen.h \
   qt/blocknettabbar.h \
@@ -593,6 +595,7 @@ BITCOIN_QT_WALLET_CPP += \
   qt/blocknetsendfunds4.cpp \
   qt/blocknetsendfundsdone.cpp \
   qt/blocknetsendfundsrequest.cpp \
+  qt/blocknetservicenodes.cpp \
   qt/blocknetsettings.cpp \
   qt/blocknettabbar.cpp \
   qt/blocknettabbtn.cpp \
