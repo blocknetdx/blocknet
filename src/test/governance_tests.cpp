@@ -1136,6 +1136,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
         BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
         // Prep vote utxo
         CKey key; key.MakeNewKey(true);
         AddKey(*wallet, key);
@@ -1152,7 +1153,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
         gov::ProposalVote proposalVote{proposal, gov::YES, voteDest};
         std::vector<CTransactionRef> txns;
         failReason.clear();
-        success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, GetWallets(), consensus, txns, g_connman.get(), &failReason);
+        success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {wallet}, consensus, txns, g_connman.get(), &failReason);
         BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit votes: %s", failReason));
         BOOST_CHECK_MESSAGE(txns.size() == 1, strprintf("Expected 1 vote transaction to be created, %d were created", txns.size()));
