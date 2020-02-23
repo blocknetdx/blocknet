@@ -1289,7 +1289,8 @@ void CWallet::BlockDisconnected(const std::shared_ptr<const CBlock>& pblock) {
             return;
         std::set<gov::Proposal> ps;
         std::set<gov::Vote> vs;
-        gov::Governance::instance().dataFromBlock(pblock.get(), ps, vs, Params().GetConsensus(), nullptr, false);
+        std::map<uint256, std::set<gov::VinHash>> vh;
+        gov::Governance::instance().dataFromBlock(pblock.get(), ps, vs, vh, Params().GetConsensus(), 0);
         if (vs.empty())
             return; // no votes, then done
         // Any votes cast based on abandoned coinstake implies we can abandon this vote tx
