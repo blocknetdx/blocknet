@@ -386,8 +386,7 @@ bool SubmitVotes(const std::vector<ProposalVote> & proposalVotes, const std::vec
                     // is signed with the utxo that is representing that vote. The signing must
                     // happen before the vote object is serialized.
                     CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
-                    Vote vote(pv.proposal.getHash(), pv.vote, coin.outpoint,
-                            makeVinHash(inputCoins[addr].outpoint));
+                    Vote vote(pv.proposal.getHash(), pv.vote, coin.outpoint, makeVinHash(inputCoins[addr].outpoint));
                     if (!vote.sign(key)) {
                         LogPrint(BCLog::GOVERNANCE, "WARNING: Failed to vote on {%s} proposal, utxo signing failed %s\n", pv.proposal.getName(), coin.outpoint.ToString());
                         continue;
