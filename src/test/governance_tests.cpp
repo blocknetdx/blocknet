@@ -69,7 +69,9 @@ bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount &
         return false;
 
     CValidationState state;
-    return wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+    auto sent = wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+    BOOST_CHECK_MESSAGE(state.IsValid(), state.GetRejectReason());
+    return sent && state.IsValid();
 }
 
 bool sendToRecipients(CWallet *wallet, const std::vector<CRecipient> & recipients, CTransactionRef & tx, std::vector<std::pair<CTxOut,COutPoint>> *recvouts=nullptr) {
@@ -99,7 +101,9 @@ bool sendToRecipients(CWallet *wallet, const std::vector<CRecipient> & recipient
         }
     }
     CValidationState state;
-    return wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+    auto sent = wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+    BOOST_CHECK_MESSAGE(state.IsValid(), state.GetRejectReason());
+    return sent && state.IsValid();
 }
 
 bool newWalletAddress(CWallet *wallet, CTxDestination & dest) {
@@ -290,19 +294,30 @@ bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COu
     return false;
 }
 
+bool isTxInBlock(const CBlockIndex *blockhash, const uint256 & txhash, const Consensus::Params & consensus) {
+    CBlock block;
+    ReadBlockFromDisk(block, blockhash, consensus);
+    bool txInBlock{false};
+    for (auto & vtx : block.vtx) {
+        if (vtx->GetHash() == txhash) {
+            txInBlock = true;
+            break;
+        }
+    }
+    return txInBlock;
+}
+
 bool cleanup(int blockCount, CWallet *wallet=nullptr) {
+    const auto & params = Params();
     {
         LOCK2(cs_main, mempool.cs);
         mempool.clear();
     }
-    while (chainActive.Height() > blockCount) {
-        CValidationState state;
-        InvalidateBlock(state, Params(), chainActive.Tip());
-    }
-    gArgs.ForceSetArg("-proposaladdress", "");
     CValidationState state;
-    ActivateBestChain(state, Params());
-    SyncWithValidationInterfaceQueue();
+    while (chainActive.Height() > blockCount)
+        InvalidateBlock(state, params, chainActive.Tip(), false);
+    ActivateBestChain(state, params); SyncWithValidationInterfaceQueue();
+    gArgs.ForceSetArg("-proposaladdress", "");
     gov::Governance::instance().reset();
     if (wallet) {
         std::vector<CWalletTx> wtx;
@@ -846,8 +861,8 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
         // 3) Simulate block invalidation/disconnect and make sure votes are properly unspent
         {
             CValidationState state;
-            BOOST_CHECK_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip()), "Failed to invalidate the block with spent vote");
-            SyncWithValidationInterfaceQueue(); mempool.clear();
+            BOOST_CHECK_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip(), false), "Failed to invalidate the block with spent vote");
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
             auto vs = gov::Governance::instance().getVotes(proposal.getHash());
             BOOST_CHECK_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
             auto pvs = gov::Governance::instance().getVotes(proposal.getHash());
@@ -868,6 +883,188 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
         ReloadWallet();
     }
 
+    UnregisterValidationInterface(&gov::Governance::instance());
+    cleanup(chainActive.Height(), wallet.get());
+    ReloadWallet();
+}
+
+BOOST_FIXTURE_TEST_CASE(governance_tests_undo_submissions, TestChainPoS)
+{
+    RegisterValidationInterface(&gov::Governance::instance());
+
+    auto *params = (CChainParams*)&Params();
+    params->consensus.voteMinUtxoAmount = 20*COIN;
+    params->consensus.voteBalance = 200*COIN;
+    const auto & consensus = params->GetConsensus();
+    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
+    std::string failReason;
+
+    // Check normal proposal
+    gov::Proposal proposal("Test Proposal Undo", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
+                     EncodeDestination(dest), "https://forum.blocknet.co", "");
+    BOOST_REQUIRE_MESSAGE(proposal.isValid(consensus), "Proposal should be valid");
+    CTransactionRef ptx; // proposal tx
+    gov::SubmitProposal(proposal, {wallet}, consensus, ptx, g_connman.get(), &failReason);
+    StakeBlocks(1), SyncWithValidationInterfaceQueue();
+    BOOST_REQUIRE_MESSAGE(gov::Governance::instance().getProposal(proposal.getHash()).isValid(consensus), "Proposal should be valid");
+
+    // Setup other wallet to cast votes from
+    CKey key; key.MakeNewKey(true);
+    const auto & voteDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
+    // Submit the vote with spent utxo
+    auto otherwallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+    bool firstRun; otherwallet->LoadWallet(firstRun);
+    AddKey(*otherwallet, key);
+    otherwallet->SetBroadcastTransactions(true);
+    rescanWallet(otherwallet.get());
+    RegisterValidationInterface(otherwallet.get());
+    std::vector<std::pair<CTxOut,COutPoint>> recvouts;
+
+    // Send vote coin to otherwallet
+    {
+        CTransactionRef sendtx;
+        auto recipients = std::vector<CRecipient>{
+            {GetScriptForDestination(voteDest), 200*COIN, false},
+            {GetScriptForDestination(voteDest), 1*COIN, false}
+        };
+        bool sent = sendToRecipients(wallet.get(), recipients, sendtx, &recvouts);
+        BOOST_REQUIRE_MESSAGE(sent, "Send to another address failed");
+        int checkHeight = chainActive.Height();
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        BOOST_REQUIRE_MESSAGE(recvouts[0].first.nValue == 200 * COIN, strprintf("Expecting a vote utxo with %s BLOCK, found %s BLOCK", FormatMoney(200*COIN), FormatMoney(recvouts[0].first.nValue)));
+        BOOST_REQUIRE_MESSAGE(recvouts[1].first.nValue == 1 * COIN, strprintf("Expecting a vote input with %s BLOCK, found %s BLOCK", FormatMoney(1*COIN), FormatMoney(recvouts[1].first.nValue)));
+        BOOST_REQUIRE_MESSAGE(checkHeight+1 == chainActive.Height(), "Block should be accepted");
+        BOOST_REQUIRE_MESSAGE(isTxInBlock(chainActive.Tip(), sendtx->GetHash(), consensus), "Expecting transaction to be included in the block");
+    }
+
+    // Vote on the proposal
+    gov::ProposalVote proposalVote{proposal, gov::YES};
+    {
+        std::vector<CTransactionRef> txs;
+        bool success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txs, g_connman.get(), &failReason);
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+        BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+        BOOST_REQUIRE_MESSAGE(vs[0].getAmount() == 200*COIN, strprintf("Expecting a vote against utxo with amount %s, found %s", FormatMoney(200*COIN), FormatMoney(vs[0].getAmount())));
+    }
+
+    StakeBlocks(4), SyncWithValidationInterfaceQueue();
+
+    // Simulate orphaned votes
+    for (int i = 0; i < 25; ++i) {
+        {
+            UnregisterValidationInterface(otherwallet.get());
+            otherwallet.reset();
+            otherwallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+            otherwallet->LoadWallet(firstRun);
+            AddKey(*otherwallet, key);
+            otherwallet->SetBroadcastTransactions(true);
+            rescanWallet(otherwallet.get());
+            RegisterValidationInterface(otherwallet.get());
+        }
+
+        const auto resetBlocks = chainActive.Height();
+
+        // Submit proposal for testing proposal invalidation
+        gov::Proposal prop("Test Proposal Undo 2", nextSuperblock(chainActive.Height(), consensus.superblock), 1500*COIN,
+                EncodeDestination(dest), "https://forum.blocknet.co", "2");
+        BOOST_CHECK_MESSAGE(prop.isValid(consensus), "Proposal should be valid");
+        {
+            CTransactionRef proptx; // proposal tx
+            gov::SubmitProposal(prop, {wallet}, consensus, proptx, g_connman.get(), &failReason);
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().getProposal(prop.getHash()).isValid(consensus), "Proposal should be valid");
+        }
+        // Change proposal vote from yes to no
+        {
+            gov::ProposalVote proposalVoteNo{proposal, gov::NO};
+            std::vector<CTransactionRef> txs;
+            bool success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVoteNo}, {otherwallet}, consensus, txs, g_connman.get(), &failReason);
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            BOOST_REQUIRE_MESSAGE(isTxInBlock(chainActive.Tip(), txs[0]->GetHash(), consensus), "Expecting transaction to be included in the block");
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            BOOST_REQUIRE_MESSAGE(vs[0].getVote() == proposalVoteNo.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVoteNo.vote), gov::Vote::voteTypeToString(vs[0].getVote())));
+        }
+        // Simulate orphaned vote and make sure no vote is properly unrecorded
+        {
+            CValidationState state;
+            BOOST_REQUIRE_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip(), false), "Failed to invalidate the block with spent vote");
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+            BOOST_REQUIRE_MESSAGE(vs[0].getVote() == proposalVote.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVote.vote), gov::Vote::voteTypeToString(vs[0].getVote())));
+        }
+        // Spend vote
+        {
+            CMutableTransaction mtx;
+            mtx.vin.resize(1);
+            mtx.vin[0] = CTxIn(recvouts[0].second);
+            mtx.vout.resize(1);
+            mtx.vout[0] = CTxOut(recvouts[0].first.nValue - 10000, recvouts[0].first.scriptPubKey);
+            SignatureData sigdata = DataFromTransaction(mtx, 0, recvouts[0].first);
+            ProduceSignature(*otherwallet, MutableTransactionSignatureCreator(&mtx, 0, recvouts[0].first.nValue, SIGHASH_ALL),
+                    recvouts[0].first.scriptPubKey, sigdata);
+            UpdateInput(mtx.vin[0], sigdata);
+            uint256 txid;
+            std::string errstr;
+            const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 1 * COIN);
+            BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send vote transaction: %s", errstr));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            BOOST_REQUIRE_MESSAGE(isTxInBlock(chainActive.Tip(), mtx.GetHash(), consensus), "Expecting transaction to be included in the block");
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.empty(), strprintf("Expecting 0 votes, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && pvs[0].spent(), "Expecting 1 spent vote");
+        }
+        // Simulate orphaned block and make sure votes are properly unspent
+        {
+            CValidationState state;
+            BOOST_REQUIRE_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip(), false), "Failed to invalidate the block with spent vote");
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+        }
+        // Check vote is valid after new block
+        {
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+            BOOST_REQUIRE_MESSAGE(pvs[0].getVote() == proposalVote.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVote.vote), gov::Vote::voteTypeToString(pvs[0].getVote())));
+            BOOST_REQUIRE_MESSAGE(pvs[0].getAmount() == 200*COIN, strprintf("Expecting a vote against utxo with amount %s, found %s", FormatMoney(200*COIN), FormatMoney(pvs[0].getAmount())));
+        }
+
+        // Invalidate all blocks added during this iteration
+        CValidationState state;
+        while (chainActive.Height() > resetBlocks)
+            InvalidateBlock(state, *params, chainActive.Tip(), false);
+        ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
+        rescanWallet(wallet.get());
+
+        // Check vote is valid after cleanup
+        {
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+            BOOST_REQUIRE_MESSAGE(pvs[0].getVote() == proposalVote.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVote.vote), gov::Vote::voteTypeToString(pvs[0].getVote())));
+        }
+        // Check proposal was removed
+        {
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().getProposal(prop.getHash()).isNull(), "Proposal should be null");
+        }
+    }
+
+    UnregisterValidationInterface(otherwallet.get());
+    otherwallet.reset();
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), wallet.get());
     ReloadWallet();
@@ -2095,9 +2292,8 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 BOOST_REQUIRE_MESSAGE(success, "Valid superblock payee list should be accepted");
                 if (success) {
                     CValidationState state;
-                    InvalidateBlock(state, *params, chainActive.Tip());
-                    ActivateBestChain(state, *params);
-                    SyncWithValidationInterfaceQueue();
+                    InvalidateBlock(state, *params, chainActive.Tip(), false);
+                    ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
                 }
             }
 
@@ -2370,11 +2566,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
             }
 
             CValidationState state;
-            InvalidateBlock(state, *params, chainActive.Tip());
-            ActivateBestChain(state, *params);
-            SyncWithValidationInterfaceQueue();
+            InvalidateBlock(state, *params, chainActive.Tip(), false);
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
             BOOST_CHECK_MESSAGE(!chainActive.Contains(votecsidx), "Revote coinstake should be abandoned");
             BOOST_CHECK_MESSAGE(!chainActive.Contains(voteidx), "Revote tx should be abandoned");
+            pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
             UnregisterValidationInterface(nwallet.get());
             RemoveWallet(nwallet);
