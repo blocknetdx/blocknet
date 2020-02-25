@@ -834,6 +834,7 @@ public:
         LOCK(mu);
         proposals.clear();
         votes.clear();
+        stackvotes.clear();
         sbvotes.clear();
         return true;
     }
@@ -978,7 +979,7 @@ public:
                 // Remove votes that are not associated with a proposal
                 if (!hasProposal(vote.getProposal(), vote.getBlockNumber())) {
                     LOCK(mu);
-                    removeVote(vote);
+                    removeVote(vote, true);
                     continue;
                 }
 
@@ -986,7 +987,7 @@ public:
                 const auto & proposal = getProposal(vote.getProposal());
                 if (!outsideVotingCutoff(proposal, vote.getBlockNumber(), consensus)) {
                     LOCK(mu);
-                    removeVote(vote);
+                    removeVote(vote, true);
                     continue;
                 }
 
@@ -1004,7 +1005,7 @@ public:
                 uint256 hashBlock;
                 if (!GetTransaction(vote.getUtxo().hash, tx, consensus, hashBlock)) {
                     LOCK(mu);
-                    removeVote(vote);
+                    removeVote(vote, true);
                     continue;
                 }
                 CBlockIndex *pindex = nullptr;
@@ -1014,7 +1015,7 @@ public:
                 }
                 if (!pindex || pindex->nHeight > vote.getBlockNumber()) {
                     LOCK(mu);
-                    removeVote(vote);
+                    removeVote(vote, true);
                     continue;
                 }
 
@@ -1037,7 +1038,7 @@ public:
                     // Remove votes that refer to invalid (or orphaned) utxos -or-
                     // Remove votes with stale utxos (existed prior to governance start block)
                     LOCK(mu);
-                    removeVote(vote);
+                    removeVote(vote, true);
                     continue;
                 }
             }
@@ -1250,6 +1251,7 @@ public:
                 v.spend(block, txhash);
             }
         }
+        stackvotes[voteHash].back().spend(block, txhash);
     }
 
     /**
@@ -1281,6 +1283,7 @@ public:
                 v.unspend(block, txhash);
             }
         }
+        stackvotes[voteHash].back().unspend(block, txhash);
     }
 
     /**
@@ -2026,7 +2029,7 @@ protected:
             auto s = getVotes(p.getHash(), true);
             svotes.insert(svotes.end(), s.begin(), s.end());
         }
-        // Spend votes that match spent vins
+        // Unspend votes that match spent vins
         if (!svotes.empty()) {
             LOCK(mu);
             for (auto & v : svotes) {
@@ -2109,6 +2112,7 @@ protected:
             return;
 
         const auto & voteHash = vote.getHash();
+        stackvotes[voteHash].push_back(vote);
         votes[voteHash] = vote; // add to votes data provider
 
         const auto & proposal = proposals[vote.getProposal()];
@@ -2119,14 +2123,26 @@ protected:
     /**
      * Removes and erases the specified vote from data providers.
      * @param vote
+     * @param force Remove all vote history regardless of prior state
      */
-    void removeVote(const Vote & vote) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+    void removeVote(const Vote & vote, const bool & force=false) EXCLUSIVE_LOCKS_REQUIRED(mu) {
         const auto & voteHash = vote.getHash();
         if (!votes.count(voteHash))
             return;
 
-        // Remove from votes data provider
-        votes.erase(voteHash);
+        // Remove from votes data provider. If force is set, remove all vote history
+        // under all circumstances. Useful for initial blockchain load.
+        if (!force) {
+            stackvotes[voteHash].pop_back();
+            if (stackvotes[voteHash].empty()) {
+                stackvotes.erase(voteHash);
+                votes.erase(voteHash);
+            } else
+                votes[voteHash] = stackvotes[voteHash].back();
+        } else {
+            stackvotes.erase(voteHash);
+            votes.erase(voteHash);
+        }
 
         if (!proposals.count(vote.getProposal()))
             return;
@@ -2139,7 +2155,10 @@ protected:
         if (!vs.count(voteHash))
             return;
         // Remove from superblock votes data provider
-        vs.erase(voteHash);
+        if (!stackvotes.count(voteHash))
+            vs.erase(voteHash);
+        else
+            vs[voteHash] = stackvotes[voteHash].back();
     }
 
     void addProposal(const Proposal & proposal) EXCLUSIVE_LOCKS_REQUIRED(mu) {
@@ -2156,6 +2175,7 @@ protected:
     Mutex mu;
     std::unordered_map<uint256, Proposal, Hasher> proposals GUARDED_BY(mu);
     std::unordered_map<uint256, Vote, Hasher> votes GUARDED_BY(mu);
+    std::unordered_map<uint256, std::vector<Vote>, Hasher> stackvotes GUARDED_BY(mu);
     std::unordered_map<int, std::unordered_map<uint256, Vote, Hasher>> sbvotes GUARDED_BY(mu);
 };
 

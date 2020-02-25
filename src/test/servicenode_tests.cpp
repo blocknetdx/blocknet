@@ -610,7 +610,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_valid_onreorg)
         // Now disconnect spent collateral blocks and verify that snode is still valid
         CValidationState state;
         for (int i = 0; i <= sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS; ++i)
-            InvalidateBlock(state, *params, chainActive.Tip());
+            InvalidateBlock(state, *params, chainActive.Tip(), false);
         SyncWithValidationInterfaceQueue();
         const auto checkSnode2 = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
         BOOST_CHECK_MESSAGE(checkSnode2.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should still be valid after block disconnects");
