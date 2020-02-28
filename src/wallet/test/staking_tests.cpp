@@ -475,7 +475,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
 
         // reset chain tip
         CValidationState state;
-        InvalidateBlock(state, Params(), chainActive.Tip());
+        InvalidateBlock(state, Params(), chainActive.Tip(), false);
         ActivateBestChain(state, Params());
         SyncWithValidationInterfaceQueue();
 

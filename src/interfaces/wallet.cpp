@@ -393,6 +393,12 @@ public:
     {
         return m_wallet->GetAvailableBalance(&coin_control);
     }
+    CAmount getImmatureBalance() override {
+        return m_wallet->GetImmatureBalance();
+    }
+    CAmount getUnconfirmedBalance() override {
+        return m_wallet->GetUnconfirmedBalance();
+    }
     isminetype txinIsMine(const CTxIn& txin) override
     {
         auto locked_chain = m_wallet->chain().lock();

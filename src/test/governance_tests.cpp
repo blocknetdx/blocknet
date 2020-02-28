@@ -69,7 +69,41 @@ bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount &
         return false;
 
     CValidationState state;
-    return wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+    auto sent = wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+    BOOST_CHECK_MESSAGE(state.IsValid(), state.GetRejectReason());
+    return sent && state.IsValid();
+}
+
+bool sendToRecipients(CWallet *wallet, const std::vector<CRecipient> & recipients, CTransactionRef & tx, std::vector<std::pair<CTxOut,COutPoint>> *recvouts=nullptr) {
+    // Create and send the transaction
+    CReserveKey reservekey(wallet);
+    CAmount nFeeRequired;
+    std::string strError;
+    int nChangePosRet = -1;
+    CCoinControl cc;
+    auto locked_chain = wallet->chain().lock();
+    if (!wallet->CreateTransaction(*locked_chain, recipients, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
+        return false;
+    if (recvouts) { // ensure vouts in order of recipients
+        std::set<COutPoint> used;
+        for (int i = 0;  i < recipients.size(); ++i) {
+            auto & rec = recipients[i];
+            for (int j = 0; j < tx->vout.size(); ++j) {
+                auto vout = tx->vout[j];
+                if (used.count({tx->GetHash(), (uint32_t)j}))
+                    continue;
+                if (vout.scriptPubKey == rec.scriptPubKey && vout.nValue == rec.nAmount) {
+                    recvouts->emplace_back(vout, COutPoint(tx->GetHash(), j));
+                    used.insert({tx->GetHash(), (uint32_t)j});
+                    break;
+                }
+            }
+        }
+    }
+    CValidationState state;
+    auto sent = wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
+    BOOST_CHECK_MESSAGE(state.IsValid(), state.GetRejectReason());
+    return sent && state.IsValid();
 }
 
 bool newWalletAddress(CWallet *wallet, CTxDestination & dest) {
@@ -260,19 +294,30 @@ bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COu
     return false;
 }
 
+bool isTxInBlock(const CBlockIndex *blockhash, const uint256 & txhash, const Consensus::Params & consensus) {
+    CBlock block;
+    ReadBlockFromDisk(block, blockhash, consensus);
+    bool txInBlock{false};
+    for (auto & vtx : block.vtx) {
+        if (vtx->GetHash() == txhash) {
+            txInBlock = true;
+            break;
+        }
+    }
+    return txInBlock;
+}
+
 bool cleanup(int blockCount, CWallet *wallet=nullptr) {
+    const auto & params = Params();
     {
         LOCK2(cs_main, mempool.cs);
         mempool.clear();
     }
-    while (chainActive.Height() > blockCount) {
-        CValidationState state;
-        InvalidateBlock(state, Params(), chainActive.Tip());
-    }
-    gArgs.ForceSetArg("-proposaladdress", "");
     CValidationState state;
-    ActivateBestChain(state, Params());
-    SyncWithValidationInterfaceQueue();
+    while (chainActive.Height() > blockCount)
+        InvalidateBlock(state, params, chainActive.Tip(), false);
+    ActivateBestChain(state, params); SyncWithValidationInterfaceQueue();
+    gArgs.ForceSetArg("-proposaladdress", "");
     gov::Governance::instance().reset();
     if (wallet) {
         std::vector<CWalletTx> wtx;
@@ -397,7 +442,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(psubmit, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         BOOST_CHECK_MESSAGE(mempool.exists(tx->GetHash()), "Proposal submission tx should be in the mempool");
         CDataStream ss(SER_NETWORK, GOV_PROTOCOL_VERSION);
@@ -423,7 +468,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(psubmit, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         BOOST_CHECK_MESSAGE(mempool.exists(tx->GetHash()), "Proposal submission tx should be in the mempool");
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -452,7 +497,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
         CTransactionRef pp1_tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(pp1, {wallet}, consensus, pp1_tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit proposal: %s", failReason));
 
         // Check that proposal tx was accepted
@@ -797,7 +842,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
             std::vector<CTransactionRef> txs;
             std::string failReason;
             bool success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txs, g_connman.get(), &failReason);
-            BOOST_CHECK_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
             StakeBlocks(1), SyncWithValidationInterfaceQueue();
             auto vs = gov::Governance::instance().getVotes(proposal.getHash());
             BOOST_CHECK_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
@@ -816,8 +861,8 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
         // 3) Simulate block invalidation/disconnect and make sure votes are properly unspent
         {
             CValidationState state;
-            BOOST_CHECK_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip()), "Failed to invalidate the block with spent vote");
-            SyncWithValidationInterfaceQueue(); mempool.clear();
+            BOOST_CHECK_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip(), false), "Failed to invalidate the block with spent vote");
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
             auto vs = gov::Governance::instance().getVotes(proposal.getHash());
             BOOST_CHECK_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
             auto pvs = gov::Governance::instance().getVotes(proposal.getHash());
@@ -838,6 +883,188 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
         ReloadWallet();
     }
 
+    UnregisterValidationInterface(&gov::Governance::instance());
+    cleanup(chainActive.Height(), wallet.get());
+    ReloadWallet();
+}
+
+BOOST_FIXTURE_TEST_CASE(governance_tests_undo_submissions, TestChainPoS)
+{
+    RegisterValidationInterface(&gov::Governance::instance());
+
+    auto *params = (CChainParams*)&Params();
+    params->consensus.voteMinUtxoAmount = 20*COIN;
+    params->consensus.voteBalance = 200*COIN;
+    const auto & consensus = params->GetConsensus();
+    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
+    std::string failReason;
+
+    // Check normal proposal
+    gov::Proposal proposal("Test Proposal Undo", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
+                     EncodeDestination(dest), "https://forum.blocknet.co", "");
+    BOOST_REQUIRE_MESSAGE(proposal.isValid(consensus), "Proposal should be valid");
+    CTransactionRef ptx; // proposal tx
+    gov::SubmitProposal(proposal, {wallet}, consensus, ptx, g_connman.get(), &failReason);
+    StakeBlocks(1), SyncWithValidationInterfaceQueue();
+    BOOST_REQUIRE_MESSAGE(gov::Governance::instance().getProposal(proposal.getHash()).isValid(consensus), "Proposal should be valid");
+
+    // Setup other wallet to cast votes from
+    CKey key; key.MakeNewKey(true);
+    const auto & voteDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
+    // Submit the vote with spent utxo
+    auto otherwallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+    bool firstRun; otherwallet->LoadWallet(firstRun);
+    AddKey(*otherwallet, key);
+    otherwallet->SetBroadcastTransactions(true);
+    rescanWallet(otherwallet.get());
+    RegisterValidationInterface(otherwallet.get());
+    std::vector<std::pair<CTxOut,COutPoint>> recvouts;
+
+    // Send vote coin to otherwallet
+    {
+        CTransactionRef sendtx;
+        auto recipients = std::vector<CRecipient>{
+            {GetScriptForDestination(voteDest), 200*COIN, false},
+            {GetScriptForDestination(voteDest), 1*COIN, false}
+        };
+        bool sent = sendToRecipients(wallet.get(), recipients, sendtx, &recvouts);
+        BOOST_REQUIRE_MESSAGE(sent, "Send to another address failed");
+        int checkHeight = chainActive.Height();
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        BOOST_REQUIRE_MESSAGE(recvouts[0].first.nValue == 200 * COIN, strprintf("Expecting a vote utxo with %s BLOCK, found %s BLOCK", FormatMoney(200*COIN), FormatMoney(recvouts[0].first.nValue)));
+        BOOST_REQUIRE_MESSAGE(recvouts[1].first.nValue == 1 * COIN, strprintf("Expecting a vote input with %s BLOCK, found %s BLOCK", FormatMoney(1*COIN), FormatMoney(recvouts[1].first.nValue)));
+        BOOST_REQUIRE_MESSAGE(checkHeight+1 == chainActive.Height(), "Block should be accepted");
+        BOOST_REQUIRE_MESSAGE(isTxInBlock(chainActive.Tip(), sendtx->GetHash(), consensus), "Expecting transaction to be included in the block");
+    }
+
+    // Vote on the proposal
+    gov::ProposalVote proposalVote{proposal, gov::YES};
+    {
+        std::vector<CTransactionRef> txs;
+        bool success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txs, g_connman.get(), &failReason);
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+        BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+        BOOST_REQUIRE_MESSAGE(vs[0].getAmount() == 200*COIN, strprintf("Expecting a vote against utxo with amount %s, found %s", FormatMoney(200*COIN), FormatMoney(vs[0].getAmount())));
+    }
+
+    StakeBlocks(4), SyncWithValidationInterfaceQueue();
+
+    // Simulate orphaned votes
+    for (int i = 0; i < 25; ++i) {
+        {
+            UnregisterValidationInterface(otherwallet.get());
+            otherwallet.reset();
+            otherwallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+            otherwallet->LoadWallet(firstRun);
+            AddKey(*otherwallet, key);
+            otherwallet->SetBroadcastTransactions(true);
+            rescanWallet(otherwallet.get());
+            RegisterValidationInterface(otherwallet.get());
+        }
+
+        const auto resetBlocks = chainActive.Height();
+
+        // Submit proposal for testing proposal invalidation
+        gov::Proposal prop("Test Proposal Undo 2", nextSuperblock(chainActive.Height(), consensus.superblock), 1500*COIN,
+                EncodeDestination(dest), "https://forum.blocknet.co", "2");
+        BOOST_CHECK_MESSAGE(prop.isValid(consensus), "Proposal should be valid");
+        {
+            CTransactionRef proptx; // proposal tx
+            gov::SubmitProposal(prop, {wallet}, consensus, proptx, g_connman.get(), &failReason);
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().getProposal(prop.getHash()).isValid(consensus), "Proposal should be valid");
+        }
+        // Change proposal vote from yes to no
+        {
+            gov::ProposalVote proposalVoteNo{proposal, gov::NO};
+            std::vector<CTransactionRef> txs;
+            bool success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVoteNo}, {otherwallet}, consensus, txs, g_connman.get(), &failReason);
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            BOOST_REQUIRE_MESSAGE(isTxInBlock(chainActive.Tip(), txs[0]->GetHash(), consensus), "Expecting transaction to be included in the block");
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            BOOST_REQUIRE_MESSAGE(vs[0].getVote() == proposalVoteNo.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVoteNo.vote), gov::Vote::voteTypeToString(vs[0].getVote())));
+        }
+        // Simulate orphaned vote and make sure no vote is properly unrecorded
+        {
+            CValidationState state;
+            BOOST_REQUIRE_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip(), false), "Failed to invalidate the block with spent vote");
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+            BOOST_REQUIRE_MESSAGE(vs[0].getVote() == proposalVote.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVote.vote), gov::Vote::voteTypeToString(vs[0].getVote())));
+        }
+        // Spend vote
+        {
+            CMutableTransaction mtx;
+            mtx.vin.resize(1);
+            mtx.vin[0] = CTxIn(recvouts[0].second);
+            mtx.vout.resize(1);
+            mtx.vout[0] = CTxOut(recvouts[0].first.nValue - 10000, recvouts[0].first.scriptPubKey);
+            SignatureData sigdata = DataFromTransaction(mtx, 0, recvouts[0].first);
+            ProduceSignature(*otherwallet, MutableTransactionSignatureCreator(&mtx, 0, recvouts[0].first.nValue, SIGHASH_ALL),
+                    recvouts[0].first.scriptPubKey, sigdata);
+            UpdateInput(mtx.vin[0], sigdata);
+            uint256 txid;
+            std::string errstr;
+            const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 1 * COIN);
+            BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to send vote transaction: %s", errstr));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            BOOST_REQUIRE_MESSAGE(isTxInBlock(chainActive.Tip(), mtx.GetHash(), consensus), "Expecting transaction to be included in the block");
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.empty(), strprintf("Expecting 0 votes, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && pvs[0].spent(), "Expecting 1 spent vote");
+        }
+        // Simulate orphaned block and make sure votes are properly unspent
+        {
+            CValidationState state;
+            BOOST_REQUIRE_MESSAGE(InvalidateBlock(state, *params, chainActive.Tip(), false), "Failed to invalidate the block with spent vote");
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+        }
+        // Check vote is valid after new block
+        {
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+            BOOST_REQUIRE_MESSAGE(pvs[0].getVote() == proposalVote.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVote.vote), gov::Vote::voteTypeToString(pvs[0].getVote())));
+            BOOST_REQUIRE_MESSAGE(pvs[0].getAmount() == 200*COIN, strprintf("Expecting a vote against utxo with amount %s, found %s", FormatMoney(200*COIN), FormatMoney(pvs[0].getAmount())));
+        }
+
+        // Invalidate all blocks added during this iteration
+        CValidationState state;
+        while (chainActive.Height() > resetBlocks)
+            InvalidateBlock(state, *params, chainActive.Tip(), false);
+        ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
+        rescanWallet(wallet.get());
+
+        // Check vote is valid after cleanup
+        {
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            auto pvs = gov::Governance::instance().getVotes(proposal.getHash(), true);
+            BOOST_REQUIRE_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+            BOOST_REQUIRE_MESSAGE(pvs[0].getVote() == proposalVote.vote, strprintf("Expecting vote to be %s, found %s", gov::Vote::voteTypeToString(proposalVote.vote), gov::Vote::voteTypeToString(pvs[0].getVote())));
+        }
+        // Check proposal was removed
+        {
+            BOOST_CHECK_MESSAGE(gov::Governance::instance().getProposal(prop.getHash()).isNull(), "Proposal should be null");
+        }
+    }
+
+    UnregisterValidationInterface(otherwallet.get());
+    otherwallet.reset();
     UnregisterValidationInterface(&gov::Governance::instance());
     cleanup(chainActive.Height(), wallet.get());
     ReloadWallet();
@@ -950,7 +1177,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
     {
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         BOOST_CHECK(gov::Governance::instance().hasProposal(proposal.getHash()));
@@ -958,29 +1185,34 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
 
     RegisterValidationInterface(otherwallet.get());
 
-    // Submit the first vote
+    // Submit the first vote and then submit vote change
     {
         gov::ProposalVote proposalVote{proposal, gov::YES};
         std::vector<CTransactionRef> txns;
         failReason.clear();
         success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit YES vote in replay attack test: %s", failReason));
+        failReason.clear();
+        BOOST_REQUIRE_MESSAGE(txns.size() == 1 && txns[0]->vin.size() == 1, "Expecting only 1 vote transaction with 1 vin");
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         CBlock block; // use to check staked inputs used in votes
         BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
         std::set<gov::Proposal> ps;
         std::set<gov::Vote> vs;
-        gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+        std::map<uint256, std::set<gov::VinHash>> vh;
+        gov::Governance::instance().dataFromBlock(&block, ps, vs, vh, consensus, chainActive.Tip()->nHeight);
+        gov::Governance::instance().filterDataFromBlock(ps, vs, vh, consensus, chainActive.Tip()->nHeight, true);
+        BOOST_REQUIRE_MESSAGE(!vs.empty(), strprintf("Expecting at least 1 vote, found %u", vs.size()));
         firstVote = *vs.begin(); // store first vote to use with replay attack
-        BOOST_CHECK_MESSAGE(txns.size() == 1 && txns[0]->vin.size() == 1, "Expecting only 1 vote transaction");
         firstVoteVinPrevout = txns[0]->vin[0].prevout;
-        failReason.clear();
+        txns.clear();
         // Change vote to NO
         gov::ProposalVote proposalVoteNo{proposal, gov::NO};
         success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVoteNo}, {otherwallet}, consensus, txns, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit NO vote in replay attack test: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(txns.size() == 1 && txns[0]->vin.size() == 1, "Expecting only 1 vote transaction with 1 vin");
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
     }
 
@@ -1014,7 +1246,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
         BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
         std::set<gov::Proposal> ps;
         std::set<gov::Vote> vs;
-        gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+        std::map<uint256, std::set<gov::VinHash>> vh;
+        gov::Governance::instance().dataFromBlock(&block, ps, vs, vh, consensus, chainActive.Tip()->nHeight);
+        gov::Governance::instance().filterDataFromBlock(ps, vs, vh, consensus, chainActive.Tip()->nHeight, true);
         // Vote should not be accepted
         BOOST_CHECK_MESSAGE(vs.empty(), "Vote replay attack should fail on non-owner wallet");
     }
@@ -1053,7 +1287,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
         BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
         std::set<gov::Proposal> ps;
         std::set<gov::Vote> vs;
-        gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+        std::map<uint256, std::set<gov::VinHash>> vh;
+        gov::Governance::instance().dataFromBlock(&block, ps, vs, vh, consensus, chainActive.Tip()->nHeight);
+        gov::Governance::instance().filterDataFromBlock(ps, vs, vh, consensus, chainActive.Tip()->nHeight, true);
         // Vote should not be accepted
         BOOST_CHECK_MESSAGE(vs.empty(), "Vote replay attack should fail on same wallet");
     }
@@ -1084,7 +1320,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit proposal: %s", failReason));
         auto accepted = tx != nullptr && sendProposal(proposal, tx, this, *params);
         BOOST_CHECK_MESSAGE(accepted, "Proposal submission failed");
@@ -1101,12 +1337,69 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit proposal: %s", failReason));
         auto accepted = tx != nullptr && sendProposal(proposal, tx, this, *params);
         BOOST_CHECK_MESSAGE(accepted, "Proposal submission failed");
         auto results = gov::Governance::instance().getSuperblockResults(nextSuperblock(chainActive.Height(), consensus.superblock), consensus);
         BOOST_CHECK_MESSAGE(results.empty(), "Superblock results on a proposal with 0 votes should be empty");
+        // clean up
+        cleanup(resetBlocks, wallet.get());
+        ReloadWallet();
+    }
+
+    // Check proposal voting with specific address
+    {
+        const auto resetBlocks = chainActive.Height();
+        gov::Proposal proposal("Test proposal addrs", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
+                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+        CTransactionRef tx = nullptr;
+        std::string failReason;
+        auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        // Prep vote utxo
+        CKey key; key.MakeNewKey(true);
+        AddKey(*wallet, key);
+        CTxDestination voteDest(key.GetPubKey().GetID());
+        CTransactionRef sendtx;
+        auto recipients = std::vector<CRecipient>{
+            {GetScriptForDestination(voteDest), 1000 * COIN, false},
+            {GetScriptForDestination(voteDest), 1 * COIN, false}
+        };
+        bool sent = sendToRecipients(wallet.get(), recipients, sendtx);
+        BOOST_CHECK_MESSAGE(sent, "Failed to create vote network fee payment address");
+        if (sent) StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        // Submit the vote
+        gov::ProposalVote proposalVote{proposal, gov::YES, voteDest};
+        std::vector<CTransactionRef> txns;
+        failReason.clear();
+        success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {wallet}, consensus, txns, g_connman.get(), &failReason);
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+        BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit votes: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(txns.size() == 1, strprintf("Expected 1 vote transaction to be created, %d were created", txns.size()));
+        // check that tx is standard
+        BOOST_CHECK_MESSAGE(IsStandardTx(*txns[0], failReason), strprintf("Vote transaction is not standard: %s", failReason));
+        failReason.clear();
+        BOOST_CHECK_MESSAGE(txns[0]->vin.size() == 1, strprintf("Expected 1 vote input, found %u", txns[0]->vin.size()));
+        {
+            uint256 hashBlock;
+            CTransactionRef vtx;
+            BOOST_CHECK_MESSAGE(GetTransaction(txns[0]->vin[0].prevout.hash, vtx, consensus, hashBlock), "Vote input tx should be valid");
+            BOOST_CHECK_MESSAGE(vtx->vout[txns[0]->vin[0].prevout.n].nValue == 1 * COIN, strprintf("Vote input tx amount is wrong, expected 1 BLOCK found %s", FormatMoney(vtx->vout[txns[0]->vin[0].prevout.n].nValue)));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        }
+        auto votes = gov::Governance::instance().getVotes(proposal.getHash());
+        BOOST_REQUIRE_MESSAGE(votes.size() == 1, strprintf("Expected 1 vote, found %u", votes.size()));
+        {
+            uint256 hashBlock;
+            CTransactionRef vtx;
+            BOOST_CHECK_MESSAGE(GetTransaction(votes[0].getUtxo().hash, vtx, consensus, hashBlock), "Vote utxo tx should be valid");
+            BOOST_CHECK_MESSAGE(vtx->vout[votes[0].getUtxo().n].nValue == 1000 * COIN, strprintf("Vote utxo amount is wrong, expected 1000 BLOCK found %s", FormatMoney(vtx->vout[votes[0].getUtxo().n].nValue)));
+            CTxDestination vdest;
+            BOOST_CHECK(ExtractDestination(vtx->vout[votes[0].getUtxo().n].scriptPubKey, vdest));
+            BOOST_CHECK_MESSAGE(vdest == voteDest, "Vote utxo address does not match the expected address the 1000 BLOCK was sent to");
+        }
         // clean up
         cleanup(resetBlocks, wallet.get());
         ReloadWallet();
@@ -1128,7 +1421,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
                                EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
         CTransactionRef tx = nullptr;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
         BOOST_CHECK(gov::Governance::instance().hasProposal(proposal.getHash()));
@@ -1138,13 +1431,12 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
         std::vector<CTransactionRef> txns;
         failReason.clear();
         success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, GetWallets(), consensus, txns, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit votes: %s", failReason));
-        BOOST_CHECK_MESSAGE(txns.size() == 2, strprintf("Expected 2 vote transaction to be created, %d were created", txns.size()));
-        if (!txns.empty()) { // check that tx is standard
-            BOOST_CHECK_MESSAGE(IsStandardTx(*txns[0], failReason), strprintf("Vote transaction is not standard: %s", failReason));
-            failReason.clear();
-        }
+        BOOST_REQUIRE_MESSAGE(txns.size() == 2, strprintf("Expected 2 vote transaction to be created, %d were created", txns.size()));
+        // check that tx is standard
+        BOOST_CHECK_MESSAGE(IsStandardTx(*txns[0], failReason), strprintf("Vote transaction is not standard: %s", failReason));
+        failReason.clear();
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
         CBlock block; // use to check staked inputs used in votes
         BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
@@ -1188,7 +1480,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
                 CDataStream ss2(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                 gov::Vote vote({txn->GetHash(), static_cast<uint32_t>(n)}, block.GetBlockTime());
                 ss2 >> vote;
-                bool valid = vote.isValid(vinHashes, consensus);
+                bool valid = vote.loadVoteUTXO() && vote.isValid(vinHashes, consensus);
                 BOOST_CHECK_MESSAGE(vote.getProposal() == proposal.getHash(), "Vote data should match the expected proposal hash");
                 BOOST_CHECK_MESSAGE(vote.getVote() == proposalVote.vote, "Vote data should match the expected vote type");
                 if (vote.getUtxo() == block.vtx[1]->vin[0].prevout) { // staked inputs associated with votes should be invalid
@@ -1258,18 +1550,18 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
                                EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
         success = gov::Governance::instance().hasProposal(proposal.getHash());
-        BOOST_CHECK_MESSAGE(success, "Proposal not found");
+        BOOST_REQUIRE_MESSAGE(success, "Proposal not found");
 
         // Submit the vote
         gov::ProposalVote proposalVote{proposal, gov::YES};
         std::vector<CTransactionRef> txns;
         failReason.clear();
         success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {wallet}, consensus, txns, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), strprintf("Failed to submit votes: %s", failReason));
         BOOST_CHECK_MESSAGE(txns.size() == 3, strprintf("Expected 3 vote transactions to be created, %d were created", txns.size()));
         BOOST_REQUIRE_MESSAGE(!txns.empty(), "Proposal tx should confirm to the network before continuing");
@@ -1309,11 +1601,11 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
                                EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
         success = gov::Governance::instance().hasProposal(proposal.getHash());
-        BOOST_CHECK_MESSAGE(success, "Proposal not found");
+        BOOST_REQUIRE_MESSAGE(success, "Proposal not found");
 
         // Submit the vote (should fail)
         gov::ProposalVote proposalVote{proposal, gov::YES};
@@ -1345,10 +1637,10 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
                                EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
         success = gov::Governance::instance().hasProposal(proposal.getHash());
-        BOOST_CHECK_MESSAGE(success, "Proposal not found");
+        BOOST_REQUIRE_MESSAGE(success, "Proposal not found");
 
         // Prep vote utxos for non-wallet address to simulate another user voting
         CKey notInWalletKey; notInWalletKey.MakeNewKey(true);
@@ -1382,7 +1674,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         std::vector<CTransactionRef> txnsOther;
         failReason.clear();
         success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txnsOther, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), "Fail reason should be empty for tally test");
         BOOST_CHECK_MESSAGE(txnsOther.size() == 1, strprintf("Expected 1 transaction, instead have %d on tally test", txnsOther.size()));
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -1398,7 +1690,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         std::vector<CTransactionRef> txns;
         failReason.clear();
         success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {wallet}, consensus, txns, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(failReason.empty(), "Fail reason should be empty for tally test");
         BOOST_CHECK_MESSAGE(txns.size() == 3, strprintf("Expected %d transactions, instead have %d on tally test", 3, txns.size()));
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -1407,7 +1699,9 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
         BOOST_CHECK(ReadBlockFromDisk(block, chainActive.Tip(), consensus));
         std::set<gov::Proposal> ps;
         std::set<gov::Vote> vs;
-        gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+        std::map<uint256, std::set<gov::VinHash>> vh;
+        gov::Governance::instance().dataFromBlock(&block, ps, vs, vh, consensus, chainActive.Tip()->nHeight);
+        gov::Governance::instance().filterDataFromBlock(ps, vs, vh, consensus, chainActive.Tip()->nHeight, true);
         CAmount voteAmount{0};
         for (const auto & vote : vs)
             voteAmount += vote.getAmount();
@@ -1544,14 +1838,14 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 proposals.insert(proposal);
                 CTransactionRef tx;
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
                 // Submit votes with otherwallet
                 gov::ProposalVote proposalVote{proposal, gov::YES};
                 std::vector<CTransactionRef> txns;
                 failReason.clear();
                 success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
                 rescanWallet(otherwallet.get());
                 // Count the votes
@@ -1559,7 +1853,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 ReadBlockFromDisk(block, chainActive.Tip(), consensus);
                 std::set<gov::Proposal> ps;
                 std::set<gov::Vote> vs;
-                gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+                std::map<uint256, std::set<gov::VinHash>> vh;
+                gov::Governance::instance().dataFromBlock(&block, ps, vs, vh, consensus, chainActive.Tip()->nHeight);
+                gov::Governance::instance().filterDataFromBlock(ps, vs, vh, consensus, chainActive.Tip()->nHeight, true);
                 BOOST_CHECK_MESSAGE(vs.size() == voteUtxoCount, strprintf("Expecting total votes cast to be %u found %u", voteUtxoCount, vs.size()));
                 votes.insert(vs.begin(), vs.end());
             }
@@ -1619,14 +1915,14 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 proposals.insert(proposal);
                 CTransactionRef tx;
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
                 // Submit votes with otherwallet
                 gov::ProposalVote proposalVote{proposal, gov::YES};
                 std::vector<CTransactionRef> txns;
                 failReason.clear();
                 success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
                 rescanWallet(otherwallet.get());
                 // Count the votes
@@ -1634,7 +1930,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
                 ReadBlockFromDisk(block, chainActive.Tip(), consensus);
                 std::set<gov::Proposal> ps;
                 std::set<gov::Vote> vs;
-                gov::Governance::instance().dataFromBlock(&block, ps, vs, consensus, chainActive.Tip());
+                std::map<uint256, std::set<gov::VinHash>> vh;
+                gov::Governance::instance().dataFromBlock(&block, ps, vs, vh, consensus, chainActive.Tip()->nHeight);
+                gov::Governance::instance().filterDataFromBlock(ps, vs, vh, consensus, chainActive.Tip()->nHeight, true);
                 BOOST_CHECK_MESSAGE(vs.size() == voteUtxoCount, strprintf("Expecting total votes cast to be %u found %u", voteUtxoCount, vs.size()));
                 votes.insert(vs.begin(), vs.end());
             }
@@ -1700,7 +1998,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             std::vector<CTransactionRef> txns;
             failReason.clear();
             auto success = gov::SubmitVotes(castVotes, {otherwallet}, consensus, txns, g_connman.get(), &failReason);
-            BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             rescanWallet(otherwallet.get());
             std::vector<gov::Proposal> allProposalsB;
@@ -1765,7 +2063,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
         {
             CTransactionRef tx;
             auto success = gov::SubmitProposal(voteCutoffProposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-            BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
         }
 
@@ -1778,7 +2076,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             const gov::Proposal proposal{"Test Proposal Cutoff", gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
             CTransactionRef tx;
             auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-            BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             std::vector<gov::Proposal> allProposalsB;
             std::vector<gov::Vote> allVotesB;
@@ -1797,7 +2095,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             std::vector<CTransactionRef> txns;
             failReason.clear();
             auto success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns, g_connman.get(), &failReason);
-            BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             rescanWallet(otherwallet.get());
             std::vector<gov::Proposal> allProposalsB;
@@ -1961,14 +2259,14 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 proposals.insert(proposal);
                 CTransactionRef tx;
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
                 // Submit votes
                 gov::ProposalVote proposalVote{proposal, gov::YES};
                 std::vector<CTransactionRef> txns;
                 failReason.clear();
                 success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
                 rescanWallet(otherwallet.get());
             }
@@ -1991,12 +2289,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 auto block = std::make_shared<const CBlock>(blocktemplate->block);
                 bool fNewBlock{false};
                 bool success = ProcessNewBlock(*params, block, true, &fNewBlock);
-                BOOST_CHECK_MESSAGE(success, "Valid superblock payee list should be accepted");
+                BOOST_REQUIRE_MESSAGE(success, "Valid superblock payee list should be accepted");
                 if (success) {
                     CValidationState state;
-                    InvalidateBlock(state, *params, chainActive.Tip());
-                    ActivateBestChain(state, *params);
-                    SyncWithValidationInterfaceQueue();
+                    InvalidateBlock(state, *params, chainActive.Tip(), false);
+                    ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
                 }
             }
 
@@ -2042,6 +2339,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                BOOST_REQUIRE_MESSAGE(!payees.empty(), "Payees should be valid");
                 payees[0].nValue = payees[0].nValue + 1;
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
                 auto tip = chainActive.Tip()->nHeight;
@@ -2057,6 +2355,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                BOOST_REQUIRE_MESSAGE(!payees.empty(), "Payees should be valid");
                 payees.emplace_back(100 * COIN, payees[0].scriptPubKey);
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
                 auto tip = chainActive.Tip()->nHeight;
@@ -2072,6 +2371,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
                 BOOST_CHECK_MESSAGE(blocktemplate != nullptr, "CreateNewBlockPoS failed, superblock stake test");
                 const auto & results = gov::Governance::instance().getSuperblockResults(superblock, consensus);
                 auto payees = gov::Governance::getSuperblockPayees(superblock, results, consensus);
+                BOOST_REQUIRE_MESSAGE(!payees.empty(), "Payees should be valid");
                 payees.emplace_back(payees[0].nValue, payees[0].scriptPubKey);
                 BOOST_CHECK_MESSAGE(applySuperblockPayees(pos, blocktemplate.get(), stake, payees, consensus), "Failed to create a valid PoS block for the superblock payee test");
                 auto tip = chainActive.Tip()->nHeight;
@@ -2162,10 +2462,13 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
             nwallet->AddKeyPubKey(key, key.GetPubKey());
         }
         const CAmount voteUtxoAmt{10000*COIN};
-        CTransactionRef tx;
-        CTransactionRef txVoteInput;
-        bool sent = sendToAddress(pos.wallet.get(), newDest, voteUtxoAmt, tx)
-                    && sendToAddress(pos.wallet.get(), newDest, 1 * COIN, txVoteInput);
+        CTransactionRef sendtx;
+        auto recipients = std::vector<CRecipient>{
+            {GetScriptForDestination(newDest), voteUtxoAmt, false},
+            {GetScriptForDestination(newDest), 1 * COIN, false}
+        };
+        std::vector<std::pair<CTxOut,COutPoint>> recvouts;
+        bool sent = sendToRecipients(pos.wallet.get(), recipients, sendtx, &recvouts);
         BOOST_CHECK_MESSAGE(sent, "Send to another address failed");
         const auto blocks = gov::NextSuperblock(consensus) - chainActive.Height();
         pos.StakeBlocks(blocks+1), SyncWithValidationInterfaceQueue();
@@ -2181,9 +2484,10 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
         BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposal.getHash()), "Proposal should be accepted");
 
         // Voting wallet
-        COutPoint voteInput(txVoteInput->GetHash(), txVoteInput->vout[0].nValue == 1 * COIN ? 0 : 1);
-        COutPoint voteUtxo(tx->GetHash(), tx->vout[0].nValue == voteUtxoAmt ? 0 : 1);
-        CTxOut txout = txVoteInput->vout[0].nValue == 1 * COIN ? txVoteInput->vout[0] : txVoteInput->vout[1];
+        BOOST_REQUIRE_MESSAGE(recvouts.size() == recipients.size(), "vout out of bounds error");
+        COutPoint voteUtxo = recvouts[0].second;
+        COutPoint voteInput = recvouts[1].second;
+        CTxOut txout = recvouts[1].first;
         CBasicKeyStore keystore;
         keystore.AddKey(key);
 
@@ -2226,7 +2530,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
         // Check that stake occurred
         BOOST_CHECK_MESSAGE(chainActive.Height() == currentHeight+1, "Stake should succeed on revote");
         auto votes = gov::Governance::instance().getVotes(proposal.getHash());
-        BOOST_CHECK_MESSAGE(votes.size() == 1, "Should only be 1 valid vote");
+        BOOST_REQUIRE_MESSAGE(votes.size() == 1, strprintf("Should only be 1 valid vote on this proposal, found %u", votes.size()));
         BOOST_CHECK_MESSAGE(votes.front().getHash() != vote.getHash(), "Recast vote should have different hash");
         BOOST_CHECK_MESSAGE(votes.front().getVote() == vote.getVote(), "Recast vote type should match old vote type");
         CBlock block;
@@ -2262,11 +2566,11 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
             }
 
             CValidationState state;
-            InvalidateBlock(state, *params, chainActive.Tip());
-            ActivateBestChain(state, *params);
-            SyncWithValidationInterfaceQueue();
+            InvalidateBlock(state, *params, chainActive.Tip(), false);
+            ActivateBestChain(state, *params); SyncWithValidationInterfaceQueue();
             BOOST_CHECK_MESSAGE(!chainActive.Contains(votecsidx), "Revote coinstake should be abandoned");
             BOOST_CHECK_MESSAGE(!chainActive.Contains(voteidx), "Revote tx should be abandoned");
+            pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
             UnregisterValidationInterface(nwallet.get());
             RemoveWallet(nwallet);
@@ -2300,10 +2604,10 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
             return 200 * COIN;
         else if (blockHeight % consensusParams.superblock == 0)
             return 40001 * COIN;
-        return 50 * COIN;
+        return 500 * COIN;
     };
     const auto & consensus = params->GetConsensus();
-    pos.Init("200,40001,50");
+    pos.Init("200,40001,500");
 
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
     std::vector<COutput> coins;
@@ -2326,12 +2630,14 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
             nwallet->AddKeyPubKey(key, key.GetPubKey());
         }
         const CAmount voteUtxoAmt{5000*COIN};
-        CTransactionRef tx1;
-        CTransactionRef tx2;
-        CTransactionRef txVoteInput;
-        bool sent = sendToAddress(pos.wallet.get(), newDest, voteUtxoAmt, tx1)
-                    && sendToAddress(pos.wallet.get(), newDest, voteUtxoAmt, tx2)
-                    && sendToAddress(pos.wallet.get(), newDest, 1 * COIN, txVoteInput);
+        CTransactionRef sendtx;
+        auto recipients = std::vector<CRecipient>{
+                {GetScriptForDestination(newDest), voteUtxoAmt, false},
+                {GetScriptForDestination(newDest), voteUtxoAmt, false},
+                {GetScriptForDestination(newDest), 1 * COIN, false}
+        };
+        std::vector<std::pair<CTxOut,COutPoint>> recvouts;
+        bool sent = sendToRecipients(pos.wallet.get(), recipients, sendtx, &recvouts);
         BOOST_CHECK_MESSAGE(sent, "Send to another address failed");
         const auto blocks = gov::NextSuperblock(consensus) - chainActive.Height();
         pos.StakeBlocks(blocks+1), SyncWithValidationInterfaceQueue();
@@ -2352,10 +2658,10 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
         BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposal2.getHash()), "Proposal2 should be accepted");
 
         // Voting wallet
-        COutPoint voteInput(txVoteInput->GetHash(), txVoteInput->vout[0].nValue == 1 * COIN ? 0 : 1);
-        COutPoint voteUtxo1(tx1->GetHash(), tx1->vout[0].nValue == voteUtxoAmt ? 0 : 1);
-        COutPoint voteUtxo2(tx2->GetHash(), tx2->vout[0].nValue == voteUtxoAmt ? 0 : 1);
-        CTxOut txout = txVoteInput->vout[0].nValue == 1 * COIN ? txVoteInput->vout[0] : txVoteInput->vout[1];
+        COutPoint voteUtxo1 = recvouts[0].second;
+        COutPoint voteUtxo2 = recvouts[1].second;
+        COutPoint voteInput = recvouts[2].second;
+        CTxOut txout = recvouts[2].first;
         CBasicKeyStore keystore;
         keystore.AddKey(key);
 
@@ -2386,9 +2692,9 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
         auto voteScript2b = CScript() << OP_RETURN << ToByteVector(ss2b);
         mtx.vout.resize(5); // 4 votes total + change
         mtx.vout[0] = CTxOut(0, voteScript1a); // cast 1a vote here
-        mtx.vout[1] = CTxOut(1, voteScript1b); // cast 1b vote here
-        mtx.vout[2] = CTxOut(2, voteScript2a); // cast 2a vote here
-        mtx.vout[3] = CTxOut(3, voteScript2b); // cast 2b vote here
+        mtx.vout[1] = CTxOut(0, voteScript1b); // cast 1b vote here
+        mtx.vout[2] = CTxOut(0, voteScript2a); // cast 2a vote here
+        mtx.vout[3] = CTxOut(0, voteScript2b); // cast 2b vote here
         mtx.vout[4] = CTxOut(txout.nValue - 0.1 * COIN, txout.scriptPubKey); // change
         SignatureData sigdata = DataFromTransaction(mtx, 0, txout);
         ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, txout.nValue, SIGHASH_ALL),
@@ -2427,8 +2733,8 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
         // Check that "a" votes are changed and that "b" votes are unchanged
         auto votes1 = gov::Governance::instance().getVotes(proposal1.getHash());
         auto votes2 = gov::Governance::instance().getVotes(proposal2.getHash());
-        BOOST_CHECK_MESSAGE(votes1.size() == 2, "Should be 2 valid votes on proposal 1");
-        BOOST_CHECK_MESSAGE(votes2.size() == 2, "Should be 2 valid votes on proposal 2");
+        BOOST_REQUIRE_MESSAGE(votes1.size() == 2, "Should be 2 valid votes on proposal 1");
+        BOOST_REQUIRE_MESSAGE(votes2.size() == 2, "Should be 2 valid votes on proposal 2");
         if (votes1[0].getUtxo() == vote1b.getUtxo()) {
             BOOST_CHECK_MESSAGE(votes1[0].getUtxo() == vote1b.getUtxo(), "vote1b should be unchanged");
             BOOST_CHECK_MESSAGE(votes1[1].getUtxo() != vote1a.getUtxo(), "vote1a should be changed");
@@ -2485,8 +2791,8 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
         // Check that "b" votes are changed
         votes1 = gov::Governance::instance().getVotes(proposal1.getHash());
         votes2 = gov::Governance::instance().getVotes(proposal2.getHash());
-        BOOST_CHECK_MESSAGE(votes1.size() == 2, "Should be 2 valid votes on proposal 1");
-        BOOST_CHECK_MESSAGE(votes2.size() == 2, "Should be 2 valid votes on proposal 2");
+        BOOST_REQUIRE_MESSAGE(votes1.size() == 2, "Should be 2 valid votes on proposal 1");
+        BOOST_REQUIRE_MESSAGE(votes2.size() == 2, "Should be 2 valid votes on proposal 2");
 
         BOOST_CHECK_MESSAGE(votes1[0].getUtxo() != vote1b.getUtxo() && votes1[1].getUtxo() != vote1b.getUtxo(), "vote1b should be changed");
         BOOST_CHECK_MESSAGE(votes1[0].getHash() != vote1b.getHash() && votes1[1].getHash() != vote1b.getHash(), "vote1b hash should be changed");
@@ -2547,7 +2853,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_proposals)
                                EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
         CTransactionRef tx = nullptr;
         auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         BOOST_CHECK_MESSAGE(tx != nullptr, "Proposal tx should be valid");
         proposals[i] = proposal;
         if (i == 15) {
@@ -2632,7 +2938,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
             sproposals.push_back(proposal);
             CTransactionRef tx = nullptr;
             auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-            BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
             // Submit initial votes
@@ -2640,7 +2946,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
                 gov::ProposalVote proposalVote{proposal, gov::NO};
                 std::vector<CTransactionRef> txns1;
                 success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns1, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             }
 
@@ -2649,7 +2955,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
                 gov::ProposalVote proposalVote{proposal, gov::YES};
                 std::vector<CTransactionRef> txns1;
                 success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns1, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
                 txns.insert(txns.end(), txns1.begin(), txns1.end());
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             }
@@ -2665,7 +2971,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
             sproposals.push_back(proposal);
             CTransactionRef tx = nullptr;
             auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-            BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
             pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
             // Submit initial votes
@@ -2673,7 +2979,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
                 gov::ProposalVote proposalVote{proposal, gov::NO};
                 std::vector<CTransactionRef> txns1;
                 success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns1, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             }
 
@@ -2682,7 +2988,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
                 gov::ProposalVote proposalVote{proposal, gov::YES};
                 std::vector<CTransactionRef> txns1;
                 success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {otherwallet}, consensus, txns1, g_connman.get(), &failReason);
-                BOOST_CHECK_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+                BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
                 txns.insert(txns.end(), txns1.begin(), txns1.end()); // track votes
                 pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
             }
@@ -2717,7 +3023,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
                         CDataStream ssv(data, SER_NETWORK, GOV_PROTOCOL_VERSION);
                         gov::Vote vote({tx->GetHash(), static_cast<uint32_t>(n)});
                         ssv >> vote;
-                        if (vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, chainActive.Height(), consensus.governanceBlock, false))
+                        if (vote.loadVoteUTXO() && vote.isValid(consensus) && !vote.spent() && !gov::IsVoteSpent(vote, chainActive.Height(), consensus.governanceBlock, false))
                             ++expecting;
                         else
                             ++spent;
@@ -2946,7 +3252,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         CTransactionRef tx;
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
         // Succeed on proper yes vote
@@ -3028,6 +3334,19 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
             BOOST_CHECK_THROW(CallRPC2("vote", rpcparams), std::runtime_error);
         }
 
+        // Succeed on proper yes vote with address
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), gov::Vote::voteTypeToString(gov::YES), EncodeDestination(dest) });
+            BOOST_CHECK_NO_THROW(CallRPC2("vote", rpcparams));
+        }
+        // Fail on invalid vote with address (bad address)
+        {
+            UniValue rpcparams(UniValue::VARR);
+            rpcparams.push_backV({ proposal.getHash().ToString(), gov::Vote::voteTypeToString(gov::YES), "kjkdsfjaskdfjsdk" });
+            BOOST_CHECK_THROW(CallRPC2("vote", rpcparams), std::runtime_error);
+        }
+
         cleanup(resetBlocks, pos.wallet.get());
         pos.ReloadWallet();
     }
@@ -3044,7 +3363,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         const gov::Proposal proposal{"Test proposal 3", nextSB, 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
         CTransactionRef tx;
         auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
         // Submit votes
@@ -3052,7 +3371,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         std::vector<CTransactionRef> txns;
         failReason.clear();
         success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {pos.wallet}, consensus, txns, g_connman.get(), &failReason);
-        BOOST_CHECK_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
         UniValue rpcparams(UniValue::VARR);
