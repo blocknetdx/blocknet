@@ -89,6 +89,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     table->horizontalHeader()->setSectionResizeMode(COLUMN_VOTE, QHeaderView::Fixed);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING2, QHeaderView::Fixed); table->setColumnWidth(COLUMN_PADDING2, BGU::spi(2));
     table->setHorizontalHeaderLabels({ "", "", "", tr("Name"), tr("Superblock"), tr("Amount"), tr("Y-N-A"), tr("Url"), tr("Description"), tr("Status"), tr("Results"), "", ""});
+    table->setColumnWidth(COLUMN_TALLY, BGU::spi(60));
 
     auto *btnBox = new QFrame;
     btnBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
