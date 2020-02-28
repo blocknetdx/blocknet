@@ -15,6 +15,7 @@
 #include <cstdint>
 
 #include <json/json_spirit.h>
+#include <univalue.h>
 
 using namespace json_spirit;
 
@@ -125,6 +126,7 @@ bool hextodec(const std::string & hex, unsigned int & n);
 std::string generateUUID();
 Object form_reply(const std::string & uuid, const Value & reply);
 Object form_reply(const std::string & uuid, const std::string & reply);
+UniValue form_reply(const std::string & uuid, const UniValue & reply);
 
 } // namespace
 
