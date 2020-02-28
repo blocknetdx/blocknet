@@ -173,14 +173,7 @@ bool is_hex(const std::string & hex)
 }
 
 bool hextodec(const std::string & hex, unsigned int & n) {
-    std::string s = hex;
-    if (boost::algorithm::starts_with(s, "0x"))
-        s = hex.substr(2);
-    try {
-        n = boost::lexical_cast<unsigned int>(s);
-    } catch (...) {
-        return false;
-    }
+    n = std::stoul(hex, nullptr, 16);
     return true;
 }
 
@@ -273,6 +266,75 @@ Object form_reply(const std::string & uuid, const Value & reply) {
     }
 
     return ret;
+}
+
+UniValue form_reply(const std::string & uuid, const UniValue & reply) {
+    UniValue ret;
+
+    if (reply.isArray() || !reply.isObject()) {
+        ret.setObject();
+        ret.pushKV("reply", reply);
+        if (!uuid.empty())
+            ret.pushKV("uuid", uuid);
+        return ret;
+    }
+
+    ret = reply;
+
+    UniValue rply = find_value(ret, "reply");
+    UniValue result = find_value(ret, "result");
+    const UniValue error_val = find_value(ret, "error");
+    const UniValue code_val = find_value(ret, "code");
+    const UniValue uuid_val = find_value(ret, "uuid");
+
+    if (rply.isNull() && result.isNull() && error_val.isNull()) {
+        ret = UniValue(UniValue::VOBJ);
+        ret.pushKV("reply", reply.get_obj());
+        if (!error_val.isNull())
+            ret.pushKV("error", "Bad request");
+        if (!code_val.isNull())
+            ret.pushKV("code", code_val);
+        if (!uuid_val.isNull())
+            ret.pushKV("uuid", uuid_val);
+        rply = find_value(ret, "reply");
+        result = UniValue();
+    }
+
+    UniValue nret;
+    // Display result/reply
+    if (!result.isNull() && rply.isNull()) {
+        nret.setObject();
+        std::map<std::string, UniValue> uvmap;
+        ret.getObjMap(uvmap);
+        for (const auto & item : uvmap) {
+            if (item.first != "result")
+                nret.pushKV(item.first, item.second);
+        }
+        nret.pushKV("reply", result);
+    } else
+        nret = ret;
+
+    // Display errors
+    if (!error_val.isNull()) {
+        if (code_val.isNull())
+            nret.pushKV("code", xrouter::INTERNAL_SERVER_ERROR);
+    }
+
+    // Display uuid if necessary
+    UniValue rret;
+    if (!uuid.empty()) {
+        rret.setObject();
+        std::map<std::string, UniValue> uvmap;
+        nret.getObjMap(uvmap);
+        for (const auto & item : uvmap) {
+            if (item.first != "uuid")
+                rret.pushKV(item.first, item.second);
+        }
+        rret.pushKV("uuid", uuid);
+    } else
+        rret = nret;
+
+    return rret;
 }
 
 Object form_reply(const std::string & uuid, const std::string & reply)

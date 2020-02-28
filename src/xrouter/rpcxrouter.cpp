@@ -23,12 +23,24 @@
 #include <json/json_spirit_utils.h>
 
 #include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace json_spirit;
 
 static UniValue uret_xr(const json_spirit::Value & o) {
     UniValue uv;
     const auto str = json_spirit::write_string(o, json_spirit::none, 8);
+    try {
+        if (!uv.read(str))
+            uv.setStr(str);
+    } catch (...) {
+        uv.setStr(str);
+    }
+    return uv;
+}
+
+static UniValue uret_xr(const std::string & str) {
+    UniValue uv;
     try {
         if (!uv.read(str))
             uv.setStr(str);
@@ -97,31 +109,29 @@ static UniValue xrGetBlockCount(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetBlockCount", "\"BTC\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
     
     int consensus{0};
-    if (params.size() >= 2) {
-        consensus = params[1].get_int();
+    if (request.params.size() >= 2) {
+        consensus = request.params[1].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
-    std::string currency = params[0].get_str();
+    std::string currency = request.params[0].get_str();
     std::string uuid;
     std::string reply = xrouter::App::instance().getBlockCount(uuid, currency, consensus);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGetBlockHash(const JSONRPCRequest& request)
@@ -182,46 +192,55 @@ static UniValue xrGetBlockHash(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetBlockHash", "\"BTC\", \"1\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2)
-    {
-        Object error;
-        error.emplace_back("error", "block_number not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.size() < 2) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "block_number not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     int consensus{0};
-    if (params.size() >= 3) {
-        consensus = params[2].get_int();
+    if (request.params.size() >= 3) {
+        consensus = request.params[2].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
-    std::string currency = params[0].get_str();
+    const std::string & currency = request.params[0].get_str();
+    const std::string & blocknum = request.params[1].get_str();
     unsigned int block;
-    if (!xrouter::hextodec(params[1].get_str(), block)) {
-        Object error;
-        error.emplace_back("error", "Bad block number " + params[1].get_str());
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (boost::starts_with(blocknum, "0x")) {
+        if (!xrouter::hextodec(blocknum, block)) {
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "Bad block number " + blocknum);
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
+    } else {
+        try {
+            block = boost::lexical_cast<unsigned int>(blocknum);
+        } catch (boost::bad_lexical_cast) {
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "Bad block number " + blocknum);
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
+        }
     }
     std::string uuid;
     std::string reply = xrouter::App::instance().getBlockHash(uuid, currency, consensus, block);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGetBlock(const JSONRPCRequest& request)
@@ -348,47 +367,44 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetBlock", "\"BTC\", \"00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1 || (params.size() == 1 && xrouter::is_hash(params[0].get_str())))
-    {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty() || (request.params.size() == 1 && xrouter::is_hash(request.params[0].get_str()))) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2)
-    {
-        Object error;
-        error.emplace_back("error", "block_hash not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.size() < 2) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "block_hash not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    const auto & hash = params[1].get_str();
+    const auto & hash = request.params[1].get_str();
     if (!xrouter::is_hash(hash)) {
-        Object error;
-        error.emplace_back("error", "block_hash is bad");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "block_hash is bad");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     int consensus{0};
-    if (params.size() >= 3) {
-        consensus = params[2].get_int();
+    if (request.params.size() >= 3) {
+        consensus = request.params[2].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
-    std::string currency = params[0].get_str();
+    std::string currency = request.params[0].get_str();
     std::string uuid;
     std::string reply = xrouter::App::instance().getBlock(uuid, currency, consensus, hash);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGetTransaction(const JSONRPCRequest& request)
@@ -489,47 +505,44 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetTransaction", "\"BLOCK\", \"97578005939f0c25afd6358772ad1ff90f6e2e089d552c7acb9c10c56d983c1e\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1 || (params.size() == 1 && xrouter::is_hash(params[0].get_str())))
-    {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty() || (request.params.size() == 1 && xrouter::is_hash(request.params[0].get_str()))) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2)
-    {
-        Object error;
-        error.emplace_back("error", "tx_id not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.size() < 2) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "tx_id not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    const auto & hash = params[1].get_str();
+    const auto & hash = request.params[1].get_str();
     if (!xrouter::is_hash(hash)) {
-        Object error;
-        error.emplace_back("error", "tx_id is bad");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "tx_id is bad");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     int consensus{0};
-    if (params.size() >= 3) {
-        consensus = params[2].get_int();
+    if (request.params.size() >= 3) {
+        consensus = request.params[2].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
-    std::string currency = params[0].get_str();
+    std::string currency = request.params[0].get_str();
     std::string uuid;
     std::string reply = xrouter::App::instance().getTransaction(uuid, currency, consensus, hash);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
@@ -631,47 +644,44 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrDecodeRawTransaction", "\"BLOCK\", \"010000000188d2c346e4215872409eebfaf7a5676c84261ac7e2b0acfe36da3a4e3860ee4b010000004847304402201aa718585891f0e15ef8b9bc642f9d283b66beab42fd2d63e49419d2b9f5b4fb02205f37a09acfaa7b537ddf5984e512025907628279ae6b8d0a2a5c1a256c7b95dd01ffffffff03000000000000000000feb489fb14000000232103f5b9bb3158fc036463f0fbd6fc3f7de66cd89add440d1e849c2feb572bd23855ac801d2c04000000001976a9146499ceebaa0d586c95271575780b3f9590f9f8ca88ac00000000\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1 || (params.size() == 1 && xrouter::is_hex(params[0].get_str())))
-    {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty() || (request.params.size() == 1 && xrouter::is_hex(request.params[0].get_str()))) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2)
-    {
-        Object error;
-        error.emplace_back("error", "tx_hex not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.size() < 2) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "tx_hex not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    const auto & hex = params[1].get_str();
+    const auto & hex = request.params[1].get_str();
     if (hex.empty() || !xrouter::is_hex(hex)) {
-        Object error;
-        error.emplace_back("error", "tx_hex is bad");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "tx_hex is bad");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     int consensus{0};
-    if (params.size() >= 3) {
-        consensus = params[2].get_int();
+    if (request.params.size() >= 3) {
+        consensus = request.params[2].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
-    std::string currency = params[0].get_str();
+    std::string currency = request.params[0].get_str();
     std::string uuid;
     std::string reply = xrouter::App::instance().decodeRawTransaction(uuid, currency, consensus, hex);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGetBlocks(const JSONRPCRequest& request)
@@ -762,52 +772,51 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetBlocks", "\"BLOCK\", \"39e11e62d89cfcfd2b0800f7e9b4bd439fa44a7d7aa111e1e7a8b235d848eadf,7b41ea6a8bf0ed93fd4f3a6a67a558941634400e9eaa51676d5af5077a01760c\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1 || boost::algorithm::contains(params[0].get_str(), ",")) {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.size() < 1 || boost::algorithm::contains(request.params[0].get_str(), ",")) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2) {
-        Object error;
-        error.emplace_back("error", "block_hashes not specified (comma-delimited list)");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.size() < 2) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "block_hashes not specified (comma-delimited list)");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     std::vector<std::string> blockHashes;
-    const auto & hashes = params[1].get_str();
+    const auto & hashes = request.params[1].get_str();
     boost::split(blockHashes, hashes, boost::is_any_of(","));
     for (const auto & hash : blockHashes) {
         if (hash.empty() || hash.find(',') != std::string::npos) {
-            Object error;
-            error.emplace_back("error", "block_hashes must be specified in a comma-delimited string with no spaces.\n"
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "block_hashes must be specified in a comma-delimited string with no spaces.\n"
                                         "Example: xrGetBlocks BLOCK \"302a309d6b6c4a65e4b9ff06c7ea81bb17e985d00abdb01978ace62cc5e18421,"
                                         "175d2a428b5649c2a4732113e7f348ba22a0e69cc0a87631449d1d77cd6e1b04,"
                                         "34989eca8ed66ff53631294519e147a12f4860123b4bdba36feac6da8db492ab\"");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
     int consensus{0};
-    if (params.size() >= 3) {
-        consensus = params[2].get_int();
+    if (request.params.size() >= 3) {
+        consensus = request.params[2].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
-    std::string currency = params[0].get_str();
+    std::string currency = request.params[0].get_str();
     std::string uuid;
     std::string reply = xrouter::App::instance().getBlocks(uuid, currency, consensus, blockHashes);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGetTransactions(const JSONRPCRequest& request)
@@ -917,54 +926,52 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetTransactions", "\"BLOCK\", \"6582c8028f409a98c96a73e3efeca277ea9ee43aeef174801c6fa6474b66f4e7,4d4db727a3b36e6689af82765cadabb235fd9bdfeb94de0210804c6dd5d2031d\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
     
-    if (params.size() < 2)
+    if (request.params.size() < 2)
     {
-        Object error;
-        error.emplace_back("error", "tx_ids not specified (comma-delimited list)");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "tx_ids not specified (comma-delimited list)");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     std::vector<std::string> txHashes;
-    const auto & hashes = params[1].get_str();
+    const auto & hashes = request.params[1].get_str();
     boost::split(txHashes, hashes, boost::is_any_of(","));
     for (const auto & hash : txHashes) {
         if (hash.empty() || hash.find(',') != std::string::npos) {
-            Object error;
-            error.emplace_back("error", "tx_ids must be specified in a comma-delimited string with no spaces.\n"
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "tx_ids must be specified in a comma-delimited string with no spaces.\n"
                                         "Example: xrGetTransactions BLOCK \"24ff5506a30772acfb65012f1b3309d62786bc386be3b6ea853a798a71c010c8,"
                                         "24b6bcb44f045d7a4cf8cd47c94a14cc609352851ea973f8a47b20578391629f,"
                                         "66a5809c7090456965fe30280b88f69943e620894e1c4538a724ed9a89c769be\"");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
     
     int consensus{0};
-    if (params.size() >= 3) {
-        consensus = params[2].get_int();
+    if (request.params.size() >= 3) {
+        consensus = request.params[2].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
-    std::string currency = params[0].get_str();
+    std::string currency = request.params[0].get_str();
     std::string uuid;
     std::string reply = xrouter::App::instance().getTransactions(uuid, currency, consensus, txHashes);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGetTxBloomFilter(const JSONRPCRequest& request)
@@ -990,44 +997,43 @@ static UniValue xrGetTxBloomFilter(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetTxBloomFilter", "\"BLOCK\", \"0x0000000018\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
+    if (request.params.empty())
     {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2)
+    if (request.params.size() < 2)
     {
-        Object error;
-        error.emplace_back("error", "filter not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "filter not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     int number{0};
-    if (params.size() >= 3)
-        number = params[2].get_int();
+    if (request.params.size() >= 3)
+        number = request.params[2].get_int();
 
     int consensus{0};
-    if (params.size() >= 4) {
-        consensus = params[3].get_int();
+    if (request.params.size() >= 4) {
+        consensus = request.params[3].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
     
-    const auto & currency = params[0].get_str();
-    const auto & filter = params[1].get_str();
+    const auto & currency = request.params[0].get_str();
+    const auto & filter = request.params[1].get_str();
     std::string uuid;
     const auto reply = xrouter::App::instance().getTransactionsBloomFilter(uuid, currency, consensus, filter, number);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGenerateBloomFilter(const JSONRPCRequest& request)
@@ -1053,21 +1059,21 @@ static UniValue xrGenerateBloomFilter(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGenerateBloomFilter", "\"BLOCK\", \"BXziudHsEee8vDTgvXXNLCXwKouSssLMQ3,BgSDpy7F7PuBZpG4PQfryX9m94NNcmjWAX\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    
-    Object result;
 
-    if (params.empty()) {
-        result.emplace_back("error", "No valid addresses");
-        result.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(result);
+    UniValue result(UniValue::VOBJ);
+
+    if (request.params.empty()) {
+        result.pushKV("error", "No valid addresses");
+        result.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return result;
     }
     
-    CBloomFilter f(10 * static_cast<unsigned int>(params.size()), 0.1, 5, 0);
+    CBloomFilter f(10 * static_cast<unsigned int>(request.params.size()), 0.1, 5, 0);
 
-    Array invalid;
+    UniValue invalid(UniValue::VARR);
 
-    for (const auto & param : params) {
+    for (int i = 0; i < request.params.size(); ++i) {
+        const auto & param = request.params[i];
         std::vector<unsigned char> data;
         const std::string & addr = param.get_str();
         if (!DecodeBase58(addr, data)) { // Try parsing pubkey
@@ -1075,7 +1081,7 @@ static UniValue xrGenerateBloomFilter(const JSONRPCRequest& request)
             data = ParseHex(addr);
             CPubKey pubkey(data);
             if (!pubkey.IsValid()) {
-                invalid.push_back(Value(addr));
+                invalid.push_back(addr);
                 continue;
             }
             f.insert(data);
@@ -1088,22 +1094,22 @@ static UniValue xrGenerateBloomFilter(const JSONRPCRequest& request)
     }
     
     if (!invalid.empty()) {
-        result.emplace_back("skipped-invalid", invalid);
+        result.pushKV("skipped-invalid", invalid);
     }
     
-    if (invalid.size() == params.size()) {
-        result.emplace_back("error", "No valid addresses");
-        result.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(result);
+    if (invalid.size() == request.params.size()) {
+        result.pushKV("error", "No valid addresses");
+        result.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return result;
     }
 
-    result.emplace_back("bloomfilter", HexStr(f.data()));
+    result.pushKV("bloomfilter", HexStr(f.data()));
 
-    Object reply;
-    reply.emplace_back("result", result);
+    UniValue reply(UniValue::VOBJ);
+    reply.pushKV("result", result);
 
     const std::string & uuid = xrouter::generateUUID();
-    return uret_xr(xrouter::form_reply(uuid, write_string(Value(reply), false)));
+    return xrouter::form_reply(uuid, reply);
 }
 
 static UniValue xrService(const JSONRPCRequest& request)
@@ -1148,24 +1154,22 @@ static UniValue xrService(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrService", "\"xrs::SomeXCloudPlugin\", \"param1\", \"param2\"")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back("error", "Service name not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Service name not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
     
-    const std::string & service = params[0].get_str();
+    const std::string & service = request.params[0].get_str();
     std::vector<std::string> call_params;
-    for (unsigned int i = 1; i < params.size(); i++)
-        call_params.push_back(params[i].get_str());
+    for (unsigned int i = 1; i < request.params.size(); i++)
+        call_params.push_back(request.params[i].get_str());
 
     std::string uuid;
     std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, 0, call_params);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrServiceConsensus(const JSONRPCRequest& request)
@@ -1235,41 +1239,39 @@ static UniValue xrServiceConsensus(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrServiceConsensus", "3, \"xrs::SomeXCloudPlugin\", \"param1\", \"param2\"")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back("error", "node_count not specified, must be an integer >= 1");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "node_count not specified, must be an integer >= 1");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2)
+    if (request.params.size() < 2)
     {
-        Object error;
-        error.emplace_back("error", "Service name not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Service name not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    const auto & consensus = params[0].get_int();
-    const auto & service = params[1].get_str();
+    const auto & consensus = request.params[0].get_int();
+    const auto & service = request.params[1].get_str();
 
     if (consensus < 1) {
-        Object error;
-        error.emplace_back("error", "node_count must be an integer >= 1");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "node_count must be an integer >= 1");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     std::vector<std::string> call_params;
-    for (unsigned int i = 2; i < params.size(); i++)
-        call_params.push_back(params[i].get_str());
+    for (unsigned int i = 2; i < request.params.size(); i++)
+        call_params.push_back(request.params[i].get_str());
 
     std::string uuid;
     std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, consensus, call_params);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrSendTransaction(const JSONRPCRequest& request)
@@ -1307,40 +1309,37 @@ static UniValue xrSendTransaction(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrSendTransaction", "\"BLOCK\", \"010000000101b4b67db0875632e4ff6cf1b9c6988c81d7ddefbf1be9a0ffd6b5109434eeff010000006a473044022007c31c3909ee93a5d8f589b1e99b4d71b6723507de31b90af3e0373812b7cdd602206d6fc5a3752530b634ba3b6a8d0997293b299c1184b0d90397242bedb6fc5f9a01210397b2f25181661d7c39d68667e0d1b99820ce8183b7a42da0dce3a623a3d30b67ffffffff08005039278c0400001976a914245ad0cca6ec4233791d89258e25cd7d9b5ec69e88ac00204aa9d10100001976a914216c4f3fdb628a97aed21569e7d16de369c1c30a88ac36e3c8239b0d00001976a914e89125937281a96e9ed1abf54b7529a08eb3ef9e88ac00204aa9d10100001976a91475fc439f3344039ef796fa28b2c563f29c960f0f88ac0010a5d4e80000001976a9148abaf7773d9aea7b7bec1417cb0bc002daf1952988ac0010a5d4e80000001976a9142e276ba01bf62a5ac76a818bf990047d4d0aaf5d88ac0010a5d4e80000001976a91421d5b48b854f74e7dcc89bf551e1f8dec87680cd88ac0010a5d4e80000001976a914c18d9ac6189d43f43240539491a53835219363fc88ac00000000\"")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back("error", "blockchain not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "blockchain not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    if (params.size() < 2)
-    {
-        Object error;
-        error.emplace_back("error", "signed_tx_hex not specified");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.size() < 2) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "signed_tx_hex not specified");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     int consensus{0};
-    if (params.size() >= 3) {
-        consensus = params[2].get_int();
+    if (request.params.size() >= 3) {
+        consensus = request.params[2].get_int();
         if (consensus < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
     
-    std::string currency = params[0].get_str();
-    std::string transaction = params[1].get_str();
+    std::string currency = request.params[0].get_str();
+    std::string transaction = request.params[1].get_str();
     std::string uuid;
     std::string reply = xrouter::App::instance().sendTransaction(uuid, currency, consensus, transaction);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrGetReply(const JSONRPCRequest& request)
@@ -1385,20 +1384,17 @@ static UniValue xrGetReply(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetReply", "\"3c84d025-8a03-4b64-848f-99892fe481ff\"")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1)
-    {
-        Object error;
-        error.emplace_back("error", "Please specify the uuid");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Please specify the uuid");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
     
-    std::string uuid = params[0].get_str();
-    Object result;
+    std::string uuid = request.params[0].get_str();
     std::string reply = xrouter::App::instance().getReply(uuid);
-    return uret_xr(xrouter::form_reply(uuid, reply));
+    return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
 static UniValue xrShowConfigs(const JSONRPCRequest& request)
@@ -1441,9 +1437,7 @@ static UniValue xrShowConfigs(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrShowConfigs", "")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    
-    Object result;
+
     std::string reply = xrouter::App::instance().printConfigs();
     return reply;
 }
@@ -1470,9 +1464,7 @@ static UniValue xrReloadConfigs(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrReloadConfigs", "")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    
-    Object result;
+
     return xrouter::App::instance().reloadConfigs();
 }
 
@@ -1507,9 +1499,7 @@ static UniValue xrStatus(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrStatus", "")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    
-    Object result;
+
     std::string reply = xrouter::App::instance().getStatus();
     return reply;
 }
@@ -1579,13 +1569,12 @@ static UniValue xrConnectedNodes(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrConnectedNodes", "")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (!params.empty()) {
-        Object error;
-        error.emplace_back("error", "This call does not support parameters");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (!request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "This call does not support parameters");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     const std::string & uuid = xrouter::generateUUID();
@@ -1595,7 +1584,7 @@ static UniValue xrConnectedNodes(const JSONRPCRequest& request)
     Array data;
     app.snodeConfigJSON(configs, data);
 
-    return uret_xr(xrouter::form_reply(uuid, data));
+    return xrouter::form_reply(uuid, uret_xr(Value(data)));
 }
 
 static UniValue xrConnect(const JSONRPCRequest& request)
@@ -1679,31 +1668,30 @@ static UniValue xrConnect(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrConnect", "\"xrs::CustomXCloudPlugin\", 2")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() < 1) {
-        Object error;
-        error.emplace_back("error", "Service not specified. Example: xrConnect xr::BTC");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Service not specified. Example: xrConnect xr::BTC");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
-    const auto & service = params[0].get_str();
+    const auto & service = request.params[0].get_str();
     if (service.empty()) {
-        Object error;
-        error.emplace_back("error", "Service not specified. Example: xrConnect xr::BLOCK");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Service not specified. Example: xrConnect xr::BLOCK");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     int nodeCount{1};
-    if (params.size() > 1) {
-        nodeCount = params[1].get_int();
+    if (request.params.size() > 1) {
+        nodeCount = request.params[1].get_int();
         if (nodeCount < 1) {
-            Object error;
-            error.emplace_back("error", "node_count must be an integer >= 1");
-            error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-            return uret_xr(error);
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("code", xrouter::INVALID_PARAMETERS);
+            return error;
         }
     }
 
@@ -1717,27 +1705,27 @@ static UniValue xrConnect(const JSONRPCRequest& request)
         uint32_t found{0};
         configs = app.xrConnect(service, nodeCount, found);
         if (configs.size() < nodeCount) {
-            Object error;
-            error.emplace_back("error", "Failed to connect to nodes, found " +
+            UniValue error(UniValue::VOBJ);
+            error.pushKV("error", "Failed to connect to nodes, found " +
                                         std::to_string(found > configs.size() ? found : configs.size()) +
                                         " expected " + std::to_string(nodeCount));
-            error.emplace_back("code", xrouter::NOT_ENOUGH_NODES);
-            return uret_xr(error);
+            error.pushKV("code", xrouter::NOT_ENOUGH_NODES);
+            return error;
         }
         app.snodeConfigJSON(configs, data);
     } catch (std::exception & e) {
-        Object error;
-        error.emplace_back("error", e.what());
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", e.what());
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     } catch (xrouter::XRouterError & e) {
-        Object error;
-        error.emplace_back("error", e.msg);
-        error.emplace_back("code", e.code);
-        return uret_xr(error);
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", e.msg);
+        error.pushKV("code", e.code);
+        return error;
     }
 
-    return uret_xr(xrouter::form_reply(uuid, data));
+    return xrouter::form_reply(uuid, uret_xr(Value(data)));
 }
 
 static UniValue xrGetNetworkServices(const JSONRPCRequest& request)
@@ -1795,13 +1783,12 @@ static UniValue xrGetNetworkServices(const JSONRPCRequest& request)
                   + HelpExampleRpc("xrGetNetworkServices", "")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (!params.empty()) {
-        Object error;
-        error.emplace_back("error", "This call does not support parameters");
-        error.emplace_back("code", xrouter::INVALID_PARAMETERS);
-        return uret_xr(error);
+    if (!request.params.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "This call does not support parameters");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
     }
 
     const std::string & uuid = xrouter::generateUUID();
@@ -1827,18 +1814,17 @@ static UniValue xrGetNetworkServices(const JSONRPCRequest& request)
         }
     }
 
-    Array jspv{spvwallets.begin(), spvwallets.end()};
-    Array jxr{services.begin(), services.end()};
-    Object jnodes;
-
-    Object data;
-    data.emplace_back("spvwallets", jspv);
-    data.emplace_back("services", jxr);
+    UniValue data(UniValue::VOBJ);
+    UniValue jspv(UniValue::VARR); for (const auto & w : spvwallets) jspv.push_back(w);
+    UniValue jxr(UniValue::VARR); for (const auto & s : services) jxr.push_back(s);
+    data.pushKV("spvwallets", jspv);
+    data.pushKV("services", jxr);
+    UniValue jnodes(UniValue::VOBJ);
     for (const auto & item : counts) // show number of nodes with each service
-        jnodes.emplace_back(item.first, item.second);
-    data.emplace_back("nodecounts", jnodes);
+        jnodes.pushKV(item.first, item.second);
+    data.pushKV("nodecounts", jnodes);
 
-    return uret_xr(xrouter::form_reply(uuid, data));
+    return xrouter::form_reply(uuid, data);
 }
 
 static UniValue xrTest(const JSONRPCRequest& request)
@@ -1846,10 +1832,9 @@ static UniValue xrTest(const JSONRPCRequest& request)
     if (request.fHelp) {
         throw std::runtime_error("xrTest\nAuxiliary call");
     }
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-    
+
     xrouter::App::instance().runTests();
-    return uret_xr(true);
+    return true;
 }
 
 // clang-format off

@@ -24,6 +24,7 @@ KNOWN_VIOLATIONS=(
     "src/validation.cpp:.*normalize"
     "src/xbridge/xbridgerpc.cpp:.*sprintf"
     "src/xrouter/utils-misc.cpp:.*sprintf"
+    "src/xrouter/utils-misc.cpp:.*stoul"
     "src/xrouter/xrouterpacket.h:.*sprintf"
     "src/governance/governance.h:.*to_lower"
     "src/servicenode/servicenodemgr.h:.*to_lower"
