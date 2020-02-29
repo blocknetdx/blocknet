@@ -1918,9 +1918,9 @@ bool AppInitMain(InitInterfaces& interfaces)
         xrouter::App::createConf(); // create config if it doesn't exist
         if (xrouter::App::isEnabled()) {
             uiInterface.InitMessage(_("Starting xrouter service"));
-            const auto xrinit = xrapp.init(); // init xrouter
-            if (!xrinit || !xrapp.start()) // start xrouter if init succeeds
+            if (!xrapp.init()) // start xrouter
                 LogPrintf("XRouter failed to start, please check your configs\n");
+            xrapp.start();
         }
 
         // If there's snode entries, proceed to register them

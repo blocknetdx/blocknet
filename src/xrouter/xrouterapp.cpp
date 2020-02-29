@@ -261,24 +261,30 @@ bool App::init()
     if (!isEnabled())
         return false;
 
+    xrouterpath = GetDataDir(false) / "xrouter.conf";
+    xrsettings = std::make_shared<XRouterSettings>(CPubKey{});
+
+    // Load the xrouter server if we're a service node
+    if (gArgs.GetBoolArg("-servicenode", false)) {
+        // Create xrouter server instance
+        server = std::make_shared<XRouterServer>();
+    }
+
     // Load the xrouter configuration
     try {
-        xrouterpath = GetDataDir(false) / "xrouter.conf";
-        xrsettings = std::make_shared<XRouterSettings>(CPubKey{});
-        if (!xrsettings->init(xrouterpath))
+        if (!xrsettings->init(xrouterpath)) {
+            ERR() << "Failed to read xrouter config " << xrouterpath.string();
             return false;
+        }
     } catch (...) {
         return false;
     }
 
     // Check for a valid host parameter if we're a servicenode
-    if (gArgs.GetBoolArg("-servicenode", false) && xrsettings->host(xrDefault).empty()) {
+    if (xrsettings->host(xrDefault).empty()) {
         ERR() << "Failed to read xrouter config, missing \"host\" entry " << xrouterpath.string();
         return false;
     }
-
-    // Create xrouter server instance
-    server = std::make_shared<XRouterServer>();
 
     LOG() << "Loading xrouter config from file " << xrouterpath.string();
     return true;
@@ -1965,11 +1971,19 @@ std::string App::sendXRouterConfigRequestSync(CNode* node) {
 
 bool App::reloadConfigs() {
     if (!server) {
-        LOG() << "Failed to reload xrouter config, xrouter server is not running (is host= set?)";
+        LOG() << "Failed to reload xrouter config, xrouter server is not running (is this a service node?)";
         return false;
     }
     LOG() << "Reloading xrouter config from file " << xrouterpath.string();
-    xrsettings->init(xrouterpath);
+    if (!xrsettings->init(xrouterpath)) {
+        ERR() << "Failed to read xrouter config " << xrouterpath.string();
+        return false;
+    }
+    // Check for a valid host parameter if we're a servicenode
+    if (xrsettings->host(xrDefault).empty()) {
+        ERR() << "Failed to read xrouter config, missing \"host\" entry " << xrouterpath.string();
+        return false;
+    }
     return createConnectors();
 }
 

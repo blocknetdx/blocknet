@@ -129,13 +129,17 @@ bool XRouterSettings::init(const boost::filesystem::path & configPath) {
         ERR() << "Failed to read xrouter config " << configPath.string();
         return false;
     }
-    if (!host(xrDefault).empty()) {
-        CNetAddr caddr;
-        if (!LookupHost(host(xrDefault).c_str(), caddr, !ismine))
-            return false;
-        addr = CService(caddr, port(xrDefault));
-        node = addr.ToStringIPPort();
+    if (host(xrDefault).empty()) {
+        ERR() << "Failed to read xrouter config, missing \"host\" entry " << configPath.string();
+        return false;
     }
+    CNetAddr caddr;
+    if (!LookupHost(host(xrDefault).c_str(), caddr, true)) {
+        ERR() << "Failed to read xrouter config, bad \"host\" entry " << configPath.string();
+        return false;
+    }
+    addr = CService(caddr, port(xrDefault));
+    node = addr.ToStringIPPort();
     loadPlugins();
     loadWallets();
     return true;
@@ -151,8 +155,10 @@ bool XRouterSettings::init(const std::string & config) {
         return false;
     }
     CNetAddr caddr;
-    if (!LookupHost(host(xrDefault).c_str(), caddr, !ismine))
+    if (!LookupHost(host(xrDefault).c_str(), caddr, true)) {
+        ERR() << "Failed to read xrouter config, bad \"host\" entry " << config;
         return false;
+    }
     addr = CService(caddr, port(xrDefault));
     node = addr.ToStringIPPort();
     loadPlugins();
