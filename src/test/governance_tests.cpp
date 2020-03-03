@@ -3366,33 +3366,71 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
-        // Submit votes
-        gov::ProposalVote proposalVote{proposal, gov::YES};
-        std::vector<CTransactionRef> txns;
-        failReason.clear();
-        success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {pos.wallet}, consensus, txns, g_connman.get(), &failReason);
-        BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
-        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        // Passing proposal
+        {
+            // Submit votes
+            gov::ProposalVote proposalVote{proposal, gov::YES};
+            std::vector<CTransactionRef> txns;
+            failReason.clear();
+            success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {pos.wallet}, consensus, txns, g_connman.get(), &failReason);
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+            pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
 
-        UniValue rpcparams(UniValue::VARR);
-        UniValue result;
-        BOOST_CHECK_NO_THROW(result = CallRPC2("listproposals", rpcparams));
-        BOOST_CHECK_MESSAGE(result.isArray(), "listproposals rpc call should return array");
-        for (const auto & uprop : result.get_array().getValues()) {
-            const UniValue & p = uprop.get_obj();
-            const auto proposalHash = uint256S(find_value(p.get_obj(), "hash").get_str());
-            BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposalHash), "Failed to find proposal in governance manager");
-            if (proposalHash == proposal.getHash()) { // only check proposal for this unit test
-                BOOST_CHECK_EQUAL(find_value(p, "name")       .get_str(), proposal.getName());
-                BOOST_CHECK_EQUAL(find_value(p, "superblock") .get_int(), proposal.getSuperblock());
-                BOOST_CHECK_EQUAL(find_value(p, "amount")     .get_int(), proposal.getAmount() / COIN);
-                BOOST_CHECK_EQUAL(find_value(p, "address")    .get_str(), proposal.getAddress());
-                BOOST_CHECK_EQUAL(find_value(p, "url")        .get_str(), proposal.getUrl());
-                BOOST_CHECK_EQUAL(find_value(p, "description").get_str(), proposal.getDescription());
-                const auto tally = gov::Governance::getTally(proposal.getHash(), gov::Governance::instance().getVotes(), consensus);
-                BOOST_CHECK_EQUAL(find_value(p, "votes_yes")  .get_int(), tally.yes);
-                BOOST_CHECK_EQUAL(find_value(p, "votes_no")   .get_int(), tally.no);
-                BOOST_CHECK_EQUAL(find_value(p, "votes_abstain").get_int(), tally.abstain);
+            UniValue rpcparams(UniValue::VARR);
+            UniValue result;
+            BOOST_CHECK_NO_THROW(result = CallRPC2("listproposals", rpcparams));
+            BOOST_CHECK_MESSAGE(result.isArray(), "listproposals rpc call should return array");
+            for (const auto & uprop : result.get_array().getValues()) {
+                const UniValue & p = uprop.get_obj();
+                const auto proposalHash = uint256S(find_value(p.get_obj(), "hash").get_str());
+                BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposalHash), "Failed to find proposal in governance manager");
+                if (proposalHash == proposal.getHash()) { // only check proposal for this unit test
+                    BOOST_CHECK_EQUAL(find_value(p, "name")       .get_str(), proposal.getName());
+                    BOOST_CHECK_EQUAL(find_value(p, "superblock") .get_int(), proposal.getSuperblock());
+                    BOOST_CHECK_EQUAL(find_value(p, "amount")     .get_int(), proposal.getAmount() / COIN);
+                    BOOST_CHECK_EQUAL(find_value(p, "address")    .get_str(), proposal.getAddress());
+                    BOOST_CHECK_EQUAL(find_value(p, "url")        .get_str(), proposal.getUrl());
+                    BOOST_CHECK_EQUAL(find_value(p, "description").get_str(), proposal.getDescription());
+                    const auto tally = gov::Governance::getTally(proposal.getHash(), gov::Governance::instance().getVotes(), consensus);
+                    BOOST_CHECK_EQUAL(find_value(p, "votes_yes")  .get_int(), tally.yes);
+                    BOOST_CHECK_EQUAL(find_value(p, "votes_no")   .get_int(), tally.no);
+                    BOOST_CHECK_EQUAL(find_value(p, "votes_abstain").get_int(), tally.abstain);
+                    BOOST_CHECK_EQUAL(find_value(p, "status").get_str(), "passing");
+                }
+            }
+        }
+
+        // Failing proposal
+        {
+            // Submit votes
+            gov::ProposalVote proposalVote{proposal, gov::NO};
+            std::vector<CTransactionRef> txns;
+            failReason.clear();
+            success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVote}, {pos.wallet}, consensus, txns, g_connman.get(), &failReason);
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Vote submission failed: %s", failReason));
+            pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+            UniValue rpcparams(UniValue::VARR);
+            UniValue result;
+            BOOST_CHECK_NO_THROW(result = CallRPC2("listproposals", rpcparams));
+            BOOST_CHECK_MESSAGE(result.isArray(), "listproposals rpc call should return array");
+            for (const auto & uprop : result.get_array().getValues()) {
+                const UniValue & p = uprop.get_obj();
+                const auto proposalHash = uint256S(find_value(p.get_obj(), "hash").get_str());
+                BOOST_CHECK_MESSAGE(gov::Governance::instance().hasProposal(proposalHash), "Failed to find proposal in governance manager");
+                if (proposalHash == proposal.getHash()) { // only check proposal for this unit test
+                    BOOST_CHECK_EQUAL(find_value(p, "name")       .get_str(), proposal.getName());
+                    BOOST_CHECK_EQUAL(find_value(p, "superblock") .get_int(), proposal.getSuperblock());
+                    BOOST_CHECK_EQUAL(find_value(p, "amount")     .get_int(), proposal.getAmount() / COIN);
+                    BOOST_CHECK_EQUAL(find_value(p, "address")    .get_str(), proposal.getAddress());
+                    BOOST_CHECK_EQUAL(find_value(p, "url")        .get_str(), proposal.getUrl());
+                    BOOST_CHECK_EQUAL(find_value(p, "description").get_str(), proposal.getDescription());
+                    const auto tally = gov::Governance::getTally(proposal.getHash(), gov::Governance::instance().getVotes(), consensus);
+                    BOOST_CHECK_EQUAL(find_value(p, "votes_yes")  .get_int(), tally.yes);
+                    BOOST_CHECK_EQUAL(find_value(p, "votes_no")   .get_int(), tally.no);
+                    BOOST_CHECK_EQUAL(find_value(p, "votes_abstain").get_int(), tally.abstain);
+                    BOOST_CHECK_EQUAL(find_value(p, "status").get_str(), "failing");
+                }
             }
         }
 
