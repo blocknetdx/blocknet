@@ -1812,6 +1812,9 @@ bool AppInitMain(InitInterfaces& interfaces)
         return false;
     }
 
+    // Signal service node list support
+    nLocalServices = ServiceFlags(nLocalServices | NODE_SNODE_LIST);
+
     int chain_active_height;
 
     //// debug print

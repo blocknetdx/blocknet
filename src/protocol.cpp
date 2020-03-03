@@ -1,5 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2018 The Bitcoin Core developers
+// Copyright (c) 2019-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -44,6 +45,8 @@ const char *BLOCKTXN="blocktxn";
 const char *XBRIDGE="xbridge";
 const char *SNREGISTER="snr";
 const char *SNPING="snp";
+const char *SNLIST="snl";
+const char *SNLISTPING="snlp";
 const char *XROUTER="xrouter";
 } // namespace NetMsgType
 
@@ -80,6 +83,8 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::XBRIDGE,
     NetMsgType::SNREGISTER,
     NetMsgType::SNPING,
+    NetMsgType::SNLIST,
+    NetMsgType::SNLISTPING,
     NetMsgType::XROUTER,
 };
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes, allNetMessageTypes+ARRAYLEN(allNetMessageTypes));
