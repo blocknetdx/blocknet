@@ -271,15 +271,20 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 
     std::atomic<int> counter{0};
     std::atomic<double> pcounter{0};
-    const int totalprogress{90};
-    auto progress = [&counter,&pcounter,totalprogress](const double & unit, const double & total, const double & percent) {
+    std::atomic<int> pprog{0};
+    const int totalprogress{85};
+    auto progress = [&counter,&pcounter,&pprog,totalprogress](const double & unit, const double & total, const double & percent) {
         ++counter;
         pcounter = pcounter + unit/total * percent;
         if (counter % 10000 == 0) {
             int p = static_cast<int>(pcounter);
             if (p >= totalprogress) p = totalprogress;
-            LogPrintf("[%u%%]...", p); /* Continued */
-            uiInterface.ShowProgress("Loading block index", p, false);
+            if (p != pprog) {
+                pprog = p;
+                if (pprog % 10 == 0)
+                    LogPrintf("[%u%%]...", pprog); /* Continued */
+                uiInterface.ShowProgress("Loading block index", pprog, false);
+            }
         }
     };
 
