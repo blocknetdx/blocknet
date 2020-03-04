@@ -826,7 +826,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
             CTransactionRef tx;
             CTransactionRef txVoteInput;
             bool sent = sendToAddress(wallet.get(), newDest, 200 * COIN, tx)
-                     && sendToAddress(wallet.get(), newDest, 1 * COIN, txVoteInput);
+                     && sendToAddress(wallet.get(), newDest, 3 * COIN, txVoteInput);
             BOOST_CHECK_MESSAGE(sent, "Send to another address failed");
         }
         // Create proposal
@@ -2634,7 +2634,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
         auto recipients = std::vector<CRecipient>{
                 {GetScriptForDestination(newDest), voteUtxoAmt, false},
                 {GetScriptForDestination(newDest), voteUtxoAmt, false},
-                {GetScriptForDestination(newDest), 1 * COIN, false}
+                {GetScriptForDestination(newDest), 5 * COIN, false}
         };
         std::vector<std::pair<CTxOut,COutPoint>> recvouts;
         bool sent = sendToRecipients(pos.wallet.get(), recipients, sendtx, &recvouts);
@@ -2791,8 +2791,8 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
         // Check that "b" votes are changed
         votes1 = gov::Governance::instance().getVotes(proposal1.getHash());
         votes2 = gov::Governance::instance().getVotes(proposal2.getHash());
-        BOOST_REQUIRE_MESSAGE(votes1.size() == 2, "Should be 2 valid votes on proposal 1");
-        BOOST_REQUIRE_MESSAGE(votes2.size() == 2, "Should be 2 valid votes on proposal 2");
+        BOOST_REQUIRE_MESSAGE(votes1.size() == 2, strprintf("Should be 2 valid votes on proposal 1, found %u", votes1.size()));
+        BOOST_REQUIRE_MESSAGE(votes2.size() == 2, strprintf("Should be 2 valid votes on proposal 2, found %u", votes2.size()));
 
         BOOST_CHECK_MESSAGE(votes1[0].getUtxo() != vote1b.getUtxo() && votes1[1].getUtxo() != vote1b.getUtxo(), "vote1b should be changed");
         BOOST_CHECK_MESSAGE(votes1[0].getHash() != vote1b.getHash() && votes1[1].getHash() != vote1b.getHash(), "vote1b hash should be changed");
