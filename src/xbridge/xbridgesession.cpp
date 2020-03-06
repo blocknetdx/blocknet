@@ -714,7 +714,9 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         return true;
     }
 
-    if (ptr)
+    // If the order state is canceled and the snode rebroadcasts, allow the
+    // client the opportunity to re-accept the order.
+    if (ptr && ptr->state != TransactionDescr::trCancelled)
     {
         if (ptr->state > TransactionDescr::trPending)
         {
@@ -729,13 +731,6 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         {
             LOG() << "received confirmed order from snode, setting status to pending " << __FUNCTION__;
             ptr->state = TransactionDescr::trPending;
-        }
-        
-        if (ptr->state == TransactionDescr::trCancelled)
-        {
-            LOG() << "already received order and was cancelled " << ptr->id.ToString() << " " << __FUNCTION__;
-            LOG() << __FUNCTION__ << ptr;
-            return true;
         }
 
         // update timestamp
