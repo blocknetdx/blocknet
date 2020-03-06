@@ -661,6 +661,14 @@ public:
     }
 
     /**
+     * Returns true if the ping is null.
+     * @return
+     */
+    bool isNull() const {
+        return snode.isNull();
+    }
+
+    /**
      * Public key associated with the ping.
      * @return
      */
@@ -689,6 +697,14 @@ public:
      */
     const std::string& getConfig() const {
         return config;
+    }
+
+    /**
+     * Time of ping as reported by the service node.
+     * @return
+     */
+    uint32_t getPingTime() const {
+        return pingTime;
     }
 
     /**
@@ -768,9 +784,9 @@ public:
 
 protected:
     CPubKey snodePubKey;
-    uint32_t bestBlock;
+    uint32_t bestBlock{0};
     uint256 bestBlockHash;
-    uint32_t pingTime;
+    uint32_t pingTime{0};
     std::string config;
     ServiceNode snode;
     std::vector<unsigned char> signature;

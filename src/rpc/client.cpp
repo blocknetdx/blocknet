@@ -202,6 +202,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "xrGetBlockAtTime", 1, "arg1" },
     { "xrGetBlockAtTime", 2, "arg2" },
     { "xrConnect", 1, "arg1" },
+    { "xrUpdateNetworkServices", 0, "arg1" },
 };
 // clang-format on
 

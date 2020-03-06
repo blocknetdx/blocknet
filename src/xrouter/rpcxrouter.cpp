@@ -16,6 +16,7 @@
 #include <rpc/util.h>
 
 #include <exception>
+#include <netmessagemaker.h>
 #include <regex>
 
 #include <json/json_spirit_reader_template.h>
@@ -1827,6 +1828,103 @@ static UniValue xrGetNetworkServices(const JSONRPCRequest& request)
     return xrouter::form_reply(uuid, data);
 }
 
+static UniValue xrUpdateNetworkServices(const JSONRPCRequest& request) {
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"xrUpdateNetworkServices",
+                "\nQueries a random set of connected peers for the latest service node list. If node_count is specified "
+                "the call will query up to the specified number. By default 1 service node is queried for services. If "
+                "fewer service nodes with the ability to share the list are found then only those found will be queried.\n",
+                {
+                    {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "1", "Query at most this number of service nodes. It's possible that fewer or none are available."},
+                },
+                RPCResult{
+                "true"
+                },
+                RPCExamples{
+                    HelpExampleCli("xrUpdateNetworkServices", "")
+                  + HelpExampleRpc("xrUpdateNetworkServices", "")
+                  + HelpExampleCli("xrUpdateNetworkServices", "5")
+                  + HelpExampleRpc("xrUpdateNetworkServices", "5")
+                },
+            }.ToString());
+
+    if (request.params.size() > 1) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Too many parameters were specified, accepts 1 or none");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    if (!request.params.empty() && request.params[0].get_int() <= 0) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Must specify a node_count >= 1");
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
+        return error;
+    }
+
+    const int askcount = request.params.empty() ? 1 : request.params[0].get_int();
+
+    if (!xrouter::App::isEnabled() || !xrouter::App::instance().isReady()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "XRouter is not enabled");
+        error.pushKV("code", xrouter::UNSUPPORTED_SERVICE);
+        return error;
+    }
+
+    std::set<std::string> nodes;
+    g_connman->ForEachNode([&nodes](CNode *pnode) {
+        if (!(pnode->nServices & NODE_SNODE_LIST))
+            return; // only look for nodes with the snode list service
+        if (nodes.count(pnode->GetAddrName()))
+            return; // already known
+        nodes.insert(pnode->GetAddrName());
+    });
+
+    if (nodes.empty()) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "No peers found with the service node list capability");
+        error.pushKV("code", xrouter::UNSUPPORTED_SERVICE);
+        return error;
+    }
+
+    auto randnode = [](std::set<std::string> & vnodes) -> std::string {
+        auto idx = rand() & (vnodes.size()-1);
+        auto it = vnodes.begin();
+        std::advance(it, idx);
+        const auto addr = *it;
+        vnodes.erase(it);
+        return addr;
+    };
+
+    // Ask up to "askcount" number of nodes
+    auto copynodes = nodes;
+    const auto csize = copynodes.size();
+    while (!copynodes.empty() && csize - copynodes.size() < askcount) {
+        try {
+            const auto addr = randnode(copynodes);
+            g_connman->ForEachNode([addr](CNode *pnode) {
+                if (pnode->GetAddrName() != addr)
+                    return;
+                const CNetMsgMaker msgMaker(pnode->GetSendVersion());
+                g_connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNLIST));
+            });
+        } catch (...) {
+            break;
+        }
+    }
+
+    // If fewer nodes were queried than requested, inform client
+    if (csize - copynodes.size() < askcount) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", strprintf("Queried %u nodes, expected %u", csize - copynodes.size(), askcount));
+        error.pushKV("code", xrouter::BAD_REQUEST);
+        return error;
+    }
+
+    return true;
+}
+
 static UniValue xrTest(const JSONRPCRequest& request)
 {
     if (request.fHelp) {
@@ -1861,6 +1959,7 @@ static const CRPCCommand commands[] =
     { "xrouter",      "xrServiceConsensus",              &xrServiceConsensus,             {} },
     { "xrouter",      "xrShowConfigs",                   &xrShowConfigs,                  {} },
     { "xrouter",      "xrStatus",                        &xrStatus,                       {} },
+    { "xrouter",      "xrUpdateNetworkServices",         &xrUpdateNetworkServices,        {} },
     // { "xrouter",      "xrTest",                          &xrTest,                         {} },
 };
 // clang-format on

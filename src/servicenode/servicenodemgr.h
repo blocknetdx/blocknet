@@ -36,6 +36,13 @@ namespace sn {
 extern CTxDestination ServiceNodePaymentAddress(const std::string & snode);
 
 /**
+ * Hasher used with unordered_map and unordered_set
+ */
+struct Hasher {
+    size_t operator()(const CPubKey & pubkey) const { return ReadLE64(pubkey.begin()); }
+};
+
+/**
  * Service node configuration entry (from servicenode.conf).
  */
 struct ServiceNodeConfigEntry {
@@ -85,6 +92,7 @@ public:
     void reset() {
         LOCK(mu);
         snodes.clear();
+        pings.clear();
         seenPackets.clear();
         snodeEntries.clear();
     }
@@ -174,6 +182,9 @@ public:
 
         if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
             return false; // bad ping
+
+        if (!addPing(ping))
+            return false;
 
         addSn(ping.getSnode(), false); // skip validity check here because it's checked in the ping's
         return true;
@@ -354,6 +365,11 @@ public:
             return false;
         }
 
+        if (!addPing(ping)) {
+            LogPrint(BCLog::SNODE, "service node ping failed: existing newer ping already exists\n");
+            return false; // failed to add our own ping
+        }
+
         addSn(ping.getSnode(), false); // skip validity check here because it's checked in the ping's
 
         // Relay
@@ -377,6 +393,18 @@ public:
         for (const auto & item : snodes)
            l.push_back(*item.second);
         return l;
+    }
+
+    /**
+     * Returns the servicenode ping with the specified snode pubkey.
+     * @param snodePubKey
+     * @return
+     */
+    const ServiceNodePing & getPing(const CPubKey & snodePubKey) {
+        LOCK(mu);
+        if (!pings.count(snodePubKey))
+            return std::move(ServiceNodePing{});
+        return pings[snodePubKey];
     }
 
     /**
@@ -804,6 +832,23 @@ protected:
 protected:
 
     /**
+     * Add the service node ping. Returns true if the ping was added, otherwise returns
+     * false.
+     * @param ping
+     * @return
+     */
+    bool addPing(const ServiceNodePing & ping) {
+        LOCK(mu);
+        const auto & pubkey = ping.getSnodePubKey();
+        // only add if this ping is newer than last known ping
+        if (!pings.count(pubkey) || pings[pubkey].getPingTime() < ping.getPingTime()) {
+            pings[pubkey] = ping;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Add servicenode if valid and returns the added snode, otherwise returns nullptr.
      * @param snode
      * @param checkValid default true, skips validity check if false
@@ -1173,6 +1218,7 @@ protected:
 protected:
     Mutex mu;
     std::map<CPubKey, ServiceNodePtr> snodes;
+    std::unordered_map<CPubKey, ServiceNodePing, Hasher> pings;
     std::set<uint256> seenPackets;
     std::set<ServiceNodeConfigEntry> snodeEntries;
 };

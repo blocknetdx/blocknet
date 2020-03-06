@@ -3090,7 +3090,7 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
         return true;
     }
 
-    if (strCommand == NetMsgType::SNPING) { // handle snode pings
+    if (strCommand == NetMsgType::SNPING || strCommand == NetMsgType::SNLISTPING) { // handle snode pings
         sn::ServiceNodePing ping;
         try {
             if (!smgr.processPing(vRecv, ping))
@@ -3104,16 +3104,29 @@ bool static ProcessMessage(CNode* pfrom, const std::string& strCommand, CDataStr
             return true;
         }
 
-        // Relay packets
-        connman->ForEachNode([&](CNode* pnode) {
-            if (pfrom == pnode)
-                return;
-            connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNPING, ping));
-        });
+        // Relay packets only on SNPING (not SNLISTPING)
+        if (strCommand == NetMsgType::SNPING) {
+            connman->ForEachNode([&](CNode* pnode) {
+                if (pfrom == pnode)
+                    return;
+                connman->PushMessage(pnode, msgMaker.Make(NetMsgType::SNPING, ping));
+            });
+        }
 
         bool isReady = xrouter::App::isEnabled() && xrouter::App::instance().isReady();
         if (isReady)
             xrouter::App::instance().processConfigMessage(ping.getSnode());
+
+        return true;
+    }
+
+    if (strCommand == NetMsgType::SNLIST) { // handle snode list requests
+        const auto & snlist = smgr.list();
+        for (const auto & snode : snlist) {
+            const auto & ping = smgr.getPing(snode.getSnodePubKey());
+            if (!ping.isNull())
+                connman->PushMessage(pfrom, msgMaker.Make(NetMsgType::SNLISTPING, ping));
+        }
 
         return true;
     }

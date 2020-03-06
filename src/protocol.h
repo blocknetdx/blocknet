@@ -254,6 +254,16 @@ extern const char *SNREGISTER;
  */
 extern const char *SNPING;
 /**
+ * Contains the Service Node list message.
+ * @since protocol version 70713
+ */
+extern const char *SNLIST;
+/**
+ * Contains the Service Node ping from snlist request.
+ * @since protocol version 70713
+ */
+extern const char *SNLISTPING;
+/**
  * Contains an XRouter message.
  * @since protocol version 70712
  */
@@ -296,6 +306,9 @@ enum ServiceFlags : uint64_t {
     // collisions and other cases where nodes may be advertising a service they
     // do not actually support. Other service bits should be allocated via the
     // BIP process.
+
+    // Service Node list support
+    NODE_SNODE_LIST = (1 << 20),
 };
 
 /**
