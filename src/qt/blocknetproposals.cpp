@@ -271,7 +271,11 @@ void BlocknetProposals::initialize() {
         if (it != sbResults.end())
             tally = it->second;
 
-        if (currentBlock < proposal.getSuperblock() && tally.payout) {
+        if (nextSuperblock < proposal.getSuperblock()) {
+            results = tr("Pending");
+            statusColor = STATUS_IN_PROGRESS;
+        }
+        else if (currentBlock < proposal.getSuperblock() && tally.payout) {
             results = tr("Passing");
             statusColor = STATUS_PASSED;
         }
