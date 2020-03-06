@@ -1648,10 +1648,18 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         ptr = m_p->m_transactions[id];
     }
 
+    if (ptr->state >= TransactionDescr::trAccepting) {
+        WARN() << strprintf("not accepting, transaction %s already accepted ", id.ToString());
+        return xbridge::BAD_REQUEST;
+    }
+    const auto priorState = ptr->state;
+    ptr->state = TransactionDescr::trAccepting;
+
     WalletConnectorPtr connFrom = connectorByCurrency(ptr->fromCurrency);
     WalletConnectorPtr connTo   = connectorByCurrency(ptr->toCurrency);
     if (!connFrom || !connTo)
     {
+        ptr->state = priorState;
         // no session
         WARN() << "no wallet session for <" << (connFrom ? ptr->fromCurrency : ptr->toCurrency) << "> " << __FUNCTION__;
         return xbridge::NO_SESSION;
@@ -1660,15 +1668,18 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     // check dust
     if (connFrom->isDustAmount(static_cast<double>(ptr->fromAmount) / TransactionDescr::COIN))
     {
+        ptr->state = priorState;
         return xbridge::Error::DUST;
     }
     if (connTo->isDustAmount(static_cast<double>(ptr->toAmount) / TransactionDescr::COIN))
     {
+        ptr->state = priorState;
         return xbridge::Error::DUST;
     }
 
     if (availableBalance() < connTo->serviceNodeFee)
     {
+        ptr->state = priorState;
         return xbridge::Error::INSIFFICIENT_FUNDS_DX;
     }
 
@@ -1677,6 +1688,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     {
         uint32_t len = ptr->sPubKey.size();
         if (len != 33) {
+            ptr->state = priorState;
             LOG() << "bad service node public key, len " << len << " " << __FUNCTION__;
             return xbridge::Error::NO_SERVICE_NODE;
         }
@@ -1695,6 +1707,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             }
             if (snode.isNull())
             {
+                ptr->state = priorState;
                 // bad service node, no more
                 LOG() << "unknown service node pubkey " << pksnode.GetID().ToString() << " " << __FUNCTION__;
                 return xbridge::Error::NO_SERVICE_NODE;
@@ -1726,8 +1739,10 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     }
     info.insert(info.begin(), orderId); // add order id to the front
     strInfo = write_string(json_spirit::Value(info));
-    if (strInfo.size() > maxBytes) // make sure we're not too large
+    if (strInfo.size() > maxBytes) { // make sure we're not too large
+        ptr->state = priorState;
         return xbridge::Error::INVALID_ONCHAIN_HISTORY;
+    }
 
     auto destScript = GetScriptForDestination(CTxDestination(snodeCollateralAddress));
     auto data = ToByteVector(strInfo);
@@ -1739,6 +1754,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         // BLOCK available p2pkh utxos
         std::vector<wallet::UtxoEntry> feeOutputs;
         if (!rpc::unspentP2PKH(feeOutputs)) {
+            ptr->state = priorState;
             WARN() << "insufficient BLOCK funds for service node fee payment " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
@@ -1758,6 +1774,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         if (!rpc::createFeeTransaction(destScript, connFrom->serviceNodeFee, blockFeePerByte,
                 data, feeOutputs, ptr->feeUtxos, ptr->rawFeeTx))
         {
+            ptr->state = priorState;
             ERR() << "Failed to take order, couldn't prepare the service node fee " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
@@ -1797,6 +1814,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, ptr->fromAmount,
                          TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
         {
+            ptr->state = priorState;
             WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
             unlockFeeUtxos(ptr->feeUtxos);
             return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1835,6 +1853,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             }
 
             if (err) {
+                ptr->state = priorState;
                 // unlock fee utxos on error
                 unlockFeeUtxos(ptr->feeUtxos);
                 return err;
@@ -1848,6 +1867,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
         // lock used coins
         if (!lockCoins(connFrom->currency, ptr->usedCoins)) {
+            ptr->state = priorState;
             ERR() << "failed to create order, cannot reuse utxo inputs for " << connFrom->currency
                   << " across multiple orders " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;
@@ -1932,7 +1952,6 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
 
     onSend(ptr->hubAddress, packet->body());
 
-    ptr->state = TransactionDescr::trAccepting;
     xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
     return true;
