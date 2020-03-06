@@ -975,6 +975,35 @@ void App::updateActiveWallets()
             continue;
         }
 
+        // Check maker locktime reqs
+        if (wp.blockTime * XMIN_LOCKTIME_BLOCKS > XMAKER_LOCKTIME_TARGET_SECONDS) {
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed maker locktime requirements";
+            removeConnector(wp.currency);
+            continue;
+        }
+        // Check taker locktime reqs (non-slow chains)
+        if (wp.blockTime < XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XTAKER_LOCKTIME_TARGET_SECONDS) {
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
+            removeConnector(wp.currency);
+            continue;
+        }
+        // If this coin is a slow blockchain check to make sure locktime drift checks
+        // are compatible with this chain. If not then ignore loading the token.
+        // locktime calc should be less than taker locktime target
+        if (wp.blockTime >= XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XSLOW_TAKER_LOCKTIME_TARGET_SECONDS) {
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
+            removeConnector(wp.currency);
+            continue;
+        }
+
+        // Confirmation compatibility check
+        const auto maxConfirmations = std::max<uint32_t>(XLOCKTIME_DRIFT_SECONDS/wp.blockTime, XMAX_LOCKTIME_DRIFT_BLOCKS);
+        if (wp.requiredConfirmations > maxConfirmations) {
+            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed confirmation check, max allowed for this token is " << maxConfirmations;
+            removeConnector(wp.currency);
+            continue;
+        }
+
         if (wp.blockSize < 1024) {
             wp.blockSize = 1024;
             WARN() << wp.currency << " \"" << wp.title << "\"" << " Minimum block size required is 1024 kb";

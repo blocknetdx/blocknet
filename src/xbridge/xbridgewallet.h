@@ -62,6 +62,15 @@ struct UtxoEntry
 
 } // namespace wallet
 
+static constexpr int XMIN_LOCKTIME_BLOCKS = 6;
+static constexpr int XMAX_LOCKTIME_DRIFT_BLOCKS = 4; // must be less than XMIN_LOCKTIME_BLOCKS
+static constexpr int XMAKER_LOCKTIME_TARGET_SECONDS = 2*60*60; // 2 hours
+static constexpr int XTAKER_LOCKTIME_TARGET_SECONDS = 30*60; // 30 mins, must be less than maker locktime target
+static constexpr int XSLOW_TAKER_LOCKTIME_TARGET_SECONDS = 60*60; // 1 hour, must be less than maker locktime target
+static constexpr int XSLOW_BLOCKTIME_SECONDS = 600;
+static constexpr int XLOCKTIME_DRIFT_SECONDS = XTAKER_LOCKTIME_TARGET_SECONDS/2; // 15 minutes
+
+
 //*****************************************************************************
 //*****************************************************************************
 class WalletParam

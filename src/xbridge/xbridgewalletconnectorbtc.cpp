@@ -2235,7 +2235,6 @@ bool BtcWalletConnector<CryptoProvider>::getSecretFromPaymentTransaction(const s
 
 //******************************************************************************
 //******************************************************************************
-static const int XMIN_LOCK_TIME_DIFF = 2; 
 template <class CryptoProvider>
 uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
 {
@@ -2261,16 +2260,18 @@ uint32_t BtcWalletConnector<CryptoProvider>::lockTime(const char role) const
     uint32_t lt = 0;
     if (role == 'A')
     {
-        uint32_t makerTime = 2*3600; // 2h in seconds
+        uint32_t makerTime = XMAKER_LOCKTIME_TARGET_SECONDS;
         uint32_t blocks = makerTime / blockTime;
-        if (blocks < XMIN_LOCK_TIME_DIFF) blocks = XMIN_LOCK_TIME_DIFF;
+        if (blocks < XMIN_LOCKTIME_BLOCKS) blocks = XMIN_LOCKTIME_BLOCKS;
         lt = info.blocks + blocks;
     }
     else if (role == 'B')
     {
-        uint32_t takerTime = 30*60; // 30min in seconds
+        uint32_t takerTime = XTAKER_LOCKTIME_TARGET_SECONDS;
+        if (blockTime >= XSLOW_BLOCKTIME_SECONDS)
+            takerTime = XSLOW_TAKER_LOCKTIME_TARGET_SECONDS; // allow more time for slower chains
         uint32_t blocks = takerTime / blockTime;
-        if (blocks < XMIN_LOCK_TIME_DIFF) blocks = XMIN_LOCK_TIME_DIFF;
+        if (blocks < XMIN_LOCKTIME_BLOCKS) blocks = XMIN_LOCKTIME_BLOCKS;
         lt = info.blocks + blocks;
     }
 
@@ -2285,7 +2286,15 @@ bool BtcWalletConnector<CryptoProvider>::acceptableLockTimeDrift(const char role
     auto lt = lockTime(role);
     if (lt == 0 || lt >= LOCKTIME_THRESHOLD || lckTime >= LOCKTIME_THRESHOLD)
         return false;
-    return (static_cast<int64_t>(lt) - static_cast<int64_t>(lckTime)) * static_cast<int64_t>(blockTime) <= 600; // if locktime drift is greater than 10 minutes
+    const int64_t diff = static_cast<int64_t>(lt) - static_cast<int64_t>(lckTime);
+    // Locktime drift is at minimum XLOCKTIME_DRIFT_SECONDS. In cases with slow chains
+    // the locktime drift will increase to block time multiplied by the number of
+    // blocks representing the maximum allowed locktime drift.
+    //
+    // If drift determination changes here, update wallet validation checks and unit
+    // tests.
+    int64_t drift = std::max<int64_t>(XLOCKTIME_DRIFT_SECONDS, XMAX_LOCKTIME_DRIFT_BLOCKS * blockTime);
+    return diff * static_cast<int64_t>(blockTime) <= drift;
 }
 
 //******************************************************************************
