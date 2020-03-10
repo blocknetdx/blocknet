@@ -3987,16 +3987,21 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
         return false;
 
     std::atomic<int> counter{0};
-    std::atomic<double> pcounter{90};
+    std::atomic<double> pcounter{70};
+    std::atomic<int> pprog{70};
     const int totalprogress{100};
-    auto progress = [&counter,&pcounter,totalprogress](const double & unit, const double & total, const double & percent) {
+    auto progress = [&counter,&pcounter,&pprog,totalprogress](const double & unit, const double & total, const double & percent) {
         ++counter;
         pcounter = pcounter + unit/total * percent;
         if (counter % 100000 == 0) {
             int p = static_cast<int>(pcounter);
             if (p >= totalprogress) p = totalprogress;
-            LogPrintf("[%u%%]...", p); /* Continued */
-            uiInterface.ShowProgress("Loading block index", p, false);
+            if (p != pprog) {
+                pprog = p;
+                if (pprog % 10 == 0)
+                    LogPrintf("[%u%%]...", pprog); /* Continued */
+                uiInterface.ShowProgress("Loading block index", pprog, false);
+            }
         }
     };
 
@@ -4008,7 +4013,7 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
     {
         CBlockIndex* pindex = item.second;
         vSortedByHeight.push_back(std::make_pair(pindex->nHeight, pindex));
-        progress(1, mbiCount, 3); // total progress in LoadBlockIndex must be <= 10
+        progress(1, mbiCount, 10); // total progress in LoadBlockIndex must be <= 30
     }
     sort(vSortedByHeight.begin(), vSortedByHeight.end());
     for (const std::pair<int, CBlockIndex*>& item : vSortedByHeight)
@@ -4047,7 +4052,7 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
         if (!IsProtocolV05(pindex->GetBlockTime()))
             mapHeaderIndex[pindex->nHeight] = pindex;
 
-        progress(1, mbiCount, 7); // total progress in LoadBlockIndex must be <= 10
+        progress(1, mbiCount, 20); // total progress in LoadBlockIndex must be <= 30
     }
 
     LogPrintf("[DONE].\n");

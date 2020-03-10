@@ -452,6 +452,7 @@ class CDiskBlockIndex : public CBlockIndex
 {
 public:
     uint256 hashPrev;
+    uint256 hash;
 
     CDiskBlockIndex() {
         hashPrev = uint256();
@@ -512,6 +513,10 @@ public:
         return block.GetHash();
     }
 
+    uint256 CacheBlockHash() {
+        hash = GetBlockHash();
+        return hash;
+    }
 
     std::string ToString() const
     {

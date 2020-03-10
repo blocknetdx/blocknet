@@ -267,61 +267,34 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     LogPrintf("[0%%]..."); /* Continued */
     uiInterface.ShowProgress("Loading block index", 0, false);
 
-    const int group{100000}; // shard count
+    const int group{50000}; // shard count
+    const int estTotalBlocks = static_cast<int>((double)consensusParams.lastCheckpointHeight * 1.15);
 
     std::atomic<int> counter{0};
     std::atomic<double> pcounter{0};
-    const int totalprogress{90};
-    auto progress = [&counter,&pcounter,totalprogress](const double & unit, const double & total, const double & percent) {
+    std::atomic<int> pprog{0};
+    const int totalprogress{70};
+    auto progress = [&counter,&pcounter,&pprog,totalprogress](const double & unit, const double & total, const double & percent) {
         ++counter;
         pcounter = pcounter + unit/total * percent;
         if (counter % 10000 == 0) {
             int p = static_cast<int>(pcounter);
             if (p >= totalprogress) p = totalprogress;
-            LogPrintf("[%u%%]...", p); /* Continued */
-            uiInterface.ShowProgress("Loading block index", p, false);
+            if (p != pprog) {
+                pprog = p;
+                if (pprog % 10 == 0)
+                    LogPrintf("[%u%%]...", pprog); /* Continued */
+                uiInterface.ShowProgress("Loading block index", pprog, false);
+            }
         }
     };
 
-    auto loadIndices = [&insertBlockIndex,&progress,consensusParams](const std::vector<CDiskBlockIndex> & blocks, const std::unordered_set<uint256, TXDBHasher> & invalidBlocks) {
-        // Construct block index objects
-        for (const auto & diskindex : blocks) {
-            const auto & hash = diskindex.GetBlockHash();
-            if (invalidBlocks.count(hash) > 0)
-                continue;
-            CBlockIndex *pindexNew      = insertBlockIndex(hash);
-            pindexNew->pprev            = insertBlockIndex(diskindex.hashPrev);
-            pindexNew->nHeight          = diskindex.nHeight;
-            pindexNew->nFile            = diskindex.nFile;
-            pindexNew->nDataPos         = diskindex.nDataPos;
-            pindexNew->nUndoPos         = diskindex.nUndoPos;
-            pindexNew->nVersion         = diskindex.nVersion;
-            pindexNew->hashMerkleRoot   = diskindex.hashMerkleRoot;
-            pindexNew->nTime            = diskindex.nTime;
-            pindexNew->nBits            = diskindex.nBits;
-            pindexNew->nNonce           = diskindex.nNonce;
-            pindexNew->nStatus          = diskindex.nStatus;
-            pindexNew->nTx              = diskindex.nTx;
-            // ppcoin: PoS
-            pindexNew->nMint            = diskindex.nMint;
-            pindexNew->nMoneySupply     = diskindex.nMoneySupply;
-            pindexNew->nFlags           = diskindex.nFlags;
-            pindexNew->nStakeModifier   = diskindex.nStakeModifier;
-            pindexNew->prevoutStake     = diskindex.prevoutStake;
-            pindexNew->nStakeAmount     = diskindex.nStakeAmount;
-            pindexNew->hashStakeBlock   = diskindex.hashStakeBlock;
-            pindexNew->hashProofOfStake = diskindex.hashProofOfStake;
-
-            progress(1, consensusParams.lastCheckpointHeight*1.15, 45);
-        }
-    };
-
-    auto checkWork = [group,&insertBlockIndex,&progress,consensusParams,this](const std::vector<CDiskBlockIndex> & blocks,
-            std::unordered_set<uint256, TXDBHasher> & invalidBlocks)
+    auto checkWork = [&insertBlockIndex,&progress,totalprogress,estTotalBlocks,consensusParams,this](
+            std::vector<CDiskBlockIndex> & blocks, std::unordered_set<uint256, TXDBHasher> & invalidBlocks)
     {
         boost::thread_group tg;
         Mutex mu;
-        const int slice = std::min<int>(blocks.size(), group);
+        const int slice = blocks.size();
         const int cores = GetNumCores();
         const int shard = slice/cores;
         for (int i = 0; i < cores; ++i) {
@@ -330,36 +303,32 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             if (to > blocks.size())
                 to = blocks.size();
 
-            tg.create_thread([from,to,&blocks,&invalidBlocks,&insertBlockIndex,&mu,&progress,group,consensusParams,this] {
+            tg.create_thread([from,to,&blocks,&invalidBlocks,&insertBlockIndex,&mu,&progress,totalprogress,estTotalBlocks,consensusParams,this] {
                 RenameThread("blocknet-blockindex");
-
-                // Blocknet PoS check work
+                // Construct block index objects
                 for (int j = from; j < to; ++j) {
-                    if (ShutdownRequested())
-                        break;
-                    const auto & diskindex = blocks[j];
-                    const auto & hash = diskindex.GetBlockHash();
-
-                    if (IsProofOfStake(diskindex.nHeight, consensusParams)) {
-                        arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(diskindex.nBits);
-                        if (IsProtocolV06(diskindex.GetBlockTime(), consensusParams)) {
-                            if (!stakeTargetHitV06(diskindex.hashProofOfStake, diskindex.nStakeAmount, bnTargetPerCoinDay)) {
+                    auto *diskindex = &blocks[j];
+                    const auto & hash = diskindex->CacheBlockHash();
+                    if (IsProofOfStake(diskindex->nHeight, consensusParams)) {
+                        arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(diskindex->nBits);
+                        if (IsProtocolV06(diskindex->GetBlockTime(), consensusParams)) {
+                            if (!stakeTargetHitV06(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay)) {
                                 LOCK(mu);
                                 invalidBlocks.insert(hash);
                                 continue;
                             }
-                        } else if (!stakeTargetHit(diskindex.hashProofOfStake, diskindex.nStakeAmount, bnTargetPerCoinDay)) {
+                        } else if (!stakeTargetHit(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay)) {
                             LOCK(mu);
                             invalidBlocks.insert(hash);
                             continue;
                         }
-                    } else if (!IsProofOfStake(diskindex.nHeight, consensusParams) && !CheckProofOfWork(hash, diskindex.nBits, consensusParams)) {
+                    } else if (!IsProofOfStake(diskindex->nHeight, consensusParams) && !CheckProofOfWork(hash, diskindex->nBits, consensusParams)) {
                         LOCK(mu);
                         invalidBlocks.insert(hash);
                         continue;
                     }
 
-                    progress(1, consensusParams.lastCheckpointHeight*1.15, 45);
+                    progress(1, estTotalBlocks, 30);
                 }
             });
         }
@@ -367,22 +336,62 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
         tg.join_all();
     };
 
+    auto loadIndices = [&insertBlockIndex,&progress,estTotalBlocks](const std::vector<CDiskBlockIndex> & blocks, std::unordered_set<uint256, TXDBHasher> & invalidBlocks) {
+        // Construct block index objects
+        for (const auto & diskindex : blocks) {
+            const auto & hash = diskindex.hash;
+            if (invalidBlocks.count(hash))
+                continue;
+
+            CBlockIndex *pindexNew = insertBlockIndex(hash);
+            pindexNew->pprev = insertBlockIndex(diskindex.hashPrev);
+            pindexNew->nHeight = diskindex.nHeight;
+            pindexNew->nFile = diskindex.nFile;
+            pindexNew->nDataPos = diskindex.nDataPos;
+            pindexNew->nUndoPos = diskindex.nUndoPos;
+            pindexNew->nVersion = diskindex.nVersion;
+            pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
+            pindexNew->nTime = diskindex.nTime;
+            pindexNew->nBits = diskindex.nBits;
+            pindexNew->nNonce = diskindex.nNonce;
+            pindexNew->nStatus = diskindex.nStatus;
+            pindexNew->nTx = diskindex.nTx;
+            // ppcoin: PoS
+            pindexNew->nMint = diskindex.nMint;
+            pindexNew->nMoneySupply = diskindex.nMoneySupply;
+            pindexNew->nFlags = diskindex.nFlags;
+            pindexNew->nStakeModifier = diskindex.nStakeModifier;
+            pindexNew->prevoutStake = diskindex.prevoutStake;
+            pindexNew->nStakeAmount = diskindex.nStakeAmount;
+            pindexNew->hashStakeBlock = diskindex.hashStakeBlock;
+            pindexNew->hashProofOfStake = diskindex.hashProofOfStake;
+
+            progress(1, estTotalBlocks, 15);
+        }
+    };
+
+    const auto lowMemory = gArgs.GetBoolArg("-lowmemoryload", false);
     std::vector<CDiskBlockIndex> blocks;
+    blocks.reserve(lowMemory ? std::min<int>(group, consensusParams.lastCheckpointHeight) : consensusParams.lastCheckpointHeight);
 
     // Load mapBlockIndex
     while (pcursor->Valid()) {
-        boost::this_thread::interruption_point();
         std::pair<char, uint256> key;
         if (pcursor->GetKey(key) && key.first == DB_BLOCK_INDEX) {
             CDiskBlockIndex diskindex;
             if (pcursor->GetValue(diskindex)) {
                 blocks.push_back(diskindex);
                 if (blocks.size() % group == 0) {
-                    std::unordered_set<uint256, TXDBHasher> invalidBlocks;
-                    checkWork(blocks, invalidBlocks);
-                    loadIndices(blocks, invalidBlocks);
-                    blocks.clear();
+                    boost::this_thread::interruption_point();
+                    if (lowMemory) {
+                        std::unordered_set<uint256, TXDBHasher> invalidBlocks;
+                        checkWork(blocks, invalidBlocks);
+                        loadIndices(blocks, invalidBlocks);
+                        blocks.clear();
+                        blocks.reserve(std::min<int>(group, consensusParams.lastCheckpointHeight));
+                    }
                 }
+                progress(1, estTotalBlocks, 25);
                 pcursor->Next();
             } else {
                 return error("%s: failed to read value", __func__);
@@ -398,6 +407,12 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
         checkWork(blocks, invalidBlocks);
         loadIndices(blocks, invalidBlocks);
         blocks.clear();
+    }
+
+    // Indicate total progress for this section is complete
+    if (pprog != totalprogress) {
+        LogPrintf("[%u%%]...", totalprogress); /* Continued */
+        uiInterface.ShowProgress("Loading block index", totalprogress, false);
     }
 
     return true;
