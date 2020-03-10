@@ -119,6 +119,7 @@ static UniValue listproposals(const JSONRPCRequest& request)
                 "  \"votes_yes\": n,                 (numeric) All yes votes\n"
                 "  \"votes_no\": n,                  (numeric) All no votes\n"
                 "  \"votes_abstain\": n              (numeric) All abstain votes\n"
+                "  \"status\": \"xxxx\"              (string) Statuses include: passing, failing, passed, failed, pending (future proposal)\n"
                 "}\n"
                 },
                 RPCExamples{
@@ -129,7 +130,8 @@ static UniValue listproposals(const JSONRPCRequest& request)
                 },
             }.ToString());
 
-    const auto & prevSuperblock = gov::PreviousSuperblock(Params().GetConsensus());
+    const auto & consensus = Params().GetConsensus();
+    const auto & prevSuperblock = gov::PreviousSuperblock(consensus);
     const auto & sinceBlock = request.params[0].isNull() || request.params[0].get_int() <= 0
                                                          ? prevSuperblock
                                                          : request.params[0].get_int();
@@ -148,9 +150,26 @@ static UniValue listproposals(const JSONRPCRequest& request)
         votes.insert(votes.end(), v.begin(), v.end());
     }
 
+    const auto superblock = gov::NextSuperblock(consensus);
+    std::map<gov::Proposal, gov::Tally> results;
+
     UniValue ret(UniValue::VARR);
     for (const auto & proposal : proposals) {
-        const auto tally = gov::Governance::getTally(proposal.getHash(), votes, Params().GetConsensus());
+        if (!results.count(proposal) && proposal.getSuperblock() <= superblock) {
+            auto presults = gov::Governance::instance().getSuperblockResults(proposal.getSuperblock(), consensus);
+            results.insert(presults.begin(), presults.end());
+        }
+        std::string status = "pending"; // superblocks in the future beyond the next one
+        if (proposal.getSuperblock() == superblock) { // next superblock (present tense)
+            status = "failing";
+            if (results.count(proposal))
+                status = "passing";
+        } else if (proposal.getSuperblock() < superblock) { // previous superblock (past tense)
+            status = "failed";
+            if (results.count(proposal))
+                status = "passed";
+        }
+        const auto tally = gov::Governance::getTally(proposal.getHash(), votes, consensus);
         UniValue prop(UniValue::VOBJ);
         prop.pushKV("hash", proposal.getHash().ToString());
         prop.pushKV("name", proposal.getName());
@@ -162,6 +181,7 @@ static UniValue listproposals(const JSONRPCRequest& request)
         prop.pushKV("votes_yes", tally.yes);
         prop.pushKV("votes_no", tally.no);
         prop.pushKV("votes_abstain", tally.abstain);
+        prop.pushKV("status", status);
         ret.push_back(prop);
     }
     return ret;
