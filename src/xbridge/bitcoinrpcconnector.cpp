@@ -88,10 +88,7 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
 
     LOCK(cs_rpcBlockchainStore);
 
-    const static std::string createCommand("createrawtransaction");
-    const static std::string signCommand("signrawtransaction");
-
-    int         errCode = 0;
+    int errCode = 0;
     std::string errMessage;
 
     try
@@ -240,19 +237,10 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
                 throw std::runtime_error("Sign transaction error or not completed, failed to sign transaction");
         }
 
-        // Send transaction
-        uint256 txid;
-        std::string errstr;
-        const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, ::maxTxFee);
-        if (err != TransactionError::OK)
-            throw std::runtime_error(strprintf("Failed to send fee tx: %s", errstr));
-
         rawTx = EncodeHexTx(::CTransaction(mtx));
-        LOG() << "feetx " << rawTx;
     }
     catch (json_spirit::Object & obj)
     {
-        //
         errCode = find_value(obj, "code").get_int();
         errMessage = find_value(obj, "message").get_str();
     }
@@ -270,8 +258,8 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
 
     if (errCode != 0)
     {
-        TXERR() << "feetx fundrawtransaction " << rawTx;
-        LOG() << "failed to fund the fee transaction " << errCode << " " << errMessage << " " << __FUNCTION__;
+        errCode = -1;
+        errMessage = "failed to create service node fee tx";
         return false;
     }
 
@@ -285,8 +273,6 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
 bool storeDataIntoBlockchain(const std::string & rawTx, std::string & txid)
 {
     LOCK(cs_rpcBlockchainStore);
-
-    const static std::string sendCommand("sendrawtransaction");
 
     int errCode = 0;
     std::string errMessage;
@@ -307,13 +293,7 @@ bool storeDataIntoBlockchain(const std::string & rawTx, std::string & txid)
 
         txid = txhash.GetHex();
 
-        TXLOG() << "feetx sendrawtransaction " << rawTx;
-    }
-    catch (json_spirit::Object & obj)
-    {
-        //
-        errCode = find_value(obj, "code").get_int();
-        errMessage = find_value(obj, "message").get_str();
+        TXLOG() << "submitting fee to service node, feetx " << rawTx;
     }
     catch (std::runtime_error & e)
     {
@@ -324,12 +304,12 @@ bool storeDataIntoBlockchain(const std::string & rawTx, std::string & txid)
     catch (...)
     {
         errCode = -1;
-        errMessage = "unknown error";
+        errMessage = "failed to send feetx, unknown error";
     }
 
     if (errCode != 0)
     {
-        TXERR() << "feetx sendrawtransaction " << rawTx;
+        TXERR() << "failed to send feetx " << rawTx;
         LOG() << "error sending the fee transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
         return false;
     }
