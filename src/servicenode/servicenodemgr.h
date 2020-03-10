@@ -22,6 +22,7 @@
 #endif // ENABLE_WALLET
 
 #include <iostream>
+#include <numeric>
 #include <set>
 #include <utility>
 
@@ -95,6 +96,7 @@ public:
         pings.clear();
         seenPackets.clear();
         snodeEntries.clear();
+        seenBlocks.clear();
     }
 
     /**
@@ -1116,6 +1118,31 @@ protected:
 #endif // ENABLE_WALLET
 
 protected:
+    /**
+     * Records when the last known block was received.
+     */
+    void addRecentBlock() {
+        LOCK(mu);
+        if (seenBlocks.size() >= 2)
+            seenBlocks.erase(seenBlocks.begin());
+        seenBlocks.push_back(GetTime());
+    }
+
+    /**
+     * Returns true if the last time a block was received was within N seconds
+     * of the specified time.
+     * @param seconds
+     * @return
+     */
+    bool seenBlockRecently(const int seconds=2) {
+        LOCK(mu);
+        if (seenBlocks.size() < 2)
+            return false;
+        const auto diff = seenBlocks.back() - seenBlocks.front();
+        return diff <= seconds;
+    }
+
+protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) override
     {
@@ -1130,7 +1157,8 @@ protected:
 #ifndef ENABLE_WALLET
         return;
 #else
-        if (fInitialDownload)
+        addRecentBlock();
+        if (fInitialDownload || seenBlockRecently())
             return; // do not try and register snode during initial download
 
         // Check if any of our snodes have inputs that were spent and/or staked
@@ -1221,6 +1249,7 @@ protected:
     std::unordered_map<CPubKey, ServiceNodePing, Hasher> pings;
     std::set<uint256> seenPackets;
     std::set<ServiceNodeConfigEntry> snodeEntries;
+    std::vector<int> seenBlocks;
 };
 
 }
