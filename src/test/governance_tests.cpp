@@ -925,14 +925,14 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_undo_submissions, TestChainPoS)
         CTransactionRef sendtx;
         auto recipients = std::vector<CRecipient>{
             {GetScriptForDestination(voteDest), 200*COIN, false},
-            {GetScriptForDestination(voteDest), 1*COIN, false}
+            {GetScriptForDestination(voteDest), 2*COIN, false}
         };
         bool sent = sendToRecipients(wallet.get(), recipients, sendtx, &recvouts);
         BOOST_REQUIRE_MESSAGE(sent, "Send to another address failed");
         int checkHeight = chainActive.Height();
         StakeBlocks(1), SyncWithValidationInterfaceQueue();
         BOOST_REQUIRE_MESSAGE(recvouts[0].first.nValue == 200 * COIN, strprintf("Expecting a vote utxo with %s BLOCK, found %s BLOCK", FormatMoney(200*COIN), FormatMoney(recvouts[0].first.nValue)));
-        BOOST_REQUIRE_MESSAGE(recvouts[1].first.nValue == 1 * COIN, strprintf("Expecting a vote input with %s BLOCK, found %s BLOCK", FormatMoney(1*COIN), FormatMoney(recvouts[1].first.nValue)));
+        BOOST_REQUIRE_MESSAGE(recvouts[1].first.nValue == 2 * COIN, strprintf("Expecting a vote input with %s BLOCK, found %s BLOCK", FormatMoney(2*COIN), FormatMoney(recvouts[1].first.nValue)));
         BOOST_REQUIRE_MESSAGE(checkHeight+1 == chainActive.Height(), "Block should be accepted");
         BOOST_REQUIRE_MESSAGE(isTxInBlock(chainActive.Tip(), sendtx->GetHash(), consensus), "Expecting transaction to be included in the block");
     }
@@ -2465,7 +2465,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
         CTransactionRef sendtx;
         auto recipients = std::vector<CRecipient>{
             {GetScriptForDestination(newDest), voteUtxoAmt, false},
-            {GetScriptForDestination(newDest), 1 * COIN, false}
+            {GetScriptForDestination(newDest), 2 * COIN, false}
         };
         std::vector<std::pair<CTxOut,COutPoint>> recvouts;
         bool sent = sendToRecipients(pos.wallet.get(), recipients, sendtx, &recvouts);
