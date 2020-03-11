@@ -105,10 +105,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1589565600; // May 15, 2020
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000003cdd5efecbcb5d9b9"); // block 1301200
+        consensus.nMinimumChainWork = uint256S("00000000000000000000000000000000000000000000000403efd01ca1b33a6d"); // block 1367315
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x016477330d5f04aeb7f93971ef7fb8c4c15aedc4281f43753aee4fa13a54ccd5");
+        consensus.defaultAssumeValid = uint256S("0x28483eea85f9ddd028be0100e8930439bb7ff564d59f13a4eac2aea1036e7c9f"); // block 1367315
 
         // Last POW block
         consensus.lastPOWBlock = 2000;
@@ -172,6 +172,7 @@ public:
                 {1110080, uint256S("0x566452bd3fd8608f83a6af45711af88877e54a137cac030ef3d9d134124c0c05")},
                 {1212162, uint256S("0x3e16a50c22e23f7c6b93567a540e2e830f3ac774755896d12234dce30d1db06a")},
                 {1301200, uint256S("0x016477330d5f04aeb7f93971ef7fb8c4c15aedc4281f43753aee4fa13a54ccd5")},
+                {1367315, uint256S("0x28483eea85f9ddd028be0100e8930439bb7ff564d59f13a4eac2aea1036e7c9f")},
             }
         };
         // Assign last checkpoint height, used to estimate initial load time
@@ -182,9 +183,9 @@ public:
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats 43200 [block_hash]
-            /* nTime    */ 1580429226,
-            /* nTxCount */ 2915295,
-            /* dTxRate  */ 0.03785580143119947
+            /* nTime    */ 1583952825,
+            /* nTxCount */ 3057093,
+            /* dTxRate  */ 0.03880640632088561
         };
 
         /* enable fallback fee on mainnet */
