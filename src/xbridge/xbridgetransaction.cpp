@@ -309,6 +309,7 @@ void Transaction::cancel()
 {
     LOCK(m_lock);
     LOG() << "cancel transaction <" << m_id.GetHex() << ">";
+    m_accepting = false;
     m_state = trCancelled;
 }
 

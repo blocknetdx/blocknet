@@ -186,6 +186,16 @@ public:
      */
     void finish();
 
+    /**
+     * @brief Set the accepting state.
+     */
+    void setAccepting(bool flag) { LOCK(m_lock); m_accepting = flag; }
+    /**
+     * @brief Return the accepting state.
+     * @return
+     */
+    bool accepting() { LOCK(m_lock); return m_accepting; }
+
     // uint256                    firstId() const;
     std::vector<unsigned char> a_address() const;
     std::vector<unsigned char> a_destination() const;
@@ -259,6 +269,7 @@ private:
     uint256                    m_blockHash; //hash of block when transaction created
 
     State                      m_state;
+    bool                       m_accepting{false};
 
     bool                       m_a_stateChanged;
     bool                       m_b_stateChanged;

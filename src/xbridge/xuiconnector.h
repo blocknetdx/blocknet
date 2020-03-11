@@ -15,7 +15,7 @@
 namespace xbridge
 {
 struct TransactionDescr;
-typedef boost::shared_ptr<TransactionDescr> TransactionDescrPtr;
+typedef std::shared_ptr<TransactionDescr> TransactionDescrPtr;
 }
 
 class XUIConnector
