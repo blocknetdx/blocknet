@@ -347,15 +347,15 @@ bool listaddressgroupings(const std::string & rpcuser, const std::string & rpcpa
         Array arr = result.get_array();
         for (const Value & v : arr)
         {
-	    Array varray = v.get_array();
-	    for (const Value & varr : varray)
-	    {
-		Array vaddress = varr.get_array();
-		if (!vaddress.empty() && vaddress[0].type() == str_type)
-		{
-		addresses.push_back(vaddress[0].get_str());
-		}
-	    }
+            Array varray = v.get_array();
+            for (const Value & varr : varray)
+            {
+                Array vaddress = varr.get_array();
+                if (!vaddress.empty() && vaddress[0].type() == str_type)
+                {
+                    addresses.push_back(vaddress[0].get_str());
+                }
+            }
         }
     }
     catch (std::exception & e)
@@ -431,7 +431,7 @@ bool validateaddress(const std::string & rpcuser, const std::string & rpcpasswd,
     {
         Array params;
         params.push_back(address);
-        params.push_back(address); 
+        params.push_back(address);
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "signmessage", params);
 
         // Parse reply
@@ -441,7 +441,7 @@ bool validateaddress(const std::string & rpcuser, const std::string & rpcpasswd,
         {
             // Error
             LOG() << "signmessage failed for address:" << address << " error: " << write_string(error, false);
-	    return false;
+            return false;
         }
 
     }
@@ -1534,11 +1534,11 @@ bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::
 
     for (std::string & address : addresses)
     {
-    	if (!rpc::validateaddress(m_user, m_passwd, m_ip, m_port, address))
-    	{
-		continue;
-    	}
-    	copy.emplace_back(address);
+        if (!rpc::validateaddress(m_user, m_passwd, m_ip, m_port, address))
+        {
+            continue;
+        }
+        copy.emplace_back(address);
 
     }
     entries.emplace_back("none", copy);
