@@ -7,7 +7,9 @@
 #include <node/transaction.h>
 #include <rpc/server.h>
 #include <servicenode/servicenode.h>
+#define protected public
 #include <servicenode/servicenodemgr.h>
+#undef protected
 #include <wallet/coincontrol.h>
 #include <xbridge/xbridgeapp.h>
 
@@ -37,30 +39,34 @@ void cleanupSn() {
     mempool.clear();
 }
 
+bool ServiceNodeSetupFixtureSetup{false};
 struct ServiceNodeSetupFixture {
     explicit ServiceNodeSetupFixture() {
+        if (ServiceNodeSetupFixtureSetup) return; ServiceNodeSetupFixtureSetup = true;
         chain_1000_50();
         chain_1250_50();
     }
     void chain_1000_50() {
-        TestChainPoS pos(false);
+        auto pos = std::make_shared<TestChainPoS>(false);
         auto *params = (CChainParams*)&Params();
         params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
                 return 1000 * COIN;
             return 50 * COIN;
         };
-        pos.Init("1000,50");
+        pos->Init("1000,50");
+        pos.reset();
     }
     void chain_1250_50() {
-        TestChainPoS pos(false);
+        auto pos = std::make_shared<TestChainPoS>(false);
         auto *params = (CChainParams*)&Params();
         params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
             if (blockHeight <= consensusParams.lastPOWBlock)
                 return 1250 * COIN;
             return 50 * COIN;
         };
-        pos.Init("1250,50");
+        pos->Init("1250,50");
+        pos.reset();
     }
 };
 
@@ -69,7 +75,8 @@ BOOST_FIXTURE_TEST_SUITE(servicenode_tests, ServiceNodeSetupFixture)
 /// Check case where servicenode is properly validated under normal circumstances
 BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -104,6 +111,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_isvalid)
     BOOST_CHECK(snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
 
     cleanupSn();
+    pos_ptr.reset();
 }
 
 /// Check open tier case
@@ -199,7 +207,8 @@ BOOST_FIXTURE_TEST_CASE(servicenode_tests_insufficient_collateral, TestChainPoS)
 /// Check case where collateral inputs are spent
 BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -287,9 +296,11 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
         ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, c.GetInputCoin().txout.nValue, SIGHASH_ALL), c.GetInputCoin().txout.scriptPubKey, sigdata);
         UpdateInput(mtx.vin[0], sigdata);
 
-        CValidationState state;
-        LOCK(cs_main);
-        BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx), nullptr, nullptr, false, 0));
+        {
+            CValidationState state;
+            LOCK(cs_main);
+            BOOST_CHECK(AcceptToMemoryPool(mempool, state, MakeTransactionRef(mtx), nullptr, nullptr, false, 0));
+        }
         CAmount totalAmount{0};
         std::vector<COutPoint> collateral;
         for (int i = 0; i < coins.size(); ++i) { // start at 1 (ignore first spent coinbase)
@@ -372,13 +383,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_spent_collateral)
 
         cleanupSn();
     }
+    pos_ptr.reset();
 }
 
 /// Check case where servicenode is re-registered on spent collateral
 BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
 {
     gArgs.SoftSetBoolArg("-servicenode", true);
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -484,12 +497,139 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_reregister_onspend)
     UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
     gArgs.SoftSetBoolArg("-servicenode", false);
     cleanupSn();
+    pos_ptr.reset();
+}
+
+/// Check case where servicenode is valid on reorg (block disconnect)
+BOOST_AUTO_TEST_CASE(servicenode_tests_valid_onreorg)
+{
+    gArgs.SoftSetBoolArg("-servicenode", true);
+    TestChainPoS pos(false);
+    auto *params = (CChainParams*)&Params();
+    params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
+        if (blockHeight <= consensusParams.lastPOWBlock)
+            return 1000 * COIN;
+        return 50 * COIN;
+    };
+    params->consensus.coinMaturity = 10;
+    pos.Init("1000,50");
+    sn::ServiceNodeMgr::instance().reset();
+    RegisterValidationInterface(&sn::ServiceNodeMgr::instance());
+
+    CKey key; key.MakeNewKey(true);
+    const auto saddr = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
+
+    bool firstRun;
+    auto otherwallet = std::make_shared<CWallet>(*pos.chain, WalletLocation(), WalletDatabase::CreateMock());
+    otherwallet->LoadWallet(firstRun);
+    otherwallet->SetBroadcastTransactions(true);
+    AddKey(*otherwallet, key);
+    AddWallet(otherwallet); // add wallet to global mgr
+    RegisterValidationInterface(otherwallet.get());
+
+    CBasicKeyStore keystore; // temp used to spend inputs
+    keystore.AddKey(key);
+    keystore.AddKey(pos.coinbaseKey);
+
+    // Check that snode is valid after spent collateral is orphaned
+    {
+        std::vector<COutput> coins;
+        {
+            LOCK2(cs_main, pos.wallet->cs_wallet);
+            pos.wallet->AvailableCoins(*pos.locked_chain, coins, true, nullptr, 1000 * COIN);
+        }
+        std::vector<COutPoint> collateral;
+        CAmount collateralTotal{0};
+        for (auto & c : coins) {
+            if (collateralTotal >= sn::ServiceNode::COLLATERAL_SPV)
+                break;
+            CMutableTransaction mtx;
+            mtx.vin.resize(1);
+            mtx.vin[0] = CTxIn(c.GetInputCoin().outpoint);
+            mtx.vout.resize(1);
+            mtx.vout[0].scriptPubKey = GetScriptForDestination(saddr);
+            mtx.vout[0].nValue = c.GetInputCoin().txout.nValue - CENT;
+            SignatureData sigdata = DataFromTransaction(mtx, 0, c.GetInputCoin().txout);
+            ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, c.GetInputCoin().txout.nValue, SIGHASH_ALL), c.GetInputCoin().txout.scriptPubKey, sigdata);
+            UpdateInput(mtx.vin[0], sigdata);
+            // Send transaction
+            uint256 txid; std::string errstr;
+            const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+            BOOST_REQUIRE_MESSAGE(err == TransactionError::OK, strprintf("Failed to send snode collateral tx: %s", errstr));
+            collateral.emplace_back(mtx.GetHash(), 0);
+            collateralTotal += mtx.vout[0].nValue;
+        }
+        pos.StakeBlocks(params->GetConsensus().coinMaturity), SyncWithValidationInterfaceQueue();
+        rescanWallet(otherwallet.get());
+
+        // Setup snode
+        UniValue rpcparams = UniValue(UniValue::VARR);
+        rpcparams.push_backV({ EncodeDestination(saddr), "snode0" });
+        UniValue entry;
+        BOOST_CHECK_NO_THROW(entry = CallRPC2("servicenodesetup", rpcparams));
+        BOOST_CHECK_MESSAGE(entry.isObject(), "Service node entry expected");
+        rpcparams = UniValue(UniValue::VARR);
+        BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
+        const auto snodeEntry = sn::ServiceNodeMgr::instance().getActiveSn();
+        const auto snode = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        // Find collateral that is spendable
+        COutPoint selUtxo;
+        for (const auto & col : snode.getCollateral()) {
+            Coin c;
+            if (pcoinsTip->GetCoin(col, c) && c.nHeight >= params->GetConsensus().coinMaturity) {
+                selUtxo = col;
+                break;
+            }
+        }
+        BOOST_REQUIRE_MESSAGE(!selUtxo.IsNull(), "Failed to find collateral utxo");
+
+        // Simulate that the snode is someone elses, remove it from our local state
+        sn::ServiceNodeMgr::instance().removeSnEntry(snodeEntry);
+        auto ss = CDataStream(SER_NETWORK, PROTOCOL_VERSION);
+        ss << snode;
+        sn::ServiceNode snodetmp;
+        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().processRegistration(ss, snodetmp), "failed to process snode registration");
+
+        // Spend one of the collateral utxos
+        CTransactionRef tx; uint256 hashBlock;
+        BOOST_CHECK_MESSAGE(GetTransaction(selUtxo.hash, tx, params->GetConsensus(), hashBlock), "failed to get snode collateral");
+        CMutableTransaction mtx;
+        mtx.vin.resize(1); mtx.vout.resize(1);
+        mtx.vin[0] = CTxIn(selUtxo);
+        mtx.vout[0] = CTxOut(tx->vout[selUtxo.n].nValue - CENT, tx->vout[selUtxo.n].scriptPubKey);
+        SignatureData sigdata = DataFromTransaction(mtx, 0, tx->vout[selUtxo.n]);
+        ProduceSignature(keystore, MutableTransactionSignatureCreator(&mtx, 0, tx->vout[selUtxo.n].nValue, SIGHASH_ALL), tx->vout[selUtxo.n].scriptPubKey, sigdata);
+        UpdateInput(mtx.vin[0], sigdata);
+        uint256 txid; std::string errstr; const TransactionError err = BroadcastTransaction(MakeTransactionRef(mtx), txid, errstr, 0);
+        BOOST_CHECK_MESSAGE(err == TransactionError::OK, strprintf("Failed to spend snode collateral: %s", errstr));
+        pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
+
+        pos.StakeBlocks(sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS), SyncWithValidationInterfaceQueue();
+        const auto checkSnode = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        BOOST_CHECK_MESSAGE(checkSnode.getInvalid(), "snode should be marked invalid since collateral was spent");
+        BOOST_CHECK_MESSAGE(!checkSnode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should be invalid");
+
+        // Now disconnect spent collateral blocks and verify that snode is still valid
+        CValidationState state;
+        for (int i = 0; i <= sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS; ++i)
+            InvalidateBlock(state, *params, chainActive.Tip(), false);
+        SyncWithValidationInterfaceQueue();
+        const auto checkSnode2 = sn::ServiceNodeMgr::instance().getSn(snodeEntry.key.GetPubKey());
+        BOOST_CHECK_MESSAGE(checkSnode2.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "snode should still be valid after block disconnects");
+    }
+
+    UnregisterValidationInterface(otherwallet.get());
+    RemoveWallet(otherwallet);
+    UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
+    gArgs.SoftSetBoolArg("-servicenode", false);
+    cleanupSn();
 }
 
 /// Check case where collateral inputs are immature
 BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -597,7 +737,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
         BOOST_CHECK_MESSAGE(success, "Refresh snode ping before running state check");
         auto running = sn::ServiceNodeMgr::instance().getSn(snodePubKey).running();
         BOOST_CHECK_MESSAGE(running, "Service node with recently spent collateral in grace period should still be in running state");
-        pos.StakeBlocks(2), SyncWithValidationInterfaceQueue();
+        pos.StakeBlocks(sn::ServiceNode::VALID_GRACEPERIOD_BLOCKS), SyncWithValidationInterfaceQueue();
         BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().getSn(snodePubKey).isValid(GetTxFunc, IsServiceNodeBlockValidFunc),  "Service node with recently staked collateral should be valid");
         UnregisterValidationInterface(&sn::ServiceNodeMgr::instance());
     }
@@ -606,13 +746,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_immature_collateral)
     RemoveWallet(otherwallet);
     cleanupSn();
     gArgs.SoftSetBoolArg("-servicenode", false);
+    pos_ptr.reset();
 }
 
 /// Servicenode registration and ping tests
 BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 {
     gArgs.SoftSetBoolArg("-servicenode", true);
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -623,41 +765,42 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
     pos.Init("1000,50");
 
     CTxDestination dest(pos.coinbaseKey.GetPubKey().GetID());
+    auto & smgr = sn::ServiceNodeMgr::instance();
 
     // Snode registration and ping w/ uncompressed key
     {
         CKey key; key.MakeNewKey(false);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ uncompressed key");
+        BOOST_CHECK_MESSAGE(smgr.registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ uncompressed key");
         // Snode ping w/ uncompressed key
         sn::ServiceNodeConfigEntry entry("snode0", sn::ServiceNode::SPV, key, dest);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>{entry});
         std::set<sn::ServiceNodeConfigEntry> entries;
-        sn::ServiceNodeMgr::instance().loadSnConfig(entries);
+        smgr.loadSnConfig(entries);
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
-        auto success = sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get());
+        auto success = smgr.sendPing(50, jservices, g_connman.get());
         BOOST_CHECK_MESSAGE(success, "Snode ping w/ uncompressed key");
-        BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == 1);
+        BOOST_CHECK(smgr.list().size() == 1);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        smgr.reset();
     }
 
     // Snode registration and ping w/ compressed key
     {
         CKey key; key.MakeNewKey(true);
-        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ compressed key");
+        BOOST_CHECK_MESSAGE(smgr.registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register snode w/ compressed key");
         // Snode ping w/ compressed key
         sn::ServiceNodeConfigEntry entry("snode1", sn::ServiceNode::SPV, key, dest);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>{entry});
         std::set<sn::ServiceNodeConfigEntry> entries;
-        sn::ServiceNodeMgr::instance().loadSnConfig(entries);
+        smgr.loadSnConfig(entries);
         xbridge::App::instance().utAddXWallets({"BLOCK","BTC","LTC"});
         const auto & jservices = xbridge::App::instance().myServicesJSON();
-        auto success = sn::ServiceNodeMgr::instance().sendPing(50, jservices, g_connman.get());
+        auto success = smgr.sendPing(50, jservices, g_connman.get());
         BOOST_CHECK_MESSAGE(success, "Snode ping w/ compressed key");
-        BOOST_CHECK(sn::ServiceNodeMgr::instance().list().size() == 1);
+        BOOST_CHECK(smgr.list().size() == 1);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        smgr.reset();
     }
 
     // Check servicenoderegister all rpc
@@ -671,7 +814,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         rpcparams = UniValue(UniValue::VARR);
         BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        smgr.reset();
     }
 
     // Check servicenoderegister by alias rpc
@@ -686,7 +829,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         rpcparams.push_backV({ "snode1" });
         BOOST_CHECK_NO_THROW(CallRPC2("servicenoderegister", rpcparams));
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        smgr.reset();
     }
 
     // Check servicenoderegister rpc result data
@@ -713,7 +856,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         }
 
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        smgr.reset();
     }
 
     // Check servicenoderegister bad alias
@@ -728,7 +871,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         rpcparams.push_backV({ "bad_alias" });
         BOOST_CHECK_THROW(CallRPC2("servicenoderegister", rpcparams), std::runtime_error);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        smgr.reset();
     }
 
     // Check servicenoderegister no configs
@@ -737,17 +880,104 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
         UniValue rpcparams(UniValue::VARR);
         BOOST_CHECK_THROW(CallRPC2("servicenoderegister", rpcparams), std::runtime_error);
         sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
-        sn::ServiceNodeMgr::instance().reset();
+        smgr.reset();
+    }
+
+    // Check valid snode ping
+    {
+        CKey key; key.MakeNewKey(true);
+        BOOST_CHECK_MESSAGE(smgr.registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register SPV tier snode");
+        const auto bestBlock = chainActive.Height();
+        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
+        auto snode = smgr.getSn(key.GetPubKey());
+        sn::ServiceNodePing pingValid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        pingValid.sign(key);
+        BOOST_CHECK_MESSAGE(pingValid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be valid for open tier xrs services");
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        smgr.reset();
+    }
+
+    // Check invalid snode ping (empty/missing config)
+    {
+        CKey key; key.MakeNewKey(true);
+        BOOST_CHECK_MESSAGE(smgr.registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register SPV tier snode");
+        const auto bestBlock = chainActive.Height();
+        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
+        auto snode = smgr.getSn(key.GetPubKey());
+        sn::ServiceNodePing pingInvalid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()), "", snode);
+        pingInvalid.sign(key);
+        BOOST_CHECK_MESSAGE(!pingInvalid.isValid(GetTxFunc, IsServiceNodeBlockValidFunc), "Service node ping should be invalid for missing config");
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        smgr.reset();
+    }
+
+    // Check snode addping
+    {
+        CKey key; key.MakeNewKey(true);
+        BOOST_CHECK_MESSAGE(smgr.registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register SPV tier snode");
+        const auto bestBlock = chainActive.Height();
+        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
+        auto snode = smgr.getSn(key.GetPubKey());
+        // Normal add ping should succeed
+        sn::ServiceNodePing ping(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        ping.sign(key);
+        BOOST_CHECK_MESSAGE(smgr.addPing(ping), "addPing should succeed");
+        // Ping in past should fail
+        sn::ServiceNodePing ping2(key.GetPubKey(), bestBlock, bestBlockHash, ping.getPingTime() - 1000,
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        ping2.sign(key);
+        BOOST_CHECK_MESSAGE(!smgr.addPing(ping2), "addPing should fail on ping with time prior to latest known ping");
+        // Ping with future time should succeed
+        sn::ServiceNodePing ping3(key.GetPubKey(), bestBlock, bestBlockHash, ping.getPingTime() + 10000,
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        ping3.sign(key);
+        BOOST_CHECK_MESSAGE(smgr.addPing(ping3), "addPing should succeed for a future time");
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        smgr.reset();
+    }
+
+    // Check snode processPing
+    {
+        CKey key; key.MakeNewKey(true);
+        BOOST_CHECK_MESSAGE(smgr.registerSn(key, sn::ServiceNode::SPV, EncodeDestination(dest), g_connman.get(), {pos.wallet}), "Register SPV tier snode");
+        const auto bestBlock = chainActive.Height();
+        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
+        auto snode = smgr.getSn(key.GetPubKey());
+        // Normal add ping should succeed
+        sn::ServiceNodePing ping(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        ping.sign(key);
+        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION); ss << ping;
+        sn::ServiceNodePing pping;
+        BOOST_CHECK_MESSAGE(smgr.processPing(ss, pping), "processPing should succeed");
+        // Ping in past should fail
+        sn::ServiceNodePing ping2(key.GetPubKey(), bestBlock, bestBlockHash, ping.getPingTime() - 1000,
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        ping2.sign(key);
+        CDataStream ss2(SER_NETWORK, PROTOCOL_VERSION); ss2 << ping2;
+        sn::ServiceNodePing pping2;
+        BOOST_CHECK_MESSAGE(!smgr.processPing(ss2, pping2), "processPing should fail on ping with time prior to latest known ping");
+        // Ping with future time should succeed
+        sn::ServiceNodePing ping3(key.GetPubKey(), bestBlock, bestBlockHash, ping.getPingTime() + 10000,
+                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
+        ping3.sign(key);
+        CDataStream ss3(SER_NETWORK, PROTOCOL_VERSION); ss3 << ping3;
+        sn::ServiceNodePing pping3;
+        BOOST_CHECK_MESSAGE(smgr.processPing(ss3, pping3), "processPing should succeed for a future time");
+        sn::ServiceNodeMgr::writeSnConfig(std::vector<sn::ServiceNodeConfigEntry>(), false); // reset
+        smgr.reset();
     }
 
     // TODO Blocknet OPEN tier snodes, support non-SPV snode tiers (enable unit tests)
 //    // Snode ping should fail on open tier with xr:: namespace
 //    {
 //        CKey key; key.MakeNewKey(true);
-//        BOOST_CHECK_MESSAGE(sn::ServiceNodeMgr::instance().registerSn(key, sn::ServiceNode::OPEN, EncodeDestination(dest), g_connman.get(), {}), "Register OPEN tier snode");
+//        BOOST_CHECK_MESSAGE(smgr.registerSn(key, sn::ServiceNode::OPEN, EncodeDestination(dest), g_connman.get(), {}), "Register OPEN tier snode");
 //        const auto bestBlock = chainActive.Height();
 //        const auto bestBlockHash = chainActive[bestBlock]->GetBlockHash();
-//        auto snode = sn::ServiceNodeMgr::instance().getSn(key.GetPubKey());
+//        auto snode = smgr.getSn(key.GetPubKey());
 //        sn::ServiceNodePing pingValid(key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()),
 //                R"({"xbridgeversion":50,"xrouterversion":50,"xrouter":{"config":"[Main]\nwallets=\nplugins=CustomPlugin1,CustomPlugin2\nhost=127.0.0.1", "plugins":{"CustomPlugin1":"","CustomPlugin2":""}}})", snode);
 //        pingValid.sign(key);
@@ -761,12 +991,14 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_registration_pings)
 
     gArgs.SoftSetBoolArg("-servicenode", false);
     cleanupSn();
+    pos_ptr.reset();
 }
 
 /// Check misc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
 {
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -1021,13 +1253,15 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_misc_checks)
     }
 
     cleanupSn();
+    pos_ptr.reset();
 }
 
 /// Check rpc cases
 BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 {
     gArgs.SoftSetBoolArg("-servicenode", true);
-    TestChainPoS pos(false);
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
     params->consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
         if (blockHeight <= consensusParams.lastPOWBlock)
@@ -1376,8 +1610,8 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
                                     false};
             vecSend.push_back(recipient);
         }
-        // For fee
-        vecSend.push_back({GetScriptForDestination(dest), COIN, false});
+        vecSend.push_back({GetScriptForDestination(dest), COIN, false}); // For voting input
+        vecSend.push_back({GetScriptForDestination(dest), COIN, false}); // For fee
         CCoinControl cc;
         CTransactionRef tx;
         {
@@ -1491,6 +1725,7 @@ BOOST_AUTO_TEST_CASE(servicenode_tests_rpc)
 
     gArgs.SoftSetBoolArg("-servicenode", false);
     cleanupSn();
+    pos_ptr.reset();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

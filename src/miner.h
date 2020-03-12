@@ -169,8 +169,8 @@ public:
 #ifdef ENABLE_WALLET
     /** Construct new PoS block */
     std::unique_ptr<CBlockTemplate> CreateNewBlockPoS(const CInputCoin & stakeInput, const uint256 & stakeBlockHash,
-                                                      const int64_t & stakeTime, CWallet *keystore,
-                                                      const bool & disableValidationChecks = false);
+                                                      const int64_t & stakeTime, const int64_t & blockTime,
+                                                      CWallet *keystore, const bool & disableValidationChecks = false);
 #endif // ENABLE_WALLET
 
     static Optional<int64_t> m_last_block_num_txs;

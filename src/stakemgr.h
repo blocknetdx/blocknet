@@ -21,17 +21,27 @@ public:
         std::shared_ptr<CInputCoin> coin;
         std::shared_ptr<CWallet> wallet;
         int64_t time;
+        int64_t blockTime;
         uint256 hashBlock;
         int64_t hashBlockTime;
         uint256 hashProofOfStake;
         explicit StakeCoin() {
             SetNull();
         }
-        explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time,
+        explicit StakeCoin(std::shared_ptr<CInputCoin> coin, std::shared_ptr<CWallet> wallet, int64_t time, int64_t blockTime,
                            uint256 hashBlock, int64_t hashBlockTime, uint256 hashProofOfStake)
-                                          : coin(coin), wallet(wallet), time(time),
+                                          : coin(coin), wallet(wallet), time(time), blockTime(blockTime),
                                             hashBlock(hashBlock), hashBlockTime(hashBlockTime),
                                             hashProofOfStake(hashProofOfStake) { }
+        StakeCoin(const StakeCoin & stakeCoin) {
+            coin = stakeCoin.coin;
+            wallet = stakeCoin.wallet;
+            time = stakeCoin.time;
+            blockTime = stakeCoin.blockTime;
+            hashBlock = stakeCoin.hashBlock;
+            hashBlockTime = stakeCoin.hashBlockTime;
+            hashProofOfStake = stakeCoin.hashProofOfStake;
+        }
         bool IsNull() {
             return coin == nullptr;
         }
@@ -39,9 +49,13 @@ public:
             coin = nullptr;
             wallet = nullptr;
             time = 0;
+            blockTime = 0;
             hashBlock.SetNull();
             hashBlockTime = 0;
             hashProofOfStake.SetNull();
+        }
+        ~StakeCoin() {
+            SetNull();
         }
     };
     struct StakeOutput {
@@ -49,8 +63,16 @@ public:
         std::shared_ptr<CWallet> wallet;
         explicit StakeOutput() : out(nullptr), wallet(nullptr) {}
         explicit StakeOutput(std::shared_ptr<COutput> out, std::shared_ptr<CWallet> wallet) : out(out), wallet(wallet) {}
+        StakeOutput(const StakeOutput & stakeOutput) {
+            out = stakeOutput.out;
+            wallet = stakeOutput.wallet;
+        }
         bool IsNull() {
             return out == nullptr;
+        }
+        ~StakeOutput() {
+            out = nullptr;
+            wallet = nullptr;
         }
     };
 
@@ -62,6 +84,11 @@ public:
     int64_t LastUpdateTime() const;
     int LastBlockHeight() const;
     const StakeCoin & GetStake();
+    bool SuitableCoin(const COutput & coin, const int & tipHeight, const Consensus::Params & params) const;
+    std::vector<COutput> StakeOutputs(CWallet *wallet, const CAmount & minStakeAmount) const;
+    bool GetStakesMeetingTarget(const std::shared_ptr<COutput> & coin, std::shared_ptr<CWallet> & wallet,
+        const CBlockIndex *tip, const int64_t & adjustedTime, const int64_t & blockTime, const int64_t & fromTime,
+        const int64_t & toTime, std::map<int64_t, std::vector<StakeCoin>> & stakes, const Consensus::Params & params);
 
 private:
     bool HasStakeModifier(const uint256 & blockHash) {
@@ -71,6 +98,10 @@ private:
     uint64_t GetStakeModifier(const uint256 & blockHash) {
         LOCK(mu);
         return stakeModifiers.count(blockHash) ? stakeModifiers[blockHash] : 0;
+    }
+    void UpdateStakeModifier(const uint256 & blockHash, const uint64_t & stakeModifier) {
+        LOCK(mu);
+        stakeModifiers[blockHash] = stakeModifier;
     }
 
 private:

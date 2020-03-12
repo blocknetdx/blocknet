@@ -41,7 +41,7 @@ static constexpr int64_t TIMESTAMP_WINDOW = MAX_FUTURE_BLOCK_TIME;
  *
  * Ref: https://github.com/bitcoin/bitcoin/pull/1026
  */
-static constexpr int64_t MAX_BLOCK_TIME_GAP = 90 * 60;
+static constexpr int64_t MAX_BLOCK_TIME_GAP = 15 * 60; // Blocknet 15 minutes
 
 class CBlockFileInfo
 {
@@ -452,6 +452,7 @@ class CDiskBlockIndex : public CBlockIndex
 {
 public:
     uint256 hashPrev;
+    uint256 hash;
 
     CDiskBlockIndex() {
         hashPrev = uint256();
@@ -512,6 +513,10 @@ public:
         return block.GetHash();
     }
 
+    uint256 CacheBlockHash() {
+        hash = GetBlockHash();
+        return hash;
+    }
 
     std::string ToString() const
     {

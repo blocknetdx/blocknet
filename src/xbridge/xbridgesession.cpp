@@ -714,7 +714,9 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         return true;
     }
 
-    if (ptr)
+    // If the order state is canceled and the snode rebroadcasts, allow the
+    // client the opportunity to re-accept the order.
+    if (ptr && ptr->state != TransactionDescr::trCancelled)
     {
         if (ptr->state > TransactionDescr::trPending)
         {
@@ -729,13 +731,6 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         {
             LOG() << "received confirmed order from snode, setting status to pending " << __FUNCTION__;
             ptr->state = TransactionDescr::trPending;
-        }
-        
-        if (ptr->state == TransactionDescr::trCancelled)
-        {
-            LOG() << "already received order and was cancelled " << ptr->id.ToString() << " " << __FUNCTION__;
-            LOG() << __FUNCTION__ << ptr;
-            return true;
         }
 
         // update timestamp
@@ -865,9 +860,15 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         WARN() << "no order found with id " << id.ToString() << " " << __FUNCTION__;
         return true;
     }
+    if (trPending->accepting()) {
+        WARN() << "order already accepted: id " << id.ToString() << " " << __FUNCTION__;
+        return true;
+    }
+    trPending->setAccepting(true);
 
     WalletConnectorPtr makerConn = xapp.connectorByCurrency(trPending->a_currency());
     if (!makerConn) {
+        trPending->setAccepting(false);
         WARN() << "no maker connector for <" << trPending->a_currency() << "> " << __FUNCTION__;
         return true;
     }
@@ -903,6 +904,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                                                  XBridgePacket::addressSize + XBridgePacket::signatureSize;
             if (packet->size() < offset+utxoItemSize)
             {
+                trPending->setAccepting(false);
                 WARN() << "bad packet size while reading utxo items, packet dropped in "
                        << __FUNCTION__;
                 return true;
@@ -953,6 +955,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
     if (commonAmount * TransactionDescr::COIN < samount)
     {
+        trPending->setAccepting(false);
         LOG() << "order rejected, amount from utxo items <" << commonAmount
               << "> less than required <" << samount << "> " << __FUNCTION__;
         return true;
@@ -962,6 +965,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     if (conn->isDustAmount(static_cast<double>(samount) / TransactionDescr::COIN) ||
         conn->isDustAmount(commonAmount - (static_cast<double>(samount) / TransactionDescr::COIN)))
     {
+        trPending->setAccepting(false);
         LOG() << "reject dust amount order " << id.ToString() << " " << __FUNCTION__;
         return true;
     }
@@ -975,6 +979,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
     if (!e.checkUtxoItems(id, utxoItems))
     {
+        trPending->setAccepting(false);
         LOG() << "error accepting order, utxos are bad "
               << __FUNCTION__;
         return true;

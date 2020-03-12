@@ -105,7 +105,7 @@ BlocknetCreateProposal3::BlocknetCreateProposal3(int id, QFrame *parent) : Block
     btnBox->setLayout(btnBoxLayout);
     doneBtn = new BlocknetFormBtn;
     doneBtn->setText(tr("Done"));
-    btnBoxLayout->addWidget(doneBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
+    btnBoxLayout->addWidget(doneBtn, 0, Qt::AlignCenter | Qt::AlignBottom);
     btnBoxLayout->addStretch(1);
 
     int spacing = BGU::spi(10);

@@ -517,6 +517,11 @@ void OptionsModel::checkAndMigrate()
         if (settingsVersion < 130000 && settings.contains("nDatabaseCache") && settings.value("nDatabaseCache").toLongLong() == 100)
             settings.setValue("nDatabaseCache", (qint64)nDefaultDbCache);
 
+        // Blocknet -dbcache was bumped from 450 to 550 in 4.1
+        // force people to upgrade to the new value if they are using 450MB
+        if (settingsVersion < 4010000 && settings.contains("nDatabaseCache") && settings.value("nDatabaseCache").toLongLong() == 450)
+            settings.setValue("nDatabaseCache", (qint64)nDefaultDbCache);
+
         settings.setValue(strSettingsVersionKey, CLIENT_VERSION);
     }
 

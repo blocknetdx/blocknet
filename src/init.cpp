@@ -415,7 +415,8 @@ void SetupServerArgs()
     gArgs.AddArg("-prune=<n>", "Pruning is not supported", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex", "Rebuild chain state and block index from the blk*.dat files on disk", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-reindex-chainstate", "Rebuild chain state from the currently indexed blocks. When in pruning mode or if blocks on disk might be corrupted, use full -reindex instead.", false, OptionsCategory::OPTIONS);
-    gArgs.AddArg("-staking", "Mine blocks on this node (default: 1)", false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-staking", "Mine blocks on this node (default: 1). Can be used to specify search interval, staking=number_of_seconds (default: 15)", false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-stakingwithoutpeers", "Proceeds with staking even though no peers were detected. Mainly used for testing, this could put you on a fork. (default: 0)", false, OptionsCategory::OPTIONS);
     gArgs.AddArg("-minstakeamount", strprintf("Only stakes UTXOs greater than or equal to this amount (default: %d)", 0), false, OptionsCategory::OPTIONS);
 #ifndef WIN32
     gArgs.AddArg("-sysperms", "Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)", false, OptionsCategory::OPTIONS);
@@ -423,6 +424,7 @@ void SetupServerArgs()
     hidden_args.emplace_back("-sysperms");
 #endif
     gArgs.AddArg("-txindex", "Blocknet requires txindex to support the Proof of Stake protocol.", false, OptionsCategory::OPTIONS);
+    gArgs.AddArg("-lowmemoryload", "Use less memory during initial load. This may result in longer load times, however, may improve loading on memory constrained devices if out of memory errors persist (e.g. Rasp Pi)", false, OptionsCategory::OPTIONS);
 
     gArgs.AddArg("-addnode=<ip>", "Add a node to connect to and attempt to keep the connection open (see the `addnode` RPC command help for more info). This option can be specified multiple times to add multiple nodes.", false, OptionsCategory::CONNECTION);
     gArgs.AddArg("-banscore=<n>", strprintf("Threshold for disconnecting misbehaving peers (default: %u)", DEFAULT_BANSCORE_THRESHOLD), false, OptionsCategory::CONNECTION);
@@ -1515,9 +1517,9 @@ bool AppInitMain(InitInterfaces& interfaces)
     int64_t nTotalCache = (gArgs.GetArg("-dbcache", nDefaultDbCache) << 20);
     nTotalCache = std::max(nTotalCache, nMinDbCache << 20); // total cache cannot be less than nMinDbCache
     nTotalCache = std::min(nTotalCache, nMaxDbCache << 20); // total cache cannot be greater than nMaxDbcache
-    int64_t nBlockTreeDBCache = std::min(nTotalCache / 8, nMaxBlockDBCache << 20);
+    int64_t nBlockTreeDBCache = std::min(nTotalCache / 6, nMaxBlockDBCache << 20);
     nTotalCache -= nBlockTreeDBCache;
-    int64_t nTxIndexCache = std::min(nTotalCache / 8, nMaxTxIndexCache << 20); // Blocknet PoS requires txindex
+    int64_t nTxIndexCache = std::min(nTotalCache / 2, nMaxTxIndexCache << 20); // Blocknet PoS requires txindex
     nTotalCache -= nTxIndexCache;
     int64_t nCoinDBCache = std::min(nTotalCache / 2, (nTotalCache / 4) + (1 << 23)); // use 25%-50% of the remainder for disk cache
     nCoinDBCache = std::min(nCoinDBCache, nMaxCoinsDBCache << 20); // cap total coins db cache
@@ -1811,6 +1813,9 @@ bool AppInitMain(InitInterfaces& interfaces)
         return false;
     }
 
+    // Signal service node list support
+    nLocalServices = ServiceFlags(nLocalServices | NODE_SNODE_LIST);
+
     int chain_active_height;
 
     //// debug print
@@ -1917,9 +1922,9 @@ bool AppInitMain(InitInterfaces& interfaces)
         xrouter::App::createConf(); // create config if it doesn't exist
         if (xrouter::App::isEnabled()) {
             uiInterface.InitMessage(_("Starting xrouter service"));
-            const auto xrinit = xrapp.init(); // init xrouter
-            if (!xrinit || !xrapp.start()) // start xrouter if init succeeds
+            if (!xrapp.init()) // start xrouter
                 LogPrintf("XRouter failed to start, please check your configs\n");
+            xrapp.start();
         }
 
         // If there's snode entries, proceed to register them
@@ -1958,6 +1963,12 @@ bool AppInitMain(InitInterfaces& interfaces)
         RegisterValidationInterface(&smgr);
     }
 #endif
+
+    // Clear v3 header index if chaintip is ahead of that protocol
+    if (IsProtocolV05(chainActive.Tip()->GetBlockTime())) {
+        LOCK(cs_main);
+        mapHeaderIndex.clear();
+    }
 
     uiInterface.InitMessage(_("Done loading"));
 

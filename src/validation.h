@@ -461,7 +461,7 @@ CBlockIndex* FindForkInGlobalIndex(const CChain& chain, const CBlockLocator& loc
 bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIndex *pindex) LOCKS_EXCLUDED(cs_main);
 
 /** Mark a block as invalid. */
-bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindex);
+bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindex, const bool & addTransactionsToMempool=true);
 
 /** Remove invalidity status from a block and its descendants. */
 void ResetBlockFailureFlags(CBlockIndex* pindex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
@@ -544,7 +544,7 @@ bool GetTxFunc(const COutPoint & out, CTransactionRef & tx);
  * @param checkStale
  * @return bool
  */
-static const int SNODE_STALE_BLOCKS = 5; // number of blocks to allow before a snode is marked "stale"
+static const int SNODE_STALE_BLOCKS = 10; // number of blocks to allow before a snode is marked "stale"
 bool IsServiceNodeBlockValidFunc(const uint64_t & blockNumber, const uint256 & blockHash, const bool & checkStale=true);
 
 /**

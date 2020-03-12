@@ -41,10 +41,10 @@ typedef std::shared_ptr<boost::asio::io_service>       IoServicePtr;
 typedef std::shared_ptr<boost::asio::io_service::work> WorkPtr;
 
 struct TransactionDescr;
-typedef boost::shared_ptr<TransactionDescr> TransactionDescrPtr;
+typedef std::shared_ptr<TransactionDescr> TransactionDescrPtr;
 
 class Transaction;
-typedef boost::shared_ptr<Transaction> TransactionPtr;
+typedef std::shared_ptr<Transaction> TransactionPtr;
 
 } // namespace xbridge
 

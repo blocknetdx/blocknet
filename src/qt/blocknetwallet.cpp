@@ -7,6 +7,7 @@
 #include <qt/blocknetaddressbook.h>
 #include <qt/blocknetfontmgr.h>
 #include <qt/blocknetquicksend.h>
+#include <qt/blocknetservicenodes.h>
 #include <qt/blocknetsettings.h>
 
 #include <qt/askpassphrasedialog.h>
@@ -23,8 +24,7 @@
 #include <QSettings>
 
 BlocknetWallet::BlocknetWallet(interfaces::Node & node, const PlatformStyle *platformStyle, QFrame *parent)
-                              : QFrame(parent), node(node),
-                                platformStyle(platformStyle)
+                              : QFrame(parent), node(node), platformStyle(platformStyle)
 {
     BlocknetFontMgr::setup();
 
@@ -52,6 +52,9 @@ BlocknetWallet::BlocknetWallet(interfaces::Node & node, const PlatformStyle *pla
     connect(leftMenu, &BlocknetLeftMenu::menuChanged, this, &BlocknetWallet::setPage);
     connect(toolbar, &BlocknetToolBar::passphrase, this, &BlocknetWallet::changePassphrase);
     connect(toolbar, &BlocknetToolBar::lock, this, &BlocknetWallet::onLockRequest);
+    connect(toolbar, &BlocknetToolBar::progressClicked, this, [this]{
+        Q_EMIT progressClicked();
+    });
 }
 
 bool BlocknetWallet::setCurrentWallet(const QString & name) {
@@ -185,16 +188,12 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             screen = transactionView;
             break;
         }
-//        case BlocknetPage::SNODES: { // TODO Blocknet Qt implement snode list
-//            QSettings settings;
-//            if (settings.value("fShowServicenodesTab").toBool()) {
-//                auto *snode = new ServicenodeList;
-//                snode->setClientModel(clientModel);
-//                snode->setWalletModel(walletModel);
-//                screen = snode;
-//            }
-//            break;
-//        }
+        case BlocknetPage::SNODES: {
+            auto *snode = new BlocknetServiceNodes;
+            snode->setClientModel(clientModel);
+            screen = snode;
+            break;
+        }
         case BlocknetPage::PROPOSALS: {
             auto *proposals = new BlocknetProposals;
             connect(proposals, &BlocknetProposals::createProposal, this, &BlocknetWallet::goToCreateProposal);
@@ -270,6 +269,8 @@ void BlocknetWallet::goToCreateProposal() {
 
 void BlocknetWallet::balanceChanged(const interfaces::WalletBalances & balances) {
     leftMenu->setBalance(balances.balance, walletModel->getOptionsModel() ? walletModel->getOptionsModel()->getDisplayUnit() : 0);
+    if (dashboard)
+        dashboard->balanceChanged(balances);
 }
 
 void BlocknetWallet::displayUnitChanged(const int unit) {

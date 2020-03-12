@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2018 The Bitcoin Core developers
-// Copyright (c) 2017-2019 The Blocknet developers
+// Copyright (c) 2017-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -15,6 +15,7 @@
 // from kernel.h
 bool IsProofOfStake(int blockHeight);
 bool CheckProofOfStake(const CBlockHeader & block, const CBlockIndex *pindexPrev, uint256 & hashProofOfStake, const Consensus::Params & consensusParams);
+bool IsProtocolV06(uint64_t nTimeTx, const Consensus::Params & consensusParams);
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader */*pblock*/, const Consensus::Params& params)
 {
@@ -160,9 +161,10 @@ unsigned int BlocknetGetNextWorkRequired(const CBlockIndex* pindexLast, const Co
 
     // Use algo for non-POW blocks
     if (pindexLast->nHeight > params.lastPOWBlock) {
-        const arith_uint256 bnTargetLimit = UintToArith256(uint256S("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
-        int64_t nTargetSpacing = 60;
-        int64_t nTargetTimespan = 60 * 40;
+        arith_uint256 bnTargetLimit = UintToArith256(uint256S("0x000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"));
+        // Support minimum difficulty blocks if flag set
+        if (params.stakingAllowsMinDifficultyBlocks && pindexLast->GetBlockTime() - pindexLast->pprev->GetBlockTime() > params.nPowTargetSpacing)
+            bnTargetLimit = UintToArith256(params.powLimit);
 
         int64_t nActualSpacing = 0;
         if (pindexLast->nHeight != 0)
@@ -176,9 +178,9 @@ unsigned int BlocknetGetNextWorkRequired(const CBlockIndex* pindexLast, const Co
         arith_uint256 bnNew;
         bnNew.SetCompact(pindexLast->nBits);
 
-        int64_t nInterval = nTargetTimespan / nTargetSpacing;
-        bnNew *= ((nInterval - 1) * nTargetSpacing + nActualSpacing + nActualSpacing);
-        bnNew /= ((nInterval + 1) * nTargetSpacing);
+        int64_t nInterval = params.stakingPoSTargetTimespan / params.nPowTargetSpacing;
+        bnNew *= ((nInterval - 1) * params.nPowTargetSpacing + nActualSpacing + nActualSpacing);
+        bnNew /= ((nInterval + 1) * params.nPowTargetSpacing);
 
         if (bnNew <= 0 || bnNew > bnTargetLimit)
             bnNew = bnTargetLimit;

@@ -29,19 +29,19 @@ static Value getResult(const std::string & obj)
     return r;
 }
 
-static std::string dec2hex(const int & s) {
+static std::string dec2hex(const unsigned int & n) {
     std::stringstream ss;
-    ss << std::hex << s;
+    ss << std::hex << n;
     return "0x" + ss.str();
 }
 
 static std::string dec2hex(const std::string & s) {
-    return dec2hex(boost::lexical_cast<int>(s));
+    return dec2hex(boost::lexical_cast<unsigned int>(s));
 }
 
-static int hex2dec(std::string s) {
-    std::stringstream ss;
+static unsigned int hex2dec(const std::string & s) {
     unsigned int result;
+    std::stringstream ss;
     ss << std::hex << s;
     ss >> result;
     return result;
@@ -67,7 +67,7 @@ std::string EthWalletConnectorXRouter::getBlockCount() const
         const auto & item = o[i];
         if (item.name_ == "result") {
             o.erase(o.begin()+i);
-            o.insert(o.begin()+i, Pair("result", blockCount));
+            o.insert(o.begin()+i, Pair("result", static_cast<int>(blockCount)));
             return write_string(Value(o));
         }
     }
@@ -84,7 +84,7 @@ std::string EthWalletConnectorXRouter::getBlockHash(const int & block) const
 std::string EthWalletConnectorXRouter::getBlock(const std::string & blockHash) const
 {
     static const std::string command("eth_getBlockByHash");
-    return CallRPC(m_user, m_passwd, m_ip, m_port, command, { blockHash, true }, jsonver, contenttype);
+    return CallRPC(m_user, m_passwd, m_ip, m_port, command, { blockHash, false }, jsonver, contenttype);
 }
 
 std::vector<std::string> EthWalletConnectorXRouter::getBlocks(const std::vector<std::string> & blockHashes) const

@@ -61,6 +61,7 @@ Q_SIGNALS:
     /** Notify that a new transaction appeared */
     void incomingTransaction(const QString& date, int unit, const CAmount& amount, const QString& type,
             const QString& address, const QString& label, const QString& walletName);
+    void progressClicked();
 
 
 public Q_SLOTS:
@@ -79,6 +80,7 @@ public Q_SLOTS:
     void showProgress(const QString &title, int nProgress);
     void usedSendingAddresses();
     void usedReceivingAddresses();
+    void onLockRequest(bool locked, bool stakingOnly);
 
 protected Q_SLOTS:
     void onSendFunds();
@@ -88,7 +90,6 @@ protected Q_SLOTS:
     void goToHistory();
     void goToCreateProposal();
     void goToProposals();
-    void onLockRequest(bool locked, bool stakingOnly);
     void balanceChanged(const interfaces::WalletBalances & balances);
     void displayUnitChanged(int unit);
     void processNewTransaction(const QModelIndex& parent, int start, int /*end*/);

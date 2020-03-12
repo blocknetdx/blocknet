@@ -22,6 +22,7 @@
 #endif // ENABLE_WALLET
 
 #include <iostream>
+#include <numeric>
 #include <set>
 #include <utility>
 
@@ -36,13 +37,20 @@ namespace sn {
 extern CTxDestination ServiceNodePaymentAddress(const std::string & snode);
 
 /**
+ * Hasher used with unordered_map and unordered_set
+ */
+struct Hasher {
+    size_t operator()(const CPubKey & pubkey) const { return ReadLE64(pubkey.begin()); }
+};
+
+/**
  * Service node configuration entry (from servicenode.conf).
  */
 struct ServiceNodeConfigEntry {
     std::string alias;
     ServiceNode::Tier tier;
     CKey key;
-    CTxDestination address;
+    CTxDestination address{CNoDestination()};
     ServiceNodeConfigEntry() : tier(ServiceNode::Tier::OPEN) {}
     ServiceNodeConfigEntry(std::string alias, ServiceNode::Tier tier, CKey key, CTxDestination address)
                                                    : alias(std::move(alias)), tier(tier),
@@ -52,7 +60,7 @@ struct ServiceNodeConfigEntry {
     friend inline bool operator!=(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return !(a.key == b.key); }
     friend inline bool operator<(const ServiceNodeConfigEntry & a, const ServiceNodeConfigEntry & b) { return a.alias.compare(b.alias) < 0; }
     bool isNull() const {
-        return !address.empty();
+        return boost::get<CNoDestination>(&address);
     }
     CKeyID keyId() const {
         return key.GetPubKey().GetID();
@@ -85,8 +93,10 @@ public:
     void reset() {
         LOCK(mu);
         snodes.clear();
+        pings.clear();
         seenPackets.clear();
         snodeEntries.clear();
+        seenBlocks.clear();
     }
 
     /**
@@ -174,6 +184,9 @@ public:
 
         if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
             return false; // bad ping
+
+        if (!addPing(ping))
+            return false;
 
         addSn(ping.getSnode(), false); // skip validity check here because it's checked in the ping's
         return true;
@@ -354,6 +367,11 @@ public:
             return false;
         }
 
+        if (!addPing(ping)) {
+            LogPrint(BCLog::SNODE, "service node ping failed: existing newer ping already exists\n");
+            return false; // failed to add our own ping
+        }
+
         addSn(ping.getSnode(), false); // skip validity check here because it's checked in the ping's
 
         // Relay
@@ -377,6 +395,18 @@ public:
         for (const auto & item : snodes)
            l.push_back(*item.second);
         return l;
+    }
+
+    /**
+     * Returns the servicenode ping with the specified snode pubkey.
+     * @param snodePubKey
+     * @return
+     */
+    const ServiceNodePing & getPing(const CPubKey & snodePubKey) {
+        LOCK(mu);
+        if (!pings.count(snodePubKey))
+            return std::move(ServiceNodePing{});
+        return pings[snodePubKey];
     }
 
     /**
@@ -423,6 +453,37 @@ public:
     }
 
     /**
+     * Returns the specific entry if it exists, otherwise returns a null entry. See isNull()
+     * @param id The CKeyID of the service node entry you want.
+     * @return
+     */
+    ServiceNodeConfigEntry getSnEntry(const CKeyID & id) {
+        LOCK(mu);
+        for (const auto & entry : snodeEntries) {
+            if (id == entry.keyId())
+                return entry;
+        }
+        return ServiceNodeConfigEntry{};
+    }
+
+    /**
+     * Returns true if the snode is one of ours.
+     * @param snode
+     * @param entryRet Return the matched snode entry
+     * @return
+     */
+    bool isMine(const ServiceNode & snode, ServiceNodeConfigEntry & entryRet) {
+        LOCK(mu);
+        for (const auto & entry : snodeEntries) {
+            if (entry.keyId() == snode.getSnodePubKey().GetID()) {
+                entryRet = entry;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns true if an active service node exists. This node must be a servicenode
      * indicated by the "-servicenode=1" flag on the command line or in the config.
      * @return
@@ -464,11 +525,11 @@ public:
      */
     ServiceNodeConfigEntry getActiveSn() {
         if (!gArgs.GetBoolArg("-servicenode", false))
-            return std::move(ServiceNodeConfigEntry{});
+            return ServiceNodeConfigEntry{};
         LOCK(mu);
         if (!snodeEntries.empty())
             return *snodeEntries.begin();
-        return std::move(ServiceNodeConfigEntry{});
+        return ServiceNodeConfigEntry{};
     }
 
     /**
@@ -773,6 +834,23 @@ protected:
 protected:
 
     /**
+     * Add the service node ping. Returns true if the ping was added, otherwise returns
+     * false.
+     * @param ping
+     * @return
+     */
+    bool addPing(const ServiceNodePing & ping) {
+        LOCK(mu);
+        const auto & pubkey = ping.getSnodePubKey();
+        // only add if this ping is newer than last known ping
+        if (!pings.count(pubkey) || pings[pubkey].getPingTime() < ping.getPingTime()) {
+            pings[pubkey] = ping;
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Add servicenode if valid and returns the added snode, otherwise returns nullptr.
      * @param snode
      * @param checkValid default true, skips validity check if false
@@ -1040,6 +1118,31 @@ protected:
 #endif // ENABLE_WALLET
 
 protected:
+    /**
+     * Records when the last known block was received.
+     */
+    void addRecentBlock() {
+        LOCK(mu);
+        if (seenBlocks.size() >= 2)
+            seenBlocks.erase(seenBlocks.begin());
+        seenBlocks.push_back(GetTime());
+    }
+
+    /**
+     * Returns true if the last time a block was received was within N seconds
+     * of the specified time.
+     * @param seconds
+     * @return
+     */
+    bool seenBlockRecently(const int seconds=2) {
+        LOCK(mu);
+        if (seenBlocks.size() < 2)
+            return false;
+        const auto diff = seenBlocks.back() - seenBlocks.front();
+        return diff <= seconds;
+    }
+
+protected:
     void BlockConnected(const std::shared_ptr<const CBlock>& block, const CBlockIndex* pindex,
                         const std::vector<CTransactionRef>& txn_conflicted) override
     {
@@ -1054,37 +1157,54 @@ protected:
 #ifndef ENABLE_WALLET
         return;
 #else
-        if (fInitialDownload)
+        addRecentBlock();
+        if (fInitialDownload || seenBlockRecently())
             return; // do not try and register snode during initial download
 
-        std::set<ServiceNodeConfigEntry> copyReregister;
+        // Check if any of our snodes have inputs that were spent and/or staked
+        std::set<ServiceNodeConfigEntry> entries;
         {
             LOCK(mu);
             // Update current block number on snode list
             for (auto & item : snodes)
                 item.second->setCurrentBlock(pindexNew->nHeight);
-            // Check if we need to re-register any snodes
-            if (reregister.empty())
-                return;
-            copyReregister = reregister;
+            // copy entries
+            entries = snodeEntries;
         }
+        if (entries.empty())
+            return; // do not proceed if no snode entries
 
-        std::set<ServiceNodeConfigEntry> remove;
+        // Only consider re-registration attempts on snode entries that have collateral
+        // inputs associated with a key in our wallet.
         auto wallets = GetWallets();
-        for (auto & snode : copyReregister) {
-            std::string failReason;
-            if (registerSn(snode, g_connman.get(), wallets, &failReason)) {
-                LogPrintf("Service node registration succeeded for %s\n", snode.alias);
-                remove.insert(snode);
-            } else
-                LogPrintf("Retrying service node %s registration on the next block\n", snode.alias);
-        }
+        for (const auto & entry : entries) {
+            const auto & snode = getSn(entry.key.GetPubKey());
+            if (snode.isNull())
+                continue; // skip snodes we don't know about
 
-        // Erase successfully re-registered service nodes from the list
-        {
-            LOCK(mu);
-            for (auto & snode : remove)
-                reregister.erase(snode);
+            if (!snode.getInvalid() && snode.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
+                continue; // skip valid snodes
+
+            // At this point we want to try and re-register any snodes that are marked
+            // invalid.
+
+            // Make sure the snode collateral is in our wallet
+            bool haveAddr{false};
+            for (auto & w : wallets) {
+                if (w->HaveKey(boost::get<CKeyID>(entry.address))) {
+                    haveAddr = true;
+                    break;
+                }
+            }
+            if (!haveAddr)
+                continue; // snode collateral not in wallet
+
+            // Try re-registering
+            std::string failReason;
+            if (registerSn(entry, g_connman.get(), wallets, &failReason))
+                LogPrintf("Service node registration succeeded for %s\n", entry.alias);
+            else
+                LogPrintf("Retrying service node %s registration on the next block\n", entry.alias);
         }
 #endif // ENABLE_WALLET
     }
@@ -1093,7 +1213,7 @@ protected:
         // Store all spent vins
         std::set<COutPoint> spent;
         for (const auto & tx : block->vtx) {
-            if (connected) { // when block is being added check for spend utxos in vin list
+            if (connected) { // when block is being added check for spent utxos in vin list
                 for (const auto & vin : tx->vin)
                     spent.insert(vin.prevout);
             } else { // when block is being disconnected mark utxos in the vout list as spent
@@ -1114,40 +1234,22 @@ protected:
                         break;
                     }
                 }
+                // Re-validate snodes on potential reorg (on block disconnected)
+                if (!connected) {
+                    snode->markInvalid(false); // reset state before is valid check
+                    snode->markInvalid(!snode->isValid(GetTxFunc, IsServiceNodeBlockValidFunc));
+                }
             }
-        }
-
-        // Check if any of our snodes have inputs that were spent and/or staked
-        std::set<ServiceNodeConfigEntry> entries;
-        {
-            LOCK(mu);
-            entries = snodeEntries;
-        }
-
-        std::set<ServiceNodeConfigEntry> requiresRegistration;
-        for (const auto & entry : entries) {
-            const auto & snode = getSn(entry.key.GetPubKey());
-            for (const auto & utxo : snode.getCollateral()) {
-                if (spent.count(utxo) && !requiresRegistration.count(entry))
-                    requiresRegistration.insert(entry);
-            }
-        }
-
-        if (requiresRegistration.empty())
-            return;
-
-        {
-            LOCK(mu);
-            reregister.insert(requiresRegistration.begin(), requiresRegistration.end());
         }
     }
 
 protected:
     Mutex mu;
     std::map<CPubKey, ServiceNodePtr> snodes;
+    std::unordered_map<CPubKey, ServiceNodePing, Hasher> pings;
     std::set<uint256> seenPackets;
     std::set<ServiceNodeConfigEntry> snodeEntries;
-    std::set<ServiceNodeConfigEntry> reregister;
+    std::vector<int> seenBlocks;
 };
 
 }

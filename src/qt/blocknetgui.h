@@ -99,6 +99,8 @@ protected:
     QAction* optionsAction = nullptr;
     QAction* toggleHideAction = nullptr;
     QAction* encryptWalletAction = nullptr;
+    QAction* unlockWalletAction = nullptr;
+    QAction* lockWalletAction = nullptr;
     QAction* backupWalletAction = nullptr;
     QAction* changePassphraseAction = nullptr;
     QAction* aboutQtAction = nullptr;
@@ -127,6 +129,7 @@ protected:
     /** Keep track of previous number of blocks, to detect progress */
     int prevBlocks = 0;
     int spinnerFrame = 0;
+    bool showHeaderSyncModal{true};
 
     const PlatformStyle *platformStyle;
     const NetworkStyle* const m_network_style;

@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2018 The Bitcoin Core developers
-// Copyright (c) 2018-2019 The Blocknet developers
+// Copyright (c) 2018-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -180,7 +180,7 @@ public:
 
     // Manual block validity manipulation:
     bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIndex* pindex) LOCKS_EXCLUDED(cs_main);
-    bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindex);
+    bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex* pindex, const bool & addTransactionsToMempool=true);
     void ResetBlockFailureFlags(CBlockIndex* pindex) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
     bool ReplayBlocks(const CChainParams& params, CCoinsView* view);
@@ -1119,8 +1119,8 @@ bool ReadBlockFromDisk(CBlock& block, const CBlockIndex* pindex, const Consensus
     if (!ReadBlockFromDisk(block, blockPos, consensusParams))
         return false;
 
-    // Check the header
-    if (block.IsProofOfStake()) { // TODO Blocknet check PoS here
+    // Check PoS
+    if (block.IsProofOfStake()) {
         uint256 hashProofOfStake;
         if (!CheckProofOfStake(block, pindex->pprev, hashProofOfStake, consensusParams))
             return error("ReadBlockFromDisk(CBlock&, CBlockIndex*): proof of stake check failed on block %u", pindex->nHeight);
@@ -1860,6 +1860,16 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
         // TODO Blocknet PoS verify that the stake input sig matches the signer of the block, i.e. staker must be the block signer
         if (!VerifySig(block, txStake->vout[txin.prevout.n].scriptPubKey) && !VerifySig(block, block.vtx[1]->vout[1].scriptPubKey))
             return state.DoS(100, false, REJECT_INVALID, "bad-stake-signer", false, "bad block sig staker must be signer");
+        if (IsProtocolV06(block.GetBlockTime(), chainparams.GetConsensus())) {
+            const auto lastBlockTime = pindex->pprev->GetBlockTime();
+            // Check that block time is not less than the previous block time
+            if (block.GetBlockTime() <= lastBlockTime)
+                return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
+            // Other PoS nonce checks happen in CheckBlock above
+            // Ensure nonce is not less than or equal to the last block time
+            if (block.nNonce <= lastBlockTime)
+                return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
+        }
     }
 
     // PoS check that only PoW are allowed
@@ -2305,7 +2315,9 @@ bool CChainState::DisconnectTip(CValidationState& state, const CChainParams& cha
     if (disconnectpool) {
         // Save transactions to re-add to mempool at end of reorg
         for (auto it = block.vtx.rbegin(); it != block.vtx.rend(); ++it) {
-            disconnectpool->addTransaction(*it);
+            // No coinbase or coinstakes
+            if (!it->get()->IsCoinBase() && !it->get()->IsCoinStake())
+                disconnectpool->addTransaction(*it);
         }
         while (disconnectpool->DynamicMemoryUsage() > MAX_DISCONNECTED_TX_POOL_SIZE * 1000) {
             // Drop the earliest entry, and remove its children from the mempool.
@@ -2784,7 +2796,7 @@ bool PreciousBlock(CValidationState& state, const CChainParams& params, CBlockIn
     return g_chainstate.PreciousBlock(state, params, pindex);
 }
 
-bool CChainState::InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex)
+bool CChainState::InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex, const bool & addTransactionsToMempool)
 {
     CBlockIndex* to_mark_failed = pindex;
     bool pindex_was_in_chain = false;
@@ -2811,7 +2823,7 @@ bool CChainState::InvalidateBlock(CValidationState& state, const CChainParams& c
         // transactions back to the mempool if disconnecting was succesful,
         // and we're not doing a very deep invalidation (in which case
         // keeping the mempool up to date is probably futile anyway).
-        UpdateMempoolForReorg(disconnectpool, /* fAddToMempool = */ (++disconnected <= 10) && ret);
+        UpdateMempoolForReorg(disconnectpool, /* fAddToMempool = */ (++disconnected <= 10) && ret && addTransactionsToMempool);
         if (!ret) return false;
         assert(invalid_walk_tip->pprev == chainActive.Tip());
 
@@ -2869,8 +2881,8 @@ bool CChainState::InvalidateBlock(CValidationState& state, const CChainParams& c
     return true;
 }
 
-bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex) {
-    return g_chainstate.InvalidateBlock(state, chainparams, pindex);
+bool InvalidateBlock(CValidationState& state, const CChainParams& chainparams, CBlockIndex *pindex, const bool & addTransactionsToMempool) {
+    return g_chainstate.InvalidateBlock(state, chainparams, pindex, addTransactionsToMempool);
 }
 
 void CChainState::ResetBlockFailureFlags(CBlockIndex *pindex) {
@@ -2955,8 +2967,8 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
         // ppcoin: compute stake modifier
         uint64_t stakeModifier = 0;
         bool didGenStakeModifier = false;
-        if (!ComputeNextStakeModifier(pindexNew->pprev, stakeModifier, didGenStakeModifier))
-            LogPrintf("ComputeNextStakeModifier() failed for %s\n", pindexNew->GetBlockHash().ToString());
+        if (!ComputeNextStakeModifier(pindexNew->pprev, stakeModifier, didGenStakeModifier, Params().GetConsensus()))
+            LogPrintf("ComputeNextStakeModifier failed for %s\n", pindexNew->GetBlockHash().ToString());
         pindexNew->SetStakeModifier(stakeModifier, didGenStakeModifier);
     }
     pindexNew->nTimeMax = (pindexNew->pprev ? std::max(pindexNew->pprev->nTimeMax, pindexNew->nTime) : pindexNew->nTime);
@@ -2968,7 +2980,8 @@ CBlockIndex* CChainState::AddToBlockIndex(const CBlockHeader& block)
     setDirtyBlockIndex.insert(pindexNew);
 
     // Store in header index
-    mapHeaderIndex[pindexNew->nHeight] = pindexNew;
+    if (!IsProtocolV05(pindexNew->GetBlockTime()))
+        mapHeaderIndex[pindexNew->nHeight] = pindexNew;
     if (pindexNew->nHeight % 10000 == 0)
         LogPrintf("Processing block indices at %u %s\n", pindexNew->nHeight, pindexNew->GetBlockHash().ToString());
 
@@ -3181,6 +3194,11 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
         // PoS: Second transaction must be coinstake
         if (!block.vtx[1]->IsCoinStake())
             return state.DoS(100, false, REJECT_INVALID, "bad-cs-missing", false, "second tx must be coinstake");
+        // Check v6 staking protocol
+        if (IsProtocolV06(block.GetBlockTime(), consensusParams)) {
+            if (block.nNonce <= 0 || block.nNonce > GetAdjustedTime() + consensusParams.PoSFutureBlockTimeLimit())
+                return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
+        }
     }
 
     // Check transactions
@@ -3305,13 +3323,31 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.DoS(100, error("%s: forked chain older than last checkpoint (height %d)", __func__, nHeight), REJECT_CHECKPOINT, "bad-fork-prior-to-checkpoint");
     }
 
+    // Blocknet staking protocol doesn't allow blocks prior to the previous
+    // stake's block time.
+    if (IsProofOfStake(nHeight, consensusParams) && IsProtocolV06(block.GetBlockTime(), params.GetConsensus())) {
+        // Check timestamp against prev (not less than half target spacing)
+        if (block.GetBlockTime() <= pindexPrev->GetBlockTime())
+            return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
+        // Check that stake time is valid: nonce can't be less or equal to previous block time or more than
+        // future block time limit.
+        if (block.nNonce <= 0 || block.nNonce <= pindexPrev->GetBlockTime() || block.nNonce > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit())
+            return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
+    } else {
     // Check timestamp against prev
     if (block.GetBlockTime() <= pindexPrev->GetMedianTimePast())
         return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
+    } // end else
 
+    if (IsProofOfStake(nHeight)) {
+        assert(params.GetConsensus().PoSFutureBlockTimeLimit() == MAX_FUTURE_BLOCK_TIME_POS);
+        if (block.GetBlockTime() > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit())
+            return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
+    } else {
     // Check timestamp
-    if (block.GetBlockTime() > nAdjustedTime + (IsProofOfStake(nHeight) ? MAX_FUTURE_BLOCK_TIME_POS : MAX_FUTURE_BLOCK_TIME))
+    if (block.GetBlockTime() > nAdjustedTime + MAX_FUTURE_BLOCK_TIME)
         return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
+    } // end else
 
     // Reject outdated version blocks
     if (block.nVersion < 3)
@@ -3950,13 +3986,34 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
     if (!blocktree.LoadBlockIndexGuts(consensus_params, [this](const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs_main) { return this->InsertBlockIndex(hash); }))
         return false;
 
+    std::atomic<int> counter{0};
+    std::atomic<double> pcounter{70};
+    std::atomic<int> pprog{70};
+    const int totalprogress{100};
+    auto progress = [&counter,&pcounter,&pprog,totalprogress](const double & unit, const double & total, const double & percent) {
+        ++counter;
+        pcounter = pcounter + unit/total * percent;
+        if (counter % 100000 == 0) {
+            int p = static_cast<int>(pcounter);
+            if (p >= totalprogress) p = totalprogress;
+            if (p != pprog) {
+                pprog = p;
+                if (pprog % 10 == 0)
+                    LogPrintf("[%u%%]...", pprog); /* Continued */
+                uiInterface.ShowProgress("Loading block index", pprog, false);
+            }
+        }
+    };
+
     // Calculate nChainWork
     std::vector<std::pair<int, CBlockIndex*> > vSortedByHeight;
-    vSortedByHeight.reserve(mapBlockIndex.size());
+    const int & mbiCount = mapBlockIndex.size();
+    vSortedByHeight.reserve(mbiCount);
     for (const std::pair<const uint256, CBlockIndex*>& item : mapBlockIndex)
     {
         CBlockIndex* pindex = item.second;
         vSortedByHeight.push_back(std::make_pair(pindex->nHeight, pindex));
+        progress(1, mbiCount, 10); // total progress in LoadBlockIndex must be <= 30
     }
     sort(vSortedByHeight.begin(), vSortedByHeight.end());
     for (const std::pair<int, CBlockIndex*>& item : vSortedByHeight)
@@ -3992,8 +4049,14 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
             pindexBestHeader = pindex;
 
         // Store in header index
-        mapHeaderIndex[pindex->nHeight] = pindex;
+        if (!IsProtocolV05(pindex->GetBlockTime()))
+            mapHeaderIndex[pindex->nHeight] = pindex;
+
+        progress(1, mbiCount, 20); // total progress in LoadBlockIndex must be <= 30
     }
+
+    LogPrintf("[DONE].\n");
+    uiInterface.ShowProgress("Loading block index", 100, false);
 
     return true;
 }
@@ -4448,6 +4511,8 @@ void UnloadBlockIndex()
     chainActive.SetTip(nullptr);
     pindexBestInvalid = nullptr;
     pindexBestHeader = nullptr;
+    pindexBestForkTip = nullptr;
+    pindexBestForkBase = nullptr;
     mempool.clear();
     mapBlocksUnlinked.clear();
     vinfoBlockFile.clear();

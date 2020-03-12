@@ -10,7 +10,6 @@
 #include <qt/blocknetguiutil.h>
 #include <qt/blocknetformbtn.h>
 #include <qt/blocknethdiv.h>
-#include <qt/blockneticonbtn.h>
 #include <qt/blocknetvars.h>
 
 #include <qt/bitcoinunits.h>
@@ -20,6 +19,7 @@
 #include <governance/governancewallet.h>
 #include <net.h>
 #include <uint256.h>
+#include <wallet/coincontrol.h>
 
 #include <utility>
 
@@ -30,6 +30,7 @@
 #include <QHeaderView>
 #include <QMessageBox>
 #include <QRadioButton>
+#include <QSettings>
 #include <QVariant>
 
 BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(new QVBoxLayout),
@@ -48,25 +49,16 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     auto *topBoxLayout = new QHBoxLayout;
     topBoxLayout->setContentsMargins(QMargins());
     topBox->setLayout(topBoxLayout);
-
-    auto *createProposal = new BlocknetIconBtn(":/redesign/QuickActions/ProposalsIcon.png");
-
-    buttonLbl = new QLabel(tr("Create New Proposal"));
-    buttonLbl->setObjectName("h4");
-
     filterLbl = new QLabel(tr("Filter by:"));
     filterLbl->setObjectName("title");
-
-    QStringList list{tr("All Proposals"), tr("Active"), tr("Upcoming"), tr("Completed")};
+    QStringList list{tr("All Proposals"), tr("Current"), tr("Upcoming"), tr("Completed")};
     proposalsDropdown = new BlocknetDropdown(list);
-
-    topBoxLayout->addWidget(createProposal, 0, Qt::AlignLeft);
-    topBoxLayout->addWidget(buttonLbl, 0, Qt::AlignLeft);
     topBoxLayout->addStretch(1);
     topBoxLayout->addWidget(filterLbl);
     topBoxLayout->addWidget(proposalsDropdown);
 
     table = new QTableWidget;
+    table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     table->setContentsMargins(QMargins());
     table->setColumnCount(COLUMN_PADDING2 + 1);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -74,8 +66,6 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setFocusPolicy(Qt::NoFocus);
     table->setAlternatingRowColors(true);
-    table->setColumnWidth(COLUMN_COLOR, BGU::spi(3));
-    table->setColumnWidth(COLUMN_VOTE, BGU::spi(150));
     table->setShowGrid(false);
     table->setFocusPolicy(Qt::NoFocus);
     table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
@@ -86,23 +76,48 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     table->horizontalHeader()->setSortIndicatorShown(true);
     table->horizontalHeader()->setSectionsClickable(true);
+    table->setColumnHidden(COLUMN_HASH, true); table->setColumnWidth(COLUMN_HASH, BGU::spi(0));
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_COLOR, QHeaderView::Fixed); table->setColumnWidth(COLUMN_COLOR, BGU::spi(3));
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING1, QHeaderView::Fixed); table->setColumnWidth(COLUMN_PADDING1, BGU::spi(1));
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_SUPERBLOCK, QHeaderView::Stretch);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_NAME, QHeaderView::Stretch);
-    table->horizontalHeader()->setSectionResizeMode(COLUMN_COLOR, QHeaderView::Fixed);
-    table->horizontalHeader()->setSectionResizeMode(COLUMN_VOTE, QHeaderView::Fixed);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_AMOUNT, QHeaderView::ResizeToContents);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_TALLY, QHeaderView::ResizeToContents);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_URL, QHeaderView::Stretch);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_DESCRIPTION, QHeaderView::Stretch);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_RESULTS, QHeaderView::ResizeToContents);
-    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING1, QHeaderView::Fixed); table->setColumnWidth(COLUMN_PADDING1, BGU::spi(12));
-    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING2, QHeaderView::Fixed); table->setColumnWidth(COLUMN_PADDING2, BGU::spi(12));
-    table->setColumnHidden(COLUMN_HASH, true);
-    table->setHorizontalHeaderLabels({ "", "", "", tr("Name"), tr("Superblock"), tr("Amount"), tr("Url"), tr("Description"), tr("Status"), tr("Results"), "", "", ""});
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_VOTE, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING2, QHeaderView::Fixed); table->setColumnWidth(COLUMN_PADDING2, BGU::spi(2));
+    table->setHorizontalHeaderLabels({ "", "", "", tr("Name"), tr("Superblock"), tr("Amount"), tr("Y-N-A"), tr("Url"), tr("Description"), tr("Status"), tr("Results"), "", ""});
+    table->setColumnWidth(COLUMN_TALLY, BGU::spi(60));
 
-    layout->addWidget(titleLbl);
+    auto *btnBox = new QFrame;
+    btnBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
+    auto *btnBoxLayout = new QHBoxLayout;
+    btnBoxLayout->setContentsMargins(QMargins());
+    btnBox->setLayout(btnBoxLayout);
+    voteBtn = new BlocknetFormBtn;
+    voteBtn->setObjectName("delete");
+    voteBtn->setText(tr("Cast Votes"));
+    auto *createProposalBtn = new BlocknetFormBtn;
+    createProposalBtn->setText(tr("Create New Proposal"));
+    btnBoxLayout->addWidget(voteBtn);
+    btnBoxLayout->addStretch(1);
+    btnBoxLayout->addWidget(createProposalBtn);
+
+    auto *titleBox = new QFrame;
+    titleBox->setContentsMargins(QMargins());
+    auto *titleBoxLayout = new QHBoxLayout;
+    titleBox->setLayout(titleBoxLayout);
+    titleBoxLayout->addWidget(titleLbl);
+    titleBoxLayout->addStretch(1);
+    titleBoxLayout->addWidget(topBox);
+
+    layout->addWidget(titleBox);
     layout->addSpacing(BGU::spi(15));
-    layout->addWidget(topBox);
+    layout->addWidget(table, 1);
     layout->addSpacing(BGU::spi(15));
-    layout->addWidget(table);
+    layout->addWidget(btnBox);
     layout->addSpacing(BGU::spi(20));
 
     // context menu
@@ -121,12 +136,19 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     contextMenu->addAction(copyYes);
     contextMenu->addAction(copyNo);
 
+    QSettings settings;
+    auto filterIdx = settings.value("proposalsFilter", FILTER_ACTIVE);
+    proposalsDropdown->setCurrentIndex(filterIdx.toInt());
+
     // Timer used to check for vote capabilities and refresh proposals
     int timerInterval = 5000;
     timer = new QTimer(this);
     timer->setInterval(timerInterval);
     connect(timer, &QTimer::timeout, this, [this]() {
+        if (!voteBtn || !walletModel)
+            return;
         bool cannotVote = !canVote();
+        voteBtn->setEnabled(!cannotVote);
         if (cannotVote) table->setColumnWidth(COLUMN_VOTE, 0);
         else table->setColumnWidth(COLUMN_VOTE, BGU::spi(150));
         table->setColumnHidden(COLUMN_VOTE, cannotVote);
@@ -134,7 +156,9 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     });
     timer->start(timerInterval);
 
-    connect(createProposal, &BlocknetIconBtn::clicked, this, &BlocknetProposals::onCreateProposal);
+    connect(createProposalBtn, &BlocknetFormBtn::clicked, this, &BlocknetProposals::onCreateProposal);
+    connect(voteBtn, &BlocknetFormBtn::clicked, this, &BlocknetProposals::onVote);
+
     connect(table, &QTableWidget::itemSelectionChanged, this, [this]() {
         lastSelection = QDateTime::currentMSecsSinceEpoch();
     });
@@ -149,8 +173,9 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     connect(table, &QTableWidget::cellDoubleClicked, this, [this](int row, int column) {
         if (row >= filteredData.size())
             return;
-        auto data = filteredData[row];
-        showProposalDetails(data);
+        auto *hashItem = table->item(row, COLUMN_HASH);
+        if (hashItem)
+            showProposalDetails(proposalForHash(hashItem->data(Qt::DisplayRole).toString()));
     });
     connect(table, &QTableWidget::customContextMenuRequested, this, &BlocknetProposals::showContextMenu);
     connect(proposalsDropdown, &BlocknetDropdown::valueChanged, this, &BlocknetProposals::onFilter);
@@ -158,25 +183,26 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
     connect(viewDetails, &QAction::triggered, this, [this]() {
         if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
-        auto data = filteredData[contextItem->row()];
-        showProposalDetails(data);
+        auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
+        if (hashItem)
+            showProposalDetails(proposalForHash(hashItem->data(Qt::DisplayRole).toString()));
     });
     connect(copyName, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *nameItem = table->item(contextItem->row(), COLUMN_NAME);
         if (nameItem)
             QApplication::clipboard()->setText(nameItem->data(Qt::DisplayRole).toString(), QClipboard::Clipboard);
     });
     connect(copyUrl, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *urlItem = table->item(contextItem->row(), COLUMN_URL);
         if (urlItem)
             QApplication::clipboard()->setText(urlItem->data(Qt::DisplayRole).toString(), QClipboard::Clipboard);
     });
     connect(copyHash, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
         if (hashItem) {
@@ -185,7 +211,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
         }
     });
     connect(copyYes, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
         if (hashItem) {
@@ -194,7 +220,7 @@ BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(ne
         }
     });
     connect(copyNo, &QAction::triggered, this, [this]() {
-        if (contextItem == nullptr)
+        if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
         auto *hashItem = table->item(contextItem->row(), COLUMN_HASH);
         if (hashItem) {
@@ -221,8 +247,7 @@ void BlocknetProposals::initialize() {
         const int superblock = proposal.getSuperblock();
         if (superblockResults.count(superblock))
             continue;
-        superblockResults[superblock] = gov::Governance::instance()
-                .getSuperblockResults(superblock, Params().GetConsensus());
+        superblockResults[superblock] = gov::Governance::instance().getSuperblockResults(superblock, Params().GetConsensus(), true);
     }
     // Sort proposals descending
     std::sort(proposals.begin(), proposals.end(), [](const gov::Proposal & a, const gov::Proposal & b) {
@@ -241,20 +266,29 @@ void BlocknetProposals::initialize() {
             statusColor = STATUS_PASSED;
         }
 
-        if (currentBlock < proposal.getSuperblock() && sbResults.count(proposal)) {
+        gov::Tally tally;
+        auto it = sbResults.find(proposal);
+        if (it != sbResults.end())
+            tally = it->second;
+
+        if (nextSuperblock < proposal.getSuperblock()) {
+            results = tr("Pending");
+            statusColor = STATUS_IN_PROGRESS;
+        }
+        else if (currentBlock < proposal.getSuperblock() && tally.payout) {
             results = tr("Passing");
             statusColor = STATUS_PASSED;
         }
-        else if (currentBlock < proposal.getSuperblock() && !sbResults.count(proposal)) {
+        else if (currentBlock < proposal.getSuperblock() && !tally.payout) {
             results = tr("Failing");
             statusColor = STATUS_REJECTED;
         }
-        else if (currentBlock >= proposal.getSuperblock() && sbResults.count(proposal)) {
+        else if (currentBlock >= proposal.getSuperblock() && tally.payout) {
             results = tr("Passed");
             status = tr("Finished");
             statusColor = STATUS_PASSED;
         }
-        else if (currentBlock >= proposal.getSuperblock() && !sbResults.count(proposal)) {
+        else if (currentBlock >= proposal.getSuperblock() && !tally.payout) {
             results = tr("Failed");
             status = tr("Finished");
             statusColor = STATUS_REJECTED;
@@ -300,6 +334,7 @@ void BlocknetProposals::initialize() {
             QString::fromStdString(proposal.getName()),
             proposal.getSuperblock(),
             proposal.getAmount(),
+            tally,
             QString::fromStdString(proposal.getUrl()),
             QString::fromStdString(proposal.getDescription()),
             status,
@@ -316,7 +351,7 @@ void BlocknetProposals::initialize() {
         return a.superblock > b.superblock;
     });
 
-    this->setData(dataModel);
+    onFilter();
 }
 
 void BlocknetProposals::setModels(ClientModel *c, WalletModel *w) {
@@ -385,6 +420,12 @@ void BlocknetProposals::setData(QVector<BlocknetProposal> data) {
                 d.amount, 0, false, BitcoinUnits::separatorStandard));
         table->setItem(i, COLUMN_AMOUNT, amountItem);
 
+        // tally
+        auto *tallyItem = new QTableWidgetItem;
+        tallyItem->setData(Qt::DisplayRole, QString("%1-%2-%3").arg(QString::number(d.tally.yes),
+                QString::number(d.tally.no), QString::number(d.tally.abstain)));
+        table->setItem(i, COLUMN_TALLY, tallyItem);
+
         // url
         auto *urlItem = new QTableWidgetItem;
         urlItem->setData(Qt::DisplayRole, d.url);
@@ -437,26 +478,12 @@ void BlocknetProposals::setData(QVector<BlocknetProposal> data) {
             voteLbl->setText(voteText);
             boxLayout->addWidget(voteLbl, 0, Qt::AlignCenter);
             table->setRowHeight(i, BGU::spi(50));
-        } else if (getChainHeight() >= d.superblock) {
+        } else {
             voteLbl->setText(tr("Did not vote"));
             boxLayout->addWidget(voteLbl, 0, Qt::AlignCenter);
         }
 
-        // Only show vote button if proposal voting is in progress
-        if (getChainHeight() < d.superblock - Params().GetConsensus().votingCutoff) {
-            auto *button = new BlocknetFormBtn;
-            button->setText(voteText.isEmpty() ? tr("Vote") : tr("Change Vote"));
-            button->setToolTip(tr("Vote status updates as votes are confirmed"));
-            button->setFixedSize(BGU::spi(100), BGU::spi(25));
-            button->setID(QString::fromStdString(d.hash.GetHex()));
-            boxLayout->addWidget(button, 0, Qt::AlignCenter);
-            boxLayout->addSpacing(BGU::spi(3));
-            connect(button, &BlocknetFormBtn::clicked, this, &BlocknetProposals::onVote);
-            if (voteText.isEmpty())
-                table->setRowHeight(i, BGU::spi(50));
-            else table->setRowHeight(i, BGU::spi(75));
-        }
-
+        table->setRowHeight(i, BGU::spi(50));
         table->setCellWidget(i, COLUMN_VOTE, widget);
         table->setItem(i, COLUMN_VOTE, votedItem);
 
@@ -466,6 +493,7 @@ void BlocknetProposals::setData(QVector<BlocknetProposal> data) {
     }
     // Hide the vote column if we're not able to vote
     bool cannotVote = !canVote();
+    voteBtn->setEnabled(!cannotVote);
     if (cannotVote) table->setColumnWidth(COLUMN_VOTE, 0);
     else table->setColumnWidth(COLUMN_VOTE, BGU::spi(150));
     table->setColumnHidden(COLUMN_VOTE, cannotVote);
@@ -503,7 +531,11 @@ QVector<BlocknetProposals::BlocknetProposal> BlocknetProposals::filtered(int fil
 }
 
 bool BlocknetProposals::canVote() {
-    return walletModel->wallet().getBalance() >= Params().GetConsensus().voteBalance;
+    const auto balance = walletModel->wallet().getBalance() + walletModel->wallet().getImmatureBalance()
+            + walletModel->wallet().getUnconfirmedBalance();
+    CCoinControl cc;
+    const auto available = walletModel->wallet().getAvailableBalance(cc);
+    return  balance > Params().GetConsensus().voteBalance && available > 0;
 }
 
 /**
@@ -522,46 +554,38 @@ void BlocknetProposals::refresh(bool force) {
  */
 void BlocknetProposals::onFilter() {
     setData(filtered(proposalsDropdown->currentIndex(), getChainHeight()));
+    QSettings settings;
+    settings.setValue("proposalsFilter", proposalsDropdown->currentIndex());
 }
 
 void BlocknetProposals::onVote() {
-    auto *btn = qobject_cast<BlocknetFormBtn*>(sender());
-    if (!btn)
-        return;
-    auto proposalHash = uint256S(btn->getID().toStdString());
-    BlocknetProposal foundProposal;
-
-    bool found = false;
-    for (auto &proposal : dataModel) {
-        if (proposal.hash == proposalHash) {
-            found = true;
-            foundProposal = proposal;
-            break;
-        }
+    QVector<BlocknetProposals::BlocknetProposal> proposals;
+    const auto nextSB = gov::Governance::nextSuperblock(Params().GetConsensus());
+    for (const auto & prop : dataModel) {
+        if (prop.superblock >= nextSB)
+            proposals.push_back(prop);
     }
-    if (!found) { // do nothing if no proposal found
-        QMessageBox::warning(this, tr("No proposal found"), tr("Unable to vote on this proposal, please try again later."));
+    if (proposals.empty()) { // do nothing if no proposal found
+        QMessageBox::warning(this, tr("No proposals found"), tr("There are no proposals for the current voting period"));
         return;
     }
 
-    auto *dialog = new BlocknetProposalsVoteDialog(foundProposal, walletModel->getOptionsModel()->getDisplayUnit());
+    auto *dialog = new BlocknetProposalsVoteDialog(proposals, walletModel->getOptionsModel()->getDisplayUnit());
     dialog->setStyleSheet(GUIUtil::loadStyleSheet());
-    connect(dialog, &BlocknetProposalsVoteDialog::submitVote, this, [this, dialog](uint256 propHash, bool yes, bool no, bool abstain) {
-        // Check if proposal is available
-        if (!gov::Governance::instance().hasProposal(propHash)) {
-            QMessageBox::warning(this, tr("No proposal found"), tr("Unable to find this proposal"));
+    connect(dialog, &BlocknetProposalsVoteDialog::submitVotes, this, [this, dialog](const std::vector<gov::ProposalVote> & votes) {
+        QMessageBox::StandardButton retval = QMessageBox::question(this, tr("Cast Votes"),
+                tr("Are you sure you want to cast these votes?"), QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (retval != QMessageBox::Yes)
             return;
-        }
+
         WalletModel::UnlockContext ctx(walletModel->requestUnlock());
         if (!ctx.isValid()) {
             return;
         }
         // Cast votes
-        auto proposal = gov::Governance::instance().getProposal(propHash);
-        gov::ProposalVote vote(proposal, yes ? gov::VoteType::YES : no ? gov::VoteType::NO : gov::VoteType::ABSTAIN);
         std::string failureReason;
         std::vector<CTransactionRef> txns;
-        if (!gov::SubmitVotes({vote}, GetWallets(), Params().GetConsensus(), txns, g_connman.get(), &failureReason))
+        if (!gov::SubmitVotes(votes, GetWallets(), Params().GetConsensus(), txns, g_connman.get(), &failureReason))
             QMessageBox::warning(this, tr("Vote Submission Issue"), QString::fromStdString(failureReason));
         else {// close dialog if no errors
             dialog->close();
@@ -619,65 +643,113 @@ void BlocknetProposals::setNumBlocks(int count, const QDateTime &blockDate, doub
     }
 }
 
+BlocknetProposals::BlocknetProposal BlocknetProposals::proposalForHash(const QString & propHash) {
+    const auto & hash = uint256S(propHash.toStdString());
+    for (const auto & proposal : filteredData) {
+        if (proposal.hash == hash)
+            return proposal;
+    }
+    return BlocknetProposal{};
+}
+
 /**
  * Dialog that manages the vote submission for the specified proposal.
  * @param proposal Proposal that's being voting on
  * @param parent Optional parent widget to attach to
  */
-BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(const BlocknetProposals::BlocknetProposal &proposal,
+BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(QVector<BlocknetProposals::BlocknetProposal> proposals,
         int displayUnit, QWidget *parent) : QDialog(parent)
 {
     auto *layout = new QVBoxLayout;
     layout->setContentsMargins(BGU::spi(30), BGU::spi(10), BGU::spi(30), BGU::spi(10));
     this->setLayout(layout);
-    this->setMinimumWidth(BGU::spi(550));
-    this->setWindowTitle(tr("Vote on Proposal"));
+    this->setMinimumWidth(BGU::spi(650));
+    this->setWindowTitle(tr("Voting"));
 
-    // Find the stored proposal
-    QString url = proposal.url;
-    QString amount = BitcoinUnits::floorWithUnit(displayUnit, proposal.amount);
-    QString superblock = QString::number(proposal.superblock);
-
-    auto *titleLbl = new QLabel(tr("Vote on %1").arg(proposal.name));
+    auto *titleLbl = new QLabel(tr("Vote on Proposals"));
     titleLbl->setObjectName("h2");
     titleLbl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 
-    auto *descBox = new QFrame;
-    descBox->setContentsMargins(QMargins());
-    descBox->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-    auto *descBoxLayout = new QGridLayout;
-    descBoxLayout->setContentsMargins(QMargins());
-    descBox->setLayout(descBoxLayout);
-    auto *superblockLbl = new QLabel(tr("Superblock"));   superblockLbl->setObjectName("description");
-    auto *superblockVal = new QLabel(superblock);         superblockVal->setObjectName("value"); superblockVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    auto *urlLbl = new QLabel(tr("Url"));                urlLbl->setObjectName("description");
-    auto *urlVal = new QLabel(url);                       urlVal->setObjectName("value"); urlVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
-    auto amountStr = BitcoinUnits::floorWithUnit(displayUnit, proposal.amount);
-    auto *amountLbl = new QLabel(tr("Amount"));           amountLbl->setObjectName("description");
-    auto *amountVal = new QLabel(amountStr);              amountVal->setObjectName("value");
-    auto *descLbl = new  QLabel(tr("Description"));       descLbl->setObjectName("description");
-    auto *descVal = new QLabel(proposal.description);     descVal->setObjectName("value"); descVal->setWordWrap(true);
-    auto *pl = new QLabel;
-    descBoxLayout->addWidget(superblockLbl, 0, 0);    descBoxLayout->addWidget(superblockVal, 0, 1);   descBoxLayout->addWidget(pl, 0, 2); descBoxLayout->setRowMinimumHeight(0, 22);
-    descBoxLayout->addWidget(urlLbl, 1, 0);           descBoxLayout->addWidget(urlVal, 1, 1);          descBoxLayout->addWidget(pl, 1, 2); descBoxLayout->setRowMinimumHeight(1, 22);
-    descBoxLayout->addWidget(amountLbl, 2, 0);        descBoxLayout->addWidget(amountVal, 2, 1);       descBoxLayout->addWidget(pl, 2, 2); descBoxLayout->setRowMinimumHeight(2, 22);
-    descBoxLayout->addWidget(descLbl, 3, 0);          descBoxLayout->addWidget(descVal, 3, 1);         descBoxLayout->addWidget(pl, 3, 2); descBoxLayout->setRowMinimumHeight(3, 22);
-    descBoxLayout->setColumnStretch(2, 1);
+    auto *proposalGrid = new QFrame;
+    proposalGrid->setObjectName("contentFrame");
+    proposalGrid->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    auto *gridLayout = new QGridLayout;
+    gridLayout->setContentsMargins(QMargins());
+    gridLayout->setVerticalSpacing(BGU::spi(8));
+    proposalGrid->setLayout(gridLayout);
 
-    auto *choiceBox = new QFrame;
-    choiceBox->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
-    auto *choiceBoxLayout = new QHBoxLayout;
-    choiceBoxLayout->setContentsMargins(QMargins());
-    choiceBoxLayout->setSpacing(BGU::spi(20));
-    choiceBox->setLayout(choiceBoxLayout);
-    auto *approveLbl = new QLabel(tr("Do you approve?"));
-    approveLbl->setObjectName("h5");
-    auto *yesRb = new QRadioButton(tr("Yes"));
-    auto *noRb = new QRadioButton(tr("No"));
-    auto *abstainRb = new QRadioButton(tr("Abstain"));
-    choiceBoxLayout->addWidget(yesRb);
-    choiceBoxLayout->addWidget(noRb);
-    choiceBoxLayout->addWidget(abstainRb);
+    auto *scrollArea = new QScrollArea;
+    scrollArea->setWidgetResizable(true);
+    scrollArea->setContentsMargins(QMargins());
+    scrollArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    scrollArea->setWidget(proposalGrid);
+    scrollArea->setMinimumHeight(BGU::spi(250));
+
+    auto *nameLbl = new QLabel(tr("Proposal"));           nameLbl->setObjectName("description");
+    auto *superblockLbl = new QLabel(tr("Superblock"));   superblockLbl->setObjectName("description");
+    auto *amountLbl = new QLabel(tr("Amount"));           amountLbl->setObjectName("description");
+    auto *approveLbl = new QLabel(tr("Do you approve?")); approveLbl->setObjectName("description");
+    auto *pl = new QLabel;
+    auto *headerDiv = new BlocknetHDiv; headerDiv->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    gridLayout->addWidget(nameLbl,        0, 0, Qt::AlignTop | Qt::AlignLeft);
+    gridLayout->addWidget(superblockLbl,  0, 1, Qt::AlignTop | Qt::AlignLeft);
+    gridLayout->addWidget(amountLbl,      0, 2, Qt::AlignTop | Qt::AlignLeft);
+    gridLayout->addWidget(pl,             0, 3); gridLayout->setColumnStretch(3, 1);
+    gridLayout->addWidget(approveLbl,     0, 4, Qt::AlignTop | Qt::AlignCenter);
+    gridLayout->addWidget(pl,             0, 5); gridLayout->setColumnMinimumWidth(5, BGU::spi(5));
+    gridLayout->addWidget(headerDiv,      1, 0, 1, 5, Qt::AlignTop);
+    gridLayout->setVerticalSpacing(BGU::spi(8));
+    gridLayout->setHorizontalSpacing(BGU::spi(15));
+
+    int row = 2; // account for header + div rows
+
+    std::sort(proposals.begin(), proposals.end(), [](const BlocknetProposals::BlocknetProposal & a, const BlocknetProposals::BlocknetProposal & b) -> bool {
+        return a.superblock < b.superblock; // ascending (later proposals last)
+    });
+    for (int i = 0; i < proposals.size(); ++i) {
+        const auto & proposal = proposals[i];
+        QString amount = BitcoinUnits::floorWithUnit(displayUnit, proposal.amount);
+        QString superblock = QString::number(proposal.superblock);
+        auto *nameVal = new QLabel(proposal.name);    nameVal->setObjectName("value");       nameVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        auto *superblockVal = new QLabel(superblock); superblockVal->setObjectName("value"); superblockVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        auto *amountVal = new QLabel(amount);         amountVal->setObjectName("value");     amountVal->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+        auto *approveBox = new QFrame;
+        auto *approveBoxLayout = new QVBoxLayout;
+        approveBox->setContentsMargins(QMargins());
+        approveBox->setLayout(approveBoxLayout);
+        auto *rbBoxLayout = new QHBoxLayout;
+        rbBoxLayout->setSpacing(BGU::spi(20));
+        auto *yesRb = new QRadioButton(tr("Yes"));
+        auto *noRb = new QRadioButton(tr("No"));
+        auto *abstainRb = new QRadioButton(tr("Abstain"));
+        auto *group = new QButtonGroup;
+        group->addButton(yesRb, 0);
+        group->addButton(noRb, 1);
+        group->addButton(abstainRb, 2);
+        rbBoxLayout->addWidget(yesRb);
+        rbBoxLayout->addWidget(noRb);
+        rbBoxLayout->addWidget(abstainRb);
+        approveBoxLayout->addLayout(rbBoxLayout);
+
+        gridLayout->addWidget(nameVal,        row, 0);
+        gridLayout->addWidget(superblockVal,  row, 1);
+        gridLayout->addWidget(amountVal,      row, 2);
+        gridLayout->addWidget(pl,             row, 3);
+        gridLayout->addWidget(approveBox,     row, 4);
+        gridLayout->addWidget(pl,             row, 5);
+        auto *div = new BlocknetHDiv; div->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        gridLayout->addWidget(div, row+1, 0, 1, 5, Qt::AlignTop);
+
+        // Store ref to button groups
+        approveButtons[proposal.hash] = group;
+
+        row += 2;
+    }
+    // Grid should be condensed, put remaining space after last item
+    gridLayout->setRowStretch(row, 1);
 
     auto *voteDescBox = new QFrame;
     auto *voteDescBoxLayout = new QVBoxLayout;
@@ -686,40 +758,14 @@ BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(const BlocknetProposals
     voteDescBox->setLayout(voteDescBoxLayout);
     auto *voteTitleLbl = new QLabel(tr("Network Fee"));
     voteTitleLbl->setObjectName("h5");
-    auto *voteDescLbl = new QLabel(tr("Casting a vote will submit a transaction to the network where you'll be charged "
-                                      "a minimal network fee in order to secure your vote on-chain."));
+    auto *voteDescLbl = new QLabel(tr("Casting votes will submit a transaction to the network where you'll be charged "
+                                      "a minimal network fee in order to secure your vote on-chain. The ideal way to "
+                                      "vote is to put a small 1 BLOCK UTXO in each voting address so that this is used "
+                                      "to pay the network fee (instead of larger voting inputs)."));
     voteDescLbl->setWordWrap(true);
     voteDescLbl->setObjectName("description");
     voteDescBoxLayout->addWidget(voteTitleLbl);
     voteDescBoxLayout->addWidget(voteDescLbl);
-
-    auto *voteInfoBox = new QFrame;
-    voteInfoBox->setContentsMargins(QMargins());
-    auto *voteInfoBoxLayout = new QGridLayout;
-    voteInfoBoxLayout->setContentsMargins(QMargins());
-    voteInfoBox->setLayout(voteInfoBoxLayout);
-    auto *voteInfoLbl = new QLabel(tr("Your Vote Information"));                                                                   voteInfoLbl->setObjectName("h5");
-    auto *voteInfoCoinLbl = new QLabel(tr("Active Vote Amount on this Proposal"));                                                 voteInfoCoinLbl->setObjectName("description");
-    auto *voteInfoCoinVal = new QLabel(BitcoinUnits::formatWithUnit(BitcoinUnits::BTC, proposal.voteAmount));                      voteInfoCoinVal->setObjectName("value");
-    auto *voteInfoReqLbl = new QLabel(tr("Required Amount per Vote"));                                                             voteInfoReqLbl->setObjectName("description");
-    auto *voteInfoReqVal = new QLabel(BitcoinUnits::floorWithUnit(BitcoinUnits::BTC, Params().GetConsensus().voteBalance));        voteInfoReqVal->setObjectName("value");
-    auto *voteInfoVotesLbl = new QLabel(tr("Total Votes Counted"));                                                                voteInfoVotesLbl->setObjectName("description");
-    auto *voteInfoVotesVal = new QLabel(QString::number(proposal.voteAmount/Params().GetConsensus().voteBalance));                 voteInfoVotesVal->setObjectName("value");
-    auto *voteInfoMinLbl = new QLabel(tr("Smallest UTXO Used in Voting"));                                                         voteInfoMinLbl->setObjectName("description");
-    auto *voteInfoMinVal = new QLabel(BitcoinUnits::floorWithUnit(BitcoinUnits::BTC, Params().GetConsensus().voteMinUtxoAmount));  voteInfoMinVal->setObjectName("value");
-    auto *voteInfoNotesLbl = new QLabel(tr("Reminder* votes are tied to unspent coin, if coin is spent it can cause "
-                                           "votes to be invalidated."));                                                           voteInfoNotesLbl->setObjectName("description");
-    voteInfoNotesLbl->setWordWrap(true);
-    voteInfoBoxLayout->addWidget(voteInfoCoinLbl, 0, 0);
-    voteInfoBoxLayout->addWidget(voteInfoCoinVal, 0, 1);
-    voteInfoBoxLayout->addWidget(voteInfoReqLbl, 1, 0);
-    voteInfoBoxLayout->addWidget(voteInfoReqVal, 1, 1);
-    voteInfoBoxLayout->addWidget(voteInfoVotesLbl, 2, 0);
-    voteInfoBoxLayout->addWidget(voteInfoVotesVal, 2, 1);
-    voteInfoBoxLayout->addWidget(voteInfoMinLbl, 3, 0);
-    voteInfoBoxLayout->addWidget(voteInfoMinVal, 3, 1);
-    voteInfoBoxLayout->addWidget(new QLabel, 4, 0, 1, 2);
-    voteInfoBoxLayout->addWidget(voteInfoNotesLbl, 5, 0, 1, 2);
 
     auto *btnBox = new QFrame;
     btnBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
@@ -728,7 +774,7 @@ BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(const BlocknetProposals
     btnBoxLayout->setSpacing(BGU::spi(15));
     btnBox->setLayout(btnBoxLayout);
     auto *voteBtn = new BlocknetFormBtn;
-    voteBtn->setText(tr("Vote"));
+    voteBtn->setText(tr("Submit Votes"));
     auto *cancelBtn = new BlocknetFormBtn;
     cancelBtn->setObjectName("cancel");
     cancelBtn->setText(tr("Cancel"));
@@ -736,42 +782,32 @@ BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(const BlocknetProposals
     btnBoxLayout->addWidget(voteBtn, 0, Qt::AlignLeft | Qt::AlignBottom);
 
     auto *div1 = new BlocknetHDiv;
-    auto *div2 = new BlocknetHDiv;
-    auto *div3 = new BlocknetHDiv;
-    auto *div4 = new BlocknetHDiv;
 
     layout->addSpacing(BGU::spi(20));
     layout->addWidget(titleLbl);
     layout->addSpacing(BGU::spi(10));
-    layout->addWidget(descBox);
-    layout->addSpacing(BGU::spi(10));
-    layout->addWidget(div1);
-    layout->addSpacing(BGU::spi(10));
-    layout->addWidget(approveLbl);
-    layout->addSpacing(BGU::spi(10));
-    layout->addWidget(choiceBox);
-    layout->addSpacing(BGU::spi(10));
-    layout->addWidget(div2);
-    layout->addSpacing(BGU::spi(10));
+    layout->addWidget(scrollArea, 1);
+    layout->addSpacing(BGU::spi(20));
     layout->addWidget(voteDescBox);
     layout->addSpacing(BGU::spi(10));
-    layout->addWidget(div3);
-    layout->addWidget(voteInfoLbl);
-    layout->addSpacing(BGU::spi(10));
-    layout->addWidget(voteInfoBox);
-    layout->addSpacing(BGU::spi(10));
-    layout->addWidget(div4);
-    layout->addSpacing(BGU::spi(20));
-    layout->addStretch(1);
     layout->addWidget(btnBox);
     layout->addSpacing(BGU::spi(10));
 
-    connect(voteBtn, &BlocknetFormBtn::clicked, this, [this, proposal, yesRb, noRb, abstainRb]() {
-        if (!yesRb->isChecked() && !noRb->isChecked() && !abstainRb->isChecked()) {
+    connect(voteBtn, &BlocknetFormBtn::clicked, this, [this]() {
+        std::vector<gov::ProposalVote> votes;
+        for (const auto & item : approveButtons) {
+            const int bid = item.second->checkedId();
+            if (bid >= 0) { // skip non-voting proposals
+                const auto & proposal = gov::Governance::instance().getProposal(item.first);
+                if (!proposal.isNull())
+                    votes.emplace_back(proposal, bid == 0 ? gov::VoteType::YES : bid == 1 ? gov::VoteType::NO : gov::VoteType::ABSTAIN);
+            }
+        }
+        if (votes.empty()) {
             QMessageBox::critical(this, tr("Failed to vote"), tr("Please select a vote option (Yes, No, Abstain)"));
             return;
         }
-        Q_EMIT submitVote(proposal.hash, yesRb->isChecked(), noRb->isChecked(), abstainRb->isChecked());
+        Q_EMIT submitVotes(votes);
     });
     connect(cancelBtn, &BlocknetFormBtn::clicked, this, [this]() {
         close();
@@ -856,7 +892,7 @@ BlocknetProposalsDetailsDialog::BlocknetProposalsDetailsDialog(const BlocknetPro
     auto *voteMsgNotesLbl = new QLabel(tr("Votes are associated with unspent coin. Spending coin after casting votes may "
                                           "cause those votes to be invalidated. Only p2pkh or p2pk inputs can be used in "
                                           "votes. Casting votes submits transactions to the network and as a result will "
-                                          "incur minimal network fees. The ideal way to vote is to put a small 0.01 UTXO "
+                                          "incur minimal network fees. The ideal way to vote is to put a small 1 BLOCK UTXO "
                                           "in each voting address so that this is used to pay the network fee (instead of "
                                           "larger voting inputs). Any voting inputs used to pay for network fees will not "
                                           "be counted towards a proposal vote."));
