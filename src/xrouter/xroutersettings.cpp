@@ -147,16 +147,16 @@ bool XRouterSettings::init(const boost::filesystem::path & configPath) {
 
 bool XRouterSettings::init(const std::string & config) {
     if (!read(config)) {
-        ERR() << "Failed to read xrouter config " << config;
+//        ERR() << "Failed to read xrouter config " << config;
         return false;
     }
     if (host(xrDefault).empty()) {
-        ERR() << "Failed to read xrouter config, missing \"host\" entry " << config;
+//        ERR() << "Failed to read xrouter config, missing \"host\" entry " << config;
         return false;
     }
     CNetAddr caddr;
     if (!LookupHost(host(xrDefault).c_str(), caddr, true)) {
-        ERR() << "Failed to read xrouter config, bad \"host\" entry " << config;
+//        ERR() << "Failed to read xrouter config, bad \"host\" entry " << config;
         return false;
     }
     addr = CService(caddr, port(xrDefault));
