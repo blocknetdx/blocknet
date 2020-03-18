@@ -646,6 +646,8 @@ bool RevoteOnStake(const int & stakedHeight, const COutPoint & utxo, const CKey 
 
     CMutableTransaction votetx;
     CCoinControl cc;
+    if (IsNetworkFeesEnabled(chainActive.Tip(), params))
+        cc.m_zero_fee = true;
     cc.fAllowOtherInputs = false;
     cc.destChange = CTxDestination(key.GetPubKey().GetID()); // pay change to address of staking utxo
     // Select first voting input
