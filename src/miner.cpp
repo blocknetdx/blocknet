@@ -342,12 +342,13 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
         }
     };
 
-    // Calculate network fee for coinbase/coinstake txs
-    signInput(coinstakeTx, keystore); // add signature
-    const auto coinbaseBytes = ::GetSerializeSize(coinbaseTx, PROTOCOL_VERSION);
-    const auto coinstakeBytes = ::GetSerializeSize(coinstakeTx, PROTOCOL_VERSION);
-    CAmount estimatedNetworkFee = static_cast<CAmount>(::minRelayTxFee.GetFee(coinbaseBytes) + ::minRelayTxFee.GetFee(coinstakeBytes));
-    coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount - estimatedNetworkFee, paymentScript); // staker payment w/ network fee taken out
+    if (!feesEnabled) { // Calculate network fee for coinbase/coinstake txs if fees are not enabled
+        signInput(coinstakeTx, keystore); // add signature for sole purpose of computing accurate network fee
+        const auto coinbaseBytes = ::GetSerializeSize(coinbaseTx, PROTOCOL_VERSION);
+        const auto coinstakeBytes = ::GetSerializeSize(coinstakeTx, PROTOCOL_VERSION);
+        CAmount estimatedNetworkFee = static_cast<CAmount>(::minRelayTxFee.GetFee(coinbaseBytes) + ::minRelayTxFee.GetFee(coinstakeBytes));
+        coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount - estimatedNetworkFee, paymentScript); // staker payment w/ network fee taken out
+    }
     signInput(coinstakeTx, keystore); // resign with correct fee estimation
 
     // Assign coinstake tx
