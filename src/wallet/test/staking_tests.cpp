@@ -599,6 +599,24 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         BOOST_CHECK_MESSAGE(g_txindex->BestBlockIndex()->GetBlockHash() == chainActive.Tip()->GetBlockHash(), "global txindex failed to update on stake");
     }
 
+    // Check -staketoaddress
+    {
+        CKey stakeToKey; stakeToKey.MakeNewKey(true);
+        BOOST_CHECK(wallet->LoadKey(stakeToKey, stakeToKey.GetPubKey()));
+        gArgs.ForceSetArg("-staketoaddress", EncodeDestination(GetDestinationForKey(stakeToKey.GetPubKey(), OutputType::LEGACY)));
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
+        auto blocktemplate = BlockAssembler(Params()).CreateNewBlockPoS(*nextStake.coin, nextStake.hashBlock, nextStake.time, nextStake.blockTime, nextStake.wallet.get(), false);
+        CBlock block = blocktemplate->block;
+        BOOST_CHECK_MESSAGE(block.vtx[1]->vout[1].nValue == nextStake.coin->txout.nValue, "Stake-to-address expecting no stake reward on the coinstake");
+        auto stakeReward = Params().GetConsensus().GetBlockSubsidy(chainActive.Height(), Params().GetConsensus());
+        BOOST_CHECK_MESSAGE(stakeReward == block.vtx[1]->vout[2].nValue, "Stake-to-address payment should match expected stake reward");
+        auto success = ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr);
+        BOOST_CHECK_MESSAGE(success, "Stake-to-address block should be accepted in ProcessNewBlock");
+        gArgs.ForceSetArg("-staketoaddress", "");
+        StakeBlocks(1), SyncWithValidationInterfaceQueue();
+    }
+
     // TODO Blocknet PoS unit test for p2pkh stakes
 }
 
