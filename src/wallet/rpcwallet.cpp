@@ -4147,7 +4147,7 @@ UniValue walletcreatefundedpsbt(const JSONRPCRequest& request)
 
 static UniValue splitbalance(const JSONRPCRequest& request)
 {
-    if (request.fHelp || (request.params.empty() || request.params.size() > 2))
+    if (request.fHelp || (request.params.empty() || request.params.size() > 3))
         throw std::runtime_error(
             RPCHelpMan{"splitbalance",
                 "\nFinds all the utxos in the specified address and splits them into equal amounts specified by amount. "
@@ -4155,6 +4155,7 @@ static UniValue splitbalance(const JSONRPCRequest& request)
                 {
                     {"amount", RPCArg::Type::NUM, RPCArg::Optional::NO, "Split balance into utxos of this amount."},
                     {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "Split balance in this address."},
+                    {"hex_only", RPCArg::Type::BOOL, RPCArg::Optional::OMITTED, "false", "Return the transaction hex only, does not submit transaction."},
                 },
                 RPCResult{
             "{\n"
@@ -4168,7 +4169,8 @@ static UniValue splitbalance(const JSONRPCRequest& request)
             "  \"inputs_not_consumed_amount\": 0.00000000, (total inputs amount not consumed)\n"
             "  \"outputs_not_created\": 0,                 (outputs that weren't created)\n"
             "  \"outputs_not_created_amount\": 0.00000000, (total outputs amount that wasn't created)\n"
-            "  \"msgs\": \"xxxx\"\n"
+            "  \"msgs\": \"xxxx\"                          (any useful messages)\n"
+            "  \"hex\": \"xxxx\"                           (raw transaction hex if hex_only is specified)\n"
             "}\n"
                 },
                 RPCExamples{
@@ -4178,16 +4180,19 @@ static UniValue splitbalance(const JSONRPCRequest& request)
                 + HelpExampleRpc("splitbalance", "80.05, \"BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j\"")
                 + HelpExampleCli("splitbalance", "500 BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j")
                 + HelpExampleRpc("splitbalance", "500, \"BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j\"")
+                + HelpExampleCli("splitbalance", "500 BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j true")
+                + HelpExampleRpc("splitbalance", "500, \"BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j\", true")
                 },
             }.ToString());
 
     const auto amount = request.params[0].get_real();
     const auto camount = static_cast<CAmount>(amount * COIN);
+    const auto saddr = request.params[1].get_str();
+    const auto hex_only = request.params[2].isNull() ? false : request.params[2].get_bool();
 
     if (camount < 6000) // Check dust
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Amount %s BLOCK is too small", FormatMoney(camount)));
 
-    const auto saddr = request.params[1].get_str();
     if (!IsValidDestinationString(saddr))
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad address [%s]", saddr));
     const auto sdest = DecodeDestination(saddr);
@@ -4257,6 +4262,8 @@ static UniValue splitbalance(const JSONRPCRequest& request)
             result.pushKV("outputs_not_created_amount", ValueFromAmount(total));
             result.pushKV("msgs", strprintf("Unable to split remaining balance of %s BLOCK, already split "
                                             "%s BLOCK in address %s", FormatMoney(total), FormatMoney(inputsEqualSkippedAmount), saddr));
+            if (hex_only)
+                result.pushKV("hex", "");
             return result;
         }
 
@@ -4288,14 +4295,16 @@ static UniValue splitbalance(const JSONRPCRequest& request)
         if (!pwallet->CreateTransaction(*locked_chain, vouts, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
             throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to split balance: %s", strError));
 
-        // Send all voting transaction to the network. If there's a failure
-        // at any point in the process, bail out.
-        if (pwallet->GetBroadcastTransactions() && !g_connman)
-            throw JSONRPCError(RPC_MISC_ERROR, "Failed to split balance: Peer-to-peer functionality missing or disabled");
+        if (!hex_only) {
+            // Send all voting transaction to the network. If there's a failure
+            // at any point in the process, bail out.
+            if (pwallet->GetBroadcastTransactions() && !g_connman)
+                throw JSONRPCError(RPC_MISC_ERROR, "Failed to split balance: Peer-to-peer functionality missing or disabled");
 
-        CValidationState state;
-        if (!pwallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state))
-            throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to create split balance transaction, it was rejected: %s", FormatStateMessage(state)));
+            CValidationState state;
+            if (!pwallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state))
+                throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to create split balance transaction, it was rejected: %s", FormatStateMessage(state)));
+        }
 
         // Include unused change and non-consumed inputs
         const int allOutputsNotCreated = static_cast<int>((tx->vout[nChangePosRet].nValue+inputsNotConsumedAmount)/camount);
@@ -4315,9 +4324,11 @@ static UniValue splitbalance(const JSONRPCRequest& request)
             msgs.emplace_back("Too many inputs found, unable to fit in one transaction (run again)");
         if (outputsNotCreated > 0)
             msgs.emplace_back("Too many outputs found, unable to fit in one transaction (run again)");
-        if (msgs.empty())
+        if (msgs.empty() && !hex_only)
             msgs.emplace_back("Successfully created utxos, please wait for them to confirm on the network.");
         result.pushKV("msgs", boost::algorithm::join(msgs, ","));
+        if (hex_only)
+            result.pushKV("hex", EncodeHexTx(*tx, RPCSerializationFlags()));
         return result; // return here, do not process same address from other wallets to avoid duplicate txs
     }
 
@@ -4333,6 +4344,8 @@ static UniValue splitbalance(const JSONRPCRequest& request)
     result.pushKV("outputs_not_created", 0);
     result.pushKV("outputs_not_created_amount", 0);
     result.pushKV("msgs", strprintf("No wallet inputs found for address [%s]", saddr));
+    if (hex_only)
+        result.pushKV("hex", "");
     return result;
 }
 

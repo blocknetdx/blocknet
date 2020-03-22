@@ -149,6 +149,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "logging", 1, "exclude" },
     { "disconnectnode", 1, "nodeid" },
     { "splitbalance", 0, "amount" },
+    { "splitbalance", 2, "hex_only" },
     // Echo with conversion (For testing only)
     { "echojson", 0, "arg0" },
     { "echojson", 1, "arg1" },
