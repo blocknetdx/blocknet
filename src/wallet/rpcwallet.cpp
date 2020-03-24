@@ -4278,11 +4278,13 @@ static UniValue splitbalance(const JSONRPCRequest& request)
                 outputsNotCreatedAmount += camount;
                 continue; // track non-created outputs (this will go to change)
             }
-            if (isremainder) // Handler remainder
+            if (isremainder)
                 continue; // coin control handles remainder as change
-            else if (i == outs - 1)
+            else if (i == outs - 1) {
+                ++outputsNotCreated;
+                outputsNotCreatedAmount += camount;
                 vouts.push_back({GetScriptForDestination(sdest), camount, true}); // change on last vout when no remainder
-            else
+            } else
                 vouts.push_back({GetScriptForDestination(sdest), camount, false});
         }
 
@@ -4307,23 +4309,33 @@ static UniValue splitbalance(const JSONRPCRequest& request)
         }
 
         // Include unused change and non-consumed inputs
-        const int allOutputsNotCreated = static_cast<int>((tx->vout[nChangePosRet].nValue+inputsNotConsumedAmount)/camount);
+        const bool feeInLastVout = vouts.back().fSubtractFeeFromAmount;
+        // Handle case where coincontrol doesn't create change (due to subtract fee from last vout)
+        const int nonConsumedOutputsNotCreated = feeInLastVout ? 0 : static_cast<int>((tx->vout[nChangePosRet].nValue+inputsNotConsumedAmount)/camount);
+        // Fee in last vout indicates that we are not using coin control for change,
+        // rather we are using the last vout as change because there's not enough
+        // coin to create the last vout and pay the network fee.
+        const int outputsCreated = feeInLastVout ? (int)vouts.size() - 1 : (int)vouts.size();
+        const CAmount changeAmount = feeInLastVout ? tx->vout.back().nValue : tx->vout[nChangePosRet].nValue;
+
         UniValue result(UniValue::VOBJ);
         result.pushKV("inputs_consumed", inputs);
         result.pushKV("inputs_consumed_amount", ValueFromAmount(total));
-        result.pushKV("outputs_created", (int)vouts.size());
-        result.pushKV("outputs_created_amount", ValueFromAmount(vouts.size()*camount));
-        result.pushKV("change_amount", ValueFromAmount(tx->vout[nChangePosRet].nValue));
+        result.pushKV("outputs_created", outputsCreated);
+        result.pushKV("outputs_created_amount", ValueFromAmount(outputsCreated*camount));
+        result.pushKV("change_amount", ValueFromAmount(changeAmount));
         result.pushKV("fees", ValueFromAmount(nFeeRequired));
         result.pushKV("inputs_not_consumed", inputsNotConsumed);
         result.pushKV("inputs_not_consumed_amount", ValueFromAmount(inputsNotConsumedAmount));
-        result.pushKV("outputs_not_created", outputsNotCreated + allOutputsNotCreated);
-        result.pushKV("outputs_not_created_amount", ValueFromAmount(outputsNotCreatedAmount + allOutputsNotCreated*camount));
+        result.pushKV("outputs_not_created", outputsNotCreated + nonConsumedOutputsNotCreated);
+        result.pushKV("outputs_not_created_amount", ValueFromAmount(outputsNotCreatedAmount + nonConsumedOutputsNotCreated*camount));
         std::vector<std::string> msgs;
         if (inputsNotConsumed > 0)
-            msgs.emplace_back("Too many inputs found, unable to fit in one transaction (run again)");
-        if (outputsNotCreated > 0)
-            msgs.emplace_back("Too many outputs found, unable to fit in one transaction (run again)");
+            msgs.emplace_back("Too many inputs found, unable to fit in one transaction. Please run again.");
+        if (!feeInLastVout && outputsNotCreated > 0)
+            msgs.emplace_back("Too many outputs found, unable to fit in one transaction. Please run again.");
+        if (feeInLastVout && outputsNotCreated > 0)
+            msgs.emplace_back("Unable to create last output at the full amount. It was partially consumed to pay the network fee.");
         if (msgs.empty() && !hex_only)
             msgs.emplace_back("Successfully created utxos, please wait for them to confirm on the network.");
         result.pushKV("msgs", boost::algorithm::join(msgs, ","));
