@@ -123,8 +123,9 @@ BlocknetServiceNodes::BlocknetServiceNodes(QFrame *parent) : QFrame(parent), lay
     connect(table, &QTableWidget::cellDoubleClicked, this, [this](int row, int column) {
         if (row >= filteredData.size())
             return;
-        auto data = filteredData[row];
-        showServiceNodeDetails(data);
+        auto *pubkeyItem = table->item(row, COLUMN_PUBKEY);
+        if (pubkeyItem)
+            showServiceNodeDetails(serviceNodeForPubkey(pubkeyItem->data(Qt::DisplayRole).toString().toStdString()));
     });
     connect(table, &QTableWidget::customContextMenuRequested, this, &BlocknetServiceNodes::showContextMenu);
     connect(filterDd, &BlocknetDropdown::valueChanged, this, &BlocknetServiceNodes::onFilter);
@@ -132,8 +133,9 @@ BlocknetServiceNodes::BlocknetServiceNodes(QFrame *parent) : QFrame(parent), lay
     connect(viewDetails, &QAction::triggered, this, [this]() {
         if (contextItem == nullptr || contextItem->row() >= filteredData.size())
             return;
-        auto data = filteredData[contextItem->row()];
-        showServiceNodeDetails(data);
+        auto *pubkeyItem = table->item(contextItem->row(), COLUMN_PUBKEY);
+        if (pubkeyItem)
+            showServiceNodeDetails(serviceNodeForPubkey(pubkeyItem->data(Qt::DisplayRole).toString().toStdString()));
     });
     connect(copyPubKey, &QAction::triggered, this, [this]() {
         if (contextItem == nullptr)
@@ -415,6 +417,14 @@ void BlocknetServiceNodes::setNumBlocks(int count, const QDateTime & blockDate, 
         initialize();
         onFilter();
     }
+}
+
+sn::ServiceNode BlocknetServiceNodes::serviceNodeForPubkey(const std::string & hex) {
+    for (const auto & snode : filteredData) {
+        if (HexStr(snode.getSnodePubKey()) == hex)
+            return snode;
+    }
+    return sn::ServiceNode{};
 }
 
 /**
