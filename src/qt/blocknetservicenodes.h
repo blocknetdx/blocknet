@@ -75,6 +75,7 @@ private:
     void watch();
     void refresh(bool force = false);
     void showContextMenu(QPoint pt);
+    sn::ServiceNode serviceNodeForPubkey(const std::string & hex);
 
     enum {
         COLUMN_PRIVKEY, // hidden
