@@ -42,7 +42,10 @@
 
 #include <univalue.h>
 
+#include <cmath>
 #include <functional>
+
+#include <boost/algorithm/string/join.hpp>
 
 static const std::string WALLET_ENDPOINT_BASE = "/wallet/";
 
@@ -4142,6 +4145,222 @@ UniValue walletcreatefundedpsbt(const JSONRPCRequest& request)
     return result;
 }
 
+static UniValue splitbalance(const JSONRPCRequest& request)
+{
+    if (request.fHelp || (request.params.empty() || request.params.size() > 3))
+        throw std::runtime_error(
+            RPCHelpMan{"splitbalance",
+                "\nFinds all the utxos in the specified address and splits them into equal amounts specified by amount. "
+                "Any change that wasn't split is paid back to the same address.\n",
+                {
+                    {"amount", RPCArg::Type::NUM, RPCArg::Optional::NO, "Split balance into utxos of this amount."},
+                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "Split balance in this address."},
+                    {"hex_only", RPCArg::Type::BOOL, RPCArg::Optional::OMITTED, "false", "Return the transaction hex only, does not submit transaction."},
+                },
+                RPCResult{
+            "{\n"
+            "  \"inputs_consumed\": 1,                     (total number of consumed inputs)\n"
+            "  \"inputs_consumed_amount\": 819.99135650,   (total consumed inputs amount)\n"
+            "  \"outputs_created\": 163,                   (total number of created outputs)\n"
+            "  \"outputs_created_amount\": 815.00000000,   (total amount of created outputs)\n"
+            "  \"change_amount\": 4.99078320,              (leftover paid back as change)\n"
+            "  \"fees\": 0.00057330,                       (network fees paid to submit this transaction)\n"
+            "  \"inputs_not_consumed\": 0,                 (inputs that were not consumed)\n"
+            "  \"inputs_not_consumed_amount\": 0.00000000, (total inputs amount not consumed)\n"
+            "  \"outputs_not_created\": 0,                 (outputs that weren't created)\n"
+            "  \"outputs_not_created_amount\": 0.00000000, (total outputs amount that wasn't created)\n"
+            "  \"msgs\": \"xxxx\"                          (any useful messages)\n"
+            "  \"hex\": \"xxxx\"                           (raw transaction hex if hex_only is specified)\n"
+            "}\n"
+                },
+                RPCExamples{
+                  HelpExampleCli("splitbalance", "500 BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j")
+                + HelpExampleRpc("splitbalance", "500, \"BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j\"")
+                + HelpExampleCli("splitbalance", "80.05 BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j")
+                + HelpExampleRpc("splitbalance", "80.05, \"BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j\"")
+                + HelpExampleCli("splitbalance", "500 BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j")
+                + HelpExampleRpc("splitbalance", "500, \"BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j\"")
+                + HelpExampleCli("splitbalance", "500 BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j true")
+                + HelpExampleRpc("splitbalance", "500, \"BeDQzBfouG1WxE9ArLc43uibF8Gk4HYv3j\", true")
+                },
+            }.ToString());
+
+    const auto amount = request.params[0].get_real();
+    const auto camount = static_cast<CAmount>(amount * COIN);
+    const auto saddr = request.params[1].get_str();
+    const auto hex_only = request.params[2].isNull() ? false : request.params[2].get_bool();
+
+    if (camount < 6000) // Check dust
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Amount %s BLOCK is too small", FormatMoney(camount)));
+
+    if (!IsValidDestinationString(saddr))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad address [%s]", saddr));
+    const auto sdest = DecodeDestination(saddr);
+    if (boost::get<CNoDestination>(&sdest))
+        throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Bad address decode [%s]", saddr));
+
+    const int maxInputs{250};
+    const int maxOutputs{250};
+
+    auto wallets = GetWallets();
+    for (const auto & pwallet : wallets) {
+        pwallet->BlockUntilSyncedToCurrentChain();
+        auto locked_chain = pwallet->chain().lock();
+        LOCK(pwallet->cs_wallet);
+
+        int inputs{0};
+        CAmount total{0};
+        int inputsNotConsumed{0};
+        CAmount inputsNotConsumedAmount{0};
+        int outputsNotCreated{0};
+        CAmount outputsNotCreatedAmount{0};
+        CAmount inputsEqualSkippedAmount{0};
+
+        std::vector<COutput> cs;
+        pwallet->AvailableCoins(*locked_chain, cs);
+
+        CCoinControl cc;
+        cc.fAllowOtherInputs = false;
+        cc.destChange = sdest; // let coin control handle change
+        for (const auto & coin : cs) {
+            if (coin.GetInputCoin().txout.scriptPubKey != GetScriptForDestination(sdest))
+                continue;
+            if (coin.GetInputCoin().txout.nValue == camount) {
+                inputsEqualSkippedAmount += coin.GetInputCoin().txout.nValue;
+                continue; // Skip inputs that already match expected
+            }
+            if (inputs >= maxInputs) {
+                ++inputsNotConsumed;
+                inputsNotConsumedAmount += coin.GetInputCoin().txout.nValue;
+                continue; // track non-consumed inputs
+            }
+            cc.Select(coin.GetInputCoin().outpoint);
+            total += coin.GetInputCoin().txout.nValue;
+            ++inputs;
+        }
+
+        if (total <= 0)
+            continue; // no coins, skip
+
+        EnsureWalletIsUnlocked(pwallet.get());
+
+        if (total < camount && inputsEqualSkippedAmount == 0) // not enough coin in saddr
+            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Unable to split balance into %s BLOCK increments, wallet "
+                                                                "only has %s BLOCK in address %s", FormatMoney(camount), FormatMoney(total), saddr));
+
+        if (total < camount && inputsEqualSkippedAmount > 0) { // Already split as many inputs as possible
+            UniValue result(UniValue::VOBJ);
+            result.pushKV("inputs_consumed", 0);
+            result.pushKV("inputs_consumed_amount", 0);
+            result.pushKV("outputs_created", 0);
+            result.pushKV("outputs_created_amount", 0);
+            result.pushKV("change_amount", 0);
+            result.pushKV("fees", 0);
+            result.pushKV("inputs_not_consumed", 0);
+            result.pushKV("inputs_not_consumed_amount", 0);
+            result.pushKV("outputs_not_created", inputs);
+            result.pushKV("outputs_not_created_amount", ValueFromAmount(total));
+            result.pushKV("msgs", strprintf("Unable to split remaining balance of %s BLOCK, already split "
+                                            "%s BLOCK in address %s", FormatMoney(total), FormatMoney(inputsEqualSkippedAmount), saddr));
+            if (hex_only)
+                result.pushKV("hex", "");
+            return result;
+        }
+
+        // Coin control vouts. Let coin control handle change
+        // (which in this case is the remainder of the balance that wasn't split)
+        const int outs = std::ceil((double)total / (double)camount);
+        std::vector<CRecipient> vouts; vouts.reserve(outs);
+        for (int i = 0; i < outs; ++i) {
+            bool isremainder = i == outs - 1 && total % camount != 0;
+            if (vouts.size() >= maxOutputs && !isremainder) {
+                ++outputsNotCreated;
+                outputsNotCreatedAmount += camount;
+                continue; // track non-created outputs (this will go to change)
+            }
+            if (isremainder)
+                continue; // coin control handles remainder as change
+            else if (i == outs - 1) {
+                ++outputsNotCreated;
+                outputsNotCreatedAmount += camount;
+                vouts.push_back({GetScriptForDestination(sdest), camount, true}); // change on last vout when no remainder
+            } else
+                vouts.push_back({GetScriptForDestination(sdest), camount, false});
+        }
+
+        // Create and send the transaction
+        CReserveKey reservekey(pwallet.get());
+        CAmount nFeeRequired;
+        int nChangePosRet = -1;
+        std::string strError;
+        CTransactionRef tx;
+        if (!pwallet->CreateTransaction(*locked_chain, vouts, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
+            throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to split balance: %s", strError));
+
+        if (!hex_only) {
+            // Send all voting transaction to the network. If there's a failure
+            // at any point in the process, bail out.
+            if (pwallet->GetBroadcastTransactions() && !g_connman)
+                throw JSONRPCError(RPC_MISC_ERROR, "Failed to split balance: Peer-to-peer functionality missing or disabled");
+
+            CValidationState state;
+            if (!pwallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state))
+                throw JSONRPCError(RPC_MISC_ERROR, strprintf("Failed to create split balance transaction, it was rejected: %s", FormatStateMessage(state)));
+        }
+
+        // Include unused change and non-consumed inputs
+        const bool feeInLastVout = vouts.back().fSubtractFeeFromAmount;
+        // Handle case where coincontrol doesn't create change (due to subtract fee from last vout)
+        const int nonConsumedOutputsNotCreated = feeInLastVout ? 0 : static_cast<int>((tx->vout[nChangePosRet].nValue+inputsNotConsumedAmount)/camount);
+        // Fee in last vout indicates that we are not using coin control for change,
+        // rather we are using the last vout as change because there's not enough
+        // coin to create the last vout and pay the network fee.
+        const int outputsCreated = feeInLastVout ? (int)vouts.size() - 1 : (int)vouts.size();
+        const CAmount changeAmount = feeInLastVout ? tx->vout.back().nValue : tx->vout[nChangePosRet].nValue;
+
+        UniValue result(UniValue::VOBJ);
+        result.pushKV("inputs_consumed", inputs);
+        result.pushKV("inputs_consumed_amount", ValueFromAmount(total));
+        result.pushKV("outputs_created", outputsCreated);
+        result.pushKV("outputs_created_amount", ValueFromAmount(outputsCreated*camount));
+        result.pushKV("change_amount", ValueFromAmount(changeAmount));
+        result.pushKV("fees", ValueFromAmount(nFeeRequired));
+        result.pushKV("inputs_not_consumed", inputsNotConsumed);
+        result.pushKV("inputs_not_consumed_amount", ValueFromAmount(inputsNotConsumedAmount));
+        result.pushKV("outputs_not_created", outputsNotCreated + nonConsumedOutputsNotCreated);
+        result.pushKV("outputs_not_created_amount", ValueFromAmount(outputsNotCreatedAmount + nonConsumedOutputsNotCreated*camount));
+        std::vector<std::string> msgs;
+        if (inputsNotConsumed > 0)
+            msgs.emplace_back("Too many inputs found, unable to fit in one transaction. Please run again.");
+        if (!feeInLastVout && outputsNotCreated > 0)
+            msgs.emplace_back("Too many outputs found, unable to fit in one transaction. Please run again.");
+        if (feeInLastVout && outputsNotCreated > 0)
+            msgs.emplace_back("Unable to create last output at the full amount. It was partially consumed to pay the network fee.");
+        if (msgs.empty() && !hex_only)
+            msgs.emplace_back("Successfully created utxos, please wait for them to confirm on the network.");
+        result.pushKV("msgs", boost::algorithm::join(msgs, ","));
+        if (hex_only)
+            result.pushKV("hex", EncodeHexTx(*tx, RPCSerializationFlags()));
+        return result; // return here, do not process same address from other wallets to avoid duplicate txs
+    }
+
+    UniValue result(UniValue::VOBJ);
+    result.pushKV("inputs_consumed", 0);
+    result.pushKV("inputs_consumed_amount", 0);
+    result.pushKV("outputs_created", 0);
+    result.pushKV("outputs_created_amount", 0);
+    result.pushKV("change_amount", 0);
+    result.pushKV("fees", 0);
+    result.pushKV("inputs_not_consumed", 0);
+    result.pushKV("inputs_not_consumed_amount", 0);
+    result.pushKV("outputs_not_created", 0);
+    result.pushKV("outputs_not_created_amount", 0);
+    result.pushKV("msgs", strprintf("No wallet inputs found for address [%s]", saddr));
+    if (hex_only)
+        result.pushKV("hex", "");
+    return result;
+}
+
 UniValue abortrescan(const JSONRPCRequest& request); // in rpcdump.cpp
 UniValue dumpprivkey(const JSONRPCRequest& request); // in rpcdump.cpp
 UniValue importprivkey(const JSONRPCRequest& request);
@@ -4213,6 +4432,7 @@ static const CRPCCommand commands[] =
     { "wallet",             "walletpassphrase",                 &walletpassphrase,              {"passphrase","timeout","unlockforstakingonly"} },
     { "wallet",             "walletpassphrasechange",           &walletpassphrasechange,        {"oldpassphrase","newpassphrase"} },
     { "wallet",             "walletprocesspsbt",                &walletprocesspsbt,             {"psbt","sign","sighashtype","bip32derivs"} },
+    { "wallet",             "splitbalance",                     &splitbalance,                  {"amount","address","hex_only"} },
 };
 // clang-format on
 
