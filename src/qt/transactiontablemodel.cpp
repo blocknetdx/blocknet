@@ -70,6 +70,7 @@ public:
      * As it is in the same order as the CWallet, by definition
      * this is sorted by sha256.
      */
+    RecursiveMutex cachedWalletMutex; // recursive mutex b/c inherited methods will call methods that lock the mutex, don't want deadlock
     QList<TransactionRecord> cachedWallet;
 
     /* Query entire wallet anew from core.
@@ -77,6 +78,7 @@ public:
     void refreshWallet(interfaces::Wallet& wallet)
     {
         qDebug() << "TransactionTablePriv::refreshWallet";
+        LOCK(cachedWalletMutex);
         cachedWallet.clear();
         {
             for (const auto& wtx : wallet.getWalletTxs()) {
@@ -95,7 +97,7 @@ public:
     void updateWallet(interfaces::Wallet& wallet, const uint256 &hash, int status, bool showTransaction)
     {
         qDebug() << "TransactionTablePriv::updateWallet: " + QString::fromStdString(hash.ToString()) + " " + QString::number(status);
-
+        LOCK(cachedWalletMutex);
         // Find bounds of this transaction in model
         QList<TransactionRecord>::iterator lower = qLowerBound(
             cachedWallet.begin(), cachedWallet.end(), hash, TxLessThan());
@@ -174,14 +176,16 @@ public:
 
     int size()
     {
+        LOCK(cachedWalletMutex);
         return cachedWallet.size();
     }
 
     TransactionRecord *index(interfaces::Wallet& wallet, int idx)
     {
+        LOCK(cachedWalletMutex);
         if(idx >= 0 && idx < cachedWallet.size())
         {
-            TransactionRecord *rec = &cachedWallet[idx];
+            TransactionRecord & rec = cachedWallet[idx];
 
             // Get required locks upfront. This avoids the GUI from getting
             // stuck if the core is holding the locks for a longer time - for
@@ -193,10 +197,10 @@ public:
             interfaces::WalletTxStatus wtx;
             int numBlocks;
             int64_t block_time;
-            if (wallet.tryGetTxStatus(rec->hash, wtx, numBlocks, block_time) && rec->statusUpdateNeeded(numBlocks)) {
-                rec->updateStatus(wtx, numBlocks, block_time);
+            if (wallet.tryGetTxStatus(rec.hash, wtx, numBlocks, block_time) && rec.statusUpdateNeeded(numBlocks)) {
+                rec.updateStatus(wtx, numBlocks, block_time);
             }
-            return rec;
+            return &cachedWallet[idx];
         }
         return nullptr;
     }
@@ -669,7 +673,7 @@ QModelIndex TransactionTableModel::index(int row, int column, const QModelIndex 
     TransactionRecord *data = priv->index(walletModel->wallet(), row);
     if(data)
     {
-        return createIndex(row, column, priv->index(walletModel->wallet(), row));
+        return createIndex(row, column, data);
     }
     return QModelIndex();
 }
