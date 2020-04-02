@@ -90,189 +90,30 @@ bool App::isEnabled()
 }
 
 // static
-bool App::createConf()
-{
-    try {
-        std::string eol = "\n";
-#ifdef WIN32
-        eol = "\r\n";
-#endif
-        auto p = GetDataDir(false) / "xrouter.conf";
-        if (!boost::filesystem::exists(p)) {
-            saveConf(p,
-                "[Main]"                                                                                            + eol +
-                "#! host is a mandatory field, this tells the XRouter network how to find your node."               + eol +
-                "#! DNS and ip addresses are acceptable values."                                                    + eol +
-                "#! host=mynode.example.com"                                                                        + eol +
-                "#! host=208.67.222.222"                                                                            + eol +
-                "host="                                                                                             + eol +
-                ""                                                                                                  + eol +
-                "#! port is the tcpip port on the host that accepts xrouter connections."                           + eol +
-                "#! port will default to the default blockchain port (e.g. 41412), examples:"                       + eol +
-                "#! port=41412"                                                                                     + eol +
-                "#! port=80"                                                                                        + eol +
-                "#! port=8080"                                                                                      + eol +
-                ""                                                                                                  + eol +
-                "#! maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"            + eol +
-                "#! 0 means you only want free calls"                                                               + eol +
-                "maxfee=0"                                                                                          + eol +
-                ""                                                                                                  + eol +
-                "#! consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)"      + eol +
-                "#! Paid calls will send a payment to each selected service node."                                  + eol +
-                "consensus=1"                                                                                       + eol +
-                ""                                                                                                  + eol +
-                "#! timeout is the maximum time in seconds you're willing to wait for an XRouter response"          + eol +
-                "timeout=30"                                                                                        + eol +
-                ""                                                                                                  + eol +
-                "#! Optionally set per-call config options:"                                                        + eol +
-                "#! [xrGetBlockCount]"                                                                              + eol +
-                "#! maxfee=0.01"                                                                                    + eol +
-                ""                                                                                                  + eol +
-                "#! [BLOCK::xrGetBlockCount]"                                                                       + eol +
-                "#! maxfee=0.01"                                                                                    + eol +
-                ""                                                                                                  + eol +
-                "#! [SYS::xrGetBlockCount]"                                                                         + eol +
-                "#! maxfee=0.01"                                                                                    + eol +
-                ""                                                                                                  + eol +
-                "#! It's possible to set config options for Custom XRouter services"                                + eol +
-                "#! [xrs::GetBestBlockHashBTC]"                                                                     + eol +
-                "#! maxfee=0.1"                                                                                     + eol
-            );
-        }
-
-        // Create the plugins directory if it doesn't exist
-        auto plugins = GetDataDir(false) / "plugins";
-        if (!boost::filesystem::exists(plugins)) {
-            boost::filesystem::create_directory(plugins);
-            auto samplerpc = plugins / "ExampleRPC.conf";
-            saveConf(samplerpc,
-                "#! ExampleRPC is a sample rpc plugin. This entire plugin configuration is sent to the client."     + eol +
-                "#! Any lines beginning with #! will not be sent to the client."                                    + eol +
-                "#! Any config parameters beginning with private:: will not be sent to the client."                 + eol +
-                "#! The name of the plugin file ExampleRPC will be the service name broadcasted to the XRouter"     + eol +
-                "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                     + eol +
-                ""                                                                                                  + eol +
-//                "#! Optional host identifying the location of the service. this tells the XRouter network how "     + eol +
-//                "#! to find your node. The default is xrouter.conf [Main].host"                                     + eol +
-//                "#! DNS and ip address are acceptable values."                                                      + eol +
-//                "#! host=mynode.example.com"                                                                        + eol +
-//                "#! host=208.67.222.222"                                                                            + eol +
-//                ""                                                                                                  + eol +
-//                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."      + eol +
-//                "#! The default is xrouter.conf [Main].port"                                                        + eol +
-//                "#! port=80"                                                                                        + eol +
-//                ""                                                                                                  + eol +
-                "#! parameters that you need from the user, acceptable types: string,bool,int,double"               + eol +
-                "#! Example parameters=string,bool if you want to accept a string parameter and boolean"            + eol +
-                "#! parameter from an XRouter client."                                                              + eol +
-                "parameters="                                                                                       + eol +
-                ""                                                                                                  + eol +
-                "#! Set the fee in BLOCK to how much you want to charge for requests to this custom plugin."        + eol +
-                "#! Example fee=0.1 if you want to accept 0.1 BLOCK or 0 if you want the plugin to be free."        + eol +
-                "fee=0"                                                                                             + eol +
-                ""                                                                                                  + eol +
-                "#! Set the client request limit in milliseconds. -1 means unlimited. 50 means that a client"       + eol +
-                "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"        + eol +
-                "#! requests exceed this value they will be penalized and eventually banned by your node."          + eol +
-                "clientrequestlimit=-1"                                                                             + eol +
-                ""                                                                                                  + eol +
-                "#! This is a sample configuration for the RPC plugin type for a syscoin plugin."                   + eol +
-                "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"            + eol +
-                "#! plugin for syscoin running on 127.0.0.1:8370. This plugin accepts 0 parameters, as"             + eol +
-                "#! indicated by \"parameters=\" config above, and it will call the syscoin \"getblockcount\""      + eol +
-                "#! rpc command. The result will be forwarded onto the client."                                     + eol +
-                "private::type=rpc"                                                                                 + eol +
-                "private::rpcip=127.0.0.1"                                                                          + eol +
-                "private::rpcport=8370"                                                                             + eol +
-                "private::rpcuser=sysuser"                                                                          + eol +
-                "private::rpcpassword=sysuser_pass"                                                                 + eol +
-                "private::rpccommand=getblockcount"                                                                 + eol +
-                ""                                                                                                  + eol +
-                "#! JSON version and Content Type can be set on the rpc call:"                                      + eol +
-                "#!private::rpcjsonversion=2.0"                                                                     + eol +
-                "#!private::rpccontenttype=application/json"                                                        + eol +
-                ""                                                                                                  + eol +
-                "#! Disable this sample plugin"                                                                     + eol +
-                "disabled=1"                                                                                        + eol
-            );
-            auto sampledocker = plugins / "ExampleDocker.conf";
-            saveConf(sampledocker,
-                "#! ExampleDocker is a sample docker plugin. This entire plugin configuration is sent to the client." + eol +
-                "#! Any lines beginning with #! will not be sent to the client."                                      + eol +
-                "#! Any config parameters beginning with private:: will not be sent to the client."                   + eol +
-                "#! The name of the plugin file ExampleDocker will be the service name broadcasted to the XRouter"    + eol +
-                "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                       + eol +
-                ""                                                                                                    + eol +
-//                "#! Optional host identifying the location of the service. this tells the XRouter network how "       + eol +
-//                "#! to find your node. The default is xrouter.conf [Main].host"                                       + eol +
-//                "#! DNS and ip address are acceptable values."                                                        + eol +
-//                "#! host=mynode.example.com"                                                                          + eol +
-//                "#! host=208.67.222.222"                                                                              + eol +
-//                ""                                                                                                    + eol +
-//                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."        + eol +
-//                "#! The default is xrouter.conf [Main].port"                                                          + eol +
-//                "#! port=80"                                                                                          + eol +
-//                ""                                                                                                    + eol +
-                "#! parameters that you need from the user, acceptable types: string,bool,int,double"                 + eol +
-                "#! Example parameters=string,bool if you want to accept a string parameter and boolean"              + eol +
-                "#! parameter from an XRouter client."                                                                + eol +
-                "parameters=string"                                                                                   + eol +
-                ""                                                                                                    + eol +
-                "#! Set the fee in BLOCK to how much you want to charge for requests to this custom plugin."          + eol +
-                "#! Example fee=0.1 if you want to accept 0.1 BLOCK or 0 if you want the plugin to be free."          + eol +
-                "fee=0"                                                                                               + eol +
-                ""                                                                                                    + eol +
-                "#! Set the client request limit in milliseconds. -1 means unlimited. 50 means that a client"         + eol +
-                "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"          + eol +
-                "#! requests exceed this value they will be penalized and eventually banned by your node."            + eol +
-                "clientrequestlimit=-1"                                                                               + eol +
-                ""                                                                                                    + eol +
-                "#! This is a sample configuration of a docker plugin running a syscoin container."                   + eol +
-                "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"              + eol +
-                "#! plugin for syscoin running in docker container \"syscoin\". This plugin accepts 1 parameter"      + eol +
-                "#! indicated by \"parameters=\" config above, and it will call the syscoin \"getblock\" rpc"         + eol +
-                "#! command. The result will be forwarded onto the client. \"quoteargs\" puts \"$1\" around"          + eol +
-                "#! user supplied arguments. \"command\" executed within the docker container. \"args\" can"          + eol +
-                "#! include both user supplied arguments ($1, $2, $3 etc.) and explicit arguments. For example,"      + eol +
-                "#! you can mix both user supplied and custom arguments:  private::args=some_api_key $1 $2"           + eol +
-                "private::type=docker"                                                                                + eol +
-                "private::containername=syscoin"                                                                      + eol +
-                "private::quoteargs=1"                                                                                + eol +
-                "private::command=syscoin-cli getblock"                                                               + eol +
-                "private::args=$1"                                                                                    + eol +
-                ""                                                                                                    + eol +
-                "#! Disable this sample plugin"                                                                       + eol +
-                "disabled=1"                                                                                          + eol
-            );
-        }
-
-        return true;
-
-    } catch (...) {
-        ERR() << "XRouter failed to create default xrouter.conf and plugins directory";
-    }
-    return false;
+bool App::createConf(const boost::filesystem::path & confDir, const bool & skipPlugins) {
+    return xrouter::createConf(confDir, skipPlugins);
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool App::init()
+bool App::init(const boost::filesystem::path & xrouterDir)
 {
     if (!isEnabled())
         return false;
 
-    xrouterpath = GetDataDir(false) / "xrouter.conf";
+    xrouterpath = xrouterDir / "xrouter.conf";
     xrsettings = std::make_shared<XRouterSettings>(CPubKey{});
 
     // Load the xrouter server if we're a service node
-    if (gArgs.GetBoolArg("-servicenode", false)) {
+    const bool snode = gArgs.GetBoolArg("-servicenode", false);
+    if (snode) {
         // Create xrouter server instance
         server = std::make_shared<XRouterServer>();
     }
 
     // Load the xrouter configuration
     try {
-        if (!xrsettings->init(xrouterpath)) {
+        if (!xrsettings->init(xrouterpath, snode)) {
             ERR() << "Failed to read xrouter config " << xrouterpath.string();
             return false;
         }
@@ -281,7 +122,7 @@ bool App::init()
     }
 
     // Check for a valid host parameter if we're a servicenode
-    if (xrsettings->host(xrDefault).empty()) {
+    if (snode && xrsettings->host(xrDefault).empty()) {
         ERR() << "Failed to read xrouter config, missing \"host\" entry " << xrouterpath.string();
         return false;
     }
@@ -420,7 +261,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             return true; // fetch limit exceeded
         }
         auto rateLimit = settings->clientRequestLimit(command, service);
-        if (rateLimitExceeded(nodeAddr, fqService, getLastRequest(nodeAddr, fqService), rateLimit)) {
+        if (rateLimitExceeded(nodeAddr, fqService, queryMgr.getLastRequest(nodeAddr, fqService), rateLimit)) {
             LOG() << "Skipping node " << nodeAddr << " because not enough time passed since the last call";
             return true;
         }
@@ -446,7 +287,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         const std::string & nodeAddr = node->GetAddrName();
 
         // fetch config
-        updateSentRequest(nodeAddr, XRouterCommand_ToString(xrGetConfig));
+        queryMgr.updateSentRequest(nodeAddr, XRouterCommand_ToString(xrGetConfig));
         std::string uuid = sendXRouterConfigRequest(node);
         LOG() << "Requesting config from snode " << EncodeDestination(CTxDestination(snode.getPaymentAddress()))
               << " query " << uuid;
@@ -524,7 +365,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             while (!node->fSuccessfullyConnected) { // wait n seconds for node to become available
                 const auto currentTime = GetTime();
                 if (ShutdownRequested() || currentTime - startTime > 3) { // wait 3 seconds
-                    updateScore(snodeAddr, -5);
+                    checkSnodeBan(snodeAddr, queryMgr.updateScore(snodeAddr, -5));
                     pendingConnMgr.notify(snodeAddr);
                     return;
                 }
@@ -539,7 +380,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                 addSelected(snodeAddr);
         } else {
             LOG() << "Failed to connect to servicenode " << EncodeDestination(CTxDestination(snode.getPaymentAddress()));
-            updateScore(snodeAddr, -10);
+            checkSnodeBan(snodeAddr, queryMgr.updateScore(snodeAddr, -10));
         }
 
         pendingConnMgr.notify(snodeAddr);
@@ -646,7 +487,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
         boost::thread_group tg;
         std::set<NodeAddr> conns;
         const auto timeout = xrsettings->commandTimeout(command, service);
-        const auto startTime = GetAdjustedTime();
+        const auto startTime = GetTime();
         bool timedOut{false};
 
         // Make connections via threads (max 2 per cpu core)
@@ -691,7 +532,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             // Wait until we have all required connections (adjustedCount - connected = 0)
             // Wait while thread group has more running threads than we need connections for -or-
             //            thread group has too many threads (2 per cpu core)
-            auto waitTime = GetAdjustedTime();
+            auto waitTime = GetTime();
             while (adjustedCount - connectedCount() > 0 && // only continue waiting for threads if we need more connections
                   (tg.size() > (adjustedCount - connectedCount()) || tg.size() >= boost::thread::hardware_concurrency() * 2)) {
                 if (ShutdownRequested()) {
@@ -701,7 +542,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
                     foundCount = connectedCount();
                     return false;
                 }
-                const auto t = GetAdjustedTime();
+                const auto t = GetTime();
                 if (t - waitTime > std::max(connwait, 1) * tg.size() // stop waiting after config sync timeouts
                     || t - startTime > timeout) // stop waiting after timeout seconds
                 {
@@ -733,48 +574,6 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     foundCount = connected + nonWalletXRNodes.size();
     // Account for the non-wallet xrouter nodes
     return foundCount >= count;
-}
-
-std::string App::updateConfigs(bool force)
-{
-    if (!isEnabled() || !isReady())
-        return "XRouter is turned off. Please set 'xrouter=1' in blocknet.conf to run XRouter.";
-    
-    std::vector<sn::ServiceNode> vServicenodes = getServiceNodes();
-    std::vector<CNode*> nodes = CopyNodes();
-
-    // Build snode cache
-    std::map<std::string, sn::ServiceNode> snodes;
-    for (sn::ServiceNode & s : vServicenodes) {
-        if (!s.getHost().empty())
-            snodes[s.getHost()] = s;
-    }
-
-    // Query servicenodes that haven't had configs updated recently
-    for (CNode* pnode : nodes) {
-        const auto nodeAddr = pnode->GetAddrName();
-        // skip non-xrouter nodes, disconnecting nodes, and self
-        if (!snodes.count(nodeAddr) || !snodes[nodeAddr].hasService(xr) || !pnode->fSuccessfullyConnected
-            || pnode->fDisconnect || snodes[nodeAddr].getSnodePubKey() == sn::ServiceNodeMgr::instance().getActiveSn().key.GetPubKey())
-            continue;
-
-        // If not force check, rate limit config requests
-        if (!force) {
-            const auto & service = XRouterCommand_ToString(xrGetConfig);
-            if (!needConfigUpdate(nodeAddr, service))
-                continue;
-        }
-
-        // Request the config
-        auto & snode = snodes[nodeAddr]; // safe here due to check above
-        updateSentRequest(nodeAddr, XRouterCommand_ToString(xrGetConfig));
-        std::string uuid = sendXRouterConfigRequest(pnode);
-        LOG() << "Requesting config from snode " << EncodeDestination(CTxDestination(snode.getPaymentAddress()))
-              << " query " << uuid;
-    }
-
-    releaseNodes(nodes);
-    return "Config requests have been sent";
 }
 
 std::string App::printConfigs()
@@ -905,7 +704,7 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
         }
 
         auto rateLimit = settings->clientRequestLimit(command, service);
-        if (rateLimitExceeded(nodeAddr, fqCmd, getLastRequest(nodeAddr, fqCmd), rateLimit)) {
+        if (queryMgr.rateLimitExceeded(nodeAddr, fqCmd, queryMgr.getLastRequest(nodeAddr, fqCmd), rateLimit)) {
             const auto & snodeAddr = EncodeDestination(CTxDestination(snodec[nodeAddr].getPaymentAddress()));
             LOG() << "Skipping node " << snodeAddr << " because not enough time passed since the last call";
             continue;
@@ -1033,7 +832,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
         auto configInit = settings->init(config);
         if (!configInit) {
             ERR() << "Failed to read config on query " << uuid << " from node " << nodeAddr;
-            updateScore(nodeAddr, -10);
+            checkSnodeBan(nodeAddr, queryMgr.updateScore(nodeAddr, -10));
             reply = "Failed to parse config from XRouter node " + nodeAddr + "\n" + reply;
             queryMgr.addReply(uuid, nodeAddr, reply);
             queryMgr.purge(uuid, nodeAddr);
@@ -1049,7 +848,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
                     settings->addPlugin(plugin.name_, psettings);
             } catch (...) {
                 ERR() << "Failed to read plugin " << plugin.name_ << " on query " << uuid << " from node " << nodeAddr;
-                updateScore(nodeAddr, -2);
+                checkSnodeBan(nodeAddr, queryMgr.updateScore(nodeAddr, -2));
             }
         }
 
@@ -1060,7 +859,7 @@ bool App::processConfigReply(CNode *node, XRouterPacketPtr packet, CValidationSt
 
     } catch (...) {
         ERR() << "Failed to read config on query " << uuid << " from node " << nodeAddr;
-        updateScore(nodeAddr, -10);
+        checkSnodeBan(nodeAddr, queryMgr.updateScore(nodeAddr, -10));
         reply = "Failed to parse config from XRouter node " + nodeAddr + "\n" + reply;
         queryMgr.addReply(uuid, nodeAddr, reply);
         queryMgr.purge(uuid, nodeAddr);
@@ -1162,7 +961,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
                     }
                 }
 
-                updateScore(node->GetAddrName(), -10);
+                checkSnodeBan(node->GetAddrName(), queryMgr.updateScore(node->GetAddrName(), -10));
                 state.DoS(10, error("XRouter: invalid packet received"), REJECT_INVALID, "xrouter-error");
                 checkDoS(state, node);
                 releaseNode(node);
@@ -1215,7 +1014,7 @@ void App::onMessageReceived(CNode* node, const std::vector<unsigned char> & mess
 //*****************************************************************************
 //*****************************************************************************
 std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet, const std::string & fqServiceName,
-                             const int & confirmations, const std::vector<std::string> & params)
+                             const int & confirmations, const UniValue & params)
 {
     const std::string & uuid = generateUUID();
     uuidRet = uuid; // set uuid
@@ -1237,25 +1036,28 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             // Check param1
             switch (command) {
                 case xrGetBlockHash:
-                    if (params.size() > 0 && !is_number(params[0]))
-                        throw XRouterError("Incorrect block number: " + params[0], xrouter::INVALID_PARAMETERS);
+                    if (params.size() > 0 && !is_number(params.getValues()[0].get_str()) && !is_hex(params.getValues()[0].get_str()))
+                        throw XRouterError("Incorrect block number: " + params.getValues()[0].get_str(), xrouter::INVALID_PARAMETERS);
                     break;
-                case xrGetTxBloomFilter:
-                    if (params.size() > 0 && (!is_hash(params[0]) || (params[0].size() % 10 != 0)))
-                        throw XRouterError("Incorrect bloom filter: " + params[0], xrouter::INVALID_PARAMETERS);
-                    break;
+//                case xrGetTxBloomFilter:
+//                    if (params.size() > 0 && (!is_hash(params.getValues()[0].get_str()) || (params[0].size() % 10 != 0)))
+//                        throw XRouterError("Incorrect bloom filter: " + params[0], xrouter::INVALID_PARAMETERS);
+//                    break;
                 case xrGetBlock:
+                    if (params.size() > 0 && !is_number(params.getValues()[0].get_str()) && !is_hash(params.getValues()[0].get_str()) && !is_hex(params.getValues()[0].get_str()))
+                        throw XRouterError("Incorrect hash: " + params.getValues()[0].get_str(), xrouter::INVALID_PARAMETERS);
+                    break;
                 case xrGetTransaction:
-                    if (params.size() > 0 && !is_hash(params[0]))
-                        throw XRouterError("Incorrect hash: " + params[0], xrouter::INVALID_PARAMETERS);
+                    if (params.size() > 0 && !is_hash(params.getValues()[0].get_str()))
+                        throw XRouterError("Incorrect hash: " + params.getValues()[0].get_str(), xrouter::INVALID_PARAMETERS);
                     break;
                 case xrGetBlocks:
                 case xrGetTransactions: {
                     if (params.empty())
                         throw XRouterError("Missing parameters for " + fqServiceName, xrouter::INVALID_PARAMETERS);
-                    for (const auto & p : params) {
-                        if (!is_hash(p))
-                            throw XRouterError("Incorrect hash " + p + " for " + fqServiceName, xrouter::INVALID_PARAMETERS);
+                    for (const auto & p : params.getValues()) {
+                        if (!is_hash(p.get_str()))
+                            throw XRouterError("Incorrect hash " + p.get_str() + " for " + fqServiceName, xrouter::INVALID_PARAMETERS);
                     }
                     break;
                 }
@@ -1265,10 +1067,10 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
             // Check param2
             switch (command) {
-                case xrGetTxBloomFilter:
-                    if (params.size() > 1 && !is_number(params[1]))
-                        throw XRouterError("Incorrect block number: " + params[1], xrouter::INVALID_PARAMETERS);
-                    break;
+//                case xrGetTxBloomFilter:
+//                    if (params.size() > 1 && !is_number(params.getValues()[1]))
+//                        throw XRouterError("Incorrect block number: " + params.getValues()[1], xrouter::INVALID_PARAMETERS);
+//                    break;
                 default:
                     break;
             }
@@ -1374,11 +1176,11 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 packet.append(service);
                 packet.append(feetx); // feetx
                 packet.append(static_cast<uint32_t>(params.size()));
-                for (const std::string & p : params)
-                    packet.append(p);
+                for (const auto & p : params.getValues())
+                    packet.append(p.get_str());
                 packet.sign(cpubkey, cprivkey);
                 PushXRouterMessage(pnode, packet.body());
-                updateSentRequest(addr, fqService);
+                queryMgr.updateSentRequest(addr, fqService);
             } else { // query via external ip specified in config
                 // Set the fully qualified service url to the form /xr/BLOCK/xrGetBlockCount
                 const auto & fqUrl = fqServiceToUrl((command == xrService) ? pluginCommandKey(service) // plugin
@@ -1388,25 +1190,22 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                         RenameThread("blocknet-xrclientrequest");
                         if (ShutdownRequested())
                             return;
-                        json_spirit::Array jparams;
-                        for (const std::string & p : params)
-                            jparams.push_back(p);
 
                         CKey clientKey; clientKey.Set(cprivkey.begin(), cprivkey.end(), true);
                         XRouterReply xrresponse;
                         try {
                             std::string data;
-                            if (!jparams.empty())
-                                data = json_spirit::write_string(Value(jparams), json_spirit::none, 8);
+                            if (!params.empty())
+                                data = params.write();
                             xrresponse = xrouter::CallXRouterUrl(snode.getHostAddr().ToStringIP(),
                                     snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
                                     snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
-                            json_spirit::Object obj;
-                            obj.emplace_back("error", e.what());
-                            obj.emplace_back("code", xrouter::Error::BAD_REQUEST);
-                            obj.emplace_back("reply", "");
-                            queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(obj)));
+                            UniValue error(UniValue::VOBJ);
+                            error.pushKV("error", e.what());
+                            error.pushKV("code", xrouter::Error::BAD_REQUEST);
+                            error.pushKV("reply", UniValue::VNULL);
+                            queryMgr.addReply(uuid, addr, error.write());
                             queryMgr.purge(uuid, addr);
                             return; // failed to connect
                         }
@@ -1423,11 +1222,11 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                         if (snode.getSnodePubKey() != xrresponse.hdrpubkey
                         || !sigPubKey.RecoverCompact(hash, xrresponse.hdrsignature)
                         || snode.getSnodePubKey() != sigPubKey) {
-                            json_spirit::Object obj;
-                            obj.emplace_back("error", "Unable to verify if the service node is valid. Received bad signature on this request.");
-                            obj.emplace_back("code", xrouter::Error::BAD_SIGNATURE);
-                            obj.emplace_back("reply", xrresponse.result);
-                            queryMgr.addReply(uuid, addr, json_spirit::write_string(Value(obj)));
+                            UniValue error(UniValue::VOBJ);
+                            error.pushKV("error", "Unable to verify if the service node is valid. Received bad signature on this request.");
+                            error.pushKV("code", xrouter::Error::BAD_SIGNATURE);
+                            error.pushKV("reply", xrresponse.result);
+                            queryMgr.addReply(uuid, addr, error.write());
                             queryMgr.purge(uuid, addr);
                             return;
                         }
@@ -1437,14 +1236,15 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                         queryMgr.purge(uuid, addr);
                     });
                 } catch (...) { }
-                updateSentRequest(addr, fqService);
+
+                queryMgr.updateSentRequest(addr, fqService);
             }
             LOG() << "Sent command " << fqService << " query " << uuid << " to node " << addr;
         }
 
         // At this point we need to wait for responses
         int confirmation_count = 0;
-        auto queryCheckStart = GetAdjustedTime();
+        auto queryCheckStart = GetTime();
         auto queries = queryMgr.allLocks(uuid);
         std::vector<NodeAddr> review;
         for (auto & query : queries)
@@ -1452,7 +1252,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Check that all replies have arrived, only run as long as timeout
         while (!ShutdownRequested() && confirmation_count < confs
-            && GetAdjustedTime() - queryCheckStart < timeout)
+            && GetTime() - queryCheckStart < timeout)
         {
             boost::this_thread::sleep_for(boost::chrono::milliseconds(5));
             for (int i = review.size() - 1; i >= 0; --i)
@@ -1481,7 +1281,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             for (const auto & addr : review) {
                 if (!snodec.count(addr))
                     continue;
-                updateScore(addr, -25);
+                checkSnodeBan(addr, queryMgr.updateScore(addr, -25));
             }
 
             std::set<std::string> snodeAddresses;
@@ -1509,27 +1309,27 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         std::string rawResult;
         int c = queryMgr.mostCommonReply(uuid, rawResult, replies, agree, diff);
         for (const auto & addr : diff) // penalize nodes that didn't match consensus
-            updateScore(addr, -5);
+            checkSnodeBan(addr, queryMgr.updateScore(addr, -5));
         if (c > 1) { // only update score if there's consensus
             for (const auto & addr : agree) {
                 if (!failed.count(addr))
-                    updateScore(addr, c > 1 ? c * 2 : 0); // boost majority consensus nodes
+                    checkSnodeBan(addr, queryMgr.updateScore(addr, c > 1 ? c * 2 : 0)); // boost majority consensus nodes
             }
         }
 
         // Check for errors
         for (const auto & rp : replies) {
             try {
-                Value resultVal; read_string(rp.second, resultVal);
-                if (resultVal.type() == obj_type) {
-                    const auto & err_code = find_value(resultVal.get_obj(), "code");
-                    const auto & rv = find_value(resultVal.get_obj(), "result");
-                    if (err_code.type() == int_type && err_code.get_int() == INTERNAL_SERVER_ERROR)
-                        updateScore(rp.first, -2); // penalize server errors
-                    else if (rv.type() == obj_type) {
-                        const auto & err_code = find_value(rv.get_obj(), "code");
-                        if (err_code.type() == int_type && err_code.get_int() == INTERNAL_SERVER_ERROR)
-                            updateScore(rp.first, -2); // penalize server errors
+                UniValue resultVal;
+                if (resultVal.read(rp.second) && resultVal.isObject()) {
+                    const auto & err_code = find_value(resultVal, "code");
+                    const auto & rv = find_value(resultVal, "result");
+                    if (err_code.isNum() && err_code.get_int() == INTERNAL_SERVER_ERROR)
+                        checkSnodeBan(rp.first, queryMgr.updateScore(rp.first, -2)); // penalize server errors
+                    else if (rv.isObject()) {
+                        const auto & err_code2 = find_value(rv, "code");
+                        if (err_code2.isNum() && err_code2.get_int() == INTERNAL_SERVER_ERROR)
+                            checkSnodeBan(rp.first, queryMgr.updateScore(rp.first, -2)); // penalize server errors
                     }
                 }
             } catch (...) { } // do not report on non-error objs
@@ -1537,39 +1337,40 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Show all replies in the response (along with the majority consensus reply)
         if (replies.size() > 1) {
-            Object r;
+            UniValue r;
 
             // By default we parse the {"result": } field of any response. XRouter integrations will
             // ideally return any json responses in a result field. If not we return the raw response
             // in json object form if possible, or a raw string.
-            Value resultVal; read_string(rawResult, resultVal);
-            if (resultVal.type() == obj_type) {
-                const Value & rv = find_value(resultVal.get_obj(), "result");
-                if (rv.type() == null_type)
-                    r.emplace_back("result", resultVal);
+            UniValue uv;
+            if (uv.read(rawResult) && uv.isObject()) {
+                const auto & rv = find_value(uv, "result");
+                if (rv.isNull())
+                    r.pushKV("result", uv);
                 else
-                    r.emplace_back("result", rv);
+                    r.pushKV("result", rv);
             } else
-                r.emplace_back("result", resultVal);
+                r.pushKV("result", uv);
 
-            Array allr;
+            UniValue allr(UniValue::VARR);
             for (const auto & item : replies) {
                 const auto & nodeAddr = item.first;
                 const auto & reply = item.second;
 
-                Object ar;
+                UniValue ar(UniValue::VOBJ);
                 std::vector<unsigned char> spubkey; servicenodePubKey(nodeAddr, spubkey);
-                ar.emplace_back("nodepubkey", HexStr(spubkey));
-                ar.emplace_back("score", getScore(nodeAddr));
+                ar.pushKV("nodepubkey", HexStr(spubkey));
+                ar.pushKV("score", queryMgr.getScore(nodeAddr));
 
-                Value replyVal; read_string(reply, replyVal);
-                ar.emplace_back("reply", replyVal);
+                UniValue replyVal;
+                if (replyVal.read(reply))
+                    ar.pushKV("reply", replyVal);
 
                 allr.push_back(ar);
             }
-            r.emplace_back("allreplies", allr);
+            r.pushKV("allreplies", allr);
 
-            rawResult = json_spirit::write_string(Value(r));
+            rawResult = r.write();
         }
 
         // Unlock any utxos associated with replies that returned an error
@@ -1577,10 +1378,10 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             for (const auto & item : replies) {
                 const auto & nodeAddr = item.first;
                 const auto & reply = item.second;
-                Value replyVal; read_string(reply, replyVal);
-                if (replyVal.type() == obj_type) {
-                    const auto & err = find_value(replyVal.get_obj(), "error");
-                    if (err.type() != null_type) {
+                UniValue uv;
+                if (uv.read(reply) && uv.isObject()) {
+                    const auto & err = find_value(uv.get_obj(), "error");
+                    if (!err.isNull()) {
                         const auto & tx = feePaymentTxs[nodeAddr];
                         unlockOutputs(tx);
                     }
@@ -1607,13 +1408,13 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             }
         }
 
-        Object error;
-        error.emplace_back(Pair("error", errmsg));
-        error.emplace_back(Pair("code", e.code));
-        error.emplace_back(Pair("uuid", uuid));
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", errmsg);
+        error.pushKV("code", e.code);
+        error.pushKV("uuid", uuid);
 
         releaseNodes(selectedNodes);
-        return json_spirit::write_string(Value(error), true);
+        return error.write();
 
     } catch (std::exception & e) {
         LOG() << e.what();
@@ -1623,69 +1424,93 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             unlockOutputs(tx);
         }
 
-        Object error;
-        error.emplace_back(Pair("error", "Internal Server Error"));
-        error.emplace_back(Pair("code", INTERNAL_SERVER_ERROR));
-        error.emplace_back(Pair("uuid", uuid));
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", "Internal Server Error");
+        error.pushKV("code", INTERNAL_SERVER_ERROR);
+        error.pushKV("uuid", uuid);
 
         releaseNodes(selectedNodes);
-        return json_spirit::write_string(Value(error), true);
+        return error.write();
     }
 }
 
 std::string App::getBlockCount(std::string & uuidRet, const std::string & currency, const int & confirmations)
 {
-    return this->xrouterCall(xrGetBlockCount, uuidRet, currency, confirmations, {});
+    auto uv = UniValue(UniValue::VARR);
+    return this->xrouterCall(xrGetBlockCount, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getBlockHash(std::string & uuidRet, const std::string & currency, const int & confirmations, const unsigned int & block)
 {
-    return this->xrouterCall(xrGetBlockHash, uuidRet, currency, confirmations, { std::to_string(block) });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(std::to_string(block));
+    return this->xrouterCall(xrGetBlockHash, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getBlock(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & blockHash)
 {
-    return this->xrouterCall(xrGetBlock, uuidRet, currency, confirmations, { blockHash });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(blockHash);
+    return this->xrouterCall(xrGetBlock, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getBlocks(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::vector<std::string> & blockHashes)
 {
-    return this->xrouterCall(xrGetBlocks, uuidRet, currency, confirmations, { blockHashes.begin(), blockHashes.end() });
+    auto uv = UniValue(UniValue::VARR);
+    for (const auto & hash : blockHashes)
+        uv.push_back(hash);
+    return this->xrouterCall(xrGetBlocks, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & hash)
 {
-    return this->xrouterCall(xrGetTransaction, uuidRet, currency, confirmations, { hash });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(hash);
+    return this->xrouterCall(xrGetTransaction, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getTransactions(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::vector<std::string> & txs)
 {
-    return this->xrouterCall(xrGetTransactions, uuidRet, currency, confirmations, std::vector<std::string>(txs.begin(), txs.end()));
+    auto uv = UniValue(UniValue::VARR);
+    for (const auto & tx : txs)
+        uv.push_back(tx);
+    return this->xrouterCall(xrGetTransactions, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::decodeRawTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & rawtx)
 {
-    return this->xrouterCall(xrDecodeRawTransaction, uuidRet, currency, confirmations, { rawtx });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(rawtx);
+    return this->xrouterCall(xrDecodeRawTransaction, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getTransactionsBloomFilter(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & filter, const int & number)
 {
-    return this->xrouterCall(xrGetTxBloomFilter, uuidRet, currency, confirmations, { filter, std::to_string(number) });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(filter);
+    uv.push_back(std::to_string(number));
+    return this->xrouterCall(xrGetTxBloomFilter, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::sendTransaction(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & transaction)
 {
-    return this->xrouterCall(xrSendTransaction, uuidRet, currency, confirmations, { transaction });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(transaction);
+    return this->xrouterCall(xrSendTransaction, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::convertTimeToBlockCount(std::string & uuidRet, const std::string & currency, const int & confirmations, const int64_t & time)
 {
-    return this->xrouterCall(xrGetBlockAtTime, uuidRet, currency, confirmations, { std::to_string(time) });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(std::to_string(time));
+    return this->xrouterCall(xrGetBlockAtTime, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getBalance(std::string & uuidRet, const std::string & currency, const int & confirmations, const std::string & address)
 {
-    return this->xrouterCall(xrGetBalance, uuidRet, currency, confirmations, { address });
+    auto uv = UniValue(UniValue::VARR);
+    uv.push_back(address);
+    return this->xrouterCall(xrGetBalance, uuidRet, currency, confirmations, uv);
 }
 
 std::string App::getReply(const std::string & id)
@@ -1732,7 +1557,7 @@ std::string App::getReply(const std::string & id)
             servicenodePubKey(snodeAddr, spubkey);
 
             o.emplace_back("nodepubkey", HexStr(spubkey));
-            o.emplace_back("score", getScore(snodeAddr));
+            o.emplace_back("score", queryMgr.getScore(snodeAddr));
             o.emplace_back("address", EncodeDestination(CTxDestination(s->getPaymentAddress())));
             arr.emplace_back(o);
         }
@@ -1856,7 +1681,7 @@ void App::snodeConfigJSON(const std::map<NodeAddr, std::pair<XRouterSettingsPtr,
         o.emplace_back("nodepubkey", HexStr(spubkey));
 
         // score
-        o.emplace_back("score", getScore(item.first));
+        o.emplace_back("score", queryMgr.getScore(item.first));
         // banned
         o.emplace_back("banned", g_banman->IsBanned(settings->getAddr()));
         // payment address
@@ -1975,7 +1800,7 @@ bool App::reloadConfigs() {
         return false;
     }
     LOG() << "Reloading xrouter config from file " << xrouterpath.string();
-    if (!xrsettings->init(xrouterpath)) {
+    if (!xrsettings->init(xrouterpath, true)) {
         ERR() << "Failed to read xrouter config " << xrouterpath.string();
         return false;
     }
@@ -2080,20 +1905,15 @@ void App::checkDoS(CValidationState & state, CNode *pnode) {
         LogPrint(BCLog::XROUTER, "xrouter packet from peer=%d %s processed with error: %s\n", pnode->GetId(), pnode->cleanSubVer,
                  state.GetRejectReason());
     }
-};
+}
 
-void App::updateScore(const NodeAddr & node, const int score) {
-    LOCK(mu);
-    if (!snodeScore.count(node))
-        snodeScore[node] = 0;
-    snodeScore[node] += score;
-    const auto scr = snodeScore[node];
+void App::checkSnodeBan(const NodeAddr & node, const int score) {
     int banscore = gArgs.GetArg("-xrouterbanscore", -200);
-    if (scr <= banscore) {
-        g_connman->ForEachNode([&node,scr,this](CNode *pnode) {
+    if (score <= banscore) {
+        g_connman->ForEachNode([&node,score,this](CNode *pnode) {
             if (node == pnode->GetAddrName()) {
-                LOG() << strprintf("Banning XRouter Node %s because score is too low: %i", node, scr);
-                snodeScore[node] = -30; // default score when ban expires
+                LOG() << strprintf("Banning XRouter Node %s because score is too low: %i", node, score);
+                queryMgr.banScore(node); // default score when ban expires
                 LOCK(cs_main);
                 Misbehaving(pnode->GetId(), 100);
             }

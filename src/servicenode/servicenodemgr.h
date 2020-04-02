@@ -171,9 +171,10 @@ public:
      * Processes a servicenode ping message from the network.
      * @param ss
      * @param ping
+     * @param skipValidation If true the validation checks are skipped.
      * @return
      */
-    bool processPing(CDataStream & ss, ServiceNodePing & ping) {
+    bool processPing(CDataStream & ss, ServiceNodePing & ping, const bool skipValidation = false) {
         try {
             ss >> ping;
         } catch (...) {
@@ -182,7 +183,7 @@ public:
         if (seenPacket(ping.getHash()))
             return false;
 
-        if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
+        if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc, skipValidation))
             return false; // bad ping
 
         if (!addPing(ping))

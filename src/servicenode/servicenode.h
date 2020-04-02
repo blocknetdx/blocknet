@@ -743,9 +743,10 @@ public:
      * allowed to accept payments.
      * @param getTxFunc
      * @param isBlockValid
+     * @param skipBlockchainValidation If true the blockchain validation is skipped. Other validation is performed.
      */
-    bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid) const {
-        if (!isBlockValid(bestBlock, bestBlockHash, true))
+    bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid, const bool skipBlockchainValidation = false) const {
+        if (!skipBlockchainValidation && !isBlockValid(bestBlock, bestBlockHash, true))
             return false; // fail if ping is stale
 
         // TODO Blocknet OPEN tier snodes, support non-SPV snode tiers (enable unit tests)
@@ -779,7 +780,10 @@ public:
         if (pubkey.GetID() != snodePubKey.GetID())
             return false; // fail if pubkeys don't match
 
-        return snode.isValid(getTxFunc, isBlockValid, false); // stale check not required here, it happens above on isBlockValid
+        if (!skipBlockchainValidation)
+            return snode.isValid(getTxFunc, isBlockValid, false); // stale check not required here, it happens above on isBlockValid
+
+        return true;
     }
 
 protected:

@@ -1164,12 +1164,12 @@ static UniValue xrService(const JSONRPCRequest& request)
     }
     
     const std::string & service = request.params[0].get_str();
-    std::vector<std::string> call_params;
+    auto uv = UniValue(UniValue::VARR);
     for (unsigned int i = 1; i < request.params.size(); i++)
-        call_params.push_back(request.params[i].get_str());
+        uv.push_back(request.params[i].get_str());
 
     std::string uuid;
-    std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, 0, call_params);
+    std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, 0, uv);
     return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
@@ -1266,12 +1266,12 @@ static UniValue xrServiceConsensus(const JSONRPCRequest& request)
         return error;
     }
 
-    std::vector<std::string> call_params;
+    auto uv = UniValue(UniValue::VARR);
     for (unsigned int i = 2; i < request.params.size(); i++)
-        call_params.push_back(request.params[i].get_str());
+        uv.push_back(request.params[i].get_str());
 
     std::string uuid;
-    std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, consensus, call_params);
+    std::string reply = xrouter::App::instance().xrouterCall(xrouter::xrService, uuid, service, consensus, uv);
     return xrouter::form_reply(uuid, uret_xr(reply));
 }
 
@@ -1708,21 +1708,21 @@ static UniValue xrConnect(const JSONRPCRequest& request)
         if (configs.size() < nodeCount) {
             UniValue error(UniValue::VOBJ);
             error.pushKV("error", "Failed to connect to nodes, found " +
-                                        std::to_string(found > configs.size() ? found : configs.size()) +
-                                        " expected " + std::to_string(nodeCount));
+                                  std::to_string(found > configs.size() ? found : configs.size()) +
+                                  " expected " + std::to_string(nodeCount));
             error.pushKV("code", xrouter::NOT_ENOUGH_NODES);
             return error;
         }
         app.snodeConfigJSON(configs, data);
-    } catch (std::exception & e) {
-        UniValue error(UniValue::VOBJ);
-        error.pushKV("error", e.what());
-        error.pushKV("code", xrouter::INVALID_PARAMETERS);
-        return error;
     } catch (xrouter::XRouterError & e) {
         UniValue error(UniValue::VOBJ);
         error.pushKV("error", e.msg);
         error.pushKV("code", e.code);
+        return error;
+    } catch (std::exception & e) {
+        UniValue error(UniValue::VOBJ);
+        error.pushKV("error", e.what());
+        error.pushKV("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
 

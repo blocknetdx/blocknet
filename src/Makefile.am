@@ -300,6 +300,7 @@ BITCOIN_CORE_H += \
 BITCOIN_CORE_H += \
   xrouter/version.h \
   xrouter/xrouterapp.h \
+  xrouter/xrouterclient.h \
   xrouter/xrouterconnector.h \
   xrouter/xrouterconnectorbtc.h \
   xrouter/xrouterconnectoreth.h \
@@ -307,8 +308,11 @@ BITCOIN_CORE_H += \
   xrouter/xroutererror.h \
   xrouter/xrouterlogger.h \
   xrouter/xrouterpacket.h \
+  xrouter/xrouterpeermgr.h \
+  xrouter/xrouterquerymgr.h \
   xrouter/xrouterserver.h \
   xrouter/xroutersettings.h \
+  xrouter/xroutersnodeconfig.h \
   xrouter/xrouterutils.h
 
 
@@ -630,13 +634,17 @@ xrouter_libxrouter_a_SOURCES = \
   xrouter/utils-network.cpp \
   xrouter/utils-payments.cpp \
   xrouter/xrouterapp.cpp \
+  xrouter/xrouterclient.cpp \
   xrouter/xrouterconnector.cpp \
   xrouter/xrouterconnectorbtc.cpp \
   xrouter/xrouterconnectoreth.cpp \
   xrouter/xrouterlogger.cpp \
   xrouter/xrouterpacket.cpp \
+  xrouter/xrouterpeermgr.cpp \
+  xrouter/xrouterquerymgr.cpp \
   xrouter/xrouterserver.cpp \
   xrouter/xroutersettings.cpp \
+  xrouter/xroutersnodeconfig.cpp \
   servicenode/servicenodemgr.cpp \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
