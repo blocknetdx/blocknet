@@ -358,7 +358,7 @@ public:
         const uint32_t bestBlock = getActiveChainHeight();
         const uint256 & bestBlockHash = getActiveChainHash(bestBlock);
 
-        snode->setConfig(config);
+        snode->setConfig(config, Params());
         snode->updatePing();
 
         ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()), config, *snode);

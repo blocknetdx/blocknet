@@ -149,6 +149,13 @@ public:
     }
 
     /**
+     * Returns true if the servicenode supports Enterprise XRouter requests.
+     */
+    bool isEXRCompatible() const {
+        return exrCompatible;
+    }
+
+    /**
      * Returns the servicenode's public key.
      * @return
      */
@@ -241,10 +248,15 @@ public:
 
     /**
      * Returns the servicenode last ping time in unix time.
+     * @param reportedPingTime The ping time reported by the originator (i.e. service node sending the ping).
      * @return
      */
-    void updatePing() {
-        pingtime = GetAdjustedTime();
+    void updatePing(const int64_t reportedPingTime = 0) {
+        const auto currentTime = GetAdjustedTime();
+        if (reportedPingTime == 0 || currentTime < reportedPingTime)
+            pingtime = currentTime;
+        else
+            pingtime = reportedPingTime;
     }
 
     /**
@@ -260,11 +272,12 @@ public:
     /**
      * Assigns the specified config to the servicenode.
      * @param c
+     * @param chainparams Chain parameters for use with mainnet, testnet, regtest chains
      */
-    void setConfig(const std::string & c) {
+    void setConfig(const std::string & c, const CChainParams & chainparams) {
         config = c;
         services.clear();
-        parseConfig();
+        parseConfig(config, chainparams);
     }
 
     /**
@@ -509,10 +522,10 @@ protected:
      * Return true if the config was successfully parsed.
      * @return
      */
-    bool parseConfig() {
+    bool parseConfig(const std::string & conf, const CChainParams & chainparams) {
         try {
             UniValue uv;
-            if (!uv.read(config))
+            if (!uv.read(conf))
                 return false; // do not continue processing if config is bad json
 
             // Get the config version
@@ -548,6 +561,13 @@ protected:
                 xrouter::XRouterSettings settings(snodePubKey, false); // not our config
                 if (!settings.init(uxrconf.get_str()))
                     return false;
+
+                // Enterprise XRouter compatibility check
+                if (settings.getAddr().GetPort() != 0) {
+                    const auto snodeXRPort = static_cast<int>(settings.getAddr().GetPort());
+                    const auto defaultPort = chainparams.GetDefaultPort();
+                    exrCompatible = snodeXRPort != defaultPort;
+                }
 
                 // Parse plugins
                 const auto uxrplugins = find_value(uxr, "plugins");
@@ -606,6 +626,7 @@ protected: // in-memory only
     bool invalid{false};
     int invalidBlock{0};
     int currentBlock{0};
+    bool exrCompatible{false};
 };
 
 typedef std::shared_ptr<ServiceNode> ServiceNodePtr;
@@ -638,8 +659,8 @@ public:
                                  pingTime(pingTime), config(std::move(config)), snode(std::move(snode)),
                                  signature(std::vector<unsigned char>()) {
         this->snode.setBestBlock(this->bestBlock, this->bestBlockHash);
-        this->snode.setConfig(this->config);
-        this->snode.updatePing();
+        this->snode.setConfig(this->config, Params());
+        this->snode.updatePing(pingTime);
     }
 
     ADD_SERIALIZE_METHODS;
@@ -655,8 +676,8 @@ public:
         READWRITE(signature);
         if (ser_action.ForRead()) { // on read stream, set the snode best block and ping
             snode.setBestBlock(bestBlock, bestBlockHash);
-            snode.setConfig(config);
-            snode.updatePing();
+            snode.setConfig(config, Params());
+            snode.updatePing(pingTime);
         }
     }
 
