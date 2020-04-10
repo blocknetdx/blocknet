@@ -63,6 +63,10 @@ public:
     UniValue getTransaction(const std::string & currency, const std::string & transaction, std::string & uuid, int querynodes = 1);
     UniValue getTransaction(const std::string & currency, const std::string & transaction, int querynodes = 1);
 
+    std::string getTransactionsRaw(const std::string & currency, const std::vector<std::string> & txns, std::string & uuid, int querynodes = 1);
+    UniValue getTransactions(const std::string & currency, const std::vector<std::string> & txns, std::string & uuid, int querynodes = 1);
+    UniValue getTransactions(const std::string & currency, const std::vector<std::string> & txns, int querynodes = 1);
+
     std::string decodeTransactionRaw(const std::string & currency, const std::string & rawtransaction, std::string & uuid, int querynodes = 1);
     UniValue decodeTransaction(const std::string & currency, const std::string & rawtransaction, std::string & uuid, int querynodes = 1);
     UniValue decodeTransaction(const std::string & currency, const std::string & rawtransaction, int querynodes = 1);

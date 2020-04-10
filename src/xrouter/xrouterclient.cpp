@@ -456,6 +456,25 @@ UniValue XRouterClient::getTransaction(const std::string & currency, const std::
 }
 
 ///
+/// getTransactions
+///
+
+std::string XRouterClient::getTransactionsRaw(const std::string & currency, const std::vector<std::string> & txns, std::string & uuid, const int querynodes) {
+    auto uv = UniValue(UniValue::VARR);
+    for (const auto & tx : txns)
+        uv.push_back(tx);
+    return xrouterCall(xrGetTransactions, uuid, currency, querynodes, uv);
+}
+UniValue XRouterClient::getTransactions(const std::string & currency, const std::vector<std::string> & txns, std::string & uuid, const int querynodes) {
+    const auto res = getTransactionsRaw(currency, txns, uuid, querynodes);
+    return uret(res, uuid);
+}
+UniValue XRouterClient::getTransactions(const std::string & currency, const std::vector<std::string> & txns, const int querynodes) {
+    std::string uuid;
+    return getTransactions(currency, txns, uuid, querynodes);
+}
+
+///
 /// decodeTransaction
 ///
 
@@ -552,7 +571,7 @@ int XRouterClient::runningCount(const std::string & service) {
     const auto & list = smgr.list();
     int count{0};
     for (const auto & snode : list) {
-        if (snode.running() && snode.hasService(service))
+        if (snode.running() && snode.hasService(service) && snode.isEXRCompatible())
             ++count;
     }
     return count;

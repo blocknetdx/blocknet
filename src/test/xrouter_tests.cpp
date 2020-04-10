@@ -39,6 +39,12 @@ BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrcalls, XRouterTestClientTestnet)
     BOOST_REQUIRE_MESSAGE(client->waitForService(5000, "xr::BLOCK"), "Services not found on testnet");
     BOOST_REQUIRE_MESSAGE(!client->getServiceNodes().empty(), "Service node list should not be empty");
 
+    const std::string testnetBlock1Hash = "1e1a89b239727807b0b7ee0ca465945b33cfebb37286d570e502163b80c60ff5";
+    const std::string testnetBlock2Hash = "36ac6222b88a3db2a4f7e7f51de37a59e22ee68d23b3186f9e9b7ae8d3fdf2db";
+    const std::string testnetBlock1Tx = "3b0d75a594c0ae23a389e0c9ca249cb250df95f718131ca876e9cd874bbaa136";
+    const std::string testnetBlock2Tx = "9c6f33a21b4df7253aef34cd9f3c0936770df3b4edba271a87cf56562253ee4a";
+    const std::string testnetBlock1TxRaw = "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff03510101ffffffff010088526a740000001976a9143002c6d1bbb62ad87bfb32fdd6a4ecf89abc818988ac00000000";
+
     { // getBlockCount
         UniValue res = client->getBlockCount("BLOCK");
         auto replynull = find_value(res, "reply").isNull();
@@ -55,7 +61,7 @@ BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrcalls, XRouterTestClientTestnet)
         BOOST_CHECK_MESSAGE(!replynull, "getBlockHash reply is invalid");
         if (!replynull) {
             BOOST_CHECK_MESSAGE(find_value(res, "reply").isStr(), "getBlockHash reply is not a string");
-            BOOST_CHECK_MESSAGE(find_value(res, "reply").get_str() == "1e1a89b239727807b0b7ee0ca465945b33cfebb37286d570e502163b80c60ff5", "getBlockHash wrong hash");
+            BOOST_CHECK_MESSAGE(find_value(res, "reply").get_str() == testnetBlock1Hash, "getBlockHash wrong hash");
         }
         BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getBlockHash uuid is invalid");
         BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlockHash has error");
@@ -65,16 +71,109 @@ BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrcalls, XRouterTestClientTestnet)
 //        BOOST_CHECK_MESSAGE(!replynull, "getBlockHash reply is invalid");
 //        if (!replynull) {
 //            BOOST_CHECK_MESSAGE(find_value(res, "reply").isStr(), "getBlockHash reply is not a string");
-//            BOOST_CHECK_MESSAGE(find_value(res, "reply").get_str() == "1e1a89b239727807b0b7ee0ca465945b33cfebb37286d570e502163b80c60ff5", "getBlockHash wrong hash");
+//            BOOST_CHECK_MESSAGE(find_value(res, "reply").get_str() == testnetBlock1Hash, "getBlockHash wrong hash");
 //        }
 //        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getBlockHash uuid is invalid");
 //        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlockHash has error");
     }
 
+    { // getBlock
+        // TODO Blocknet XRouter int block
+//        UniValue res = client->getBlock("BLOCK", 1);
+//        auto replynull = find_value(res, "reply").isNull();
+//        BOOST_CHECK_MESSAGE(!replynull, "getBlock reply is invalid");
+//        if (!replynull) {
+//            BOOST_CHECK_MESSAGE(find_value(res, "reply").isObject(), "getBlock reply is not a json obj");
+//            BOOST_CHECK_MESSAGE(find_value(find_value(res, "reply").get_obj(), "hash").get_str() == testnetBlock1Hash, "getBlock wrong hash");
+//        }
+//        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getBlock uuid is invalid");
+//        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlock has error");
+
+        // string block
+        auto res = client->getBlock("BLOCK", testnetBlock1Hash);
+        auto replynull = find_value(res, "reply").isNull();
+        BOOST_CHECK_MESSAGE(!replynull, "getBlock reply is invalid");
+        if (!replynull) {
+            BOOST_CHECK_MESSAGE(find_value(res, "reply").isObject(), "getBlock reply is not a json obj");
+            BOOST_CHECK_MESSAGE(find_value(find_value(res, "reply").get_obj(), "hash").get_str() == testnetBlock1Hash, "getBlock wrong hash");
+        }
+        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getBlock uuid is invalid");
+        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlock has error");
+    }
+
+    { // getBlocks
+        // TODO Blocknet XRouter int block numbers
+//        UniValue res = client->getBlocks("BLOCK", {1, 2});
+//        auto replynull = find_value(res, "reply").isNull();
+//        BOOST_CHECK_MESSAGE(!replynull, "getBlocks reply is invalid");
+//        if (!replynull) {
+//            auto reply = find_value(res, "reply");
+//            BOOST_CHECK_MESSAGE(reply.isArray(), "getBlocks reply is not a json array");
+//            BOOST_CHECK_MESSAGE(reply.get_array().size() == 2, "getBlocks expected 2 results");
+//        }
+//        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getBlocks uuid is invalid");
+//        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlocks has error");
+
+        // string block hashes
+        auto res = client->getBlocks("BLOCK", {testnetBlock1Hash, testnetBlock2Hash});
+        auto replynull = find_value(res, "reply").isNull();
+        BOOST_CHECK_MESSAGE(!replynull, "getBlocks reply is invalid");
+        if (!replynull) {
+            auto reply = find_value(res, "reply");
+            BOOST_CHECK_MESSAGE(reply.isArray(), "getBlocks reply is not a json array");
+            BOOST_CHECK_MESSAGE(reply.get_array().size() == 2, "getBlocks expected 2 results");
+        }
+        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getBlocks uuid is invalid");
+        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlocks has error");
+    }
+
+    { // getTransaction
+        auto res = client->getTransaction("BLOCK", testnetBlock1Tx);
+        auto replynull = find_value(res, "reply").isNull();
+        BOOST_CHECK_MESSAGE(!replynull, "getTransaction reply is invalid");
+        if (!replynull) {
+            BOOST_CHECK_MESSAGE(find_value(res, "reply").isObject(), "getTransaction reply is not a json obj");
+            BOOST_CHECK_MESSAGE(find_value(find_value(res, "reply").get_obj(), "hash").get_str() == testnetBlock1Tx, "getTransaction wrong hash");
+        }
+        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getTransaction uuid is invalid");
+        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getTransaction has error");
+    }
+
+    { // getTransactions
+        UniValue res = client->getTransactions("BLOCK", {testnetBlock1Tx, testnetBlock2Tx});
+        auto replynull = find_value(res, "reply").isNull();
+        BOOST_CHECK_MESSAGE(!replynull, "getTransactions reply is invalid");
+        if (!replynull) {
+            auto reply = find_value(res, "reply");
+            BOOST_CHECK_MESSAGE(reply.isArray(), "getTransactions reply is not a json array");
+            BOOST_CHECK_MESSAGE(reply.get_array().size() == 2, "getTransactions expected 2 results");
+        }
+        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getTransactions uuid is invalid");
+        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getTransactions has error");
+    }
+
+    { // decodeTransaction
+        auto res = client->decodeTransaction("BLOCK", testnetBlock1TxRaw);
+        auto replynull = find_value(res, "reply").isNull();
+        BOOST_CHECK_MESSAGE(!replynull, "decodeTransaction reply is invalid");
+        if (!replynull) {
+            BOOST_CHECK_MESSAGE(find_value(res, "reply").isObject(), "decodeTransaction reply is not a json obj");
+            BOOST_CHECK_MESSAGE(find_value(find_value(res, "reply").get_obj(), "hash").get_str() == testnetBlock1Tx, "decodeTransaction wrong hash");
+        }
+        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "decodeTransaction uuid is invalid");
+        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "decodeTransaction has error");
+    }
+
+    { // sendTransaction
+        auto res = client->sendTransaction("BLOCK", testnetBlock1TxRaw);
+        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "sendTransaction uuid is invalid");
+        BOOST_CHECK_MESSAGE(!find_value(res, "error").isNull(), "sendTransaction expecting error since tx has already confirmed");
+    }
+
     BOOST_CHECK(client->stop());
 }
 
-BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrscalls, XRouterTestClientTestnet) {
+BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrservicecalls, XRouterTestClientTestnet) {
     BOOST_REQUIRE_MESSAGE(client->start(), "Failed to start xrouter client");
     BOOST_REQUIRE_MESSAGE(client->waitForService(5000, {{"xr::BLOCK",1},{"xrs::block_getblockhash",1}}), "Services not found on testnet");
     BOOST_REQUIRE_MESSAGE(!client->getServiceNodes().empty(), "Service node list should not be empty");
@@ -96,7 +195,7 @@ BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrscalls, XRouterTestClientTestnet
     BOOST_CHECK(client->stop());
 }
 
-BOOST_FIXTURE_TEST_CASE(xrouter_tests_mainnet_xrcalls, XRouterTestClientMainnet) {
+/*BOOST_FIXTURE_TEST_CASE(xrouter_tests_mainnet_xrcalls, XRouterTestClientMainnet) {
         BOOST_REQUIRE_MESSAGE(client->start(), "Failed to start xrouter client");
         BOOST_REQUIRE_MESSAGE(client->waitForService(10000, "xr::BLOCK"), "Services not found on mainnet");
         BOOST_REQUIRE_MESSAGE(!client->getServiceNodes().empty(), "Service node list should not be empty");
@@ -134,6 +233,6 @@ BOOST_FIXTURE_TEST_CASE(xrouter_tests_mainnet_xrcalls, XRouterTestClientMainnet)
         }
 
         BOOST_CHECK(client->stop());
-    }
+    }*/
 
 BOOST_AUTO_TEST_SUITE_END()
