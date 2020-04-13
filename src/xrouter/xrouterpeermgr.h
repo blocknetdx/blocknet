@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef XROUTER_XROUTERPEERMGR_H
-#define XROUTER_XROUTERPEERMGR_H
+#ifndef BLOCKNET_XROUTER_XROUTERPEERMGR_H
+#define BLOCKNET_XROUTER_XROUTERPEERMGR_H
 
 #include <banman.h>
 #include <net.h>
@@ -35,4 +35,4 @@ private:
 
 }
 
-#endif //XROUTER_XROUTERPEERMGR_H
+#endif //BLOCKNET_XROUTER_XROUTERPEERMGR_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNET_XROUTERQUERYMGR_H
-#define BLOCKNET_XROUTERQUERYMGR_H
+#ifndef BLOCKNET_XROUTER_XROUTERQUERYMGR_H
+#define BLOCKNET_XROUTER_XROUTERQUERYMGR_H
 
 #include <hash.h>
 #include <sync.h>
@@ -216,4 +216,4 @@ private:
 
 }
 
-#endif //BLOCKNET_XROUTERQUERYMGR_H
+#endif //BLOCKNET_XROUTER_XROUTERQUERYMGR_H

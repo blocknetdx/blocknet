@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BLOCKNET_XROUTER_TESTS_H
-#define BLOCKNET_XROUTER_TESTS_H
+#ifndef BLOCKNET_TEST_XROUTER_TESTS_H
+#define BLOCKNET_TEST_XROUTER_TESTS_H
 
 #include <chainparamsbase.h>
 #include <xrouter/xrouterclient.h>
@@ -25,4 +25,4 @@ struct XRouterTestClientTestnet : public XRouterTestClient {
     explicit XRouterTestClientTestnet();
 };
 
-#endif //BLOCKNET_XROUTER_TESTS_H
+#endif //BLOCKNET_TEST_XROUTER_TESTS_H
