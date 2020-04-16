@@ -55,6 +55,16 @@ BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrcalls, XRouterTestClientTestnet)
         BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlockCount has error");
     }
 
+    { // getBlockCount with namespace
+        UniValue res = client->getBlockCount("xr::BLOCK");
+        auto replynull = find_value(res, "reply").isNull();
+        BOOST_CHECK_MESSAGE(!replynull, "getBlockCount reply is invalid");
+        if (!replynull)
+            BOOST_CHECK_MESSAGE(find_value(res, "reply").isNum(), "getBlockCount reply is not a number");
+        BOOST_CHECK_MESSAGE(!find_value(res, "uuid").isNull(), "getBlockCount uuid is invalid");
+        BOOST_CHECK_MESSAGE(find_value(res, "error").isNull(), "getBlockCount has error");
+    }
+
     { // getBlockHash
         UniValue res = client->getBlockHash("BLOCK", 1);
         auto replynull = find_value(res, "reply").isNull();
