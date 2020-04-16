@@ -109,6 +109,16 @@ AC_ARG_ENABLE([wallet],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
 
+AC_ARG_ENABLE([xrouterclient],
+  [AS_HELP_STRING([--enable-xrouterclient],
+  [enable xrouterclient (default is no)])],
+  [use_xrouterclient=$enableval],
+  [use_xrouterclient=no])
+
+if test "x$use_xrouterclient" = xyes; then
+  AC_DEFINE(USE_XROUTERCLIENT, 1, [Define this symbol to build for xrouter client use])
+fi
+
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
   [enable UPNP (default is yes if libminiupnpc is found)])],
@@ -1424,6 +1434,7 @@ AM_CONDITIONAL([ENABLE_SSE41],[test x$enable_sse41 = xyes])
 AM_CONDITIONAL([ENABLE_AVX2],[test x$enable_avx2 = xyes])
 AM_CONDITIONAL([ENABLE_SHANI],[test x$enable_shani = xyes])
 AM_CONDITIONAL([USE_ASM],[test x$use_asm = xyes])
+AM_CONDITIONAL([USE_XROUTERCLIENT],[test x$use_xrouterclient = xyes])
 
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
 AC_DEFINE(CLIENT_VERSION_MINOR, _CLIENT_VERSION_MINOR, [Minor version])
@@ -1557,6 +1568,7 @@ echo "  with test     = $use_tests"
 if test x$use_tests != xno; then
     echo "    with fuzz   = $enable_fuzz"
 fi
+echo "  xrouterclient = $use_xrouterclient"
 echo "  with bench    = $use_bench"
 echo "  with upnp     = $use_upnp"
 echo "  use asm       = $use_asm"

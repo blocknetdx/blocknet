@@ -18,6 +18,10 @@
 #include <utility>
 #include <sys/stat.h>
 
+#if defined(USE_XROUTERCLIENT)
+const std::function<std::string(const char*)> G_TRANSLATION_FUN = nullptr;
+#endif
+
 namespace xrouter {
 
 static bool InitSanityCheck() {
