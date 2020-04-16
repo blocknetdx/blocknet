@@ -696,6 +696,7 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
                 "    \"address\":\"blocknet address\", (string) Blocknet address associated with the service node\n"
                 "    \"timelastseen\": n,              (numeric) Unix time of when this service node was last seen\n"
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
+                "    \"exr\": n,                       (boolean) Enterprise XRouter compatibility\n"
                 "    \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
                 "    \"services\":[...],               (array<string>) List of supported services\n"
                 "  }\n"
@@ -719,6 +720,7 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("address", EncodeDestination(snode.getPaymentAddress()));
         obj.pushKV("timelastseen", snode.getPingTime());
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
+        obj.pushKV("exr", snode.isEXRCompatible());
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
         obj.pushKV("score", xrouter::App::instance().isReady() ? xrouter::App::instance().getScore(snode.getHost()) : 0);
         UniValue services(UniValue::VARR);

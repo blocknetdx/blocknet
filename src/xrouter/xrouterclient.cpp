@@ -637,14 +637,14 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
         std::map<std::string, sn::ServiceNode> mapSelectedSnodes;
         const auto fqServiceAdjusted = (command == xrService) ? fqService
                                                               : walletCommandKey(service);
-        auto list = sn::ServiceNodeMgr::instance().list();
+        auto list = smgr.list();
         for (const auto & s : list) {
             if (!s.hasService(xr)) // has xrouter
                 continue;
             if (!s.hasService(fqServiceAdjusted)) // has the service
                 continue;
-            if (!s.running())
-                continue; // only running snodes
+            if (!s.running() || !s.isEXRCompatible())
+                continue; // only running snodes and exr compatible snodes
             mapSelectedSnodes[s.getHostAddr().ToStringIPPort()] = s;
         }
 
