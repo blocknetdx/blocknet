@@ -29,6 +29,8 @@ bool IsProofOfStake(int blockHeight, const Consensus::Params & consensusParams);
 bool stakeTargetHit(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
 bool IsProtocolV06(uint64_t nTimeTx, const Consensus::Params & consensusParams);
 bool stakeTargetHitV06(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
+bool IsProtocolV07(uint64_t nTimeTx, const Consensus::Params & consensusParams);
+bool stakeTargetHitV07(const uint256 & hashProofOfStake, const int64_t & currentStakingTime, const int64_t & prevStakingTime, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay, const int & nPowTargetSpacing);
 
 static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';
@@ -311,7 +313,13 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                     const auto & hash = diskindex->CacheBlockHash();
                     if (IsProofOfStake(diskindex->nHeight, consensusParams)) {
                         arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(diskindex->nBits);
-                        if (IsProtocolV06(diskindex->GetBlockTime(), consensusParams)) {
+                        if (IsProtocolV07(diskindex->GetBlockTime(), consensusParams)) {
+                            if (!stakeTargetHitV07(diskindex->hashProofOfStake, diskindex->nNonce, diskindex->pprev->nNonce, diskindex->nStakeAmount, bnTargetPerCoinDay, consensusParams.nPowTargetSpacing)) {
+                                LOCK(mu);
+                                invalidBlocks.insert(hash);
+                                continue;
+                            }
+                        } else if (IsProtocolV06(diskindex->GetBlockTime(), consensusParams)) {
                             if (!stakeTargetHitV06(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay)) {
                                 LOCK(mu);
                                 invalidBlocks.insert(hash);

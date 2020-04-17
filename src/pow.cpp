@@ -15,7 +15,6 @@
 // from kernel.h
 bool IsProofOfStake(int blockHeight);
 bool CheckProofOfStake(const CBlockHeader & block, const CBlockIndex *pindexPrev, uint256 & hashProofOfStake, const Consensus::Params & consensusParams);
-bool IsProtocolV06(uint64_t nTimeTx, const Consensus::Params & consensusParams);
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader */*pblock*/, const Consensus::Params& params)
 {

@@ -245,6 +245,10 @@ bool IsProtocolV06(uint64_t nTimeTx, const Consensus::Params & consensusParams) 
     return nTimeTx >= consensusParams.stakingV06UpgradeTime;
 }
 
+bool IsProtocolV07(uint64_t nTimeTx, const Consensus::Params & consensusParams) {
+    return nTimeTx >= consensusParams.stakingV07UpgradeTime;
+}
+
 // Get the stake modifier specified by the protocol to hash for a stake kernel
 bool GetKernelStakeModifier(const CBlockIndex* pindexPrev, const CBlockIndex *pindexStake, const int64_t & nBlockTime,
         uint64_t & nStakeModifier, int & nStakeModifierHeight, int64_t & nStakeModifierTime)
@@ -365,6 +369,24 @@ bool stakeTargetHitV06(const uint256 & hashProofOfStake, const int64_t & nValueI
     return (UintToArith256(hashProofOfStake) < bnCoinDayWeight * bnTargetPerCoinDay);
 }
 
+bool stakeTargetHitV07(const uint256 & hashProofOfStake, const int64_t & currentStakingTime, const int64_t & prevStakingTime, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay, const int & nPowTargetSpacing) {
+    const auto numberOfSpaces = static_cast<double>(currentStakingTime - prevStakingTime) / nPowTargetSpacing;
+    double multiplier{0};
+    if (numberOfSpaces <= 1) { // if lte to target spacing
+        multiplier = std::max<double>(0, pow(numberOfSpaces, 4)); // min 0
+        multiplier = std::min<double>(1.0, multiplier); // max 1x staking weight
+    } else { // if greater than target spacing
+        const double pw = -1.0 * pow(numberOfSpaces - 2.0, 4) + 2.0;
+        multiplier = std::max<double>(1.0, pw);
+        multiplier = std::min<double>(2.0, multiplier); // max 2x staking weight
+    }
+    const auto stakeWeightMultiplier = arith_uint256(multiplier * 100);
+    // Stake weight is 1/200 of the staked input amount multiplied by the multiplier with 100 denominator removed
+    const auto bnCoinDayWeight = arith_uint256(nValueIn) * stakeWeightMultiplier / 200 / 100;
+    // Now check if proof-of-stake hash meets target protocol
+    return (UintToArith256(hashProofOfStake) < bnCoinDayWeight * bnTargetPerCoinDay);
+}
+
 bool CheckStakeKernelHash(const CBlockIndex *pindexPrev, const CBlockIndex *pindexStake, const unsigned int & nBits,
         const CAmount & txInAmount, const COutPoint & prevout, const int64_t & nBlockTime, const unsigned int & nNonce,
         uint256 & hashProofOfStake, const Consensus::Params & consensus)
@@ -394,6 +416,12 @@ bool CheckStakeKernelHash(const CBlockIndex *pindexPrev, const CBlockIndex *pind
 
     CDataStream ss(SER_GETHASH, 0);
     ss << nStakeModifier;
+
+    bool v07StakeProtocol = IsProtocolV07(nBlockTime, consensus);
+    if (v07StakeProtocol) {
+        hashProofOfStake = stakeHashV06(ss, txInBlockHash, nTimeBlockFrom, currentBlock, prevout.n, nNonce);
+        return stakeTargetHitV07(hashProofOfStake, nNonce, pindexPrev->nNonce, txInAmount, bnTargetPerCoinDay, consensus.nPowTargetSpacing);
+    }
 
     bool v06StakeProtocol = IsProtocolV06(nBlockTime, consensus);
     if (v06StakeProtocol) {

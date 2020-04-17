@@ -89,6 +89,7 @@ public:
     bool GetStakesMeetingTarget(const std::shared_ptr<COutput> & coin, std::shared_ptr<CWallet> & wallet,
         const CBlockIndex *tip, const int64_t & adjustedTime, const int64_t & blockTime, const int64_t & fromTime,
         const int64_t & toTime, std::map<int64_t, std::vector<StakeCoin>> & stakes, const Consensus::Params & params);
+    void Reset();
 
 private:
     bool HasStakeModifier(const uint256 & blockHash) {

@@ -57,12 +57,12 @@ bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBl
     // are not present in the wallet this could waste cpu cycles. Normal staking happens every 15 seconds
     // (see below) and results in fewer cpu cycles.
     const int stakingInterval = std::max<int>(gArgs.GetArg("-staking", 15), 1);
-    const int64_t stakeSearchPeriodSeconds = params.PoSFutureBlockTimeLimit();
-    const int64_t endTime = GetAdjustedTime() + stakeSearchPeriodSeconds; // current time + seconds into future
+    auto adjustedTime = GetAdjustedTime();
+    int64_t endTime = adjustedTime + params.PoSFutureBlockTimeLimit(adjustedTime); // current time + seconds into future
     // A closed staking window means we've exhausted the search for a new stake
     const bool stakingWindowClosed = endTime <= lastUpdateTime + stakingInterval;
     const bool tipChanged = tip->nHeight != lastBlockHeight;
-    const bool staleTip = tip->nTime <= lastUpdateTime || tip->nTime < GetAdjustedTime() - params.stakeMinAge*2; // TODO Blocknet testnet could stall chain?
+    const bool staleTip = tip->nTime <= lastUpdateTime || tip->nTime < adjustedTime - params.stakeMinAge*2; // TODO Blocknet testnet could stall chain?
     if (stakingWindowClosed && !tipChanged && staleTip)
         return false; // do not process if staking window closed, tip hasn't changed, and tip time is stale
 
@@ -94,8 +94,9 @@ bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBl
         const auto out = item.out;
         auto wallet = item.wallet;
         std::map<int64_t, std::vector<StakeCoin>> stakes;
-        const int64_t adjustedTime = GetAdjustedTime();
+        adjustedTime = GetAdjustedTime(); // update here b/c this loop could be long running process
         const auto blockTime = std::max(tip->GetBlockTime()+1, adjustedTime);
+        endTime = blockTime + params.PoSFutureBlockTimeLimit(blockTime); // current time + seconds into future
         if (!GetStakesMeetingTarget(out, wallet, tip, adjustedTime, blockTime, lastUpdateTime, endTime, stakes, params))
             continue;
         if (!stakes.empty()) {
@@ -155,7 +156,10 @@ bool StakeMgr::NextStake(std::vector<StakeCoin> & nextStakes, const CBlockIndex 
         // Find the smallest stake input that meets the protocol requirements
         for (const auto & stake : stakes) {
             // Make sure stake still meets network requirements
-            if (IsProtocolV06(stake.blockTime, chainparams.GetConsensus())) {
+            if (IsProtocolV07(stake.blockTime, chainparams.GetConsensus())) {
+                if (!stakeTargetHitV07(stake.hashProofOfStake, stake.time, tip->nNonce, stake.coin->txout.nValue, bnTargetPerCoinDay, chainparams.GetConsensus().nPowTargetSpacing))
+                    continue;
+            } else if (IsProtocolV06(stake.blockTime, chainparams.GetConsensus())) {
                 if (!stakeTargetHitV06(stake.hashProofOfStake, stake.coin->txout.nValue, bnTargetPerCoinDay))
                     continue;
             } else if (!stakeTargetHit(stake.hashProofOfStake, stake.coin->txout.nValue, bnTargetPerCoinDay))
@@ -275,7 +279,11 @@ bool StakeMgr::GetStakesMeetingTarget(const std::shared_ptr<COutput> & coin, std
             ss << stakeModifier;
 
             uint256 hashProofOfStake;
-            if (IsProtocolV06(blockTime, params)) {
+            if (IsProtocolV07(blockTime, params)) {
+                hashProofOfStake = stakeHashV06(ss, txInBlockHash, hashBlockTime, stakeHeight, coin->i, i);
+                if (!stakeTargetHitV07(hashProofOfStake, i, tip->nNonce, coin->GetInputCoin().txout.nValue, bnTargetPerCoinDay, params.nPowTargetSpacing))
+                    continue;
+            } else if (IsProtocolV06(blockTime, params)) {
                 hashProofOfStake = stakeHashV06(ss, txInBlockHash, hashBlockTime, stakeHeight, coin->i, i);
                 if (!stakeTargetHitV06(hashProofOfStake, coin->GetInputCoin().txout.nValue, bnTargetPerCoinDay))
                     continue;
@@ -316,4 +324,14 @@ bool StakeMgr::GetStakesMeetingTarget(const std::shared_ptr<COutput> & coin, std
     }
 
     return true;
+}
+
+void StakeMgr::Reset() {
+    {
+        LOCK(mu);
+        stakeTimes.clear();
+        stakeModifiers.clear();
+    }
+    lastUpdateTime = 0;
+    lastBlockHeight = 0;
 }

@@ -20,6 +20,7 @@ int64_t GetStakeModifierSelectionInterval();
 // Stake modifier selection upgrade
 bool IsProtocolV05(uint64_t nTimeTx);
 bool IsProtocolV06(uint64_t nTimeTx, const Consensus::Params & consensusParams);
+bool IsProtocolV07(uint64_t nTimeTx, const Consensus::Params & consensusParams);
 
 uint256 stakeHash(unsigned int nTimeTx, CDataStream ss, unsigned int prevoutIndex, uint256 prevoutHash,unsigned int nTimeBlockFrom);
 uint256 stakeHashV05(CDataStream ss, const unsigned int & nTimeBlockFrom, const int & blockHeight, const unsigned int & prevoutIndex, const unsigned int & nTimeTx);
@@ -28,6 +29,7 @@ uint256 stakeHashV06(CDataStream ss, const uint256 & hashBlockFrom, const unsign
 // Check whether stake kernel meets hash target
 bool stakeTargetHit(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
 bool stakeTargetHitV06(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
+bool stakeTargetHitV07(const uint256 & hashProofOfStake, const int64_t & currentStakingTime, const int64_t & prevStakingTime, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay, const int & nPowTargetSpacing);
 
 bool CheckStakeKernelHash(const CBlockIndex *pindexPrev, const CBlockIndex *pindexStake, const unsigned int & nBits,
         const CAmount & txInAmount, const COutPoint & prevout, const int64_t & nBlockTime, const unsigned int & nNonce,
