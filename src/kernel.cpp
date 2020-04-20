@@ -382,7 +382,7 @@ bool stakeTargetHitV07(const uint256 & hashProofOfStake, const int64_t & current
     }
     const auto stakeWeightMultiplier = arith_uint256(multiplier * 100);
     // Stake weight is 1/200 of the staked input amount multiplied by the multiplier with 100 denominator removed
-    const auto bnCoinDayWeight = arith_uint256(nValueIn) * stakeWeightMultiplier / 200 / 100;
+    const auto bnCoinDayWeight = arith_uint256(nValueIn) * stakeWeightMultiplier / 100 / 100;
     // Now check if proof-of-stake hash meets target protocol
     return (UintToArith256(hashProofOfStake) < bnCoinDayWeight * bnTargetPerCoinDay);
 }
