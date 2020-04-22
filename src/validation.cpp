@@ -3196,7 +3196,7 @@ bool CheckBlock(const CBlock& block, CValidationState& state, const Consensus::P
             return state.DoS(100, false, REJECT_INVALID, "bad-cs-missing", false, "second tx must be coinstake");
         // Check v6 staking protocol
         if (IsProtocolV06(block.GetBlockTime(), consensusParams)) {
-            if (block.nNonce <= 0 || block.nNonce > GetAdjustedTime() + consensusParams.PoSFutureBlockTimeLimit())
+            if (block.nNonce <= 0 || block.nNonce > GetAdjustedTime() + consensusParams.PoSFutureBlockTimeLimit(block.GetBlockTime()))
                 return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
         }
     }
@@ -3331,7 +3331,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
             return state.Invalid(false, REJECT_INVALID, "time-too-old", "block's timestamp is too early");
         // Check that stake time is valid: nonce can't be less or equal to previous block time or more than
         // future block time limit.
-        if (block.nNonce <= 0 || block.nNonce <= pindexPrev->GetBlockTime() || block.nNonce > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit())
+        if (block.nNonce <= 0 || block.nNonce <= pindexPrev->GetBlockTime() || block.nNonce > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit(block.GetBlockTime()))
             return state.DoS(100, false, REJECT_INVALID, "bad-cs-nonce", false, "nonce has invalid pos time");
     } else {
     // Check timestamp against prev
@@ -3340,8 +3340,7 @@ static bool ContextualCheckBlockHeader(const CBlockHeader& block, CValidationSta
     } // end else
 
     if (IsProofOfStake(nHeight)) {
-        assert(params.GetConsensus().PoSFutureBlockTimeLimit() == MAX_FUTURE_BLOCK_TIME_POS);
-        if (block.GetBlockTime() > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit())
+        if (block.GetBlockTime() > nAdjustedTime + params.GetConsensus().PoSFutureBlockTimeLimit(block.GetBlockTime()))
             return state.Invalid(false, REJECT_INVALID, "time-too-new", "block timestamp too far in the future");
     } else {
     // Check timestamp

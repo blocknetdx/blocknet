@@ -92,7 +92,13 @@ struct Params {
     int64_t stakingPoSTargetTimespan{60*40};
     int64_t stakingV05UpgradeTime{0};
     int64_t stakingV06UpgradeTime{0};
-    int64_t PoSFutureBlockTimeLimit() const { return nPowTargetSpacing * 3; } // changing this will break consensus!
+    int64_t stakingV07UpgradeTime{0};
+    int64_t PoSFutureBlockTimeLimit(const int64_t blockTime) const { // changing this will break consensus!
+        if (blockTime >= stakingV07UpgradeTime)
+            return 15; // seconds in the future
+        else
+            return nPowTargetSpacing * 3;
+    }
     /** Service node parameters */
     int snMaxCollateralCount{10}; // max utxos for use with service node collateral
     /** Governance parameters */

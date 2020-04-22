@@ -245,6 +245,7 @@ bool applySuperblockPayees(TestChainPoS & pos, CBlockTemplate *blocktemplate, co
 bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COutPoint & stakeInput, const int & tryiter) {
     const CChainParams & params = Params();
     int tries{0};
+    int64_t tipBlockTime{0};
     const int currentBlockHeight = chainActive.Height();
     while (chainActive.Height() < currentBlockHeight + 1) {
         try {
@@ -256,6 +257,7 @@ bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COu
             {
                 LOCK(cs_main);
                 tip = chainActive.Tip();
+                tipBlockTime = tip->GetBlockTime();
                 if (!GetTransaction(stakeInput.hash, tx, params.GetConsensus(), block))
                     return false;
                 stakeIndex = LookupBlockIndex(block);
@@ -269,8 +271,8 @@ bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COu
             }
             const auto adjustedTime = GetAdjustedTime();
             const auto fromTime = std::max(tip->GetBlockTime()+1, adjustedTime);
-            const auto toTime = fromTime + params.GetConsensus().PoSFutureBlockTimeLimit();
             const auto blockTime = fromTime;
+            const auto toTime = fromTime + params.GetConsensus().PoSFutureBlockTimeLimit(blockTime);
             std::map<int64_t, std::vector<StakeMgr::StakeCoin>> stakes;
             if (staker.GetStakesMeetingTarget(output, wallet, tip, adjustedTime, blockTime, fromTime, toTime,
                                               stakes, params.GetConsensus())) {
@@ -289,7 +291,7 @@ bool stakeWallet(std::shared_ptr<CWallet> & wallet, StakeMgr & staker, const COu
         }
         if (++tries > tryiter)
             throw std::runtime_error("Staker failed to find stake");
-        SetMockTime(GetAdjustedTime() + params.GetConsensus().PoSFutureBlockTimeLimit());
+        SetMockTime(GetAdjustedTime() + params.GetConsensus().PoSFutureBlockTimeLimit(tipBlockTime));
     }
     return false;
 }

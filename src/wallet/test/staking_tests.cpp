@@ -77,7 +77,8 @@ BOOST_AUTO_TEST_CASE(staking_tests_v03modifier)
     params->consensus.governanceBlock = 10000; // disable governance
     params->consensus.stakingV05UpgradeTime = std::numeric_limits<int>::max(); // set far into future
     params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
-    pos.Init("150");
+    params->consensus.stakingV07UpgradeTime = std::numeric_limits<int>::max(); // disable v07
+    pos.Init("150,v03");
     const int blocks{100};
     // 4 selection intervals worth of blocks
     while (chainActive.Height() < blocks) {
@@ -114,7 +115,8 @@ BOOST_AUTO_TEST_CASE(staking_tests_v05modifier)
     params->consensus.governanceBlock = 10000; // disable governance
     params->consensus.stakingV05UpgradeTime = GetAdjustedTime(); // set to current
     params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
-    pos.Init("150");
+    params->consensus.stakingV07UpgradeTime = std::numeric_limits<int>::max(); // disable v07
+    pos.Init("150,v05");
     const int blocks{100};
     // 4 selection intervals worth of blocks
     while (chainActive.Height() < blocks) {
@@ -152,7 +154,8 @@ BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade_v05)
     params->consensus.governanceBlock = 10000; // disable governance
     params->consensus.stakingV05UpgradeTime = std::numeric_limits<int>::max(); // disable v05
     params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
-    pos.Init("150");
+    params->consensus.stakingV07UpgradeTime = std::numeric_limits<int>::max(); // disable v07
+    pos.Init("150,v03");
     pos.StakeBlocks(25);
 
     // Switch on the upgrade
@@ -174,11 +177,35 @@ BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade_v06)
     params->consensus.governanceBlock = 10000; // disable governance
     params->consensus.stakingV05UpgradeTime = GetAdjustedTime();
     params->consensus.stakingV06UpgradeTime = std::numeric_limits<int>::max(); // disable v06
-    pos.Init("150");
+    params->consensus.stakingV07UpgradeTime = std::numeric_limits<int>::max(); // disable v07
+    pos.Init("150,v05-v06");
     pos.StakeBlocks(25);
 
     // Switch on the upgrade
     params->consensus.stakingV06UpgradeTime = GetAdjustedTime() + params->GetConsensus().nPowTargetSpacing * 10; // set 10 min in future (~10 blocks)
+    int blocks = chainActive.Height();
+    pos.StakeBlocks(25); // make sure seemless upgrade to v06 staking protocol occurs
+    BOOST_CHECK_EQUAL(chainActive.Height(), blocks + 25);
+
+    pos_ptr.reset();
+}
+
+/// Check that the v06 to v07 staking protocol upgrade works properly
+BOOST_AUTO_TEST_CASE(staking_tests_protocolupgrade_v07)
+{
+    auto pos_ptr = std::make_shared<TestChainPoS>(false);
+    auto & pos = *pos_ptr;
+    auto *params = (CChainParams*)&Params();
+    params->consensus.lastPOWBlock = 150;
+    params->consensus.governanceBlock = 10000; // disable governance
+    params->consensus.stakingV05UpgradeTime = GetAdjustedTime();
+    params->consensus.stakingV06UpgradeTime = GetAdjustedTime();
+    params->consensus.stakingV07UpgradeTime = std::numeric_limits<int>::max(); // disable v07
+    pos.Init("150,v06-v07");
+    pos.StakeBlocks(25);
+
+    // Switch on the upgrade
+    params->consensus.stakingV07UpgradeTime = GetAdjustedTime() + params->GetConsensus().nPowTargetSpacing * 10; // set 10 min in future (~10 blocks)
     int blocks = chainActive.Height();
     pos.StakeBlocks(25); // make sure seemless upgrade to v06 staking protocol occurs
     BOOST_CHECK_EQUAL(chainActive.Height(), blocks + 25);
@@ -257,7 +284,44 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
             } catch (std::exception & e) {
                 LogPrintf("Staker ran into an exception: %s\n", e.what());
             } catch (...) { }
-            SetMockTime(GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing);
+            SetMockTime(GetAdjustedTime() + Params().GetConsensus().PoSFutureBlockTimeLimit(tip->GetBlockTime()));
+        }
+
+        return false;
+    };
+
+    // Find a stake in certain time
+    auto findStakeUntilTime = [&createStakeBlock](StakeMgr::StakeCoin & nextStake, StakeMgr & staker,
+            const CBlockIndex *tip, const std::shared_ptr<CWallet> & wallet, const CAmount & stakeAmount,
+            const CScript & paymentScript, const int64_t endTime) -> bool
+    {
+        while (GetAdjustedTime() <= endTime) {
+            try {
+                std::vector<std::shared_ptr<CWallet>> wallets{wallet};
+                if (staker.Update(wallets, tip, Params().GetConsensus(), true)) {
+                    std::vector<StakeMgr::StakeCoin> nextStakes;
+                    if (!staker.NextStake(nextStakes, tip, Params()))
+                        continue;
+                    for (const auto & ns : nextStakes) {
+                        CBlock block;
+                        CMutableTransaction coinbaseTx;
+                        CMutableTransaction coinstakeTx;
+                        createStakeBlock(ns, tip, block, coinbaseTx, coinstakeTx);
+                        block.vtx[0] = MakeTransactionRef(coinbaseTx); // set coinbase
+                        coinstakeTx.vout[1] = CTxOut(ns.coin->txout.nValue + stakeAmount, paymentScript); // staker payment
+                        block.vtx[1] = MakeTransactionRef(coinstakeTx);
+                        block.hashMerkleRoot = BlockMerkleRoot(block);
+                        uint256 haspos;
+                        if (CheckProofOfStake(block, tip, haspos, Params().GetConsensus())) {
+                            nextStake = ns;
+                            return true;
+                        }
+                    }
+                }
+            } catch (std::exception & e) {
+                LogPrintf("Staker ran into an exception: %s\n", e.what());
+            } catch (...) { }
+            SetMockTime(GetAdjustedTime() + 1);
         }
 
         return false;
@@ -269,7 +333,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         const auto tipHeight = tip->nHeight;
         const auto adjustedTime = GetAdjustedTime();
         const auto fromTime = tip->GetBlockTime() + 1;
-        const auto toTime = adjustedTime + params.PoSFutureBlockTimeLimit();
+        const auto toTime = adjustedTime + params.PoSFutureBlockTimeLimit(blockTime);
         std::vector<StakeMgr::StakeOutput> selected;
         const std::vector<COutput> & coins = staker.StakeOutputs(wallet.get(), 1);
         for (const COutput & out : coins) {
@@ -317,12 +381,36 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
 
     // Find a stake
     {
+        staker.Reset();
         StakeMgr::StakeCoin nextStake;
         BOOST_CHECK(findStake(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript));
+    }
+    // Find a stake before target spacing
+    {
+        staker.Reset();
+        SetMockTime(chainActive.Tip()->nNonce);
+        auto endTime = GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing*0.85;
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStakeUntilTime(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript, endTime));
+    }
+    // Find a stake after target spacing
+    {
+        // Just after 1 block worth of spacing
+        staker.Reset();
+        SetMockTime(chainActive.Tip()->nNonce + Params().GetConsensus().nPowTargetSpacing);
+        auto endTime = GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing/2;
+        StakeMgr::StakeCoin nextStake;
+        BOOST_CHECK(findStakeUntilTime(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript, endTime));
+        // Just after 2 blocks worth of spacing
+        staker.Reset();
+        SetMockTime(chainActive.Tip()->nNonce + Params().GetConsensus().nPowTargetSpacing*2);
+        endTime = GetAdjustedTime() + Params().GetConsensus().nPowTargetSpacing;
+        BOOST_CHECK(findStakeUntilTime(nextStake, staker, chainActive.Tip(), wallet, stakeAmount, paymentScript, endTime));
     }
 
     // Check valid coinstake
     {
+        staker.Reset();
         CBlock block;
         uint256 blockHash;
         CMutableTransaction coinbaseTx;
@@ -569,7 +657,7 @@ BOOST_FIXTURE_TEST_CASE(staking_tests_stakes, TestChainPoS)
         BOOST_CHECK_MESSAGE(!ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake should not be accepted with nonce of 0");
         block.nNonce = -1;
         BOOST_CHECK_MESSAGE(!ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake should not be accepted with nonce less than 0");
-        block.nNonce = GetAdjustedTime() + Params().GetConsensus().PoSFutureBlockTimeLimit() + 10;
+        block.nNonce = GetAdjustedTime() + Params().GetConsensus().PoSFutureBlockTimeLimit(block.nTime) + 10;
         BOOST_CHECK_MESSAGE(!ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake should not be accepted with nonce greater than adjusted time + max future stake time");
         block.nNonce = validNonce;
         BOOST_CHECK_MESSAGE(ProcessNewBlock(Params(), std::make_shared<CBlock>(block), true, nullptr), "stake with valid nonce should be accepted");
