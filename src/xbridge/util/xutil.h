@@ -13,6 +13,7 @@
 #include <xbridge/xbridgedef.h>
 
 #include <uint256.h>
+#include <univalue.h>
 
 #include <string>
 
@@ -111,6 +112,11 @@ namespace xbridge
      * @return  json_spirit object with error description
      */
      json_spirit::Object makeError(const xbridge::Error statusCode, const std::string &function, const std::string &message = "");
+
+    void LogOrderMsg(const std::string & orderId, const std::string & msg, const std::string & func);
+    void LogOrderMsg(UniValue o, const std::string & msg, const std::string & func);
+    void LogOrderMsg(xbridge::TransactionDescrPtr & ptr, const std::string & func);
+    void LogOrderMsg(xbridge::TransactionPtr & ptr, const std::string & func);
 
 } // namespace xbridge
 

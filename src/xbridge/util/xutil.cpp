@@ -303,4 +303,23 @@ json_spirit::Object makeError(const xbridge::Error statusCode, const std::string
     return  error;
 }
 
+void LogOrderMsg(const std::string & orderId, const std::string & msg, const std::string & func) {
+    UniValue o(UniValue::VOBJ);
+    o.pushKV("orderid", orderId);
+    o.pushKV("function", func);
+    o.pushKV("msg", msg);
+    LOG() << o.write();
+}
+void LogOrderMsg(UniValue o, const std::string & msg, const std::string & func) {
+    o.pushKV("function", func);
+    o.pushKV("msg", msg);
+    LOG() << o.write();
+}
+void LogOrderMsg(xbridge::TransactionDescrPtr & ptr, const std::string & func) {
+    LOG() << func << " " << ptr;
+}
+void LogOrderMsg(xbridge::TransactionPtr & ptr, const std::string & func) {
+    LOG() << func << " " << ptr;
+}
+
 } // namespace xbridge

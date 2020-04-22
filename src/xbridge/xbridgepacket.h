@@ -36,7 +36,15 @@ enum TxCancelReason
     crBlocknetError   = 13,
     crBadADepositTx   = 14,
     crBadBDepositTx   = 15,
-    crTimeout         = 16
+    crTimeout         = 16,
+    crBadLockTime     = 17,
+    crBadALockTime    = 18,
+    crBadBLockTime    = 19,
+    crBadAUtxo        = 20,
+    crBadBUtxo        = 21,
+    crBadARefundTx    = 22,
+    crBadBRefundTx    = 23,
+    crBadFeeTx        = 24,
 };
 
 //******************************************************************************
