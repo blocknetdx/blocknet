@@ -3071,7 +3071,7 @@ std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
         log_utxo.pushKV("index", static_cast<int>(count));
         log_utxo.pushKV("txid", entry.txId);
         log_utxo.pushKV("vout", static_cast<int>(entry.vout));
-        log_utxo.pushKV("amount", entry.amount);
+        log_utxo.pushKV("amount", xBridgeStringValueFromPrice(entry.amount, COIN));
         log_utxo.pushKV("address", entry.address);
         log_utxos.push_back(log_utxo);
         ++count;

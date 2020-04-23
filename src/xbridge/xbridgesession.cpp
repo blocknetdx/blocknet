@@ -1679,7 +1679,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             UniValue log_utxo(UniValue::VOBJ);
             log_utxo.pushKV("txid", entry.txId);
             log_utxo.pushKV("vout", static_cast<int>(entry.vout));
-            log_utxo.pushKV("amount", entry.amount);
+            log_utxo.pushKV("amount", xBridgeStringValueFromPrice(entry.amount, COIN));
             log_utxos.push_back(log_utxo);
         }
         log_obj.pushKV("utxos", log_utxos);
@@ -2158,7 +2158,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             UniValue log_utxo(UniValue::VOBJ);
             log_utxo.pushKV("txid", entry.txId);
             log_utxo.pushKV("vout", static_cast<int>(entry.vout));
-            log_utxo.pushKV("amount", entry.amount);
+            log_utxo.pushKV("amount", xBridgeStringValueFromPrice(entry.amount, COIN));
             log_utxos.push_back(log_utxo);
         }
         log_obj.pushKV("utxos", log_utxos);

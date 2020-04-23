@@ -80,6 +80,7 @@ namespace xbridge
 
     uint64_t xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
+    std::string xBridgeStringValueFromPrice(double price, uint64_t denomination);
     std::string xBridgeStringValueFromAmount(uint64_t amount);
 
     /**

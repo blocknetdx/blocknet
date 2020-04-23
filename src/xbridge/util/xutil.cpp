@@ -9,6 +9,8 @@
 
 #include <xbridge/xbridgetransactiondescr.h>
 
+#include <amount.h>
+
 #include <ctime>
 #include <iomanip>
 #include <sstream>
@@ -208,6 +210,13 @@ std::string xBridgeStringValueFromPrice(double price)
 {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << price;
+    return ss.str();
+}
+
+std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
+{
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(denomination)) << price;
     return ss.str();
 }
 
