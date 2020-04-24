@@ -20,6 +20,7 @@
 #include <xbridge/xbridgewalletconnectorbtc.h>
 #include <xbridge/xbridgewalletconnectorbch.h>
 #include <xbridge/xbridgewalletconnectordgb.h>
+#include <xbridge/xbridgepacket.h>
 #include <xbridge/xuiconnector.h>
 #include <xrouter/xrouterapp.h>
 
@@ -392,8 +393,7 @@ bool App::Impl::start()
     }
     catch (std::exception & e)
     {
-        ERR() << e.what();
-        ERR() << __FUNCTION__;
+        ERR() << e.what() << " " << __FUNCTION__;
     }
 
     m_stopped = false;
@@ -1221,7 +1221,7 @@ TransactionDescrPtr App::transaction(const uint256 & id) const
     if (m_p->m_historicTransactions.count(id))
     {
         if(result != nullptr) {
-            ERR() << "duplicate transaction " << __FUNCTION__;
+            ERR() << "duplicate order " << __FUNCTION__;
             return result;
         }
 //        assert(!result && "duplicate objects");
@@ -1330,14 +1330,14 @@ void App::moveTransactionToHistory(const uint256 & id)
 
             counter = m_p->m_transactions.erase(id);
             if(counter > 1) {
-                ERR() << "duplicate transaction id = " << id.GetHex() << " " << __FUNCTION__;
+                ERR() << "duplicate order id = " << id.GetHex() << " " << __FUNCTION__;
             }
         }
 
         if (xtx)
         {
             if(m_p->m_historicTransactions.count(id) != 0) {
-                ERR() << "duplicate tx " << id.GetHex() << " in tx list and history " << __FUNCTION__;
+                ERR() << "duplicate order " << id.GetHex() << " in history " << __FUNCTION__;
                 return;
             }
             m_p->m_historicTransactions[id] = xtx;
@@ -1461,11 +1461,15 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
 
-        LOG() << "fee1: " << (static_cast<double>(fee1) / TransactionDescr::COIN);
-        LOG() << "fee2: " << (static_cast<double>(fee2) / TransactionDescr::COIN);
-        LOG() << "amount of used utxo items: " << (static_cast<double>(utxoAmount) / TransactionDescr::COIN)
-              << " required amount + fees: "
-              << (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN);
+        {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("currency", from);
+            log_obj.pushKV("fee1", (static_cast<double>(fee1) / TransactionDescr::COIN));
+            log_obj.pushKV("fee2", (static_cast<double>(fee2) / TransactionDescr::COIN));
+            log_obj.pushKV("utxos_amount", (static_cast<double>(utxoAmount) / TransactionDescr::COIN));
+            log_obj.pushKV("required_amount", (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN));
+            xbridge::LogOrderMsg(log_obj, "utxo selection details for order", __FUNCTION__);
+        }
 
         // sign used coins
         for (wallet::UtxoEntry &entry : outputsForUse) {
@@ -1544,7 +1548,12 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->blockHash    = blockHash;
     ptr->role         = 'A';
 
-    LOG() << "using servicenode " << HexStr(pmn.getSnodePubKey()) << " for order " << id.ToString();
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("snode_pubkey", HexStr(pmn.getSnodePubKey()));
+        xbridge::LogOrderMsg(log_obj, "using servicenode for order", __FUNCTION__);
+    }
 
     // m key
     connTo->newKeyPair(ptr->mPubKey, ptr->mPrivKey);
@@ -1580,7 +1589,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         m_p->m_transactions[id] = ptr;
     }
 
-    LOG() << "order created" << ptr << __FUNCTION__;
+    xbridge::LogOrderMsg(ptr, std::string(__FUNCTION__) + " order created");
 
     return xbridge::Error::SUCCESS;
 }
@@ -1671,14 +1680,14 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         if (!m_p->m_transactions.count(id))
         {
 
-            WARN() << "transaction not found " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "order not found", __FUNCTION__);
             return xbridge::TRANSACTION_NOT_FOUND;
         }
         ptr = m_p->m_transactions[id];
     }
 
     if (ptr->state >= TransactionDescr::trAccepting) {
-        WARN() << strprintf("not accepting, transaction %s already accepted ", id.ToString());
+        xbridge::LogOrderMsg(id.GetHex(), "not accepting, order already accepted", __FUNCTION__);
         return xbridge::BAD_REQUEST;
     }
     const auto priorState = ptr->state;
@@ -1690,7 +1699,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     {
         ptr->state = priorState;
         // no session
-        WARN() << "no wallet session for <" << (connFrom ? ptr->fromCurrency : ptr->toCurrency) << "> " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "no wallet session for " + (connFrom ? ptr->fromCurrency : ptr->toCurrency), __FUNCTION__);
         return xbridge::NO_SESSION;
     }
 
@@ -1718,7 +1727,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         uint32_t len = ptr->sPubKey.size();
         if (len != 33) {
             ptr->state = priorState;
-            LOG() << "bad service node public key, len " << len << " " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "not accepting order, bad service node public key length (" + std::to_string(len) + ")", __FUNCTION__);
             return xbridge::Error::NO_SERVICE_NODE;
         }
         pksnode.Set(ptr->sPubKey.begin(), ptr->sPubKey.end());
@@ -1738,14 +1747,19 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             {
                 ptr->state = priorState;
                 // bad service node, no more
-                LOG() << "unknown service node pubkey " << pksnode.GetID().ToString() << " " << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, unknown service node " + pksnode.GetID().ToString(), __FUNCTION__);
                 return xbridge::Error::NO_SERVICE_NODE;
             }
         }
 
         snodeCollateralAddress = snode.getPaymentAddress();
 
-        LOG() << "use service node " << HexStr(snode.getSnodePubKey()) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("from_currency", ptr->fromCurrency);
+        log_obj.pushKV("to_currency", ptr->toCurrency);
+        log_obj.pushKV("snode_pubkey", HexStr(snode.getSnodePubKey()));
+        xbridge::LogOrderMsg(log_obj, "using service node for order", __FUNCTION__);
     }
 
     // transaction info
@@ -1784,7 +1798,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         std::vector<wallet::UtxoEntry> feeOutputs;
         if (!rpc::unspentP2PKH(feeOutputs)) {
             ptr->state = priorState;
-            WARN() << "insufficient BLOCK funds for service node fee payment " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "insufficient BLOCK funds for service node fee payment", __FUNCTION__);
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
 
@@ -1804,7 +1818,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
                 data, feeOutputs, ptr->feeUtxos, ptr->rawFeeTx))
         {
             ptr->state = priorState;
-            ERR() << "Failed to take order, couldn't prepare the service node fee " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "order not accepted, failed to prepare the service node fee", __FUNCTION__);
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
 
@@ -1844,7 +1858,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
                          TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
         {
             ptr->state = priorState;
-            WARN() << "insufficient funds for <" << ptr->fromCurrency << "> " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "not accepting order, insufficient funds for <" + ptr->fromCurrency + ">", __FUNCTION__);
             unlockFeeUtxos(ptr->feeUtxos);
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
@@ -1856,7 +1870,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             std::string signature;
             if (!connFrom->signMessage(entry.address, entry.toString(), signature))
             {
-                WARN() << "funds not signed <" << ptr->fromCurrency << "> " << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, funds not signed <" + ptr->fromCurrency + ">", __FUNCTION__);
                 err = xbridge::Error::FUNDS_NOT_SIGNED;
             }
 
@@ -1864,20 +1878,20 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
             entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
             if (isInvalid)
             {
-                WARN() << "invalid signature <" << ptr->fromCurrency << "> " << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, invalid signature <" + ptr->fromCurrency + ">", __FUNCTION__);
                 err = xbridge::Error::FUNDS_NOT_SIGNED;
             }
 
             entry.rawAddress = connFrom->toXAddr(entry.address);
             if(entry.signature.size() != 65)
             {
-                ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, incorrect signature length, need 65 bytes", __FUNCTION__);
                 err = xbridge::Error::INVALID_SIGNATURE;
             }
 
             if(entry.rawAddress.size() != 20)
             {
-                ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, incorrect raw address length, need 20 bytes", __FUNCTION__);
                 err = xbridge::Error::INVALID_ADDRESS;
             }
 
@@ -1897,8 +1911,8 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         // lock used coins
         if (!lockCoins(connFrom->currency, ptr->usedCoins)) {
             ptr->state = priorState;
-            ERR() << "failed to create order, cannot reuse utxo inputs for " << connFrom->currency
-                  << " across multiple orders " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "not accepting order, cannot reuse utxo inputs for " + connFrom->currency +
+                                     " across multiple orders ", __FUNCTION__);
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
     }
@@ -1927,13 +1941,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     // try send immediatelly
     m_p->sendAcceptingTransaction(ptr);
 
-//    LOG() << "accept transaction " << to_str(ptr->id) << std::endl
-//          << "    from " << from << " (" << to_str(ptr->from) << ")" << std::endl
-//          << "             " << ptr->fromCurrency << " : " << ptr->fromAmount << std::endl
-//          << "    from " << to << " (" << to_str(ptr->to) << ")" << std::endl
-//          << "             " << ptr->toCurrency << " : " << ptr->toAmount << std::endl;
-
-    LOG() << "order accepted" << ptr << __FUNCTION__;
+    xbridge::LogOrderMsg(ptr, std::string(__FUNCTION__) + " order accepted");
 
     return xbridge::Error::SUCCESS;
 }
@@ -3040,10 +3048,13 @@ void App::clearMempool() {
 
 std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
 {
-    if(!settings().isFullLog())
-    {
-        out << std::endl << "ORDER ID: " << tx->id.GetHex() << std::endl;
+    UniValue log_obj(UniValue::VOBJ);
+    std::string errMsg;
 
+    log_obj.pushKV("orderid", tx->id.GetHex());
+
+    if (!settings().isFullLog()) {
+        out << log_obj.write();
         return out;
     }
 
@@ -3051,41 +3062,98 @@ std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(tx->toCurrency);
 
     if (!connFrom || !connTo)
-        out << "MISSING SOME CONNECTOR, NOT ALL ORDER INFO WILL BE LOGGED";
+        errMsg = (!connFrom ? tx->fromCurrency : tx->toCurrency) + " connector missing";
 
-    std::ostringstream inputsStream;
+    UniValue log_utxos(UniValue::VARR);
     uint32_t count = 0;
-    for(const xbridge::wallet::UtxoEntry & entry : tx->usedCoins)
-    {
-        inputsStream << "    INDEX: " << count << std::endl
-                     << "    ID: " << entry.txId << std::endl
-                     << "    VOUT: " << boost::lexical_cast<std::string>(entry.vout) << std::endl
-                     << "    AMOUNT: " << entry.amount << std::endl
-                     << "    ADDRESS: " << entry.address << std::endl;
-
+    for (const auto & entry : tx->usedCoins) {
+        UniValue log_utxo(UniValue::VOBJ);
+        log_utxo.pushKV("index", static_cast<int>(count));
+        log_utxo.pushKV("txid", entry.txId);
+        log_utxo.pushKV("vout", static_cast<int>(entry.vout));
+        log_utxo.pushKV("amount", xBridgeStringValueFromPrice(entry.amount, COIN));
+        log_utxo.pushKV("address", entry.address);
+        log_utxos.push_back(log_utxo);
         ++count;
     }
 
-    out << std::endl
-        << "LOG ORDER BODY" << std::endl
-        << "ID: " << tx->id.GetHex() << std::endl
-        << "MAKER: " << tx->fromCurrency << std::endl
-        << "MAKER SIZE: " << xBridgeStringValueFromAmount(tx->fromAmount) << std::endl
-        << "MAKER ADDR: " << (!tx->from.empty() && connFrom ? connFrom->fromXAddr(tx->from) : "") << std::endl
-        << "TAKER: " << tx->toCurrency << std::endl
-        << "TAKER SIZE: " << xBridgeStringValueFromAmount(tx->toAmount) << std::endl
-        << "TAKER ADDR: " << (!tx->to.empty() && connTo ? connTo->fromXAddr(tx->to) : "") << std::endl
-        << "STATE: " << tx->strState() << std::endl
-        << "BLOCK HASH: " << tx->blockHash.GetHex() << std::endl
-        << "UPDATED AT: " << iso8601(tx->txtime) << std::endl
-        << "CREATED AT: " << iso8601(tx->created) << std::endl
-        << "USED INPUTS: " << std::endl << inputsStream.str();
+    log_obj.pushKV("maker", tx->fromCurrency);
+    log_obj.pushKV("maker_size", xBridgeStringValueFromAmount(tx->fromAmount));
+    log_obj.pushKV("maker_addr", (!tx->from.empty() && connFrom ? connFrom->fromXAddr(tx->from) : ""));
+    log_obj.pushKV("taker", tx->toCurrency);
+    log_obj.pushKV("taker_size", xBridgeStringValueFromAmount(tx->toAmount));
+    log_obj.pushKV("taker_addr", (!tx->to.empty() && connTo ? connTo->fromXAddr(tx->to) : ""));
+    log_obj.pushKV("state", tx->strState());
+    log_obj.pushKV("block_hash", tx->blockHash.GetHex());
+    log_obj.pushKV("updated_at", iso8601(tx->txtime));
+    log_obj.pushKV("created_at", iso8601(tx->created));
+    log_obj.pushKV("err_msg", errMsg);
+    log_obj.pushKV("cancel_reason", TxCancelReasonText(tx->reason));
+    log_obj.pushKV("utxos", log_utxos);
 
+    out << log_obj.write();
     return out;
 }
 
 WalletConnectorPtr ConnectorByCurrency(const std::string & currency) {
     return App::instance().connectorByCurrency(currency);
+}
+
+std::string TxCancelReasonText(uint32_t reason) {
+    const auto creason = static_cast<TxCancelReason>(reason);
+    switch (creason) {
+        case TxCancelReason::crBadSettings:
+            return "crUnknown";
+        case TxCancelReason::crUserRequest:
+            return "crUserRequest";
+        case TxCancelReason::crNoMoney:
+            return "crNoMoney";
+        case TxCancelReason::crBadUtxo:
+            return "crBadUtxo";
+        case TxCancelReason::crDust:
+            return "crDust";
+        case TxCancelReason::crRpcError:
+            return "crRpcError";
+        case TxCancelReason::crNotSigned:
+            return "crNotSigned";
+        case TxCancelReason::crNotAccepted:
+            return "crNotAccepted";
+        case TxCancelReason::crRollback:
+            return "crRollback";
+        case TxCancelReason::crRpcRequest:
+            return "crRpcRequest";
+        case TxCancelReason::crXbridgeRejected:
+            return "crXbridgeRejected";
+        case TxCancelReason::crInvalidAddress:
+            return "crInvalidAddress";
+        case TxCancelReason::crBlocknetError:
+            return "crBlocknetError";
+        case TxCancelReason::crBadADepositTx:
+            return "crBadADepositTx";
+        case TxCancelReason::crBadBDepositTx:
+            return "crBadBDepositTx";
+        case TxCancelReason::crTimeout:
+            return "crTimeout";
+        case TxCancelReason::crBadLockTime:
+            return "crBadLockTime";
+        case TxCancelReason::crBadALockTime:
+            return "crBadALockTime";
+        case TxCancelReason::crBadBLockTime:
+            return "crBadBLockTime";
+        case TxCancelReason::crBadAUtxo:
+            return "crBadAUtxo";
+        case TxCancelReason::crBadBUtxo:
+            return "crBadBUtxo";
+        case TxCancelReason::crBadARefundTx:
+            return "crBadARefundTx";
+        case TxCancelReason::crBadBRefundTx:
+            return "crBadBRefundTx";
+        case TxCancelReason::crBadFeeTx:
+            return "crBadFeeTx";
+        case TxCancelReason::crUnknown:
+        default:
+            return "crNone";
+    }
 }
 
 } // namespace xbridge

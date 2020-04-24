@@ -9,6 +9,8 @@
 
 #include <xbridge/xbridgetransactiondescr.h>
 
+#include <amount.h>
+
 #include <ctime>
 #include <iomanip>
 #include <sstream>
@@ -211,6 +213,13 @@ std::string xBridgeStringValueFromPrice(double price)
     return ss.str();
 }
 
+std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
+{
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(denomination)) << price;
+    return ss.str();
+}
+
 double xBridgeValueFromAmount(uint64_t amount) {
     return boost::numeric_cast<double>(amount) /
             boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
@@ -301,6 +310,25 @@ json_spirit::Object makeError(const xbridge::Error statusCode, const std::string
     error.emplace_back(Pair("code", statusCode));
     error.emplace_back(Pair("name",function));
     return  error;
+}
+
+void LogOrderMsg(const std::string & orderId, const std::string & msg, const std::string & func) {
+    UniValue o(UniValue::VOBJ);
+    o.pushKV("orderid", orderId);
+    o.pushKV("function", func);
+    o.pushKV("msg", msg);
+    LOG() << o.write();
+}
+void LogOrderMsg(UniValue o, const std::string & msg, const std::string & func) {
+    o.pushKV("function", func);
+    o.pushKV("msg", msg);
+    LOG() << o.write();
+}
+void LogOrderMsg(xbridge::TransactionDescrPtr & ptr, const std::string & func) {
+    LOG() << func << " " << ptr;
+}
+void LogOrderMsg(xbridge::TransactionPtr & ptr, const std::string & func) {
+    LOG() << func << " " << ptr;
 }
 
 } // namespace xbridge
