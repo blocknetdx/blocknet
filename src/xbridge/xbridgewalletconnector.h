@@ -107,6 +107,8 @@ public:
 
     virtual bool getRawMempool(std::vector<std::string> & txids) = 0;
 
+    virtual bool getBlockCount(uint32_t & blockCount) = 0;
+
 public:
     // helper functions
     virtual bool hasValidAddressPrefix(const std::string & addr) const = 0;
