@@ -2389,8 +2389,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     // send transactions
     {
         // Get the current block
-        rpc::WalletInfo info;
-        if (!connFrom->getInfo(info)) {
+        uint32_t blockCount{0};
+        if (!connFrom->getBlockCount(blockCount)) {
             LogOrderMsg(txid.GetHex(), "failed to obtain block count from <" + xtx->fromCurrency + "> blockchain, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crRpcError);
             return true;
@@ -2412,7 +2412,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             log_obj.pushKV("p2sh_txid", xtx->binTxId);
             log_obj.pushKV("sent_id", sentid);
             LogOrderMsg(log_obj,  "successfully submitted p2sh deposit", __FUNCTION__);
-            xtx->setWatchBlock(info.blocks);
+            xtx->setWatchBlock(blockCount);
             xapp.watchForSpentDeposit(xtx);
         }
         else
@@ -3538,11 +3538,11 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
         return true; // done
     }
 
-    xbridge::rpc::WalletInfo info;
-    bool infoReceived = connFrom->getInfo(info);
+    uint32_t blockCount{0};
+    bool infoReceived = connFrom->getBlockCount(blockCount);
 
     // Check if locktime for the deposit has expired (can't redeem until locktime expires)
-    if (infoReceived && info.blocks < xtx->lockTime)
+    if (infoReceived && blockCount < xtx->lockTime)
     {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());

@@ -2730,8 +2730,8 @@ void App::Impl::checkWatchesOnDepositSpends()
 
         xtx->setWatching(true);
 
-        rpc::WalletInfo info;
-        if (!connFrom->getInfo(info)) {
+        uint32_t blockCount{0};
+        if (!connFrom->getBlockCount(blockCount)) {
             xtx->setWatching(false);
             continue;
         }
@@ -2740,7 +2740,7 @@ void App::Impl::checkWatchesOnDepositSpends()
         if (!xtx->hasSecret()) {
             // Obtain the transactions to search (current mempool or current block)
             std::vector<std::string> txids;
-            if (xtx->getWatchStartBlock() == info.blocks) {
+            if (xtx->getWatchStartBlock() == blockCount) {
                 if (!connFrom->getRawMempool(txids)) {
                     xtx->setWatching(false);
                     continue;
@@ -2750,7 +2750,7 @@ void App::Impl::checkWatchesOnDepositSpends()
                 bool failure = false;
 
                 // Search all tx in blocks up to current block
-                while (blocks <= info.blocks) {
+                while (blocks <= blockCount) {
                     std::string blockHash;
                     std::vector<std::string> txs;
                     if (!connFrom->getBlockHash(blocks, blockHash)) {
@@ -2788,7 +2788,7 @@ void App::Impl::checkWatchesOnDepositSpends()
         bool done = false;
 
         // If lockTime has expired on original deposit, attempt to redeem it
-        if (xtx->lockTime <= info.blocks) {
+        if (xtx->lockTime <= blockCount) {
             xbridge::SessionPtr session = getSession();
             int32_t errCode = 0;
             if (session->redeemOrderDeposit(xtx, errCode))
@@ -2842,15 +2842,15 @@ void App::Impl::watchTraderDeposits()
     auto check = [](xbridge::SessionPtr session, const std::string & orderId, const WalletConnectorPtr & conn,
                     const uint32_t & lockTime, const std::string & refTx) -> bool
     {
-        rpc::WalletInfo info;
-        if (!conn->getInfo(info))
+        uint32_t blockCount{0};
+        if (!conn->getBlockCount(blockCount))
             return false;
 
         // If a redeem of trader deposit is successful
         bool done = false;
 
         // If lockTime has expired on trader deposit, attempt to redeem it
-        if (lockTime <= info.blocks) {
+        if (lockTime <= blockCount) {
             int32_t errCode = 0;
             if (session->refundTraderDeposit(orderId, conn->currency, lockTime, refTx, errCode))
                 done = true;
@@ -2859,7 +2859,7 @@ void App::Impl::watchTraderDeposits()
                   || errCode == RPCErrorCode::RPC_VERIFY_REJECTED)
                 done = true;
 
-            if (!done && (info.blocks - lockTime) * conn->blockTime > 3600) // if locktime has expired for more than 1 hr, we're done
+            if (!done && (blockCount - lockTime) * conn->blockTime > 3600) // if locktime has expired for more than 1 hr, we're done
                 done = true;
         }
 
