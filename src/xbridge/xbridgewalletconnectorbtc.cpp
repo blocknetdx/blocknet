@@ -263,6 +263,35 @@ bool getblockhash(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
+bool getblockcount(const std::string & rpcuser, const std::string & rpcpasswd,
+                   const std::string & rpcip, const std::string & rpcport, uint32_t & blockCount)
+{
+    try {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getblockcount", params);
+
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type) {
+            LOG() << "getblockcount error: " << write_string(error, false);
+            return false;
+        } else if (result.type() != int_type) {
+            LOG() << "getblockcount result is not an int";
+            return false;
+        }
+        blockCount = result.get_int();
+
+    } catch (std::exception & e) {
+        LOG() << "getblockcount exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool listaccounts(const std::string & rpcuser, const std::string & rpcpasswd,
                   const std::string & rpcip, const std::string & rpcport,
                   std::vector<std::string> & accounts)
@@ -1767,6 +1796,17 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::getBlockHash(const uint32_t & block, std::string & blockHash)
 {
     if (!rpc::getblockhash(m_user, m_passwd, m_ip, m_port, block, blockHash)) {
+        LOG() << "rpc::getblockhash failed " << __FUNCTION__;
+        return false;
+    }
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::getBlockCount(uint32_t & blockCount) {
+    if (!rpc::getblockcount(m_user, m_passwd, m_ip, m_port, blockCount)) {
         LOG() << "rpc::getblockhash failed " << __FUNCTION__;
         return false;
     }

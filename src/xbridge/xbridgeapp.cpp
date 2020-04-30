@@ -145,9 +145,14 @@ protected:
      * make new packet and - sent packet with cancelled command
      * to network, update transaction state, notify ui about trabsaction state changed
      * @param ptr - pointer to transaction
+     * @param fromBlockHeight from token block height
+     * @param toBlockHeight to token block height
+     * @param fromBlockHash from token block hash
+     * @param toBlockHash to token block hash
      * @return
      */
-    bool sendAcceptingTransaction(const TransactionDescrPtr & ptr);
+    bool sendAcceptingTransaction(const TransactionDescrPtr & ptr, uint32_t fromBlockHeight, uint32_t toBlockHeight,
+                                  const std::string & fromBlockHash, const std::string & toBlockHash);
 
     /**
      * @brief hasNodeService - returns true if the specified node is found with the
@@ -1917,6 +1922,21 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
         }
     }
 
+    // Obtain the block heights and hashes from both tokens involved in the order.
+    uint32_t fromBlockHeight;
+    std::string fromBlockHash;
+    uint32_t toBlockHeight;
+    std::string toBlockHash;
+    if (!connFrom->getBlockCount(fromBlockHeight) || !connFrom->getBlockHash(fromBlockHeight, fromBlockHash)
+        || !connTo->getBlockCount(toBlockHeight) || !connTo->getBlockHash(toBlockHeight, toBlockHash))
+    {
+        ptr->state = priorState;
+        unlockCoins(connFrom->currency, ptr->usedCoins);
+        unlockFeeUtxos(ptr->feeUtxos);
+        ptr->clearUsedCoins();
+        return xbridge::Error::NO_SESSION;
+    }
+
     ptr->fromAddr  = from;
     ptr->from      = connFrom->toXAddr(from);
     ptr->toAddr    = to;
@@ -1939,8 +1959,7 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
     updateConnector(connTo, ptr->to, ptr->toCurrency);
 
     // try send immediatelly
-    m_p->sendAcceptingTransaction(ptr);
-
+    m_p->sendAcceptingTransaction(ptr, fromBlockHeight, toBlockHeight, fromBlockHash, toBlockHash);
     xbridge::LogOrderMsg(ptr, std::string(__FUNCTION__) + " order accepted");
 
     return xbridge::Error::SUCCESS;
@@ -1948,7 +1967,8 @@ Error App::acceptXBridgeTransaction(const uint256     & id,
 
 //******************************************************************************
 //******************************************************************************
-bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
+bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr, uint32_t fromBlockHeight, uint32_t toBlockHeight,
+                                         const std::string & fromBlockHash, const std::string & toBlockHash)
 {
     XBridgePacketPtr packet(new XBridgePacket(xbcTransactionAccepting));
 
@@ -1960,19 +1980,32 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr)
     std::vector<unsigned char> tc(8, 0);
     std::copy(ptr->toCurrency.begin(), ptr->toCurrency.end(), tc.begin());
 
+    // first 8 bytes of block hash
+    std::vector<unsigned char> fromhash(8, 0);
+    std::memcpy(&fromhash[0], &fromBlockHash[0], fromhash.size());
+    // first 8 bytes of block hash
+    std::vector<unsigned char> tohash(8, 0);
+    std::memcpy(&tohash[0], &toBlockHash[0], tohash.size());
+
     // 20 bytes - id of transaction
     // 2x
     // 20 bytes - address
     //  8 bytes - currency
     //  4 bytes - amount
+    //  4 bytes - block height
+    //  8 bytes - block hash
     packet->append(ptr->hubAddress);
     packet->append(ptr->id.begin(), 32);
     packet->append(ptr->from);
     packet->append(fc);
     packet->append(ptr->fromAmount);
+    packet->append(fromBlockHeight);
+    packet->append(fromhash);
     packet->append(ptr->to);
     packet->append(tc);
     packet->append(ptr->toAmount);
+    packet->append(toBlockHeight);
+    packet->append(tohash);
 
     // utxo items
     packet->append(static_cast<uint32_t>(ptr->usedCoins.size()));
@@ -2697,8 +2730,8 @@ void App::Impl::checkWatchesOnDepositSpends()
 
         xtx->setWatching(true);
 
-        rpc::WalletInfo info;
-        if (!connFrom->getInfo(info)) {
+        uint32_t blockCount{0};
+        if (!connFrom->getBlockCount(blockCount)) {
             xtx->setWatching(false);
             continue;
         }
@@ -2707,7 +2740,7 @@ void App::Impl::checkWatchesOnDepositSpends()
         if (!xtx->hasSecret()) {
             // Obtain the transactions to search (current mempool or current block)
             std::vector<std::string> txids;
-            if (xtx->getWatchStartBlock() == info.blocks) {
+            if (xtx->getWatchStartBlock() == blockCount) {
                 if (!connFrom->getRawMempool(txids)) {
                     xtx->setWatching(false);
                     continue;
@@ -2717,7 +2750,7 @@ void App::Impl::checkWatchesOnDepositSpends()
                 bool failure = false;
 
                 // Search all tx in blocks up to current block
-                while (blocks <= info.blocks) {
+                while (blocks <= blockCount) {
                     std::string blockHash;
                     std::vector<std::string> txs;
                     if (!connFrom->getBlockHash(blocks, blockHash)) {
@@ -2755,7 +2788,7 @@ void App::Impl::checkWatchesOnDepositSpends()
         bool done = false;
 
         // If lockTime has expired on original deposit, attempt to redeem it
-        if (xtx->lockTime <= info.blocks) {
+        if (xtx->lockTime <= blockCount) {
             xbridge::SessionPtr session = getSession();
             int32_t errCode = 0;
             if (session->redeemOrderDeposit(xtx, errCode))
@@ -2809,15 +2842,15 @@ void App::Impl::watchTraderDeposits()
     auto check = [](xbridge::SessionPtr session, const std::string & orderId, const WalletConnectorPtr & conn,
                     const uint32_t & lockTime, const std::string & refTx) -> bool
     {
-        rpc::WalletInfo info;
-        if (!conn->getInfo(info))
+        uint32_t blockCount{0};
+        if (!conn->getBlockCount(blockCount))
             return false;
 
         // If a redeem of trader deposit is successful
         bool done = false;
 
         // If lockTime has expired on trader deposit, attempt to redeem it
-        if (lockTime <= info.blocks) {
+        if (lockTime <= blockCount) {
             int32_t errCode = 0;
             if (session->refundTraderDeposit(orderId, conn->currency, lockTime, refTx, errCode))
                 done = true;
@@ -2826,7 +2859,7 @@ void App::Impl::watchTraderDeposits()
                   || errCode == RPCErrorCode::RPC_VERIFY_REJECTED)
                 done = true;
 
-            if (!done && (info.blocks - lockTime) * conn->blockTime > 3600) // if locktime has expired for more than 1 hr, we're done
+            if (!done && (blockCount - lockTime) * conn->blockTime > 3600) // if locktime has expired for more than 1 hr, we're done
                 done = true;
         }
 

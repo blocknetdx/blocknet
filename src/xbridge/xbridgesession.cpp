@@ -122,8 +122,10 @@ protected:
                                const TxCancelReason & reason) const;
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
                                const TxCancelReason & reason) const;
+    bool sendRejectTransaction(const uint256 & id, const TxCancelReason & reason) const;
 
     bool processTransactionCancel(XBridgePacketPtr packet) const;
+    bool processTransactionReject(XBridgePacketPtr packet) const;
 
     bool processTransactionFinished(XBridgePacketPtr packet) const;
 
@@ -207,6 +209,7 @@ void Session::Impl::init()
     {
         // common handlers
         m_handlers[xbcTransactionCancel]     .bind(this, &Impl::processTransactionCancel);
+        m_handlers[xbcTransactionReject]     .bind(this, &Impl::processTransactionReject);
         m_handlers[xbcTransactionFinished]   .bind(this, &Impl::processTransactionFinished);
     }
 
@@ -804,11 +807,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         return true;
     }
 
-    // size must be >= 164 bytes
-    if (packet->size() < 164)
+    // size must be >= 188 bytes
+    if (packet->size() < 188)
     {
         ERR() << "invalid packet size for xbcTransactionAccepting "
-              << "need min 164 bytes, received " << packet->size() << " "
+              << "need min 188 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -827,6 +830,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += 8;
     uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
+    uint32_t sourceHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
+    offset += sizeof(uint32_t);
+    std::vector<unsigned char> sourceHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::string sourceHashTruncated(sourceHashRaw.begin(), sourceHashRaw.end());
+    offset += 8;
 
     // destination
     std::vector<unsigned char> daddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
@@ -835,6 +843,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += 8;
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
+    uint32_t destinationHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
+    offset += sizeof(uint32_t);
+    std::vector<unsigned char> destinationHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::string destinationHashTruncated(destinationHashRaw.begin(), destinationHashRaw.end());
+    offset += 8;
 
     std::vector<unsigned char> mpubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
@@ -853,10 +866,74 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
-    if (!conn)
-    {
-        xbridge::LogOrderMsg(id.GetHex(), "no connector for <" + scurrency + ">", __FUNCTION__);
+    WalletConnectorPtr connDest = xapp.connectorByCurrency(dcurrency);
+    if (!conn || !connDest) {
+        xbridge::LogOrderMsg(id.GetHex(), "no connector for <" + (!conn ? scurrency : dcurrency) + ">", __FUNCTION__);
+        sendRejectTransaction(id, crRpcError);
         return true;
+    }
+
+    // Obtain the block heights and hashes from both tokens involved in the order
+    // and compare with those reported by the taker. If there are any discrepancies
+    // reject the taker's request.
+    //
+    // Criteria:
+    // 1) Taker's block heights must be within 2 blocks of snode's
+    // 2) Taker's block hash must match the snode's block hash for the reported
+    //    token heights. This lowers risk of pairing counterparies on forks
+    {
+        uint32_t sourceBlockHeightSnode;
+        std::string sourceBlockHashSnode;
+        std::string sourceBlockHashCounterparty;
+        uint32_t destinationBlockHeightSnode;
+        std::string destinationBlockHashSnode;
+        std::string destinationBlockHashCounterparty;
+        if (conn->getBlockCount(sourceBlockHeightSnode) && conn->getBlockHash(sourceBlockHeightSnode, sourceBlockHashSnode)
+           && connDest->getBlockCount(destinationBlockHeightSnode) && connDest->getBlockHash(destinationBlockHeightSnode, destinationBlockHashSnode)
+           && conn->getBlockHash(sourceHeight, sourceBlockHashCounterparty) && connDest->getBlockHash(destinationHeight, destinationBlockHashCounterparty))
+        {
+            // make sure source height is within 2 blocks
+            if (abs((int)sourceBlockHeightSnode - (int)sourceHeight) > 1) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + scurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // make sure destination height is within 2 blocks
+            else if (abs((int)destinationBlockHeightSnode - (int)destinationHeight) > 1) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + dcurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's source height equals snode's source height make sure the truncated hash matches
+            else if (sourceBlockHeightSnode == sourceHeight && sourceBlockHashSnode.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has bad block hash for <" + scurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's destination height equals snode's destination height make sure the truncated hash matches
+            else if (destinationBlockHeightSnode == destinationHeight && destinationBlockHashSnode.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has bad block hash for <" + dcurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's source height is different than snode, make sure the snode's block hash on reported taker source height matches
+            else if (sourceBlockHashCounterparty.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty might be on fork, it has bad block hash for <" + scurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's destination height is different than snode, make sure the snode's block hash on reported taker destination height matches
+            else if (destinationBlockHashCounterparty.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty might be on fork, it has bad block hash for <" + dcurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+        } else {
+            xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, snode rpc error", __FUNCTION__);
+            sendRejectTransaction(id, crRpcError);
+            return true;
+        }
+
     }
 
     //
@@ -878,6 +955,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     if (!makerConn) {
         trPending->setAccepting(false);
         xbridge::LogOrderMsg(id.GetHex(), "no maker connector for <" + trPending->a_currency() + ">", __FUNCTION__);
+        sendRejectTransaction(id, crRpcError);
         return true;
     }
 
@@ -917,6 +995,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             {
                 trPending->setAccepting(false);
                 xbridge::LogOrderMsg(id.GetHex(), "bad packet size while reading utxo items, packet dropped", __FUNCTION__);
+                sendRejectTransaction(id, crBadBUtxo);
                 return true;
             }
 
@@ -977,6 +1056,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         log_obj.pushKV("expecting_amount", samount);
         log_obj.pushKV("received_amount", commonAmount);
         xbridge::LogOrderMsg(log_obj, "rejecting taker order request, insufficient funds", __FUNCTION__);
+        sendRejectTransaction(id, crNoMoney);
         return true;
     }
 
@@ -986,6 +1066,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     {
         trPending->setAccepting(false);
         xbridge::LogOrderMsg(id.GetHex(), "reject taker order request, amount is dust", __FUNCTION__);
+        sendRejectTransaction(id, crDust);
         return true;
     }
 
@@ -1005,6 +1086,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     {
         trPending->setAccepting(false);
         xbridge::LogOrderMsg(id.GetHex(), "rejecting taker order request, bad utxos", __FUNCTION__);
+        sendRejectTransaction(id, crBadBUtxo);
         return true;
     }
 
@@ -1016,6 +1098,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             TransactionPtr tr = e.transaction(id);
             if (!tr->matches(id)) { // ignore no matching orders
                 xbridge::LogOrderMsg(id.GetHex(), "rejecting taker order request, no order found with id", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
 
@@ -1025,6 +1108,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                 log_obj.pushKV("orderid", tr->id().GetHex());
                 log_obj.pushKV("state", tr->state());
                 xbridge::LogOrderMsg(log_obj, "wrong tx state, expecting joined state", __FUNCTION__);
+                sendRejectTransaction(tr->id(), crNotAccepted);
                 return true;
             }
             // Set role 'B' utxos used in the order
@@ -2305,8 +2389,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     // send transactions
     {
         // Get the current block
-        rpc::WalletInfo info;
-        if (!connFrom->getInfo(info)) {
+        uint32_t blockCount{0};
+        if (!connFrom->getBlockCount(blockCount)) {
             LogOrderMsg(txid.GetHex(), "failed to obtain block count from <" + xtx->fromCurrency + "> blockchain, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crRpcError);
             return true;
@@ -2328,7 +2412,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             log_obj.pushKV("p2sh_txid", xtx->binTxId);
             log_obj.pushKV("sent_id", sentid);
             LogOrderMsg(log_obj,  "successfully submitted p2sh deposit", __FUNCTION__);
-            xtx->setWatchBlock(info.blocks);
+            xtx->setWatchBlock(blockCount);
             xapp.watchForSpentDeposit(xtx);
         }
         else
@@ -3027,6 +3111,58 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 
 //*****************************************************************************
 //*****************************************************************************
+bool Session::Impl::processTransactionReject(XBridgePacketPtr packet) const
+{
+    DEBUG_TRACE();
+
+    // size must be == 36 bytes
+    if (packet->size() != 36)
+    {
+        ERR() << "invalid packet size for xbcTransactionReject "
+              << "need 36 received " << packet->size() << " "
+              << __FUNCTION__;
+        return false;
+    }
+
+    std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
+    uint256 txid(stxid);
+    TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + XBridgePacket::hashSize));
+
+    xbridge::App & xapp = xbridge::App::instance();
+    TransactionDescrPtr xtx = xapp.transaction(txid);
+    // Do not proceed if we're not the taker or the state is beyond the accepting phase
+    if (!xtx || xtx->role != 'B' || xtx->state > TransactionDescr::trAccepting)
+        return true;
+
+    // Only snode can reject an order
+    if (!packet->verify(xtx->sPubKey))
+        return true;
+
+    // restore state on rejection
+    xtx->state = TransactionDescr::trPending;
+    // unlock coins
+    xapp.unlockCoins(xtx->fromCurrency, xtx->usedCoins);
+    xapp.unlockFeeUtxos(xtx->feeUtxos);
+    xtx->clearUsedCoins();
+    xtx->fromAddr.clear();
+    xtx->from.clear();
+    xtx->toAddr.clear();
+    xtx->to.clear();
+    xtx->role = 0;
+    xtx->mPubKey.clear();
+    xtx->mPrivKey.clear();
+    std::swap(xtx->fromCurrency, xtx->toCurrency);
+    std::swap(xtx->fromAmount, xtx->toAmount);
+    // remove from pending packets (if added)
+    xapp.removePackets(txid);
+
+    LogOrderMsg(xtx, __FUNCTION__);
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool Session::Impl::finishTransaction(TransactionPtr tr) const
 {
     if (tr == nullptr)
@@ -3119,6 +3255,29 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
     // update transaction state for gui
     xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
 
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Session::Impl::sendRejectTransaction(const uint256 & id,
+                                          const TxCancelReason & reason) const
+{
+    Exchange & e = Exchange::instance();
+    if (!e.isStarted()) // snode only
+        return false;
+
+    UniValue log_obj(UniValue::VOBJ);
+    log_obj.pushKV("orderid", id.GetHex());
+    log_obj.pushKV("cancel_reason", TxCancelReasonText(reason));
+    LogOrderMsg(log_obj, "rejecting order, initiated by me", __FUNCTION__);
+
+    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionReject));
+    reply->append(id.begin(), 32);
+    reply->append(static_cast<uint32_t>(reason));
+    reply->sign(e.pubKey(), e.privKey());
+
+    sendPacketBroadcast(reply);
     return true;
 }
 
@@ -3379,11 +3538,11 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
         return true; // done
     }
 
-    xbridge::rpc::WalletInfo info;
-    bool infoReceived = connFrom->getInfo(info);
+    uint32_t blockCount{0};
+    bool infoReceived = connFrom->getBlockCount(blockCount);
 
     // Check if locktime for the deposit has expired (can't redeem until locktime expires)
-    if (infoReceived && info.blocks < xtx->lockTime)
+    if (infoReceived && blockCount < xtx->lockTime)
     {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());
