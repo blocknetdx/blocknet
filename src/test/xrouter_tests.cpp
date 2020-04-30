@@ -24,6 +24,11 @@ XRouterTestClientTestnet::XRouterTestClientTestnet() : XRouterTestClient() {
 
 BOOST_AUTO_TEST_SUITE(xrouter_tests)
 
+BOOST_AUTO_TEST_CASE(xrouter_tests_default) {
+}
+
+#ifdef USE_XROUTERCLIENT
+
 BOOST_FIXTURE_TEST_CASE(xrouter_tests_waitforservice, XRouterTestClientTestnet) {
     BOOST_REQUIRE_MESSAGE(client->start(), "Failed to start xrouter client");
     auto start = std::chrono::system_clock::now();
@@ -245,4 +250,7 @@ BOOST_FIXTURE_TEST_CASE(xrouter_tests_testnet_xrservicecalls, XRouterTestClientT
         BOOST_CHECK(client->stop());
     }*/
 
+#endif // USE_XROUTERCLIENT
+
 BOOST_AUTO_TEST_SUITE_END()
+
