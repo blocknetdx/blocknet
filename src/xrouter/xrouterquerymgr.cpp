@@ -88,7 +88,7 @@ int QueryMgr::mostCommonReply(const std::string & id, std::string & reply, std::
         auto result = item.second;
         try {
             UniValue j;
-            if (j.read(result) && j.isObject())
+            if (j.read(result))
                 result = j.write();
         } catch (...) {
             result = item.second;

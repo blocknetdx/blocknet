@@ -1197,7 +1197,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                             std::string data;
                             if (!params.empty())
                                 data = params.write();
-                            xrresponse = xrouter::CallXRouterUrl(snode.getHostAddr().ToStringIP(),
+                            xrresponse = xrouter::CallXRouterUrl(snode.getHost(),
                                     snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
                                     snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
@@ -1333,44 +1333,6 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                     }
                 }
             } catch (...) { } // do not report on non-error objs
-        }
-
-        // Show all replies in the response (along with the majority consensus reply)
-        if (replies.size() > 1) {
-            UniValue r;
-
-            // By default we parse the {"result": } field of any response. XRouter integrations will
-            // ideally return any json responses in a result field. If not we return the raw response
-            // in json object form if possible, or a raw string.
-            UniValue uv;
-            if (uv.read(rawResult) && uv.isObject()) {
-                const auto & rv = find_value(uv, "result");
-                if (rv.isNull())
-                    r.pushKV("result", uv);
-                else
-                    r.pushKV("result", rv);
-            } else
-                r.pushKV("result", uv);
-
-            UniValue allr(UniValue::VARR);
-            for (const auto & item : replies) {
-                const auto & nodeAddr = item.first;
-                const auto & reply = item.second;
-
-                UniValue ar(UniValue::VOBJ);
-                std::vector<unsigned char> spubkey; servicenodePubKey(nodeAddr, spubkey);
-                ar.pushKV("nodepubkey", HexStr(spubkey));
-                ar.pushKV("score", queryMgr.getScore(nodeAddr));
-
-                UniValue replyVal;
-                if (replyVal.read(reply))
-                    ar.pushKV("reply", replyVal);
-
-                allr.push_back(ar);
-            }
-            r.pushKV("allreplies", allr);
-
-            rawResult = r.write();
         }
 
         // Unlock any utxos associated with replies that returned an error
