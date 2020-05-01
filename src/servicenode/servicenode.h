@@ -310,11 +310,19 @@ public:
     }
 
     /**
-     * Return the ip address of the host.
+     * Return the host (DNS or IP from config).
      * @return
      */
     std::string getHost() const {
-        return addr.ToStringIPPort();
+        return host.empty() ? addr.ToStringIP() : host;
+    }
+
+    /**
+     * Return the host and port.
+     * @return
+     */
+    std::string getHostPort() const {
+        return host.empty() ? addr.ToStringIPPort() : (host + ":" + addr.ToStringPort());
     }
 
     /**
@@ -586,6 +594,7 @@ protected:
                 }
 
                 addr = settings.getAddr();
+                host = settings.host(xrouter::xrDefault);
                 services.push_back(xrouter::xr); // add the general xrouter service
 
                 for (const auto & s : settings.getWallets()) {
@@ -622,6 +631,7 @@ protected: // in-memory only
     uint32_t xbridgeversion{0};
     uint32_t xrouterversion{0};
     CService addr;
+    std::string host;
     std::vector<std::string> services;
     bool invalid{false};
     int invalidBlock{0};

@@ -570,7 +570,7 @@ private:
             else
                 it++;
         }
-        snodeConfigs[snode.getHost()] = std::make_pair(config, snode.getTier());
+        snodeConfigs[snode.getHostPort()] = std::make_pair(config, snode.getTier());
     }
     bool needConfigUpdate(const NodeAddr & node, const bool & isServer = false) {
         const auto & service = XRouterCommand_ToString(xrGetConfig);

@@ -188,7 +188,7 @@ XRouterClient::XRouterClient(int argc, char* argv[], CConnman::Options connOpts)
     peerMgr->onSnodePing([this](const sn::ServiceNode &snode) {
         if (snode.isNull() || !snode.running())
             return;
-        settings[snode.getHost()] = MakeUnique<XRouterSnodeConfig>(snode);
+        settings[snode.getHostPort()] = MakeUnique<XRouterSnodeConfig>(snode);
     });
 
     interfaces.chain = interfaces::MakeChain();
@@ -645,7 +645,7 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
                 continue;
             if (!s.running() || !s.isEXRCompatible())
                 continue; // only running snodes and exr compatible snodes
-            mapSelectedSnodes[s.getHostAddr().ToStringIPPort()] = s;
+            mapSelectedSnodes[s.getHostPort()] = s;
         }
 
         // Compose a final list of snodes to request. selectedNodes here should be sorted
@@ -690,7 +690,7 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
 
         // Send xrouter request to each selected node
         for (auto & snode : queryNodes) {
-            const std::string & addr = snode.getHost();
+            const std::string & addr = snode.getHostPort();
             std::string feetx;
             if (feePaymentTxs.count(addr))
                 feetx = feePaymentTxs[addr];
@@ -713,7 +713,7 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
                         std::string data;
                         if (!params.empty())
                             data = params.write();
-                        xrresponse = xrouter::CallXRouterUrl(snode.getHostAddr().ToStringIP(),
+                        xrresponse = xrouter::CallXRouterUrl(snode.getHost(),
                                 snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
                                 snode.getSnodePubKey(), feetx);
                     } catch (std::exception & e) {
@@ -787,8 +787,8 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
             auto sns = getServiceNodes();
             std::map<NodeAddr, sn::ServiceNode*> snodec;
             for (auto & s : sns) {
-                if (!s.getHost().empty())
-                    snodec[s.getHost()] = &s;
+                if (!s.getHostPort().empty())
+                    snodec[s.getHostPort()] = &s;
             }
 
             // Penalize the snodes that didn't respond

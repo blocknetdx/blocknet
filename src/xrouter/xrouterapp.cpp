@@ -390,7 +390,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     std::set<NodeAddr> snodesConnected;
     std::map<NodeAddr, sn::ServiceNode> snodesNeedConfig;
     for (auto & s : snodes) {
-        const auto & snodeAddr = s.getHost();
+        const auto & snodeAddr = s.getHostPort();
         if (!nodec.count(snodeAddr)) // skip non-connected nodes
             continue;
 
@@ -431,7 +431,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     // At this point all remaining snodes are ones we don't have configs for.
     std::map<NodeAddr, sn::ServiceNode> needConnectionsNoConfigs;
     for (auto & s : snodes) {
-        const auto & snodeAddr = s.getHost();
+        const auto & snodeAddr = s.getHostPort();
         if (snodeAddr.empty()) // Sanity check
             continue;
 
@@ -1114,7 +1114,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         for (auto & pnode : selectedNodes)
             mapSelectedSnodes[pnode->GetAddrName()] = sn::ServiceNodeMgr::instance().getSn(pnode->GetAddrName());
         for (auto & snode : nonWalletSnodes)
-            mapSelectedSnodes[snode.getHostAddr().ToStringIPPort()] = snode;
+            mapSelectedSnodes[snode.getHostPort()] = snode;
 
         // Compose a final list of snodes to request. selectedNodes here should be sorted
         // ascending best to worst
@@ -1160,7 +1160,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
 
         // Send xrouter request to each selected node
         for (auto & snode : queryNodes) {
-            const std::string & addr = snode.getHost();
+            const std::string & addr = snode.getHostPort();
             std::string feetx;
             if (feePaymentTxs.count(addr))
                 feetx = feePaymentTxs[addr];
@@ -1273,8 +1273,8 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
             auto snodes = getServiceNodes();
             std::map<NodeAddr, sn::ServiceNode*> snodec;
             for (auto & s : snodes) {
-                if (!s.getHost().empty())
-                    snodec[s.getHost()] = &s;
+                if (!s.getHostPort().empty())
+                    snodec[s.getHostPort()] = &s;
             }
 
             // Penalize the snodes that didn't respond
@@ -1519,9 +1519,9 @@ std::string App::getReply(const std::string & id)
     std::vector<sn::ServiceNode> snodes = getServiceNodes();
     std::map<NodeAddr, sn::ServiceNode*> snodec;
     for (auto & s : snodes) {
-        if (s.getHost().empty())
+        if (s.getHostPort().empty())
             continue;
-        const auto & snodeAddr = s.getHost();
+        const auto & snodeAddr = s.getHostPort();
         snodec[snodeAddr] = &s;
     }
 
@@ -1594,7 +1594,7 @@ bool App::getPaymentAddress(const NodeAddr & nodeAddr, std::string & paymentAddr
     // Payment address = pubkey Collateral address of snode
     std::vector<sn::ServiceNode> snodes = getServiceNodes();
     for (sn::ServiceNode & s : snodes) {
-        if (s.getHost() == nodeAddr) {
+        if (s.getHostPort() == nodeAddr) {
             paymentAddress = EncodeDestination(CTxDestination(s.getPaymentAddress()));
             return true;
         }
@@ -1608,7 +1608,7 @@ CPubKey App::getPaymentPubkey(CNode* node)
     // Payment address = pubkey Collateral address of snode
     std::vector<sn::ServiceNode> vServicenodeRanks = getServiceNodes();
     for (sn::ServiceNode & s : vServicenodeRanks) {
-        if (s.getHost() == node->GetAddrName()) {
+        if (s.getHostPort() == node->GetAddrName()) {
             return s.getSnodePubKey();
         }
     }
@@ -1819,7 +1819,7 @@ std::string App::getStatus() {
         const auto & entry = sn::ServiceNodeMgr::instance().getActiveSn();
         const auto & snode = sn::ServiceNodeMgr::instance().getSn(entry.key.GetPubKey());
         std::map<NodeAddr, std::pair<XRouterSettingsPtr, sn::ServiceNode::Tier>> my;
-        my[snode.getHost()] = std::make_pair(xrsettings, snode.getTier());
+        my[snode.getHostPort()] = std::make_pair(xrsettings, snode.getTier());
 
         Array data;
         snodeConfigJSON(my, data);
@@ -1856,9 +1856,9 @@ void App::getLatestNodeContainers(std::vector<sn::ServiceNode> & snodes, std::ve
 
     // Build snode cache
     for (sn::ServiceNode & s : snodes) {
-        const auto & snodeAddr = s.getHost();
+        const auto & snodeAddr = s.getHostPort();
         if (!snodeAddr.empty() && !g_banman->IsBanned(s.getHostAddr())
-            && !(smgr.hasActiveSn() && smgr.getSn(smgr.getActiveSn().key.GetPubKey()).getHost() == snodeAddr)) // skip banned snodes and self
+            && !(smgr.hasActiveSn() && smgr.getSn(smgr.getActiveSn().key.GetPubKey()).getHostPort() == snodeAddr)) // skip banned snodes and self
             snodec[snodeAddr] = s;
     }
 

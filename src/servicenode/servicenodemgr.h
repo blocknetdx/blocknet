@@ -439,7 +439,7 @@ public:
     ServiceNode getSn(const std::string & nodeAddr) {
         LOCK(mu);
         for (const auto & s : snodes)
-            if (s.second->getHost() == nodeAddr)
+            if (s.second->getHostPort() == nodeAddr)
                 return *s.second;
         return ServiceNode{};
     }
