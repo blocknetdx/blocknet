@@ -68,6 +68,15 @@ public:
                         std::set<NodeAddr> & agree, std::set<NodeAddr> & diff);
 
     /**
+     * Fetch the most common reply for a specific query. If a group of nodes return results and 2 of 3 are
+     * matching, this will return the most common reply, i.e. the replies of the matching two.
+     * @param id
+     * @param reply Most common reply
+     * @return
+     */
+    int mostCommonReply(const std::string & id, std::string & reply);
+
+    /**
      * Returns true if the query with specified id.
      * @param id
      * @return

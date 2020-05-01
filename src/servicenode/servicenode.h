@@ -322,7 +322,10 @@ public:
      * @return
      */
     std::string getHostPort() const {
-        return host.empty() ? addr.ToStringIPPort() : (host + ":" + addr.ToStringPort());
+        if (exrCompatible)
+            return host.empty() ? addr.ToStringIPPort() : (host + ":" + addr.ToStringPort());
+        else
+            return addr.ToStringIPPort();
     }
 
     /**

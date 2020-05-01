@@ -722,7 +722,7 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("exr", snode.isEXRCompatible());
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
-        obj.pushKV("score", xrouter::App::instance().isReady() ? xrouter::App::instance().getScore(snode.getHost()) : 0);
+        obj.pushKV("score", xrouter::App::instance().isReady() ? xrouter::App::instance().getScore(snode.getHostPort()) : 0);
         UniValue services(UniValue::VARR);
         for (const auto & service : snode.serviceList())
             services.push_back(service);

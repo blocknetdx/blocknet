@@ -1395,7 +1395,7 @@ static UniValue xrGetReply(const JSONRPCRequest& request)
     
     std::string uuid = request.params[0].get_str();
     std::string reply = xrouter::App::instance().getReply(uuid);
-    return xrouter::form_reply(uuid, uret_xr(reply));
+    return reply;
 }
 
 static UniValue xrShowConfigs(const JSONRPCRequest& request)

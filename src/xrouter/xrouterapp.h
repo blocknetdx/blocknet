@@ -139,12 +139,12 @@ public:
      * @param count Number of nodes to open connections to
      * @param parameterCount Number of parameters used in the call
      * @param skipNodes avoids connecting to these nodes
-     * @param nonWalletXRNodes are selected nodes that do not accept requests on the default blocknet wallet port
+     * @param exrSnodes are selected nodes that do not accept requests on the default blocknet wallet port
      * @param foundCount number of nodes found
      */
     bool openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
                          const int & parameterCount, const std::vector<CNode*> & skipNodes,
-                         std::vector<sn::ServiceNode> & nonWalletXRNodes, uint32_t & foundCount);
+                         std::vector<sn::ServiceNode> & exrSnodes, uint32_t & foundCount);
     
     /**
      * @brief prints xrouter configs
@@ -387,6 +387,18 @@ public:
      * @return
      */
     bool processConfigMessage(const sn::ServiceNode & snode);
+
+    /**
+     * Returns true if the specified service node matches all the criteria required for querying.
+     * @param snode
+     * @param settings
+     * @param command
+     * @param service
+     * @param parameterCount
+     * @return
+     */
+    bool snodeMatchesCriteria(const sn::ServiceNode & snode, xrouter::XRouterSettingsPtr settings,
+            enum XRouterCommand command, const std::string & service, const int & parameterCount);
 
     /**
      * @brief get all nodes that support the command for a given chain

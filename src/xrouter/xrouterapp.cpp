@@ -191,7 +191,7 @@ bool App::createConnectors() {
 
 bool App::openConnections(enum XRouterCommand command, const std::string & service, const uint32_t & count,
                           const int & parameterCount, const std::vector<CNode*> & skipNodes,
-                          std::vector<sn::ServiceNode> & nonWalletXRNodes, uint32_t & foundCount)
+                          std::vector<sn::ServiceNode> & exrSnodes, uint32_t & foundCount)
 {
     const auto fqService = (command == xrService) ? pluginCommandKey(service) // plugin
                                                   : walletCommandKey(service, XRouterCommand_ToString(command)); // spv wallet
@@ -388,13 +388,15 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 
     // Check if existing snode connections have what we need
     std::set<NodeAddr> snodesConnected;
-    std::map<NodeAddr, sn::ServiceNode> snodesNeedConfig;
     for (auto & s : snodes) {
         const auto & snodeAddr = s.getHostPort();
         if (!nodec.count(snodeAddr)) // skip non-connected nodes
             continue;
 
         if (!s.running()) // skip non-running snodes
+            continue;
+
+        if (s.isEXRCompatible()) // skip EXR snodes
             continue;
 
         if (connectedSnodes.count(snodeAddr)) // skip already selected nodes
@@ -408,70 +410,38 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 
         if (hasConfig(snodeAddr)) // has config, count it
             snodesConnected.insert(snodeAddr);
-        else
-            snodesNeedConfig[snodeAddr] = s;
     }
 
     // Check our snode configs and connect to any nodes with required services
-    // that we're not already connected to
+    // that we're not already connected to. Assign any EXR snodes
+    exrSnodes.clear();
     std::map<NodeAddr, sn::ServiceNode> needConnectionsHaveConfigs;
     auto configs = getConfigs();
     for (const auto & item : configs) {
         const auto & snodeAddr = item.first;
         auto config = item.second;
 
-        if (nodec.count(snodeAddr) || connectedSnodes.count(snodeAddr) || snodesNeedConfig.count(snodeAddr))
-            continue; // already processed, skip
+        bool knownSnode = snodec.count(snodeAddr);
+        if (!knownSnode)
+            continue; // not known, skip
+
+        auto & s = snodec[snodeAddr];
 
         // only connect if snode is in the list, it has the specified plugin or it is an SPV node with the specified wallet
-        if (snodec.count(snodeAddr) && (config.first->hasPlugin(service) || (config.second == sn::ServiceNode::SPV && config.first->hasWallet(service))))
-            needConnectionsHaveConfigs[snodeAddr] = snodec[snodeAddr];
-    }
-
-    // At this point all remaining snodes are ones we don't have configs for.
-    std::map<NodeAddr, sn::ServiceNode> needConnectionsNoConfigs;
-    for (auto & s : snodes) {
-        const auto & snodeAddr = s.getHostPort();
-        if (snodeAddr.empty()) // Sanity check
-            continue;
-
-        if (!s.running()) // skip non-running snodes
-            continue;
-
-        if (nodec.count(snodeAddr) || connectedSnodes.count(snodeAddr) || snodesNeedConfig.count(snodeAddr)
-            || needConnectionsHaveConfigs.count(snodeAddr))
-            continue; // already processed, skip
-
-        if (!s.hasService(xr)) // has xrouter
-            continue;
-
-        if (!s.hasService(fqServiceAdjusted)) // has the service
-            continue;
-
-        needConnectionsNoConfigs[snodeAddr] = s;
+        if (s.isEXRCompatible() && snodeMatchesCriteria(s, config.first, command, service, parameterCount))
+            exrSnodes.push_back(s);
+        else if (config.first->hasPlugin(service) || (config.second == sn::ServiceNode::SPV && config.first->hasWallet(service))) {
+            if (!nodec.count(snodeAddr) && !connectedSnodes.count(snodeAddr)) // if not connected then proceed
+                needConnectionsHaveConfigs[snodeAddr] = s;
+        }
     }
 
     // Connect to already connected snodes that need configs
     std::vector<NodeAddr> all{snodesConnected.begin(), snodesConnected.end()};
-    for (const auto & it : snodesNeedConfig)
-        all.push_back(it.first);
     for (const auto & it : needConnectionsHaveConfigs)
         all.push_back(it.first);
-    for (const auto & it : needConnectionsNoConfigs)
-        all.push_back(it.first);
 
-    // Remove all nodes that use non-default ports
-    nonWalletXRNodes.clear();
-    for (int i = (int)all.size()-1; i >= 0; --i) {
-        const auto & snodeAddr = all[i];
-        auto settings = getConfig(snodeAddr);
-        if (!settings || settings->port(xrDefault) != Params().GetDefaultPort()) {
-            nonWalletXRNodes.push_back(snodec[snodeAddr]);
-            all.erase(all.begin()+i);
-        }
-    }
-
-    const int adjustedCount = static_cast<int>(count) - nonWalletXRNodes.size();
+    const int adjustedCount = static_cast<int>(count) - exrSnodes.size();
     if (!all.empty() && adjustedCount > 0) {
         if (all.size() < adjustedCount) { // Check not enough nodes
             releaseNodes(nodes);
@@ -498,35 +468,20 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
             if (adjustedCount - connectedCount() <= 0)
                 break; // done, all connected!
 
-            bool needConfig = snodesNeedConfig.count(snodeAddr) > 0;
             bool needConnectionHaveConfig = needConnectionsHaveConfigs.count(snodeAddr) > 0;
-            bool needConnectionAndConfig = needConnectionsNoConfigs.count(snodeAddr) > 0;
 
             sn::ServiceNode s;
-            if (needConfig)                    s = snodesNeedConfig[snodeAddr];
-            else if (needConnectionHaveConfig) s = needConnectionsHaveConfigs[snodeAddr];
-            else if (needConnectionAndConfig)  s = needConnectionsNoConfigs[snodeAddr];
+            if (needConnectionHaveConfig) s = needConnectionsHaveConfigs[snodeAddr];
 
             auto node = nodec[snodeAddr];
-            if (needConfig) {
-                needConnectionAndConfig = !node || node->fDisconnect;
-                if (needConnectionAndConfig)
-                    needConfig = false;
-            }
 
-            tg.create_thread([node,s,snodeAddr,needConfig,needConnectionHaveConfig,
-                              needConnectionAndConfig,&lu,&conns,&fetchConfig,&connect]()
-            {
+            tg.create_thread([node,s,snodeAddr,needConnectionHaveConfig,&lu,&conns,&fetchConfig,&connect]() {
                 RenameThread("blocknet-xrconnection");
                 boost::this_thread::interruption_point();
-
-                if (needConnectionHaveConfig || needConnectionAndConfig) {
+                if (needConnectionHaveConfig) {
                     { LOCK(lu); conns.insert(snodeAddr); }
                     connect(snodeAddr, s);
                 }
-
-                if (needConfig)
-                    fetchConfig(node, s);
             });
 
             // Wait until we have all required connections (adjustedCount - connected = 0)
@@ -571,7 +526,7 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
     }
 
     releaseNodes(nodes);
-    foundCount = connected + nonWalletXRNodes.size();
+    foundCount = connected + exrSnodes.size();
     // Account for the non-wallet xrouter nodes
     return foundCount >= count;
 }
@@ -628,7 +583,57 @@ bool App::stop(const bool safeCleanup)
 
     return true;
 }
- 
+
+bool App::snodeMatchesCriteria(const sn::ServiceNode & snode, xrouter::XRouterSettingsPtr settings,
+        enum XRouterCommand command, const std::string & service, const int & parameterCount)
+{
+    // fully qualified command e.g. xr::ServiceName
+    const auto & commandStr = XRouterCommand_ToString(command);
+    const auto & fqCmd = (command == xrService) ? pluginCommandKey(service) // plugin
+                                                : walletCommandKey(service, commandStr); // spv wallet
+
+    if (command != xrService && !settings->hasWallet(service))
+        return false;
+    if (!settings->isAvailableCommand(command, service))
+        return false;
+    if (!snode.running()) // skip if not running
+        return false;
+    if (!snode.hasService(command == xrService ? fqCmd : walletCommandKey(service))) // use top-level wallet key (e.g. xr::BLOCK)
+        return false; // Ignore snodes that don't have the service
+
+    // Only select nodes with a fee smaller than the max fee we're willing to pay
+    auto maxfee = xrsettings->maxFee(command, service);
+    auto fee = settings->commandFee(command, service);
+    if (fee > 0) {
+        if (fee > maxfee) {
+            const auto & snodeAddr = EncodeDestination(CTxDestination(snode.getPaymentAddress()));
+            return false;
+        }
+        if (!xbridge::CanAffordFeePayment(fee * COIN)) {
+            const auto & snodeAddr = EncodeDestination(CTxDestination(snode.getPaymentAddress()));
+            return false;
+        }
+    }
+
+    // Only select nodes who's fetch limit is acceptable
+    const auto & fetchLimit = settings->commandFetchLimit(command, service);
+    if (parameterCount > fetchLimit) {
+        const auto & snodeAddr = EncodeDestination(CTxDestination(snode.getPaymentAddress()));
+        LOG() << "Skipping node " << snodeAddr << " because its fetch limit " << fetchLimit << " is lower than "
+              << parameterCount;
+        return false;
+    }
+
+    auto rateLimit = settings->clientRequestLimit(command, service);
+    if (queryMgr.rateLimitExceeded(snode.getHostPort(), fqCmd, queryMgr.getLastRequest(snode.getHostPort(), fqCmd), rateLimit)) {
+        const auto & snodeAddr = EncodeDestination(CTxDestination(snode.getPaymentAddress()));
+        LOG() << "Skipping node " << snodeAddr << " because not enough time passed since the last call";
+        return false;
+    }
+
+    return true;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, const std::string & service,
@@ -665,6 +670,8 @@ std::vector<CNode*> App::availableNodesRetained(enum XRouterCommand command, con
             continue;
         if (!snodec.count(nodeAddr)) // Ignore if not a snode
             continue;
+        if (snodec[nodeAddr].isEXRCompatible())
+            continue; // skip exr compatible snodes, they're handled elsewhere
         if (!snodec[nodeAddr].running()) // skip if not running
             continue;
         if (!snodec[nodeAddr].hasService(command == xrService ? fqCmd : walletCommandKey(service))) // use top-level wallet key (e.g. xr::BLOCK)
@@ -1081,10 +1088,11 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         const auto & fqService = (command == xrService) ? pluginCommandKey(service) // plugin
                                                         : walletCommandKey(service, commandStr); // spv wallet
 
-        // Open connections (at least number equal to how many confirmations we want)
-        std::vector<sn::ServiceNode> nonWalletSnodes;
+        // Obtain all EXR compatible snodes and open connections if necessary
+        // (at least number equal to how many confirmations we want)
+        std::vector<sn::ServiceNode> exrSnodes;
         uint32_t found{0};
-        if (!openConnections(command, service, confs, params.size(), {}, nonWalletSnodes, found)) {
+        if (!openConnections(command, service, confs, params.size(), {}, exrSnodes, found)) {
             std::string err("Failed to find " + std::to_string(confs) + " service node(s) supporting " + fqService +
                             " with config limits, found " + std::to_string(found));
             throw XRouterError(err, xrouter::NOT_ENOUGH_NODES);
@@ -1095,7 +1103,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         const auto & selected = static_cast<int>(selectedNodes.size());
 
         // Check if we have enough nodes
-        if (selected + nonWalletSnodes.size() < confs)
+        if (selected + exrSnodes.size() < confs)
             throw XRouterError("Failed to find " + std::to_string(confs) + " service node(s) supporting " +
                                fqService + " with config limits, found " + std::to_string(selected), xrouter::NOT_ENOUGH_NODES);
 
@@ -1113,13 +1121,23 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         std::map<NodeAddr, sn::ServiceNode> mapSelectedSnodes;
         for (auto & pnode : selectedNodes)
             mapSelectedSnodes[pnode->GetAddrName()] = sn::ServiceNodeMgr::instance().getSn(pnode->GetAddrName());
-        for (auto & snode : nonWalletSnodes)
+        for (auto & snode : exrSnodes)
             mapSelectedSnodes[snode.getHostPort()] = snode;
 
+        std::vector<sn::ServiceNode> listSelectedSnodes;
+        for (auto & item : mapSelectedSnodes)
+            listSelectedSnodes.push_back(item.second);
+        std::sort(listSelectedSnodes.begin(), listSelectedSnodes.end(), [this](const sn::ServiceNode & a, const sn::ServiceNode & b) {
+            if (a.isEXRCompatible() && !b.isEXRCompatible())
+                return true;
+            else if (!a.isEXRCompatible() && b.isEXRCompatible())
+                return false;
+            return queryMgr.getScore(a.getHostPort()) > queryMgr.getScore(b.getHostPort());
+        });
         // Compose a final list of snodes to request. selectedNodes here should be sorted
         // ascending best to worst
-        for (auto & item : mapSelectedSnodes) {
-            const auto & addr = item.first;
+        for (auto & snode : listSelectedSnodes) {
+            const auto & addr = snode.getHostPort();
             if (!hasConfig(addr))
                 continue; // skip nodes that do not have configs
 
@@ -1142,7 +1160,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 }
             }
 
-            queryNodes.push_back(item.second);
+            queryNodes.push_back(snode);
             ++snodeCount;
             if (snodeCount == confs)
                 break;
@@ -1156,6 +1174,7 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
         }
 
         const int timeout = xrsettings->commandTimeout(command, service);
+        CKey clientKey; clientKey.Set(cprivkey.begin(), cprivkey.end(), true);
         boost::thread_group tg;
 
         // Send xrouter request to each selected node
@@ -1181,17 +1200,16 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 packet.sign(cpubkey, cprivkey);
                 PushXRouterMessage(pnode, packet.body());
                 queryMgr.updateSentRequest(addr, fqService);
-            } else { // query via external ip specified in config
+            } else { // query EXR snode
                 // Set the fully qualified service url to the form /xr/BLOCK/xrGetBlockCount
                 const auto & fqUrl = fqServiceToUrl((command == xrService) ? pluginCommandKey(service) // plugin
                                                        : walletCommandKey(service, commandStr, true)); // spv wallet
                 try {
-                    tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,timeout,this]() {
+                    tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,timeout,&clientKey,this]() {
                         RenameThread("blocknet-xrclientrequest");
                         if (ShutdownRequested())
                             return;
 
-                        CKey clientKey; clientKey.Set(cprivkey.begin(), cprivkey.end(), true);
                         XRouterReply xrresponse;
                         try {
                             std::string data;
@@ -1478,6 +1496,8 @@ std::string App::getBalance(std::string & uuidRet, const std::string & currency,
 std::string App::getReply(const std::string & id)
 {
     auto replies = queryMgr.allReplies(id);
+    std::string mostCommonReply;
+    auto c = queryMgr.mostCommonReply(id, mostCommonReply);
     std::vector<sn::ServiceNode> snodes = getServiceNodes();
     std::map<NodeAddr, sn::ServiceNode*> snodec;
     for (auto & s : snodes) {
@@ -1487,45 +1507,45 @@ std::string App::getReply(const std::string & id)
         snodec[snodeAddr] = &s;
     }
 
+    UniValue o(UniValue::VOBJ);
     if (replies.empty()) {
-        Object result;
-        result.emplace_back("error", "No replies found");
-        result.emplace_back("code", xrouter::NO_REPLIES);
-        return json_spirit::write_string(Value(result), json_spirit::pretty_print);
+        o.pushKV("error", "No replies found");
+        o.pushKV("code", xrouter::NO_REPLIES);
+        o.pushKV("uuid", id);
+        return o.write(2);
     }
 
-    if (replies.size() == 1) {
-        return replies.begin()->second;
-    } else {
-        Array arr;
-        for (const auto & it : replies) {
-            const auto & reply = it.second;
-            const auto & snodeAddr = it.first;
-            const auto & s = snodec[snodeAddr];
+    UniValue oarr(UniValue::VARR);
+    for (const auto & it : replies) {
+        const auto & reply = it.second;
+        const auto & snodeAddr = it.first;
+        const auto & s = snodec[snodeAddr];
 
-            Object o;
-            try {
-                Value reply_val; read_string(reply, reply_val);
-                if (reply_val.type() == obj_type)
-                    o = reply_val.get_obj();
-                else
-                    o.emplace_back("result", reply_val);
-            } catch (...) {
-                o = Object();
-                o.emplace_back("result", "");
-            }
-
-            std::vector<unsigned char> spubkey;
-            servicenodePubKey(snodeAddr, spubkey);
-
-            o.emplace_back("nodepubkey", HexStr(spubkey));
-            o.emplace_back("score", queryMgr.getScore(snodeAddr));
-            o.emplace_back("address", EncodeDestination(CTxDestination(s->getPaymentAddress())));
-            arr.emplace_back(o);
+        UniValue po(UniValue::VOBJ);
+        try {
+            UniValue uv;
+            if (!uv.read(reply))
+                po.pushKV("reply", reply);
+            else
+                po.pushKV("reply", uv.get_obj());
+        } catch (...) {
+            po.pushKV("reply", reply);
         }
-        return json_spirit::write_string(Value(arr), json_spirit::pretty_print);
+
+        po.pushKV("nodepubkey", HexStr(s->getSnodePubKey()));
+        po.pushKV("score", queryMgr.getScore(snodeAddr));
+        po.pushKV("address", EncodeDestination(CTxDestination(s->getPaymentAddress())));
+        po.pushKV("exr", s->isEXRCompatible());
+        oarr.push_back(po);
     }
 
+    UniValue uvmc;
+    const auto uvmcSuccess = uvmc.read(mostCommonReply);
+    o.pushKV("allreplies", oarr);
+    o.pushKV("mostcommon", uvmcSuccess ? uvmc : mostCommonReply);
+    o.pushKV("mostcommoncount", c);
+    o.pushKV("uuid", id);
+    return o.write(2);
 }
 
 bool App::generatePayment(const NodeAddr & nodeAddr, const std::string & paymentAddress,
@@ -1843,7 +1863,7 @@ std::string App::getMyPaymentAddress() {
 bool App::servicenodePubKey(const NodeAddr & node, std::vector<unsigned char> & pubkey)  {
     std::vector<sn::ServiceNode> vServicenodes = getServiceNodes();
     for (const auto & snode : vServicenodes) {
-        if (node != snode.getHost())
+        if (node != snode.getHostPort())
             continue;
         auto key = snode.getSnodePubKey();
         if (!key.IsCompressed() && !key.Compress())

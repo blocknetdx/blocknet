@@ -634,9 +634,10 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
                             "is fully unlocked and you have at least " + std::to_string(confs) +
                             " available unspent transaction."};
 
-        std::map<std::string, sn::ServiceNode> mapSelectedSnodes;
         const auto fqServiceAdjusted = (command == xrService) ? fqService
                                                               : walletCommandKey(service);
+
+        std::vector<sn::ServiceNode> listSelectedSnodes;
         auto list = smgr.list();
         for (const auto & s : list) {
             if (!s.hasService(xr)) // has xrouter
@@ -645,13 +646,16 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
                 continue;
             if (!s.running() || !s.isEXRCompatible())
                 continue; // only running snodes and exr compatible snodes
-            mapSelectedSnodes[s.getHostPort()] = s;
+            listSelectedSnodes.push_back(s);
         }
+        std::sort(listSelectedSnodes.begin(), listSelectedSnodes.end(), [this](const sn::ServiceNode & a, const sn::ServiceNode & b) {
+            return queryMgr.getScore(a.getHostPort()) > queryMgr.getScore(b.getHostPort());
+        });
 
         // Compose a final list of snodes to request. selectedNodes here should be sorted
         // ascending best to worst
-        for (auto & item : mapSelectedSnodes) {
-            const auto & addr = item.first;
+        for (auto & snode : listSelectedSnodes) {
+            const auto & addr = snode.getHostPort();
             if (!settings.count(addr) || !settings[addr]->isValid())
                 continue; // skip invalid snodes and ones that do not have configs
 
@@ -670,9 +674,10 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
 //                    nodeErrors.emplace_back(strprintf("Failed to create payment to service node %s , %s", addr, e.msg), e.code);
 //                    continue;
 //                }
+                continue; // TODO Blocknet xrclient support paid calls
             }
 
-            queryNodes.push_back(item.second);
+            queryNodes.push_back(snode);
             ++snodeCount;
             if (snodeCount == confs)
                 break;
@@ -713,9 +718,8 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
                         std::string data;
                         if (!params.empty())
                             data = params.write();
-                        xrresponse = xrouter::CallXRouterUrl(snode.getHost(),
-                                snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
-                                snode.getSnodePubKey(), feetx);
+                        xrresponse = xrouter::CallXRouterUrl(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl, data,
+                                timeout, clientKey, snode.getSnodePubKey(), feetx);
                     } catch (std::exception & e) {
                         UniValue error(UniValue::VOBJ);
                         error.pushKV("error", e.what());
@@ -806,11 +810,11 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
                 snodeAddresses.insert(EncodeDestination(CTxDestination(s->getPaymentAddress())));
             }
 
-            // TODO Blocknet Unlock failed txs
-            for (const auto & addr : failed) { // unlock any fee txs
-                const auto & tx = feePaymentTxs[addr];
+            // TODO Blocknet xrclient unlock failed txs
+//            for (const auto & addr : failed) { // unlock any fee txs
+//                const auto & tx = feePaymentTxs[addr];
 //                unlockOutputs(tx);
-            }
+//            }
         }
 
         // Handle the results
@@ -846,29 +850,30 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
             } catch (...) { } // do not report on non-error objs
         }
 
-        // TODO Blocknet Unlock any utxos associated with replies that returned an error
-        if (!feePaymentTxs.empty()) {
-            for (const auto & item : replies) {
-                const auto & nodeAddr = item.first;
-                const auto & reply = item.second;
-                UniValue uv;
-                if (uv.read(reply) && uv.isObject()) {
-                    const auto & err = find_value(uv.get_obj(), "error");
-                    if (!err.isNull()) {
-                        const auto & tx = feePaymentTxs[nodeAddr];
+        // TODO Blocknet xrclient unlock any utxos associated with replies that returned an error
+//        if (!feePaymentTxs.empty()) {
+//            for (const auto & item : replies) {
+//                const auto & nodeAddr = item.first;
+//                const auto & reply = item.second;
+//                UniValue uv;
+//                if (uv.read(reply) && uv.isObject()) {
+//                    const auto & err = find_value(uv.get_obj(), "error");
+//                    if (!err.isNull()) {
+//                        const auto & tx = feePaymentTxs[nodeAddr];
 //                        unlockOutputs(tx);
-                    }
-                }
-            }
-        }
+//                    }
+//                }
+//            }
+//        }
 
         return rawResult;
 
     } catch (XRouterError & e) {
-        for (const auto & item : feePaymentTxs) { // TODO Blocknet unlock any fee txs
-            const std::string & tx = item.second;
+        // TODO Blocknet xrclient unlock any fee txs
+//        for (const auto & item : feePaymentTxs) {
+//            const std::string & tx = item.second;
 //            unlockOutputs(tx);
-        }
+//        }
 
         std::string errmsg = e.msg;
         if (!nodeErrors.empty()) {
@@ -883,10 +888,11 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
         return error.write();
 
     } catch (std::exception & e) {
-        for (const auto & item : feePaymentTxs) { // TODO Blocknet unlock any fee txs
-            const std::string & tx = item.second;
+        // TODO Blocknet xrclient unlock any fee txs
+//        for (const auto & item : feePaymentTxs) {
+//            const std::string & tx = item.second;
 //            unlockOutputs(tx);
-        }
+//        }
 
         UniValue error(UniValue::VOBJ);
         error.pushKV("error", "Internal Server Error");

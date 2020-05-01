@@ -95,7 +95,7 @@ int QueryMgr::mostCommonReply(const std::string & id, std::string & reply, std::
         }
         auto hash = Hash(result.begin(), result.end());
         hashes[hash] = item.second;
-        counts[hash] = counts.count(hash) + 1; // update counts for common replies
+        counts[hash] += 1; // update counts for common replies
         nodes[hash].insert(item.first);
     }
 
@@ -140,6 +140,13 @@ int QueryMgr::mostCommonReply(const std::string & id, std::string & reply, std::
     // select the most common replies
     reply = hashes[selhash];
     return tmp[0].second;
+}
+
+int QueryMgr::mostCommonReply(const std::string & id, std::string & reply) {
+    std::map<NodeAddr, std::string> replies;
+    std::set<NodeAddr> agree;
+    std::set<NodeAddr> diff;
+    return mostCommonReply(id, reply, replies, agree, diff);
 }
 
 bool QueryMgr::hasQuery(const std::string & id) {
