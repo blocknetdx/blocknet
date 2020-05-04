@@ -21,7 +21,9 @@
 #include <ui_interface.h>
 #include <validation.h>
 
+#ifndef USE_XROUTERCLIENT
 const std::function<std::string(const char*)> G_TRANSLATION_FUN = nullptr;
+#endif // USE_XROUTERCLIENT
 
 FastRandomContext g_insecure_rand_ctx;
 

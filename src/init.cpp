@@ -1919,10 +1919,10 @@ bool AppInitMain(InitInterfaces& interfaces)
         xapp.start(); // start xbridge
 
         xrouter::App & xrapp = xrouter::App::instance();
-        xrouter::App::createConf(); // create config if it doesn't exist
+        xrouter::App::createConf(GetDataDir(false)); // create config if it doesn't exist
         if (xrouter::App::isEnabled()) {
             uiInterface.InitMessage(_("Starting xrouter service"));
-            if (!xrapp.init()) // start xrouter
+            if (!xrapp.init(GetDataDir(false))) // start xrouter
                 LogPrintf("XRouter failed to start, please check your configs\n");
             xrapp.start();
         }

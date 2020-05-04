@@ -2211,6 +2211,7 @@ bool CConnman::Start(CScheduler& scheduler, const Options& connOptions)
     }
     // Load addresses from peers.dat
     int64_t nStart = GetTimeMillis();
+#ifndef USE_XROUTERCLIENT
     {
         CAddrDB adb;
         if (adb.Read(addrman))
@@ -2221,10 +2222,13 @@ bool CConnman::Start(CScheduler& scheduler, const Options& connOptions)
             DumpAddresses();
         }
     }
+#endif // USE_XROUTERCLIENT
 
     uiInterface.InitMessage(_("Starting network threads..."));
 
+#ifndef USE_XROUTERCLIENT
     fAddressesInitialized = true;
+#endif // USE_XROUTERCLIENT
 
     if (semOutbound == nullptr) {
         // initialize semaphore

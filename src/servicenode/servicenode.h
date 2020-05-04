@@ -149,6 +149,13 @@ public:
     }
 
     /**
+     * Returns true if the servicenode supports Enterprise XRouter requests.
+     */
+    bool isEXRCompatible() const {
+        return exrCompatible;
+    }
+
+    /**
      * Returns the servicenode's public key.
      * @return
      */
@@ -241,10 +248,15 @@ public:
 
     /**
      * Returns the servicenode last ping time in unix time.
+     * @param reportedPingTime The ping time reported by the originator (i.e. service node sending the ping).
      * @return
      */
-    void updatePing() {
-        pingtime = GetAdjustedTime();
+    void updatePing(const int64_t reportedPingTime = 0) {
+        const auto currentTime = GetAdjustedTime();
+        if (reportedPingTime == 0 || currentTime < reportedPingTime)
+            pingtime = currentTime;
+        else
+            pingtime = reportedPingTime;
     }
 
     /**
@@ -260,11 +272,12 @@ public:
     /**
      * Assigns the specified config to the servicenode.
      * @param c
+     * @param chainparams Chain parameters for use with mainnet, testnet, regtest chains
      */
-    void setConfig(const std::string & c) {
+    void setConfig(const std::string & c, const CChainParams & chainparams) {
         config = c;
         services.clear();
-        parseConfig();
+        parseConfig(config, chainparams);
     }
 
     /**
@@ -297,11 +310,22 @@ public:
     }
 
     /**
-     * Return the ip address of the host.
+     * Return the host (DNS or IP from config).
      * @return
      */
     std::string getHost() const {
-        return addr.ToStringIPPort();
+        return host.empty() ? addr.ToStringIP() : host;
+    }
+
+    /**
+     * Return the host and port.
+     * @return
+     */
+    std::string getHostPort() const {
+        if (exrCompatible)
+            return host.empty() ? addr.ToStringIPPort() : (host + ":" + addr.ToStringPort());
+        else
+            return addr.ToStringIPPort();
     }
 
     /**
@@ -509,10 +533,10 @@ protected:
      * Return true if the config was successfully parsed.
      * @return
      */
-    bool parseConfig() {
+    bool parseConfig(const std::string & conf, const CChainParams & chainparams) {
         try {
             UniValue uv;
-            if (!uv.read(config))
+            if (!uv.read(conf))
                 return false; // do not continue processing if config is bad json
 
             // Get the config version
@@ -549,6 +573,13 @@ protected:
                 if (!settings.init(uxrconf.get_str()))
                     return false;
 
+                // Enterprise XRouter compatibility check
+                if (settings.getAddr().GetPort() != 0) {
+                    const auto snodeXRPort = static_cast<int>(settings.getAddr().GetPort());
+                    const auto defaultPort = chainparams.GetDefaultPort();
+                    exrCompatible = snodeXRPort != defaultPort;
+                }
+
                 // Parse plugins
                 const auto uxrplugins = find_value(uxr, "plugins");
                 std::map<std::string, UniValue> kv;
@@ -566,6 +597,7 @@ protected:
                 }
 
                 addr = settings.getAddr();
+                host = settings.host(xrouter::xrDefault);
                 services.push_back(xrouter::xr); // add the general xrouter service
 
                 for (const auto & s : settings.getWallets()) {
@@ -602,10 +634,12 @@ protected: // in-memory only
     uint32_t xbridgeversion{0};
     uint32_t xrouterversion{0};
     CService addr;
+    std::string host;
     std::vector<std::string> services;
     bool invalid{false};
     int invalidBlock{0};
     int currentBlock{0};
+    bool exrCompatible{false};
 };
 
 typedef std::shared_ptr<ServiceNode> ServiceNodePtr;
@@ -638,8 +672,8 @@ public:
                                  pingTime(pingTime), config(std::move(config)), snode(std::move(snode)),
                                  signature(std::vector<unsigned char>()) {
         this->snode.setBestBlock(this->bestBlock, this->bestBlockHash);
-        this->snode.setConfig(this->config);
-        this->snode.updatePing();
+        this->snode.setConfig(this->config, Params());
+        this->snode.updatePing(pingTime);
     }
 
     ADD_SERIALIZE_METHODS;
@@ -655,8 +689,8 @@ public:
         READWRITE(signature);
         if (ser_action.ForRead()) { // on read stream, set the snode best block and ping
             snode.setBestBlock(bestBlock, bestBlockHash);
-            snode.setConfig(config);
-            snode.updatePing();
+            snode.setConfig(config, Params());
+            snode.updatePing(pingTime);
         }
     }
 
@@ -743,9 +777,10 @@ public:
      * allowed to accept payments.
      * @param getTxFunc
      * @param isBlockValid
+     * @param skipBlockchainValidation If true the blockchain validation is skipped. Other validation is performed.
      */
-    bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid) const {
-        if (!isBlockValid(bestBlock, bestBlockHash, true))
+    bool isValid(const TxFunc & getTxFunc, const BlockValidFunc & isBlockValid, const bool skipBlockchainValidation = false) const {
+        if (!skipBlockchainValidation && !isBlockValid(bestBlock, bestBlockHash, true))
             return false; // fail if ping is stale
 
         // TODO Blocknet OPEN tier snodes, support non-SPV snode tiers (enable unit tests)
@@ -779,7 +814,10 @@ public:
         if (pubkey.GetID() != snodePubKey.GetID())
             return false; // fail if pubkeys don't match
 
-        return snode.isValid(getTxFunc, isBlockValid, false); // stale check not required here, it happens above on isBlockValid
+        if (!skipBlockchainValidation)
+            return snode.isValid(getTxFunc, isBlockValid, false); // stale check not required here, it happens above on isBlockValid
+
+        return true;
     }
 
 protected:

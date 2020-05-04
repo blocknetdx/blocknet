@@ -146,8 +146,8 @@ class XRouterSettings : public IniConfig
 public:
     explicit XRouterSettings(const CPubKey & pubkey, const bool & ismine = true);
 
-    bool init(const boost::filesystem::path & configPath);
-    bool init(const std::string & config);
+    bool init(const boost::filesystem::path & configPath, const bool & snode = false);
+    bool init(const std::string & config, const bool & snode = true); // assume string configs come from snodes
 
     void defaultPaymentAddress(const std::string & paymentAddress);
 
@@ -221,6 +221,9 @@ private:
     CPubKey snodePubKey;
 };
 
+void saveConf(const boost::filesystem::path& p, const std::string& str);
+bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugins);
+
 } // namespace
 
-#endif // SETTINGS_H
+#endif // BLOCKNET_XROUTER_XROUTERSETTINGS_H

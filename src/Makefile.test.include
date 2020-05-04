@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
-# Copyright (c) 2019 The Blocknet developers
+# Copyright (c) 2019-2020 The Blocknet developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -129,6 +129,12 @@ BITCOIN_TESTS =\
   test/util_tests.cpp \
   test/validation_block_tests.cpp \
   test/versionbits_tests.cpp
+
+# Blocknet XRouter
+BITCOIN_TESTS += \
+  test/xrouter_tests.cpp
+BITCOIN_TEST_SUITE += \
+  test/xrouter_tests.h
 
 if ENABLE_PROPERTY_TESTS
 BITCOIN_TESTS += \
