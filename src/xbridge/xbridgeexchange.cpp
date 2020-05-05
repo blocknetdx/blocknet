@@ -154,6 +154,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
 //*****************************************************************************
 bool Exchange::isEnabled()
 {
+    LOCK(m_lock);
     if (m_p) {
         LOCK(m_p->m_walletsLock);
         return ((m_p->m_wallets.size() > 0) && gArgs.GetBoolArg("-enableexchange", false));
