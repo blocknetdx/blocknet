@@ -20,6 +20,12 @@
 #include <boost/lexical_cast.hpp>
 #include <json/json_spirit_writer_template.h>
 
+#ifdef ENABLE_EVENTSSL
+#include <event2/bufferevent_ssl.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#endif // ENABLE_EVENTSSL
+
 //*****************************************************************************
 //*****************************************************************************
 namespace xrouter
@@ -281,6 +287,134 @@ std::string CallCMD(const std::string & cmd, int & exit) {
 #endif
 
     return result;
+}
+
+/**
+ * Performs a TLS request on the specified host.
+ * @param host
+ * @param port
+ * @param url
+ * @param data
+ * @param timeout
+ * @param signingkey
+ * @param serverkey
+ * @param paymentrawtx
+ * @return
+ */
+XRouterReply CallXRouterUrlSSL(const std::string & host, const int & port, const std::string & url, const std::string & data,
+        const int & timeout, const CKey & signingkey, const CPubKey & serverkey, const std::string & paymentrawtx)
+{
+#if defined(ENABLE_EVENTSSL) && LIBEVENT_VERSION_NUMBER >= 0x02010b00
+    auto cleanup = [](SSL_CTX *ssl_ctx, SSL *ssl=nullptr, struct evhttp_connection *evcon=nullptr, struct evhttp_request *req=nullptr) {
+        if (ssl_ctx) SSL_CTX_free(ssl_ctx);
+        if (ssl) SSL_free(ssl);
+        if (evcon) evhttp_connection_free(evcon);
+        if (req) evhttp_request_free(req);
+    };
+
+    SSL_CTX *ssl_ctx = SSL_CTX_new(SSLv23_method());
+    if (ssl_ctx == nullptr) {
+        cleanup(ssl_ctx);
+        throw std::runtime_error("failed to open ssl connection (1)");
+    }
+    // TODO Blocknet xrclient cert verification
+//    int c1 = SSL_CTX_set_default_verify_paths(ssl_ctx);
+//    int c2 = SSL_CTX_load_verify_locations(ssl_ctx, "/etc/ssl/certs/ca-certificates.crt", "/etc/ssl/certs"); // debian
+//    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, nullptr);
+
+    SSL *ssl = SSL_new(ssl_ctx);
+    if (ssl == nullptr) {
+        cleanup(ssl_ctx, ssl);
+        throw std::runtime_error("failed to open ssl connection (2)");
+    }
+    // SNI support
+    SSL_set_tlsext_host_name(ssl, host.c_str());
+
+    raii_event_base raii_base = obtain_event_base();
+    struct event_base *base = raii_base.get();
+    if (base == nullptr) {
+        cleanup(ssl_ctx, ssl);
+        throw std::runtime_error("failed to open ssl connection (3)");
+    }
+
+    struct bufferevent *bev = bufferevent_openssl_socket_new(base, -1, ssl, BUFFEREVENT_SSL_CONNECTING, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_DEFER_CALLBACKS);
+    if (bev == nullptr) {
+        cleanup(ssl_ctx, ssl);
+        throw std::runtime_error("failed to open ssl connection (4)");
+    }
+    bufferevent_openssl_set_allow_dirty_shutdown(bev, 1);
+
+    // Synchronously look up hostname
+    struct evhttp_connection *evcon = evhttp_connection_base_bufferevent_new(base, nullptr, bev, host.c_str(), 443);
+    if (evcon == nullptr)
+        throw std::runtime_error("failed to open ssl connection (5)");
+    evhttp_connection_set_timeout(evcon, timeout > 0 ? timeout : static_cast<int>(gArgs.GetArg("-rpcxroutertimeout", 60)));
+
+    HTTPReply response;
+    struct evhttp_request *req = evhttp_request_new(http_request_done, (void*)&response);
+    if (req == nullptr) {
+        cleanup(nullptr, nullptr, evcon, req);
+        throw std::runtime_error("create ssl http request failed");
+    }
+#if LIBEVENT_VERSION_NUMBER >= 0x02010300
+    evhttp_request_set_error_cb(req, http_error_cb);
+#endif
+
+    struct evkeyvalq* output_headers = evhttp_request_get_output_headers(req);
+    assert(output_headers);
+    evhttp_add_header(output_headers, "Host", host.c_str());
+    evhttp_add_header(output_headers, "Connection", "close");
+    evhttp_add_header(output_headers, "XR-Pubkey", HexStr(signingkey.GetPubKey()).c_str());
+
+    CHashWriter hw(SER_GETHASH, 0);
+    hw << data;
+    std::vector<unsigned char> signature;
+    if (!signingkey.SignCompact(hw.GetHash(), signature)) {
+        cleanup(nullptr, nullptr, evcon, req);
+        throw std::runtime_error("failed to produce signature on payload");
+    }
+    evhttp_add_header(output_headers, "XR-Signature", HexStr(signature).c_str());
+    evhttp_add_header(output_headers, "XR-Payment", paymentrawtx.c_str());
+
+    // Attach request data
+    std::string strRequest = data + "\n";
+    struct evbuffer *output_buffer = evhttp_request_get_output_buffer(req);
+    if (!output_buffer) {
+        cleanup(nullptr, nullptr, nullptr, req);
+        throw std::runtime_error(strprintf("Internal error in connection to server %s:%d failed to set headers\n", host, 443));
+    }
+    evbuffer_add(output_buffer, strRequest.data(), strRequest.size());
+
+    int r = evhttp_make_request(evcon, req, EVHTTP_REQ_POST, url.c_str());
+    if (r != 0) {
+        cleanup(nullptr, nullptr, evcon, req);
+        throw std::runtime_error("send ssl http request failed");
+    }
+
+    event_base_dispatch(base);
+    cleanup(nullptr, nullptr, evcon, nullptr); // req owned by evcon
+
+    if (response.status == 0) {
+        std::string responseErrorMessage;
+        if (response.error != -1)
+            responseErrorMessage = strprintf(" (error code %d - %s)", response.error, http_errorstring(response.error));
+        throw std::runtime_error(strprintf("Could not connect to the ssl server %s:%d %s\n", host, 443, responseErrorMessage));
+    } else if (response.status == HTTP_UNAUTHORIZED) {
+        throw std::runtime_error("ssl authorization failed");
+    } else if (response.status >= 400 && response.status != HTTP_BAD_REQUEST && response.status != HTTP_NOT_FOUND && response.status != HTTP_INTERNAL_SERVER_ERROR) {
+        throw std::runtime_error(strprintf("ssl server returned HTTP error %d", response.status));
+    }
+
+    XRouterReply reply;
+    reply.status = response.status;
+    reply.error = response.error;
+    reply.result = response.body;
+    reply.hdrpubkey = response.hdrpubkey;
+    reply.hdrsignature = response.hdrsignature;
+    return std::move(reply);
+#else
+    return CallXRouterUrl(host, port, url, data, timeout, signingkey, serverkey, paymentrawtx);
+#endif // ENABLE_EVENTSSL
 }
 
 } // namespace xrouter

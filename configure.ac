@@ -1112,8 +1112,17 @@ if test x$use_pkgconfig = xyes; then
       if test x$use_qr != xno; then
         BITCOIN_QT_CHECK([PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes], [have_qrencode=no])])
       fi
-      if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests != xnononono; then
-        PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
+      if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests$use_xrouterclient != xnonononono; then
+        PKG_CHECK_MODULES([EVENT],[libevent_openssl],
+                  [AC_DEFINE([ENABLE_EVENTSSL],[1],[Define to 1 to enable xrouter ssl])],
+                  [AC_DEFINE([ENABLE_EVENTSSL],[0],[Define to 1 to enable xrouter ssl])
+                   AC_MSG_WARN([libevent_openssl not found, disabling])
+                   use_xrouterssl=no])
+        if test x$use_xrouterssl != xno; then
+            PKG_CHECK_MODULES([EVENT], [libevent_openssl libevent libssl],, [AC_MSG_ERROR(libevent not found.)])
+        else
+            PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
+        fi
         if test x$TARGET_OS != xwindows; then
           PKG_CHECK_MODULES([EVENT_PTHREADS], [libevent_pthreads],, [AC_MSG_ERROR(libevent_pthreads not found.)])
         fi
@@ -1137,9 +1146,17 @@ else
   AC_CHECK_HEADER([openssl/ssl.h],, AC_MSG_ERROR(libssl headers missing),)
   AC_CHECK_LIB([ssl],         [main],SSL_LIBS=-lssl, AC_MSG_ERROR(libssl missing))
 
-  if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests != xnononono; then
+  if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests$use_xrouterclient != xnonononono; then
     AC_CHECK_HEADER([event2/event.h],, AC_MSG_ERROR(libevent headers missing),)
+    AC_CHECK_HEADER([event2/bufferevent_ssl.h],,
+        [AC_DEFINE([ENABLE_EVENTSSL],[1],[Define to 1 to enable xrouter ssl])],
+        [AC_DEFINE([ENABLE_EVENTSSL],[0],[Define to 1 to enable xrouter ssl])
+         AC_MSG_WARN([libevent_openssl headers not found, disabling])
+         use_xrouterssl=no])
     AC_CHECK_LIB([event],[main],EVENT_LIBS=-levent,AC_MSG_ERROR(libevent missing))
+    if test x$use_xrouterssl != xno; then
+        AC_CHECK_LIB([event_openssl],[main],[EVENT_LIBS="-levent_openssl $EVENT_LIBS $SSL_LIBS"],AC_MSG_ERROR(libevent_openssl missing))
+    fi
     if test x$TARGET_OS != xwindows; then
       AC_CHECK_LIB([event_pthreads],[main],EVENT_PTHREADS_LIBS=-levent_pthreads,AC_MSG_ERROR(libevent_pthreads missing))
     fi

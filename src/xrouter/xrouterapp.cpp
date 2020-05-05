@@ -26,6 +26,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#ifdef ENABLE_EVENTSSL
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <openssl/engine.h>
+#endif // ENABLE_EVENTSSL
 
 extern void Misbehaving(NodeId nodeid, int howmuch, const std::string& message="") EXCLUSIVE_LOCKS_REQUIRED(cs_main); // declared in net_processing.cpp
 
@@ -135,6 +140,12 @@ bool App::start()
 {
     if (!isEnabled())
         return false;
+
+#ifdef ENABLE_EVENTSSL
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
+#endif // ENABLE_EVENTSSL
 
     // Only start server mode if we're a servicenode
     if (gArgs.GetBoolArg("-servicenode", false)) {
@@ -563,6 +574,12 @@ bool App::stop(const bool safeCleanup)
     if (stopped)
         return true;
     stopped = true;
+
+#ifdef ENABLE_EVENTSSL
+    ENGINE_cleanup();
+    ERR_free_strings();
+    EVP_cleanup();
+#endif // ENABLE_EVENTSSL
 
     if (safeCleanup)
         LOG() << "stopping xrouter threads...";
@@ -1201,11 +1218,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 PushXRouterMessage(pnode, packet.body());
                 queryMgr.updateSentRequest(addr, fqService);
             } else { // query EXR snode
+                const bool tls = getConfig(addr)->tls(command, service);
                 // Set the fully qualified service url to the form /xr/BLOCK/xrGetBlockCount
                 const auto & fqUrl = fqServiceToUrl((command == xrService) ? pluginCommandKey(service) // plugin
                                                        : walletCommandKey(service, commandStr, true)); // spv wallet
                 try {
-                    tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,timeout,&clientKey,this]() {
+                    tg.create_thread([uuid,addr,snode,tls,fqUrl,params,feetx,timeout,&clientKey,this]() {
                         RenameThread("blocknet-xrclientrequest");
                         if (ShutdownRequested())
                             return;
@@ -1215,9 +1233,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                             std::string data;
                             if (!params.empty())
                                 data = params.write();
-                            xrresponse = xrouter::CallXRouterUrl(snode.getHost(),
-                                    snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
-                                    snode.getSnodePubKey(), feetx);
+                            if (tls)
+                                xrresponse = xrouter::CallXRouterUrlSSL(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl,
+                                        data, timeout, clientKey, snode.getSnodePubKey(), feetx);
+                            else
+                                xrresponse = xrouter::CallXRouterUrl(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl,
+                                        data, timeout, clientKey, snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
                             UniValue error(UniValue::VOBJ);
                             error.pushKV("error", e.what());

@@ -192,6 +192,7 @@ public:
     bool isAvailableCommand(XRouterCommand c, const std::string & service);
     std::string host(XRouterCommand c, const std::string & service="");
     int port(XRouterCommand c, const std::string & service="");
+    bool tls(XRouterCommand c, const std::string & service="");
     double commandFee(XRouterCommand c, const std::string & service, double def=0.0);
     int commandTimeout(XRouterCommand c, const std::string & service, int def=XROUTER_DEFAULT_TIMEOUT);
     int commandFetchLimit(XRouterCommand c, const std::string & service, int def=XROUTER_DEFAULT_FETCHLIMIT);

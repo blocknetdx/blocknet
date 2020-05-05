@@ -289,6 +289,14 @@ int XRouterSettings::port(XRouterCommand c, const std::string & service) {
     return res;
 }
 
+bool XRouterSettings::tls(XRouterCommand c, const std::string & service) {
+    auto res = get<bool>("Main.tls", false);
+
+    // TODO Blocknet XRouter support subsection tls designations
+
+    return res;
+}
+
 double XRouterSettings::maxFee(XRouterCommand c, const std::string & service, double def)
 {
     const std::string cstr{XRouterCommand_ToString(c)};
@@ -710,6 +718,11 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
                      "#! port=41412"                                                                                     + eol +
                      "#! port=80"                                                                                        + eol +
                      "#! port=8080"                                                                                      + eol +
+                     ""                                                                                                  + eol +
+                     "#! tls signals to the xrouter network that your endpoint supports TLS/SSL connections."            + eol +
+                     "#! The default is 0 (false)."                                                                      + eol +
+                     "#! tls=1"                                                                                          + eol +
+                     "tls=0"                                                                                             + eol +
                      ""                                                                                                  + eol +
                      "#! maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"            + eol +
                      "#! 0 means you only want free calls"                                                               + eol +
