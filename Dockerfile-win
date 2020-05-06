@@ -25,7 +25,7 @@ RUN apt update \
   && update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix \
   && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-ENV PROJECTDIR=/opt/blocknetdx/bitcoin
+ENV PROJECTDIR=/opt/blocknetdx/blocknet
 ENV BASEPREFIX=$PROJECTDIR/depends
 ENV DISTDIR=/opt/blocknetdx/dist
 ENV HOST=x86_64-w64-mingw32
@@ -33,8 +33,8 @@ ENV HOST=x86_64-w64-mingw32
 # Download depends
 RUN mkdir -p $PROJECTDIR \
   && cd $PROJECTDIR \
-  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-v18-win-bionic2.tar.gz \
-  && [ "$(printf '1d1f239efccacefd8a396b274d8f380edeaf79ba16a5530297dd58e6f6ebd665 depends-v18-win-bionic2.tar.gz' | sha256sum -c)" = "depends-v18-win-bionic2.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
+  && wget -nv https://s3.us-east-2.amazonaws.com/devbuilds.blocknetprotocol.com/depends/depends-v4.2.0-win-bionic.tar.gz \
+  && [ "$(printf '1a10012c4fd13cc1eb671ac5a3919cd42c86b9ff90f875ce8fa153a77871170c depends-v4.2.0-win-bionic.tar.gz' | sha256sum -c)" = "depends-v4.2.0-win-bionic.tar.gz: OK" ] || $(echo "depends checksum failed"; exit 1)
 
 # Copy source files
 COPY . $PROJECTDIR/
@@ -43,7 +43,7 @@ COPY . $PROJECTDIR/
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
   && rm -r $BASEPREFIX \
-  && tar xzvf depends-v18-win-bionic2.tar.gz \
+  && tar xzvf depends-v4.2.0-win-bionic.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-reduce-exports --disable-bench --disable-gui-tests \
