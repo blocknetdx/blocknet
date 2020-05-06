@@ -723,7 +723,8 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
-    if (!sconn || !dconn)
+    bool nowalletswitch = gArgs.GetBoolArg("-dxnowallets", false);
+    if ((!sconn || !dconn) && !nowalletswitch)
     {
         xbridge::LogOrderMsg(txid.GetHex(), "no connector for <" + (!sconn ? scurrency : dcurrency) + ">", __FUNCTION__);
         return true;

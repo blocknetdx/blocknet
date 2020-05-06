@@ -570,6 +570,7 @@ void SetupServerArgs()
     gArgs.AddArg("-enableexchange", strprintf("Enable exchange mode on this service node (default: %u)", false), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-orderinputscheck", strprintf("Time interval for the utxo validity check on order inputs (default: %d seconds)", 900), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-maxmempoolxbridge", strprintf("Maximum size in MB (megabytes) for the xbridge mempool (default: %dMB)", 128), false, OptionsCategory::XBRIDGE);
+    gArgs.AddArg("-dxnowallets", strprintf("Show all orders across the network for non-local wallets"), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-rpcxbridgetimeout", strprintf("Timeout for internal XBridge RPC calls (default: %d seconds)", 120), false, OptionsCategory::XBRIDGE);
 
     // XRouter

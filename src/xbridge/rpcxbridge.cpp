@@ -307,7 +307,7 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
     auto &xapp = xbridge::App::instance();
     TransactionMap trlist = xapp.transactions();
     auto currentTime = boost::posix_time::second_clock::universal_time();
-
+    bool nowalletswitch = gArgs.GetBoolArg("-dxnowallets", false);
     Array result;
     for (const auto& trEntry : trlist) {
 
@@ -323,7 +323,7 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
 
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
-        if (!connFrom || !connTo) {
+        if ((!connFrom || !connTo) && !nowalletswitch ){
             continue;
         }
 
