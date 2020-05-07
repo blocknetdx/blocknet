@@ -146,9 +146,8 @@ class XRouterSettings : public IniConfig
 public:
     explicit XRouterSettings(const CPubKey & pubkey, const bool & ismine = true);
 
-    bool init(const boost::filesystem::path & configPath, const bool & snode = false);
-    bool init(const std::string & config, const bool & snode = true); // assume string configs come from snodes
-
+    bool init(const boost::filesystem::path & configPath, bool snode = false);
+    bool init(const std::string & config, bool snode = true); // assume string configs come from snodes
     void defaultPaymentAddress(const std::string & paymentAddress);
 
     const CService & getAddr() const {

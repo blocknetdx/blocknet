@@ -124,7 +124,7 @@ bool IniConfig::write(const char * fileName)
 
 XRouterSettings::XRouterSettings(const CPubKey & pubkey, const bool & ismine) : snodePubKey(pubkey), ismine(ismine) { }
 
-bool XRouterSettings::init(const boost::filesystem::path & configPath, const bool & snode) {
+bool XRouterSettings::init(const boost::filesystem::path & configPath, const bool snode) {
     if (!read(configPath)) {
         ERR() << "Failed to read xrouter config " << configPath.string();
         return false;
@@ -139,15 +139,16 @@ bool XRouterSettings::init(const boost::filesystem::path & configPath, const boo
             ERR() << "Failed to read xrouter config, bad \"host\" entry " << configPath.string();
             return false;
         }
-        addr = CService(caddr, port(xrDefault));
-        node = addr.ToStringIPPort();
+        const auto nport = port(xrDefault);
+        addr = CService(caddr, nport);
+        node = host(xrDefault) + ":" + std::to_string(nport);
     }
     loadPlugins();
     loadWallets();
     return true;
 }
 
-bool XRouterSettings::init(const std::string & config, const bool & snode) {
+bool XRouterSettings::init(const std::string & config, const bool snode) {
     if (!read(config)) {
         ERR() << "Failed to read xrouter config " << config;
         return false;
@@ -162,8 +163,9 @@ bool XRouterSettings::init(const std::string & config, const bool & snode) {
 //            ERR() << "Failed to read xrouter config, bad \"host\" entry " << config;
             return false;
         }
-        addr = CService(caddr, port(xrDefault));
-        node = addr.ToStringIPPort();
+        const auto nport = port(xrDefault);
+        addr = CService(caddr, nport);
+        node = host(xrDefault) + ":" + std::to_string(nport);
     }
     loadPlugins();
     loadWallets();

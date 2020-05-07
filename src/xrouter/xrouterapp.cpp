@@ -545,26 +545,26 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 std::string App::printConfigs()
 {
     LOCK(mu);
-    Array result;
+    UniValue result(UniValue::VARR);
 
     for (const auto & it : snodeConfigs) {
         auto settings = it.second.first;
-        Object val;
-        std::vector<unsigned char> spubkey; servicenodePubKey(settings->getNode(), spubkey);
-        val.emplace_back("nodepubkey", HexStr(spubkey));
-        val.emplace_back("paymentaddress", settings->paymentAddress(xrGetConfig));
-        val.emplace_back("config", settings->publicText());
-        Object p_val;
+        UniValue o(UniValue::VOBJ);
+        std::vector<unsigned char> spubkey; servicenodePubKey(it.first, spubkey);
+        o.pushKV("nodepubkey", HexStr(spubkey));
+        o.pushKV("paymentaddress", settings->paymentAddress(xrDefault));
+        o.pushKV("config", settings->publicText());
+        UniValue p_val(UniValue::VARR);
         for (const auto & p : settings->getPlugins()) {
             auto pp = settings->getPluginSettings(p);
             if (pp)
-                p_val.emplace_back(p, pp->publicText());
+                p_val.pushKV(p, pp->publicText());
         }
-        val.emplace_back("plugins", p_val);
-        result.push_back(val);
+        o.pushKV("plugins", p_val);
+        result.push_back(o);
     }
     
-    return json_spirit::write_string(Value(result), true);
+    return result.write(2);
 }
 
 //*****************************************************************************
@@ -1688,7 +1688,7 @@ void App::snodeConfigJSON(const std::map<NodeAddr, std::pair<XRouterSettingsPtr,
         // banned
         o.emplace_back("banned", g_banman->IsBanned(settings->getAddr()));
         // payment address
-        o.emplace_back("paymentaddress", settings->paymentAddress(xrGetConfig));
+        o.emplace_back("paymentaddress", settings->paymentAddress(xrDefault));
         // tier
         o.emplace_back("tier", sn::ServiceNodeMgr::tierString(tier));
 
@@ -1803,7 +1803,7 @@ bool App::reloadConfigs() {
         return false;
     }
     LOG() << "Reloading xrouter config from file " << xrouterpath.string();
-    if (!xrsettings->init(xrouterpath, true)) {
+    if (!xrsettings->init(xrouterpath, gArgs.GetBoolArg("-servicenode", false))) {
         ERR() << "Failed to read xrouter config " << xrouterpath.string();
         return false;
     }
