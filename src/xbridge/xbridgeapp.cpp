@@ -313,6 +313,10 @@ bool App::createConf()
                 "[Main]"                                                                       + eol +
                 "ExchangeWallets="                                                             + eol +
                 "FullLog=true"                                                                 + eol +
+                "# Show all orders across the network regardless of whether wallets are "      + eol +
+                "# installed locally, set to \"true\". -dxnowallets in blocknet.conf "         + eol +
+                "# overrides this setting"                                                     + eol +
+                "ShowAllOrders=false"                                                          + eol +
                 ""                                                                             + eol +
                 "# Sample configuration:"                                                      + eol +
                 "# [BLOCK]"                                                                    + eol +
@@ -355,7 +359,7 @@ bool App::createConf()
 //*****************************************************************************
 bool App::isEnabled()
 {
-    return connectors().size() > 0 || xbridge::Exchange::instance().isEnabled();
+    return connectors().size() > 0 || xbridge::Exchange::instance().isEnabled() || gArgs.GetBoolArg("-dxnowallets", settings().showAllOrders());
 }
 
 //*****************************************************************************
@@ -3078,6 +3082,20 @@ void App::clearMempool() {
         m_p->m_processedMessages.clear();
 }
 
+void App::clearNonLocalOrders() {
+    LOCK(m_p->m_txLocker);
+    for (auto it = m_p->m_transactions.begin(); it != m_p->m_transactions.end(); ) {
+        const TransactionDescrPtr & ptr = it->second;
+        if (ptr->isLocal())
+            continue; // do not remove any orders that belong to us
+        LOCK(m_p->m_connectorsLock);
+        if (!m_p->m_connectorCurrencyMap.count(ptr->fromCurrency) || !m_p->m_connectorCurrencyMap.count(ptr->toCurrency)) {
+            m_p->m_transactions.erase(it++);
+        } else {
+            ++it;
+        }
+    }
+}
 
 std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
 {
