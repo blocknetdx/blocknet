@@ -117,7 +117,7 @@ public:
         consensus.coinMaturity = 100;
         consensus.stakingV05UpgradeTime = 1569261600; // Sep 23 '19 6pm UTC
         consensus.stakingV06UpgradeTime = 1586973600; // Apr 15, 2020 6pm UTC
-        consensus.stakingV07UpgradeTime = 1591120800; // June 1, 2020 6pm UTC
+        consensus.stakingV07UpgradeTime = 1591639200; // June 8, 2020 6pm UTC
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
