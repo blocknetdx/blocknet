@@ -231,7 +231,9 @@ std::vector<COutput> StakeMgr::StakeOutputs(CWallet *wallet, const CAmount & min
     auto locked_chain = wallet->chain().lock();
     LOCK2(cs_main, wallet->cs_wallet);
     if (wallet->IsLocked()) {
-        LogPrintf("Wallet is locked not staking inputs: %s\n", wallet->GetDisplayName());
+        static int stakelog{-1};
+        if (++stakelog % 10 == 0)
+            LogPrintf("Wallet is locked not staking inputs: %s\n", wallet->GetDisplayName());
         return coins; // skip locked wallets
     }
     wallet->AvailableCoins(*locked_chain, coins, true, nullptr, minStakeAmount, MAX_MONEY, MAX_MONEY, 0);
