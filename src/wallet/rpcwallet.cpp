@@ -4186,7 +4186,7 @@ static UniValue splitbalance(const JSONRPCRequest& request)
             }.ToString());
 
     const auto amount = request.params[0].get_real();
-    const auto camount = static_cast<CAmount>(amount * COIN);
+    auto camount = static_cast<CAmount>(amount * COIN);
     const auto saddr = request.params[1].get_str();
     const auto hex_only = request.params[2].isNull() ? false : request.params[2].get_bool();
 
@@ -4244,11 +4244,11 @@ static UniValue splitbalance(const JSONRPCRequest& request)
 
         EnsureWalletIsUnlocked(pwallet.get());
 
-        if (total < camount && inputsEqualSkippedAmount == 0) // not enough coin in saddr
-            throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Unable to split balance into %s BLOCK increments, wallet "
-                                                                "only has %s BLOCK in address %s", FormatMoney(camount), FormatMoney(total), saddr));
-
-        if (total < camount && inputsEqualSkippedAmount > 0) { // Already split as many inputs as possible
+        // Already split as many inputs as possible, therefore consolidate the remainder
+        // into the largest possible utxo (sets split amount to total remainder).
+        if (total < camount)
+            camount = total;
+        if (total <= 6000) { // total should not be dust
             UniValue result(UniValue::VOBJ);
             result.pushKV("inputs_consumed", 0);
             result.pushKV("inputs_consumed_amount", 0);
@@ -4260,8 +4260,7 @@ static UniValue splitbalance(const JSONRPCRequest& request)
             result.pushKV("inputs_not_consumed_amount", 0);
             result.pushKV("outputs_not_created", inputs);
             result.pushKV("outputs_not_created_amount", ValueFromAmount(total));
-            result.pushKV("msgs", strprintf("Unable to split remaining balance of %s BLOCK, already split "
-                                            "%s BLOCK in address %s", FormatMoney(total), FormatMoney(inputsEqualSkippedAmount), saddr));
+            result.pushKV("msgs", strprintf("Unable to split remaining balance of %s BLOCK because it's dust.", FormatMoney(total)));
             if (hex_only)
                 result.pushKV("hex", "");
             return result;
@@ -4335,7 +4334,7 @@ static UniValue splitbalance(const JSONRPCRequest& request)
         if (!feeInLastVout && outputsNotCreated > 0)
             msgs.emplace_back("Too many outputs found, unable to fit in one transaction. Please run again.");
         if (feeInLastVout && outputsNotCreated > 0)
-            msgs.emplace_back("Unable to create last output at the full amount. It was partially consumed to pay the network fee.");
+            msgs.emplace_back("Unable to create last output at the full amount. Remaining inputs combined into change.");
         if (msgs.empty() && !hex_only)
             msgs.emplace_back("Successfully created utxos, please wait for them to confirm on the network.");
         result.pushKV("msgs", boost::algorithm::join(msgs, ","));
