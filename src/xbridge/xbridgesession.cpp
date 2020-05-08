@@ -12,6 +12,7 @@
 #include <xbridge/util/posixtimeconversion.h>
 #include <xbridge/util/xutil.h>
 #include <xbridge/util/logger.h>
+#include <xbridge/util/settings.h>
 #include <xbridge/util/txlog.h>
 #include <xbridge/util/xassert.h>
 #include <xbridge/xbitcointransaction.h>
@@ -723,7 +724,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
-    bool nowalletswitch = gArgs.GetBoolArg("-dxnowallets", false);
+    bool nowalletswitch = gArgs.GetBoolArg("-dxnowallets", settings().showAllOrders());
     if ((!sconn || !dconn) && !nowalletswitch)
     {
         xbridge::LogOrderMsg(txid.GetHex(), "no connector for <" + (!sconn ? scurrency : dcurrency) + ">", __FUNCTION__);
