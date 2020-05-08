@@ -179,7 +179,7 @@ test_test_blocknet_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 # Blocknet XBridge
 test_test_blocknet_LDADD += $(LIBXBRIDGE)
 # Blocknet XRouter
-test_test_blocknet_LDADD += $(LIBXROUTER)
+test_test_blocknet_LDADD += $(LIBXROUTER) $(EVENT_LIBS) $(SSL_LIBS)
 test_test_blocknet_LDADD += $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(RAPIDCHECK_LIBS)
 test_test_blocknet_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -static
 

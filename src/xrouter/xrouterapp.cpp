@@ -26,6 +26,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/mutex.hpp>
+#ifdef ENABLE_EVENTSSL
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <openssl/engine.h>
+#endif // ENABLE_EVENTSSL
 
 extern void Misbehaving(NodeId nodeid, int howmuch, const std::string& message="") EXCLUSIVE_LOCKS_REQUIRED(cs_main); // declared in net_processing.cpp
 
@@ -135,6 +140,12 @@ bool App::start()
 {
     if (!isEnabled())
         return false;
+
+#ifdef ENABLE_EVENTSSL
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
+#endif // ENABLE_EVENTSSL
 
     // Only start server mode if we're a servicenode
     if (gArgs.GetBoolArg("-servicenode", false)) {
@@ -534,26 +545,26 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 std::string App::printConfigs()
 {
     LOCK(mu);
-    Array result;
+    UniValue result(UniValue::VARR);
 
     for (const auto & it : snodeConfigs) {
         auto settings = it.second.first;
-        Object val;
-        std::vector<unsigned char> spubkey; servicenodePubKey(settings->getNode(), spubkey);
-        val.emplace_back("nodepubkey", HexStr(spubkey));
-        val.emplace_back("paymentaddress", settings->paymentAddress(xrGetConfig));
-        val.emplace_back("config", settings->publicText());
-        Object p_val;
+        UniValue o(UniValue::VOBJ);
+        std::vector<unsigned char> spubkey; servicenodePubKey(it.first, spubkey);
+        o.pushKV("nodepubkey", HexStr(spubkey));
+        o.pushKV("paymentaddress", settings->paymentAddress(xrDefault));
+        o.pushKV("config", settings->publicText());
+        UniValue p_val(UniValue::VARR);
         for (const auto & p : settings->getPlugins()) {
             auto pp = settings->getPluginSettings(p);
             if (pp)
-                p_val.emplace_back(p, pp->publicText());
+                p_val.pushKV(p, pp->publicText());
         }
-        val.emplace_back("plugins", p_val);
-        result.push_back(val);
+        o.pushKV("plugins", p_val);
+        result.push_back(o);
     }
     
-    return json_spirit::write_string(Value(result), true);
+    return result.write(2);
 }
 
 //*****************************************************************************
@@ -563,6 +574,12 @@ bool App::stop(const bool safeCleanup)
     if (stopped)
         return true;
     stopped = true;
+
+#ifdef ENABLE_EVENTSSL
+    ENGINE_cleanup();
+    ERR_free_strings();
+    EVP_cleanup();
+#endif // ENABLE_EVENTSSL
 
     if (safeCleanup)
         LOG() << "stopping xrouter threads...";
@@ -1201,11 +1218,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                 PushXRouterMessage(pnode, packet.body());
                 queryMgr.updateSentRequest(addr, fqService);
             } else { // query EXR snode
+                const bool tls = getConfig(addr)->tls(command, service);
                 // Set the fully qualified service url to the form /xr/BLOCK/xrGetBlockCount
                 const auto & fqUrl = fqServiceToUrl((command == xrService) ? pluginCommandKey(service) // plugin
                                                        : walletCommandKey(service, commandStr, true)); // spv wallet
                 try {
-                    tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,timeout,&clientKey,this]() {
+                    tg.create_thread([uuid,addr,snode,tls,fqUrl,params,feetx,timeout,&clientKey,this]() {
                         RenameThread("blocknet-xrclientrequest");
                         if (ShutdownRequested())
                             return;
@@ -1215,9 +1233,12 @@ std::string App::xrouterCall(enum XRouterCommand command, std::string & uuidRet,
                             std::string data;
                             if (!params.empty())
                                 data = params.write();
-                            xrresponse = xrouter::CallXRouterUrl(snode.getHost(),
-                                    snode.getHostAddr().GetPort(), fqUrl, data, timeout, clientKey,
-                                    snode.getSnodePubKey(), feetx);
+                            if (tls)
+                                xrresponse = xrouter::CallXRouterUrlSSL(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl,
+                                        data, timeout, clientKey, snode.getSnodePubKey(), feetx);
+                            else
+                                xrresponse = xrouter::CallXRouterUrl(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl,
+                                        data, timeout, clientKey, snode.getSnodePubKey(), feetx);
                         } catch (std::exception & e) {
                             UniValue error(UniValue::VOBJ);
                             error.pushKV("error", e.what());
@@ -1667,7 +1688,7 @@ void App::snodeConfigJSON(const std::map<NodeAddr, std::pair<XRouterSettingsPtr,
         // banned
         o.emplace_back("banned", g_banman->IsBanned(settings->getAddr()));
         // payment address
-        o.emplace_back("paymentaddress", settings->paymentAddress(xrGetConfig));
+        o.emplace_back("paymentaddress", settings->paymentAddress(xrDefault));
         // tier
         o.emplace_back("tier", sn::ServiceNodeMgr::tierString(tier));
 
@@ -1782,7 +1803,7 @@ bool App::reloadConfigs() {
         return false;
     }
     LOG() << "Reloading xrouter config from file " << xrouterpath.string();
-    if (!xrsettings->init(xrouterpath, true)) {
+    if (!xrsettings->init(xrouterpath, gArgs.GetBoolArg("-servicenode", false))) {
         ERR() << "Failed to read xrouter config " << xrouterpath.string();
         return false;
     }

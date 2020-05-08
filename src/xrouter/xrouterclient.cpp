@@ -18,6 +18,13 @@
 #include <utility>
 #include <sys/stat.h>
 
+#ifdef ENABLE_EVENTSSL
+#include <openssl/engine.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#endif // ENABLE_EVENTSSL
+
 #if defined(USE_XROUTERCLIENT)
 const std::function<std::string(const char*)> G_TRANSLATION_FUN = nullptr;
 #endif
@@ -214,6 +221,12 @@ bool XRouterClient::start(std::string & error) {
         return false;
     }
     started = true;
+
+#ifdef ENABLE_EVENTSSL
+    SSL_library_init();
+    OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
+#endif // ENABLE_EVENTSSL
 
     // Start xrouter
     const auto conf = gArgs.GetArg("-xrouterconf", "");
@@ -704,11 +717,12 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
             queryMgr.addQuery(uuid, addr);
 
             // Query Enterprise XRouter snodes
+            const auto tls = settings[addr]->settings()->tls(command, service);
             // Set the fully qualified service url to the form /xr/BLOCK/xrGetBlockCount
             const auto & fqUrl = fqServiceToUrl((command == xrService) ? pluginCommandKey(service) // plugin
                                                                        : walletCommandKey(service, commandStr, true)); // spv wallet
             try {
-                tg.create_thread([uuid,addr,snode,fqUrl,params,feetx,timeout,this]() {
+                tg.create_thread([uuid,addr,snode,tls,fqUrl,params,feetx,timeout,this]() {
                     RenameThread("blocknet-xrclientrequest");
                     if (ShutdownRequested())
                         return;
@@ -718,8 +732,12 @@ std::string XRouterClient::xrouterCall(enum XRouterCommand command, std::string 
                         std::string data;
                         if (!params.empty())
                             data = params.write();
-                        xrresponse = xrouter::CallXRouterUrl(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl, data,
-                                timeout, clientKey, snode.getSnodePubKey(), feetx);
+                        if (tls)
+                            xrresponse = xrouter::CallXRouterUrlSSL(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl, data,
+                                    timeout, clientKey, snode.getSnodePubKey(), feetx);
+                        else
+                            xrresponse = xrouter::CallXRouterUrl(snode.getHost(), snode.getHostAddr().GetPort(), fqUrl, data,
+                                    timeout, clientKey, snode.getSnodePubKey(), feetx);
                     } catch (std::exception & e) {
                         UniValue error(UniValue::VOBJ);
                         error.pushKV("error", e.what());
@@ -915,6 +933,11 @@ XRouterClient::~XRouterClient() {
     settings.clear();
     smgr.reset();
     gArgs.ClearArgs();
+#ifdef ENABLE_EVENTSSL
+    ENGINE_cleanup();
+    ERR_free_strings();
+    EVP_cleanup();
+#endif // ENABLE_EVENTSSL
 }
 
 }

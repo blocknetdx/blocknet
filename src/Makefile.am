@@ -695,7 +695,7 @@ blocknetd_LDADD += $(LIBXBRIDGE)
 # Blocknet XRouter
 blocknetd_LDADD += $(LIBXROUTER)
 
-blocknetd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+blocknetd_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(SSL_LIBS) $(ZMQ_LIBS)
 
 # bitcoin-cli binary #
 blocknet_cli_SOURCES = bitcoin-cli.cpp
@@ -764,7 +764,7 @@ blocknet_wallet_LDADD = \
 blocknet_wallet_LDADD += $(LIBXBRIDGE)
 
 # Blocknet XRouter
-blocknet_wallet_LDADD += $(LIBXROUTER)
+blocknet_wallet_LDADD += $(LIBXROUTER) $(EVENT_LIBS) $(SSL_LIBS)
 
 blocknet_wallet_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS)
 #

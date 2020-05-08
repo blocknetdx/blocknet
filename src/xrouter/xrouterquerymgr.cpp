@@ -232,6 +232,8 @@ void QueryMgr::updateSentRequest(const NodeAddr & node, const std::string & comm
 bool QueryMgr::rateLimitExceeded(const NodeAddr & node, const std::string & service,
         const std::chrono::time_point<std::chrono::system_clock> lastRequest, const int rateLimit)
 {
+    if (rateLimit <= 0)
+        return false; // rate limiting disabled
     if (hasSentRequest(node, service)) {
         std::chrono::time_point<std::chrono::system_clock> time = std::chrono::system_clock::now();
         std::chrono::system_clock::duration diff = time - lastRequest;

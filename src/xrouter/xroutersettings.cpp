@@ -124,7 +124,7 @@ bool IniConfig::write(const char * fileName)
 
 XRouterSettings::XRouterSettings(const CPubKey & pubkey, const bool & ismine) : snodePubKey(pubkey), ismine(ismine) { }
 
-bool XRouterSettings::init(const boost::filesystem::path & configPath, const bool & snode) {
+bool XRouterSettings::init(const boost::filesystem::path & configPath, const bool snode) {
     if (!read(configPath)) {
         ERR() << "Failed to read xrouter config " << configPath.string();
         return false;
@@ -139,15 +139,16 @@ bool XRouterSettings::init(const boost::filesystem::path & configPath, const boo
             ERR() << "Failed to read xrouter config, bad \"host\" entry " << configPath.string();
             return false;
         }
-        addr = CService(caddr, port(xrDefault));
-        node = addr.ToStringIPPort();
+        const auto nport = port(xrDefault);
+        addr = CService(caddr, nport);
+        node = host(xrDefault) + ":" + std::to_string(nport);
     }
     loadPlugins();
     loadWallets();
     return true;
 }
 
-bool XRouterSettings::init(const std::string & config, const bool & snode) {
+bool XRouterSettings::init(const std::string & config, const bool snode) {
     if (!read(config)) {
         ERR() << "Failed to read xrouter config " << config;
         return false;
@@ -162,8 +163,9 @@ bool XRouterSettings::init(const std::string & config, const bool & snode) {
 //            ERR() << "Failed to read xrouter config, bad \"host\" entry " << config;
             return false;
         }
-        addr = CService(caddr, port(xrDefault));
-        node = addr.ToStringIPPort();
+        const auto nport = port(xrDefault);
+        addr = CService(caddr, nport);
+        node = host(xrDefault) + ":" + std::to_string(nport);
     }
     loadPlugins();
     loadWallets();
@@ -285,6 +287,14 @@ int XRouterSettings::port(XRouterCommand c, const std::string & service) {
 //            res = get<int>(service + xrdelimiter + cstr + ".port", res);
 //        }
 //    }
+
+    return res;
+}
+
+bool XRouterSettings::tls(XRouterCommand c, const std::string & service) {
+    auto res = get<bool>("Main.tls", false);
+
+    // TODO Blocknet XRouter support subsection tls designations
 
     return res;
 }
@@ -710,6 +720,11 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
                      "#! port=41412"                                                                                     + eol +
                      "#! port=80"                                                                                        + eol +
                      "#! port=8080"                                                                                      + eol +
+                     ""                                                                                                  + eol +
+                     "#! tls signals to the xrouter network that your endpoint supports TLS/SSL connections."            + eol +
+                     "#! The default is 0 (false)."                                                                      + eol +
+                     "#! tls=1"                                                                                          + eol +
+                     "tls=0"                                                                                             + eol +
                      ""                                                                                                  + eol +
                      "#! maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"            + eol +
                      "#! 0 means you only want free calls"                                                               + eol +
