@@ -4189,8 +4189,9 @@ static UniValue splitbalance(const JSONRPCRequest& request)
     auto camount = static_cast<CAmount>(amount * COIN);
     const auto saddr = request.params[1].get_str();
     const auto hex_only = request.params[2].isNull() ? false : request.params[2].get_bool();
+    const CAmount dust = 6000;
 
-    if (camount < 6000) // Check dust
+    if (camount <= dust) // Check dust
         throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("Amount %s BLOCK is too small", FormatMoney(camount)));
 
     if (!IsValidDestinationString(saddr))
@@ -4244,11 +4245,16 @@ static UniValue splitbalance(const JSONRPCRequest& request)
 
         EnsureWalletIsUnlocked(pwallet.get());
 
-        // Already split as many inputs as possible, therefore consolidate the remainder
-        // into the largest possible utxo (sets split amount to total remainder).
-        if (total < camount)
-            camount = total;
-        if (total <= 6000) { // total should not be dust
+        const bool totalIsDust = total <= dust;
+        const bool totalSmallerThanSplitAmount = total < camount;
+        const bool inputsExhausted = totalSmallerThanSplitAmount && inputs <= 1;
+
+        if (totalIsDust || inputsExhausted) { // do not proceed if total is dust or inputs are all used up
+            std::string emsg;
+            if (totalIsDust)
+                emsg = strprintf("Unable to split remaining balance of %s BLOCK because it's dust.", FormatMoney(total));
+            if (inputsExhausted)
+                emsg += strprintf("%sIgnoring split request, all inputs have already been consolidated.", !emsg.empty() ? " " : "");
             UniValue result(UniValue::VOBJ);
             result.pushKV("inputs_consumed", 0);
             result.pushKV("inputs_consumed_amount", 0);
@@ -4260,11 +4266,16 @@ static UniValue splitbalance(const JSONRPCRequest& request)
             result.pushKV("inputs_not_consumed_amount", 0);
             result.pushKV("outputs_not_created", inputs);
             result.pushKV("outputs_not_created_amount", ValueFromAmount(total));
-            result.pushKV("msgs", strprintf("Unable to split remaining balance of %s BLOCK because it's dust.", FormatMoney(total)));
+            result.pushKV("msgs", emsg);
             if (hex_only)
                 result.pushKV("hex", "");
             return result;
         }
+
+        // Already split as many inputs as possible, therefore consolidate the remainder
+        // into the largest possible utxo (sets split amount to total remainder).
+        if (totalSmallerThanSplitAmount)
+            camount = total;
 
         // Coin control vouts. Let coin control handle change
         // (which in this case is the remainder of the balance that wasn't split)
