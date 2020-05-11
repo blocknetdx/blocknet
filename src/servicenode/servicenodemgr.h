@@ -171,9 +171,10 @@ public:
      * Processes a servicenode ping message from the network.
      * @param ss
      * @param ping
+     * @param skipValidation If true the validation checks are skipped.
      * @return
      */
-    bool processPing(CDataStream & ss, ServiceNodePing & ping) {
+    bool processPing(CDataStream & ss, ServiceNodePing & ping, const bool skipValidation = false) {
         try {
             ss >> ping;
         } catch (...) {
@@ -182,7 +183,7 @@ public:
         if (seenPacket(ping.getHash()))
             return false;
 
-        if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc))
+        if (!ping.isValid(GetTxFunc, IsServiceNodeBlockValidFunc, skipValidation))
             return false; // bad ping
 
         if (!addPing(ping))
@@ -357,7 +358,7 @@ public:
         const uint32_t bestBlock = getActiveChainHeight();
         const uint256 & bestBlockHash = getActiveChainHash(bestBlock);
 
-        snode->setConfig(config);
+        snode->setConfig(config, Params());
         snode->updatePing();
 
         ServiceNodePing ping(activesn.key.GetPubKey(), bestBlock, bestBlockHash, static_cast<uint32_t>(GetTime()), config, *snode);
@@ -438,7 +439,7 @@ public:
     ServiceNode getSn(const std::string & nodeAddr) {
         LOCK(mu);
         for (const auto & s : snodes)
-            if (s.second->getHost() == nodeAddr)
+            if (s.second->getHostPort() == nodeAddr)
                 return *s.second;
         return ServiceNode{};
     }

@@ -13,6 +13,7 @@
 #include <xbridge/xbridgewalletconnector.h>
 
 #include <sync.h>
+#include <univalue.h>
 #include <util/strencodings.h>
 #include <validation.h>
 
@@ -550,10 +551,13 @@ bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
 //*****************************************************************************
 std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
 {
-    if(!settings().isFullLog())
-    {
-        out << std::endl << "ORDER ID: " << tx->id().GetHex() << std::endl;
+    UniValue log_obj(UniValue::VOBJ);
+    std::string errMsg;
 
+    log_obj.pushKV("orderid", tx->id().GetHex());
+
+    if(!settings().isFullLog()) {
+        out << log_obj.write();
         return out;
     }
 
@@ -561,38 +565,38 @@ std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
     xbridge::WalletConnectorPtr connTo   = ConnectorByCurrency(tx->b_currency());
 
     if (!connFrom || !connTo)
-        out << "MISSING SOME CONNECTOR, NOT ALL ORDER INFO WILL BE LOGGED";
+        errMsg = (!connFrom ? tx->a_currency() : tx->b_currency()) + " connector missing";
 
     std::vector<xbridge::wallet::UtxoEntry> items;
     ExchangeUtxos(tx->id(), items);
 
-    std::ostringstream inputsStream;
+    UniValue log_utxos(UniValue::VARR);
     uint32_t count = 0;
     for(const xbridge::wallet::UtxoEntry & entry : items)
     {
-        inputsStream << "    INDEX: " << count << std::endl
-                     << "    ID: " << entry.txId << std::endl
-                     << "    VOUT: " << boost::lexical_cast<std::string>(entry.vout) << std::endl
-                     << "    AMOUNT: " << entry.amount << std::endl
-                     << "    ADDRESS: " << entry.address << std::endl;
-
+        UniValue log_utxo(UniValue::VOBJ);
+        log_utxo.pushKV("index", static_cast<int>(count));
+        log_utxo.pushKV("txid", entry.txId);
+        log_utxo.pushKV("vout", static_cast<int>(entry.vout));
+        log_utxo.pushKV("amount", xBridgeStringValueFromPrice(entry.amount, COIN));
+        log_utxo.pushKV("address", entry.address);
+        log_utxos.push_back(log_utxo);
         ++count;
     }
 
-    out << std::endl
-        << "ORDER BODY" << std::endl
-        << "ID: " << tx->id().GetHex() << std::endl
-        << "MAKER: " << tx->a_currency() << std::endl
-        << "MAKER SIZE: " << xbridge::xBridgeStringValueFromAmount(tx->a_amount()) << std::endl
-        << "MAKER ADDR: " << (!tx->a_address().empty() && connFrom ? connFrom->fromXAddr(tx->a_address()) : "") << std::endl
-        << "TAKER: " << tx->b_currency() << std::endl
-        << "TAKER SIZE: " << xbridge::xBridgeStringValueFromAmount(tx->b_amount()) << std::endl
-        << "TAKER ADDR: " << (!tx->b_address().empty() && connTo ? connTo->fromXAddr(tx->b_address()) : "") << std::endl
-        << "STATE: " << tx->strState() << std::endl
-        << "BLOCK HASH: " << tx->blockHash().GetHex() << std::endl
-        << "CREATED AT: " << xbridge::iso8601(tx->createdTime()) << std::endl
-        << "USED INPUTS: " << std::endl << inputsStream.str();
+    log_obj.pushKV("maker", tx->a_currency());
+    log_obj.pushKV("maker_size", xbridge::xBridgeStringValueFromAmount(tx->a_amount()));
+    log_obj.pushKV("maker_addr", (!tx->a_address().empty() && connFrom ? connFrom->fromXAddr(tx->a_address()) : ""));
+    log_obj.pushKV("taker", tx->b_currency());
+    log_obj.pushKV("taker_size", xbridge::xBridgeStringValueFromAmount(tx->b_amount()));
+    log_obj.pushKV("taker_addr", (!tx->b_address().empty() && connTo ? connTo->fromXAddr(tx->b_address()) : ""));
+    log_obj.pushKV("state", tx->strState());
+    log_obj.pushKV("block_hash", tx->blockHash().GetHex());
+    log_obj.pushKV("created_at", xbridge::iso8601(tx->createdTime()));
+    log_obj.pushKV("err_msg", errMsg);
+    log_obj.pushKV("utxos", log_utxos);
 
+    out << log_obj.write();
     return out;
 }
 

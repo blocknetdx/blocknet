@@ -4,8 +4,8 @@
 
 #include <rpc/server.h>
 
-#include <xbridge/util/settings.h>
 #include <xbridge/util/logger.h>
+#include <xbridge/util/settings.h>
 #include <xbridge/util/xbridgeerror.h>
 #include <xbridge/util/xseries.h>
 #include <xbridge/util/xutil.h>
@@ -207,6 +207,8 @@ UniValue dxLoadXBridgeConf(const JSONRPCRequest& request)
     auto success = app.loadSettings();
     app.clearBadWallets(); // clear any bad wallet designations b/c user is explicitly requesting a wallet update
     app.updateActiveWallets();
+    if (!settings().showAllOrders())
+        app.clearNonLocalOrders();
     return uret(success);
 }
 
@@ -307,7 +309,7 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
     auto &xapp = xbridge::App::instance();
     TransactionMap trlist = xapp.transactions();
     auto currentTime = boost::posix_time::second_clock::universal_time();
-
+    bool nowalletswitch = gArgs.GetBoolArg("-dxnowallets", settings().showAllOrders());
     Array result;
     for (const auto& trEntry : trlist) {
 
@@ -323,7 +325,7 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
 
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
-        if (!connFrom || !connTo) {
+        if ((!connFrom || !connTo) && !nowalletswitch ){
             continue;
         }
 

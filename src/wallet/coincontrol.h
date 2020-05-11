@@ -38,6 +38,8 @@ public:
     bool m_avoid_partial_spends;
     //! Fee estimation mode to control arguments to estimateSmartFee
     FeeEstimateMode m_fee_mode;
+    //! 0-fee
+    bool m_zero_fee;
 
     CCoinControl()
     {

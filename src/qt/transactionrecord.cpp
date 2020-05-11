@@ -68,9 +68,18 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const interface
                 }
                 if (wtx.is_coinbase)
                 {
-                    // Generated
-                    sub.type = TransactionRecord::Generated;
-                    sub.debit = -wtx.debit; // Blocknet track debit amount for coinstakes
+                    if (i == 0)
+                        continue; // skip coinbase, instead track coinstake below
+                    if (wtx.tx->vout.size() > 2) { // if stake-to-address
+                        if (i == 1)
+                            continue; // skip stake-to-address coinstake vouts
+                        else if (i >= 2)
+                            sub.type = TransactionRecord::Generated;
+                    } else if (i == 1) {
+                        // Generated
+                        sub.type = TransactionRecord::Generated;
+                        sub.debit = -wtx.debit; // Blocknet track debit amount for coinstakes
+                    }
                 }
 
                 parts.append(sub);

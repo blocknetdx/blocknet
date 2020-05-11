@@ -262,6 +262,12 @@ struct TransactionDescr
         return fromAddr;
     }
 
+    void clearUsedCoins() {
+        LOCK(_lock);
+        usedCoins.clear();
+        feeUtxos.clear();
+    }
+
     TransactionDescr()
         : role(0)
         , lockTime(0)

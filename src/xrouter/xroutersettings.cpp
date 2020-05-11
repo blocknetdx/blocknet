@@ -124,43 +124,49 @@ bool IniConfig::write(const char * fileName)
 
 XRouterSettings::XRouterSettings(const CPubKey & pubkey, const bool & ismine) : snodePubKey(pubkey), ismine(ismine) { }
 
-bool XRouterSettings::init(const boost::filesystem::path & configPath) {
+bool XRouterSettings::init(const boost::filesystem::path & configPath, const bool snode) {
     if (!read(configPath)) {
         ERR() << "Failed to read xrouter config " << configPath.string();
         return false;
     }
-    if (host(xrDefault).empty()) {
+    if (snode && host(xrDefault).empty()) {
         ERR() << "Failed to read xrouter config, missing \"host\" entry " << configPath.string();
         return false;
     }
-    CNetAddr caddr;
-    if (!LookupHost(host(xrDefault).c_str(), caddr, true)) {
-        ERR() << "Failed to read xrouter config, bad \"host\" entry " << configPath.string();
-        return false;
+    if (snode) {
+        CNetAddr caddr;
+        if (!LookupHost(host(xrDefault).c_str(), caddr, true)) {
+            ERR() << "Failed to read xrouter config, bad \"host\" entry " << configPath.string();
+            return false;
+        }
+        const auto nport = port(xrDefault);
+        addr = CService(caddr, nport);
+        node = host(xrDefault) + ":" + std::to_string(nport);
     }
-    addr = CService(caddr, port(xrDefault));
-    node = addr.ToStringIPPort();
     loadPlugins();
     loadWallets();
     return true;
 }
 
-bool XRouterSettings::init(const std::string & config) {
+bool XRouterSettings::init(const std::string & config, const bool snode) {
     if (!read(config)) {
         ERR() << "Failed to read xrouter config " << config;
         return false;
     }
-    if (host(xrDefault).empty()) {
-        ERR() << "Failed to read xrouter config, missing \"host\" entry " << config;
+    if (snode && host(xrDefault).empty()) {
+//        ERR() << "Failed to read xrouter config, missing \"host\" entry " << config;
         return false;
     }
-    CNetAddr caddr;
-    if (!LookupHost(host(xrDefault).c_str(), caddr, true)) {
-        ERR() << "Failed to read xrouter config, bad \"host\" entry " << config;
-        return false;
+    if (snode) {
+        CNetAddr caddr;
+        if (!LookupHost(host(xrDefault).c_str(), caddr, true)) {
+//            ERR() << "Failed to read xrouter config, bad \"host\" entry " << config;
+            return false;
+        }
+        const auto nport = port(xrDefault);
+        addr = CService(caddr, nport);
+        node = host(xrDefault) + ":" + std::to_string(nport);
     }
-    addr = CService(caddr, port(xrDefault));
-    node = addr.ToStringIPPort();
     loadPlugins();
     loadWallets();
     return true;
@@ -281,6 +287,14 @@ int XRouterSettings::port(XRouterCommand c, const std::string & service) {
 //            res = get<int>(service + xrdelimiter + cstr + ".port", res);
 //        }
 //    }
+
+    return res;
+}
+
+bool XRouterSettings::tls(XRouterCommand c, const std::string & service) {
+    auto res = get<bool>("Main.tls", false);
+
+    // TODO Blocknet XRouter support subsection tls designations
 
     return res;
 }
@@ -676,6 +690,182 @@ std::string XRouterPluginSettings::customResponse() {
     auto t = get<std::string>("response", "");
     t = get<std::string>(privatePrefix + "response", t);
     return t;
+}
+
+void saveConf(const boost::filesystem::path & p, const std::string & str) {
+    boost::filesystem::ofstream file;
+    file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    file.open(p, std::ios_base::binary);
+    file.write(str.c_str(), str.size());
+}
+
+bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugins) {
+    try {
+        std::string eol = "\n";
+#ifdef WIN32
+        eol = "\r\n";
+#endif
+        auto p = confDir / "xrouter.conf";
+        if (!boost::filesystem::exists(p)) {
+            saveConf(p,
+                     "[Main]"                                                                                            + eol +
+                     "#! host is a mandatory field, this tells the XRouter network how to find your node."               + eol +
+                     "#! DNS and ip addresses are acceptable values."                                                    + eol +
+                     "#! host=mynode.example.com"                                                                        + eol +
+                     "#! host=208.67.222.222"                                                                            + eol +
+                     "host="                                                                                             + eol +
+                     ""                                                                                                  + eol +
+                     "#! port is the tcpip port on the host that accepts xrouter connections."                           + eol +
+                     "#! port will default to the default blockchain port (e.g. 41412), examples:"                       + eol +
+                     "#! port=41412"                                                                                     + eol +
+                     "#! port=80"                                                                                        + eol +
+                     "#! port=8080"                                                                                      + eol +
+                     ""                                                                                                  + eol +
+                     "#! tls signals to the xrouter network that your endpoint supports TLS/SSL connections."            + eol +
+                     "#! The default is 0 (false)."                                                                      + eol +
+                     "#! tls=1"                                                                                          + eol +
+                     "tls=0"                                                                                             + eol +
+                     ""                                                                                                  + eol +
+                     "#! maxfee is the maximum fee (in BLOCK) you're willing to pay on a single xrouter call"            + eol +
+                     "#! 0 means you only want free calls"                                                               + eol +
+                     "maxfee=0"                                                                                          + eol +
+                     ""                                                                                                  + eol +
+                     "#! consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)"      + eol +
+                     "#! Paid calls will send a payment to each selected service node."                                  + eol +
+                     "consensus=1"                                                                                       + eol +
+                     ""                                                                                                  + eol +
+                     "#! timeout is the maximum time in seconds you're willing to wait for an XRouter response"          + eol +
+                     "timeout=30"                                                                                        + eol +
+                     ""                                                                                                  + eol +
+                     "#! Optionally set per-call config options:"                                                        + eol +
+                     "#! [xrGetBlockCount]"                                                                              + eol +
+                     "#! maxfee=0.01"                                                                                    + eol +
+                     ""                                                                                                  + eol +
+                     "#! [BLOCK::xrGetBlockCount]"                                                                       + eol +
+                     "#! maxfee=0.01"                                                                                    + eol +
+                     ""                                                                                                  + eol +
+                     "#! [SYS::xrGetBlockCount]"                                                                         + eol +
+                     "#! maxfee=0.01"                                                                                    + eol +
+                     ""                                                                                                  + eol +
+                     "#! It's possible to set config options for Custom XRouter services"                                + eol +
+                     "#! [xrs::GetBestBlockHashBTC]"                                                                     + eol +
+                     "#! maxfee=0.1"                                                                                     + eol
+            );
+        }
+
+        // Create the plugins directory if it doesn't exist
+        auto plugins = confDir / "plugins";
+        if (!skipPlugins && !boost::filesystem::exists(plugins)) {
+            boost::filesystem::create_directory(plugins);
+            auto samplerpc = plugins / "ExampleRPC.conf";
+            saveConf(samplerpc,
+                     "#! ExampleRPC is a sample rpc plugin. This entire plugin configuration is sent to the client."     + eol +
+                     "#! Any lines beginning with #! will not be sent to the client."                                    + eol +
+                     "#! Any config parameters beginning with private:: will not be sent to the client."                 + eol +
+                     "#! The name of the plugin file ExampleRPC will be the service name broadcasted to the XRouter"     + eol +
+                     "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                     + eol +
+                     ""                                                                                                  + eol +
+                     //                "#! Optional host identifying the location of the service. this tells the XRouter network how "     + eol +
+                     //                "#! to find your node. The default is xrouter.conf [Main].host"                                     + eol +
+                     //                "#! DNS and ip address are acceptable values."                                                      + eol +
+                     //                "#! host=mynode.example.com"                                                                        + eol +
+                     //                "#! host=208.67.222.222"                                                                            + eol +
+                     //                ""                                                                                                  + eol +
+                     //                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."      + eol +
+                     //                "#! The default is xrouter.conf [Main].port"                                                        + eol +
+                     //                "#! port=80"                                                                                        + eol +
+                     //                ""                                                                                                  + eol +
+                     "#! parameters that you need from the user, acceptable types: string,bool,int,double"               + eol +
+                     "#! Example parameters=string,bool if you want to accept a string parameter and boolean"            + eol +
+                     "#! parameter from an XRouter client."                                                              + eol +
+                     "parameters="                                                                                       + eol +
+                     ""                                                                                                  + eol +
+                     "#! Set the fee in BLOCK to how much you want to charge for requests to this custom plugin."        + eol +
+                     "#! Example fee=0.1 if you want to accept 0.1 BLOCK or 0 if you want the plugin to be free."        + eol +
+                     "fee=0"                                                                                             + eol +
+                     ""                                                                                                  + eol +
+                     "#! Set the client request limit in milliseconds. -1 means unlimited. 50 means that a client"       + eol +
+                     "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"        + eol +
+                     "#! requests exceed this value they will be penalized and eventually banned by your node."          + eol +
+                     "clientrequestlimit=-1"                                                                             + eol +
+                     ""                                                                                                  + eol +
+                     "#! This is a sample configuration for the RPC plugin type for a syscoin plugin."                   + eol +
+                     "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"            + eol +
+                     "#! plugin for syscoin running on 127.0.0.1:8370. This plugin accepts 0 parameters, as"             + eol +
+                     "#! indicated by \"parameters=\" config above, and it will call the syscoin \"getblockcount\""      + eol +
+                     "#! rpc command. The result will be forwarded onto the client."                                     + eol +
+                     "private::type=rpc"                                                                                 + eol +
+                     "private::rpcip=127.0.0.1"                                                                          + eol +
+                     "private::rpcport=8370"                                                                             + eol +
+                     "private::rpcuser=sysuser"                                                                          + eol +
+                     "private::rpcpassword=sysuser_pass"                                                                 + eol +
+                     "private::rpccommand=getblockcount"                                                                 + eol +
+                     ""                                                                                                  + eol +
+                     "#! JSON version and Content Type can be set on the rpc call:"                                      + eol +
+                     "#!private::rpcjsonversion=2.0"                                                                     + eol +
+                     "#!private::rpccontenttype=application/json"                                                        + eol +
+                     ""                                                                                                  + eol +
+                     "#! Disable this sample plugin"                                                                     + eol +
+                     "disabled=1"                                                                                        + eol
+            );
+            auto sampledocker = plugins / "ExampleDocker.conf";
+            saveConf(sampledocker,
+                     "#! ExampleDocker is a sample docker plugin. This entire plugin configuration is sent to the client." + eol +
+                     "#! Any lines beginning with #! will not be sent to the client."                                      + eol +
+                     "#! Any config parameters beginning with private:: will not be sent to the client."                   + eol +
+                     "#! The name of the plugin file ExampleDocker will be the service name broadcasted to the XRouter"    + eol +
+                     "#! network. Acceptable plugin names may include the characters: a-z A-Z 0-9 -"                       + eol +
+                     ""                                                                                                    + eol +
+                     //                "#! Optional host identifying the location of the service. this tells the XRouter network how "       + eol +
+                     //                "#! to find your node. The default is xrouter.conf [Main].host"                                       + eol +
+                     //                "#! DNS and ip address are acceptable values."                                                        + eol +
+                     //                "#! host=mynode.example.com"                                                                          + eol +
+                     //                "#! host=208.67.222.222"                                                                              + eol +
+                     //                ""                                                                                                    + eol +
+                     //                "#! Optionally specify the port on the host that accepts xrouter connections for this plugin."        + eol +
+                     //                "#! The default is xrouter.conf [Main].port"                                                          + eol +
+                     //                "#! port=80"                                                                                          + eol +
+                     //                ""                                                                                                    + eol +
+                     "#! parameters that you need from the user, acceptable types: string,bool,int,double"                 + eol +
+                     "#! Example parameters=string,bool if you want to accept a string parameter and boolean"              + eol +
+                     "#! parameter from an XRouter client."                                                                + eol +
+                     "parameters=string"                                                                                   + eol +
+                     ""                                                                                                    + eol +
+                     "#! Set the fee in BLOCK to how much you want to charge for requests to this custom plugin."          + eol +
+                     "#! Example fee=0.1 if you want to accept 0.1 BLOCK or 0 if you want the plugin to be free."          + eol +
+                     "fee=0"                                                                                               + eol +
+                     ""                                                                                                    + eol +
+                     "#! Set the client request limit in milliseconds. -1 means unlimited. 50 means that a client"         + eol +
+                     "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"          + eol +
+                     "#! requests exceed this value they will be penalized and eventually banned by your node."            + eol +
+                     "clientrequestlimit=-1"                                                                               + eol +
+                     ""                                                                                                    + eol +
+                     "#! This is a sample configuration of a docker plugin running a syscoin container."                   + eol +
+                     "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"              + eol +
+                     "#! plugin for syscoin running in docker container \"syscoin\". This plugin accepts 1 parameter"      + eol +
+                     "#! indicated by \"parameters=\" config above, and it will call the syscoin \"getblock\" rpc"         + eol +
+                     "#! command. The result will be forwarded onto the client. \"quoteargs\" puts \"$1\" around"          + eol +
+                     "#! user supplied arguments. \"command\" executed within the docker container. \"args\" can"          + eol +
+                     "#! include both user supplied arguments ($1, $2, $3 etc.) and explicit arguments. For example,"      + eol +
+                     "#! you can mix both user supplied and custom arguments:  private::args=some_api_key $1 $2"           + eol +
+                     "private::type=docker"                                                                                + eol +
+                     "private::containername=syscoin"                                                                      + eol +
+                     "private::quoteargs=1"                                                                                + eol +
+                     "private::command=syscoin-cli getblock"                                                               + eol +
+                     "private::args=$1"                                                                                    + eol +
+                     ""                                                                                                    + eol +
+                     "#! Disable this sample plugin"                                                                       + eol +
+                     "disabled=1"                                                                                          + eol
+            );
+        }
+
+        return true;
+
+    } catch (...) {
+        ERR() << "XRouter failed to create default xrouter.conf and plugins directory";
+    }
+
+    return false;
 }
 
 } // namespace xrouter

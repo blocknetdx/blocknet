@@ -525,6 +525,11 @@ public:
     }
 
     /**
+     * @brief Clears the non-local orders.
+     */
+    void clearNonLocalOrders();
+
+    /**
      * @brief Returns true if wallet update checks are already in progress, otherwise returns false.
      * @return
      */
@@ -676,6 +681,13 @@ static CAmount availableBalance() {
 #endif
     return balance;
 }
+
+/**
+ * Display the string representation of the enum.
+ * @param reason
+ * @return
+ */
+extern std::string TxCancelReasonText(uint32_t reason);
 
 } // namespace xbridge
 

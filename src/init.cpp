@@ -570,6 +570,7 @@ void SetupServerArgs()
     gArgs.AddArg("-enableexchange", strprintf("Enable exchange mode on this service node (default: %u)", false), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-orderinputscheck", strprintf("Time interval for the utxo validity check on order inputs (default: %d seconds)", 900), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-maxmempoolxbridge", strprintf("Maximum size in MB (megabytes) for the xbridge mempool (default: %dMB)", 128), false, OptionsCategory::XBRIDGE);
+    gArgs.AddArg("-dxnowallets", strprintf("Show all orders across the network for non-local wallets"), false, OptionsCategory::XBRIDGE);
     gArgs.AddArg("-rpcxbridgetimeout", strprintf("Timeout for internal XBridge RPC calls (default: %d seconds)", 120), false, OptionsCategory::XBRIDGE);
 
     // XRouter
@@ -1919,10 +1920,10 @@ bool AppInitMain(InitInterfaces& interfaces)
         xapp.start(); // start xbridge
 
         xrouter::App & xrapp = xrouter::App::instance();
-        xrouter::App::createConf(); // create config if it doesn't exist
+        xrouter::App::createConf(GetDataDir(false)); // create config if it doesn't exist
         if (xrouter::App::isEnabled()) {
             uiInterface.InitMessage(_("Starting xrouter service"));
-            if (!xrapp.init()) // start xrouter
+            if (!xrapp.init(GetDataDir(false))) // start xrouter
                 LogPrintf("XRouter failed to start, please check your configs\n");
             xrapp.start();
         }

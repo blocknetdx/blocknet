@@ -36,7 +36,15 @@ enum TxCancelReason
     crBlocknetError   = 13,
     crBadADepositTx   = 14,
     crBadBDepositTx   = 15,
-    crTimeout         = 16
+    crTimeout         = 16,
+    crBadLockTime     = 17,
+    crBadALockTime    = 18,
+    crBadBLockTime    = 19,
+    crBadAUtxo        = 20,
+    crBadBUtxo        = 21,
+    crBadARefundTx    = 22,
+    crBadBRefundTx    = 23,
+    crBadFeeTx        = 24,
 };
 
 //******************************************************************************
@@ -122,16 +130,20 @@ enum XBridgeCommand
     //    uint256 block hash
     xbcPendingTransaction = 4,
     //
-    // xbcTransactionAccepting (164 bytes min)
+    // xbcTransactionAccepting (188 bytes min)
     // client accepting opened tx
     //    uint160 hub address
     //    uint256 client transaction id
     //    20 bytes source address
     //    8 bytes source currency
     //    uint64 source amount
+    //    4 bytes source block height
+    //    8 bytes source block hash
     //    20 bytes destination address
     //    8 bytes destination currency
     //    uint64 destination amount
+    //    4 bytes destination block height
+    //    8 bytes destination block hash
     //    array of unspent outputs used in transaction
     //      uint32_t count of array items
     //      array items
@@ -248,6 +260,13 @@ enum XBridgeCommand
     //    uint256 hub transaction id
     //
     xbcTransactionFinished = 24,
+
+    //
+    // xbcTransactionReject (36 bytes)
+    //    uint256 order id
+    //    uint32_t reason
+    //
+    xbcTransactionReject = 26,
 
     //
     // xbcServicesPing

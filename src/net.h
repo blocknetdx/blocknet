@@ -147,6 +147,7 @@ public:
         bool m_use_addrman_outgoing = true;
         std::vector<std::string> m_specified_outgoing;
         std::vector<std::string> m_added_nodes;
+        bool unit_test_mode{false};
     };
 
     void Init(const Options& connOptions) {

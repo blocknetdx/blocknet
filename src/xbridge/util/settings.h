@@ -35,6 +35,7 @@ public:
 public:
     bool isFullLog()
         { return get<bool>("Main.FullLog", false); }
+    bool showAllOrders() { return get<bool>("Main.ShowAllOrders", false); }
 
     bool isExchangeEnabled() const { return m_isExchangeEnabled; }
     std::string appPath() const    { return m_appPath; }

@@ -12,6 +12,7 @@
 #include <xbridge/util/posixtimeconversion.h>
 #include <xbridge/util/xutil.h>
 #include <xbridge/util/logger.h>
+#include <xbridge/util/settings.h>
 #include <xbridge/util/txlog.h>
 #include <xbridge/util/xassert.h>
 #include <xbridge/xbitcointransaction.h>
@@ -122,8 +123,10 @@ protected:
                                const TxCancelReason & reason) const;
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
                                const TxCancelReason & reason) const;
+    bool sendRejectTransaction(const uint256 & id, const TxCancelReason & reason) const;
 
     bool processTransactionCancel(XBridgePacketPtr packet) const;
+    bool processTransactionReject(XBridgePacketPtr packet) const;
 
     bool processTransactionFinished(XBridgePacketPtr packet) const;
 
@@ -207,6 +210,7 @@ void Session::Impl::init()
     {
         // common handlers
         m_handlers[xbcTransactionCancel]     .bind(this, &Impl::processTransactionCancel);
+        m_handlers[xbcTransactionReject]     .bind(this, &Impl::processTransactionReject);
         m_handlers[xbcTransactionFinished]   .bind(this, &Impl::processTransactionFinished);
     }
 
@@ -424,11 +428,10 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         // Update the transaction timestamp
         if (e.updateTimestampOrRemoveExpired(t)) {
             if (!e.makerUtxosAreStillValid(t)) { // if the maker utxos are no longer valid, cancel the order
-                sendCancelTransaction(t, crBadUtxo);
+                sendCancelTransaction(t, crBadAUtxo);
                 return false;
             }
-            LOG() << "order already received, updating timestamp " << id.ToString()
-                  << " " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "order already received, updating timestamp", __FUNCTION__);
             // relay order to network
             sendTransaction(id);
         }
@@ -462,7 +465,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
     if (!packet->verify(mpubkey))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "bad counterparty packet signature", __FUNCTION__);
         return true;
     }
 
@@ -471,7 +474,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
     if (!sconn || !dconn)
     {
-        WARN() << "no connector for <" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "no connector for " + (!sconn ? scurrency : dcurrency), __FUNCTION__);
         return true;
     }
 
@@ -491,7 +494,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                                                  XBridgePacket::addressSize + XBridgePacket::signatureSize;
             if (packet->size() < offset+utxoItemSize)
             {
-                WARN() << "bad packet size while reading utxo items, packet dropped in " << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "bad packet size while reading utxo items, packet dropped", __FUNCTION__);
                 return true;
             }
 
@@ -516,8 +519,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
             if (!sconn->getTxOut(entry))
             {
-                LOG() << "not found utxo entry <" << entry.txId
-                      << "> no " << entry.vout << " " << __FUNCTION__;
+                UniValue log_obj(UniValue::VOBJ);
+                log_obj.pushKV("orderid", id.GetHex());
+                log_obj.pushKV("utxo_txid", entry.txId);
+                log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
+                xbridge::LogOrderMsg(log_obj, "bad utxo entry", __FUNCTION__);
                 continue;
             }
 
@@ -525,8 +531,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
             std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
             if (!sconn->verifyMessage(entry.address, entry.toString(), signature))
             {
-                LOG() << "not valid signature, bad utxo entry" << entry.txId
-                      << "> no " << entry.vout << " " << __FUNCTION__;
+                UniValue log_obj(UniValue::VOBJ);
+                log_obj.pushKV("orderid", id.GetHex());
+                log_obj.pushKV("utxo_txid", entry.txId);
+                log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
+                xbridge::LogOrderMsg(log_obj, "bad utxo signature", __FUNCTION__);
                 continue;
             }
 
@@ -538,14 +547,14 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
     if (utxoItems.empty())
     {
-        LOG() << "order rejected, utxo items are empty <" << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "order rejected, utxo items are empty <", __FUNCTION__);
         return true;
     }
 
     if (commonAmount * TransactionDescr::COIN < samount)
     {
-        LOG() << "order rejected, amount from utxo items <" << commonAmount
-              << "> less than required <" << samount << "> " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "order rejected, amount from utxo items <" + std::to_string(commonAmount) + "> "
+                                          "less than required <" + std::to_string(static_cast<double>(samount)/static_cast<double>(TransactionDescr::COIN)) + "> ", __FUNCTION__);
         return true;
     }
 
@@ -554,15 +563,21 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         sconn->isDustAmount(commonAmount - (static_cast<double>(samount) / TransactionDescr::COIN)) ||
         dconn->isDustAmount(static_cast<double>(damount) / TransactionDescr::COIN))
     {
-        LOG() << "reject dust amount order " << id.ToString() << " " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "order rejected, order amount is dust", __FUNCTION__);
         return true;
     }
 
-    LOG() << "received order " << id.GetHex() << std::endl
-          << "    from " << HexStr(saddr) << std::endl
-          << "             " << scurrency << " : " << samount << std::endl
-          << "    to   " << HexStr(daddr) << std::endl
-          << "             " << dcurrency << " : " << damount << std::endl;
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("from_addr", HexStr(saddr));
+        log_obj.pushKV("from_currency", scurrency);
+        log_obj.pushKV("from_amount", std::to_string(samount));
+        log_obj.pushKV("to_addr", HexStr(daddr));
+        log_obj.pushKV("to_currency", dcurrency);
+        log_obj.pushKV("to_amount", std::to_string(damount));
+        xbridge::LogOrderMsg(log_obj, "received order", __FUNCTION__);
+    }
 
     std::string saddrStr = sconn->fromXAddr(saddr);
     std::string daddrStr = dconn->fromXAddr(daddr);
@@ -582,19 +597,17 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     uint256 checkId = ss.GetHash();
     if(checkId != id)
     {
-        WARN() << "id from packet is differs from body hash:" << std::endl
-               << "packet id: " << id.GetHex() << std::endl
-               << "body hash:" << checkId.GetHex() << std::endl
-               << __FUNCTION__;
-
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("expected_orderid", checkId.GetHex());
+        xbridge::LogOrderMsg(log_obj, "orderid from packet differs from hash of order body", __FUNCTION__);
         return true;
     }
 
     // check utxo items
     if (!e.checkUtxoItems(id, utxoItems))
     {
-        LOG() << "order rejected, error check utxo items "  << id.ToString()
-              << " " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "order rejected, utxo check failed", __FUNCTION__);
         return true;
     }
 
@@ -608,7 +621,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                                  blockHash, isCreated))
         {
             // not created
-            LOG() << "failed to create order "  << id.ToString() << " " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "failed to create order", __FUNCTION__);
             return true;
         }
         
@@ -626,19 +639,19 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                 d->state        = TransactionDescr::trPending;
                 d->blockHash    = blockHash;
 
-                LOG() << __FUNCTION__ << d;
+                xbridge::LogOrderMsg(d, __FUNCTION__);
 
                 // Set role 'A' utxos used in the order
                 tr->a_setUtxos(utxoItems);
 
-                LOG() << __FUNCTION__ << tr;
+                xbridge::LogOrderMsg(tr, __FUNCTION__);
 
                 xuiConnector.NotifyXBridgeTransactionReceived(d);
             }
         }
 
         if (!tr->matches(id)) { // couldn't find order
-            LOG() << "failed to find order after it was created "  << id.ToString() << " " << __FUNCTION__;
+            xbridge::LogOrderMsg(id.GetHex(), "failed to find order after it was created", __FUNCTION__);
             return true;
         }
 
@@ -693,24 +706,28 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     // Reject if snode key doesn't match original (prevent order manipulation)
     if (ptr && !packet->verify(ptr->sPubKey)) {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(ptr->sPubKey)
-               << " but received pubkey " << HexStr(spubkey)
-               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(ptr->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        log_obj.pushKV("hubaddress", HexStr(hubAddress));
+        xbridge::LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
 
     // All traders verify sig, important when tx ptr is not known yet
     if (!packet->verify(spubkey))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        xbridge::LogOrderMsg(txid.GetHex(), "bad snode packet signature on order", __FUNCTION__);
         return true;
     }
 
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
-    if (!sconn || !dconn)
+    bool nowalletswitch = gArgs.GetBoolArg("-dxnowallets", settings().showAllOrders());
+    if ((!sconn || !dconn) && !nowalletswitch)
     {
-        WARN() << "no connector for <" << (!sconn ? scurrency : dcurrency) << "> " << __FUNCTION__;
+        xbridge::LogOrderMsg(txid.GetHex(), "no connector for <" + (!sconn ? scurrency : dcurrency) + ">", __FUNCTION__);
         return true;
     }
 
@@ -720,23 +737,20 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     {
         if (ptr->state > TransactionDescr::trPending)
         {
-            LOG() << "already received order " << ptr->id.ToString() << " " << __FUNCTION__;
-
-            LOG() << __FUNCTION__ << ptr;
-
+            xbridge::LogOrderMsg(ptr->id.GetHex(), "already received order", __FUNCTION__);
             return true;
         }
 
         if (ptr->state == TransactionDescr::trNew)
         {
-            LOG() << "received confirmed order from snode, setting status to pending " << __FUNCTION__;
+            xbridge::LogOrderMsg(ptr->id.GetHex(), "received confirmed order from snode, setting status to pending", __FUNCTION__);
             ptr->state = TransactionDescr::trPending;
         }
 
         // update timestamp
         ptr->updateTimestamp();
 
-        LOG() << __FUNCTION__ << ptr;
+        xbridge::LogOrderMsg(ptr, __FUNCTION__);
 
         xuiConnector.NotifyXBridgeTransactionChanged(ptr->id);
 
@@ -768,9 +782,8 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     xapp.appendTransaction(ptr);
 
-    LOG() << "received order <" << ptr->id.GetHex() << "> " << __FUNCTION__;
-
-    LOG() << __FUNCTION__ << ptr;
+    xbridge::LogOrderMsg(ptr->id.GetHex(), "received pending order", __FUNCTION__);
+    xbridge::LogOrderMsg(ptr, __FUNCTION__);
 
     xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
@@ -796,11 +809,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         return true;
     }
 
-    // size must be >= 164 bytes
-    if (packet->size() < 164)
+    // size must be >= 188 bytes
+    if (packet->size() < 188)
     {
         ERR() << "invalid packet size for xbcTransactionAccepting "
-              << "need min 164 bytes, received " << packet->size() << " "
+              << "need min 188 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -819,6 +832,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += 8;
     uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
+    uint32_t sourceHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
+    offset += sizeof(uint32_t);
+    std::vector<unsigned char> sourceHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::string sourceHashTruncated(sourceHashRaw.begin(), sourceHashRaw.end());
+    offset += 8;
 
     // destination
     std::vector<unsigned char> daddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
@@ -827,28 +845,97 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += 8;
     uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
+    uint32_t destinationHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
+    offset += sizeof(uint32_t);
+    std::vector<unsigned char> destinationHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::string destinationHashTruncated(destinationHashRaw.begin(), destinationHashRaw.end());
+    offset += 8;
 
     std::vector<unsigned char> mpubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // If order already accepted, ignore further attempts
     TransactionPtr trExists = e.transaction(id);
     if (trExists->matches(id)) {
-        WARN() << "order already accepted " << id.GetHex() << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "order already accepted", __FUNCTION__);
         return true;
     }
 
     if (!packet->verify(mpubkey))
     {
-        WARN() << "invalid packet signature " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "invalid counterparty packet signature for order", __FUNCTION__);
         return true;
     }
 
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
-    if (!conn)
-    {
-        WARN() << "no connector for <" << scurrency << "> " << __FUNCTION__;
+    WalletConnectorPtr connDest = xapp.connectorByCurrency(dcurrency);
+    if (!conn || !connDest) {
+        xbridge::LogOrderMsg(id.GetHex(), "no connector for <" + (!conn ? scurrency : dcurrency) + ">", __FUNCTION__);
+        sendRejectTransaction(id, crRpcError);
         return true;
+    }
+
+    // Obtain the block heights and hashes from both tokens involved in the order
+    // and compare with those reported by the taker. If there are any discrepancies
+    // reject the taker's request.
+    //
+    // Criteria:
+    // 1) Taker's block heights must be within 2 blocks of snode's
+    // 2) Taker's block hash must match the snode's block hash for the reported
+    //    token heights. This lowers risk of pairing counterparies on forks
+    {
+        uint32_t sourceBlockHeightSnode;
+        std::string sourceBlockHashSnode;
+        std::string sourceBlockHashCounterparty;
+        uint32_t destinationBlockHeightSnode;
+        std::string destinationBlockHashSnode;
+        std::string destinationBlockHashCounterparty;
+        if (conn->getBlockCount(sourceBlockHeightSnode) && conn->getBlockHash(sourceBlockHeightSnode, sourceBlockHashSnode)
+           && connDest->getBlockCount(destinationBlockHeightSnode) && connDest->getBlockHash(destinationBlockHeightSnode, destinationBlockHashSnode)
+           && conn->getBlockHash(sourceHeight, sourceBlockHashCounterparty) && connDest->getBlockHash(destinationHeight, destinationBlockHashCounterparty))
+        {
+            // make sure source height is within 2 blocks
+            if (abs((int)sourceBlockHeightSnode - (int)sourceHeight) > 1) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + scurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // make sure destination height is within 2 blocks
+            else if (abs((int)destinationBlockHeightSnode - (int)destinationHeight) > 1) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + dcurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's source height equals snode's source height make sure the truncated hash matches
+            else if (sourceBlockHeightSnode == sourceHeight && sourceBlockHashSnode.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has bad block hash for <" + scurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's destination height equals snode's destination height make sure the truncated hash matches
+            else if (destinationBlockHeightSnode == destinationHeight && destinationBlockHashSnode.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has bad block hash for <" + dcurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's source height is different than snode, make sure the snode's block hash on reported taker source height matches
+            else if (sourceBlockHashCounterparty.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty might be on fork, it has bad block hash for <" + scurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+            // if taker's destination height is different than snode, make sure the snode's block hash on reported taker destination height matches
+            else if (destinationBlockHashCounterparty.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) {
+                xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty might be on fork, it has bad block hash for <" + dcurrency + ">", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
+                return true;
+            }
+        } else {
+            xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, snode rpc error", __FUNCTION__);
+            sendRejectTransaction(id, crRpcError);
+            return true;
+        }
+
     }
 
     //
@@ -857,11 +944,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
     TransactionPtr trPending = e.pendingTransaction(id);
     if (!trPending->matches(id)) {
-        WARN() << "no order found with id " << id.ToString() << " " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "no order found", __FUNCTION__);
         return true;
     }
     if (trPending->accepting()) {
-        WARN() << "order already accepted: id " << id.ToString() << " " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "order already accepted", __FUNCTION__);
         return true;
     }
     trPending->setAccepting(true);
@@ -869,7 +956,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     WalletConnectorPtr makerConn = xapp.connectorByCurrency(trPending->a_currency());
     if (!makerConn) {
         trPending->setAccepting(false);
-        WARN() << "no maker connector for <" << trPending->a_currency() << "> " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "no maker connector for <" + trPending->a_currency() + ">", __FUNCTION__);
+        sendRejectTransaction(id, crRpcError);
         return true;
     }
 
@@ -877,9 +965,12 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     for (auto entry : makerUtxos) {
         if (!makerConn->getTxOut(entry)) {
             // Invalid utxos cancel order
-            ERR() << "bad maker utxo in order " << id.ToString() << " , utxo txid " << entry.txId << " vout " << entry.vout
-                  << " " << __FUNCTION__;
-            sendCancelTransaction(trPending, crBadUtxo);
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", id.GetHex());
+            log_obj.pushKV("utxo_txid", entry.txId);
+            log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
+            xbridge::LogOrderMsg(log_obj, "bad maker utxo in order, canceling", __FUNCTION__);
+            sendCancelTransaction(trPending, crBadAUtxo);
             return false;
         }
     }
@@ -905,8 +996,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             if (packet->size() < offset+utxoItemSize)
             {
                 trPending->setAccepting(false);
-                WARN() << "bad packet size while reading utxo items, packet dropped in "
-                       << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "bad packet size while reading utxo items, packet dropped", __FUNCTION__);
+                sendRejectTransaction(id, crBadBUtxo);
                 return true;
             }
 
@@ -933,8 +1024,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
             if (!conn->getTxOut(entry))
             {
-                LOG() << "not found utxo entry <" << entry.txId
-                      << "> no " << entry.vout << " " << __FUNCTION__;
+                UniValue log_obj(UniValue::VOBJ);
+                log_obj.pushKV("orderid", id.GetHex());
+                log_obj.pushKV("utxo_txid", entry.txId);
+                log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
+                xbridge::LogOrderMsg(log_obj, "bad utxo entry", __FUNCTION__);
                 continue;
             }
 
@@ -942,8 +1036,11 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
             if (!conn->verifyMessage(entry.address, entry.toString(), signature))
             {
-                LOG() << "not valid signature, bad utxo entry <" << entry.txId
-                      << "> no " << entry.vout << " " << __FUNCTION__;
+                UniValue log_obj(UniValue::VOBJ);
+                log_obj.pushKV("orderid", id.GetHex());
+                log_obj.pushKV("utxo_txid", entry.txId);
+                log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
+                xbridge::LogOrderMsg(log_obj, "bad utxo signature", __FUNCTION__);
                 continue;
             }
 
@@ -956,8 +1053,12 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     if (commonAmount * TransactionDescr::COIN < samount)
     {
         trPending->setAccepting(false);
-        LOG() << "order rejected, amount from utxo items <" << commonAmount
-              << "> less than required <" << samount << "> " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("expecting_amount", samount);
+        log_obj.pushKV("received_amount", commonAmount);
+        xbridge::LogOrderMsg(log_obj, "rejecting taker order request, insufficient funds", __FUNCTION__);
+        sendRejectTransaction(id, crNoMoney);
         return true;
     }
 
@@ -966,22 +1067,28 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         conn->isDustAmount(commonAmount - (static_cast<double>(samount) / TransactionDescr::COIN)))
     {
         trPending->setAccepting(false);
-        LOG() << "reject dust amount order " << id.ToString() << " " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "reject taker order request, amount is dust", __FUNCTION__);
+        sendRejectTransaction(id, crDust);
         return true;
     }
 
-    LOG() << "received accepting order " << id.ToString() << std::endl
-          << "    from " << HexStr(saddr) << std::endl
-          << "             " << scurrency << " : " << samount << std::endl
-          << "    to   " << HexStr(daddr) << std::endl
-          << "             " << dcurrency << " : " << damount << std::endl;
-
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("from_addr", HexStr(saddr));
+        log_obj.pushKV("from_currency", scurrency);
+        log_obj.pushKV("from_amount", std::to_string(samount));
+        log_obj.pushKV("to_addr", HexStr(daddr));
+        log_obj.pushKV("to_currency", dcurrency);
+        log_obj.pushKV("to_amount", std::to_string(damount));
+        xbridge::LogOrderMsg(log_obj, "accepting taker order request", __FUNCTION__);
+    }
 
     if (!e.checkUtxoItems(id, utxoItems))
     {
         trPending->setAccepting(false);
-        LOG() << "error accepting order, utxos are bad "
-              << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "rejecting taker order request, bad utxos", __FUNCTION__);
+        sendRejectTransaction(id, crBadBUtxo);
         return true;
     }
 
@@ -992,22 +1099,24 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             // if trJoined = send hold to client
             TransactionPtr tr = e.transaction(id);
             if (!tr->matches(id)) { // ignore no matching orders
-                WARN() << "accept: no order found with id " << id.ToString() << " " << __FUNCTION__;
+                xbridge::LogOrderMsg(id.GetHex(), "rejecting taker order request, no order found with id", __FUNCTION__);
+                sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
 
             if (tr->state() != xbridge::Transaction::trJoined)
             {
-                xassert(!"wrong state");
-                WARN() << "wrong tx state " << tr->id().ToString()
-                       << " state " << tr->state()
-                       << " in " << __FUNCTION__;
+                UniValue log_obj(UniValue::VOBJ);
+                log_obj.pushKV("orderid", tr->id().GetHex());
+                log_obj.pushKV("state", tr->state());
+                xbridge::LogOrderMsg(log_obj, "wrong tx state, expecting joined state", __FUNCTION__);
+                sendRejectTransaction(tr->id(), crNotAccepted);
                 return true;
             }
             // Set role 'B' utxos used in the order
             tr->b_setUtxos(utxoItems);
 
-            LOG() << __FUNCTION__ << tr;
+            xbridge::LogOrderMsg(tr, __FUNCTION__);
 
             XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
             reply1->append(m_myid);
@@ -1056,15 +1165,18 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(id);
     if (!xtx)
     {
-        LOG() << "unknown order " << id.GetHex() << " " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "unknown order", __FUNCTION__);
         return true;
     }
     // Reject if snode key doesn't match original (prevent order manipulation)
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
-               << " but received pubkey " << HexStr(spubkey)
-               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        log_obj.pushKV("hubaddress", HexStr(hubAddress));
+        xbridge::LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
 
@@ -1072,7 +1184,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     CPubKey pksnode;
     pksnode.Set(packet->pubkey(), packet->pubkey() + CPubKey::COMPRESSED_PUBLIC_KEY_SIZE);
     if (!pksnode.IsFullyValid()) {
-        LOG() << "Bad Servicenode public key " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "bad snode public key", __FUNCTION__);
         return false;
     }
 
@@ -1084,12 +1196,15 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
             snode = sn::ServiceNodeMgr::instance().getSn(pksnode);
         if (snode.isNull()) {
             // bad service node, no more
-            LOG() << "unknown service node " << HexStr(pksnode) << " " << __FUNCTION__;
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", id.GetHex());
+            log_obj.pushKV("snode_pubkey", HexStr(pksnode));
+            xbridge::LogOrderMsg(log_obj, "unknown service node", __FUNCTION__);
             return true;
         }
     }
 
-    LOG() << "use service node " << HexStr(pksnode) << " " << __FUNCTION__;
+    xbridge::LogOrderMsg(id.GetHex(), "using service node " + HexStr(pksnode) + " for order", __FUNCTION__);
 
     {
         // for xchange node remove tx
@@ -1101,7 +1216,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
             if (!tr->matches(id)) // ignore no matching orders
                 return true;
 
-            LOG() << __FUNCTION__ << tr;
+            xbridge::LogOrderMsg(tr, __FUNCTION__);
 
             if (tr->state() != xbridge::Transaction::trJoined)
             {
@@ -1114,10 +1229,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     if (xtx->state >= TransactionDescr::trHold)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("state", xtx->state);
+        xbridge::LogOrderMsg(log_obj, "wrong tx state, expecting hold state", __FUNCTION__);
         return true;
     }
 
@@ -1125,7 +1240,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     {
         xtx->state = TransactionDescr::trFinished;
 
-        LOG() << "tx moving to history " << xtx->id.ToString() << " " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "tx moving to history", __FUNCTION__);
 
         xapp.moveTransactionToHistory(id);
         xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
@@ -1137,13 +1252,13 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
     if (!conn)
     {
-        WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
+        xbridge::LogOrderMsg(id.GetHex(), "no connector for <" + xtx->toCurrency + ">", __FUNCTION__);
         return true;
     }
 
     xtx->state = TransactionDescr::trHold;
 
-    LOG() << __FUNCTION__ << std::endl << "holding order" << xtx;
+    xbridge::LogOrderMsg(xtx, __FUNCTION__);
 
     xuiConnector.NotifyXBridgeTransactionChanged(id);
 
@@ -1207,18 +1322,21 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
-        WARN() << "bad trader packet signature, received " << HexStr(pubkey)
-               << " expected " << HexStr(tr->a_pk1()) << " or " << HexStr(tr->b_pk1()) << " "
-               << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("expecting_pubkey1", HexStr(tr->a_pk1()));
+        log_obj.pushKV("expecting_pubkey2", HexStr(tr->b_pk1()));
+        log_obj.pushKV("received_pubkey", HexStr(pubkey));
+        xbridge::LogOrderMsg(log_obj, "bad counterparty packet signature", __FUNCTION__);
         return true;
     }
 
     if (tr->state() != xbridge::Transaction::trJoined)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << tr->id().ToString()
-               << " state " << tr->state()
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("state", tr->state());
+        xbridge::LogOrderMsg(log_obj, "wrong tx state, expecting joined state", __FUNCTION__);
         return true;
     }
 
@@ -1226,7 +1344,7 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     if (!isAddressInTransaction(from, tr))
     {
-        ERR() << "invalid transaction address " << __FUNCTION__;
+        LogOrderMsg(id.GetHex(), "bad order address specified", __FUNCTION__);
         sendCancelTransaction(tr, crInvalidAddress);
         return true;
     }
@@ -1316,29 +1434,32 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown order " << txid.ToString() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
         return true;
     }
     if (!xtx->isLocal())
     {
-        ERR() << "not a local order " << txid.ToString() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "not a local order", __FUNCTION__);
         return true;
     }
     // Reject if snode key doesn't match original (prevent order manipulation)
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
-               << " but received pubkey " << HexStr(spubkey)
-               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        log_obj.pushKV("hubaddress", HexStr(hubAddress));
+        LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
     if (xtx->state >= TransactionDescr::trInitialized)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("state", xtx->state);
+        LogOrderMsg(log_obj, "wrong tx state, expecting initialized state", __FUNCTION__);
         return true;
     }
 
@@ -1365,7 +1486,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
        xtx->toCurrency   != toCurrency &&
        xtx->toAmount     != toAmount)
     {
-        LOG() << "order doesn't match " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "order details do not match expected", __FUNCTION__);
         return true;
     }
 
@@ -1377,15 +1498,18 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
         if (!conn)
         {
-            WARN() << "no connector for <" << xtx->toCurrency << "> " << __FUNCTION__;
+            LogOrderMsg(txid.GetHex(), "no connector for <" + xtx->toCurrency + ">", __FUNCTION__);
             return true;
         }
 
         std::string strtxid;
         if (!rpc::storeDataIntoBlockchain(xtx->rawFeeTx, strtxid))
         {
-            ERR() << "storeDataIntoBlockchain failed, error send blocknet tx " << __FUNCTION__;
-            sendCancelTransaction(xtx, crBlocknetError);
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("fee_hex", xtx->rawFeeTx);
+            LogOrderMsg(log_obj, "snode fee submission failed, canceling", __FUNCTION__);
+            sendCancelTransaction(xtx, crBadFeeTx);
             return true;
         }
 
@@ -1393,7 +1517,10 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
 
         if(feetxtd.IsNull())
         {
-            LOG() << "storeDataIntoBlockchain failed with zero tx id, process packet later " << __FUNCTION__;
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("fee_hex", xtx->rawFeeTx);
+            LogOrderMsg(log_obj, "snode fee submission failed, no fee txid received, trying again", __FUNCTION__);
             xapp.processLater(txid, packet);
             return true;
         }
@@ -1466,18 +1593,21 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
     
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
-        WARN() << "bad trader packet signature, received " << HexStr(pk1)
-               << " expected " << HexStr(tr->a_pk1()) << " or " << HexStr(tr->b_pk1()) << " "
-               << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("expected_counterparty_a", HexStr(tr->a_pk1()));
+        log_obj.pushKV("expected_counterparty_b", HexStr(tr->b_pk1()));
+        log_obj.pushKV("received_counterparty", HexStr(pk1));
+        LogOrderMsg(log_obj, "bad counterparty packet signature", __FUNCTION__);
         return true;
     }
 
     if (tr->state() != xbridge::Transaction::trHold)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << tr->id().ToString()
-               << " state " << tr->state()
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("state", tr->state());
+        LogOrderMsg(log_obj, "wrong tx state, expecting hold state", __FUNCTION__);
         return true;
     }
 
@@ -1485,7 +1615,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
 
     if (!isAddressInTransaction(from, tr))
     {
-        ERR() << "invalid transaction address " << __FUNCTION__;
+        LogOrderMsg(tr->id().GetHex(), "invalid transaction address", __FUNCTION__);
         sendCancelTransaction(tr, crInvalidAddress);
         return true;
     }
@@ -1508,7 +1638,7 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
         }
     }
 
-    LOG() << __FUNCTION__ << tr;
+    LogOrderMsg(tr, __FUNCTION__);
 
     return true;
 }
@@ -1558,35 +1688,38 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown order " << txid.GetHex() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
         return true;
     }
     if (!xtx->isLocal())
     {
-        ERR() << "not a local order " << txid.GetHex() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "not a local order", __FUNCTION__);
         return true;
     }
     // Reject if snode key doesn't match original (prevent order manipulation)
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
-               << " but received pubkey " << HexStr(spubkey)
-               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        log_obj.pushKV("hubaddress", HexStr(hubAddress));
+        LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
     if (xtx->role != 'A')
     {
-        ERR() << "received packet for wrong role, expected role A " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "received packet for wrong role, expected role A", __FUNCTION__);
         return true;
     }
 
     if (xtx->state >= TransactionDescr::trCreated)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("state", xtx->state);
+        LogOrderMsg(log_obj, "wrong tx state, expecting created state", __FUNCTION__);
         return true;
     }
 
@@ -1595,7 +1728,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     WalletConnectorPtr connTo   = xapp.connectorByCurrency(xtx->toCurrency);
     if (!connFrom || !connTo)
     {
-        WARN() << "no connector for <" << (!connFrom ? xtx->fromCurrency : xtx->toCurrency) << "> " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "no connector for <" + (!connFrom ? xtx->fromCurrency : xtx->toCurrency) + ">", __FUNCTION__);
         sendCancelTransaction(xtx, crRpcError);
         return true;
     }
@@ -1613,8 +1746,6 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         inAmount += entry.amount;
         fee1 = connFrom->minTxFee1(usedInTx.size(), 3);
 
-        LOG() << "using utxo item, id: <" << entry.txId << "> amount: " << entry.amount << " vout: " << entry.vout;
-
         // check amount
         if (inAmount >= outAmount+fee1+fee2)
         {
@@ -1622,15 +1753,34 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         }
     }
 
-    LOG() << "fee1: " << fee1;
-    LOG() << "fee2: " << fee2;
-    LOG() << "amount of used utxo items: " << inAmount << " required amount + fees: " << outAmount + fee1 + fee2;
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("fee1", fee1);
+        log_obj.pushKV("fee2", fee2);
+        log_obj.pushKV("in_amount", inAmount);
+        log_obj.pushKV("out_amount", outAmount + fee1 + fee2);
+        UniValue log_utxos(UniValue::VARR);
+        for (const auto & entry : usedInTx) {
+            UniValue log_utxo(UniValue::VOBJ);
+            log_utxo.pushKV("txid", entry.txId);
+            log_utxo.pushKV("vout", static_cast<int>(entry.vout));
+            log_utxo.pushKV("amount", xBridgeStringValueFromPrice(entry.amount, COIN));
+            log_utxos.push_back(log_utxo);
+        }
+        log_obj.pushKV("utxos", log_utxos);
+        LogOrderMsg(log_obj, "utxo and fees for order", __FUNCTION__);
+    }
 
     // check amount
     if (inAmount < outAmount+fee1+fee2)
     {
         // no money, cancel transaction
-        LOG() << "insufficient funds, canceling order " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("in_amount", inAmount);
+        log_obj.pushKV("out_amount", outAmount+fee1+fee2);
+        LogOrderMsg(log_obj, "insufficient funds for order: expecting in amount to be >= out amount, canceling", __FUNCTION__);
         sendCancelTransaction(xtx, crNoMoney);
         return true;
     }
@@ -1640,8 +1790,12 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     xtx->opponentLockTime = connTo->lockTime('B');
     if (xtx->lockTime == 0 || xtx->opponentLockTime == 0)
     {
-        LOG() << "lockTime error, canceling order " << __FUNCTION__;
-        sendCancelTransaction(xtx, crRpcError);
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("my_locktime", static_cast<int>(xtx->lockTime));
+        log_obj.pushKV("counterparty_locktime", static_cast<int>(xtx->opponentLockTime));
+        LogOrderMsg(log_obj, "order lockTime error: locktimes should be greater than 0, canceling", __FUNCTION__);
+        sendCancelTransaction(xtx, crBadLockTime);
         return true;
     }
 
@@ -1654,12 +1808,16 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     std::vector<unsigned char> hx = connTo->getKeyId(xtx->xPubKey);
 
 #ifdef LOG_KEYPAIR_VALUES
-    LOG() << "unlock script pub keys" << std::endl <<
-             "    my       " << HexStr(xtx->mPubKey) << std::endl <<
-             "    my id    " << HexStr(connFrom->getKeyId(xtx->mPubKey)) << std::endl <<
-             "    other    " << HexStr(mPubKey) << std::endl <<
-             "    other id " << HexStr(connFrom->getKeyId(mPubKey)) << std::endl <<
-             "    x id     " << HexStr(hx);
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("my_pubkey", HexStr(xtx->mPubKey));
+        log_obj.pushKV("my_id", HexStr(connFrom->getKeyId(xtx->mPubKey)));
+        log_obj.pushKV("other_pubkey", HexStr(mPubKey));
+        log_obj.pushKV("other_id", HexStr(connFrom->getKeyId(mPubKey)));
+        log_obj.pushKV("x_secret", HexStr(hx));
+        LogOrderMsg(log_obj, "order keypair values, DO NOT SHARE with anyone", __FUNCTION__);
+    }
 #endif
 
     // create address for deposit
@@ -1698,13 +1856,13 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
         {
             // cancel transaction
-            ERR() << "failed to create deposit transaction, canceling order " << __FUNCTION__;
+            LogOrderMsg(txid.GetHex(), "failed to create deposit transaction, canceling", __FUNCTION__);
             TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                     << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                     << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ") "
                     << "using locktime " << xtx->lockTime << std::endl
                     << xtx->binTx;
-            sendCancelTransaction(xtx, crRpcError);
+            sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
 
@@ -1731,8 +1889,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
                 if (!connFrom->getNewAddress(addr))
                 {
                     // cancel order
-                    LOG() << "failed to getnewaddress for refund tx, canceling order " << xtx->id.ToString() << " "
-                          << __FUNCTION__;
+                    LogOrderMsg(txid.GetHex(), "failed to getnewaddress for refund tx, canceling", __FUNCTION__);
                     sendCancelTransaction(xtx, crRpcError);
                     return true;
                 }
@@ -1747,12 +1904,12 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel order
-            ERR() << "failed to create refund transaction, canceling order " << __FUNCTION__;
+            LogOrderMsg(txid.GetHex(), "failed to create refund transaction, canceling", __FUNCTION__);
             TXLOG() << "refund transaction for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                     << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                     << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
                     << xtx->refTx;
-            sendCancelTransaction(xtx, crRpcError);
+            sendCancelTransaction(xtx, crBadARefundTx);
             return true;
         }
 
@@ -1776,13 +1933,17 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         std::string errorMessage;
         if (connFrom->sendRawTransaction(xtx->binTx, sentid, errCode, errorMessage))
         {
-            LOG() << "successfully deposited in p2sh: txid " << xtx->binTxId << " sent id " << sentid;
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("p2sh_txid", xtx->binTxId);
+            log_obj.pushKV("sent_id", sentid);
+            LogOrderMsg(log_obj,  "successfully submitted p2sh deposit", __FUNCTION__);
         }
         else
         {
-            LOG() << "error sending deposit, canceling order " << __FUNCTION__;
+            LogOrderMsg(txid.GetHex(), "failed to send p2sh deposit, canceling", __FUNCTION__);
             xtx->failDeposit();
-            sendCancelTransaction(xtx, crRpcError);
+            sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
     }
@@ -1860,17 +2021,20 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->a_pk1()))
     {
-        WARN() << "bad counterparty packet signature, received " << HexStr(pk1)
-               << " expected " << HexStr(tr->a_pk1()) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("expected_counterparty_a", HexStr(tr->a_pk1()));
+        log_obj.pushKV("received_counterparty_a", HexStr(pk1));
+        LogOrderMsg(log_obj, "bad counterparty_a packet signature", __FUNCTION__);
         return true;
     }
 
     if (tr->state() != xbridge::Transaction::trInitialized)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << tr->id().ToString()
-               << " state " << tr->state()
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("state", tr->state());
+        LogOrderMsg(log_obj, "wrong tx state, expecting initialized state", __FUNCTION__);
         return true;
     }
 
@@ -1883,7 +2047,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 
     if (e.updateTransactionWhenCreatedReceived(tr, tr->a_address(), binTxId))
     {
-        ERR() << "bad state detected on order " << tr->id().ToString() << " " << __FUNCTION__;
+        LogOrderMsg(tr->id().GetHex(), "bad state detected on order", __FUNCTION__);
         return true;
     }
 
@@ -1899,7 +2063,7 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 
     sendPacket(tr->b_address(), reply2);
 
-    LOG() << __FUNCTION__ << tr;
+    LogOrderMsg(tr, __FUNCTION__);
 
     return true;
 }
@@ -1942,45 +2106,48 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown order " << txid.GetHex() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
         return true;
     }
     if (!xtx->isLocal())
     {
-        ERR() << "not a local order " << txid.GetHex() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "not a local order", __FUNCTION__);
         return true;
     }
     // Reject if snode key doesn't match original (prevent order manipulation)
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
-               << " but received pubkey " << HexStr(spubkey)
-               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        log_obj.pushKV("hubaddress", HexStr(hubAddress));
+        LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
     if (xtx->state >= TransactionDescr::trCreated)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("state", xtx->state);
+        LogOrderMsg(log_obj, "wrong tx state, expecting created state", __FUNCTION__);
         return true;
     }
     if (binATxId.size() == 0)
     {
-        LOG() << "bad counterparty deposit tx id received for order " << txid.GetHex() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "bad counterparty deposit tx id received for order", __FUNCTION__);
         sendCancelTransaction(xtx, crBadADepositTx);
         return true;
     }
     if (xtx->role != 'B')
     {
-        ERR() << "received packet for wrong role, expected role B " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "received packet for wrong role, expected role B", __FUNCTION__);
         return true;
     }
     if(xtx->xPubKey.size() != 0)
     {
-        ERR() << "bad role" << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "bad role, xpubkey should be empty", __FUNCTION__);
         return true;
     }
 
@@ -1989,7 +2156,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     WalletConnectorPtr connTo   = xapp.connectorByCurrency(xtx->toCurrency);
     if (!connFrom || !connTo)
     {
-        WARN() << "no connector for <" << (!connFrom ? xtx->fromCurrency : xtx->toCurrency) << "> " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "no connector for <" + (!connFrom ? xtx->fromCurrency : xtx->toCurrency) + ">", __FUNCTION__);
         sendCancelTransaction(xtx, crRpcError);
         return true;
     }
@@ -2001,10 +2168,12 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     {
         if (lockTimeA == 0 || !connTo->acceptableLockTimeDrift('A', lockTimeA))
         {
-            LOG() << "incorrect locktime " << lockTimeA << " from counterparty on order " << txid.GetHex() << " "
-                  << "expected " << connTo->lockTime('A') << " "
-                  << __FUNCTION__;
-            sendCancelTransaction(xtx, crBadADepositTx);
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("expected_counterparty_locktime", static_cast<int>(connTo->lockTime('A')));
+            log_obj.pushKV("counterparty_locktime", static_cast<int>(lockTimeA));
+            LogOrderMsg(log_obj, "bad locktime from counterparty, canceling", __FUNCTION__);
+            sendCancelTransaction(xtx, crBadALockTime);
             return true;
         }
     }
@@ -2034,12 +2203,15 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         }
         else if (!isGood)
         {
-            LOG() << "bad counterparty deposit for order " << txid.GetHex() << " , canceling order " << __FUNCTION__;
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("counterparty_p2shdeposit_txid", binATxId);
+            LogOrderMsg(log_obj, "bad counterparty deposit for order, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
 
-        LOG() << "counterparty deposit confirmed for order " << txid.GetHex();
+        LogOrderMsg(txid.GetHex(), "counterparty deposit confirmed for order", __FUNCTION__);
     }
 
     double fee1      = 0;
@@ -2053,8 +2225,6 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         inAmount += entry.amount;
         fee1 = connFrom->minTxFee1(usedInTx.size(), 3);
 
-        LOG() << "using utxo item, id: <" << entry.txId << "> amount: " << entry.amount << " vout: " << entry.vout;
-
         // check amount
         if (inAmount >= outAmount+fee1+fee2)
         {
@@ -2062,15 +2232,34 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         }
     }
 
-    LOG() << "fee1: " << fee1;
-    LOG() << "fee2: " << fee2;
-    LOG() << "amount of used utxo items: " << inAmount << " required amount + fees: " << outAmount + fee1 + fee2;
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("fee1", fee1);
+        log_obj.pushKV("fee2", fee2);
+        log_obj.pushKV("in_amount", inAmount);
+        log_obj.pushKV("out_amount", outAmount + fee1 + fee2);
+        UniValue log_utxos(UniValue::VARR);
+        for (const auto & entry : usedInTx) {
+            UniValue log_utxo(UniValue::VOBJ);
+            log_utxo.pushKV("txid", entry.txId);
+            log_utxo.pushKV("vout", static_cast<int>(entry.vout));
+            log_utxo.pushKV("amount", xBridgeStringValueFromPrice(entry.amount, COIN));
+            log_utxos.push_back(log_utxo);
+        }
+        log_obj.pushKV("utxos", log_utxos);
+        LogOrderMsg(log_obj, "utxo and fees for order", __FUNCTION__);
+    }
 
     // check amount
     if (inAmount < outAmount+fee1+fee2)
     {
         // no money, cancel transaction
-        LOG() << "insufficient funds, canceling order " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("in_amount", inAmount);
+        log_obj.pushKV("out_amount", outAmount+fee1+fee2);
+        LogOrderMsg(log_obj, "insufficient funds for order: expecting in amount to be >= out amount, canceling", __FUNCTION__);
         sendCancelTransaction(xtx, crNoMoney);
         return true;
     }
@@ -2087,12 +2276,16 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     // create transactions
 
 #ifdef LOG_KEYPAIR_VALUES
-    LOG() << "unlock script pub keys" << std::endl <<
-             "    my       " << HexStr(xtx->mPubKey) << std::endl <<
-             "    my id    " << HexStr(connFrom->getKeyId(xtx->mPubKey)) << std::endl <<
-             "    other    " << HexStr(xtx->oPubKey) << std::endl <<
-             "    other id " << HexStr(connFrom->getKeyId(xtx->oPubKey)) << std::endl <<
-             "    x id     " << HexStr(xtx->oHashedSecret);
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("my_pubkey", HexStr(xtx->mPubKey));
+        log_obj.pushKV("my_id", HexStr(connFrom->getKeyId(xtx->mPubKey)));
+        log_obj.pushKV("other_pubkey", HexStr(xtx->oPubKey));
+        log_obj.pushKV("other_id", HexStr(connFrom->getKeyId(xtx->oPubKey)));
+        log_obj.pushKV("x_secret", HexStr(xtx->oHashedSecret));
+        LogOrderMsg(log_obj, "unlock script pubkeys, DO NOT SHARE with anyone", __FUNCTION__);
+    }
 #endif
 
     // create address for deposit
@@ -2131,13 +2324,13 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
         {
             // cancel transaction
-            ERR() << "failed to create deposit transaction, canceling order " << __FUNCTION__;
+            LogOrderMsg(txid.GetHex(), "failed to create deposit transaction, canceling", __FUNCTION__);
             TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                     << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                     << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ") "
                     << "using locktime " << xtx->lockTime << std::endl
                     << xtx->binTx;
-            sendCancelTransaction(xtx, crRpcError);
+            sendCancelTransaction(xtx, crBadBDepositTx);
             return true;
         }
 
@@ -2163,8 +2356,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             if (addr.empty()) {
                 if (!connFrom->getNewAddress(addr)) {
                     // cancel order
-                    LOG() << "failed to getnewaddress for refund tx, canceling order " << xtx->id.ToString() << " "
-                          << __FUNCTION__;
+                    LogOrderMsg(txid.GetHex(), "failed to getnewaddress for refund tx, canceling", __FUNCTION__);
                     sendCancelTransaction(xtx, crRpcError);
                     return true;
                 }
@@ -2179,12 +2371,12 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
                                                xtx->refTxId, xtx->refTx))
         {
             // cancel order
-            ERR() << "failed to create refund transaction, canceling order " << __FUNCTION__;
+            LogOrderMsg(txid.GetHex(), "failed to create refund transaction, canceling", __FUNCTION__);
             TXLOG() << "refund transaction for order " << xtx->id.ToString() << " "
                     << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                     << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
                     << xtx->refTx;
-            sendCancelTransaction(xtx, crRpcError);
+            sendCancelTransaction(xtx, crBadBRefundTx);
             return true;
         }
 
@@ -2199,10 +2391,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     // send transactions
     {
         // Get the current block
-        rpc::WalletInfo info;
-        if (!connFrom->getInfo(info)) {
-            ERR() << "failed to obtain block count from " << xtx->fromCurrency << " blockchain "
-                  << __FUNCTION__;
+        uint32_t blockCount{0};
+        if (!connFrom->getBlockCount(blockCount)) {
+            LogOrderMsg(txid.GetHex(), "failed to obtain block count from <" + xtx->fromCurrency + "> blockchain, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crRpcError);
             return true;
         }
@@ -2218,15 +2409,19 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         std::string errorMessage;
         if (connFrom->sendRawTransaction(xtx->binTx, sentid, errCode, errorMessage))
         {
-            LOG() << "successfully deposited in p2sh: txid " << xtx->binTxId << " sent id " << sentid;
-            xtx->setWatchBlock(info.blocks);
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("p2sh_txid", xtx->binTxId);
+            log_obj.pushKV("sent_id", sentid);
+            LogOrderMsg(log_obj,  "successfully submitted p2sh deposit", __FUNCTION__);
+            xtx->setWatchBlock(blockCount);
             xapp.watchForSpentDeposit(xtx);
         }
         else
         {
-            LOG() << "error sending deposit tx, canceling order " << __FUNCTION__;
+            LogOrderMsg(txid.GetHex(), "failed to send p2sh deposit, canceling", __FUNCTION__);
             xtx->failDeposit();
-            sendCancelTransaction(xtx, crRpcError);
+            sendCancelTransaction(xtx, crBadBDepositTx);
             return true;
         }
     }
@@ -2299,17 +2494,20 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->b_pk1()))
     {
-        WARN() << "bad counterparty packet signature, received " << HexStr(pk1)
-               << " expected " << HexStr(tr->b_pk1()) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("expected_counterparty_b", HexStr(tr->b_pk1()));
+        log_obj.pushKV("received_counterparty_b", HexStr(pk1));
+        LogOrderMsg(log_obj, "bad counterparty_b packet signature", __FUNCTION__);
         return true;
     }
 
     if (tr->state() != xbridge::Transaction::trInitialized)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << tr->id().ToString()
-               << " state " << tr->state()
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("state", tr->state());
+        LogOrderMsg(log_obj, "wrong tx state, expecting initialized state", __FUNCTION__);
         return true;
     }
 
@@ -2336,7 +2534,7 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
         }
     }
 
-    LOG() << __FUNCTION__ << tr;
+    LogOrderMsg(tr, __FUNCTION__);
 
     return true;
 }
@@ -2373,34 +2571,37 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown order " << HexStr(txid) << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
         return true;
     }
     if (!xtx->isLocal())
     {
-        ERR() << "not a local order " << HexStr(txid) << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "not a local order", __FUNCTION__);
         return true;
     }
     // Reject if servicenode key doesn't match original (prevent order manipulation)
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
-               << " but received pubkey " << HexStr(spubkey)
-               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        log_obj.pushKV("hubaddress", HexStr(hubAddress));
+        LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
     if (xtx->state >= TransactionDescr::trCommited)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("state", xtx->state);
+        LogOrderMsg(log_obj, "wrong tx state, expecting committed state", __FUNCTION__);
         return true;
     }
     if (xtx->role != 'A')
     {
-        ERR() << "received packet for wrong role, expected role A " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "received packet for wrong role, expected role A", __FUNCTION__);
         return true;
     }
 
@@ -2409,7 +2610,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     WalletConnectorPtr connTo   = xapp.connectorByCurrency(xtx->toCurrency);
     if (!connFrom || !connTo)
     {
-        WARN() << "no connector for <" << (!connFrom ? xtx->fromCurrency : xtx->toCurrency) << "> " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "no connector for <" + (!connFrom ? xtx->fromCurrency : xtx->toCurrency) + ">, canceling", __FUNCTION__);
         sendCancelTransaction(xtx, crRpcError);
         return true;
     }
@@ -2421,10 +2622,12 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     {
         if (lockTimeB == 0 || !connTo->acceptableLockTimeDrift('B', lockTimeB))
         {
-            LOG() << "incorrect locktime " << lockTimeB << " from counterparty on order " << txid.GetHex() << " "
-                  << "expected " << connTo->lockTime('B') << " "
-                  << __FUNCTION__;
-            sendCancelTransaction(xtx, crBadBDepositTx);
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("expected_counterparty_locktime", static_cast<int>(connTo->lockTime('B')));
+            log_obj.pushKV("counterparty_locktime", static_cast<int>(lockTimeB));
+            LogOrderMsg(log_obj, "bad locktime from counterparty, canceling", __FUNCTION__);
+            sendCancelTransaction(xtx, crBadBLockTime);
             return true;
         }
     }
@@ -2454,12 +2657,15 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         }
         else if (!isGood)
         {
-            LOG() << "bad counterparty deposit for order " << txid.GetHex() << " , canceling order " << __FUNCTION__;
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("counterparty_p2shdeposit_txid", binTxId);
+            LogOrderMsg(log_obj, "bad counterparty deposit for order, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crBadBDepositTx);
             return true;
         }
 
-        LOG() << "counterparty deposit confirmed for order " << txid.GetHex();
+        LogOrderMsg(txid.GetHex(), "counterparty deposit confirmed for order", __FUNCTION__);
     }
 
     // Set counterparty tx info
@@ -2474,12 +2680,12 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         int32_t errCode = 0;
         if (!redeemOrderCounterpartyDeposit(xtx, errCode)) {
             if (errCode == RPCErrorCode::RPC_VERIFY_ERROR) { // missing inputs, wait deposit tx
-                LOG() << "trying to redeem again";
+                LogOrderMsg(txid.GetHex(), "redeem counterparty failed, trying to redeem again", __FUNCTION__);
                 xapp.processLater(txid, packet);
                 return true;
             } else {
-                LOG() << "failed to redeem tx from counterparty, canceling order";
-                sendCancelTransaction(xtx, crRpcError);
+                LogOrderMsg(txid.GetHex(), "failed to redeem p2sh deposit from counterparty, canceling", __FUNCTION__);
+                sendCancelTransaction(xtx, crBadBDepositTx);
                 return true;
             }
         }
@@ -2545,17 +2751,20 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->a_pk1()))
     {
-        WARN() << "bad counterparty packet signature, received " << HexStr(pk1)
-               << " expected " << HexStr(tr->a_pk1()) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("expected_counterparty_a", HexStr(tr->a_pk1()));
+        log_obj.pushKV("received_counterparty_a", HexStr(pk1));
+        LogOrderMsg(log_obj, "bad counterparty_a packet signature", __FUNCTION__);
         return true;
     }
 
     if (tr->state() != xbridge::Transaction::trCreated)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << tr->id().ToString()
-               << " state " << tr->state()
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("state", tr->state());
+        LogOrderMsg(log_obj, "wrong tx state, expecting created state", __FUNCTION__);
         return true;
     }
 
@@ -2564,7 +2773,7 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
 
     if (e.updateTransactionWhenConfirmedReceived(tr, tr->a_destination()))
     {
-        ERR() << "invalid confirmation " << __FUNCTION__;
+        LogOrderMsg(tr->id().GetHex(), "invalid confirmation from counterparty_a", __FUNCTION__);
         // Can't cancel here, Maker already spent Taker deposit
     }
 
@@ -2577,7 +2786,7 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
 
     sendPacket(tr->b_destination(), reply2);
 
-    LOG() << __FUNCTION__ << tr;
+    LogOrderMsg(tr, __FUNCTION__);
 
     return true;
 }
@@ -2612,29 +2821,32 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
-        LOG() << "unknown order " << txid.GetHex() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
         return true;
     }
     if (!xtx->isLocal())
     {
-        ERR() << "order is not local " << txid.GetHex() << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "not a local order", __FUNCTION__);
         return true;
     }
     // Reject if servicenode key doesn't match original (prevent order manipulation)
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
-               << " but received pubkey " << HexStr(spubkey)
-               << " and hub address " << HexStr(hubAddress) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        log_obj.pushKV("hubaddress", HexStr(hubAddress));
+        LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
     if (xtx->state >= TransactionDescr::trCommited)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << xtx->id.ToString()
-               << " state " << xtx->state
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("state", xtx->state);
+        LogOrderMsg(log_obj, "wrong tx state, expecting committed state", __FUNCTION__);
         return true;
     }
 
@@ -2648,7 +2860,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
     WalletConnectorPtr connTo = xapp.connectorByCurrency(xtx->toCurrency);
     if (!connFrom || !connTo)
     {
-        WARN() << "no connector for <" << (!connTo ? xtx->toCurrency : xtx->fromCurrency) << "> " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "no connector for <" + (!connTo ? xtx->toCurrency : xtx->fromCurrency) + ">, trying again", __FUNCTION__);
         xapp.processLater(txid, packet);
         return true;
     }
@@ -2721,17 +2933,20 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->b_pk1()))
     {
-        WARN() << "bad counterparty packet signature, received " << HexStr(pk1)
-               << " expected " << HexStr(tr->b_pk1()) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("expected_counterparty_b", HexStr(tr->b_pk1()));
+        log_obj.pushKV("received_counterparty_b", HexStr(pk1));
+        LogOrderMsg(log_obj, "bad counterparty packet signature", __FUNCTION__);
         return true;
     }
 
     if (tr->state() != xbridge::Transaction::trCreated)
     {
-        xassert(!"wrong state");
-        WARN() << "wrong tx state " << tr->id().ToString()
-               << " state " << tr->state()
-               << " in " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", tr->id().GetHex());
+        log_obj.pushKV("state", tr->state());
+        LogOrderMsg(log_obj, "wrong tx state, expecting created state", __FUNCTION__);
         return true;
     }
 
@@ -2755,7 +2970,7 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
         }
     }
 
-    LOG() << __FUNCTION__ << tr;
+    LogOrderMsg(tr, __FUNCTION__);
 
     return true;
 }
@@ -2779,6 +2994,16 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     uint256 txid(stxid);
     TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + 32));
 
+    auto write_log = [](UniValue o, const std::string & errMsg) {
+        o.pushKV("err_msg", errMsg);
+        LOG() << o.write();
+    };
+    std::string errMsg;
+    UniValue log_obj(UniValue::VOBJ);
+    log_obj.pushKV("orderid", txid.GetHex());
+    log_obj.pushKV("cancel_reason", TxCancelReasonText(reason));
+    log_obj.pushKV("function", std::string(__FUNCTION__));
+
     // check packet signature
     Exchange & e = Exchange::instance();
     if (e.isStarted())
@@ -2792,16 +3017,18 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 
         if(!tr->isValid())
         {
+            write_log(log_obj, "order not valid");
             return true;
         }
 
         if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
         {
-            WARN() << "invalid packet signature " << __FUNCTION__;
+            write_log(log_obj, "invalid packet signature");
             return true;
         }
 
         sendCancelTransaction(tr, reason);
+        write_log(log_obj, "counterparty requested cancel");
         return true;
     }
 
@@ -2809,52 +3036,54 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
     {
+        write_log(log_obj, "unknown order");
         return true;
     }
 
     // Only Maker, Taker, or Servicenode can cancel order
     if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey) && !packet->verify(xtx->mPubKey))
     {
-        LOG() << "bad packet signature for cancelation request on order " << xtx->id.GetHex() << " , not canceling " << __FUNCTION__;
+        write_log(log_obj, "bad packet signature for cancelation request on order, not canceling");
         return true;
     }
 
     WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->fromCurrency);
     if (!conn)
     {
-        WARN() << "no connector for <" << xtx->fromCurrency << "> " << __FUNCTION__;
+        write_log(log_obj, "no connector for <" + xtx->fromCurrency + "> , not canceling");
         return false;
     }
     
     // Set order cancel state
-    auto cancel = [&xapp, &conn, &xtx, &reason, &txid]() {
+    auto cancel = [&xapp, &conn, &xtx, &reason, &txid, &write_log](const UniValue & o, const std::string & errMsg) {
         xapp.removePackets(txid);
         xapp.unlockCoins(conn->currency, xtx->usedCoins);
         if (xtx->state < TransactionDescr::trInitialized)
             xapp.unlockFeeUtxos(xtx->feeUtxos);
         xtx->state  = TransactionDescr::trCancelled;
         xtx->reason = reason;
-        LOG() << __FUNCTION__ << xtx;
+        write_log(o, errMsg);
     };
 
     if (xtx->state < TransactionDescr::trCreated) { // if no deposits yet
         xapp.moveTransactionToHistory(txid);
-        cancel();
+        cancel(log_obj, "counterparty cancel request");
         xuiConnector.NotifyXBridgeTransactionChanged(txid);
         return true;
-    } else if (xtx->state == TransactionDescr::trCancelled) { // already canceled 
+    } else if (xtx->state == TransactionDescr::trCancelled) { // already canceled
+        write_log(log_obj, "already canceled");
         return true;
     } else if (!xtx->didSendDeposit()) { // cancel if deposit not sent
-        cancel();
+        cancel(log_obj, "counterparty cancel request");
         return true;
     } else if (xtx->hasRedeemedCounterpartyDeposit()) { // Ignore if counterparty deposit already redeemed
+        write_log(log_obj, "counterparty already redeemed, ignore cancel");
         return true;
     }
 
     // If refund transaction id not defined, do not attempt to rollback
     if (xtx->refTx.empty()) {
-        LOG() << "could not find a refund transaction for order " << xtx->id.GetHex() << " " << __FUNCTION__;
-        cancel();
+        cancel(log_obj, "could not find a refund transaction for order");
         return true;
     }
 
@@ -2874,10 +3103,62 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         xapp.unlockCoins(conn->currency, xtx->usedCoins);
     }
 
-    LOG() << __FUNCTION__ << xtx;
+    LogOrderMsg(xtx, __FUNCTION__);
 
     // update transaction state for gui
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Session::Impl::processTransactionReject(XBridgePacketPtr packet) const
+{
+    DEBUG_TRACE();
+
+    // size must be == 36 bytes
+    if (packet->size() != 36)
+    {
+        ERR() << "invalid packet size for xbcTransactionReject "
+              << "need 36 received " << packet->size() << " "
+              << __FUNCTION__;
+        return false;
+    }
+
+    std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
+    uint256 txid(stxid);
+    TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + XBridgePacket::hashSize));
+
+    xbridge::App & xapp = xbridge::App::instance();
+    TransactionDescrPtr xtx = xapp.transaction(txid);
+    // Do not proceed if we're not the taker or the state is beyond the accepting phase
+    if (!xtx || xtx->role != 'B' || xtx->state > TransactionDescr::trAccepting)
+        return true;
+
+    // Only snode can reject an order
+    if (!packet->verify(xtx->sPubKey))
+        return true;
+
+    // restore state on rejection
+    xtx->state = TransactionDescr::trPending;
+    // unlock coins
+    xapp.unlockCoins(xtx->fromCurrency, xtx->usedCoins);
+    xapp.unlockFeeUtxos(xtx->feeUtxos);
+    xtx->clearUsedCoins();
+    xtx->fromAddr.clear();
+    xtx->from.clear();
+    xtx->toAddr.clear();
+    xtx->to.clear();
+    xtx->role = 0;
+    xtx->mPubKey.clear();
+    xtx->mPrivKey.clear();
+    std::swap(xtx->fromCurrency, xtx->toCurrency);
+    std::swap(xtx->fromAmount, xtx->toAmount);
+    // remove from pending packets (if added)
+    xapp.removePackets(txid);
+
+    LogOrderMsg(xtx, __FUNCTION__);
 
     return true;
 }
@@ -2890,7 +3171,7 @@ bool Session::Impl::finishTransaction(TransactionPtr tr) const
     {
         return false;
     }
-    LOG() << "order finished: " << tr->id().GetHex();
+    LogOrderMsg(tr->id().GetHex(), "order finished", __FUNCTION__);
 
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
@@ -2929,7 +3210,10 @@ bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
         return false;
     }
 
-    LOG() << "canceling order " << tx->id().GetHex();
+    UniValue log_obj(UniValue::VOBJ);
+    log_obj.pushKV("orderid", tx->id().GetHex());
+    log_obj.pushKV("cancel_reason", TxCancelReasonText(reason));
+    LogOrderMsg(log_obj, "canceling order, initiated by me", __FUNCTION__);
 
     tx->cancel();
     e.deletePendingTransaction(tx->id());
@@ -2956,7 +3240,10 @@ bool Session::sendCancelTransaction(const TransactionDescrPtr & tx,
 bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
                                           const TxCancelReason & reason) const
 {
-    LOG() << "canceling order " << tx->id.GetHex();
+    UniValue log_obj(UniValue::VOBJ);
+    log_obj.pushKV("orderid", tx->id.GetHex());
+    log_obj.pushKV("cancel_reason", TxCancelReasonText(reason));
+    LogOrderMsg(log_obj, "canceling order, initiated by me", __FUNCTION__);
 
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCancel));
     reply->append(tx->id.begin(), 32);
@@ -2970,6 +3257,29 @@ bool Session::Impl::sendCancelTransaction(const TransactionDescrPtr & tx,
     // update transaction state for gui
     xuiConnector.NotifyXBridgeTransactionChanged(tx->id);
 
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool Session::Impl::sendRejectTransaction(const uint256 & id,
+                                          const TxCancelReason & reason) const
+{
+    Exchange & e = Exchange::instance();
+    if (!e.isStarted()) // snode only
+        return false;
+
+    UniValue log_obj(UniValue::VOBJ);
+    log_obj.pushKV("orderid", id.GetHex());
+    log_obj.pushKV("cancel_reason", TxCancelReasonText(reason));
+    LogOrderMsg(log_obj, "rejecting order, initiated by me", __FUNCTION__);
+
+    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionReject));
+    reply->append(id.begin(), 32);
+    reply->append(static_cast<uint32_t>(reason));
+    reply->sign(e.pubKey(), e.privKey());
+
+    sendPacketBroadcast(reply);
     return true;
 }
 
@@ -3077,34 +3387,31 @@ void Session::checkFinishedTransactions() const
 
         if (ptr->state() == xbridge::Transaction::trCancelled)
         {
-            // drop cancelled tx
-            LOG() << "drop cancelled transaction <" << txid.GetHex() << ">";
+            LogOrderMsg(txid.GetHex(), "drop canceled order", __FUNCTION__);
             ptr->drop();
         }
         else if (ptr->state() == xbridge::Transaction::trFinished)
         {
             // delete finished tx
-            LOG() << "delete finished transaction <" << txid.GetHex() << ">";
+            LogOrderMsg(txid.GetHex(), "delete finished order", __FUNCTION__);
             e.deleteTransaction(txid);
         }
         else if (ptr->state() == xbridge::Transaction::trDropped)
         {
             // delete dropped tx
-            LOG() << "delete dropped transaction <" << txid.GetHex() << ">";
+            LogOrderMsg(txid.GetHex(), "delete dropped order", __FUNCTION__);
             e.deleteTransaction(txid);
         }
         else if (!ptr->isValid())
         {
             // delete invalid tx
-            LOG() << "delete invalid transaction <" << txid.GetHex() << ">";
+            LogOrderMsg(txid.GetHex(), "delete invalid order", __FUNCTION__);
             e.deleteTransaction(txid);
         }
         else
         {
-            LOG() << "timeout transaction <" << txid.GetHex() << ">"
-                  << " state " << ptr->strState();
-
-            // send rollback
+            LogOrderMsg(txid.GetHex(), "order timeout", __FUNCTION__);
+            // cancel timed out order
             m_p->sendCancelTransaction(ptr, TxCancelReason::crTimeout);
         }
     }
@@ -3163,21 +3470,24 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (xtx == nullptr)
     {
-        LOG() << "unknown order " << HexStr(txid) << " " << __FUNCTION__;
+        LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
         return true;
     }
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
     {
-        WARN() << "wrong servicenode handling order, expected " << HexStr(xtx->sPubKey)
-               << " but received pubkey " << HexStr(spubkey) << " " << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+        log_obj.pushKV("received_snode", HexStr(spubkey));
+        LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
         return true;
     }
 
     // update transaction state for gui
     xtx->state = TransactionDescr::trFinished;
 
-    LOG() << __FUNCTION__ << xtx;
+    LogOrderMsg(xtx, __FUNCTION__);
 
     xapp.moveTransactionToHistory(txid);
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
@@ -3202,7 +3512,7 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr connFrom = xapp.connectorByCurrency(xtx->fromCurrency);
     if (!connFrom) {
-        WARN() << "rollback attempted failed, no connector for <" << xtx->fromCurrency << "> is the wallet running?";
+        LogOrderMsg(xtx->id.GetHex(), "rollback attempted failed, no connector for <" + xtx->fromCurrency + "> is the wallet running?", __FUNCTION__);
         return false;
     }
 
@@ -3216,22 +3526,32 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
         WalletConnectorPtr connTo = xapp.connectorByCurrency(xtx->toCurrency);
         auto fromAddr = connFrom->fromXAddr(xtx->from);
         auto toAddr = connTo ? connTo->fromXAddr(xtx->to) : "";
-        if (!xtx->binTx.empty()) // if there's a bin tx but no rollback, could mean potential loss of funds
-            LOG() << "Fatal error, unable to rollback. Could not find a refund transaction for order " << xtx->id.GetHex() << " "
-                  << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
-                  << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")";
+        if (!xtx->binTx.empty()) { // if there's a bin tx but no rollback, could mean potential loss of funds
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("from_addr", fromAddr);
+            log_obj.pushKV("from_currency", xtx->fromCurrency);
+            log_obj.pushKV("from_amount", xbridge::xBridgeStringValueFromAmount(xtx->fromAmount));
+            log_obj.pushKV("to_addr", toAddr);
+            log_obj.pushKV("to_currency", xtx->toCurrency);
+            log_obj.pushKV("to_amount", xbridge::xBridgeStringValueFromAmount(xtx->toAmount));
+            LogOrderMsg(log_obj, "Fatal error, unable to rollback. Could not find a refund transaction for order", __FUNCTION__);
+        }
         return true; // done
     }
 
-    xbridge::rpc::WalletInfo info;
-    bool infoReceived = connFrom->getInfo(info);
+    uint32_t blockCount{0};
+    bool infoReceived = connFrom->getBlockCount(blockCount);
 
     // Check if locktime for the deposit has expired (can't redeem until locktime expires)
-    if (infoReceived && info.blocks < xtx->lockTime)
+    if (infoReceived && blockCount < xtx->lockTime)
     {
-        LOG() << "will be able to redeem canceled order " << txid.GetHex() << " (" << xtx->fromCurrency << ") when locktime expires "
-              << "at block " << xtx->lockTime << " , deposit txid is " << xtx->binTxId << " "
-              << __FUNCTION__;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", txid.GetHex());
+        log_obj.pushKV("redeem_currency", xtx->fromCurrency);
+        log_obj.pushKV("redeem_locktime", static_cast<int>(xtx->lockTime));
+        log_obj.pushKV("redeem_p2sh_txid", xtx->binTxId);
+        LogOrderMsg(log_obj, "will be able to redeem canceled order at block " + std::to_string(xtx->lockTime), __FUNCTION__);
         return false;
     }
     else // if locktime has expired, attempt to send refund tx
@@ -3244,10 +3564,15 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
             WalletConnectorPtr connTo = xapp.connectorByCurrency(xtx->toCurrency);
             auto fromAddr = connFrom->fromXAddr(xtx->from);
             auto toAddr = connTo ? connTo->fromXAddr(xtx->to) : "";
-            LOG() << "failed to rollback locked deposit funds for order " << txid.GetHex() << " "
-                    << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
-                    << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")"
-                    << " trying again later";
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("from_addr", fromAddr);
+            log_obj.pushKV("from_currency", xtx->fromCurrency);
+            log_obj.pushKV("from_amount", xbridge::xBridgeStringValueFromAmount(xtx->fromAmount));
+            log_obj.pushKV("to_addr", toAddr);
+            log_obj.pushKV("to_currency", xtx->toCurrency);
+            log_obj.pushKV("to_amount", xbridge::xBridgeStringValueFromAmount(xtx->toAmount));
+            LogOrderMsg(log_obj, "failed to rollback locked deposit for order, trying again later", __FUNCTION__);
             xtx->state = TransactionDescr::trRollbackFailed;
             return false;
         } else {
@@ -3265,8 +3590,8 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
     WalletConnectorPtr connFrom = xapp.connectorByCurrency(xtx->fromCurrency);
     WalletConnectorPtr connTo = xapp.connectorByCurrency(xtx->toCurrency);
     if (!connFrom || !connTo) {
-        ERR() << "failed to redeem order due to bad wallet connection, is "
-              << (!connFrom ? xtx->fromCurrency : xtx->toCurrency) << " running?";
+        LogOrderMsg(xtx->id.GetHex(), "failed to redeem order due to bad wallet connection, is " +
+                                      (!connFrom ? xtx->fromCurrency : xtx->toCurrency) + " running?", __FUNCTION__);
         return false;
     }
 
@@ -3281,9 +3606,13 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
         }
         else if (!isGood)
         {
-            ERR() << "secret not found in counterparty's pay tx on " << xtx->fromCurrency << " " << xtx->otherPayTxId()
-                  << " my deposit utxo they spent is " << xtx->binTxId << " vout " << xtx->binTxVout
-                  << " counterparty could be misbehaving";
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", xtx->id.GetHex());
+            log_obj.pushKV("currency", xtx->fromCurrency);
+            log_obj.pushKV("counterparty_p2sh_txid", xtx->otherPayTxId());
+            log_obj.pushKV("my_spent_p2sh_deposit_txid", xtx->binTxId);
+            log_obj.pushKV("my_spent_p2sh_deposit_vout", static_cast<int>(xtx->binTxVout));
+            LogOrderMsg(log_obj, "secret not found in counterparty's pay tx on <" + xtx->fromCurrency + "> , counterparty could be misbehaving", __FUNCTION__);
             return false;
         }
 
@@ -3315,7 +3644,7 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
                                           xtx->secret(), xtx->unlockScript,
                                           xtx->payTxId, xtx->payTx))
     {
-        ERR() << "failed to create payment redeem transaction, retrying " << __FUNCTION__;
+        LogOrderMsg(xtx->id.GetHex(), "failed to create payment redeem transaction, retrying", __FUNCTION__);
         TXLOG() << "redeem counterparty deposit for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                 << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                 << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
@@ -3333,19 +3662,23 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
     std::string errorMessage;
     if (connTo->sendRawTransaction(xtx->payTx, sentid, errCode, errorMessage))
     {
-        LOG() << "redeeming order " << xtx->id.ToString() << " from counterparty on " << xtx->toCurrency << " chain with pay txid " << xtx->payTxId;
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", xtx->id.GetHex());
+        log_obj.pushKV("currency", xtx->toCurrency);
+        log_obj.pushKV("redeem_pay_txid", xtx->payTxId);
+        LogOrderMsg(log_obj, "redeeming order from counterparty on <" + xtx->toCurrency + "> chain with pay txid " + xtx->payTxId, __FUNCTION__);
     }
     else
     {
         if (errCode == RPCErrorCode::RPC_VERIFY_ALREADY_IN_CHAIN) {
-            LOG() << "redeem tx already found in chain, proceeding";
+            LogOrderMsg(xtx->id.GetHex(), "redeem tx already found in chain, proceeding", __FUNCTION__);
         }
         else
         {
             if (errCode == RPCErrorCode::RPC_VERIFY_ERROR) { // missing inputs, wait deposit tx
-                LOG() << "failed to redeem tx from counterparty: bad inputs";
+                LogOrderMsg(xtx->id.GetHex(), "failed to redeem tx from counterparty: bad inputs, trying again", __FUNCTION__);
             } else {
-                LOG() << "failed to redeem tx from counterparty";
+                LogOrderMsg(xtx->id.GetHex(), "failed to redeem tx from counterparty, trying again", __FUNCTION__);
             }
             return false; // can't cancel, maker already redeemed taker funds
         }
@@ -3363,15 +3696,13 @@ bool Session::Impl::refundTraderDeposit(const std::string & orderId, const std::
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(currency);
     if (!conn) {
-        WARN() << "refund attempt failed, no connector for trader (" << currency << ") on order "
-               << orderId << " , is the wallet running?";
+        LogOrderMsg(orderId, "refund attempt failed, no connector for <" + currency + "> on order, is the wallet running?", __FUNCTION__);
         return false;
     }
 
     // If refund transaction id not defined, do not attempt to rollback
     if (refTx.empty()) {
-        LOG() << "Fatal error, unable to submit refund for trader (" << currency << ") on order "
-              << orderId << " due to an unknown refund tx";
+        LogOrderMsg(orderId, "Fatal error, unable to submit refund for <" + currency + "> on order due to an unknown refund tx", __FUNCTION__);
         errCode = RPCErrorCode::RPC_MISC_ERROR;
         return true; // done
     }

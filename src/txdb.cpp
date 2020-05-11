@@ -29,6 +29,8 @@ bool IsProofOfStake(int blockHeight, const Consensus::Params & consensusParams);
 bool stakeTargetHit(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
 bool IsProtocolV06(uint64_t nTimeTx, const Consensus::Params & consensusParams);
 bool stakeTargetHitV06(const uint256 & hashProofOfStake, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay);
+bool IsProtocolV07(uint64_t nTimeTx, const Consensus::Params & consensusParams);
+bool stakeTargetHitV07(const uint256 & hashProofOfStake, const int64_t & currentStakingTime, const int64_t & prevStakingTime, const int64_t & nValueIn, const arith_uint256 & bnTargetPerCoinDay, const int & nPowTargetSpacing);
 
 static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';
@@ -290,7 +292,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     };
 
     auto checkWork = [&insertBlockIndex,&progress,totalprogress,estTotalBlocks,consensusParams,this](
-            std::vector<CDiskBlockIndex> & blocks, std::unordered_set<uint256, TXDBHasher> & invalidBlocks)
+            std::vector<CDiskBlockIndex> & blocks, std::unordered_set<uint256, TXDBHasher> & invalidBlocks) -> bool
     {
         boost::thread_group tg;
         Mutex mu;
@@ -308,10 +310,20 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                 // Construct block index objects
                 for (int j = from; j < to; ++j) {
                     auto *diskindex = &blocks[j];
-                    const auto & hash = diskindex->CacheBlockHash();
+                    if (diskindex->hash.IsNull())
+                        diskindex->CacheBlockHash();
+                    const auto & hash = diskindex->hash;
+                    if (invalidBlocks.count(hash))
+                        continue;
                     if (IsProofOfStake(diskindex->nHeight, consensusParams)) {
                         arith_uint256 bnTargetPerCoinDay; bnTargetPerCoinDay.SetCompact(diskindex->nBits);
-                        if (IsProtocolV06(diskindex->GetBlockTime(), consensusParams)) {
+                        if (IsProtocolV07(diskindex->GetBlockTime(), consensusParams)) {
+                            if (!stakeTargetHitV07(diskindex->hashProofOfStake, diskindex->nNonce, diskindex->pprev->nNonce, diskindex->nStakeAmount, bnTargetPerCoinDay, consensusParams.nPowTargetSpacing)) {
+                                LOCK(mu);
+                                invalidBlocks.insert(hash);
+                                continue;
+                            }
+                        } else if (IsProtocolV06(diskindex->GetBlockTime(), consensusParams)) {
                             if (!stakeTargetHitV06(diskindex->hashProofOfStake, diskindex->nStakeAmount, bnTargetPerCoinDay)) {
                                 LOCK(mu);
                                 invalidBlocks.insert(hash);
@@ -334,17 +346,24 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
         }
 
         tg.join_all();
+        return invalidBlocks.empty();
     };
 
-    auto loadIndices = [&insertBlockIndex,&progress,estTotalBlocks](const std::vector<CDiskBlockIndex> & blocks, std::unordered_set<uint256, TXDBHasher> & invalidBlocks) {
+    // Mutates blocks, associates the pprev (previous block index)
+    auto loadIndices = [&insertBlockIndex,&progress,estTotalBlocks](std::vector<CDiskBlockIndex> & blocks, std::unordered_set<uint256, TXDBHasher> & invalidBlocks) -> bool {
         // Construct block index objects
-        for (const auto & diskindex : blocks) {
+        for (auto & diskindex : blocks) {
+            if (diskindex.hash.IsNull())
+                diskindex.CacheBlockHash();
             const auto & hash = diskindex.hash;
             if (invalidBlocks.count(hash))
-                continue;
+                return false;
 
             CBlockIndex *pindexNew = insertBlockIndex(hash);
-            pindexNew->pprev = insertBlockIndex(diskindex.hashPrev);
+            CBlockIndex *pindexPrev = insertBlockIndex(diskindex.hashPrev);
+            pindexNew->pprev = pindexPrev;
+            diskindex.pprev = pindexPrev; // set prev index on the diskindex
+
             pindexNew->nHeight = diskindex.nHeight;
             pindexNew->nFile = diskindex.nFile;
             pindexNew->nDataPos = diskindex.nDataPos;
@@ -368,6 +387,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
 
             progress(1, estTotalBlocks, 15);
         }
+        return true;
     };
 
     const auto lowMemory = gArgs.GetBoolArg("-lowmemoryload", false);
@@ -385,8 +405,8 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                     boost::this_thread::interruption_point();
                     if (lowMemory) {
                         std::unordered_set<uint256, TXDBHasher> invalidBlocks;
-                        checkWork(blocks, invalidBlocks);
-                        loadIndices(blocks, invalidBlocks);
+                        if (!loadIndices(blocks, invalidBlocks) || !checkWork(blocks, invalidBlocks))
+                            return error("%s: Failed to load block index, reindex required", __func__);
                         blocks.clear();
                         blocks.reserve(std::min<int>(group, consensusParams.lastCheckpointHeight));
                     }
@@ -404,8 +424,8 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     // Load remaining blocks
     if (!blocks.empty()) {
         std::unordered_set<uint256, TXDBHasher> invalidBlocks;
-        checkWork(blocks, invalidBlocks);
-        loadIndices(blocks, invalidBlocks);
+        if (!loadIndices(blocks, invalidBlocks) || !checkWork(blocks, invalidBlocks))
+            return error("%s: Failed to load block index, reindex required", __func__);
         blocks.clear();
     }
 

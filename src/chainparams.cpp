@@ -117,6 +117,7 @@ public:
         consensus.coinMaturity = 100;
         consensus.stakingV05UpgradeTime = 1569261600; // Sep 23 '19 6pm UTC
         consensus.stakingV06UpgradeTime = 1586973600; // Apr 15, 2020 6pm UTC
+        consensus.stakingV07UpgradeTime = 1591639200; // June 8, 2020 6pm UTC
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -286,6 +287,7 @@ public:
         consensus.coinMaturity = 15;
         consensus.stakingV05UpgradeTime = 1566085343; // Aug 17, 2019
         consensus.stakingV06UpgradeTime = 1581628366; // Feb 13, 2020
+        consensus.stakingV07UpgradeTime = 1587164819; // Apr 17, 2020 23:06:59 UTC
 
         pchMessageStart[0] = 0x45;
         pchMessageStart[1] = 0x76;

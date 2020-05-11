@@ -678,15 +678,8 @@ qt_blocknet_qt_LDADD += $(LIBBITCOIN_CLI) $(LIBBITCOIN_COMMON) $(LIBBITCOIN_UTIL
 qt_blocknet_qt_LDADD += $(LIBXBRIDGE)
 
 # Blocknet XRouter
-qt_blocknet_qt_LDADD += $(LIBXROUTER)
+qt_blocknet_qt_LDADD += $(LIBXROUTER) $(EVENT_LIBS) $(SSL_LIBS)
 
-if ENABLE_BIP70
-qt_blocknet_qt_LDADD += $(SSL_LIBS)
-else
-if TARGET_WINDOWS
-qt_blocknet_qt_LDADD += $(SSL_LIBS)
-endif
-endif
 qt_blocknet_qt_LDADD += $(CRYPTO_LIBS)
 qt_blocknet_qt_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(QT_LDFLAGS) $(LIBTOOL_APP_LDFLAGS)
 qt_blocknet_qt_LIBTOOLFLAGS = $(AM_LIBTOOLFLAGS) --tag CXX

@@ -203,8 +203,8 @@ struct TestChainPoS : public TestingSetup {
         int tries{0};
         const int currentBlockHeight = chainActive.Height();
         while (chainActive.Height() < currentBlockHeight + blockCount) {
+            CBlockIndex *pindex = nullptr;
             try {
-                CBlockIndex *pindex = nullptr;
                 {
                     LOCK(cs_main);
                     pindex = chainActive.Tip();
@@ -228,7 +228,7 @@ struct TestChainPoS : public TestingSetup {
             auto stime = staker.LastUpdateTime();
             if (stime == 0)
                 stime = GetAdjustedTime();
-            SetMockTime(stime + MAX_FUTURE_BLOCK_TIME_POS);
+            SetMockTime(stime + Params().GetConsensus().PoSFutureBlockTimeLimit(pindex->GetBlockTime()));
         }
     }
 
@@ -263,7 +263,7 @@ struct TestChainPoS : public TestingSetup {
             auto stime = staker.LastUpdateTime();
             if (stime == 0)
                 stime = GetAdjustedTime();
-            SetMockTime(stime + MAX_FUTURE_BLOCK_TIME_POS);
+            SetMockTime(stime + params.GetConsensus().PoSFutureBlockTimeLimit(tip->GetBlockTime()));
         }
     }
 

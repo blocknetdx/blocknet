@@ -342,12 +342,25 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlockPoS(const CInputCo
         }
     };
 
-    // Calculate network fee for coinbase/coinstake txs
-    signInput(coinstakeTx, keystore); // add signature
-    const auto coinbaseBytes = ::GetSerializeSize(coinbaseTx, PROTOCOL_VERSION);
-    const auto coinstakeBytes = ::GetSerializeSize(coinstakeTx, PROTOCOL_VERSION);
-    CAmount estimatedNetworkFee = static_cast<CAmount>(::minRelayTxFee.GetFee(coinbaseBytes) + ::minRelayTxFee.GetFee(coinstakeBytes));
-    coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount - estimatedNetworkFee, paymentScript); // staker payment w/ network fee taken out
+    if (!feesEnabled) { // Calculate network fee for coinbase/coinstake txs if fees are not enabled
+        signInput(coinstakeTx, keystore); // add signature for sole purpose of computing accurate network fee
+        const auto coinbaseBytes = ::GetSerializeSize(coinbaseTx, PROTOCOL_VERSION);
+        const auto coinstakeBytes = ::GetSerializeSize(coinstakeTx, PROTOCOL_VERSION);
+        CAmount estimatedNetworkFee = static_cast<CAmount>(::minRelayTxFee.GetFee(coinbaseBytes) + ::minRelayTxFee.GetFee(coinstakeBytes));
+        coinstakeTx.vout[1] = CTxOut(stakeInput.txout.nValue + stakeAmount - estimatedNetworkFee, paymentScript); // staker payment w/ network fee taken out
+    }
+
+    // Stake to address feature
+    const auto stakeToAddress = gArgs.GetArg("-staketoaddress", "");
+    const auto stakeToAddressEnabled = !stakeToAddress.empty() && !gov::Governance::isSuperblock(nHeight, chainparams.GetConsensus()) && IsValidDestinationString(stakeToAddress);
+    if (stakeToAddressEnabled) {
+        auto stakeToAddressDest = DecodeDestination(stakeToAddress);
+        CKey stakeToAddressKey;
+        if (keystore->GetKey(GetKeyForDestination(*keystore, stakeToAddressDest), stakeToAddressKey)) {
+            coinstakeTx.vout[1] = CTxOut(coinstakeTx.vout[1].nValue - stakeAmount, paymentScript); // remove stake amount
+            coinstakeTx.vout.emplace_back(stakeAmount, GetScriptForDestination(stakeToAddressDest)); // add stake amount to stake-to-address vout
+        }
+    }
     signInput(coinstakeTx, keystore); // resign with correct fee estimation
 
     // Assign coinstake tx

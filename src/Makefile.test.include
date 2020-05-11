@@ -1,5 +1,5 @@
 # Copyright (c) 2013-2016 The Bitcoin Core developers
-# Copyright (c) 2019 The Blocknet developers
+# Copyright (c) 2019-2020 The Blocknet developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -130,6 +130,12 @@ BITCOIN_TESTS =\
   test/validation_block_tests.cpp \
   test/versionbits_tests.cpp
 
+# Blocknet XRouter
+BITCOIN_TESTS += \
+  test/xrouter_tests.cpp
+BITCOIN_TEST_SUITE += \
+  test/xrouter_tests.h
+
 if ENABLE_PROPERTY_TESTS
 BITCOIN_TESTS += \
   test/key_properties.cpp
@@ -173,7 +179,7 @@ test_test_blocknet_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 # Blocknet XBridge
 test_test_blocknet_LDADD += $(LIBXBRIDGE)
 # Blocknet XRouter
-test_test_blocknet_LDADD += $(LIBXROUTER)
+test_test_blocknet_LDADD += $(LIBXROUTER) $(EVENT_LIBS) $(SSL_LIBS)
 test_test_blocknet_LDADD += $(BDB_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(RAPIDCHECK_LIBS)
 test_test_blocknet_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) -static
 

@@ -1,7 +1,7 @@
 dnl require autoconf 2.60 (AS_ECHO/AS_ECHO_N)
 AC_PREREQ([2.60])
 define(_CLIENT_VERSION_MAJOR, 4)
-define(_CLIENT_VERSION_MINOR, 1)
+define(_CLIENT_VERSION_MINOR, 2)
 define(_CLIENT_VERSION_REVISION, 0)
 define(_CLIENT_VERSION_BUILD, 0)
 define(_CLIENT_VERSION_RC, 0)
@@ -108,6 +108,16 @@ AC_ARG_ENABLE([wallet],
   [disable wallet (enabled by default)])],
   [enable_wallet=$enableval],
   [enable_wallet=yes])
+
+AC_ARG_ENABLE([xrouterclient],
+  [AS_HELP_STRING([--enable-xrouterclient],
+  [enable xrouterclient (default is no)])],
+  [use_xrouterclient=$enableval],
+  [use_xrouterclient=no])
+
+if test "x$use_xrouterclient" = xyes; then
+  AC_DEFINE(USE_XROUTERCLIENT, 1, [Define this symbol to build for xrouter client use])
+fi
 
 AC_ARG_WITH([miniupnpc],
   [AS_HELP_STRING([--with-miniupnpc],
@@ -1102,8 +1112,17 @@ if test x$use_pkgconfig = xyes; then
       if test x$use_qr != xno; then
         BITCOIN_QT_CHECK([PKG_CHECK_MODULES([QR], [libqrencode], [have_qrencode=yes], [have_qrencode=no])])
       fi
-      if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests != xnononono; then
-        PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
+      if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests$use_xrouterclient != xnonononono; then
+        PKG_CHECK_MODULES([EVENT],[libevent_openssl],
+                  [AC_DEFINE([ENABLE_EVENTSSL],[1],[Define to 1 to enable xrouter ssl])],
+                  [AC_DEFINE([ENABLE_EVENTSSL],[0],[Define to 1 to enable xrouter ssl])
+                   AC_MSG_WARN([libevent_openssl not found, disabling])
+                   use_xrouterssl=no])
+        if test x$use_xrouterssl != xno; then
+            PKG_CHECK_MODULES([EVENT], [libevent_openssl libevent libssl],, [AC_MSG_ERROR(libevent not found.)])
+        else
+            PKG_CHECK_MODULES([EVENT], [libevent],, [AC_MSG_ERROR(libevent not found.)])
+        fi
         if test x$TARGET_OS != xwindows; then
           PKG_CHECK_MODULES([EVENT_PTHREADS], [libevent_pthreads],, [AC_MSG_ERROR(libevent_pthreads not found.)])
         fi
@@ -1127,9 +1146,17 @@ else
   AC_CHECK_HEADER([openssl/ssl.h],, AC_MSG_ERROR(libssl headers missing),)
   AC_CHECK_LIB([ssl],         [main],SSL_LIBS=-lssl, AC_MSG_ERROR(libssl missing))
 
-  if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests != xnononono; then
+  if test x$build_bitcoin_cli$build_bitcoind$bitcoin_enable_qt$use_tests$use_xrouterclient != xnonononono; then
     AC_CHECK_HEADER([event2/event.h],, AC_MSG_ERROR(libevent headers missing),)
+    AC_CHECK_HEADER([event2/bufferevent_ssl.h],,
+        [AC_DEFINE([ENABLE_EVENTSSL],[1],[Define to 1 to enable xrouter ssl])],
+        [AC_DEFINE([ENABLE_EVENTSSL],[0],[Define to 1 to enable xrouter ssl])
+         AC_MSG_WARN([libevent_openssl headers not found, disabling])
+         use_xrouterssl=no])
     AC_CHECK_LIB([event],[main],EVENT_LIBS=-levent,AC_MSG_ERROR(libevent missing))
+    if test x$use_xrouterssl != xno; then
+        AC_CHECK_LIB([event_openssl],[main],[EVENT_LIBS="-levent_openssl $EVENT_LIBS $SSL_LIBS"],AC_MSG_ERROR(libevent_openssl missing))
+    fi
     if test x$TARGET_OS != xwindows; then
       AC_CHECK_LIB([event_pthreads],[main],EVENT_PTHREADS_LIBS=-levent_pthreads,AC_MSG_ERROR(libevent_pthreads missing))
     fi
@@ -1424,6 +1451,7 @@ AM_CONDITIONAL([ENABLE_SSE41],[test x$enable_sse41 = xyes])
 AM_CONDITIONAL([ENABLE_AVX2],[test x$enable_avx2 = xyes])
 AM_CONDITIONAL([ENABLE_SHANI],[test x$enable_shani = xyes])
 AM_CONDITIONAL([USE_ASM],[test x$use_asm = xyes])
+AM_CONDITIONAL([USE_XROUTERCLIENT],[test x$use_xrouterclient = xyes])
 
 AC_DEFINE(CLIENT_VERSION_MAJOR, _CLIENT_VERSION_MAJOR, [Major version])
 AC_DEFINE(CLIENT_VERSION_MINOR, _CLIENT_VERSION_MINOR, [Minor version])
@@ -1557,6 +1585,7 @@ echo "  with test     = $use_tests"
 if test x$use_tests != xno; then
     echo "    with fuzz   = $enable_fuzz"
 fi
+echo "  xrouterclient = $use_xrouterclient"
 echo "  with bench    = $use_bench"
 echo "  with upnp     = $use_upnp"
 echo "  use asm       = $use_asm"

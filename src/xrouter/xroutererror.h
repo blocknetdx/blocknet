@@ -5,6 +5,8 @@
 #ifndef BLOCKNET_XROUTER_XROUTERERROR_H
 #define BLOCKNET_XROUTER_XROUTERERROR_H
 
+#include <exception>
+
 namespace xrouter
 {
     enum Error
@@ -29,9 +31,12 @@ namespace xrouter
         BAD_SIGNATURE           = 1036,
     };
 
-    class XRouterError {
+    class XRouterError : public std::exception {
     public:
         XRouterError(std::string message, enum Error errcode) : msg(std::move(message)), code(errcode) { }
+        const char * what() const noexcept override {
+            return msg.c_str();
+        }
         std::string msg;
         Error code;
     };
