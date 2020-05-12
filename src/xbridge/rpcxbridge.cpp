@@ -337,6 +337,8 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
         jtr.emplace_back(Pair("taker_size",     xbridge::xBridgeStringValueFromAmount(tr->toAmount)));
         jtr.emplace_back(Pair("updated_at",     xbridge::iso8601(tr->txtime)));
         jtr.emplace_back(Pair("created_at",     xbridge::iso8601(tr->created)));
+        jtr.emplace_back(Pair("partial_order",   tr->isPartialOrderAllowed()));
+        jtr.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(tr->minFromAmount)));
         jtr.emplace_back(Pair("status",         tr->strState()));
         result.emplace_back(jtr);
 
@@ -417,6 +419,7 @@ UniValue dxGetOrderFills(const JSONRPCRequest& request)
         tmp.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(transaction->fromAmount)));
         tmp.emplace_back(Pair("taker",      transaction->toCurrency));
         tmp.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(transaction->toAmount)));
+        tmp.emplace_back(Pair("partial_order", transaction->isPartialOrderAllowed()));
         arr.emplace_back(tmp);
 
     }
@@ -564,6 +567,9 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
     result.emplace_back(Pair("taker_size",  xbridge::xBridgeStringValueFromAmount(order->toAmount)));
     result.emplace_back(Pair("updated_at",  xbridge::iso8601(order->txtime)));
     result.emplace_back(Pair("created_at",  xbridge::iso8601(order->created)));
+    result.emplace_back(Pair("partial_order", order->isPartialOrderAllowed()));
+    result.emplace_back(Pair("partial_fill", order->isPartialTransaction()));
+    result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(order->minFromAmount)));
     result.emplace_back(Pair("status",      order->strState()));
     return uret(result);
 }
@@ -714,6 +720,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
             result.emplace_back(Pair("taker_size",
                                      xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
             result.emplace_back(Pair("taker_address", toAddress));
+            result.emplace_back(Pair("partial_order", false));
             result.emplace_back(Pair("status", "created"));
             return uret(result);
         }
@@ -755,6 +762,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("created_at",     xbridge::iso8601(createdTime)));
         obj.emplace_back(Pair("updated_at",     xbridge::iso8601(boost::posix_time::microsec_clock::universal_time()))); // TODO Need actual updated time, this is just estimate
         obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
+        obj.emplace_back(Pair("partial_order",  false));
         obj.emplace_back(Pair("status",         "created"));
         return uret(obj);
 
@@ -1643,6 +1651,7 @@ UniValue dxGetMyOrders(const JSONRPCRequest& request)
         // dates
         o.emplace_back(Pair("updated_at", xbridge::iso8601(t->txtime)));
         o.emplace_back(Pair("created_at", xbridge::iso8601(t->created)));
+        o.emplace_back(Pair("partial_order", t->isPartialOrderAllowed()));
         o.emplace_back(Pair("status", t->strState()));
 
         r.emplace_back(o);
@@ -2027,6 +2036,415 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
     return uret(records);
 }
 
+UniValue dxMakePartialOrder(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxMakePartialOrder",
+                "\nCreate a new order. You can only create orders for markets with tokens\n"
+                "supported by your node. There are no fees to make orders. [dryrun] will\n"
+                "validate the order without submitting the order to the network.\n"
+                "\nNote:\n"
+                "XBridge will first attempt to use funds from the specified maker address.\n"
+                "If this address does not have sufficient funds to cover the order, then\n"
+                "it will pull funds from other addresses in the wallet. Change is\n"
+                "deposited to the address with the largest input used.\n",
+                {
+                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token being sold by the maker (e.g. LTC)."},
+                    {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker token being sent."},
+                    {"maker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The maker address containing tokens being sent."},
+                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token being bought by the maker (e.g. BLOCK)."},
+                    {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker token to be received."},
+                    {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving token."},
+                    {"partial_minimum", RPCArg::Type::STR, RPCArg::Optional::NO, "The minimum amount of maker token to sell."},
+                    {"repost", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Repost partial order remainder after taken. Options: true/false"},
+                    {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 5")
+                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"5\"")
+                  + HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 5 true dryrun")
+                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"5\", \"true\", \"dryrun\"")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+
+    if (params.size() < 7) {
+        throw runtime_error("dxMakePartialOrder (maker) (maker size) (maker address) (taker) (taker size)\n"
+                            "(taker address) (partial_minimum) (repost)[optional] (dryrun)[optional]\n"
+                            "Create a new order. You can only create orders for markets with tokens\n"
+                            "supported by your node. There are no fees to make orders. After an order\n"
+                            "is taken partially, the fully taken and partially taken increments are\n"
+                            "sent to P2SH and the remaining increments are reposted at the same exchange\n"
+                            "rate (if [repost] = true) [dryrun] will validate the order without submitting\n"
+                            "the order to the network (test run).");
+    }
+
+    if (!xbridge::xBridgeValidCoin(params[1].get_str())) {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "The maker_size is too precise. The maximum precision supported is " +
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return uret(error);
+    }
+
+    if (!xbridge::xBridgeValidCoin(params[4].get_str())) {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "The taker_size is too precise. The maximum precision supported is " +
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return uret(error);
+    }
+
+    if (!xbridge::xBridgeValidCoin(params[6].get_str())) {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "The partial_minimum is too precise. The maximum precision supported is " +
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return uret(error);
+    }
+
+    std::string fromCurrency    = params[0].get_str();
+    double      fromAmount      = boost::lexical_cast<double>(params[1].get_str());
+    std::string fromAddress     = params[2].get_str();
+
+    std::string toCurrency      = params[3].get_str();
+    double      toAmount        = boost::lexical_cast<double>(params[4].get_str());
+    std::string toAddress       = params[5].get_str();
+
+    double      partialMinimum = boost::lexical_cast<double>(params[6].get_str());;
+
+    // Check that addresses are not the same
+    if (fromAddress == toAddress) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The maker_address and taker_address cannot be the same: " + fromAddress));
+    }
+
+    // Check upper limits
+    if (fromAmount > (double)xbridge::TransactionDescr::MAX_COIN ||
+            toAmount > (double)xbridge::TransactionDescr::MAX_COIN) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN)));
+    }
+    // Check lower limits
+    if (fromAmount <= 0 || toAmount <= 0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The minimum supported size is " + xbridge::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN)));
+    }
+
+    // Validate addresses
+    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
+    if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
+    if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
+
+    xbridge::App &app = xbridge::App::instance();
+
+    if (!app.isValidAddress(fromAddress, connFrom)) {
+        return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress));
+    }
+    if (!app.isValidAddress(toAddress, connTo)) {
+        return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress));
+    }
+    if(fromAmount <= .0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The maker_size must be greater than 0."));
+    }
+    if(toAmount <= .0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The taker_size must be greater than 0."));
+    }
+
+    if (partialMinimum >= fromAmount) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                   "The partial_minimum must be less than maker_size."));
+    }
+
+    if (partialMinimum <= .0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                   "The partial_minimum must be greater than 0."));
+    }
+
+    bool repost = false;
+    if (params.size() >= 8) {
+        repost = params[7].get_str() == "true";
+    }
+
+    // Perform explicit check on dryrun to avoid executing order on bad spelling
+    bool dryrun = false;
+    if (params.size() == 9) {
+        std::string dryrunParam = params[8].get_str();
+        if (dryrunParam != "dryrun") {
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
+        }
+        dryrun = true;
+    }
+
+
+    Object result;
+    auto statusCode = app.checkCreateParams(fromCurrency, toCurrency,
+                                       xbridge::xBridgeAmountFromReal(fromAmount), fromAddress);
+    switch (statusCode) {
+    case xbridge::SUCCESS:{
+        // If dryrun
+        if (dryrun) {
+            result.emplace_back(Pair("id", uint256().GetHex()));
+            result.emplace_back(Pair("maker", fromCurrency));
+            result.emplace_back(Pair("maker_size",
+                                     xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(fromAmount))));
+            result.emplace_back(Pair("maker_address", fromAddress));
+            result.emplace_back(Pair("taker", toCurrency));
+            result.emplace_back(Pair("taker_size",
+                                     xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
+            result.emplace_back(Pair("taker_address", toAddress));
+            result.emplace_back(Pair("partial_order", true));
+            result.emplace_back(Pair("partial_minimum", partialMinimum));
+            result.emplace_back(Pair("partial_repost",  repost));
+            result.emplace_back(Pair("status", "created"));
+            return uret(result);
+        }
+        break;
+    }
+
+    case xbridge::INVALID_CURRENCY: {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
+    }
+    case xbridge::NO_SESSION:{
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
+    }
+    case xbridge::INSIFFICIENT_FUNDS:{
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
+    }
+
+    default:
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+    }
+
+
+    uint256 id = uint256();
+    uint256 blockHash = uint256();
+    statusCode = xbridge::App::instance().sendXBridgeTransaction
+          (fromAddress, fromCurrency, xbridge::xBridgeAmountFromReal(fromAmount),
+           toAddress, toCurrency, xbridge::xBridgeAmountFromReal(toAmount), true,
+           repost, xbridge::xBridgeAmountFromReal(partialMinimum), id, blockHash);
+
+    if (statusCode == xbridge::SUCCESS) {
+        Object obj;
+        obj.emplace_back(Pair("id",               id.GetHex()));
+        obj.emplace_back(Pair("maker_address",    fromAddress));
+        obj.emplace_back(Pair("maker",            fromCurrency));
+        obj.emplace_back(Pair("maker_size",       xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(fromAmount))));
+        obj.emplace_back(Pair("taker_address",    toAddress));
+        obj.emplace_back(Pair("taker",            toCurrency));
+        obj.emplace_back(Pair("taker_size",       xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
+        const auto &createdTime = xbridge::App::instance().transaction(id)->created;
+        obj.emplace_back(Pair("created_at",       xbridge::iso8601(createdTime)));
+        obj.emplace_back(Pair("updated_at",       xbridge::iso8601(boost::posix_time::microsec_clock::universal_time()))); // TODO Need actual updated time, this is just estimate
+        obj.emplace_back(Pair("block_id",         blockHash.GetHex()));
+        obj.emplace_back(Pair("partial_order",    true));
+        obj.emplace_back(Pair("partial_minimum",  partialMinimum));
+        obj.emplace_back(Pair("partial_repost",   repost));
+        obj.emplace_back(Pair("status",           "created"));
+        return uret(obj);
+
+    } else {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+    }
+}
+
+UniValue dxTakePartialOrder(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxTakePartialOrder",
+                "\nThis call is used to accept an order. You can only take orders for markets\n"
+                "with tokens supported by your node. Taking an order has a 0.015 BLOCK fee.\n"
+                "[dryrun] will evaluate input without accepting the order (test run).\n"
+                "\nNote:\n"
+                "XBridge will first attempt to use funds from the specified from_address.\n"
+                "If this address does not have sufficient funds to cover the order, then\n"
+                "it will pull funds from other addresses in the wallet. Change is\n"
+                "deposited to the address with the largest input used.\n",
+                {
+                    {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The ID of the order being filled."},
+                    {"from_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address containing tokens being sent."},
+                    {"to_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address for the receiving token."},
+                    {"amount", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount to take."},
+                    {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
+                },
+                RPCResult{
+                "\n"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxTakePartialOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR")
+                  + HelpExampleRpc("dxTakePartialOrder", "\"524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\"")
+                  + HelpExampleCli("dxTakePartialOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR dryrun")
+                  + HelpExampleRpc("dxTakePartialOrder", "\"524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"dryrun\"")
+                },
+            }.ToString());
+    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+
+    if ((params.size() != 4) && (params.size() != 5))
+    {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "(id) (from_address) (to_address) (amount) (dryrun)[optional]"));
+    }
+
+    uint256 id = uint256S(params[0].get_str());
+    std::string fromAddress    = params[1].get_str();
+    std::string toAddress      = params[2].get_str();
+
+    xbridge::App &app = xbridge::App::instance();
+
+    // Check that addresses are not the same
+    if (fromAddress == toAddress) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The from_address and to_address cannot be the same: " + fromAddress));
+    }
+
+    double amount = boost::lexical_cast<double>(params[3].get_str());
+    if (amount <= 0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "The amount cannot be less than or equal to 0: " + params[3].get_str()));
+    }
+
+    // Perform explicit check on dryrun to avoid executing order on bad spelling
+    bool dryrun = false;
+    if (params.size() == 5) {
+        std::string dryrunParam = params[4].get_str();
+        if (dryrunParam != "dryrun") {
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
+        } else {
+            dryrun = true;
+        }
+    }
+
+    Object result;
+    xbridge::TransactionDescrPtr txDescr;
+    xbridge::Error statusCode;
+
+    txDescr = app.transaction(id);
+    if(!txDescr) {
+        WARN() << "transaction not found " << __FUNCTION__;
+        return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__));
+    }
+
+    if (!txDescr->isPartialOrderAllowed()) {
+        WARN() << "partial orders not allowed for this transaction " << __FUNCTION__;
+        return uret(xbridge::makeError(xbridge::INVALID_PARTIAL_ORDER, __FUNCTION__));
+    }
+
+    if (xbridge::xBridgeAmountFromReal(amount) < txDescr->minFromAmount) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "The minimum amount for this order is: " +
+            xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
+    }
+
+    uint64_t makerSize = xbridge::xBridgeAmountFromReal(amount) * xbridge::price(txDescr);
+    uint64_t takerSize = xbridge::xBridgeAmountFromReal(amount);
+
+    statusCode = app.checkAcceptParams(id, txDescr, takerSize, fromAddress);
+
+    switch (statusCode)
+    {
+    case xbridge::SUCCESS: {
+        if (txDescr->isLocal()) // no self trades
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "Unable to accept your own order."));
+
+        // taker [to] will match order [from] currency (due to pair swap happening later)
+        xbridge::WalletConnectorPtr connTo = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
+        // taker [from] will match order [to] currency (due to pair swap happening later)
+        xbridge::WalletConnectorPtr connFrom   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
+        if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->toCurrency));
+        if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->fromCurrency));
+        // Check for valid toAddress
+        if (!app.isValidAddress(toAddress, connTo))
+            return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
+                                   ": " + txDescr->fromCurrency + " address is bad. Are you using the correct address?"));
+        // Check for valid fromAddress
+        if (!app.isValidAddress(fromAddress, connFrom))
+            return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
+                                   ": " + txDescr->toCurrency + " address is bad. Are you using the correct address?"));
+
+        if(dryrun)
+        {
+            result.emplace_back(Pair("id", uint256().GetHex()));
+
+            result.emplace_back(Pair("maker", txDescr->fromCurrency));
+            result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(makerSize)));
+
+            result.emplace_back(Pair("taker", txDescr->toCurrency));
+            result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(takerSize)));
+
+            result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
+            result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
+
+            result.emplace_back(Pair("partial_order", txDescr->isPartialOrderAllowed()));
+
+            result.emplace_back(Pair("status", "filled"));
+            return uret(result);
+        }
+
+        break;
+    }
+    case xbridge::TRANSACTION_NOT_FOUND:
+    {
+        return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString()));
+    }
+
+    case xbridge::NO_SESSION:
+    {
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, txDescr->toCurrency));
+    }
+
+    case xbridge::INSIFFICIENT_FUNDS:
+    {
+        return uret(xbridge::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__, fromAddress));
+    }
+
+    default:
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+
+    }
+
+    // TODO swap is destructive on state (also complicates historical data)
+    std::swap(txDescr->fromCurrency, txDescr->toCurrency);
+    std::swap(txDescr->fromAmount, txDescr->toAmount);
+
+    statusCode = app.acceptXBridgePartialTransaction(id, fromAddress, toAddress, makerSize, takerSize);
+    if (statusCode == xbridge::SUCCESS) {
+
+        result.emplace_back(Pair("id", id.GetHex()));
+
+        result.emplace_back(Pair("maker", txDescr->fromCurrency));
+        result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(makerSize)));
+
+        result.emplace_back(Pair("taker", txDescr->toCurrency));
+        result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(takerSize)));
+
+        result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
+        result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
+
+        result.emplace_back(Pair("partial_order", txDescr->isPartialOrderAllowed()));
+
+        result.emplace_back(Pair("status", txDescr->strState()));
+        return uret(result);
+
+    } else {
+        // restore state on error
+        std::swap(txDescr->fromCurrency, txDescr->toCurrency);
+        std::swap(txDescr->fromAmount, txDescr->toAmount);
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+    }
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                       actor (function)          argNames
@@ -2039,7 +2457,9 @@ static const CRPCCommand commands[] =
     { "xbridge",            "dxGetNewTokenAddress",    &dxGetNewTokenAddress,    {} },
     { "xbridge",            "dxGetNetworkTokens",      &dxGetNetworkTokens,      {} },
     { "xbridge",            "dxMakeOrder",             &dxMakeOrder,             {} },
+    { "xbridge",            "dxMakePartialOrder",      &dxMakePartialOrder,      {} },
     { "xbridge",            "dxTakeOrder",             &dxTakeOrder,             {} },
+    { "xbridge",            "dxTakePartialOrder",      &dxTakePartialOrder,      {} },
     { "xbridge",            "dxCancelOrder",           &dxCancelOrder,           {} },
     { "xbridge",            "dxGetOrderHistory",       &dxGetOrderHistory,       {} },
     { "xbridge",            "dxGetOrderBook",          &dxGetOrderBook,          {} },

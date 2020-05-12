@@ -134,6 +134,21 @@ struct TransactionDescr
     bool     redeemedCounterpartyDeposit{false};
     bool     depositSent{false};
 
+    // is partial order allowed
+    bool     partialOrdersAllowed{false};
+
+    // is partial transaction
+    bool     partialTransaction{false};
+
+    // repost partial order after completion
+    bool     repostOrder{false};
+    bool     reposted{false};
+
+    // partial order amounts
+    uint64_t minFromAmount;
+    uint64_t origFromAmount;
+    uint64_t origToAmount;
+
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
     void excludeNode(CPubKey &key) {
@@ -192,6 +207,31 @@ struct TransactionDescr
     bool isDoneWatching() {
         LOCK(_lock);
         return watchingDone;
+    }
+
+    void allowPartialOrders() {
+        LOCK(_lock);
+        partialOrdersAllowed = true;
+    }
+
+    bool isPartialOrderAllowed() {
+        LOCK(_lock);
+        return partialOrdersAllowed;
+    }
+
+    void setPartialTransaction() {
+        LOCK(_lock);
+        partialTransaction = true;
+    }
+
+    bool isPartialTransaction() {
+        LOCK(_lock);
+        return partialTransaction;
+    }
+
+    bool isPartialRepost() {
+        LOCK(_lock);
+        return repostOrder;
     }
 
     void setWatchBlock(const uint32_t block) {
@@ -435,6 +475,11 @@ private:
         watching          = d.watching;
         watchingDone      = d.watchingDone;
         redeemedCounterpartyDeposit = d.redeemedCounterpartyDeposit;
+
+        partialOrdersAllowed = d.partialOrdersAllowed;
+        partialTransaction   = d.partialTransaction;
+
+        minFromAmount = d.minFromAmount;
         }
         updateTimestamp(d);
     }

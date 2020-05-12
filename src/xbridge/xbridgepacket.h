@@ -118,7 +118,7 @@ enum XBridgeCommand
     //        uint32_t out idx
     xbcTransaction = 3,
     //
-    // xbcPendingTransaction (124 bytes)
+    // xbcPendingTransaction (126 bytes)
     // exchange broadcast send this message, send list of opened transactions
     //    uint256 transaction id
     //    8 bytes source currency
@@ -128,9 +128,10 @@ enum XBridgeCommand
     //    uint160 hub address
     //    uint64  timestamp
     //    uint256 block hash
+    //    uint16  partial order allowed flag
     xbcPendingTransaction = 4,
     //
-    // xbcTransactionAccepting (188 bytes min)
+    // xbcTransactionAccepting (190 bytes min)
     // client accepting opened tx
     //    uint160 hub address
     //    uint256 client transaction id

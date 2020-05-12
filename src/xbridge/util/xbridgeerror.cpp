@@ -68,6 +68,8 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "Could not find a service node with required services: " + argument;
         case INVALID_ONCHAIN_HISTORY:
             return "The order information could not be written to the blockchain";
+        case INVALID_PARTIAL_ORDER:
+            return "Partial orders not allowed for this transaction";
     }
     return "invalid error value";
 }
