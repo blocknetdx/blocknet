@@ -992,6 +992,8 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
                     "  \"lastupdated\": n,          (numeric) Unix time the staker was last updated\n"
                     "  \"lastupdatedstr\": \"xxx\", (string) Human readable last updated time\n"
                     "  \"lastblockprocessed\": n,   (numeric) Last block processed for staking\n"
+                    "  \"fullyunlocked\": n,        (boolean) Wallet fully unlocked\n"
+                    "  \"unlockedforstaking\": n,   (boolean) Wallet unlocked for staking only\n"
                     "  \"status\": \"xxx\",         (string) Status message\n"
                     "}\n"
                 },
@@ -1036,6 +1038,8 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
     obj.pushKV("lastupdated", lastUpdatedTime);
     obj.pushKV("lastupdatedstr", lastUpdatedStr);
     obj.pushKV("lastblockprocessed", lastBlock);
+    obj.pushKV("fullyunlocked", !allLocked && !util::unlockedForStakingOnly);
+    obj.pushKV("unlockedforstaking", util::unlockedForStakingOnly);
     obj.pushKV("status", msg);
     return obj;
 #else
@@ -1043,6 +1047,8 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
     obj.pushKV("lastupdated", 0);
     obj.pushKV("lastupdatedstr", "");
     obj.pushKV("lastblockprocessed", 0);
+    obj.pushKV("fullyunlocked", false);
+    obj.pushKV("unlockedforstaking", false);
     obj.pushKV("status", "Staking is inactive because the wallet is disabled");
     return obj;
 #endif // ENABLE_WALLET
