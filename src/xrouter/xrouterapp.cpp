@@ -1548,7 +1548,7 @@ std::string App::getReply(const std::string & id)
             if (!uv.read(reply))
                 po.pushKV("reply", reply);
             else
-                po.pushKV("reply", uv.get_obj());
+                po.pushKV("reply", uv);
         } catch (...) {
             po.pushKV("reply", reply);
         }
