@@ -174,6 +174,11 @@ public:
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 
+    virtual bool createPartialTransaction(const std::vector<XTxIn> inputs,
+                                          const std::vector<std::pair<std::string, double> > outputs,
+                                          std::string & txId,
+                                          std::string & rawTx) = 0;
+
     virtual bool isUTXOSpentInTx(const std::string & txid, const std::string & utxoPrevTxId,
                                  const uint32_t & utxoVoutN, bool & isSpent) = 0;
 

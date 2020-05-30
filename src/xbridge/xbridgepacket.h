@@ -131,7 +131,7 @@ enum XBridgeCommand
     //    uint16  partial order allowed flag
     xbcPendingTransaction = 4,
     //
-    // xbcTransactionAccepting (190 bytes min)
+    // xbcTransactionAccepting (188 bytes min)
     // client accepting opened tx
     //    uint160 hub address
     //    uint256 client transaction id
@@ -153,9 +153,11 @@ enum XBridgeCommand
     xbcTransactionAccepting = 5,
 
     //
-    // xbcTransactionHold (52 bytes)
+    // xbcTransactionHold (68 bytes)
     //    uint160 hub address
     //    uint256 transaction id
+    //    uint64 source amount
+    //    uint64 dest amount
     xbcTransactionHold = 6,
     //
     // xbcTransactionHoldApply (72 bytes)

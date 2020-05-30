@@ -76,6 +76,8 @@ namespace xbridge
     boost::uint64_t timeToInt(const boost::posix_time::ptime &time);
     boost::posix_time::ptime intToTime(const uint64_t& number);
 
+    constexpr double xBridgeMaxPriceDeviation = 1.0 / 100000000.0;
+    constexpr int xBridgePartialOrderMaxUtxos = 10;
     double xBridgeValueFromAmount(uint64_t amount);
 
     uint64_t xBridgeAmountFromReal(double val);

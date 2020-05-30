@@ -72,6 +72,11 @@ struct TransactionDescr
     uint64_t                   toAmount;
     std::string                toAddr;
 
+    std::string                origFromCurrency;
+    uint64_t                   origFromAmount{0};
+    std::string                origToCurrency;
+    uint64_t                   origToAmount{0};
+
     uint32_t                   lockTime;
     uint32_t                   opponentLockTime;
 
@@ -135,19 +140,13 @@ struct TransactionDescr
     bool     depositSent{false};
 
     // is partial order allowed
+    std::vector<xbridge::wallet::UtxoEntry> repostCoins;
+    std::string partialOrderPrepTx;
     bool     partialOrdersAllowed{false};
-
-    // is partial transaction
-    bool     partialTransaction{false};
-
     // repost partial order after completion
     bool     repostOrder{false};
-    bool     reposted{false};
-
     // partial order amounts
-    uint64_t minFromAmount;
-    uint64_t origFromAmount;
-    uint64_t origToAmount;
+    uint64_t minFromAmount{0};
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
@@ -209,6 +208,12 @@ struct TransactionDescr
         return watchingDone;
     }
 
+    std::string orderType() {
+        if (isPartialOrderAllowed())
+            return "partial";
+        return "exact";
+    }
+
     void allowPartialOrders() {
         LOCK(_lock);
         partialOrdersAllowed = true;
@@ -217,16 +222,6 @@ struct TransactionDescr
     bool isPartialOrderAllowed() {
         LOCK(_lock);
         return partialOrdersAllowed;
-    }
-
-    void setPartialTransaction() {
-        LOCK(_lock);
-        partialTransaction = true;
-    }
-
-    bool isPartialTransaction() {
-        LOCK(_lock);
-        return partialTransaction;
     }
 
     bool isPartialRepost() {
@@ -433,8 +428,10 @@ private:
         opponentLockTime  = d.opponentLockTime;
         state             = d.state;
         reason            = d.reason;
-        payTx             = d.payTx;
-        refTx             = d.refTx;
+
+        usedCoins         = d.usedCoins;
+        feeUtxos          = d.feeUtxos;
+        rawFeeTx          = d.rawFeeTx;
 
         binTxId           = d.binTxId;
         binTxVout         = d.binTxVout;
@@ -475,11 +472,16 @@ private:
         watching          = d.watching;
         watchingDone      = d.watchingDone;
         redeemedCounterpartyDeposit = d.redeemedCounterpartyDeposit;
+        depositSent       = d.depositSent;
+
+        origFromAmount    = d.origFromAmount;
+        origToAmount      = d.origToAmount;
 
         partialOrdersAllowed = d.partialOrdersAllowed;
-        partialTransaction   = d.partialTransaction;
-
-        minFromAmount = d.minFromAmount;
+        partialOrderPrepTx   = d.partialOrderPrepTx;
+        minFromAmount        = d.minFromAmount;
+        repostCoins          = d.repostCoins;
+        repostOrder          = d.repostOrder;
         }
         updateTimestamp(d);
     }
