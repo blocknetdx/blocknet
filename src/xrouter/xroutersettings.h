@@ -114,6 +114,7 @@ public:
     std::vector<std::string> parameters();
     int clientRequestLimit();
     int fetchLimit();
+    std::string help();
     int commandTimeout();
     std::string paymentAddress();
     bool disabled();
@@ -193,6 +194,7 @@ public:
     int port(XRouterCommand c, const std::string & service="");
     bool tls(XRouterCommand c, const std::string & service="");
     double commandFee(XRouterCommand c, const std::string & service, double def=0.0);
+    std::string help(XRouterCommand c, const std::string & service);
     int commandTimeout(XRouterCommand c, const std::string & service, int def=XROUTER_DEFAULT_TIMEOUT);
     int commandFetchLimit(XRouterCommand c, const std::string & service, int def=XROUTER_DEFAULT_FETCHLIMIT);
     double maxFee(XRouterCommand c, const std::string& currency="", double def=0.0);

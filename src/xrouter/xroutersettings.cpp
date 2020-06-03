@@ -318,6 +318,33 @@ double XRouterSettings::maxFee(XRouterCommand c, const std::string & service, do
     return res;
 }
 
+std::string XRouterSettings::help(XRouterCommand c, const std::string & service)
+{
+    const std::string cstr{XRouterCommand_ToString(c)};
+    auto res = get<std::string>("Main.help", "");
+    std::string pres;
+
+    if (c == xrService && hasPlugin(service)) {
+        auto ps = getPluginSettings(service);
+        pres = ps->has("help") ? ps->help() : res;
+    }
+
+    if (pres.empty()) {
+        res = get<std::string>(cstr + ".help", res);
+        if (!service.empty()) {
+            if (c == xrService)
+                res = get<std::string>(cstr + xrdelimiter + service + ".help", res);
+            else {
+                res = get<std::string>(service + ".help", res);
+                res = get<std::string>(service + xrdelimiter + cstr + ".help", res);
+            }
+        }
+    } else
+        res = pres;
+
+    return res;
+}
+
 int XRouterSettings::commandTimeout(XRouterCommand c, const std::string & service, int def)
 {
     const std::string cstr{XRouterCommand_ToString(c)};
@@ -692,6 +719,11 @@ std::string XRouterPluginSettings::customResponse() {
     return t;
 }
 
+std::string XRouterPluginSettings::help() {
+    auto t = get<std::string>("help", "");
+    return t;
+}
+
 void saveConf(const boost::filesystem::path & p, const std::string & str) {
     boost::filesystem::ofstream file;
     file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -749,7 +781,11 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
                      ""                                                                                                  + eol +
                      "#! It's possible to set config options for Custom XRouter services"                                + eol +
                      "#! [xrs::GetBestBlockHashBTC]"                                                                     + eol +
-                     "#! maxfee=0.1"                                                                                     + eol
+                     "#! maxfee=0.1"                                                                                     + eol +
+                     ""                                                                                                  + eol +
+                     "#! Plugin help documentation can be set here as well as in the plugin conf."                       + eol +
+                     "#! [xrs::ExampleRPC]"                                                                              + eol +
+                     "#! help=The plugin documentation here."                                                            + eol
             );
         }
 
@@ -788,6 +824,9 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
                      "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"        + eol +
                      "#! requests exceed this value they will be penalized and eventually banned by your node."          + eol +
                      "clientrequestlimit=-1"                                                                             + eol +
+                     ""                                                                                                  + eol +
+                     "#! Use the help parameter to provide your plugin's documentation."                                 + eol +
+                     "help=The plugin documentation here."                                                               + eol +
                      ""                                                                                                  + eol +
                      "#! This is a sample configuration for the RPC plugin type for a syscoin plugin."                   + eol +
                      "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"            + eol +
@@ -839,6 +878,9 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
                      "#! can only request at most once per 50 milliseconds (i.e. 20 times per second). If client"          + eol +
                      "#! requests exceed this value they will be penalized and eventually banned by your node."            + eol +
                      "clientrequestlimit=-1"                                                                               + eol +
+                     ""                                                                                                    + eol +
+                     "#! Use the help parameter to provide your plugin's documentation."                                   + eol +
+                     "help=The plugin documentation here."                                                                 + eol +
                      ""                                                                                                    + eol +
                      "#! This is a sample configuration of a docker plugin running a syscoin container."                   + eol +
                      "#! private:: config entries will not be sent to XRouter clients. Below is a sample rpc"              + eol +
