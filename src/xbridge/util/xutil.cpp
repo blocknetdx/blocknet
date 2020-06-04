@@ -225,6 +225,12 @@ double xBridgeValueFromAmount(uint64_t amount) {
             boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
 }
 
+int64_t xBridgeIntFromReal(double val) {
+    double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+    auto r = (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
+    return r;
+}
+
 uint64_t xBridgeAmountFromReal(double val)
 {
     double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);

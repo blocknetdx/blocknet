@@ -655,6 +655,28 @@ public:
             uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
 
     /**
+     * selectPartialUtxos - Selects utxos for use with the partial order.
+     * @param addr Currency address
+     * @param outputs Available utxos to search
+     * @param minTxFee1 fee1 func
+     * @param minTxFee2 fee2 func
+     * @param requiredAmount total required amount (not including fees)
+     * @param requiredUtxoCount number of utxos required
+     * @param requiredFeePerUtxo fees per utxo required
+     * @param requiredSplitSize size of each utxo not including fee
+     * @param requiredPrepTxFees fees required to submit partial order prep tx
+     * @param outputsForUse selected utxos
+     * @param utxoAmount total amount of selected utxos
+     * @param fees total amount of fees
+     * @param exactUtxoMatch true if no prep tx is required
+     * @return
+     */
+    bool selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
+            const double requiredAmount, const int requiredUtxoCount, const double requiredFeePerUtxo,
+            const double requiredPrepTxFees, const double requiredSplitSize, std::vector<wallet::UtxoEntry> & outputsForUse,
+            double & utxoAmount, double & fees, bool & exactUtxoMatch) const;
+
+    /**
      * Unit tests: add xwallets
      * @param services
      */
