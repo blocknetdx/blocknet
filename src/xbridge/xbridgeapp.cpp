@@ -1731,8 +1731,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 entry.address = vouts[i].first;
                 ptr->usedCoins.push_back(entry);
                 partialNewTotalUtxosAmount += entry.amount;
-                if (partialVoutsTotal - partialNewTotalUtxosAmount <= std::numeric_limits<double>::epsilon())
-                    break; // only need enough utxos to cover partial order
+                if (xBridgeAmountFromReal(partialVoutsTotal - partialNewTotalUtxosAmount) <= 1)
+                    break; // only need enough utxos to cover partial order (use 1 sat for rounding errors)
             }
 
             if (ptr->usedCoins.size() > xBridgePartialOrderMaxUtxos) {
