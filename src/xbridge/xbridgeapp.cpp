@@ -197,6 +197,12 @@ protected:
      */
     void watchTraderDeposits();
 
+    /**
+     * @brief Returns true if the order's utxos are still valid and unspent.
+     * @param order
+     */
+    bool orderUtxosAreStillValid(TransactionDescrPtr order);
+
 protected:
     // workers
     std::deque<IoServicePtr>                           m_services;
@@ -3111,13 +3117,20 @@ void App::Impl::checkAndRelayPendingOrders() {
                 order->assignServicenode(snode);
             }
 
-            // Broadcast the order
             order->updateTimestamp();
-            sendPendingTransaction(order);
+            // Only broadcast the order if the utxos are still valid
+            if (orderUtxosAreStillValid(order))
+                sendPendingTransaction(order);
+            else
+                xbridge::App::instance().cancelXBridgeTransaction(order->id, crBadAUtxo);
         }
         else if (pendingOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trPending) {
             order->updateTimestamp();
-            sendPendingTransaction(order);
+            // Only broadcast the order if the utxos are still valid
+            if (orderUtxosAreStillValid(order))
+                sendPendingTransaction(order);
+            else
+                xbridge::App::instance().cancelXBridgeTransaction(order->id, crBadAUtxo);
         }
     }
 }
@@ -3323,6 +3336,22 @@ void App::Impl::watchTraderDeposits()
         LOCK(m_watchTradersLocker);
         m_watchingTraders = false;
     }
+}
+
+//******************************************************************************
+//******************************************************************************
+bool App::Impl::orderUtxosAreStillValid(TransactionDescrPtr order) {
+    WalletConnectorPtr makerConn = ConnectorByCurrency(order->fromCurrency);
+    if (!makerConn)
+        return false;
+
+    auto makerUtxos = order->usedCoins;
+    for (auto & entry : makerUtxos) {
+        if (!makerConn->getTxOut(entry))
+            return false;
+    }
+
+    return true; // done
 }
 
 //*****************************************************************************
