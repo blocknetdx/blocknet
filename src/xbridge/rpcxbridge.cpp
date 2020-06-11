@@ -2274,6 +2274,83 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     }
 }
 
+UniValue dxSplitAddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 6)
+        throw std::runtime_error(
+            RPCHelpMan{"dxSplitAddress",
+                "\nSplits unused coin in the specified token address into sizes of the same amount. Left over amounts\n"
+                "end up in change. Utxos in existing DX orders will not be included by the splitter.\n",
+                {
+                   {"token", RPCArg::Type::STR, RPCArg::Optional::NO, "Token, currency, or coin"},
+                   {"split_amount", RPCArg::Type::STR, RPCArg::Optional::NO, "Split amount"},
+                   {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "Address filter, only coin in this address will be split"},
+                   {"include_fees", RPCArg::Type::BOOL, "true", "Include the DX p2sh deposit fees in the split utxos"},
+                   {"show_rawtx", RPCArg::Type::BOOL, "false", "Include the raw transaction in the result (rawtx can be submitted manually)"},
+                   {"submit", RPCArg::Type::BOOL, "true", "Submit the raw transaction to the network"},
+                },
+                RPCResult{
+                "{\n"
+                "  \"token\": \"BLOCK\",                       (string) Token/currency/coin\n"
+                "  \"include_fees\": true/false,               (boolean) Requested include fees\n"
+                "  \"split_amount_requested\": \"0.52\",       (string) Requested split amount\n"
+                "  \"split_amount_with_fees\": \"0.52040000\", (string) Actual split amount with fees included\n"
+                "  \"split_utxo_count\": n,                    (number) Number of split utxos created\n"
+                "  \"split_total\": \"4.99757359\",            (string) Total amount split\n"
+                "  \"txid\": \"hex\",                          (string) Hex string of the split transaction id\n"
+                "  \"rawtx\": \"hex\"                          (string) Hex string of the raw split transaction\n"
+                "}\n"
+                },
+                RPCExamples{
+                   HelpExampleCli("dxSplitAddress", "BLOCK 10.5 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR true false true")
+                   + HelpExampleRpc("dxSplitAddress", "\"BLOCK\", \"10.5\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", true, false, true")
+                },
+            }.ToString());
+
+    auto token = request.params[0].get_str();
+    auto splitAmount = request.params[1].get_str();
+    auto address = request.params[2].get_str();
+    bool includeFees{true};
+    bool showRawTx{false};
+    bool submitTx{true};
+    if (!request.params[3].isNull())
+        includeFees = request.params[3].get_bool();
+    if (!request.params[4].isNull())
+        showRawTx = request.params[4].get_bool();
+    if (!request.params[5].isNull())
+        submitTx = request.params[5].get_bool();
+
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+
+    auto utxos = xapp.getAllLockedUtxos(token);
+    const auto sa = boost::lexical_cast<double>(splitAmount);
+    std::string txid, rawtx, failReason;
+    double totalSplit{0};
+    double splitInclFees{0};
+    int splitCount{0};
+    if (!conn->splitUtxos(sa, address, includeFees, utxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
+
+    int errorcode{0};
+    std::string txid2, errmsg;
+    if (submitTx && !conn->sendRawTransaction(rawtx, txid2, errorcode, errmsg))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, errmsg));
+
+    UniValue r(UniValue::VOBJ);
+    r.pushKV("token", token);
+    r.pushKV("include_fees", includeFees);
+    r.pushKV("split_amount_requested", splitAmount);
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_utxo_count", splitCount);
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("txid", txid);
+    r.pushKV("rawtx", showRawTx ? rawtx : "");
+    return r;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                       actor (function)          argNames
@@ -2297,6 +2374,7 @@ static const CRPCCommand commands[] =
     { "xbridge",            "dxFlushCancelledOrders",  &dxFlushCancelledOrders,  {} },
     { "xbridge",            "gettradingdata",          &gettradingdata,          {} },
     { "xbridge",            "dxGetTradingData",        &dxGetTradingData,        {} },
+    { "xbridge",            "dxSplitAddress",          &dxSplitAddress,          {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit"} },
 };
 // clang-format on
 
