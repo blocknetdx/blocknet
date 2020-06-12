@@ -558,6 +558,8 @@ bool listUnspent(const std::string & rpcuser,
                     else if (v.name_ == confirmations)
                     {
                         confs = v.value_.get_int();
+                        u.confirmations = confs > 0 ? confs : 0;
+                        u.hasConfirmations = confs > 0;
                     }
                 }
 

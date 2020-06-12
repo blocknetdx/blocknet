@@ -2448,6 +2448,67 @@ UniValue dxSplitInputs(const JSONRPCRequest& request)
     return r;
 }
 
+UniValue dxGetUtxos(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetUtxos",
+                "\nGets all unused utxos for the specified token that is compatible with the DX.\n",
+                {
+                   {"token", RPCArg::Type::STR, RPCArg::Optional::NO, "Token, currency, or coin"},
+                   {"include_used", RPCArg::Type::BOOL, "false", "Include utxos in existing orders"},
+                },
+                RPCResult{
+                "[\n"
+                "  {\n"
+                "    \"txid\": \"hex\",         (string) Transaction id of the unspent transaction output\n"
+                "    \"vout\": n,               (number) Vout index of the unspent transaction output\n"
+                "    \"amount\": \"n\",         (string) Utxo amount\n"
+                "    \"address\": \"xxx\",      (string) Utxo address\n"
+                "    \"scriptPubKey\": \"hex\", (string) Utxo address script pubkey\n"
+                "  }\n"
+                "  ...\n"
+                "]\n"
+                },
+                RPCExamples{
+                     HelpExampleCli("dxGetUtxos", "BLOCK")
+                   + HelpExampleRpc("dxGetUtxos", "BLOCK")
+                   + HelpExampleCli("dxGetUtxos", "BTC")
+                   + HelpExampleRpc("dxGetUtxos", "BTC")
+                },
+            }.ToString());
+
+    const auto token = request.params[0].get_str();
+    bool includeUsed{false};
+    if (!request.params[1].isNull())
+        includeUsed = request.params[1].get_bool();
+
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+
+    std::set<xbridge::wallet::UtxoEntry> excluded;
+    if (!includeUsed)
+        excluded = xapp.getAllLockedUtxos(token);
+    std::vector<xbridge::wallet::UtxoEntry> unspent;
+    if (!conn->getUnspent(unspent, excluded))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "failed to get unspent transaction outputs"));
+
+    UniValue r(UniValue::VARR);
+    for (const auto & utxo : unspent) {
+        UniValue o(UniValue::VOBJ);
+        o.pushKV("txid", utxo.txId);
+        o.pushKV("vout", static_cast<int>(utxo.vout));
+        o.pushKV("amount", xbridge::xBridgeStringValueFromPrice(utxo.amount, conn->COIN));
+        o.pushKV("address", utxo.address);
+        o.pushKV("scriptPubKey", utxo.scriptPubKey);
+        o.pushKV("confirmations", static_cast<int>(utxo.confirmations));
+        r.push_back(o);
+    }
+    return r;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                       actor (function)          argNames
@@ -2473,6 +2534,7 @@ static const CRPCCommand commands[] =
     { "xbridge",            "dxGetTradingData",        &dxGetTradingData,        {} },
     { "xbridge",            "dxSplitAddress",          &dxSplitAddress,          {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit"} },
     { "xbridge",            "dxSplitInputs",           &dxSplitInputs,           {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit", "utxos"} },
+    { "xbridge",            "dxGetUtxos",              &dxGetUtxos,              {"token", "include_used"} },
 };
 // clang-format on
 
