@@ -2331,7 +2331,104 @@ UniValue dxSplitAddress(const JSONRPCRequest& request)
     double totalSplit{0};
     double splitInclFees{0};
     int splitCount{0};
-    if (!conn->splitUtxos(sa, address, includeFees, utxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
+    if (!conn->splitUtxos(sa, address, includeFees, utxos, std::set<COutPoint>{}, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
+
+    int errorcode{0};
+    std::string txid2, errmsg;
+    if (submitTx && !conn->sendRawTransaction(rawtx, txid2, errorcode, errmsg))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, errmsg));
+
+    UniValue r(UniValue::VOBJ);
+    r.pushKV("token", token);
+    r.pushKV("include_fees", includeFees);
+    r.pushKV("split_amount_requested", splitAmount);
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_utxo_count", splitCount);
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("txid", txid);
+    r.pushKV("rawtx", showRawTx ? rawtx : "");
+    return r;
+}
+
+
+UniValue dxSplitInputs(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 7)
+        throw std::runtime_error(
+            RPCHelpMan{"dxSplitInputs",
+                "\nSplits unused coin in the specified token address into sizes of the same amount. Left over amounts\n"
+                "end up in change. Utxos in existing DX orders will not be included by the splitter.\n",
+                {
+                   {"token", RPCArg::Type::STR, RPCArg::Optional::NO, "Token, currency, or coin"},
+                   {"split_amount", RPCArg::Type::STR, RPCArg::Optional::NO, "Split amount"},
+                   {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "Address filter, only coin in this address will be split"},
+                   {"include_fees", RPCArg::Type::BOOL, RPCArg::Optional::NO, "Include the DX p2sh deposit fees in the split utxos"},
+                   {"show_rawtx", RPCArg::Type::BOOL, RPCArg::Optional::NO, "Include the raw transaction in the result (rawtx can be submitted manually)"},
+                   {"submit", RPCArg::Type::BOOL, RPCArg::Optional::NO, "Submit the raw transaction to the network"},
+                   {"utxos", RPCArg::Type::ARR, RPCArg::Optional::NO, "List of utxo inputs",
+                    {
+                        {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
+                         {
+                             {"txid", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Utxo transaction id"},
+                             {"vout", RPCArg::Type::NUM, RPCArg::Optional::NO, "Utxo output index"},
+                         },
+                        },
+                    }}
+                },
+                RPCResult{
+                "{\n"
+                "  \"token\": \"BLOCK\",                       (string) Token/currency/coin\n"
+                "  \"include_fees\": true/false,               (boolean) Requested include fees\n"
+                "  \"split_amount_requested\": \"0.52\",       (string) Requested split amount\n"
+                "  \"split_amount_with_fees\": \"0.52040000\", (string) Actual split amount with fees included\n"
+                "  \"split_utxo_count\": n,                    (number) Number of split utxos created\n"
+                "  \"split_total\": \"4.99757359\",            (string) Total amount split\n"
+                "  \"txid\": \"hex\",                          (string) Hex string of the split transaction id\n"
+                "  \"rawtx\": \"hex\"                          (string) Hex string of the raw split transaction\n"
+                "}\n"
+                },
+                RPCExamples{
+                     HelpExampleCli("dxSplitInputs", R"("BLOCK 10.5 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR true false true [{"txid":"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc","vout":0},{"txid":"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc","vout":1}]")")
+                   + HelpExampleRpc("dxSplitInputs", R"("BLOCK", "10.5", "BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR", true, false, true, [{"txid":"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc","vout":0},{"txid":"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc","vout":1}]")")
+                },
+            }.ToString());
+
+    auto token = request.params[0].get_str();
+    auto splitAmount = request.params[1].get_str();
+    auto address = request.params[2].get_str();
+    bool includeFees = request.params[3].get_bool();
+    bool showRawTx = request.params[4].get_bool();
+    bool submitTx = request.params[5].get_bool();
+    const auto paramUtxos = request.params[6].get_array();
+    if (paramUtxos.empty())
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "No utxos were specified"));
+
+    std::set<COutPoint> userUtxos;
+    for (const auto & val : paramUtxos.getValues()) {
+        std::map<std::string, UniValue> utxo;
+        val.getObjMap(utxo);
+        userUtxos.insert(COutPoint{uint256S(utxo["txid"].get_str()), (uint32_t)utxo["vout"].get_int()});
+    }
+
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+
+    auto excludedUtxos = xapp.getAllLockedUtxos(token);
+    for (const auto & utxo : excludedUtxos) {
+        COutPoint vout{uint256S(utxo.txId), utxo.vout};
+        if (userUtxos.count(vout))
+            return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "Cannot split utxo already in use: " + vout.ToString()));
+    }
+
+    const auto sa = boost::lexical_cast<double>(splitAmount);
+    std::string txid, rawtx, failReason;
+    double totalSplit{0};
+    double splitInclFees{0};
+    int splitCount{0};
+    if (!conn->splitUtxos(sa, address, includeFees, excludedUtxos, userUtxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
 
     int errorcode{0};
@@ -2375,6 +2472,7 @@ static const CRPCCommand commands[] =
     { "xbridge",            "gettradingdata",          &gettradingdata,          {} },
     { "xbridge",            "dxGetTradingData",        &dxGetTradingData,        {} },
     { "xbridge",            "dxSplitAddress",          &dxSplitAddress,          {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit"} },
+    { "xbridge",            "dxSplitInputs",           &dxSplitInputs,           {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit", "utxos"} },
 };
 // clang-format on
 

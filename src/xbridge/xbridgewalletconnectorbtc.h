@@ -303,7 +303,7 @@ public:
                               std::string & rawTx) override;
 
     bool splitUtxos(double splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
-                    double & totalSplit, double & splitIncFees, int & splitCount,
+                    std::set<COutPoint> utxos, double & totalSplit, double & splitIncFees, int & splitCount,
                     std::string & txId, std::string & rawTx, std::string & failReason) override;
 
     bool isUTXOSpentInTx(const std::string & txid, const std::string & utxoPrevTxId,

@@ -2621,9 +2621,11 @@ bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vec
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, const std::string addr,
                                                     const bool includeFees, const std::set<wallet::UtxoEntry> excluded,
-                                                    double & totalSplit, double & splitIncFees, int & splitCount,
-                                                    std::string & txId, std::string & rawTx, std::string & failReason)
+                                                    const std::set<COutPoint> utxos, double & totalSplit,
+                                                    double & splitIncFees, int & splitCount, std::string & txId,
+                                                    std::string & rawTx, std::string & failReason)
 {
+    const auto hasUserSpecifiedUtxos = !utxos.empty();
     if (isDustAmount(splitAmount)) {
         failReason = "split amount is dust [" + std::to_string(splitAmount) + "]";
         return false;
@@ -2637,17 +2639,35 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, co
         failReason = "failed to get unspent transaction outputs for token " + currency;
         return false;
     }
+    if (hasUserSpecifiedUtxos) { // Check that user specified utxos are available
+        std::vector<wallet::UtxoEntry> newUnspent;
+        auto copyUtxos = utxos;
+        for (const auto & utxo : unspent) {
+            COutPoint vout{uint256S(utxo.txId), utxo.vout};
+            if (copyUtxos.count(vout)) {
+                copyUtxos.erase(vout);
+                newUnspent.push_back(utxo);
+            }
+        }
+        if (!copyUtxos.empty()) {
+            failReason = "user specified utxo was not found or is not available: " + copyUtxos.begin()->ToString();
+            return false;
+        }
+        unspent = newUnspent; // only use user specified utxos
+    }
 
     const auto fee1 = minTxFee1(1, 3);
     const auto fee2 = minTxFee2(1, 1);
     const auto feesPerUtxo = fee1 + fee2;
     const auto splitSize = splitAmount + (includeFees ? feesPerUtxo : 0.);
 
-    // Remove all utxos that already match the expected size or that don't match the specified address
-    unspent.erase(std::remove_if(unspent.begin(), unspent.end(),
-        [splitSize, addr](const wallet::UtxoEntry & entry) {
-            return xBridgeIntFromReal(fabs(splitSize - entry.amount)) <= 1 || entry.address != addr;
-        }), unspent.end());
+    if (!hasUserSpecifiedUtxos) {
+        // Remove all utxos that already match the expected size or that don't match the specified address
+        unspent.erase(std::remove_if(unspent.begin(), unspent.end(),
+            [splitSize, addr](const wallet::UtxoEntry & entry) {
+                return xBridgeIntFromReal(fabs(splitSize - entry.amount)) <= 1 || entry.address != addr;
+            }), unspent.end());
+    }
 
     if (unspent.empty()) {
         failReason = "failed to get unspent transaction outputs for token " + currency;
