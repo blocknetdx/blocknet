@@ -1,78 +1,107 @@
 build_linux:
   stage: build
+  image: blocknetdx/devbuilds:gitlab-linux
   script:
-  - mkdir -p $CI_PROJECT_DIR/dist/linux
-  - docker build -f Dockerfile-linux --build-arg cores=10 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux .
-  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux; fi
-  - docker create --name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux
-  - docker cp $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux:/opt/blocknetdx/dist/bin $CI_PROJECT_DIR/dist/linux
-  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux; fi
+    - "export PROJECTDIR=/opt/blocknetdx/blocknet"
+    - "export BASEPREFIX=$PROJECTDIR/depends"
+    - "export BASEPREFIX_CACHE=/proj/depends-cache"
+    - "export DISTDIR=$PROJECTDIR/dist"
+    - "export HOST=x86_64-pc-linux-gnu"
+    - "rm -rf \"$BASEPREFIX\""
+    - "mv \"$BASEPREFIX_CACHE\" \"$BASEPREFIX\""
+    - "mkdir -p $DISTDIR"
+    - "chmod +x ./autogen.sh; sync"
+    - "./autogen.sh"
+    - "CONFIG_SITE=\"$BASEPREFIX/$HOST/share/config.site\" ./configure CC=gcc-8 CXX=g++-8 CFLAGS=\"-g3 -O0\" CXXFLAGS=\"-g3 -O0\" --enable-debug --prefix=/"
+    - "make clean"
+    - "echo \"Building with cores: 10\""
+    - "make -j10"
+    - "make install DESTDIR=\"$DISTDIR\""
+    - "make clean"
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     expire_in: 3 weeks
     paths:
-    - dist/linux/bin
-
-test_linux:
-  stage: test
-  script:
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-cli\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknetd\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-qt\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-tx\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/blocknet-wallet\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_blocknet\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/linux/bin/test_blocknet-qt\" ];"
+      - dist/bin
 
 build_win:
   stage: build
+  image: blocknetdx/devbuilds:gitlab-win
   script:
-  - mkdir -p $CI_PROJECT_DIR/dist/win
-  - docker build -f Dockerfile-win --build-arg cores=10 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win .
-  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win; fi
-  - docker create --name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win
-  - docker cp $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win:/opt/blocknetdx/dist/bin $CI_PROJECT_DIR/dist/win
-  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win; fi
+    - "export PROJECTDIR=/opt/blocknetdx/blocknet"
+    - "export BASEPREFIX=$PROJECTDIR/depends"
+    - "export BASEPREFIX_CACHE=/proj/depends-cache"
+    - "export DISTDIR=$PROJECTDIR/dist"
+    - "export HOST=x86_64-w64-mingw32"
+    - "rm -rf \"$BASEPREFIX\""
+    - "mv \"$BASEPREFIX_CACHE\" \"$BASEPREFIX\""
+    - "mkdir -p $DISTDIR"
+    - "chmod +x ./autogen.sh; sync"
+    - "./autogen.sh"
+    - "CONFIG_SITE=\"$BASEPREFIX/$HOST/share/config.site\" ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-reduce-exports --disable-bench --disable-gui-tests"
+    - "make clean"
+    - "echo \"Building with cores: 10\""
+    - "make -j10"
+    - "make deploy"
+    - "make install DESTDIR=\"$DISTDIR\""
+    - "cp *win64-setup.exe $DISTDIR/bin/blocknet-win64-setup.exe"
+    - "make clean"
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win"
     expire_in: 3 weeks
     paths:
-    - dist/win/bin
-
-test_win:
-  stage: test
-  script:
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-cli.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknetd.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-qt.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-tx.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-wallet.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/test_blocknet.exe\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/win/bin/blocknet-win64-setup.exe\" ];"
+      - dist/bin
 
 build_mac:
   stage: build
+  image: blocknetdx/devbuilds:gitlab-mac
   script:
-  - mkdir -p $CI_PROJECT_DIR/dist/mac
-  - docker build -f Dockerfile-mac --build-arg cores=10 -t blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac .
-  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac; fi
-  - docker create --name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac blocknetdx/devbuilds:$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac
-  - docker cp $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac:/opt/blocknetdx/dist/bin $CI_PROJECT_DIR/dist/mac
-  - if [ ! -z "$(docker ps -qa -f name=$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac)" ]; then docker rm $CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac; fi
+    - "export PROJECTDIR=/opt/blocknetdx/blocknet"
+    - "export BASEPREFIX=$PROJECTDIR/depends"
+    - "export BASEPREFIX_CACHE=/proj/depends-cache"
+    - "export DISTDIR=$PROJECTDIR/dist"
+    - "export HOST=x86_64-apple-darwin14"
+    - "rm -rf \"$BASEPREFIX\""
+    - "mv \"$BASEPREFIX_CACHE\" \"$BASEPREFIX\""
+    - "mkdir -p $DISTDIR"
+    - "chmod +x ./autogen.sh; sync"
+    - "./autogen.sh"
+    - "CONFIG_SITE=\"$BASEPREFIX/$HOST/share/config.site\" ./configure CFLAGS=\"-g3 -O0\" CXXFLAGS=\"-g3 -O0\" --with-gui=qt5 --enable-debug --prefix=/"
+    - "make clean"
+    - "echo \"Building with cores: 10\""
+    - "make -j10"
+    - "mkdir -p $DISTDIR/bin && llvm-dsymutil-6.0 src/qt/blocknet-qt -o $DISTDIR/bin/blocknet-qt.dSYM"
+    - "make install DESTDIR=\"$DISTDIR\""
+    - "make clean"
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac"
     expire_in: 3 weeks
     paths:
-    - dist/mac/bin
+      - dist/bin
 
-test_mac:
+test_artifacts:
   stage: test
+  image: ubuntu:bionic
   script:
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-cli\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknetd\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-qt\" ];"
-  - "[ -d \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-qt.dSYM\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-tx\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/blocknet-wallet\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknet\" ];"
-  - "[ -f \"$CI_PROJECT_DIR/dist/mac/bin/test_blocknet-qt\" ];"
+    - "[ -f \"dist/bin/blocknet-cli\" ];"
+    - "[ -f \"dist/bin/blocknetd\" ];"
+    - "[ -f \"dist/bin/blocknet-qt\" ];"
+    - "[ -f \"dist/bin/blocknet-tx\" ];"
+    - "[ -f \"dist/bin/blocknet-wallet\" ];"
+    - "[ -f \"dist/bin/test_blocknet\" ];"
+    - "[ -f \"dist/bin/test_blocknet-qt\" ];"
+    - "[ -f \"dist/bin/blocknet-cli.exe\" ];"
+    - "[ -f \"dist/bin/blocknetd.exe\" ];"
+    - "[ -f \"dist/bin/blocknet-qt.exe\" ];"
+    - "[ -f \"dist/bin/blocknet-tx.exe\" ];"
+    - "[ -f \"dist/bin/blocknet-wallet.exe\" ];"
+    - "[ -f \"dist/bin/test_blocknet.exe\" ];"
+    - "[ -f \"dist/bin/blocknet-win64-setup.exe\" ];"
+    - "[ -f \"dist/bin/blocknet-cli\" ];"
+    - "[ -f \"dist/bin/blocknetd\" ];"
+    - "[ -f \"dist/bin/blocknet-qt\" ];"
+    - "[ -d \"dist/bin/blocknet-qt.dSYM\" ];"
+    - "[ -f \"dist/bin/blocknet-tx\" ];"
+    - "[ -f \"dist/bin/blocknet-wallet\" ];"
+    - "[ -f \"dist/bin/test_blocknet\" ];"
+    - "[ -f \"dist/bin/test_blocknet-qt\" ];"
