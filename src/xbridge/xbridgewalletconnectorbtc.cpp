@@ -2659,13 +2659,15 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, co
     const auto fee1 = minTxFee1(1, 3);
     const auto fee2 = minTxFee2(1, 1);
     const auto feesPerUtxo = fee1 + fee2;
-    const auto splitSize = splitAmount + (includeFees ? feesPerUtxo : 0.);
+    // Round split size to the nearest xbridge unit
+    static double oneSubSat = 0.000000001; // help promote rounding to full sat
+    const auto splitSize = xBridgeValueFromAmount(xBridgeAmountFromReal(splitAmount + (includeFees ? feesPerUtxo : 0.))) + oneSubSat;
 
     if (!hasUserSpecifiedUtxos) {
         // Remove all utxos that already match the expected size or that don't match the specified address
         unspent.erase(std::remove_if(unspent.begin(), unspent.end(),
             [splitSize, addr](const wallet::UtxoEntry & entry) {
-                return xBridgeIntFromReal(fabs(splitSize - entry.amount)) <= 1 || entry.address != addr;
+                return xBridgeIntFromReal(splitSize) - xBridgeIntFromReal(entry.amount) == 0 || entry.address != addr;
             }), unspent.end());
     }
 

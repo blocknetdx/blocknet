@@ -1776,7 +1776,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     entry.address = vouts[i].first;
                     ptr->usedCoins.push_back(entry);
                     partialNewTotalUtxosAmount += entry.amount;
-                    if (xBridgeIntFromReal(partialVoutsTotal - partialNewTotalUtxosAmount) <= 1)
+                    if (xBridgeIntFromReal(partialVoutsTotal - partialNewTotalUtxosAmount) <= 0)
                         break; // only need enough utxos to cover partial order (use 1 sat for rounding errors)
                 }
 
@@ -2961,7 +2961,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
         auto & utxo = *it;
         if (xBridgeIntFromReal(utxo.amount) == requiredSplitSizeAmt) {
             totalAmountNeeded = requiredAmount + fees;
-            if (xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 1)
+            if (xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 0)
                 break; // Stop searching when we've reached the required amount
             utxoAmount += utxo.amount;
             fees += requiredFeePerUtxo;
@@ -2977,7 +2977,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
     // required utxos exists.
     totalAmountNeeded = requiredAmount + fees;
     // The <= 1 is the margin of error allowance
-    if (outputsForUse.size() == requiredUtxoCount && xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 1) {
+    if (outputsForUse.size() == requiredUtxoCount && xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 0) {
         exactUtxoMatch = true;
         return true;
     }
@@ -3005,7 +3005,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
         // Check if we're done (prep tx fees not required yet)
         totalAmountNeeded = requiredAmount + fees;
         // The <= 1 is the margin of error allowance
-        if (outputsForUse.size() >= requiredUtxoCount && xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 1) {
+        if (outputsForUse.size() >= requiredUtxoCount && xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 0) {
             exactUtxoMatch = true;
             return true;
         }
@@ -3015,7 +3015,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
         for (auto it = utxos.begin(); it != utxos.end(); ) {
             auto & utxo = *it;
             totalAmountNeeded = requiredAmount + fees + requiredPrepTxFees;
-            if (xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 1)
+            if (xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 0)
                 break; // Stop searching when we've reached the required amount
 
             // At this point we want to pick utxos that are larger than the required split amount to limit
@@ -3059,7 +3059,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
              });
         for (auto it = utxos.begin(); it != utxos.end(); ) {
             auto & utxo = *it;
-            if (xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 1)
+            if (xBridgeIntFromReal(totalAmountNeeded - utxoAmount) <= 0)
                 break; // Stop searching when we've reached the required amount
             utxoAmount += utxo.amount;
             outputsForUse.push_back(utxo);
