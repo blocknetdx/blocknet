@@ -2466,15 +2466,19 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
                 "    \"amount\": \"n\",         (string) Utxo amount\n"
                 "    \"address\": \"xxx\",      (string) Utxo address\n"
                 "    \"scriptPubKey\": \"hex\", (string) Utxo address script pubkey\n"
+                "    \"confirmations\": n,      (number) Utxo blockchain confirmation count\n"
+                "    \"inorder\": false,        (boolean) true if this utxo is part of an order\n"
                 "  }\n"
                 "  ...\n"
                 "]\n"
                 },
                 RPCExamples{
                      HelpExampleCli("dxGetUtxos", "BLOCK")
-                   + HelpExampleRpc("dxGetUtxos", "BLOCK")
+                   + HelpExampleRpc("dxGetUtxos", "\"BLOCK\"")
+                   + HelpExampleCli("dxGetUtxos", "BLOCK true")
+                   + HelpExampleRpc("dxGetUtxos", "\"BLOCK\", true")
                    + HelpExampleCli("dxGetUtxos", "BTC")
-                   + HelpExampleRpc("dxGetUtxos", "BTC")
+                   + HelpExampleRpc("dxGetUtxos", "\"BTC\"")
                 },
             }.ToString());
 
@@ -2488,11 +2492,9 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
     if (!conn)
         return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
 
-    std::set<xbridge::wallet::UtxoEntry> excluded;
-    if (!includeUsed)
-        excluded = xapp.getAllLockedUtxos(token);
+    std::set<xbridge::wallet::UtxoEntry> excluded = xapp.getAllLockedUtxos(token);
     std::vector<xbridge::wallet::UtxoEntry> unspent;
-    if (!conn->getUnspent(unspent, excluded))
+    if (!conn->getUnspent(unspent, !includeUsed ? excluded : std::set<xbridge::wallet::UtxoEntry>{}))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "failed to get unspent transaction outputs"));
 
     UniValue r(UniValue::VARR);
@@ -2504,6 +2506,7 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
         o.pushKV("address", utxo.address);
         o.pushKV("scriptPubKey", utxo.scriptPubKey);
         o.pushKV("confirmations", static_cast<int>(utxo.confirmations));
+        o.pushKV("inorder", excluded.count(utxo) > 0);
         r.push_back(o);
     }
     return r;
