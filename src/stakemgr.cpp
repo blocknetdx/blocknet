@@ -8,6 +8,7 @@
 #include <governance/governance.h>
 #include <kernel.h>
 #include <miner.h>
+#include <net.h>
 #include <shutdown.h>
 #include <timedata.h>
 #include <validation.h>
@@ -20,11 +21,24 @@ void ThreadStakeMinter() {
     g_staker = MakeUnique<StakeMgr>();
     const auto stakingSkipPeers = gArgs.GetBoolArg("-stakingwithoutpeers", false);
     const auto & chainparams = Params();
+    int64_t lastTime{0};
+    bool hasPeers{false};
     while (!ShutdownRequested()) {
         if (!stakingSkipPeers && IsInitialBlockDownload()) { // do not stake during initial download
             boost::this_thread::sleep_for(boost::chrono::seconds(1));
             continue;
         }
+        auto newTime = GetTime();
+        if (!stakingSkipPeers && newTime - lastTime >= 300) { // check peers
+            bool connected{false};
+            g_connman->ForEachNode([&connected](CNode *pnode) {
+                if (pnode->fSuccessfullyConnected && !pnode->fInbound)
+                    connected = true;
+            });
+            hasPeers = connected;
+            lastTime = newTime;
+        } else if (stakingSkipPeers && !hasPeers)
+            hasPeers = true;
         try {
             auto wallets = GetWallets();
             CBlockIndex *pindex = nullptr;
@@ -32,7 +46,7 @@ void ThreadStakeMinter() {
                 LOCK(cs_main);
                 pindex = chainActive.Tip();
             }
-            if (pindex && g_staker->Update(wallets, pindex, chainparams.GetConsensus(), stakingSkipPeers)) {
+            if (hasPeers && pindex && g_staker->Update(wallets, pindex, chainparams.GetConsensus(), stakingSkipPeers)) {
                 boost::this_thread::interruption_point();
                 g_staker->TryStake(pindex, chainparams);
             }
