@@ -469,6 +469,21 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         return true;
     }
 
+    bool isPartialOrder = *static_cast<uint16_t *>(static_cast<void *>(packet->data()+offset)) == 1;
+    offset += sizeof(uint16_t);
+
+    uint64_t minFromAmount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
+
+    // utxos count
+    uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint32_t);
+
+    if (isPartialOrder && utxoItemsCount > xBridgePartialOrderMaxUtxos) {
+        xbridge::LogOrderMsg(id.GetHex(), "rejecting order, partial order has too many utxos", __FUNCTION__);
+        return true;
+    }
+
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr sconn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr dconn = xapp.connectorByCurrency(dcurrency);
@@ -483,10 +498,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     // utxo items
     std::vector<wallet::UtxoEntry> utxoItems;
     {
-        // array size
-        uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-        offset += sizeof(uint32_t);
-
         // items
         for (uint32_t i = 0; i < utxoItemsCount; ++i)
         {
@@ -551,7 +562,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         return true;
     }
 
-    if (commonAmount * TransactionDescr::COIN < samount)
+    if (xBridgeAmountFromReal(commonAmount) < samount)
     {
         xbridge::LogOrderMsg(id.GetHex(), "order rejected, amount from utxo items <" + std::to_string(commonAmount) + "> "
                                           "less than required <" + std::to_string(static_cast<double>(samount)/static_cast<double>(TransactionDescr::COIN)) + "> ", __FUNCTION__);
@@ -616,9 +627,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         if (!e.createTransaction(id,
                                  saddr, scurrency, samount,
                                  daddr, dcurrency, damount,
-                                 timestamp,
-                                 mpubkey, utxoItems,
-                                 blockHash, isCreated))
+                                 timestamp, mpubkey, utxoItems,
+                                 blockHash, isCreated, isPartialOrder, minFromAmount))
         {
             // not created
             xbridge::LogOrderMsg(id.GetHex(), "failed to create order", __FUNCTION__);
@@ -638,6 +648,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                 d->toAmount     = damount;
                 d->state        = TransactionDescr::trPending;
                 d->blockHash    = blockHash;
+
+                if (isPartialOrder) {
+                    d->allowPartialOrders();
+                    d->minFromAmount = minFromAmount;
+                }
 
                 xbridge::LogOrderMsg(d, __FUNCTION__);
 
@@ -674,10 +689,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 124)
+    if (packet->size() != 134)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 124 received " << packet->size() << " "
+              << "need 134 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -747,6 +762,19 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
             ptr->state = TransactionDescr::trPending;
         }
 
+        offset += XBridgePacket::addressSize; // hub address
+        offset += sizeof(uint64_t);           // created time
+        offset += XBridgePacket::hashSize;    // block hash
+
+        bool isPartialOrderAllowed = *reinterpret_cast<boost::uint16_t *>(packet->data()+offset) == 1;
+        if (isPartialOrderAllowed)
+            ptr->allowPartialOrders();
+        offset += sizeof(uint16_t);
+
+        uint64_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+        ptr->minFromAmount = minFromAmount;
+        offset += sizeof(uint64_t);
+
         // update timestamp
         ptr->updateTimestamp();
 
@@ -763,9 +791,13 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     ptr->fromCurrency = scurrency;
     ptr->fromAmount   = samount;
+    ptr->origFromCurrency = scurrency;
+    ptr->origFromAmount = samount;
 
     ptr->toCurrency   = dcurrency;
     ptr->toAmount     = damount;
+    ptr->origToCurrency = dcurrency;
+    ptr->origToAmount = damount;
 
     ptr->hubAddress   = hubAddress;
     offset += XBridgePacket::addressSize;
@@ -779,6 +811,15 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     std::vector<unsigned char> sblockhash(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
     ptr->blockHash    = uint256(sblockhash);
     offset += XBridgePacket::hashSize;
+
+    bool isPartialOrderAllowed = *reinterpret_cast<boost::uint16_t *>(packet->data()+offset) == 1;
+    if (isPartialOrderAllowed)
+        ptr->allowPartialOrders();
+    offset += sizeof(uint16_t);
+
+    uint64_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    ptr->minFromAmount = minFromAmount;
+    offset += sizeof(uint64_t);
 
     xapp.appendTransaction(ptr);
 
@@ -794,7 +835,6 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 //*****************************************************************************
 bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 {
-
     // check and process packet if bridge is exchange
     Exchange & e = Exchange::instance();
     if (!e.isStarted())
@@ -938,13 +978,9 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
     }
 
-    //
-    // Check if maker utxos are still valid
-    //
-
     TransactionPtr trPending = e.pendingTransaction(id);
     if (!trPending->matches(id)) {
-        xbridge::LogOrderMsg(id.GetHex(), "no order found", __FUNCTION__);
+        xbridge::LogOrderMsg(id.GetHex(), "order not found", __FUNCTION__);
         return true;
     }
     if (trPending->accepting()) {
@@ -952,6 +988,10 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         return true;
     }
     trPending->setAccepting(true);
+
+    //
+    // Check if maker utxos are still valid
+    //
 
     WalletConnectorPtr makerConn = xapp.connectorByCurrency(trPending->a_currency());
     if (!makerConn) {
@@ -969,7 +1009,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             log_obj.pushKV("orderid", id.GetHex());
             log_obj.pushKV("utxo_txid", entry.txId);
             log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
-            xbridge::LogOrderMsg(log_obj, "bad maker utxo in order, canceling", __FUNCTION__);
+            xbridge::LogOrderMsg(log_obj, "order rejected, bad maker utxo in order, canceling", __FUNCTION__);
             sendCancelTransaction(trPending, crBadAUtxo);
             return false;
         }
@@ -996,7 +1036,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             if (packet->size() < offset+utxoItemSize)
             {
                 trPending->setAccepting(false);
-                xbridge::LogOrderMsg(id.GetHex(), "bad packet size while reading utxo items, packet dropped", __FUNCTION__);
+                xbridge::LogOrderMsg(id.GetHex(), "taker order rejected, bad packet size while reading utxo items, packet dropped", __FUNCTION__);
                 sendRejectTransaction(id, crBadBUtxo);
                 return true;
             }
@@ -1050,50 +1090,104 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         }
     }
 
-    if (commonAmount * TransactionDescr::COIN < samount)
+    // Total amount included in taker utxos
+    const auto camount = xBridgeAmountFromReal(commonAmount);
+
+    // Check that supplied utxos covers taker's reported source amount
+    if (camount < samount)
     {
         trPending->setAccepting(false);
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
-        log_obj.pushKV("expecting_amount", samount);
+        log_obj.pushKV("expecting_amount", xbridge::xBridgeValueFromAmount(samount));
         log_obj.pushKV("received_amount", commonAmount);
-        xbridge::LogOrderMsg(log_obj, "rejecting taker order request, insufficient funds", __FUNCTION__);
+        xbridge::LogOrderMsg(log_obj, "taker order rejected, insufficient funds", __FUNCTION__);
         sendRejectTransaction(id, crNoMoney);
         return true;
     }
 
-    // check dust amount
-    if (conn->isDustAmount(static_cast<double>(samount) / TransactionDescr::COIN) ||
-        conn->isDustAmount(commonAmount - (static_cast<double>(samount) / TransactionDescr::COIN)))
+    // Reject orders that do not have enough coin
+    if (!trPending->isPartialAllowed() && samount < trPending->b_amount())
     {
         trPending->setAccepting(false);
-        xbridge::LogOrderMsg(id.GetHex(), "reject taker order request, amount is dust", __FUNCTION__);
-        sendRejectTransaction(id, crDust);
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("expecting_amount", xbridge::xBridgeValueFromAmount(trPending->b_amount()));
+        log_obj.pushKV("received_amount", samount);
+        xbridge::LogOrderMsg(log_obj, "taker order rejected, insufficient funds", __FUNCTION__);
+        sendRejectTransaction(id, crNoMoney);
         return true;
     }
 
+    // Reject partial orders on non-partial order type (requested amount is too small)
+    if (!trPending->isPartialAllowed() && damount < trPending->a_amount())
     {
+        trPending->setAccepting(false);
+        xbridge::LogOrderMsg(id.GetHex(), "taker order rejected, partial takes are not allowed for this order", __FUNCTION__);
+        sendRejectTransaction(id, crNotAccepted);
+        return true;
+    }
+
+    // Reject partial orders where the requested amount is smaller than the minimum
+    if (trPending->isPartialAllowed() && damount < trPending->min_partial_amount())
+    {
+        trPending->setAccepting(false);
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
-        log_obj.pushKV("from_addr", HexStr(saddr));
-        log_obj.pushKV("from_currency", scurrency);
-        log_obj.pushKV("from_amount", std::to_string(samount));
-        log_obj.pushKV("to_addr", HexStr(daddr));
-        log_obj.pushKV("to_currency", dcurrency);
-        log_obj.pushKV("to_amount", std::to_string(damount));
-        xbridge::LogOrderMsg(log_obj, "accepting taker order request", __FUNCTION__);
+        log_obj.pushKV("expecting_amount", xbridge::xBridgeValueFromAmount(trPending->min_partial_amount()));
+        log_obj.pushKV("received_amount", xbridge::xBridgeValueFromAmount(damount));
+        xbridge::LogOrderMsg(log_obj, "taker order rejected, take amount must be greater than minimum", __FUNCTION__);
+        sendRejectTransaction(id, crNoMoney);
+        return true;
+    }
+
+    // Reject orders where the requested amount is larger than the maximum
+    if (damount > trPending->a_amount())
+    {
+        trPending->setAccepting(false);
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("expecting_amount", xbridge::xBridgeValueFromAmount(trPending->a_amount()));
+        log_obj.pushKV("received_amount", xbridge::xBridgeValueFromAmount(damount));
+        xbridge::LogOrderMsg(log_obj, "taker order rejected, take amount must be smaller than maximum", __FUNCTION__);
+        sendRejectTransaction(id, crNotAccepted);
+        return true;
+    }
+
+    // Reject orders where the taker bid amount is larger than the maker ask amount
+    if (samount > trPending->b_amount())
+    {
+        trPending->setAccepting(false);
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("expecting_amount", xbridge::xBridgeValueFromAmount(trPending->b_amount()));
+        log_obj.pushKV("received_amount", xbridge::xBridgeValueFromAmount(samount));
+        xbridge::LogOrderMsg(log_obj, "taker order rejected, offered amount must be less than the ask amount", __FUNCTION__);
+        sendRejectTransaction(id, crNotAccepted);
+        return true;
+    }
+
+    // check dust amount
+    const double sourceAmountD = xBridgeValueFromAmount(samount);
+    if (conn->isDustAmount(sourceAmountD) || conn->isDustAmount(commonAmount - sourceAmountD))
+    {
+        trPending->setAccepting(false);
+        xbridge::LogOrderMsg(id.GetHex(), "taker order rejected, amount is dust", __FUNCTION__);
+        sendRejectTransaction(id, crDust);
+        return true;
     }
 
     if (!e.checkUtxoItems(id, utxoItems))
     {
         trPending->setAccepting(false);
-        xbridge::LogOrderMsg(id.GetHex(), "rejecting taker order request, bad utxos", __FUNCTION__);
+        xbridge::LogOrderMsg(id.GetHex(), "taker order rejected, bad utxos", __FUNCTION__);
         sendRejectTransaction(id, crBadBUtxo);
         return true;
     }
 
     {
-        if (e.acceptTransaction(id, saddr, scurrency, samount, daddr, dcurrency, damount, mpubkey, utxoItems))
+        if (e.acceptTransaction(id, saddr, scurrency, samount, daddr, dcurrency, damount, mpubkey, utxoItems,
+                trPending->isPartialAllowed()))
         {
             // check transaction state, if trNew - do nothing,
             // if trJoined = send hold to client
@@ -1116,16 +1210,32 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             // Set role 'B' utxos used in the order
             tr->b_setUtxos(utxoItems);
 
+            // Join the partial amounts
+            tr->joinPartialAmounts(samount, damount);
             xbridge::LogOrderMsg(tr, __FUNCTION__);
 
             XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionHold));
             reply1->append(m_myid);
             reply1->append(tr->id().begin(), XBridgePacket::hashSize);
-
+            reply1->append(samount); // taker from amount
+            reply1->append(damount); // taker to amount
             reply1->sign(e.pubKey(), e.privKey());
 
             sendPacketBroadcast(reply1);
         }
+    }
+
+    {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("from_addr", HexStr(saddr));
+        log_obj.pushKV("from_currency", scurrency);
+        log_obj.pushKV("from_amount", xbridge::xBridgeStringValueFromAmount(samount));
+        log_obj.pushKV("to_addr", HexStr(daddr));
+        log_obj.pushKV("to_currency", dcurrency);
+        log_obj.pushKV("to_amount", xbridge::xBridgeStringValueFromAmount(damount));
+        log_obj.pushKV("partial_minimum", xbridge::xBridgeStringValueFromAmount(trPending->min_partial_amount()));
+        xbridge::LogOrderMsg(log_obj, "accepting taker order request", __FUNCTION__);
     }
 
     return true;
@@ -1138,10 +1248,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 52)
+    if (packet->size() != 68)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 52 received " << packet->size() << " "
+              << "need 68 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1161,6 +1271,12 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     // pubkey from packet
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+
+    // requested amounts (taker from and to amounts)
+    uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
+    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
 
     TransactionDescrPtr xtx = xapp.transaction(id);
     if (!xtx)
@@ -1205,6 +1321,76 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     }
 
     xbridge::LogOrderMsg(id.GetHex(), "using service node " + HexStr(pksnode) + " for order", __FUNCTION__);
+
+    double makerPrice{0};
+    double takerPrice{0};
+
+    // Taker check that amounts match
+    if (xtx->role == 'B') {
+        makerPrice = xBridgeValueFromAmount(xtx->toAmount) / xBridgeValueFromAmount(xtx->fromAmount);
+        takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
+        if (samount != xtx->fromAmount) {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", id.GetHex());
+            log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(samount));
+            log_obj.pushKV("expected_amount", xbridge::xBridgeStringValueFromAmount(xtx->fromAmount));
+            xbridge::LogOrderMsg(log_obj, "taker from amount from snode should match expected amount", __FUNCTION__);
+            return true;
+        } else if (damount != xtx->toAmount) {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", id.GetHex());
+            log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(damount));
+            log_obj.pushKV("expected_amount", xbridge::xBridgeStringValueFromAmount(xtx->toAmount));
+            xbridge::LogOrderMsg(log_obj, "taker to amount from snode should match expected amount", __FUNCTION__);
+            return true;
+        }
+    } else if (xtx->role == 'A') { // Handle taker checks
+        makerPrice = xBridgeValueFromAmount(xtx->fromAmount) / xBridgeValueFromAmount(xtx->toAmount);
+        takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
+        // Taker cannot take more than maker has available
+        if (damount > xtx->fromAmount) {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", id.GetHex());
+            log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(damount));
+            log_obj.pushKV("expected_amount", xbridge::xBridgeStringValueFromAmount(xtx->fromAmount));
+            xbridge::LogOrderMsg(log_obj, "taker requesting an amount that is too large", __FUNCTION__);
+            return true;
+        }
+
+        // Taker cannot offer too much
+        if (samount > xtx->toAmount) {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", id.GetHex());
+            log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(samount));
+            log_obj.pushKV("expected_amount", xbridge::xBridgeStringValueFromAmount(xtx->toAmount));
+            xbridge::LogOrderMsg(log_obj, "taker sending an amount that is too large", __FUNCTION__);
+            return true;
+        }
+
+        if (xtx->isPartialOrderAllowed()) {
+            // Taker cannot take less than the maker's minimum
+            if (damount < xtx->minFromAmount) {
+                UniValue log_obj(UniValue::VOBJ);
+                log_obj.pushKV("orderid", id.GetHex());
+                log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(damount));
+                log_obj.pushKV("expected_amount", xbridge::xBridgeStringValueFromAmount(xtx->minFromAmount));
+                xbridge::LogOrderMsg(log_obj, "taker requesting an amount that is too small", __FUNCTION__);
+                return true;
+            }
+        }
+    }
+
+    // Taker amounts must agree with maker's asking price
+    // If maker or taker prices are 0, abort
+    // If the difference between maker and taker price is larger than max deviation, abort
+    if (makerPrice == 0 || takerPrice == 0 || fabs(makerPrice - takerPrice) > xBridgeMaxPriceDeviation) {
+        UniValue log_obj(UniValue::VOBJ);
+        log_obj.pushKV("orderid", id.GetHex());
+        log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));
+        log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(makerPrice));
+        xbridge::LogOrderMsg(log_obj, "taker price doesn't match maker expected price", __FUNCTION__);
+        return true;
+    }
 
     {
         // for xchange node remove tx
@@ -1256,19 +1442,21 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         return true;
     }
 
+    // At this point maker agrees with taker amounts, assign new amounts to maker's order
+    if (xtx->role == 'A') {
+        xtx->fromAmount = damount;
+        xtx->toAmount = samount;
+    }
+
     xtx->state = TransactionDescr::trHold;
-
     xbridge::LogOrderMsg(xtx, __FUNCTION__);
-
     xuiConnector.NotifyXBridgeTransactionChanged(id);
-
 
     // send hold apply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionHoldApply));
     reply->append(hubAddress);
     reply->append(xtx->from);
     reply->append(id.begin(), 32);
-
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
     sendPacket(hubAddress, reply);
@@ -1283,8 +1471,8 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    // size must be eq 72 bytes
-    if (packet->size() != 72 )
+    // size must be eq 72
+    if (packet->size() != 72)
     {
         ERR() << "invalid packet size for xbcTransactionHoldApply "
               << "need 72 received " << packet->size() << " "
@@ -1313,6 +1501,8 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
     // transaction id
     std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
     uint256 id(sid);
+    offset += XBridgePacket::hashSize;
+
     // packet pubkey
     std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
@@ -1477,6 +1667,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     std::string   toCurrency(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
     uint64_t      toAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
+    offset += sizeof(uint64_t);
 
     if(xtx->id           != txid &&
        xtx->from         != from &&
@@ -1631,10 +1822,13 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
             reply1->append(m_myid);
             reply1->append(id.begin(), 32);
             reply1->append(tr->b_pk1());
-
             reply1->sign(e.pubKey(), e.privKey());
 
             sendPacket(tr->a_address(), reply1);
+
+            // TODO Blocknet Unlock maker utxos in partial order
+            if (tr->isPartialAllowed())
+                e.unlockUtxos(tr->id()); // unlock to allow reposts
         }
     }
 
@@ -1733,24 +1927,31 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return true;
     }
 
-    double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
+    double outAmount = xBridgeValueFromAmount(xtx->fromAmount);
 
     double fee1      = 0;
     double fee2      = connFrom->minTxFee2(1, 1);
     double inAmount  = 0;
 
     std::vector<wallet::UtxoEntry> usedInTx;
-    for (const wallet::UtxoEntry & entry : xtx->usedCoins)
-    {
-        usedInTx.push_back(entry);
-        inAmount += entry.amount;
-        fee1 = connFrom->minTxFee1(usedInTx.size(), 3);
-
-        // check amount
-        if (inAmount >= outAmount+fee1+fee2)
-        {
-            break;
+    for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) {
+        // if we have enough utxos, skip
+        if (inAmount >= outAmount+fee1+fee2) {
+            if (!xtx->isPartialOrderAllowed())
+                break; // if not partial order, done
+            // If this is a partial order store unused utxos for eventual repost
+            if (xtx->isPartialRepost()) {
+                xtx->repostCoins.push_back(*it);
+                it = xtx->usedCoins.erase(it);
+            } else
+                ++it;
+            // next
+            continue;
         }
+        usedInTx.push_back(*it);
+        inAmount += it->amount;
+        fee1 = connFrom->minTxFee1(usedInTx.size(), 3);
+        ++it;
     }
 
     {
@@ -1963,6 +2164,21 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
     sendPacket(hubAddress, reply);
+
+    // Repost order
+    if (xtx->isPartialRepost()) {
+        try {
+            const auto status = xapp.repostXBridgeTransaction(xtx->fromAddr, xtx->fromCurrency, xtx->toAddr, xtx->toCurrency,
+                    xBridgeValueFromAmount(xtx->origFromAmount)/xBridgeValueFromAmount(xtx->origToAmount), xtx->minFromAmount,
+                    xtx->repostCoins);
+            if (status == xbridge::INSIFFICIENT_FUNDS)
+                LogOrderMsg(xtx->id.GetHex(), "not reposting the partial order because all available utxos have been used up", __FUNCTION__);
+            else if (status != xbridge::SUCCESS)
+                LogOrderMsg(xtx->id.GetHex(), "failed to repost the partial order", __FUNCTION__);
+        } catch (...) {
+            LogOrderMsg(xtx->id.GetHex(), "failed to repost the partial order", __FUNCTION__);
+        }
+    }
 
     return true;
 }
@@ -3153,8 +3369,11 @@ bool Session::Impl::processTransactionReject(XBridgePacketPtr packet) const
     xtx->role = 0;
     xtx->mPubKey.clear();
     xtx->mPrivKey.clear();
-    std::swap(xtx->fromCurrency, xtx->toCurrency);
-    std::swap(xtx->fromAmount, xtx->toAmount);
+    // Restore states
+    xtx->fromCurrency = xtx->origFromCurrency;
+    xtx->toCurrency = xtx->origToCurrency;
+    xtx->fromAmount = xtx->origFromAmount;
+    xtx->toAmount = xtx->origToAmount;
     // remove from pending packets (if added)
     xapp.removePackets(txid);
 
@@ -3322,6 +3541,7 @@ void Session::sendListOfTransactions() const
         packet->append(m_p->m_myid);
         packet->append(xbridge::timeToInt(ptr->createdTime()));
         packet->append(ptr->blockHash().begin(), 32);
+        packet->append(uint16_t(ptr->isPartialAllowed()));
 
         packet->sign(e.pubKey(), e.privKey());
 
@@ -3361,6 +3581,8 @@ void Session::Impl::sendTransaction(uint256 & id) const
     packet->append(m_myid);
     packet->append(xbridge::timeToInt(tr->createdTime()));
     packet->append(tr->blockHash().begin(), 32);
+    packet->append(uint16_t(tr->isPartialAllowed()));
+    packet->append(tr->min_partial_amount());
 
     packet->sign(e.pubKey(), e.privKey());
 

@@ -69,6 +69,7 @@ public:
 
 public:
     Transaction();
+
     Transaction(const uint256                    & id,
                 const std::vector<unsigned char> & sourceAddr,
                 const std::string                & sourceCurrency,
@@ -78,7 +79,9 @@ public:
                 const uint64_t                   & destAmount,
                 const uint64_t                   & created,
                 const uint256                    & blockHash,
-                const std::vector<unsigned char> & mpubkey);
+                const std::vector<unsigned char> & mpubkey,
+                bool                               partialAllowed,
+                uint64_t                           minFromAmount);
 
     ~Transaction();
 
@@ -224,6 +227,8 @@ public:
     bool                       b_refunded() const { LOCK(m_lock); return m_b_refunded; }
     const std::vector<wallet::UtxoEntry> b_utxos() const { LOCK(m_lock); return m_b.utxos(); }
 
+    uint64_t                   min_partial_amount() const { LOCK(m_lock); return m_minPartialAmount; }
+
     std::vector<unsigned char> b_pk1() const;
 
     bool tryJoin(const TransactionPtr other);
@@ -254,6 +259,26 @@ public:
         m_b.setRefTxId(refTxId); m_b.setRefTx(refTx);
     }
 
+    bool orderType();
+
+    /**
+     * Joins the partial amounts with the maker's order. Assumes validation on these
+     * amounts has already taken place.
+     * @param takerPartialSource
+     * @param takerPartialDest
+     */
+    void joinPartialAmounts(const uint64_t takerPartialSource, const uint64_t takerPartialDest) {
+        LOCK(m_lock);
+        m_sourceAmount = takerPartialDest; // maker matches taker's size
+        m_destAmount = takerPartialSource; // maker matches taker's size
+    }
+
+    /**
+     * @brief isPartialAllowed
+     * @return true, if partial txs are allowed
+     */
+    bool isPartialAllowed();
+
     friend std::ostream & operator << (std::ostream & out, const TransactionPtr & tx);
 
 public:
@@ -276,6 +301,8 @@ private:
     bool                       m_a_refunded{false};
     bool                       m_b_refunded{false};
 
+    bool                       m_partialAllowed{false};
+
     unsigned int               m_confirmationCounter;
 
     std::string                m_sourceCurrency;
@@ -283,6 +310,10 @@ private:
 
     uint64_t                   m_sourceAmount;
     uint64_t                   m_destAmount;
+    uint64_t                   m_sourceInitialAmount;
+    uint64_t                   m_destInitialAmount;
+
+    uint64_t                   m_minPartialAmount;
 
     std::string                m_bintxid1;
     std::string                m_bintxid2;

@@ -225,6 +225,15 @@ double xBridgeValueFromAmount(uint64_t amount) {
             boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
 }
 
+/**
+ * Does not round, but truncates because a utxo cannot pay if it's rounded up
+ */
+int64_t xBridgeIntFromReal(double utxo_amount) {
+    double d = utxo_amount * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+    auto r = static_cast<int64_t>(d);
+    return r;
+}
+
 uint64_t xBridgeAmountFromReal(double val)
 {
     double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);

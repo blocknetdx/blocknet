@@ -105,7 +105,7 @@ public:
                       std::vector<wallet::UtxoEntry> & items);
 
     /**
-     * @brief createTransaction - create new xbridge transaction
+     * @brief createTransaction - create new partial order xbridge transaction
      * @param id - id of transaction
      * @param sourceAddr - source address
      * @param sourceCurrency - source currency
@@ -118,6 +118,8 @@ public:
      * @param items
      * @param blockHash
      * @param isCreated operation status
+     * @param isPartialOrder
+     * @param minFromAmount
      * @return true, if transaction created
      */
     bool createTransaction(const uint256                        & id,
@@ -131,10 +133,12 @@ public:
                            const std::vector<unsigned char>     & mpubkey,
                            const std::vector<wallet::UtxoEntry> & items,
                            uint256                              & blockHash,
-                           bool                                 & isCreated);
+                           bool                                 & isCreated,
+                           bool                                   isPartialOrder,
+                           uint64_t                               minFromAmount);
 
     /**
-     * @brief acceptTransaction - accept xbridge t ransaction
+     * @brief acceptTransaction - accept xbridge transaction
      * @param id - if of transaction
      * @param sourceAddr - source address
      * @param sourceCurrency - source currency
@@ -144,7 +148,8 @@ public:
      * @param destAmount - destination amount
      * @param mpubkey
      * @param items
-     * @return return true, if transaction accepted succes
+     * @param isPartialOrderAllowed
+     * @return return true, if transaction accepted success
      */
     bool acceptTransaction(const uint256                        & id,
                            const std::vector<unsigned char>     & sourceAddr,
@@ -154,7 +159,8 @@ public:
                            const std::string                    & destCurrency,
                            const uint64_t                       & destAmount,
                            const std::vector<unsigned char>     & mpubkey,
-                           const std::vector<wallet::UtxoEntry> & items);
+                           const std::vector<wallet::UtxoEntry> & items,
+                           bool                                   isPartialOrderAllowed);
 
     /**
      * @brief deletePendingTransaction - delete transaction, unlocked items

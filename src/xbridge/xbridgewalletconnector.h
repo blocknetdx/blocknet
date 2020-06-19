@@ -10,6 +10,7 @@
 
 #include <xbridge/xbridgewallet.h>
 
+#include <primitives/transaction.h>
 #include <script/script.h>
 #include <uint256.h>
 
@@ -173,6 +174,15 @@ public:
                                           const std::vector<unsigned char> & innerScript,
                                           std::string & txId,
                                           std::string & rawTx) = 0;
+
+    virtual bool createPartialTransaction(const std::vector<XTxIn> inputs,
+                                          const std::vector<std::pair<std::string, double> > outputs,
+                                          std::string & txId,
+                                          std::string & rawTx) = 0;
+
+    virtual bool splitUtxos(double splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
+                            std::set<COutPoint> utxos, double & totalSplit, double & splitIncFees, int & splitCount,
+                            std::string & txId, std::string & rawTx, std::string & failReason) = 0;
 
     virtual bool isUTXOSpentInTx(const std::string & txid, const std::string & utxoPrevTxId,
                                  const uint32_t & utxoVoutN, bool & isSpent) = 0;

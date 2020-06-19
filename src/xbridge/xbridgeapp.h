@@ -241,9 +241,37 @@ public:
      * @param to - destionation amount
      * @param toCurrency - destionation currency
      * @param toAmount - destionation amount
+     * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
+     * @param partialOrder - partial order flag
+     * @param partialMinimum - partial minimum amount
      * @param id - id of transaction
      * @param blockHash
-     * @return xbridge::SUCCES if success, else error code
+     * @return xbridge::SUCCESS if success, else error code
+     */
+    Error sendXBridgeTransaction(const std::string & from,
+                                 const std::string & fromCurrency,
+                                 const uint64_t & fromAmount,
+                                 const std::string & to,
+                                 const std::string & toCurrency,
+                                 const uint64_t & toAmount,
+                                 const std::vector<wallet::UtxoEntry> utxos,
+                                 bool partialOrder,
+                                 bool repostOrder,
+                                 uint64_t partialMinimum,
+                                 uint256 & id,
+                                 uint256 & blockHash);
+
+    /**
+     * @brief sendXBridgeTransaction - create new xbridge transaction and send to network
+     * @param from - source address
+     * @param fromCurrency - source currency
+     * @param fromAmount - source amount
+     * @param to - destionation amount
+     * @param toCurrency - destionation currency
+     * @param toAmount - destionation amount
+     * @param id - id of transaction
+     * @param blockHash
+     * @return xbridge::SUCCESS if success, else error code
      */
     Error sendXBridgeTransaction(const std::string & from,
                                  const std::string & fromCurrency,
@@ -252,7 +280,23 @@ public:
                                  const std::string & toCurrency,
                                  const uint64_t & toAmount,
                                  uint256 & id,
-                                 uint256& blockHash);
+                                 uint256 & blockHash);
+
+    /**
+     * @brief repostXBridgeTransaction - reposts a partial order with limited utxo set. Fees are subtracted
+     * from the total utxo amount.
+     * @param from - source address
+     * @param fromCurrency - source currency
+     * @param to - destionation amount
+     * @param toCurrency - destionation currency
+     * @param makerPrice - use this price (priced in maker_size/taker_size) to determine taker size
+     * @param minFromAmount - the minimum size that can be taken from maker
+     * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
+     * @return xbridge::SUCCESS if success, else error code
+     */
+    Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
+            double makerPrice, uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos);
+
     // TODO make protected
     /**
      * @brief sendPendingTransaction - send packet with data of pending transaction to network
@@ -262,15 +306,16 @@ public:
     bool sendPendingTransaction(const TransactionDescrPtr & ptr);
 
     /**
-     * @brief acceptXBridgeTransaction - accept transaction
+     * @brief acceptXBridgeTransaction - accept order (supports partial orders)
      * @param id - id of  transaction
      * @param from - destionation address
      * @param to - source address
+     * @param fromSize - new maker amount
+     * @param toSize - new taker amount
      * @return xbridge::SUCCESS, if transaction success accepted
      */
-    Error acceptXBridgeTransaction(const uint256 & id,
-                                     const std::string & from,
-                                     const std::string & to);
+    Error acceptXBridgeTransaction(const uint256 & id, const std::string & from, const std::string & to,
+                                   uint64_t fromSize, uint64_t toSize);
 
     /**
      * @brief cancelXBridgeTransaction - cancel xbridge transaction
@@ -279,8 +324,9 @@ public:
      * @return  status of operation
      */
     xbridge::Error cancelXBridgeTransaction(const uint256 &id, const TxCancelReason &reason);
+
     /**
-     * @brief cancelMyXBridgeTransactions - canclel all local transactions
+     * @brief cancelMyXBridgeTransactions - cancel all local transactions
      */
     void cancelMyXBridgeTransactions();
 
@@ -293,13 +339,12 @@ public:
     bool isValidAddress(const std::string &address, WalletConnectorPtr &conn) const;
 
     /**
-     * @brief checkAcceptParams checks the correctness of the parameters
-     * @param id - id accepted transaction
-     * @param ptr - smart pointer to accepted transaction
-     * @param fromAddress - address to pull utxo's from
+     * @brief checkAcceptParams checks that the token wallet has enough to cover the balance.
+     * @param fromCurrency - token to be taken
+     * @param fromAmount - amount to be taken
      * @return xbridge::SUCCESS, if all parameters valid
      */
-    xbridge::Error checkAcceptParams(const uint256 &id, TransactionDescrPtr &ptr, const std::string &fromAddress);
+    xbridge::Error checkAcceptParams(std::string fromCurrency, uint64_t fromAmount);
 
     /**
      * @brief checkCreateParams - checks parameter needs to success created transaction
@@ -610,12 +655,46 @@ public:
             uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
 
     /**
+     * selectPartialUtxos - Selects utxos for use with the partial order.
+     * @param addr Currency address
+     * @param outputs Available utxos to search
+     * @param minTxFee1 fee1 func
+     * @param minTxFee2 fee2 func
+     * @param requiredAmount total required amount (not including fees)
+     * @param requiredUtxoCount number of utxos required
+     * @param requiredFeePerUtxo fees per utxo required
+     * @param requiredSplitSize size of each utxo not including fee
+     * @param requiredPrepTxFees fees required to submit partial order prep tx
+     * @param outputsForUse selected utxos
+     * @param utxoAmount total amount of selected utxos
+     * @param fees total amount of fees
+     * @param exactUtxoMatch true if no prep tx is required
+     * @return
+     */
+    bool selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
+            const double requiredAmount, const int requiredUtxoCount, const double requiredFeePerUtxo,
+            const double requiredPrepTxFees, const double requiredSplitSize, std::vector<wallet::UtxoEntry> & outputsForUse,
+            double & utxoAmount, double & fees, bool & exactUtxoMatch) const;
+
+    /**
      * Unit tests: add xwallets
      * @param services
      */
     void utAddXWallets(const std::vector<std::string> & services) {
         utxwallets = services;
     }
+
+    /**
+     * Processes pending partial orders, i.e. partial orders recently created but
+     * waiting for prep transaction to confirm.
+     */
+    void processPendingPartialOrders();
+
+    /**
+     * Remove the partial order from the pending state.
+     * @param ptr
+     */
+    void removePendingPartialOrder(TransactionDescrPtr ptr);
 
 protected:
     void clearMempool();
@@ -628,6 +707,7 @@ private:
     bool m_updatingWallets{false};
     CCriticalSection m_updatingWalletsLock;
 
+    std::vector<TransactionDescrPtr> m_partialOrders;
     std::set<xbridge::wallet::UtxoEntry> m_feeUtxos;
     std::map<std::string, std::set<xbridge::wallet::UtxoEntry> > m_utxosDict;
     CCriticalSection m_utxosLock;

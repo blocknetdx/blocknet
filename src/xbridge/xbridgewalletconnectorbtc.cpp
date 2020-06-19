@@ -558,6 +558,8 @@ bool listUnspent(const std::string & rpcuser,
                     else if (v.name_ == confirmations)
                     {
                         confs = v.value_.get_int();
+                        u.confirmations = confs > 0 ? confs : 0;
+                        u.hasConfirmations = confs > 0;
                     }
                 }
 
@@ -1893,7 +1895,8 @@ bool BtcWalletConnector<CryptoProvider>::isValidAddress(const std::string & addr
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::isDustAmount(const double & amount) const
 {
-    return (static_cast<uint64_t>(amount * COIN) < dustAmount);
+    // cast to int because amount could be negative
+    return static_cast<int64_t>(amount * static_cast<int64_t>(COIN)) < static_cast<int64_t>(dustAmount);
 }
 
 //******************************************************************************
@@ -2577,6 +2580,183 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
     }
 
     txId  = paytxid;
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vector<XTxIn> inputs,
+                                                                  const std::vector<std::pair<std::string, double> > outputs,
+                                                                  std::string & txId, std::string & rawTx)
+{
+    xbridge::CTransactionPtr tx = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
+    rawTx = tx->toString();
+
+    // sign
+    bool complete = false;
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete)) {
+        LOG() << "sign transaction error " << __FUNCTION__;
+        return false;
+    }
+
+    if (!complete) {
+        LOG() << "transaction not fully signed " << __FUNCTION__;
+        return false;
+    }
+
+    std::string txid;
+    std::string json;
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) {
+        LOG() << "decode signed transaction error " << __FUNCTION__;
+        return false;
+    }
+
+    txId = txid;
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, const std::string addr,
+                                                    const bool includeFees, const std::set<wallet::UtxoEntry> excluded,
+                                                    const std::set<COutPoint> utxos, double & totalSplit,
+                                                    double & splitIncFees, int & splitCount, std::string & txId,
+                                                    std::string & rawTx, std::string & failReason)
+{
+    const auto hasUserSpecifiedUtxos = !utxos.empty();
+    if (isDustAmount(splitAmount)) {
+        failReason = "split amount is dust [" + std::to_string(splitAmount) + "]";
+        return false;
+    }
+    if (!isValidAddress(addr)) {
+        failReason = "address is invalid or not in the wallet for token " + currency;
+        return false;
+    }
+    std::vector<wallet::UtxoEntry> unspent;
+    if (!getUnspent(unspent, excluded)) {
+        failReason = "failed to get unspent transaction outputs for token " + currency;
+        return false;
+    }
+    if (hasUserSpecifiedUtxos) { // Check that user specified utxos are available
+        std::vector<wallet::UtxoEntry> newUnspent;
+        auto copyUtxos = utxos;
+        for (const auto & utxo : unspent) {
+            COutPoint vout{uint256S(utxo.txId), utxo.vout};
+            if (copyUtxos.count(vout)) {
+                copyUtxos.erase(vout);
+                newUnspent.push_back(utxo);
+            }
+        }
+        if (!copyUtxos.empty()) {
+            failReason = "user specified utxo was not found or is not available: " + copyUtxos.begin()->ToString();
+            return false;
+        }
+        unspent = newUnspent; // only use user specified utxos
+    }
+
+    const auto fee1 = minTxFee1(1, 3);
+    const auto fee2 = minTxFee2(1, 1);
+    const auto feesPerUtxo = fee1 + fee2;
+    // Round split size to the nearest xbridge unit
+    static double oneSubSat = 0.000000001; // help promote rounding to full sat
+    const auto splitSize = xBridgeValueFromAmount(xBridgeAmountFromReal(splitAmount + (includeFees ? feesPerUtxo : 0.))) + oneSubSat;
+
+    if (!hasUserSpecifiedUtxos) {
+        // Remove all utxos that already match the expected size or that don't match the specified address
+        unspent.erase(std::remove_if(unspent.begin(), unspent.end(),
+            [splitSize, addr](const wallet::UtxoEntry & entry) {
+                return xBridgeIntFromReal(splitSize) - xBridgeIntFromReal(entry.amount) == 0 || entry.address != addr;
+            }), unspent.end());
+    }
+
+    if (unspent.empty()) {
+        failReason = "failed to get unspent transaction outputs for token " + currency;
+        return false; // no available utxos
+    }
+
+    // Erase any utxos after 100 to prevent issues with creating txs that are too large
+    if (unspent.size() > 100)
+        unspent.erase(unspent.begin()+100, unspent.begin()+unspent.size());
+
+    double vinsTotal{0};
+    std::vector<xbridge::XTxIn> vins;
+    for (const auto & vin : unspent) {
+        vinsTotal += vin.amount;
+        vins.emplace_back(vin.txId, vin.vout, vin.amount);
+    }
+
+    auto outputCount = static_cast<int>(vinsTotal / splitSize);
+    if (outputCount < 1) {
+        failReason = "already split all unused utxos in address [" + addr + "]";
+        return false; // not enough coin
+    }
+    if (outputCount > 100)
+        outputCount = 100;
+
+    const auto remainder = vinsTotal - (outputCount * splitSize);
+    std::vector<std::pair<std::string, double>> vouts;
+    for (int i = 0; i < outputCount; ++i)
+        vouts.emplace_back(addr, splitSize);
+
+    const double txFees = minTxFee1(vins.size(), vouts.size());
+    const auto change = remainder - txFees;
+    // add remainder vout if not dust
+    if (!isDustAmount(change))
+        vouts.emplace_back(addr, change); // subtract fees
+    else {
+        // Remove any utxos consumed by fees
+        auto feesLeft = txFees;
+        while (feesLeft > std::numeric_limits<double>::epsilon() && !vouts.empty()) {
+            auto & vout = vouts[vouts.size()-1];
+            const auto voutAmount = vout.second;
+            const auto voutNewAmount = voutAmount - feesLeft;
+            // If vout doesn't cover the fee move to the next one (i.e. if new amount is too small or negative)
+            if (voutNewAmount <= std::numeric_limits<double>::epsilon()) {
+                vouts.erase(vouts.begin() + vouts.size());
+                outputCount -= 1;
+                feesLeft -= voutAmount; // subtract vout amount from leftover fees
+                continue;
+            }
+
+            vout.second = voutNewAmount;
+            if (isDustAmount(vout.second))
+                vouts.erase(vouts.begin()+vouts.size()); // remove output if dust
+            outputCount -= 1;
+
+            break;
+        }
+    }
+
+    if (vouts.empty()) {
+        failReason = "unable to split further, already split all unused utxos in address [" + addr + "]";
+        return false;
+    }
+
+    xbridge::CTransactionPtr tx = createTransaction(*this, vins, vouts, COIN, txVersion, 0, txWithTimeField);
+    rawTx = tx->toString();
+
+    // sign
+    bool complete = false;
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete) || !complete) {
+        failReason = "failed to sign the split transaction " + currency;
+        return false;
+    }
+
+    std::string txid;
+    std::string json;
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) {
+        failReason = "failed to decode the split transaction " + currency;
+        return false;
+    }
+
+    txId = txid;
+    totalSplit = vinsTotal;
+    splitIncFees = splitSize;
+    splitCount = outputCount;
 
     return true;
 }

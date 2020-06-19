@@ -52,7 +52,9 @@ Transaction::Transaction(const uint256                    & id,
                          const uint64_t                   & destAmount,
                          const uint64_t                   & created,
                          const uint256                    & blockHash,
-                         const std::vector<unsigned char> & mpubkey)
+                         const std::vector<unsigned char> & mpubkey,
+                         const bool                         partialAllowed = false,
+                         const uint64_t                     minFromAmount = 0)
     : m_id(id)
     , m_created(xbridge::intToTime(created))
     , m_last(boost::posix_time::microsec_clock::universal_time())
@@ -66,7 +68,11 @@ Transaction::Transaction(const uint256                    & id,
     , m_destCurrency(destCurrency)
     , m_sourceAmount(sourceAmount)
     , m_destAmount(destAmount)
+    , m_sourceInitialAmount(sourceAmount)
+    , m_destInitialAmount(destAmount)
     , m_a(id)
+    , m_partialAllowed(partialAllowed)
+    , m_minPartialAmount(minFromAmount)
 {
     m_a.setSource(sourceAddr);
     m_a.setDest(destAddr);
@@ -304,6 +310,12 @@ bool Transaction::isExpiredByBlockNumber() const
     return false;
 }
 
+bool Transaction::isPartialAllowed()
+{
+    LOCK(m_lock);
+    return m_partialAllowed;
+}
+
 //*****************************************************************************
 //*****************************************************************************
 void Transaction::cancel()
@@ -493,11 +505,39 @@ bool Transaction::tryJoin(const TransactionPtr other)
         return false;
     }
 
-    if (m_sourceAmount != other->m_destAmount ||
-        m_destAmount != other->m_sourceAmount)
+    if (m_partialAllowed != other->m_partialAllowed) {
+        LogOrderMsg(id().GetHex(), "partial allowed states do not match. transaction not joined", __FUNCTION__);
+        return false;
+    }
+
+    if (m_partialAllowed)
     {
-        // not same currencies
-        ERR() << "not same amount. transaction not joined" << __FUNCTION__;
+        // Taker amounts must agree with maker's asking price
+        const double makerPrice = xBridgeValueFromAmount(m_sourceAmount) / xBridgeValueFromAmount(m_destAmount);
+        const double takerPrice = xBridgeValueFromAmount(other->m_destAmount) / xBridgeValueFromAmount(other->m_sourceAmount);
+        // If maker or taker prices are 0, abort
+        // If the difference between maker and taker price is larger than max deviation, abort
+        if (makerPrice == 0 || takerPrice == 0 || fabs(makerPrice - takerPrice) > xBridgeMaxPriceDeviation) {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", id().GetHex());
+            log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));
+            log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(makerPrice));
+            xbridge::LogOrderMsg(log_obj, "taker price doesn't match maker expected price", __FUNCTION__);
+            return true;
+        }
+
+        if (m_sourceAmount < other->m_destAmount || m_destAmount < other->m_sourceAmount) {
+            LogOrderMsg(id().GetHex(), "partial order amount error, taker amounts are too big. transaction not joined", __FUNCTION__);
+            return false;
+        } else if (other->m_destAmount < m_minPartialAmount) {
+            LogOrderMsg(id().GetHex(), "partial order taker amount is smaller than the minimum. transaction not joined", __FUNCTION__);
+            return false;
+        }
+    }
+
+    if (!m_partialAllowed && (m_sourceAmount != other->m_destAmount || m_destAmount != other->m_sourceAmount)) {
+        // amounts do not match
+        LogOrderMsg(id().GetHex(), "taker amounts to not match maker ask amounts. transaction not joined", __FUNCTION__);
         return false;
     }
 
@@ -549,6 +589,15 @@ bool Transaction::setBinTxId(const std::vector<unsigned char> & addr,
 
 //*****************************************************************************
 //*****************************************************************************
+bool Transaction::orderType() {
+    LOCK(m_lock);
+    if (m_partialAllowed)
+        return "partial";
+    return "exact";
+}
+
+//*****************************************************************************
+//*****************************************************************************
 std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
 {
     UniValue log_obj(UniValue::VOBJ);
@@ -590,6 +639,8 @@ std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
     log_obj.pushKV("taker", tx->b_currency());
     log_obj.pushKV("taker_size", xbridge::xBridgeStringValueFromAmount(tx->b_amount()));
     log_obj.pushKV("taker_addr", (!tx->b_address().empty() && connTo ? connTo->fromXAddr(tx->b_address()) : ""));
+    log_obj.pushKV("order_type", tx->orderType());
+    log_obj.pushKV("partial_minimum", xbridge::xBridgeStringValueFromAmount(tx->min_partial_amount()));
     log_obj.pushKV("state", tx->strState());
     log_obj.pushKV("block_hash", tx->blockHash().GetHex());
     log_obj.pushKV("created_at", xbridge::iso8601(tx->createdTime()));
