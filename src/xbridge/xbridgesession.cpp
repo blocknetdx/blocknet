@@ -2632,6 +2632,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             LogOrderMsg(log_obj,  "successfully submitted p2sh deposit", __FUNCTION__);
             xtx->setWatchBlock(blockCount);
             xapp.watchForSpentDeposit(xtx);
+            // Save db state after updating watch state on this order
+            xapp.saveOrders(true);
         }
         else
         {
@@ -3843,6 +3845,7 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
         // done watching for spent pay tx
         xtx->doneWatching();
         xapp.unwatchSpentDeposit(xtx);
+        xapp.saveOrders(true);
     }
 
     auto fromAddr = connFrom->fromXAddr(xtx->from);

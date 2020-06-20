@@ -280,6 +280,7 @@ BITCOIN_CORE_H += \
   xbridge/xbitcointransaction.h \
   xbridge/xbridgeapp.h \
   xbridge/xbridgecryptoproviderbtc.h \
+  xbridge/xbridgedb.h \
   xbridge/xbridgedef.h \
   xbridge/xbridgeexchange.h \
   xbridge/xbridgepacket.h \
@@ -610,6 +611,7 @@ xbridge_libxbridge_a_SOURCES = \
   xbridge/xbitcointransaction.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgecryptoproviderbtc.cpp \
+  xbridge/xbridgedb.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgepacket.cpp \
   xbridge/xbridgerpc.cpp \
