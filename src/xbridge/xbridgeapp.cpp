@@ -3242,16 +3242,20 @@ void App::Impl::checkWatchesOnDepositSpends()
         if (xtx->lockTime <= blockCount) {
             xbridge::SessionPtr session = getSession();
             int32_t errCode = 0;
-            if (session->redeemOrderDeposit(xtx, errCode))
+            if (session->redeemOrderDeposit(xtx, errCode)) {
+                xtx->state = TransactionDescr::trRollback;
                 done = true;
+            }
         }
 
         // If we've found the spent paytx and haven't redeemed it yet, do that now
         if (xtx->isDoneWatching() && !xtx->hasRedeemedCounterpartyDeposit()) {
             xbridge::SessionPtr session = getSession();
             int32_t errCode = 0;
-            if (session->redeemOrderCounterpartyDeposit(xtx, errCode))
+            if (session->redeemOrderCounterpartyDeposit(xtx, errCode)) {
+                xtx->state = TransactionDescr::trFinished;
                 done = true;
+            }
         }
 
         if (done) {
