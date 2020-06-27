@@ -2139,6 +2139,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             log_obj.pushKV("p2sh_txid", xtx->binTxId);
             log_obj.pushKV("sent_id", sentid);
             LogOrderMsg(log_obj,  "successfully submitted p2sh deposit", __FUNCTION__);
+            // Save db state after updating watch state on this order
+            xapp.watchForSpentDeposit(xtx);
+            xapp.saveOrders(true);
         }
         else
         {
@@ -2909,7 +2912,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         }
     } // payTx
 
-    xtx->state = TransactionDescr::trCommited;
+    xtx->state = TransactionDescr::trFinished;
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     // send reply
@@ -3092,7 +3095,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         }
     } // payTx
 
-    xtx->state = TransactionDescr::trCommited;
+    xtx->state = TransactionDescr::trFinished;
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
 
     // send reply

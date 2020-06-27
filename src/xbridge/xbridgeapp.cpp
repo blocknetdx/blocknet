@@ -3175,6 +3175,11 @@ void App::Impl::checkWatchesOnDepositSpends()
         if (xtx->isWatching())
             continue;
 
+        if (xtx->role == 'A' && xtx->state == TransactionDescr::trFinished) { // maker can stop checking after p2sh redeem
+            app.unwatchSpentDeposit(xtx);
+            continue;
+        }
+
         WalletConnectorPtr connFrom = app.connectorByCurrency(xtx->fromCurrency);
         if (!connFrom)
             continue; // skip (maybe wallet went offline)
@@ -3186,6 +3191,8 @@ void App::Impl::checkWatchesOnDepositSpends()
             xtx->setWatching(false);
             continue;
         }
+
+        if (xtx->role == 'B') { // This section only applies to taker looking for secret
 
         // If we don't have the secret yet, look for the pay tx
         if (!xtx->hasSecret()) {
@@ -3233,6 +3240,7 @@ void App::Impl::checkWatchesOnDepositSpends()
                     break;
                 }
             }
+        }
         }
 
         // If a redeem of origin deposit or pay tx is successful
