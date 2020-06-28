@@ -3589,8 +3589,10 @@ void App::clearNonLocalOrders() {
     LOCK(m_p->m_txLocker);
     for (auto it = m_p->m_transactions.begin(); it != m_p->m_transactions.end(); ) {
         const TransactionDescrPtr & ptr = it->second;
-        if (ptr->isLocal())
+        if (ptr->isLocal()) {
+            ++it;
             continue; // do not remove any orders that belong to us
+        }
         LOCK(m_p->m_connectorsLock);
         if (!m_p->m_connectorCurrencyMap.count(ptr->fromCurrency) || !m_p->m_connectorCurrencyMap.count(ptr->toCurrency)) {
             m_p->m_transactions.erase(it++);
