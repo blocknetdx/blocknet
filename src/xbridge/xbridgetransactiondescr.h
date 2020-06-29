@@ -147,6 +147,7 @@ struct TransactionDescr
         READWRITE(partialOrderPending);
         READWRITE(repostOrder);
         READWRITE(minFromAmount);
+        READWRITE(historical);
     }
 
     void SetNull() {
@@ -213,6 +214,7 @@ struct TransactionDescr
         partialOrderPending = false;
         repostOrder = false;
         minFromAmount = 0;
+        historical = false;
     }
 
     uint256                    id;
@@ -308,6 +310,9 @@ struct TransactionDescr
     bool     repostOrder{false};
     // partial order amounts
     uint64_t minFromAmount{0};
+
+    // Track if tx is historical tx
+    bool historical{false};
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
@@ -460,6 +465,16 @@ struct TransactionDescr
     void counterpartyDepositRedeemed() {
         LOCK(_lock);
         redeemedCounterpartyDeposit = true;
+    }
+
+    void moveToHistory() {
+        LOCK(_lock);
+        historical = true;
+    }
+
+    bool isHistorical() {
+        LOCK(_lock);
+        return historical;
     }
 
     const std::string refundAddress() {
@@ -653,6 +668,7 @@ private:
         partialOrderPending          = d.partialOrderPending;
         repostOrder                  = d.repostOrder;
         minFromAmount                = d.minFromAmount;
+        historical                   = d.historical;
     }
 };
 

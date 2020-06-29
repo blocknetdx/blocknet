@@ -1365,6 +1365,7 @@ void App::moveTransactionToHistory(const uint256 & id)
                 ERR() << "duplicate order " << id.GetHex() << " in history " << __FUNCTION__;
                 return;
             }
+            xtx->moveToHistory();
             m_p->m_historicTransactions[id] = xtx;
         }
     }
@@ -3659,7 +3660,7 @@ void App::loadOrders() {
             continue;
 
         // Restore all transactions
-        if (tr->state == TransactionDescr::trCancelled || tr->state == TransactionDescr::trFinished)
+        if (tr->state == TransactionDescr::trCancelled || tr->state == TransactionDescr::trFinished || tr->isHistorical())
             m_p->m_historicTransactions.insert(std::make_pair(tr->id, tr));
         else
             m_p->m_transactions.insert(std::make_pair(tr->id, tr));
