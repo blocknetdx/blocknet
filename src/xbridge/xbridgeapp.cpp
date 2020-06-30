@@ -1724,9 +1724,17 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     return xbridge::Error::INVALID_AMOUNT;
                 }
             } else { // If no user supplied utxos, create the partial order prep transaction
+                std::vector<wallet::UtxoEntry> existingUtxos;
                 double vinsTotal{0};
                 std::vector<xbridge::XTxIn> vins;
                 for (const auto &vin : ptr->usedCoins) {
+                    // If we already have exact utxos, skip consuming those and subtract from expected total
+                    if (xBridgeAmountFromReal(vin.amount) == xBridgeAmountFromReal(partialSplitAmount + partialPerUtxoFees)) {
+                        existingUtxos.push_back(vin);
+                        partialUtxosRequiredForMinimum--;
+                        partialVoutsTotal -= partialSplitAmount + partialPerUtxoFees;
+                        continue;
+                    }
                     vinsTotal += vin.amount;
                     vins.emplace_back(vin.txId, vin.vout, vin.amount);
                 }
@@ -1778,6 +1786,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
                 unlockCoins(ptr->fromCurrency, ptr->usedCoins);
                 ptr->clearUsedCoins();
+                ptr->usedCoins = existingUtxos; // add existing utxos
+
                 double partialNewTotalUtxosAmount{0};
                 for (int i = 0; i < vouts.size(); ++i) {
                     xbridge::wallet::UtxoEntry entry;
