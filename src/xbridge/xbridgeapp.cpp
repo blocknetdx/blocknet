@@ -383,6 +383,9 @@ bool App::start()
     if (xbridge::Exchange::instance().isStarted())
         LOG() << "XBridge exchange started";
 
+    // Restore local orders
+    loadOrders();
+
     return s;
 }
 
@@ -448,6 +451,13 @@ bool App::init()
 //*****************************************************************************
 bool App::stop()
 {
+    if (m_stopped)
+        return true;
+    m_stopped = true;
+
+    // Save db state
+    saveOrders(true);
+
     bool s = m_p->stop();
     return s;
 }
@@ -1355,6 +1365,7 @@ void App::moveTransactionToHistory(const uint256 & id)
                 ERR() << "duplicate order " << id.GetHex() << " in history " << __FUNCTION__;
                 return;
             }
+            xtx->moveToHistory();
             m_p->m_historicTransactions[id] = xtx;
         }
     }
@@ -1855,6 +1866,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 id = ss2.GetHash();
 
                 ptr->id = id;
+                ptr->setPartialOrderPending(true);
                 {
                     LOCK(m_lock);
                     m_partialOrders.push_back(ptr);
@@ -2459,6 +2471,7 @@ bool App::watchForSpentDeposit(TransactionDescrPtr tr) {
     if (tr == nullptr)
         return false;
     LOCK(m_p->m_watchDepositsLocker);
+    tr->setWatchingForSpentDeposit(true);
     m_p->m_watchDeposits[tr->id] = tr;
     return true;
 }
@@ -2474,6 +2487,7 @@ void App::unwatchSpentDeposit(TransactionDescrPtr tr) {
         return;
     LOCK(m_p->m_watchDepositsLocker);
     m_p->m_watchDeposits.erase(tr->id);
+    tr->setWatchingForSpentDeposit(false);
 }
 
 //******************************************************************************
@@ -3162,6 +3176,11 @@ void App::Impl::checkWatchesOnDepositSpends()
         if (xtx->isWatching())
             continue;
 
+        if (xtx->role == 'A' && xtx->state == TransactionDescr::trFinished) { // maker can stop checking after p2sh redeem
+            app.unwatchSpentDeposit(xtx);
+            continue;
+        }
+
         WalletConnectorPtr connFrom = app.connectorByCurrency(xtx->fromCurrency);
         if (!connFrom)
             continue; // skip (maybe wallet went offline)
@@ -3173,6 +3192,8 @@ void App::Impl::checkWatchesOnDepositSpends()
             xtx->setWatching(false);
             continue;
         }
+
+        if (xtx->role == 'B') { // This section only applies to taker looking for secret
 
         // If we don't have the secret yet, look for the pay tx
         if (!xtx->hasSecret()) {
@@ -3221,6 +3242,7 @@ void App::Impl::checkWatchesOnDepositSpends()
                 }
             }
         }
+        }
 
         // If a redeem of origin deposit or pay tx is successful
         bool done = false;
@@ -3229,22 +3251,27 @@ void App::Impl::checkWatchesOnDepositSpends()
         if (xtx->lockTime <= blockCount) {
             xbridge::SessionPtr session = getSession();
             int32_t errCode = 0;
-            if (session->redeemOrderDeposit(xtx, errCode))
+            if (session->redeemOrderDeposit(xtx, errCode)) {
+                xtx->state = TransactionDescr::trRollback;
                 done = true;
+            }
         }
 
         // If we've found the spent paytx and haven't redeemed it yet, do that now
         if (xtx->isDoneWatching() && !xtx->hasRedeemedCounterpartyDeposit()) {
             xbridge::SessionPtr session = getSession();
             int32_t errCode = 0;
-            if (session->redeemOrderCounterpartyDeposit(xtx, errCode))
+            if (session->redeemOrderCounterpartyDeposit(xtx, errCode)) {
+                xtx->state = TransactionDescr::trFinished;
                 done = true;
+            }
         }
 
         if (done) {
             xtx->doneWatching();
             xbridge::App & xapp = xbridge::App::instance();
             xapp.unwatchSpentDeposit(xtx);
+            xapp.saveOrders(true);
         }
 
         xtx->setWatching(false);
@@ -3523,6 +3550,13 @@ void App::Impl::onTimer()
             if (!app->m_partialOrders.empty())
                 io->post(boost::bind(&xbridge::App::processPendingPartialOrders, app));
         }
+
+        // Save orders states every so often
+        {
+            static uint32_t counter{0};
+            if (++counter % 4 == 0)
+                app->saveOrders();
+        }
     }
 
     m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
@@ -3568,6 +3602,7 @@ void App::removePendingPartialOrder(TransactionDescrPtr ptr) {
     auto it = m_partialOrders.begin();
     while (it != m_partialOrders.end()) {
         if (ptr->id == it->get()->id) {
+            ptr->setPartialOrderPending(false);
             m_partialOrders.erase(it);
             break;
         }
@@ -3600,6 +3635,79 @@ void App::clearNonLocalOrders() {
             ++it;
         }
     }
+}
+
+void App::loadOrders() {
+    LOCK(m_lock);
+
+    XOrderSet orders;
+    if (!xdb.Exists()) {
+        UniValue info(UniValue::VOBJ);
+        if (xdb.Create())
+            LogOrderMsg(info, "Creating orders database", __FUNCTION__);
+        else
+            LogOrderMsg(info, "Failed to create orders database", __FUNCTION__);
+        return;
+    }
+    if (!xdb.Read(orders)) {
+        UniValue erro(UniValue::VOBJ);
+        LogOrderMsg(erro, "Failed to load existing orders database", __FUNCTION__);
+        return;
+    }
+
+    LOCK(m_p->m_txLocker);
+    for (auto & order : orders) {
+        auto tr = std::make_shared<TransactionDescr>(order.second);
+        if (!tr)
+            continue;
+
+        // Restore all transactions
+        if (tr->state == TransactionDescr::trCancelled || tr->state == TransactionDescr::trFinished || tr->isHistorical())
+            m_p->m_historicTransactions.insert(std::make_pair(tr->id, tr));
+        else
+            m_p->m_transactions.insert(std::make_pair(tr->id, tr));
+
+        // Restore spent deposit watches
+        if (tr->isWatchingForSpentDeposit())
+            watchForSpentDeposit(tr);
+
+        // Restore pending partial orders
+        if (tr->isPartialOrderPending())
+            m_partialOrders.push_back(tr);
+    }
+}
+
+void App::saveOrders(bool force) {
+    LOCK(m_lock);
+
+    {
+        LOCK(m_p->m_txLocker);
+        if (m_p->m_transactions.empty() && m_p->m_historicTransactions.empty() && m_partialOrders.empty())
+            return;
+    }
+
+    XOrderSet orders;
+    if (!xdb.Read(orders)) {
+        UniValue erro(UniValue::VOBJ);
+        LogOrderMsg(erro, "Failed to load existing orders database", __FUNCTION__);
+    }
+
+    {
+        LOCK(m_p->m_txLocker);
+        for (auto & order : m_p->m_transactions) {
+            if (order.second->isLocal())
+                orders[order.first] = *order.second;
+        }
+        for (auto & order : m_p->m_historicTransactions) {
+            if (order.second->isLocal())
+                orders[order.first] = *order.second;
+        }
+        for (auto & order : m_partialOrders) {
+            orders[order->id] = *order;
+        }
+    }
+
+    xdb.Write(orders, force);
 }
 
 std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)

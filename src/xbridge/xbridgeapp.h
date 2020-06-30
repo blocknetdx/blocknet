@@ -10,6 +10,7 @@
 
 #include <xbridge/util/xbridgeerror.h>
 #include <xbridge/util/xutil.h>
+#include <xbridge/xbridgedb.h>
 #include <xbridge/xbridgedef.h>
 #include <xbridge/xbridgepacket.h>
 #include <xbridge/xbridgetransactiondescr.h>
@@ -696,6 +697,16 @@ public:
      */
     void removePendingPartialOrder(TransactionDescrPtr ptr);
 
+    /**
+     * Load existing orders.
+     */
+    void loadOrders();
+
+    /**
+     * Save the orders to the persistent storage.
+     */
+    void saveOrders(bool force = false);
+
 protected:
     void clearMempool();
 
@@ -706,6 +717,7 @@ private:
     std::map<std::string, boost::posix_time::ptime> m_badWallets;
     bool m_updatingWallets{false};
     CCriticalSection m_updatingWalletsLock;
+    bool m_stopped{false};
 
     std::vector<TransactionDescrPtr> m_partialOrders;
     std::set<xbridge::wallet::UtxoEntry> m_feeUtxos;
@@ -713,6 +725,7 @@ private:
     CCriticalSection m_utxosLock;
     CCriticalSection m_utxosOrderLock;
 
+    XBridgeDB xdb;
     std::vector<std::string> utxwallets; // unit tests only
 };
 

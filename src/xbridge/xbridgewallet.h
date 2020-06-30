@@ -11,6 +11,7 @@
 #include <sync.h>
 
 #include <cstring>
+#include <serialize.h>
 #include <set>
 #include <stdint.h>
 #include <string>
@@ -57,6 +58,25 @@ struct UtxoEntry
     void setConfirmations(const uint32_t confs) {
         confirmations = confs;
         hasConfirmations = true;
+    }
+
+    static const int CURRENT_VERSION=1;
+    int nVersion{CURRENT_VERSION};
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream & s, Operation ser_action) {
+        READWRITE(nVersion);
+        READWRITE(txId);
+        READWRITE(vout);
+        READWRITE(amount);
+        READWRITE(address);
+        READWRITE(scriptPubKey);
+        READWRITE(confirmations);
+        READWRITE(rawAddress);
+        READWRITE(signature);
+        READWRITE(hasConfirmations);
     }
 };
 
