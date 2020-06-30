@@ -3720,6 +3720,18 @@ void App::saveOrders(bool force) {
     xdb.Write(orders, force);
 }
 
+uint256 App::orderWithUtxo(const wallet::UtxoEntry & utxo) {
+    LOCK(m_p->m_txLocker);
+    for (const auto & order : m_p->m_transactions) {
+        if (order.second->isLocal()) {
+            auto utxos = order.second->utxos();
+            if (utxos.count(utxo))
+                return order.first;
+        }
+    }
+    return uint256();
+}
+
 std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
 {
     UniValue log_obj(UniValue::VOBJ);

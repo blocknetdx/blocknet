@@ -477,6 +477,11 @@ struct TransactionDescr
         return historical;
     }
 
+    std::set<wallet::UtxoEntry> utxos() {
+        LOCK(_lock);
+        return {usedCoins.begin(), usedCoins.end()};
+    }
+
     const std::string refundAddress() {
         // Find the largest utxo to use as redeem if from address is empty
         if (fromAddr.empty()) {
