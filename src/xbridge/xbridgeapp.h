@@ -707,6 +707,14 @@ public:
      */
     void saveOrders(bool force = false);
 
+    /**
+     * Returns the order that contains the specified utxo. If no order
+     * contains the utxo, a null uint256 id is returned.
+     * @param utxo
+     * @return
+     */
+    uint256 orderWithUtxo(const wallet::UtxoEntry & utxo);
+
 protected:
     void clearMempool();
 

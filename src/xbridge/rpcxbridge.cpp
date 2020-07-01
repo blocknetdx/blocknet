@@ -2467,7 +2467,7 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
                 "    \"address\": \"xxx\",      (string) Utxo address\n"
                 "    \"scriptPubKey\": \"hex\", (string) Utxo address script pubkey\n"
                 "    \"confirmations\": n,      (number) Utxo blockchain confirmation count\n"
-                "    \"inorder\": false,        (boolean) true if this utxo is part of an order\n"
+                "    \"orderid\": \"xxx\",      (string) If in order, this is the order id\n"
                 "  }\n"
                 "  ...\n"
                 "]\n"
@@ -2506,7 +2506,11 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
         o.pushKV("address", utxo.address);
         o.pushKV("scriptPubKey", utxo.scriptPubKey);
         o.pushKV("confirmations", static_cast<int>(utxo.confirmations));
-        o.pushKV("inorder", excluded.count(utxo) > 0);
+        o.pushKV("orderid", "");
+        if (excluded.count(utxo) > 0) {
+            auto orderid = xapp.orderWithUtxo(utxo);
+            o.pushKV("orderid", orderid.IsNull() ? "" : orderid.GetHex());
+        }
         r.push_back(o);
     }
     return r;
