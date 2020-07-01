@@ -2051,7 +2051,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         if (inAmount > outAmount+fee1+fee2)
         {
             double rest = inAmount-outAmount-fee1-fee2;
-            outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
+            if (!connFrom->isDustAmount(rest))
+                outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
         }
 
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
@@ -2537,7 +2538,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         if (inAmount > outAmount+fee1+fee2)
         {
             double rest = inAmount-outAmount-fee1-fee2;
-            outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
+            if (!connFrom->isDustAmount(rest))
+                outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
         }
 
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
