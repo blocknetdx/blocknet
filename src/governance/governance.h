@@ -6,15 +6,18 @@
 #define BLOCKNET_GOVERNANCE_GOVERNANCE_H
 
 #include <amount.h>
+#include <dbwrapper.h>
 #include <chain.h>
 #include <consensus/params.h>
 #include <consensus/validation.h>
 #include <hash.h>
+#include <index/base.h>
 #include <key_io.h>
 #include <policy/policy.h>
 #include <script/standard.h>
 #include <shutdown.h>
 #include <streams.h>
+#include <txdb.h>
 #include <txmempool.h>
 #include <uint256.h>
 #include <util/moneystr.h>
@@ -33,6 +36,72 @@
  * Governance namespace.
  */
 namespace gov {
+
+class CDiskProposal;
+class CDiskVote;
+
+constexpr char DB_BEST_BLOCK = 'B';
+constexpr char DB_PROPOSAL = 'p';
+constexpr char DB_VOTE = 'v';
+
+class GovernanceDB : public CValidationInterface {
+public:
+    explicit GovernanceDB(size_t n_cache_size, bool f_memory, bool f_wipe);
+    void Start();
+    void Stop();
+    ~GovernanceDB();
+    const CBlockIndex* BestBlockIndex() const;
+
+    /// Write the current chain block locator to the DB.
+    bool WriteBestBlock(const CBlockIndex *pindex, const CChain & chain, CCriticalSection & chainMutex);
+
+    void AddVote(const CDiskVote & vote);
+    void AddVotes(const std::vector<std::pair<uint256, CDiskVote>> & votes);
+    void RemoveVote(const uint256 & vote);
+    void AddProposal(const CDiskProposal & proposal);
+    void AddProposals(const std::vector<std::pair<uint256, CDiskProposal>> & proposals);
+    void RemoveProposal(const uint256 & proposal);
+
+    class DB : public CDBWrapper {
+    public:
+        explicit DB(size_t n_cache_size, bool f_memory = false, bool f_wipe = false);
+
+        /// Read block locator of the chain that the govindex is in sync with.
+        bool ReadBestBlock(CBlockLocator & locator) const;
+
+        /// Write block locator of the chain that the govindex is in sync with.
+        bool WriteBestBlock(const CBlockLocator & locator);
+
+        /// Write proposals
+        bool WriteProposal(const uint256 & hash, const CDiskProposal & proposal);
+        bool WriteProposals(const std::vector<std::pair<uint256, CDiskProposal>> & proposals);
+
+        /// Write votes
+        bool WriteVote(const uint256 & hash, const CDiskVote & vote);
+        bool WriteVotes(const std::vector<std::pair<uint256, CDiskVote>> & votes);
+    };
+
+    DB & GetDB() {
+        return *db;
+    }
+
+public:
+    void BlockConnected(const std::shared_ptr<const CBlock> & block, const CBlockIndex *pindex,
+                        const std::vector<CTransactionRef> & txn_conflicted) override;
+
+    void ChainStateFlushed(const CBlockLocator& locator) override;
+
+protected:
+    /// Get the name of the index for display in logs.
+    const char* GetName() const { return "govindex"; }
+
+protected:
+    /// The last block in the chain that the index is in sync with.
+    std::atomic<const CBlockIndex*> bestBlockIndex{nullptr};
+
+private:
+    const std::unique_ptr<DB> db;
+};
 
 /**
  * Governance types are used with OP_RETURN to indicate how the messages should be processed.
@@ -164,6 +233,7 @@ protected:
  * They can be created by anyone willing to pay the submission fee.
  */
 class Proposal {
+    friend class CDiskProposal;
 public:
     explicit Proposal(std::string name, int superblock, CAmount amount, std::string address,
                       std::string url, std::string description) : name(std::move(name)), superblock(superblock),
@@ -336,6 +406,7 @@ enum VoteType : uint8_t {
  * the minimum requirements and minimum required votes.
  */
 class Vote {
+    friend class CDiskVote;
 public:
     explicit Vote(const uint256 & proposal, const VoteType & vote,
                   const COutPoint & utxo, const VinHash & vinhash) : proposal(proposal),
@@ -748,12 +819,130 @@ struct Hasher {
 };
 
 /**
+ * Proposal on disk data model.
+ */
+class CDiskProposal : public Proposal {
+public:
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(version);
+        READWRITE(type);
+        READWRITE(superblock);
+        READWRITE(amount);
+        READWRITE(address);
+        READWRITE(name);
+        READWRITE(url);
+        READWRITE(description);
+        READWRITE(blockNumber);
+    }
+
+    void SetNull() {
+        version = NETWORK_VERSION;
+        type = PROPOSAL;
+        name = "";
+        superblock = 0;
+        amount = 0;
+        address = "";
+        url = "";
+        description = "";
+        blockNumber = 0;
+    }
+
+    CDiskProposal() {
+        SetNull();
+    }
+
+    explicit CDiskProposal(const Proposal & proposal) {
+        version = proposal.version;
+        type = proposal.type;
+        superblock = proposal.superblock;
+        amount = proposal.amount;
+        address = proposal.address;
+        name = proposal.name;
+        url = proposal.url;
+        description = proposal.description;
+        blockNumber = proposal.blockNumber;
+    }
+};
+
+/**
+ * Vote on disk data model.
+ */
+class CDiskVote : public Vote {
+public:
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(version);
+        READWRITE(type);
+        READWRITE(proposal);
+        READWRITE(vote);
+        READWRITE(vinhash);
+        READWRITE(signature);
+        READWRITE(utxo);
+        READWRITE(pubkey);
+        READWRITE(outpoint);
+        READWRITE(time);
+        READWRITE(amount);
+        READWRITE(keyid);
+        READWRITE(blockNumber);
+        READWRITE(spentBlock);
+        READWRITE(spentHash);
+    }
+
+    void SetNull() {
+        version = NETWORK_VERSION;
+        type = VOTE;
+        proposal.SetNull();
+        vote = ABSTAIN;
+        vinhash = VinHash();
+        signature.clear();
+        utxo.SetNull();
+        pubkey = CPubKey();
+        outpoint.SetNull();
+        time = 0;
+        amount = 0;
+        keyid.SetNull();
+        blockNumber = 0;
+        spentBlock = 0;
+        spentHash.SetNull();
+    }
+
+    CDiskVote() {
+        SetNull();
+    }
+
+    explicit CDiskVote(const Vote & v) {
+        version = v.version;
+        type = v.type;
+        proposal = v.proposal;
+        vote = v.vote;
+        vinhash = v.vinhash;
+        signature = v.signature;
+        utxo = v.utxo;
+        pubkey = v.pubkey;
+        outpoint = v.outpoint;
+        time = v.time;
+        amount = v.amount;
+        keyid = v.keyid;
+        blockNumber = v.blockNumber;
+        spentBlock = v.spentBlock;
+        spentHash = v.spentHash;
+    }
+};
+
+/**
  * Manages related servicenode functions including handling network messages and storing an active list
  * of valid servicenodes.
  */
 class Governance : public CValidationInterface {
 public:
-    explicit Governance() = default;
+    explicit Governance(const int64_t cache) {
+        db = MakeUnique<GovernanceDB>(cache, false, fReindex);
+    }
 
     /**
      * Returns true if the proposal with the specified name exists.
@@ -840,7 +1029,6 @@ public:
     }
 
     /**
-     * TODO Blocknet use governance leveldb dat
      * Loads the governance data from the blockchain ledger. It's possible to optimize
      * this further by creating a separate leveldb for goverance data. Currently, this
      * method will read every block on the chain beginning with the governance start
@@ -851,15 +1039,58 @@ public:
     bool loadGovernanceData(const CChain & chain, CCriticalSection & chainMutex, const Consensus::Params & consensus,
             std::string & failReasonRet, const int & nthreads=0)
     {
+        int bestBlockHeight{0};
         int blockHeight{0};
+        const CBlockIndex *bestBlockIndex = nullptr;
         {
             LOCK(chainMutex);
             blockHeight = chain.Height();
+            // Load the db data
+            db->Start();
+            if (blockHeight >= consensus.governanceBlock) {
+                if (!db->BestBlockIndex())
+                    db->WriteBestBlock(chain[consensus.governanceBlock], chain, chainMutex);
+                bestBlockIndex = chain.FindFork(db->BestBlockIndex());
+                bestBlockHeight = bestBlockIndex->nHeight;
+            }
         }
         // No need to load any governance data if we're on the genesis block
         // or if the governance system hasn't been enabled yet.
         if (blockHeight == 0 || blockHeight < consensus.governanceBlock)
             return true;
+
+        // Load data from db
+        if (bestBlockHeight >= consensus.governanceBlock) {
+            LOCK(mu);
+            std::unique_ptr<CDBIterator> pcursor(db->GetDB().NewIterator());
+            pcursor->SeekToFirst();
+            while (pcursor->Valid()) {
+                std::pair<char, uint256> key;
+                if (pcursor->GetKey(key) && key.first == DB_PROPOSAL) {
+                    CDiskProposal proposal;
+                    if (pcursor->GetValue(proposal)) {
+                        addProposal(proposal, false);
+                    } else
+                        return error("%s: failed to read proposal", __func__);
+                }
+                pcursor->Next();
+            }
+            pcursor->SeekToFirst();
+            while (pcursor->Valid()) {
+                std::pair<char, uint256> key;
+                if (pcursor->GetKey(key) && key.first == DB_VOTE) {
+                    CDiskVote vote;
+                    if (pcursor->GetValue(vote)) {
+                        addVote(vote, false);
+                    } else
+                        return error("%s: failed to read vote", __func__);
+                }
+                pcursor->Next();
+            }
+        }
+
+        if (bestBlockHeight >= blockHeight)
+            return true; // done loading
 
         boost::thread_group tg;
         Mutex mut; // manage access to shared data
@@ -869,7 +1100,7 @@ public:
         bool useThreadGroup{false};
 
         // Shard the blocks into num equivalent to available cores
-        const int totalBlocks = blockHeight - consensus.governanceBlock;
+        const int totalBlocks = blockHeight - bestBlockHeight;
         int slice = totalBlocks / cores;
         bool failed{false};
 
@@ -918,7 +1149,7 @@ public:
         };
 
         for (int k = 0; k < cores; ++k) {
-            const int start = consensus.governanceBlock + k*slice;
+            const int start = bestBlockHeight + k*slice;
             const int end = k == cores-1 ? blockHeight+1 // check bounds, +1 due to "<" logic below, ensure inclusion of last block
                                          : start+slice;
             // try single threaded on failure
@@ -979,7 +1210,7 @@ public:
                 // Remove votes that are not associated with a proposal
                 if (!hasProposal(vote.getProposal(), vote.getBlockNumber())) {
                     LOCK(mu);
-                    removeVote(vote, true);
+                    removeVote(vote, true, false);
                     continue;
                 }
 
@@ -987,14 +1218,14 @@ public:
                 const auto & proposal = getProposal(vote.getProposal());
                 if (!outsideVotingCutoff(proposal, vote.getBlockNumber(), consensus)) {
                     LOCK(mu);
-                    removeVote(vote, true);
+                    removeVote(vote, true, false);
                     continue;
                 }
 
                 // Mark vote as spent if its utxo is spent before or on the associated proposal's superblock.
                 if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= proposal.getSuperblock()) {
                     LOCK(mu);
-                    spendVote(vote.getHash(), spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first);
+                    spendVote(vote.getHash(), spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first, false);
                     continue;
                 }
 
@@ -1005,7 +1236,7 @@ public:
                 uint256 hashBlock;
                 if (!GetTransaction(vote.getUtxo().hash, tx, consensus, hashBlock)) {
                     LOCK(mu);
-                    removeVote(vote, true);
+                    removeVote(vote, true, false);
                     continue;
                 }
                 CBlockIndex *pindex = nullptr;
@@ -1015,7 +1246,7 @@ public:
                 }
                 if (!pindex || pindex->nHeight > vote.getBlockNumber()) {
                     LOCK(mu);
-                    removeVote(vote, true);
+                    removeVote(vote, true, false);
                     continue;
                 }
 
@@ -1038,7 +1269,7 @@ public:
                     // Remove votes that refer to invalid (or orphaned) utxos -or-
                     // Remove votes with stale utxos (existed prior to governance start block)
                     LOCK(mu);
-                    removeVote(vote, true);
+                    removeVote(vote, true, false);
                     continue;
                 }
             }
@@ -1075,6 +1306,28 @@ public:
         // Wait for all threads to complete
         if (useThreadGroup)
             tg.join_all();
+
+        {
+            LOCK(chainMutex);
+            db->WriteBestBlock(chain[blockHeight], chain, chainMutex);
+        }
+
+        std::vector<std::pair<uint256, CDiskProposal>> savepps;
+        auto pps = copyProposals();
+        for (auto & pitem : pps) {
+            if (pitem.second.getBlockNumber() > bestBlockHeight)
+                savepps.emplace_back(pitem.first, CDiskProposal(pitem.second));
+        }
+        std::vector<std::pair<uint256, CDiskVote>> savevvs;
+        auto vvs = copyVotes();
+        for (auto & vitem : vvs) {
+            if (vitem.second.getBlockNumber() > bestBlockHeight)
+                savevvs.emplace_back(vitem.first, CDiskVote(vitem.second));
+        }
+        if (!savepps.empty())
+            db->AddProposals(savepps);
+        if (!savevvs.empty())
+            db->AddVotes(savevvs);
 
         return !failed;
     }
@@ -1228,8 +1481,9 @@ public:
      * @param voteHash
      * @param block Block number
      * @param txhash prevout of spent vote
+     * @param savedb Write to db
      */
-    void spendVote(const uint256 & voteHash, const int & block, const uint256 & txhash) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+    void spendVote(const uint256 & voteHash, const int & block, const uint256 & txhash, bool savedb=true) EXCLUSIVE_LOCKS_REQUIRED(mu) {
         if (!votes.count(voteHash))
             return;
         // Vote ref
@@ -1252,6 +1506,10 @@ public:
             }
         }
         stackvotes[voteHash].back().spend(block, txhash);
+
+        // Update db
+        if (savedb)
+            db->AddVote(CDiskVote(vote));
     }
 
     /**
@@ -1260,8 +1518,9 @@ public:
      * @param voteHash
      * @param block Block number
      * @param txhash prevout of spent vote
+     * @param savedb Write to db
      */
-    void unspendVote(const uint256 & voteHash, const int & block, const uint256 & txhash) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+    void unspendVote(const uint256 & voteHash, const int & block, const uint256 & txhash, bool savedb=true) EXCLUSIVE_LOCKS_REQUIRED(mu) {
         if (!votes.count(voteHash))
             return;
         // Vote ref
@@ -1284,6 +1543,10 @@ public:
             }
         }
         stackvotes[voteHash].back().unspend(block, txhash);
+
+        // Update db
+        if (savedb)
+            db->AddVote(CDiskVote(vote));
     }
 
     /**
@@ -1644,10 +1907,11 @@ public: // static
 
     /**
      * Singleton instance.
+     * @param cache
      * @return
      */
-    static Governance & instance() {
-        static Governance gov;
+    static Governance & instance(const int64_t cache=nMaxGovDBCache*1024*1024) {
+        static Governance gov(cache);
         return gov;
     }
 
@@ -1934,6 +2198,7 @@ protected:
         if (pindex->nHeight < params.governanceBlock)
             return;
         processBlock(block.get(), pindex->nHeight, params);
+        db->BlockConnected(block, pindex, txn_conflicted);
     }
 
     void BlockDisconnected(const std::shared_ptr<const CBlock>& block) override {
@@ -2042,6 +2307,14 @@ protected:
     }
 
     /**
+     * Flush the governance db.
+     * @param locator
+     */
+    void ChainStateFlushed(const CBlockLocator & locator) override {
+        db->ChainStateFlushed(locator);
+    }
+
+    /**
      * Processes governance data from the specified block and index. Setting the processing chain tip flag will
      * result in contextually performing additional validation including proposal and vote cutoff period checks
      * and checking whether votes have been spent.
@@ -2060,9 +2333,9 @@ protected:
         {
             LOCK(mu);
             for (const auto & p : ps)
-                addProposal(p);
+                addProposal(p, processingChainTip);
             for (const auto & v : vs)
-                addVote(v);
+                addVote(v, processingChainTip);
             // If processing tip or no votes, then no more to do
             if (!processingChainTip || votes.empty())
                 return;
@@ -2098,7 +2371,7 @@ protected:
                     continue;
                 // Only mark the vote as spent if it happens before or on its
                 // proposal's superblock.
-                spendVote(v.getHash(), blockHeight, prevouts[v.getUtxo()]);
+                spendVote(v.getHash(), blockHeight, prevouts[v.getUtxo()], processingChainTip);
             }
         }
     }
@@ -2106,8 +2379,9 @@ protected:
     /**
      * Records a vote, requires the proposal to be known.
      * @param vote
+     * @param savedb Write to db
      */
-    void addVote(const Vote & vote) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+    void addVote(const Vote & vote, bool savedb=true) EXCLUSIVE_LOCKS_REQUIRED(mu) {
         if (!proposals.count(vote.getProposal()))
             return;
 
@@ -2118,14 +2392,18 @@ protected:
         const auto & proposal = proposals[vote.getProposal()];
         auto & vs = sbvotes[proposal.getSuperblock()];
         vs[voteHash] = vote;
+
+        if (savedb)
+            db->AddVote(CDiskVote(vote));
     }
 
     /**
      * Removes and erases the specified vote from data providers.
      * @param vote
      * @param force Remove all vote history regardless of prior state
+     * @param savedb Write to db
      */
-    void removeVote(const Vote & vote, const bool & force=false) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+    void removeVote(const Vote & vote, const bool & force=false, bool savedb=true) EXCLUSIVE_LOCKS_REQUIRED(mu) {
         const auto & voteHash = vote.getHash();
         if (!votes.count(voteHash))
             return;
@@ -2144,6 +2422,10 @@ protected:
             votes.erase(voteHash);
         }
 
+        // Erase from db
+        if (savedb)
+            db->RemoveVote(voteHash);
+
         if (!proposals.count(vote.getProposal()))
             return;
 
@@ -2161,14 +2443,29 @@ protected:
             vs[voteHash] = stackvotes[voteHash].back();
     }
 
-    void addProposal(const Proposal & proposal) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+    /**
+     * Adds the proposal
+     * @param proposal
+     * @param savedb Write to db
+     */
+    void addProposal(const Proposal & proposal, bool savedb=true) EXCLUSIVE_LOCKS_REQUIRED(mu) {
         if (proposals.count(proposal.getHash()))
             return; // do not overwrite existing proposals
         proposals[proposal.getHash()] = proposal;
+        if (savedb)
+            db->AddProposal(CDiskProposal(proposal));
     }
 
-    void removeProposal(const Proposal & proposal) EXCLUSIVE_LOCKS_REQUIRED(mu) {
-        proposals.erase(proposal.getHash());
+    /**
+     * Removes the proposal
+     * @param proposal
+     * @param savedb Write to db
+     */
+    void removeProposal(const Proposal & proposal, bool savedb=true) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+        const auto hash = proposal.getHash();
+        proposals.erase(hash);
+        if (savedb)
+            db->RemoveProposal(hash);
     }
 
 protected:
@@ -2177,6 +2474,7 @@ protected:
     std::unordered_map<uint256, Vote, Hasher> votes GUARDED_BY(mu);
     std::unordered_map<uint256, std::vector<Vote>, Hasher> stackvotes GUARDED_BY(mu);
     std::unordered_map<int, std::unordered_map<uint256, Vote, Hasher>> sbvotes GUARDED_BY(mu);
+    std::unique_ptr<GovernanceDB> db;
 };
 
 }
