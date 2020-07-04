@@ -47,6 +47,7 @@ constexpr char DB_VOTE = 'v';
 class GovernanceDB : public CValidationInterface {
 public:
     explicit GovernanceDB(size_t n_cache_size, bool f_memory, bool f_wipe);
+    void Reset(bool wipe);
     void Start();
     void Stop();
     ~GovernanceDB();
@@ -96,11 +97,13 @@ protected:
     const char* GetName() const { return "govindex"; }
 
 protected:
+    size_t cache{16*1024*1024};
+    bool memory{false};
     /// The last block in the chain that the index is in sync with.
     std::atomic<const CBlockIndex*> bestBlockIndex{nullptr};
 
 private:
-    const std::unique_ptr<DB> db;
+    std::unique_ptr<DB> db;
 };
 
 /**
@@ -238,8 +241,12 @@ public:
     explicit Proposal(std::string name, int superblock, CAmount amount, std::string address,
                       std::string url, std::string description) : name(std::move(name)), superblock(superblock),
                                               amount(amount), address(std::move(address)), url(std::move(url)),
-                                              description(std::move(description)) {}
-    explicit Proposal(int blockNumber) : blockNumber(blockNumber) {}
+                                              description(std::move(description)) {
+        chash = getHash(false);
+    }
+    explicit Proposal(int blockNumber) : blockNumber(blockNumber) {
+        chash = getHash(false);
+    }
     Proposal() = default;
     Proposal(const Proposal &) = default;
     Proposal& operator=(const Proposal &) = default;
@@ -359,9 +366,12 @@ public:
 
     /**
      * Proposal hash
+     * @param cache Default true, return the cached hash.
      * @return
      */
-    uint256 getHash() const {
+    uint256 getHash(bool cache=true) const {
+        if (cache)
+            return chash;
         CHashWriter ss(SER_GETHASH, 0);
         ss << version << type << name << superblock << amount << address << url << description;
         return ss.GetHash();
@@ -379,6 +389,8 @@ public:
         READWRITE(name);
         READWRITE(url);
         READWRITE(description);
+        if (ser_action.ForRead())
+            chash = getHash(false);
     }
 
 protected:
@@ -393,6 +405,7 @@ protected:
 
 protected: // memory only
     int blockNumber{0}; // block containing this proposal
+    uint256 chash; // cached hash
 };
 
 enum VoteType : uint8_t {
@@ -414,6 +427,8 @@ public:
                                                                      utxo(utxo),
                                                                      vinhash(vinhash) {
         loadVoteUTXO();
+        chash = getHash(false);
+        csighash = sigHash(false);
     }
     explicit Vote(const uint256 & proposal, const VoteType & vote,
                   const COutPoint & utxo, const VinHash & vinhash,
@@ -422,10 +437,16 @@ public:
                                                                   utxo(utxo),
                                                                   vinhash(vinhash),
                                                                   keyid(keyid),
-                                                                  amount(amount) { }
+                                                                  amount(amount) {
+        chash = getHash(false);
+        csighash = sigHash(false);
+    }
     explicit Vote(const COutPoint & outpoint, const int64_t & time = 0, const int & blockNumber = 0) : outpoint(outpoint),
                                                                                                        time(time),
-                                                                                                       blockNumber(blockNumber) {}
+                                                                                                       blockNumber(blockNumber) {
+        chash = getHash(false);
+        csighash = sigHash(false);
+    }
     Vote() = default;
     Vote(const Vote &) = default;
     Vote& operator=(const Vote &) = default;
@@ -630,9 +651,12 @@ public:
 
     /**
      * Vote hash
+     * @param cache Default true, returns the hash from cache.
      * @return
      */
-    uint256 getHash() const {
+    uint256 getHash(bool cache=true) const {
+        if (cache)
+            return chash;
         CHashWriter ss(SER_GETHASH, 0);
         ss << version << type << proposal << utxo; // exclude vote from hash to properly handle changing votes
         return ss.GetHash();
@@ -640,9 +664,12 @@ public:
 
     /**
      * Vote signature hash
+     * @param cache Default true, returns the hash from cache.
      * @return
      */
-    uint256 sigHash() const {
+    uint256 sigHash(bool cache=true) const {
+        if (cache)
+            return csighash;
         CHashWriter ss(SER_GETHASH, 0);
         ss << version << type << proposal << vote << utxo << vinhash;
         return ss.GetHash();
@@ -711,6 +738,8 @@ public:
         READWRITE(signature);
         if (ser_action.ForRead()) { // assign memory only fields
             pubkey.RecoverCompact(sigHash(), signature);
+            chash = getHash(false);
+            csighash = sigHash(false);
         }
     }
 
@@ -742,6 +771,8 @@ protected: // memory only
     int blockNumber{0}; // block containing this vote
     int spentBlock{0}; // block where this vote's utxo was spent (which invalidates it)
     uint256 spentHash; // tx hash where this vote's utxo was spent (which invalidates it)
+    uint256 chash; // cached hash
+    uint256 csighash; // cached sighash
 };
 
 /**
@@ -836,6 +867,9 @@ public:
         READWRITE(url);
         READWRITE(description);
         READWRITE(blockNumber);
+        if (!ser_action.ForRead() && chash.IsNull())
+            chash = getHash(false);
+        READWRITE(chash);
     }
 
     void SetNull() {
@@ -848,6 +882,7 @@ public:
         url = "";
         description = "";
         blockNumber = 0;
+        chash.SetNull();
     }
 
     CDiskProposal() {
@@ -864,6 +899,7 @@ public:
         url = proposal.url;
         description = proposal.description;
         blockNumber = proposal.blockNumber;
+        chash = proposal.chash;
     }
 };
 
@@ -891,6 +927,14 @@ public:
         READWRITE(blockNumber);
         READWRITE(spentBlock);
         READWRITE(spentHash);
+        if (!ser_action.ForRead()) {
+            if (chash.IsNull())
+                chash = getHash(false);
+            if (csighash.IsNull())
+                csighash = getHash(false);
+        }
+        READWRITE(chash);
+        READWRITE(csighash);
     }
 
     void SetNull() {
@@ -909,6 +953,8 @@ public:
         blockNumber = 0;
         spentBlock = 0;
         spentHash.SetNull();
+        chash.SetNull();
+        csighash.SetNull();
     }
 
     CDiskVote() {
@@ -931,6 +977,8 @@ public:
         blockNumber = v.blockNumber;
         spentBlock = v.spentBlock;
         spentHash = v.spentHash;
+        chash = v.chash;
+        csighash = v.csighash;
     }
 };
 
@@ -1025,6 +1073,7 @@ public:
         votes.clear();
         stackvotes.clear();
         sbvotes.clear();
+        db->Reset(true);
         return true;
     }
 
@@ -1205,7 +1254,7 @@ public:
                     return false;
                 }
 
-                const auto & vote = tmpvotes[i].second;
+                auto & vote = tmpvotes[i].second;
 
                 // Remove votes that are not associated with a proposal
                 if (!hasProposal(vote.getProposal(), vote.getBlockNumber())) {
@@ -1216,10 +1265,15 @@ public:
 
                 // Remove votes that are inside the cutoff
                 const auto & proposal = getProposal(vote.getProposal());
-                if (!outsideVotingCutoff(proposal, vote.getBlockNumber(), consensus)) {
+                {
+                    // If a vote is in the cutoff it will mutate the vote here with the
+                    // next non-cutoff vote in the stack. This only applies if votes
+                    // were changed in the cutoff period. The most recent valid non-cutoff
+                    // period vote will be used. If no valid votes are left after this
+                    // check move to the next iteration.
                     LOCK(mu);
-                    removeVote(vote, true, false);
-                    continue;
+                    if (removeVotesInCutoff(vote, consensus))
+                        continue;
                 }
 
                 // Mark vote as spent if its utxo is spent before or on the associated proposal's superblock.
@@ -2336,7 +2390,7 @@ protected:
                 addProposal(p, processingChainTip);
             for (const auto & v : vs)
                 addVote(v, processingChainTip);
-            // If processing tip or no votes, then no more to do
+            // If not processing tip or no votes, then no more to do
             if (!processingChainTip || votes.empty())
                 return;
         }
@@ -2441,6 +2495,50 @@ protected:
             vs.erase(voteHash);
         else
             vs[voteHash] = stackvotes[voteHash].back();
+    }
+
+    /**
+     * Removes and erases the specified votes in the cutoff period. This will effectively
+     * remove all "changed votes" during the period. This will return true if all votes
+     * were removed (including changed votes).
+     * @param vote
+     * @param consensus
+     * @return
+     */
+    bool removeVotesInCutoff(Vote & vote, const Consensus::Params & consensus) EXCLUSIVE_LOCKS_REQUIRED(mu) {
+        const auto & voteHash = vote.getHash();
+        if (!votes.count(voteHash))
+            return true;
+        if (!proposals.count(vote.getProposal()))
+            return true;
+
+        const auto & proposal = proposals[vote.getProposal()];
+        while (!outsideVotingCutoff(proposal, vote.getBlockNumber(), consensus)) {
+            // Remove from votes data provider
+            stackvotes[voteHash].pop_back();
+            if (stackvotes[voteHash].empty()) {
+                stackvotes.erase(voteHash);
+                votes.erase(voteHash);
+            } else
+                votes[voteHash] = stackvotes[voteHash].back();
+
+            if (!sbvotes.count(proposal.getSuperblock()))
+                return true; // no votes found for superblock, skip
+
+            auto & vs = sbvotes[proposal.getSuperblock()];
+            if (!vs.count(voteHash))
+                return true;
+            // Remove from superblock votes data provider
+            if (!stackvotes.count(voteHash)) {
+                vs.erase(voteHash);
+                return true;
+            }
+
+            vs[voteHash] = stackvotes[voteHash].back();
+            vote = stackvotes[voteHash].back();
+        }
+
+        return false;
     }
 
     /**

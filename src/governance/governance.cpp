@@ -45,7 +45,15 @@ bool GovernanceDB::DB::WriteVotes(const std::vector<std::pair<uint256, CDiskVote
 }
 
 GovernanceDB::GovernanceDB(size_t n_cache_size, bool f_memory, bool f_wipe)
-        : db(MakeUnique<GovernanceDB::DB>(n_cache_size, f_memory, f_wipe)) { }
+        : cache(n_cache_size)
+        , memory(f_memory)
+        , db(MakeUnique<GovernanceDB::DB>(cache, memory, f_wipe)) { }
+
+void GovernanceDB::Reset(const bool wipe=false) {
+    bestBlockIndex = nullptr;
+    db.reset();
+    db = MakeUnique<GovernanceDB::DB>(cache, memory, wipe);
+}
 
 void GovernanceDB::Start() {
     CBlockLocator locator;
@@ -143,6 +151,8 @@ void GovernanceDB::ChainStateFlushed(const CBlockLocator & locator) {
 
 GovernanceDB::~GovernanceDB() {
     Stop();
+    bestBlockIndex = nullptr;
+    db.reset();
 }
 
 }
