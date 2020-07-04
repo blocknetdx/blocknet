@@ -35,7 +35,7 @@ ENV HOST=x86_64-pc-linux-gnu
 # Copy source files
 RUN mkdir -p /opt/blocknet \
   && cd /opt/blocknet \
-  && git clone --single-branch --branch 4.2.0 https://github.com/blocknetdx/blocknet.git
+  && git clone --single-branch --branch master https://github.com/blocknetdx/blocknet.git
 
 # Build source
 RUN mkdir -p /opt/blockchain/config \
