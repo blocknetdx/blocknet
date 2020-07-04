@@ -130,7 +130,7 @@ public:
         pchMessageStart[3] = 0xa3;
         nDefaultPort = 41412;
         nPruneAfterHeight = std::numeric_limits<uint64_t>::max(); // Pruning not supported
-        m_assumed_blockchain_size = 1;
+        m_assumed_blockchain_size = 3;
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1502214073, 734967, UintToArith256(consensus.powLimit).GetCompact(), 1, 250 * COIN);
