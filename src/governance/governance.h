@@ -66,7 +66,7 @@ public:
     void RemoveProposal(const uint256 & proposal);
     bool ReadSpentUtxo(const std::string & key, CDiskSpentUtxo & utxo);
     bool AddSpentUtxos(const std::vector<std::pair<std::string, CDiskSpentUtxo>> & utxos, bool sync=false);
-    bool RemoveSpentUtxo(const CDiskSpentUtxo & utxo);
+    bool RemoveSpentUtxo(const CDiskSpentUtxo & utxo, bool sync=false);
 
     class DB : public CDBWrapper {
     public:

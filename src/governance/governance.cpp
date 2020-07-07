@@ -123,8 +123,8 @@ bool GovernanceDB::AddSpentUtxos(const std::vector<std::pair<std::string, CDiskS
     return db->WriteSpentUtxos(utxos, sync);
 }
 
-bool GovernanceDB::RemoveSpentUtxo(const CDiskSpentUtxo & utxo) {
-    return db->Erase(std::make_pair(DB_SPENT_UTXO, utxo.Key()), true);
+bool GovernanceDB::RemoveSpentUtxo(const CDiskSpentUtxo & utxo, const bool sync) {
+    return db->Erase(std::make_pair(DB_SPENT_UTXO, utxo.Key()), sync);
 }
 
 void GovernanceDB::BlockConnected(const std::shared_ptr<const CBlock> & block, const CBlockIndex *pindex,
@@ -138,7 +138,7 @@ void GovernanceDB::BlockConnected(const std::shared_ptr<const CBlock> & block, c
         }
     }
     if (!spentUtxos.empty())
-        db->WriteSpentUtxos(spentUtxos, true);
+        db->WriteSpentUtxos(spentUtxos, !IsInitialBlockDownload());
 
     auto blockIndex = bestBlockIndex.load();
     if (!blockIndex) {
@@ -161,7 +161,7 @@ void GovernanceDB::BlockDisconnected(const std::shared_ptr<const CBlock> & block
     for (const auto & tx : block->vtx) {
         for (const auto & vin : tx->vin) {
             CDiskSpentUtxo utxo(vin.prevout, 0, uint256{});
-            RemoveSpentUtxo(utxo);
+            RemoveSpentUtxo(utxo, !IsInitialBlockDownload());
         }
     }
 }
