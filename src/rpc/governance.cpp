@@ -141,23 +141,16 @@ static UniValue listproposals(const JSONRPCRequest& request)
             throw JSONRPCError(RPC_INVALID_PARAMETER, strprintf("'sinceblock' is bad, cannot be greater than %d", chainActive.Height()));
     }
 
-    std::vector<gov::Proposal> proposals;
-    std::vector<gov::Vote> votes;
-    auto ps = gov::Governance::instance().getProposalsSince(sinceBlock);
-    for (const auto & proposal : ps) {
-        proposals.push_back(proposal);
-        const auto & v = gov::Governance::instance().getVotes(proposal.getHash());
-        votes.insert(votes.end(), v.begin(), v.end());
-    }
-
     const auto superblock = gov::NextSuperblock(consensus);
-    std::map<gov::Proposal, gov::Tally> results;
+    const auto proposals = gov::Governance::instance().getProposalsSince(sinceBlock);
+    std::map<int, std::map<gov::Proposal, gov::Tally>> superblockResults;
 
     UniValue ret(UniValue::VARR);
     for (const auto & proposal : proposals) {
-        if (!results.count(proposal) && proposal.getSuperblock() <= superblock) {
-            auto presults = gov::Governance::instance().getSuperblockResults(proposal.getSuperblock(), consensus);
-            results.insert(presults.begin(), presults.end());
+        auto results = superblockResults[proposal.getSuperblock()];
+        if (proposal.getSuperblock() <= superblock && results.empty()) {
+            results = gov::Governance::instance().getSuperblockResults(proposal.getSuperblock(), consensus);
+            superblockResults[proposal.getSuperblock()] = results;
         }
         std::string status = "pending"; // superblocks in the future beyond the next one
         if (proposal.getSuperblock() == superblock) { // next superblock (present tense)
@@ -169,6 +162,7 @@ static UniValue listproposals(const JSONRPCRequest& request)
             if (results.count(proposal))
                 status = "passed";
         }
+        const auto votes = gov::Governance::instance().getVotes(proposal.getHash());
         const auto tally = gov::Governance::getTally(proposal.getHash(), votes, consensus);
         UniValue prop(UniValue::VOBJ);
         prop.pushKV("hash", proposal.getHash().ToString());

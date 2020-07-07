@@ -39,6 +39,8 @@ static const int64_t nMaxBlockDBCache = 16;
 static const int64_t nMaxTxIndexCache = 3096;
 //! Max memory allocated to coin DB specific cache (MiB)
 static const int64_t nMaxCoinsDBCache = 32;
+//! Max memory allocated to governance cache (MiB)
+static const int64_t nMaxGovDBCache = 16;
 
 /** CCoinsView backed by the coin database (chainstate/) */
 class CCoinsViewDB final : public CCoinsView

@@ -1505,9 +1505,6 @@ bool AppInitMain(InitInterfaces& interfaces)
 
     // ********************************************************* Step 7: load block chain
 
-    // Governance setup
-    RegisterValidationInterface(&gov::Governance::instance());
-
     // Load coin validator
     CoinValidator::instance().LoadStatic();
 
@@ -1525,6 +1522,8 @@ bool AppInitMain(InitInterfaces& interfaces)
     int64_t nCoinDBCache = std::min(nTotalCache / 2, (nTotalCache / 4) + (1 << 23)); // use 25%-50% of the remainder for disk cache
     nCoinDBCache = std::min(nCoinDBCache, nMaxCoinsDBCache << 20); // cap total coins db cache
     nTotalCache -= nCoinDBCache;
+    int64_t nGovDBCache = std::min(nTotalCache / 6, nMaxGovDBCache << 20); // cap total gov db cache
+    nTotalCache -= nGovDBCache;
     nCoinCacheUsage = nTotalCache; // the rest goes to in-memory cache
     int64_t nMempoolSizeMax = gArgs.GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
     LogPrintf("Cache configuration:\n");
@@ -1533,6 +1532,10 @@ bool AppInitMain(InitInterfaces& interfaces)
         LogPrintf("* Using %.1f MiB for transaction index database\n", nTxIndexCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1f MiB for chain state database\n", nCoinDBCache * (1.0 / 1024 / 1024));
     LogPrintf("* Using %.1f MiB for in-memory UTXO set (plus up to %.1f MiB of unused mempool space)\n", nCoinCacheUsage * (1.0 / 1024 / 1024), nMempoolSizeMax * (1.0 / 1024 / 1024));
+    LogPrintf("* Using %.1f MiB for governance database\n", nGovDBCache * (1.0 / 1024 / 1024));
+
+    // Governance setup
+    RegisterValidationInterface(&gov::Governance::instance(nGovDBCache));
 
     // Blocknet PoS requires txindex
     g_txindex = MakeUnique<TxIndex>(nTxIndexCache, false, fReindex);

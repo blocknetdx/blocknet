@@ -33,6 +33,15 @@
 #include <QSettings>
 #include <QVariant>
 
+int getChainHeight() {
+    int height;
+    {
+        LOCK(cs_main);
+        height = chainActive.Height();
+    }
+    return height;
+}
+
 BlocknetProposals::BlocknetProposals(QFrame *parent) : QFrame(parent), layout(new QVBoxLayout),
                                                        clientModel(nullptr), walletModel(nullptr),
                                                        contextMenu(new QMenu)
@@ -704,6 +713,7 @@ BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(QVector<BlocknetProposa
     gridLayout->setHorizontalSpacing(BGU::spi(15));
 
     int row = 2; // account for header + div rows
+    auto chainHeight = getChainHeight();
 
     std::sort(proposals.begin(), proposals.end(), [](const BlocknetProposals::BlocknetProposal & a, const BlocknetProposals::BlocknetProposal & b) -> bool {
         return a.superblock < b.superblock; // ascending (later proposals last)
@@ -726,6 +736,17 @@ BlocknetProposalsVoteDialog::BlocknetProposalsVoteDialog(QVector<BlocknetProposa
         auto *noRb = new QRadioButton(tr("No"));
         auto *abstainRb = new QRadioButton(tr("Abstain"));
         auto *group = new QButtonGroup;
+
+        // Disable widgets on proposals in the voting cutoff period.
+        if (chainHeight >= proposal.superblock - Params().GetConsensus().votingCutoff) {
+            yesRb->setDisabled(true);
+            noRb->setDisabled(true);
+            abstainRb->setDisabled(true);
+            yesRb->setToolTip(tr("Voting period for this proposal has ended"));
+            noRb->setToolTip(tr("Voting period for this proposal has ended"));
+            abstainRb->setToolTip(tr("Voting period for this proposal has ended"));
+        }
+
         group->addButton(yesRb, 0);
         group->addButton(noRb, 1);
         group->addButton(abstainRb, 2);
