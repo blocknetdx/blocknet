@@ -44,6 +44,17 @@ bool GovernanceDB::DB::WriteVotes(const std::vector<std::pair<uint256, CDiskVote
     return WriteBatch(batch);
 }
 
+bool GovernanceDB::DB::ReadSpentUtxo(const std::string & key, CDiskSpentUtxo & utxo) {
+    return Read(std::make_pair(DB_SPENT_UTXO, key), utxo);
+}
+
+bool GovernanceDB::DB::WriteSpentUtxos(const std::vector<std::pair<std::string, CDiskSpentUtxo>> & utxos, const bool sync) {
+    CDBBatch batch(*this);
+    for (const auto & item : utxos)
+        batch.Write(std::make_pair(DB_SPENT_UTXO, item.first), item.second);
+    return WriteBatch(batch, sync);
+}
+
 GovernanceDB::GovernanceDB(size_t n_cache_size, bool f_memory, bool f_wipe)
         : cache(n_cache_size)
         , memory(f_memory)
@@ -76,7 +87,7 @@ bool GovernanceDB::WriteBestBlock(const CBlockIndex *pindex, const CChain & chai
     AssertLockHeld(chainMutex);
     if (!db->WriteBestBlock(chain.GetLocator(pindex)))
         return error("%s: Failed to write locator to disk", __func__);
-    bestBlockIndex = chain.FindFork(pindex);
+    bestBlockIndex = pindex;
     return true;
 }
 
@@ -84,8 +95,8 @@ void GovernanceDB::AddVote(const CDiskVote & vote) {
     db->WriteVote(vote.getHash(), vote);
 }
 
-void GovernanceDB::AddVotes(const std::vector<std::pair<uint256, CDiskVote>> & votes) {
-    db->WriteVotes(votes);
+bool GovernanceDB::AddVotes(const std::vector<std::pair<uint256, CDiskVote>> & votes) {
+    return db->WriteVotes(votes);
 }
 
 void GovernanceDB::RemoveVote(const uint256 & vote) {
@@ -96,22 +107,45 @@ void GovernanceDB::AddProposal(const CDiskProposal & proposal) {
     db->WriteProposal(proposal.getHash(), proposal);
 }
 
-void GovernanceDB::AddProposals(const std::vector<std::pair<uint256, CDiskProposal>> & proposals) {
-    db->WriteProposals(proposals);
+bool GovernanceDB::AddProposals(const std::vector<std::pair<uint256, CDiskProposal>> & proposals) {
+    return db->WriteProposals(proposals);
 }
 
 void GovernanceDB::RemoveProposal(const uint256 & proposal) {
     db->Erase(proposal);
 }
 
+bool GovernanceDB::ReadSpentUtxo(const std::string & key, CDiskSpentUtxo & utxo) {
+    return db->ReadSpentUtxo(key, utxo);
+}
+
+bool GovernanceDB::AddSpentUtxos(const std::vector<std::pair<std::string, CDiskSpentUtxo>> & utxos, const bool sync) {
+    return db->WriteSpentUtxos(utxos, sync);
+}
+
+bool GovernanceDB::RemoveSpentUtxo(const CDiskSpentUtxo & utxo) {
+    return db->Erase(std::make_pair(DB_SPENT_UTXO, utxo.Key()), true);
+}
+
 void GovernanceDB::BlockConnected(const std::shared_ptr<const CBlock> & block, const CBlockIndex *pindex,
                                   const std::vector<CTransactionRef> & txn_conflicted)
 {
+    std::vector<std::pair<std::string, CDiskSpentUtxo>> spentUtxos;
+    for (const auto & tx : block->vtx) {
+        for (const auto & vin : tx->vin) {
+            CDiskSpentUtxo utxo(vin.prevout, pindex->nHeight, tx->GetHash());
+            spentUtxos.emplace_back(utxo.Key(), utxo);
+        }
+    }
+    if (!spentUtxos.empty())
+        db->WriteSpentUtxos(spentUtxos, true);
+
     auto blockIndex = bestBlockIndex.load();
     if (!blockIndex) {
         if (pindex->nHeight == Params().GetConsensus().governanceBlock)
-            bestBlockIndex = pindex;
-        return;
+            blockIndex = pindex;
+        else
+            return;
     }
 
     // Ensure block connects to an ancestor of the current best block
@@ -121,6 +155,15 @@ void GovernanceDB::BlockConnected(const std::shared_ptr<const CBlock> & block, c
         return;
     }
     bestBlockIndex = pindex;
+}
+
+void GovernanceDB::BlockDisconnected(const std::shared_ptr<const CBlock> & block) {
+    for (const auto & tx : block->vtx) {
+        for (const auto & vin : tx->vin) {
+            CDiskSpentUtxo utxo(vin.prevout, 0, uint256{});
+            RemoveSpentUtxo(utxo);
+        }
+    }
 }
 
 void GovernanceDB::ChainStateFlushed(const CBlockLocator & locator) {

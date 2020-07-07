@@ -39,10 +39,12 @@ namespace gov {
 
 class CDiskProposal;
 class CDiskVote;
+class CDiskSpentUtxo;
 
 constexpr char DB_BEST_BLOCK = 'B';
 constexpr char DB_PROPOSAL = 'p';
 constexpr char DB_VOTE = 'v';
+constexpr char DB_SPENT_UTXO = 's';
 
 class GovernanceDB : public CValidationInterface {
 public:
@@ -57,11 +59,14 @@ public:
     bool WriteBestBlock(const CBlockIndex *pindex, const CChain & chain, CCriticalSection & chainMutex);
 
     void AddVote(const CDiskVote & vote);
-    void AddVotes(const std::vector<std::pair<uint256, CDiskVote>> & votes);
+    bool AddVotes(const std::vector<std::pair<uint256, CDiskVote>> & votes);
     void RemoveVote(const uint256 & vote);
     void AddProposal(const CDiskProposal & proposal);
-    void AddProposals(const std::vector<std::pair<uint256, CDiskProposal>> & proposals);
+    bool AddProposals(const std::vector<std::pair<uint256, CDiskProposal>> & proposals);
     void RemoveProposal(const uint256 & proposal);
+    bool ReadSpentUtxo(const std::string & key, CDiskSpentUtxo & utxo);
+    bool AddSpentUtxos(const std::vector<std::pair<std::string, CDiskSpentUtxo>> & utxos, bool sync=false);
+    bool RemoveSpentUtxo(const CDiskSpentUtxo & utxo);
 
     class DB : public CDBWrapper {
     public:
@@ -80,6 +85,10 @@ public:
         /// Write votes
         bool WriteVote(const uint256 & hash, const CDiskVote & vote);
         bool WriteVotes(const std::vector<std::pair<uint256, CDiskVote>> & votes);
+
+        /// Spent utxos
+        bool ReadSpentUtxo(const std::string & key, CDiskSpentUtxo & utxo);
+        bool WriteSpentUtxos(const std::vector<std::pair<std::string, CDiskSpentUtxo>> & utxos, bool sync=false);
     };
 
     DB & GetDB() {
@@ -89,7 +98,7 @@ public:
 public:
     void BlockConnected(const std::shared_ptr<const CBlock> & block, const CBlockIndex *pindex,
                         const std::vector<CTransactionRef> & txn_conflicted) override;
-
+    void BlockDisconnected(const std::shared_ptr<const CBlock> & block) override;
     void ChainStateFlushed(const CBlockLocator& locator) override;
 
 protected:
@@ -233,7 +242,8 @@ protected:
 
 /**
  * Proposals encapsulate the data required by the network to support voting and payments.
- * They can be created by anyone willing to pay the submission fee.
+ * They can be created by anyone willing to pay the submission fee. The proposal hash is
+ * cached. It is important to rehash the cached hash when any hash fields are mutated.
  */
 class Proposal {
     friend class CDiskProposal;
@@ -443,10 +453,7 @@ public:
     }
     explicit Vote(const COutPoint & outpoint, const int64_t & time = 0, const int & blockNumber = 0) : outpoint(outpoint),
                                                                                                        time(time),
-                                                                                                       blockNumber(blockNumber) {
-        chash = getHash(false);
-        csighash = sigHash(false);
-    }
+                                                                                                       blockNumber(blockNumber) { }
     Vote() = default;
     Vote(const Vote &) = default;
     Vote& operator=(const Vote &) = default;
@@ -737,9 +744,9 @@ public:
         READWRITE(vinhash);
         READWRITE(signature);
         if (ser_action.ForRead()) { // assign memory only fields
-            pubkey.RecoverCompact(sigHash(), signature);
             chash = getHash(false);
             csighash = sigHash(false);
+            pubkey.RecoverCompact(csighash, signature);
         }
     }
 
@@ -839,14 +846,6 @@ struct Tally {
                 && payout == rhs.payout
                 ;
     }
-};
-/**
- * Hasher used with unordered_map and unordered_set
- */
-struct Hasher {
-    size_t operator()(const CKeyID & keyID) const { return ReadLE64(keyID.begin()); }
-    size_t operator()(const uint256 & hash) const { return ReadLE64(hash.begin()); }
-    size_t operator()(const COutPoint & out) const { return (CHashWriter(SER_GETHASH, 0) << out).GetCheapHash(); }
 };
 
 /**
@@ -983,6 +982,58 @@ public:
 };
 
 /**
+ * Spent utxo on disk data model.
+ */
+class CDiskSpentUtxo {
+public:
+    COutPoint outpoint;
+    uint32_t blockNumber{0};
+    uint256 spentHash;
+    uint8_t version{1};
+
+    CDiskSpentUtxo() = default;
+    explicit CDiskSpentUtxo(COutPoint outpoint, uint32_t blockNumber, uint256 spentHash) : outpoint(outpoint)
+                                                                                         , blockNumber(blockNumber)
+                                                                                         , spentHash(spentHash) { }
+    CDiskSpentUtxo(const CDiskSpentUtxo &) = default;
+    CDiskSpentUtxo& operator=(const CDiskSpentUtxo &) = default;
+    friend inline bool operator==(const CDiskSpentUtxo & a, const CDiskSpentUtxo & b) { return a.outpoint == b.outpoint; }
+    friend inline bool operator!=(const CDiskSpentUtxo & a, const CDiskSpentUtxo & b) { return !(a.outpoint == b.outpoint); }
+    friend inline bool operator<(const CDiskSpentUtxo & a, const CDiskSpentUtxo & b) { return a.outpoint < b.outpoint; }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        READWRITE(version);
+        READWRITE(outpoint);
+        READWRITE(blockNumber);
+        READWRITE(spentHash);
+    }
+
+    std::string Key() const {
+        return outpoint.hash.GetHex().substr(10) + ":" + std::to_string(outpoint.n);
+    }
+
+    void SetNull() {
+        version = 1;
+        outpoint.SetNull();
+        blockNumber = 0;
+        spentHash.SetNull();
+    }
+};
+
+/**
+ * Hasher used with unordered_map and unordered_set
+ */
+struct Hasher {
+    size_t operator()(const CKeyID & keyID) const { return ReadLE64(keyID.begin()); }
+    size_t operator()(const uint256 & hash) const { return ReadLE64(hash.begin()); }
+    size_t operator()(const COutPoint & out) const { return (CHashWriter(SER_GETHASH, 0) << out).GetCheapHash(); }
+    size_t operator()(const CDiskSpentUtxo & utxo) const { return (CHashWriter(SER_GETHASH, 0) << (utxo.outpoint)).GetCheapHash(); }
+};
+
+/**
  * Manages related servicenode functions including handling network messages and storing an active list
  * of valid servicenodes.
  */
@@ -1115,23 +1166,21 @@ public:
             pcursor->SeekToFirst();
             while (pcursor->Valid()) {
                 std::pair<char, uint256> key;
-                if (pcursor->GetKey(key) && key.first == DB_PROPOSAL) {
-                    CDiskProposal proposal;
-                    if (pcursor->GetValue(proposal)) {
-                        addProposal(proposal, false);
-                    } else
-                        return error("%s: failed to read proposal", __func__);
+                if (!pcursor->GetKey(key)) {
+                    pcursor->Next();
+                    continue;
                 }
-                pcursor->Next();
-            }
-            pcursor->SeekToFirst();
-            while (pcursor->Valid()) {
-                std::pair<char, uint256> key;
-                if (pcursor->GetKey(key) && key.first == DB_VOTE) {
+                if (key.first == DB_PROPOSAL) {
+                    CDiskProposal proposal;
+                    if (pcursor->GetValue(proposal))
+                        addProposal(proposal, false);
+                    else
+                        return error("%s: failed to read proposal", __func__);
+                } else if (key.first == DB_VOTE) {
                     CDiskVote vote;
-                    if (pcursor->GetValue(vote)) {
+                    if (pcursor->GetValue(vote))
                         addVote(vote, false);
-                    } else
+                    else
                         return error("%s: failed to read vote", __func__);
                 }
                 pcursor->Next();
@@ -1144,8 +1193,7 @@ public:
         boost::thread_group tg;
         Mutex mut; // manage access to shared data
         const auto cores = nthreads == 0 ? GetNumCores() : nthreads;
-        std::unordered_map<COutPoint, std::pair<uint256, int>, Hasher> spentPrevouts; // pair<txhash, blockheight>
-        std::unordered_set<COutPoint, Hasher> chainVouts;
+        std::unordered_map<COutPoint, CDiskSpentUtxo, Hasher> spentPrevouts;
         bool useThreadGroup{false};
 
         // Shard the blocks into num equivalent to available cores
@@ -1153,7 +1201,7 @@ public:
         int slice = totalBlocks / cores;
         bool failed{false};
 
-        auto p1 = [&spentPrevouts,&chainVouts,&failed,&failReasonRet,&chain,&chainMutex,&mut,this]
+        auto p1 = [&spentPrevouts,&failed,&failReasonRet,&chain,&chainMutex,&mut,this]
                   (const int start, const int end, const Consensus::Params & consensus) -> bool
         {
             for (int blockNumber = start; blockNumber < end; ++blockNumber) {
@@ -1187,9 +1235,7 @@ public:
                     LOCK(mut);
                     const auto & txhash = tx->GetHash();
                     for (const auto & vin : tx->vin)
-                        spentPrevouts[vin.prevout] = {txhash, blockIndex->nHeight};
-                    for (int i = 0; i < tx->vout.size(); ++i)
-                        chainVouts.insert(COutPoint{txhash, static_cast<uint32_t>(i)});
+                        spentPrevouts[vin.prevout] = CDiskSpentUtxo{vin.prevout, static_cast<uint32_t>(blockIndex->nHeight), txhash};
                 }
                 // Process block
                 processBlock(&block, blockIndex->nHeight, consensus, false);
@@ -1227,144 +1273,132 @@ public:
         if (useThreadGroup)
             tg.join_all();
 
+        if (failed)
+            return false;
+
+        bool haveVotes{false};
         {
             LOCK(mu);
-            if (votes.empty() || failed)
-                return !failed;
+            haveVotes = !votes.empty();
         }
+        if (haveVotes) {
+            // Now that all votes are loaded, check and remove any invalid ones.
+            // Invalid votes can be evaluated using multiple threads since we
+            // have the complete dataset in memory. Below the votes are sliced
+            // up into shards and each available thread works on its own shard.
+            std::vector<std::pair<uint256, Vote>> tmpvotes;
+            {
+                LOCK(mu);
+                tmpvotes.reserve(votes.size());
+                std::copy(votes.cbegin(), votes.cend(), std::back_inserter(tmpvotes));
+            }
 
-        // Now that all votes are loaded, check and remove any invalid ones.
-        // Invalid votes can be evaluated using multiple threads since we
-        // have the complete dataset in memory. Below the votes are sliced
-        // up into shards and each available thread works on its own shard.
-        std::vector<std::pair<uint256, Vote>> tmpvotes;
-        {
-            LOCK(mu);
-            tmpvotes.reserve(votes.size());
-            std::copy(votes.cbegin(), votes.cend(), std::back_inserter(tmpvotes));
-        }
+            auto p2 = [&tmpvotes,&spentPrevouts,&failed,&mut,this](const int start, const int end,
+                    const Consensus::Params & consensus) -> bool
+            {
+                for (int i = start; i < end; ++i) {
+                    if (ShutdownRequested()) { // don't hold up shutdown requests
+                        LOCK(mut);
+                        failed = true;
+                        return false;
+                    }
 
-        auto p2 = [&tmpvotes,&spentPrevouts,&chainVouts,&failed,&mut,this](const int start, const int end,
-                const Consensus::Params & consensus) -> bool
-        {
-            for (int i = start; i < end; ++i) {
-                if (ShutdownRequested()) { // don't hold up shutdown requests
-                    LOCK(mut);
-                    failed = true;
-                    return false;
-                }
+                    auto & vote = tmpvotes[i].second;
 
-                auto & vote = tmpvotes[i].second;
-
-                // Remove votes that are not associated with a proposal
-                if (!hasProposal(vote.getProposal(), vote.getBlockNumber())) {
-                    LOCK(mu);
-                    removeVote(vote, true, false);
-                    continue;
-                }
-
-                // Remove votes that are inside the cutoff
-                const auto & proposal = getProposal(vote.getProposal());
-                {
-                    // If a vote is in the cutoff it will mutate the vote here with the
-                    // next non-cutoff vote in the stack. This only applies if votes
-                    // were changed in the cutoff period. The most recent valid non-cutoff
-                    // period vote will be used. If no valid votes are left after this
-                    // check move to the next iteration.
-                    LOCK(mu);
-                    if (removeVotesInCutoff(vote, consensus))
+                    // Remove votes that are not associated with a proposal
+                    if (!hasProposal(vote.getProposal(), vote.getBlockNumber())) {
+                        LOCK(mu);
+                        removeVote(vote, true, false);
                         continue;
-                }
+                    }
 
-                // Mark vote as spent if its utxo is spent before or on the associated proposal's superblock.
-                if (spentPrevouts.count(vote.getUtxo()) && spentPrevouts[vote.getUtxo()].second <= proposal.getSuperblock()) {
-                    LOCK(mu);
-                    spendVote(vote.getHash(), spentPrevouts[vote.getUtxo()].second, spentPrevouts[vote.getUtxo()].first, false);
-                    continue;
-                }
+                    // Remove votes that are inside the cutoff
+                    const auto & proposal = getProposal(vote.getProposal());
+                    {
+                        // If a vote is in the cutoff it will mutate the vote here with the
+                        // next non-cutoff vote in the stack. This only applies if votes
+                        // were changed in the cutoff period. The most recent valid non-cutoff
+                        // period vote will be used. If no valid votes are left after this
+                        // check move to the next iteration.
+                        LOCK(mu);
+                        if (removeVotesInCutoff(vote, consensus))
+                            continue;
+                    }
 
-                // Prevent voting on utxos in the future, all votes must reference utxos already confirmed on-chain.
-                // a) Find the block height where vote utxo was included on chain.
-                // b) The vote is ignored if this height is after the height where the vote was included on chain.
-                CTransactionRef tx;
-                uint256 hashBlock;
-                if (!GetTransaction(vote.getUtxo().hash, tx, consensus, hashBlock)) {
-                    LOCK(mu);
-                    removeVote(vote, true, false);
-                    continue;
-                }
-                CBlockIndex *pindex = nullptr;
-                {
-                    LOCK(cs_main);
-                    pindex = LookupBlockIndex(hashBlock);
-                }
-                if (!pindex || pindex->nHeight > vote.getBlockNumber()) {
-                    LOCK(mu);
-                    removeVote(vote, true, false);
-                    continue;
-                }
+                    // Mark vote as spent if its utxo is spent before or on the associated proposal's superblock.
+                    auto utxoSpent = spentPrevouts.count(vote.getUtxo());
+                    auto spent = utxoSpent;
+                    CDiskSpentUtxo spentUtxo;
+                    if (!utxoSpent) { // check db for spent utxo
+                        spentUtxo.outpoint = vote.getUtxo();
+                        spent = db->ReadSpentUtxo(spentUtxo.Key(), spentUtxo);
+                    } else
+                        spentUtxo = spentPrevouts[vote.getUtxo()];
+                    // Check if spent within the superblock voting period
+                    if (spent && spentUtxo.blockNumber <= proposal.getSuperblock()) {
+                        LOCK(mu);
+                        spendVote(vote.getHash(), spentUtxo.blockNumber, spentUtxo.spentHash, false);
+                        continue;
+                    }
 
-                // Chain vouts also includes spent vins (prevouts), however, the spent vin check
-                // happens above so those coins are already excluded. This will ensure that votes
-                // are counted for valid proposals during the superblock period in the past. Any
-                // vote utxos spent after the superblock period are still counted for that period,
-                // therefore any "spent vote utxos" at this point are moot to the protocol which is
-                // why we can just do a lookup here to verify that a vote utxo does in fact exist.
-                // Keep in mind that chainVouts only starts tracking utxos after the governance
-                // start block. This means you can't vote with "old" utxos. Utxos participating in
-                // votes must have been created on or after the governance start block.
-                if (chainVouts.count(vote.getUtxo()))
-                    continue; // if vote utxo is associated with a valid vout then continue
-                else {
-                    // Can't use pcoinsTip here to support utxos created prior to governance start block because
-                    // we'd need to know if the coin was spent at a certain point before the vote's superblock
-                    // and current chainstate implementation doesn't provide an efficient way to obtain this info.
-
-                    // Remove votes that refer to invalid (or orphaned) utxos -or-
-                    // Remove votes with stale utxos (existed prior to governance start block)
-                    LOCK(mu);
-                    removeVote(vote, true, false);
-                    continue;
+                    // Prevent voting on utxos in the future, all votes must reference utxos already confirmed on-chain.
+                    // a) Find the block height where vote utxo was included on chain.
+                    // b) The vote is ignored if this height is after the height where the vote was included on chain.
+                    CTransactionRef tx;
+                    uint256 hashBlock;
+                    if (!GetTransaction(vote.getUtxo().hash, tx, consensus, hashBlock)) {
+                        LOCK(mu);
+                        removeVote(vote, true, false);
+                        continue;
+                    }
+                    CBlockIndex *pindex = nullptr;
+                    {
+                        LOCK(cs_main);
+                        pindex = LookupBlockIndex(hashBlock);
+                    }
+                    if (!pindex || pindex->nHeight > vote.getBlockNumber()) {
+                        LOCK(mu);
+                        removeVote(vote, true, false);
+                        continue;
+                    }
                 }
-            }
-            return true;
-        };
+                return true;
+            };
 
-        useThreadGroup = false; // initial state
+            useThreadGroup = false; // initial state
 
-        slice = static_cast<int>(tmpvotes.size()) / cores;
-        for (int k = 0; k < cores; ++k) {
-            const int start = k*slice;
-            const int end = k == cores-1 ? static_cast<int>(tmpvotes.size())
-                                         : start+slice;
-            // try single threaded on failure
-            try {
-                if (cores > 1) {
-                    tg.create_thread([start,end,consensus,&p2] {
-                        RenameThread("blocknet-governance");
-                        p2(start, end, consensus);
-                    });
-                    useThreadGroup = true;
-                } else
-                    p2(start, end, consensus);
-            } catch (...) {
+            slice = static_cast<int>(tmpvotes.size()) / cores;
+            for (int k = 0; k < cores; ++k) {
+                const int start = k*slice;
+                const int end = k == cores-1 ? static_cast<int>(tmpvotes.size())
+                                             : start+slice;
+                // try single threaded on failure
                 try {
-                    p2(start, end, consensus);
-                } catch (std::exception & e) {
-                    failed = true;
-                    failReasonRet += strprintf("Failed to create thread to load governance votes: %s\n", e.what());
-                    return false; // fatal error
+                    if (cores > 1) {
+                        tg.create_thread([start,end,consensus,&p2] {
+                            RenameThread("blocknet-governance");
+                            p2(start, end, consensus);
+                        });
+                        useThreadGroup = true;
+                    } else
+                        p2(start, end, consensus);
+                } catch (...) {
+                    try {
+                        p2(start, end, consensus);
+                    } catch (std::exception & e) {
+                        failed = true;
+                        failReasonRet += strprintf("Failed to create thread to load governance votes: %s\n", e.what());
+                        return false; // fatal error
+                    }
                 }
             }
+            // Wait for all threads to complete
+            if (useThreadGroup)
+                tg.join_all();
         }
-        // Wait for all threads to complete
-        if (useThreadGroup)
-            tg.join_all();
 
-        {
-            LOCK(chainMutex);
-            db->WriteBestBlock(chain[blockHeight], chain, chainMutex);
-        }
+        if (failed)
+            return false;
 
         std::vector<std::pair<uint256, CDiskProposal>> savepps;
         auto pps = copyProposals();
@@ -1378,12 +1412,33 @@ public:
             if (vitem.second.getBlockNumber() > bestBlockHeight)
                 savevvs.emplace_back(vitem.first, CDiskVote(vitem.second));
         }
-        if (!savepps.empty())
-            db->AddProposals(savepps);
-        if (!savevvs.empty())
-            db->AddVotes(savevvs);
+        std::vector<std::pair<std::string, CDiskSpentUtxo>> saveutxos;
+        for (auto & uitem : spentPrevouts) {
+            if (uitem.second.blockNumber > bestBlockHeight)
+                saveutxos.emplace_back(uitem.second.Key(), uitem.second);
+        }
+        if (!savepps.empty() && !db->AddProposals(savepps)) {
+            failReasonRet += "Failed to save proposals to the database\n";
+            return false;
+        }
+        if (!savevvs.empty() && !db->AddVotes(savevvs)) {
+            failReasonRet += "Failed to save votes to the database\n";
+            return false;
+        }
+        if (!saveutxos.empty() && !db->AddSpentUtxos(saveutxos)) {
+            failReasonRet += "Failed to save spent utxos to the database\n";
+            return false;
+        }
 
-        return !failed;
+        {
+            LOCK(chainMutex);
+            if (!db->WriteBestBlock(chain[blockHeight], chain, chainMutex)) {
+                failReasonRet += "Failed to save governance system best block to the database\n";
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -2269,6 +2324,9 @@ protected:
         }
         if (blockHeight < params.governanceBlock)
             return;
+
+        // Update db
+        db->BlockDisconnected(block);
 
         std::set<Proposal> ps;
         std::set<Vote> vs;
