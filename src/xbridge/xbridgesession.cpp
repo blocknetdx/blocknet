@@ -3883,17 +3883,23 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
                                           xtx->payTxId, xtx->payTx))
     {
         LogOrderMsg(xtx->id.GetHex(), "failed to create payment redeem transaction, retrying", __FUNCTION__);
+        if (!xtx->didLogPayTx2()) {
+            TXLOG() << "redeem counterparty deposit for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
+                    << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
+                    << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
+                    << xtx->payTx;
+            xtx->setLogPayTx2();
+        }
+        return false;
+    }
+
+    if (!xtx->didLogPayTx1()) {
         TXLOG() << "redeem counterparty deposit for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                 << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                 << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
                 << xtx->payTx;
-        return false;
+        xtx->setLogPayTx1();
     }
-
-    TXLOG() << "redeem counterparty deposit for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
-            << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
-            << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
-            << xtx->payTx;
 
     // send pay tx
     std::string sentid;

@@ -148,6 +148,8 @@ struct TransactionDescr
         READWRITE(repostOrder);
         READWRITE(minFromAmount);
         READWRITE(historical);
+        READWRITE(logPayTx1);
+        READWRITE(logPayTx2);
     }
 
     void SetNull() {
@@ -215,6 +217,8 @@ struct TransactionDescr
         repostOrder = false;
         minFromAmount = 0;
         historical = false;
+        logPayTx1 = false;
+        logPayTx2 = false;
     }
 
     uint256                    id;
@@ -313,6 +317,10 @@ struct TransactionDescr
 
     // Track if tx is historical tx
     bool historical{false};
+
+    // Track whether pay tx has been logged
+    bool logPayTx1{false};
+    bool logPayTx2{false};
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
@@ -475,6 +483,23 @@ struct TransactionDescr
     bool isHistorical() {
         LOCK(_lock);
         return historical;
+    }
+
+    bool setLogPayTx1() {
+        LOCK(_lock);
+        logPayTx1 = true;
+    }
+    bool didLogPayTx1() {
+        LOCK(_lock);
+        return logPayTx1;
+    }
+    bool setLogPayTx2() {
+        LOCK(_lock);
+        logPayTx2 = true;
+    }
+    bool didLogPayTx2() {
+        LOCK(_lock);
+        return logPayTx2;
     }
 
     void setUpdateTime(const boost::posix_time::ptime t) {
@@ -679,6 +704,8 @@ private:
         repostOrder                  = d.repostOrder;
         minFromAmount                = d.minFromAmount;
         historical                   = d.historical;
+        logPayTx1                    = d.logPayTx1;
+        logPayTx2                    = d.logPayTx2;
     }
 };
 
