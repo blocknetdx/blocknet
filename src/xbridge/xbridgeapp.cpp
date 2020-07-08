@@ -1092,6 +1092,26 @@ void App::updateActiveWallets()
         uint32_t pendingJobs = 0;
         uint32_t allJobs = static_cast<uint32_t>(conns.size());
         boost::thread_group tg;
+        auto check = [&muJobs,&pendingJobs,&allJobs,&badConnections,&validConnections](WalletConnectorPtr conn) {
+            if (ShutdownRequested())
+                return;
+            // Check that wallet is reachable
+            if (!conn->init()) {
+                {
+                    boost::mutex::scoped_lock l(muJobs);
+                    --pendingJobs;
+                    --allJobs;
+                    badConnections.push_back(conn);
+                }
+                return;
+            }
+            {
+                boost::mutex::scoped_lock l(muJobs);
+                --pendingJobs;
+                --allJobs;
+                validConnections.push_back(conn);
+            }
+        };
 
         // Synchronize all connection checks
         try {
@@ -1111,27 +1131,15 @@ void App::updateActiveWallets()
                     WalletConnectorPtr conn = conns.back();
                     conns.pop_back();
                     // Asynchronously check connection
-                    tg.create_thread([conn, &muJobs, &allJobs, &pendingJobs, &validConnections, &badConnections]() {
-                        RenameThread("blocknet-xbridgewalletcheck");
-                        if (ShutdownRequested())
-                            return;
-                        // Check that wallet is reachable
-                        if (!conn->init()) {
-                            {
-                                boost::mutex::scoped_lock l(muJobs);
-                                --pendingJobs;
-                                --allJobs;
-                                badConnections.push_back(conn);
-                            }
-                            return;
-                        }
-                        {
-                            boost::mutex::scoped_lock l(muJobs);
-                            --pendingJobs;
-                            --allJobs;
-                            validConnections.push_back(conn);
-                        }
-                    });
+                    try {
+                        tg.create_thread([&check, conn]() {
+                            RenameThread("blocknet-xbridgewalletcheck");
+                            check(conn);
+                        });
+                    } catch (...) {
+                        // try single threaded on error creating thread
+                        check(conn);
+                    }
                 }
 
                 {
