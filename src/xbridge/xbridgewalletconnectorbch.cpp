@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 The Blocknet developers
+// Copyright (c) 2017-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -36,13 +36,18 @@ bool decodeRawTransaction(const std::string & rpcuser, const std::string & rpcpa
                           const std::string & rawtx,
                           std::string & txid, std::string & tx);
 
+bool signRawTransaction(const std::string & rpcuser,
+                        const std::string & rpcpasswd,
+                        const std::string & rpcip,
+                        const std::string & rpcport,
+                        std::string & rawtx,
+                        bool & complete);
 }
 
-//******************************************************************************
-//******************************************************************************
 enum
 {
-    SIGHASH_FORKID = 0x40
+    SCRIPT_ENABLE_SIGHASH_FORKID = (1U << 16),    // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/64fd3187598221673455a584dc25c63a48db18a0/src/script/script_flags.h#L85
+    SCRIPT_ENABLE_REPLAY_PROTECTION = (1U << 17), // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/64fd3187598221673455a584dc25c63a48db18a0/src/script/script_flags.h#L89
 };
 
 //******************************************************************************
@@ -50,24 +55,31 @@ enum
 namespace
 {
 
-//******************************************************************************
-// Base signature hash types
-// Base sig hash types not defined in this enum may be used, but they will be
-// represented as UNSUPPORTED.  See transaction
-// c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73 for an
-// example where an unsupported base sig hash of 0 was used.
-//******************************************************************************
-enum class BaseSigHashType : uint8_t
-{
+// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/f25d2ad300d902f1e99ffaf7ff0037bbc586b44b/src/script/sighashtype.h#L14
+/** Signature hash types/flags */
+enum {
+    SIGHASH_ALL = 1,
+    SIGHASH_NONE = 2,
+    SIGHASH_SINGLE = 3,
+    SIGHASH_FORKID = 0x40,
+    SIGHASH_ANYONECANPAY = 0x80,
+};
+
+/**
+ * Base signature hash types
+ * Base sig hash types not defined in this enum may be used, but they will be
+ * represented as UNSUPPORTED.  See transaction
+ * c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73 for an
+ * example where an unsupported base sig hash of 0 was used.
+ */
+enum class BaseSigHashType : uint8_t {
     UNSUPPORTED = 0,
     ALL = SIGHASH_ALL,
     NONE = SIGHASH_NONE,
     SINGLE = SIGHASH_SINGLE
 };
 
-//******************************************************************************
-// Signature hash type wrapper class
-//******************************************************************************
+/** Signature hash type wrapper class */
 class SigHashType {
 private:
     uint32_t sigHash;
@@ -77,37 +89,31 @@ public:
 
     explicit SigHashType(uint32_t sigHashIn) : sigHash(sigHashIn) {}
 
-    SigHashType withBaseType(BaseSigHashType baseSigHashType) const
-    {
+    SigHashType withBaseType(BaseSigHashType baseSigHashType) const {
         return SigHashType((sigHash & ~0x1f) | uint32_t(baseSigHashType));
     }
 
-    SigHashType withForkValue(uint32_t forkId) const
-    {
+    SigHashType withForkValue(uint32_t forkId) const {
         return SigHashType((forkId << 8) | (sigHash & 0xff));
     }
 
-    SigHashType withForkId(bool forkId = true) const
-    {
+    SigHashType withForkId(bool forkId = true) const {
         return SigHashType((sigHash & ~SIGHASH_FORKID) |
                            (forkId ? SIGHASH_FORKID : 0));
     }
 
-    SigHashType withAnyoneCanPay(bool anyoneCanPay = true) const
-    {
+    SigHashType withAnyoneCanPay(bool anyoneCanPay = true) const {
         return SigHashType((sigHash & ~SIGHASH_ANYONECANPAY) |
                            (anyoneCanPay ? SIGHASH_ANYONECANPAY : 0));
     }
 
-    BaseSigHashType getBaseType() const
-    {
+    BaseSigHashType getBaseType() const {
         return BaseSigHashType(sigHash & 0x1f);
     }
 
     uint32_t getForkValue() const { return sigHash >> 8; }
 
-    bool isDefined() const
-    {
+    bool isDefined() const {
         auto baseType =
             BaseSigHashType(sigHash & ~(SIGHASH_FORKID | SIGHASH_ANYONECANPAY));
         return baseType >= BaseSigHashType::ALL &&
@@ -116,144 +122,154 @@ public:
 
     bool hasForkId() const { return (sigHash & SIGHASH_FORKID) != 0; }
 
-    bool hasAnyoneCanPay() const
-    {
+    bool hasAnyoneCanPay() const {
         return (sigHash & SIGHASH_ANYONECANPAY) != 0;
     }
 
     uint32_t getRawSigHashType() const { return sigHash; }
 
-    template<typename S>
-    void Serialize(S &s) const {
-        ::Serialize(s, VARINT(getRawSigHashType()));
+    template <typename Stream> void Serialize(Stream &s) const {
+        ::Serialize(s, getRawSigHashType());
+    }
+
+    template <typename Stream> void Unserialize(Stream &s) {
+        ::Unserialize(s, sigHash);
+    }
+
+    /**
+     * Handy operators.
+     */
+    friend constexpr bool operator==(const SigHashType &a,
+                                     const SigHashType &b) {
+        return a.sigHash == b.sigHash;
+    }
+
+    friend constexpr bool operator!=(const SigHashType &a,
+                                     const SigHashType &b) {
+        return !(a == b);
     }
 };
 
 //******************************************************************************
 //******************************************************************************
-uint256 GetPrevoutHash(const CTransactionPtr & txTo)
-{
+// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1448
+template <class T> uint256 GetPrevoutHash(const T &txTo) {
     CHashWriter ss(SER_GETHASH, 0);
-    for (size_t n = 0; n < txTo->vin.size(); n++)
-    {
-        ss << txTo->vin[n].prevout;
+    for (const auto &txin : txTo.vin) {
+        ss << txin.prevout;
+    }
+    return ss.GetHash();
+}
+// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1456
+template <class T> uint256 GetSequenceHash(const T &txTo) {
+    CHashWriter ss(SER_GETHASH, 0);
+    for (const auto &txin : txTo.vin) {
+        ss << txin.nSequence;
+    }
+    return ss.GetHash();
+}
+// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1464
+template <class T> uint256 GetOutputsHash(const T &txTo) {
+    CHashWriter ss(SER_GETHASH, 0);
+    for (const auto &txout : txTo.vout) {
+        ss << txout;
     }
     return ss.GetHash();
 }
 
 //******************************************************************************
 //******************************************************************************
-uint256 GetSequenceHash(const CTransactionPtr & txTo)
-{
-    CHashWriter ss(SER_GETHASH, 0);
-    for (size_t n = 0; n < txTo->vin.size(); n++)
-    {
-        ss << txTo->vin[n].nSequence;
-    }
-    return ss.GetHash();
-}
-
-//******************************************************************************
-//******************************************************************************
-uint256 GetOutputsHash(const CTransactionPtr & txTo)
-{
-    CHashWriter ss(SER_GETHASH, 0);
-    for (size_t n = 0; n < txTo->vout.size(); n++)
-    {
-        ss << txTo->vout[n];
-    }
-    return ss.GetHash();
-}
-
-//******************************************************************************
-//******************************************************************************
-uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & txTo,
+typedef struct { // helper for bch cache pointer
+    uint256 hashPrevouts;
+    uint256 hashSequence;
+    uint256 hashOutputs;
+} cache_t;
+// Reference: https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1488
+uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
                       unsigned int nIn, SigHashType sigHashType,
-                      const CAmount amount
-                      /*, const PrecomputedTransactionData *cache, uint32_t flags*/)
+                      const CAmount amount)
 {
-// WARNING BCH Nov 15, 2018 hard fork
-//    if (flags & SCRIPT_ENABLE_REPLAY_PROTECTION)
-//    {
-//        // Legacy chain's value for fork id must be of the form 0xffxxxx.
-//        // By xoring with 0xdead, we ensure that the value will be different
-//        // from the original one, even if it already starts with 0xff.
-//        uint32_t newForkValue = sigHashType.getForkValue() ^ 0xdead;
-//        sigHashType = sigHashType.withForkValue(0xff0000 | newForkValue);
-//    }
+    // XBRIDGE
+    auto & txTo = *tx;
+    uint32_t flags = SCRIPT_ENABLE_SIGHASH_FORKID | SCRIPT_ENABLE_REPLAY_PROTECTION;
+    cache_t *cache = nullptr;
+    // END XBRIDGE
 
-    // if (sigHashType.hasForkId() && (flags & SCRIPT_ENABLE_SIGHASH_FORKID))
-    {
+    if (flags & SCRIPT_ENABLE_REPLAY_PROTECTION) {
+        // Legacy chain's value for fork id must be of the form 0xffxxxx.
+        // By xoring with 0xdead, we ensure that the value will be different
+        // from the original one, even if it already starts with 0xff.
+        uint32_t newForkValue = sigHashType.getForkValue() ^ 0xdead;
+        sigHashType = sigHashType.withForkValue(0xff0000 | newForkValue);
+    }
+
+    if (sigHashType.hasForkId() && (flags & SCRIPT_ENABLE_SIGHASH_FORKID)) {
         uint256 hashPrevouts;
         uint256 hashSequence;
         uint256 hashOutputs;
 
-        if (!sigHashType.hasAnyoneCanPay())
-        {
-            hashPrevouts = /*cache ? cache->hashPrevouts : */GetPrevoutHash(txTo);
+        if (!sigHashType.hasAnyoneCanPay()) {
+            hashPrevouts = cache ? cache->hashPrevouts : GetPrevoutHash(txTo);
         }
 
         if (!sigHashType.hasAnyoneCanPay() &&
             (sigHashType.getBaseType() != BaseSigHashType::SINGLE) &&
-            (sigHashType.getBaseType() != BaseSigHashType::NONE))
-        {
-            hashSequence = /*cache ? cache->hashSequence : */GetSequenceHash(txTo);
+            (sigHashType.getBaseType() != BaseSigHashType::NONE)) {
+            hashSequence = cache ? cache->hashSequence : GetSequenceHash(txTo);
         }
 
         if ((sigHashType.getBaseType() != BaseSigHashType::SINGLE) &&
-            (sigHashType.getBaseType() != BaseSigHashType::NONE))
-        {
-            hashOutputs = /*cache ? cache->hashOutputs : */GetOutputsHash(txTo);
-        }
-        else if ((sigHashType.getBaseType() == BaseSigHashType::SINGLE) &&
-                   (nIn < txTo->vout.size()))
-        {
+            (sigHashType.getBaseType() != BaseSigHashType::NONE)) {
+            hashOutputs = cache ? cache->hashOutputs : GetOutputsHash(txTo);
+        } else if ((sigHashType.getBaseType() == BaseSigHashType::SINGLE) &&
+                   (nIn < txTo.vout.size())) {
             CHashWriter ss(SER_GETHASH, 0);
-            ss << txTo->vout[nIn];
+            ss << txTo.vout[nIn];
             hashOutputs = ss.GetHash();
         }
 
         CHashWriter ss(SER_GETHASH, 0);
         // Version
-        ss << txTo->nVersion;
+        ss << txTo.nVersion;
         // Input prevouts/nSequence (none/all, depending on flags)
         ss << hashPrevouts;
         ss << hashSequence;
         // The input being signed (replacing the scriptSig with scriptCode +
         // amount). The prevout may already be contained in hashPrevout, and the
         // nSequence may already be contain in hashSequence.
-        ss << txTo->vin[nIn].prevout;
+        ss << txTo.vin[nIn].prevout;
         ss << scriptCode;
-        ss << amount; // .GetSatoshis();
-        ss << txTo->vin[nIn].nSequence;
+        ss << amount;
+        ss << txTo.vin[nIn].nSequence;
         // Outputs (none/one/all, depending on flags)
         ss << hashOutputs;
         // Locktime
-        ss << txTo->nLockTime;
+        ss << txTo.nLockTime;
         // Sighash type
         ss << sigHashType;
 
         return ss.GetHash();
     }
 
-//    static const uint256 one(uint256S(
-//        "0000000000000000000000000000000000000000000000000000000000000001"));
-//    if (nIn >= txTo.vin.size()) {
-//        //  nIn out of range
-//        return one;
-//    }
+    // XBRIDGE should never end up here
+    return {};
+    // XBRIDGE
 
+//    static const uint256 one(uint256S(
+//            "0000000000000000000000000000000000000000000000000000000000000001"));
+//
 //    // Check for invalid use of SIGHASH_SINGLE
 //    if ((sigHashType.getBaseType() == BaseSigHashType::SINGLE) &&
 //        (nIn >= txTo.vout.size())) {
 //        //  nOut out of range
 //        return one;
 //    }
-
+//
 //    // Wrapper to serialize only the necessary parts of the transaction being
 //    // signed
-//    CTransactionSignatureSerializer txTmp(txTo, scriptCode, nIn, sigHashType);
-
+//    CTransactionSignatureSerializer<T> txTmp(txTo, scriptCode, nIn,
+//                                             sigHashType);
+//
 //    // Serialize and hash
 //    CHashWriter ss(SER_GETHASH, 0);
 //    ss << txTmp << sigHashType;
@@ -480,287 +496,287 @@ data CreateChecksum(const std::string &prefix, const data &payload) {
 
 //******************************************************************************
 //******************************************************************************
+// TODO Blocknet BCH disable cashaddr
 namespace cashaddr {
-
-//******************************************************************************
-//******************************************************************************
-/**
- * Encode a cashaddr string.
- */
-std::string Encode(const std::string &prefix, const data &payload)
-{
-    data checksum = CreateChecksum(prefix, payload);
-    data combined = Cat(payload, checksum);
-    std::string ret = prefix + ':';
-
-    ret.reserve(ret.size() + combined.size());
-    for (uint8_t c : combined) {
-        ret += CHARSET[c];
-    }
-
-    return ret;
-}
-
-//******************************************************************************
-//******************************************************************************
-/**
- * Decode a cashaddr string.
- */
-std::pair<std::string, data> Decode(const std::string &str,
-                                    const std::string &default_prefix) {
-    // Go over the string and do some sanity checks.
-    bool lower = false, upper = false, hasNumber = false;
-    size_t prefixSize = 0;
-    for (size_t i = 0; i < str.size(); ++i) {
-        uint8_t c = str[i];
-        if (c >= 'a' && c <= 'z') {
-            lower = true;
-            continue;
-        }
-
-        if (c >= 'A' && c <= 'Z') {
-            upper = true;
-            continue;
-        }
-
-        if (c >= '0' && c <= '9') {
-            // We cannot have numbers in the prefix.
-            hasNumber = true;
-            continue;
-        }
-
-        if (c == ':') {
-            // The separator cannot be the first character, cannot have number
-            // and there must not be 2 separators.
-            if (hasNumber || i == 0 || prefixSize != 0) {
-                return {};
-            }
-
-            prefixSize = i;
-            continue;
-        }
-
-        // We have an unexpected character.
-        return {};
-    }
-
-    // We can't have both upper case and lowercase.
-    if (upper && lower) {
-        return {};
-    }
-
-    // Get the prefix.
-    std::string prefix;
-    if (prefixSize == 0) {
-        prefix = default_prefix;
-    } else {
-        prefix.reserve(prefixSize);
-        for (size_t i = 0; i < prefixSize; ++i) {
-            prefix += LowerCase(str[i]);
-        }
-
-        // Now add the ':' in the size.
-        prefixSize++;
-    }
-
-    // Decode values.
-    const size_t valuesSize = str.size() - prefixSize;
-    data values(valuesSize);
-    for (size_t i = 0; i < valuesSize; ++i) {
-        uint8_t c = str[i + prefixSize];
-        // We have an invalid char in there.
-        if (c > 127 || CHARSET_REV[c] == -1) {
-            return {};
-        }
-
-        values[i] = CHARSET_REV[c];
-    }
-
-    // Verify the checksum.
-    if (!VerifyChecksum(prefix, values)) {
-        return {};
-    }
-
-    return {std::move(prefix), data(values.begin(), values.end() - 8)};
-}
-
+//
+////******************************************************************************
+////******************************************************************************
+///**
+// * Encode a cashaddr string.
+// */
+//std::string Encode(const std::string &prefix, const data &payload)
+//{
+//    data checksum = CreateChecksum(prefix, payload);
+//    data combined = Cat(payload, checksum);
+//    std::string ret = prefix + ':';
+//
+//    ret.reserve(ret.size() + combined.size());
+//    for (uint8_t c : combined) {
+//        ret += CHARSET[c];
+//    }
+//
+//    return ret;
+//}
+//
+////******************************************************************************
+////******************************************************************************
+///**
+// * Decode a cashaddr string.
+// */
+//std::pair<std::string, data> Decode(const std::string &str,
+//                                    const std::string &default_prefix) {
+//    // Go over the string and do some sanity checks.
+//    bool lower = false, upper = false, hasNumber = false;
+//    size_t prefixSize = 0;
+//    for (size_t i = 0; i < str.size(); ++i) {
+//        uint8_t c = str[i];
+//        if (c >= 'a' && c <= 'z') {
+//            lower = true;
+//            continue;
+//        }
+//
+//        if (c >= 'A' && c <= 'Z') {
+//            upper = true;
+//            continue;
+//        }
+//
+//        if (c >= '0' && c <= '9') {
+//            // We cannot have numbers in the prefix.
+//            hasNumber = true;
+//            continue;
+//        }
+//
+//        if (c == ':') {
+//            // The separator cannot be the first character, cannot have number
+//            // and there must not be 2 separators.
+//            if (hasNumber || i == 0 || prefixSize != 0) {
+//                return {};
+//            }
+//
+//            prefixSize = i;
+//            continue;
+//        }
+//
+//        // We have an unexpected character.
+//        return {};
+//    }
+//
+//    // We can't have both upper case and lowercase.
+//    if (upper && lower) {
+//        return {};
+//    }
+//
+//    // Get the prefix.
+//    std::string prefix;
+//    if (prefixSize == 0) {
+//        prefix = default_prefix;
+//    } else {
+//        prefix.reserve(prefixSize);
+//        for (size_t i = 0; i < prefixSize; ++i) {
+//            prefix += LowerCase(str[i]);
+//        }
+//
+//        // Now add the ':' in the size.
+//        prefixSize++;
+//    }
+//
+//    // Decode values.
+//    const size_t valuesSize = str.size() - prefixSize;
+//    data values(valuesSize);
+//    for (size_t i = 0; i < valuesSize; ++i) {
+//        uint8_t c = str[i + prefixSize];
+//        // We have an invalid char in there.
+//        if (c > 127 || CHARSET_REV[c] == -1) {
+//            return {};
+//        }
+//
+//        values[i] = CHARSET_REV[c];
+//    }
+//
+//    // Verify the checksum.
+//    if (!VerifyChecksum(prefix, values)) {
+//        return {};
+//    }
+//
+//    return {std::move(prefix), data(values.begin(), values.end() - 8)};
+//}
+//
 } // namespace cashaddr
 
 
 //******************************************************************************
 //******************************************************************************
-namespace
-{
-
-/**
- * Convert from one power-of-2 number base to another.
- *
- * If padding is enabled, this always return true. If not, then it returns true
- * of all the bits of the input are encoded in the output.
- */
-template <int frombits, int tobits, bool pad, typename O, typename I>
-bool ConvertBits(O &out, I it, I end) {
-    size_t acc = 0;
-    size_t bits = 0;
-    constexpr size_t maxv = (1 << tobits) - 1;
-    constexpr size_t max_acc = (1 << (frombits + tobits - 1)) - 1;
-    while (it != end) {
-        acc = ((acc << frombits) | *it) & max_acc;
-        bits += frombits;
-        while (bits >= tobits) {
-            bits -= tobits;
-            out.push_back((acc >> bits) & maxv);
-        }
-        ++it;
-    }
-
-    // We have remaining bits to encode but do not pad.
-    if (!pad && bits) {
-        return false;
-    }
-
-    // We have remaining bits to encode so we do pad.
-    if (pad && bits) {
-        out.push_back((acc << (tobits - bits)) & maxv);
-    }
-
-    return true;
-}
-
-// Convert the data part to a 5 bit representation.
-template <class T>
-std::vector<uint8_t> PackAddrData(const T &id, uint8_t type)
-{
-    uint8_t version_byte(type << 3);
-    size_t size = id.size();
-    uint8_t encoded_size = 0;
-    switch (size * 8) {
-        case 160:
-            encoded_size = 0;
-            break;
-        case 192:
-            encoded_size = 1;
-            break;
-        case 224:
-            encoded_size = 2;
-            break;
-        case 256:
-            encoded_size = 3;
-            break;
-        case 320:
-            encoded_size = 4;
-            break;
-        case 384:
-            encoded_size = 5;
-            break;
-        case 448:
-            encoded_size = 6;
-            break;
-        case 512:
-            encoded_size = 7;
-            break;
-        default:
-            throw std::runtime_error(
-                "Error packing cashaddr: invalid address length");
-    }
-    version_byte |= encoded_size;
-    std::vector<uint8_t> data = {version_byte};
-    data.insert(data.end(), std::begin(id), std::end(id));
-
-    std::vector<uint8_t> converted;
-    // Reserve the number of bytes required for a 5-bit packed version of a
-    // hash, with version byte.  Add half a byte(4) so integer math provides
-    // the next multiple-of-5 that would fit all the data.
-    converted.reserve(((size + 1) * 8 + 4) / 5);
-    ConvertBits<8, 5, true>(converted, std::begin(data), std::end(data));
-
-    return converted;
-}
-
-//******************************************************************************
-//******************************************************************************
-enum CashAddrType : uint8_t { PUBKEY_TYPE = 0, SCRIPT_TYPE = 1 };
-
-//******************************************************************************
-//******************************************************************************
-struct CashAddrContent
-{
-    CashAddrType type;
-    std::vector<uint8_t> hash;
-};
-
-//******************************************************************************
-//******************************************************************************
-CashAddrContent DecodeCashAddrContent(const std::string & addr,
-                                      const std::string & prefix)
-{
-    std::string outprefix;
-    std::vector<uint8_t> payload;
-    std::tie(outprefix, payload) = cashaddr::Decode(addr, prefix);
-
-    if (outprefix != prefix)
-    {
-        return {};
-    }
-
-    if (payload.empty())
-    {
-        return {};
-    }
-
-    // Check that the padding is zero.
-    size_t extrabits = payload.size() * 5 % 8;
-    if (extrabits >= 5)
-    {
-        // We have more padding than allowed.
-        return {};
-    }
-
-    uint8_t last = payload.back();
-    uint8_t mask = (1 << extrabits) - 1;
-    if (last & mask)
-    {
-        // We have non zero bits as padding.
-        return {};
-    }
-
-    std::vector<uint8_t> data;
-    data.reserve(payload.size() * 5 / 8);
-    ConvertBits<5, 8, false>(data, begin(payload), end(payload));
-
-    // Decode type and size from the version.
-    uint8_t version = data[0];
-    if (version & 0x80)
-    {
-        // First bit is reserved.
-        return {};
-    }
-
-    auto type = CashAddrType((version >> 3) & 0x1f);
-    uint32_t hash_size = 20 + 4 * (version & 0x03);
-    if (version & 0x04)
-    {
-        hash_size *= 2;
-    }
-
-    // Check that we decoded the exact number of bytes we expected.
-    if (data.size() != hash_size + 1)
-    {
-        return {};
-    }
-
-    // Pop the version.
-    data.erase(data.begin());
-    return {type, std::move(data)};
-}
-
+namespace {
+//
+///**
+// * Convert from one power-of-2 number base to another.
+// *
+// * If padding is enabled, this always return true. If not, then it returns true
+// * of all the bits of the input are encoded in the output.
+// */
+//template <int frombits, int tobits, bool pad, typename O, typename I>
+//bool ConvertBits(O &out, I it, I end) {
+//    size_t acc = 0;
+//    size_t bits = 0;
+//    constexpr size_t maxv = (1 << tobits) - 1;
+//    constexpr size_t max_acc = (1 << (frombits + tobits - 1)) - 1;
+//    while (it != end) {
+//        acc = ((acc << frombits) | *it) & max_acc;
+//        bits += frombits;
+//        while (bits >= tobits) {
+//            bits -= tobits;
+//            out.push_back((acc >> bits) & maxv);
+//        }
+//        ++it;
+//    }
+//
+//    // We have remaining bits to encode but do not pad.
+//    if (!pad && bits) {
+//        return false;
+//    }
+//
+//    // We have remaining bits to encode so we do pad.
+//    if (pad && bits) {
+//        out.push_back((acc << (tobits - bits)) & maxv);
+//    }
+//
+//    return true;
+//}
+//
+//// Convert the data part to a 5 bit representation.
+//template <class T>
+//std::vector<uint8_t> PackAddrData(const T &id, uint8_t type)
+//{
+//    uint8_t version_byte(type << 3);
+//    size_t size = id.size();
+//    uint8_t encoded_size = 0;
+//    switch (size * 8) {
+//        case 160:
+//            encoded_size = 0;
+//            break;
+//        case 192:
+//            encoded_size = 1;
+//            break;
+//        case 224:
+//            encoded_size = 2;
+//            break;
+//        case 256:
+//            encoded_size = 3;
+//            break;
+//        case 320:
+//            encoded_size = 4;
+//            break;
+//        case 384:
+//            encoded_size = 5;
+//            break;
+//        case 448:
+//            encoded_size = 6;
+//            break;
+//        case 512:
+//            encoded_size = 7;
+//            break;
+//        default:
+//            throw std::runtime_error(
+//                "Error packing cashaddr: invalid address length");
+//    }
+//    version_byte |= encoded_size;
+//    std::vector<uint8_t> data = {version_byte};
+//    data.insert(data.end(), std::begin(id), std::end(id));
+//
+//    std::vector<uint8_t> converted;
+//    // Reserve the number of bytes required for a 5-bit packed version of a
+//    // hash, with version byte.  Add half a byte(4) so integer math provides
+//    // the next multiple-of-5 that would fit all the data.
+//    converted.reserve(((size + 1) * 8 + 4) / 5);
+//    ConvertBits<8, 5, true>(converted, std::begin(data), std::end(data));
+//
+//    return converted;
+//}
+//
+////******************************************************************************
+////******************************************************************************
+//enum CashAddrType : uint8_t { PUBKEY_TYPE = 0, SCRIPT_TYPE = 1 };
+//
+////******************************************************************************
+////******************************************************************************
+//struct CashAddrContent
+//{
+//    CashAddrType type;
+//    std::vector<uint8_t> hash;
+//};
+//
+////******************************************************************************
+////******************************************************************************
+//CashAddrContent DecodeCashAddrContent(const std::string & addr,
+//                                      const std::string & prefix)
+//{
+//    std::string outprefix;
+//    std::vector<uint8_t> payload;
+//    std::tie(outprefix, payload) = cashaddr::Decode(addr, prefix);
+//
+//    if (outprefix != prefix)
+//    {
+//        return {};
+//    }
+//
+//    if (payload.empty())
+//    {
+//        return {};
+//    }
+//
+//    // Check that the padding is zero.
+//    size_t extrabits = payload.size() * 5 % 8;
+//    if (extrabits >= 5)
+//    {
+//        // We have more padding than allowed.
+//        return {};
+//    }
+//
+//    uint8_t last = payload.back();
+//    uint8_t mask = (1 << extrabits) - 1;
+//    if (last & mask)
+//    {
+//        // We have non zero bits as padding.
+//        return {};
+//    }
+//
+//    std::vector<uint8_t> data;
+//    data.reserve(payload.size() * 5 / 8);
+//    ConvertBits<5, 8, false>(data, begin(payload), end(payload));
+//
+//    // Decode type and size from the version.
+//    uint8_t version = data[0];
+//    if (version & 0x80)
+//    {
+//        // First bit is reserved.
+//        return {};
+//    }
+//
+//    auto type = CashAddrType((version >> 3) & 0x1f);
+//    uint32_t hash_size = 20 + 4 * (version & 0x03);
+//    if (version & 0x04)
+//    {
+//        hash_size *= 2;
+//    }
+//
+//    // Check that we decoded the exact number of bytes we expected.
+//    if (data.size() != hash_size + 1)
+//    {
+//        return {};
+//    }
+//
+//    // Pop the version.
+//    data.erase(data.begin());
+//    return {type, std::move(data)};
+//}
+//
 } // namespace
 
 //******************************************************************************
 //******************************************************************************
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
 xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<std::pair<std::string, double> > & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -768,65 +784,10 @@ xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
 
 //******************************************************************************
 //******************************************************************************
-BchWalletConnector::BchWalletConnector()
-    : BtcWalletConnector()
-{
+BchWalletConnector::BchWalletConnector() : BtcWalletConnector() {}
 
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool BchWalletConnector::init()
-{
-    // wallet info
-    rpc::WalletInfo info;
-    if (!this->getInfo(info))
-        return false;
-
-    auto fallbackMinTxFee = static_cast<uint64_t>(info.relayFee * 2 * COIN);
-    if (minTxFee == 0 && feePerByte == 0 && fallbackMinTxFee == 0) { // non-relay fee coin
-        minTxFee = 3000000; // units (e.g. satoshis for btc)
-        dustAmount = 5460;
-        WARN() << currency << " \"" << title << "\"" << " Using minimum fee of 300k sats";
-    } else {
-        minTxFee = std::max(fallbackMinTxFee, minTxFee);
-        dustAmount = fallbackMinTxFee > 0 ? fallbackMinTxFee : minTxFee;
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string BchWalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const
-{
-    std::vector<uint8_t> data = PackAddrData(xaddr, PUBKEY_TYPE);
-    return cashaddr::Encode(addrPrefix, data);
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::vector<unsigned char> BchWalletConnector::toXAddr(const std::string & addr) const
-{
-    CashAddrContent c = DecodeCashAddrContent(addr, addrPrefix);
-    return c.hash;
-}
-
-//******************************************************************************
-//******************************************************************************
-bool BchWalletConnector::hasValidAddressPrefix(const std::string & /*addr*/) const
-{
-    // TODO implementation
-    return false;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-std::string BchWalletConnector::scriptIdToString(const std::vector<unsigned char> & id) const
-{
-    std::vector<uint8_t> data = PackAddrData(id, SCRIPT_TYPE);
-    return cashaddr::Encode(addrPrefix, data);
-}
+// TODO Blocknet BCH disable cashaddr
+// https://github.com/blocknetdx/blocknet/blob/2b15bf86273614dfcb959f4d219663246e5c4ac1/src/xbridge/xbridgewalletconnectorbch.cpp#L801
 
 //******************************************************************************
 //******************************************************************************
@@ -864,7 +825,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 
         SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
         std::vector<unsigned char> signature;
-        uint256 hash = xbridge::SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             // cancel transaction
@@ -887,6 +848,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
         return false;
     }
     tx->nVersion  = txUnsigned->nVersion;
+    tx->nTime     = txUnsigned->nTime;
     tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem, sequence));
     tx->vout      = txUnsigned->vout;
     tx->nLockTime = txUnsigned->nLockTime;
@@ -948,6 +910,7 @@ bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
         return false;
     }
     tx->nVersion  = txUnsigned->nVersion;
+    tx->nTime     = txUnsigned->nTime;
     tx->vin.push_back(CTxIn(txUnsigned->vin[0].prevout, redeem));
     tx->vout      = txUnsigned->vout;
 

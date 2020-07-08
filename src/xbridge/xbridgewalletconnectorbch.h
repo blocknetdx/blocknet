@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 The Blocknet developers
+// Copyright (c) 2017-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -23,17 +23,6 @@ class BchWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
 public:
     BchWalletConnector();
 
-    bool init();
-
-public:
-    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
-    std::vector<unsigned char> toXAddr(const std::string & addr) const;
-
-public:
-    bool hasValidAddressPrefix(const std::string & addr) const;
-
-    std::string scriptIdToString(const std::vector<unsigned char> & id) const;
-
 public:
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,
@@ -42,7 +31,7 @@ public:
                                  const std::vector<unsigned char> & innerScript,
                                  const uint32_t lockTime,
                                  std::string & txId,
-                                 std::string & rawTx);
+                                 std::string & rawTx) override;
 
     bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
@@ -51,7 +40,7 @@ public:
                                   const std::vector<unsigned char> & xpubKey,
                                   const std::vector<unsigned char> & innerScript,
                                   std::string & txId,
-                                  std::string & rawTx);
+                                  std::string & rawTx) override;
 };
 
 } // namespace xbridge
