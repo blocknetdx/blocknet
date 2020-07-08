@@ -1514,15 +1514,8 @@ bool BtcWalletConnector<CryptoProvider>::init()
     if (!this->getInfo(info))
         return false;
 
-    auto fallbackMinTxFee = static_cast<uint64_t>(info.relayFee * 2 * COIN);
-    if (minTxFee == 0 && feePerByte == 0 && fallbackMinTxFee == 0) { // non-relay fee coin
-        minTxFee = 3000000; // units (e.g. satoshis for btc)
-        dustAmount = 5460;
-        WARN() << currency << " \"" << title << "\"" << " Using minimum fee of 300k sats";
-    } else {
-        minTxFee = std::max(fallbackMinTxFee, minTxFee);
-        dustAmount = fallbackMinTxFee > 0 ? fallbackMinTxFee : minTxFee;
-    }
+    // Calculate dust
+    dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN : 5460;
 
     return true;
 }
