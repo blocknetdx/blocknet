@@ -22,6 +22,7 @@ class BchWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
 {
 public:
     BchWalletConnector();
+    bool init() override;
 
 public:
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
@@ -41,6 +42,13 @@ public:
                                   const std::vector<unsigned char> & innerScript,
                                   std::string & txId,
                                   std::string & rawTx) override;
+
+protected:
+    bool replayProtectionEnabled(int64_t medianBlockTime);
+
+private:
+    bool checkReplayProtectionEnabled();
+    bool replayProtection{false}; // BCH replay protection enforcement (SCRIPT_ENABLE_REPLAY_PROTECTION)
 };
 
 } // namespace xbridge

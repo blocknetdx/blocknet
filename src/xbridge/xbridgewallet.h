@@ -143,6 +143,8 @@ public:
         jsonver                     = other.jsonver;
         contenttype                 = other.contenttype;
 
+        mediantime                  = other.mediantime; // useful for fork management
+
         return *this;
     }
 
@@ -192,6 +194,9 @@ public:
     std::string                  jsonver;
     // content type for rpc requests
     std::string                  contenttype;
+
+    // median time
+    int64_t                      mediantime{0};
 };
 
 } // namespace xbridge

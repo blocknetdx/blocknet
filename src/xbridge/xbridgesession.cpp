@@ -2414,8 +2414,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // check A deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
+        uint64_t p2shAmount{0};
         bool isGood = false;
-        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
+        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -2429,6 +2430,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             LogOrderMsg(log_obj, "bad counterparty deposit for order, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
+        }
+        else {
+            xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
         LogOrderMsg(txid.GetHex(), "counterparty deposit confirmed for order", __FUNCTION__);
@@ -2871,8 +2875,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 
     // check B deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
+        uint64_t p2shAmount{0};
         bool isGood = false;
-        if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
+        if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -2886,6 +2891,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
             LogOrderMsg(log_obj, "bad counterparty deposit for order, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crBadBDepositTx);
             return true;
+        }
+        else {
+            xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
         LogOrderMsg(txid.GetHex(), "counterparty deposit confirmed for order", __FUNCTION__);
@@ -3865,12 +3873,11 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
     auto toAddr = connTo->fromXAddr(xtx->to);
 
     double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
-    double checkAmount = outAmount;
     std::vector<xbridge::XTxIn>                  inputs;
     std::vector<std::pair<std::string, double> > outputs;
 
     // inputs from binTx
-    inputs.emplace_back(xtx->oBinTxId, xtx->oBinTxVout, checkAmount);
+    inputs.emplace_back(xtx->oBinTxId, xtx->oBinTxVout, static_cast<double>(xtx->oBinTxP2SHAmount)/static_cast<double>(connTo->COIN));
 
     // outputs
     {
