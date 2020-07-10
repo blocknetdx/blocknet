@@ -155,15 +155,6 @@ protected:
                                   const std::string & fromBlockHash, const std::string & toBlockHash);
 
     /**
-     * @brief hasNodeService - returns true if the specified node is found with the
-     *        a service.
-     * @param node
-     * @param service
-     * @return
-     */
-    static bool hasNodeService(const ::CPubKey & node, const std::string & service);
-
-    /**
      * @brief findShuffledNodesWithService - finds nodes with given services
      *        that have the given protocol version
      * @param - requested services
@@ -202,6 +193,14 @@ protected:
      * @param order
      */
     bool orderUtxosAreStillValid(TransactionDescrPtr order);
+
+    /**
+     * @brief If a service node was found with the specified service, return true.
+     * @param nodePubKey
+     * @param service
+     * @param checkRunning Default false
+     */
+    bool hasNodeService(const CPubKey & nodePubKey, const std::string & service, bool checkRunning=false);
 
 protected:
     // workers
@@ -2831,14 +2830,14 @@ std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
  * @brief Returns true if the service exists.
  * @param nodePubKey Pubkey of the node
  * @param service Service to search for
+ * @param checkRunning Will only return true if the service node is also running.
  * @return True if service is supported, otherwise false
  */
 //******************************************************************************
-bool App::Impl::hasNodeService(const ::CPubKey & nodePubKey,
-                               const std::string & service)
+bool App::Impl::hasNodeService(const CPubKey & nodePubKey, const std::string & service, bool checkRunning)
 {
     const auto & snode = sn::ServiceNodeMgr::instance().getSn(nodePubKey);
-    if (snode.isNull())
+    if (snode.isNull() || (checkRunning && !snode.running()))
         return false;
     return snode.hasService(service);
 }
@@ -3157,7 +3156,7 @@ void App::Impl::checkAndRelayPendingOrders() {
             // Check that snode order is assigned to is still valid
             CPubKey oldsnode;
             oldsnode.Set(order->sPubKey.begin(), order->sPubKey.end());
-            if (!hasNodeService(oldsnode, order->fromCurrency) || !hasNodeService(oldsnode, order->toCurrency)) {
+            if (!hasNodeService(oldsnode, order->fromCurrency, true) || !hasNodeService(oldsnode, order->toCurrency, true)) {
                 // Pick new servicenode
                 std::set<std::string> currencies{order->fromCurrency, order->toCurrency};
                 CPubKey newsnode;
