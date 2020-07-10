@@ -2326,6 +2326,8 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr, uint32
 
     // 20 bytes - id of transaction
     // 2x
+    //  4 bytes - snode fee tx size
+    //  n bytes - snode fee tx hex
     // 20 bytes - address
     //  8 bytes - currency
     //  4 bytes - amount
@@ -2333,6 +2335,9 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr, uint32
     //  8 bytes - block hash
     packet->append(ptr->hubAddress);
     packet->append(ptr->id.begin(), 32);
+    auto sfeetx = ParseHex(ptr->rawFeeTx);
+    packet->append(uint32_t(sfeetx.size())); // snode fee tx size
+    packet->append(sfeetx); // snode fee tx
     packet->append(ptr->from);
     packet->append(fc);
     packet->append(ptr->fromAmount);

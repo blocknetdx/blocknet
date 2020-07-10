@@ -22,7 +22,9 @@
 #include <xbridge/xuiconnector.h>
 
 #include <base58.h>
+#include <core_io.h>
 #include <consensus/validation.h>
+#include <node/transaction.h>
 #include <random.h>
 #include <rpc/protocol.h>
 #include <script/script.h>
@@ -860,6 +862,50 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     uint256 id(sid);
     offset += XBridgePacket::hashSize;
 
+    // snode fee hex
+    uint32_t feeTxSize = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(uint32_t);
+    std::vector<unsigned char> feeTx(packet->data()+offset, packet->data()+offset+feeTxSize);
+    offset += feeTxSize;
+
+    // Process the service node fee transaction before proceeding
+    CTransactionRef feeTxRef = nullptr;
+    WalletParam wp;
+    auto & smgr = sn::ServiceNodeMgr::instance();
+    auto snodeEntry = smgr.getActiveSn();
+    if (!snodeEntry.isNull()) {
+        CMutableTransaction mtx;
+        if (!DecodeHexTx(mtx, HexStr(feeTx), true)) {
+            UniValue o(UniValue::VOBJ);
+            o.pushKV("orderid", id.GetHex());
+            o.pushKV("fee_tx", HexStr(feeTx));
+            xbridge::LogOrderMsg(o, "taker submitted bad BLOCK fee (1)", __FUNCTION__);
+            sendRejectTransaction(id, crBadFeeTx);
+            return false;
+        }
+        feeTxRef = MakeTransactionRef(std::move(mtx));
+        auto snode = smgr.getSn(snodeEntry.key.GetPubKey());
+        bool hasAddr{false};
+        for (const auto & o : feeTxRef->vout) {
+            if (o.nValue < wp.serviceNodeFee * COIN)
+                continue;
+            auto addr1 = o.scriptPubKey == GetScriptForDestination(snodeEntry.address);
+            auto addr2 = !snode.isNull() && o.scriptPubKey == GetScriptForDestination(CTxDestination(snode.getPaymentAddress()));
+            if (addr1 || addr2) {
+                hasAddr = true;
+                break;
+            }
+        }
+        if (!hasAddr) {
+            UniValue o(UniValue::VOBJ);
+            o.pushKV("orderid", id.GetHex());
+            o.pushKV("fee_tx", HexStr(feeTx));
+            xbridge::LogOrderMsg(o, "taker submitted bad BLOCK fee (2)", __FUNCTION__);
+            sendRejectTransaction(id, crBadFeeTx);
+            return false;
+        }
+    }
+
     // source
     std::vector<unsigned char> saddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
     offset += XBridgePacket::addressSize;
@@ -1202,6 +1248,28 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                 sendRejectTransaction(tr->id(), crNotAccepted);
                 return true;
             }
+
+            // Process snode feetx
+            {
+                const CAmount highfee{::maxTxFee};
+                uint256 txhash;
+                std::string errstr;
+                const TransactionError err = BroadcastTransaction(feeTxRef, txhash, errstr, highfee);
+                if (TransactionError::OK != err) {
+                    UniValue o(UniValue::VOBJ);
+                    o.pushKV("orderid", id.GetHex());
+                    o.pushKV("fee_tx", HexStr(feeTx));
+                    xbridge::LogOrderMsg(o, strprintf("unable to process taker BLOCK fee: %s", errstr), __FUNCTION__);
+                    sendRejectTransaction(id, crBadFeeTx);
+                    return false;
+                }
+                UniValue msg(UniValue::VOBJ);
+                msg.pushKV("orderid", id.GetHex());
+                msg.pushKV("fee_txid", txhash.GetHex());
+                msg.pushKV("fee_amount", wp.serviceNodeFee);
+                xbridge::LogOrderMsg(msg, "taker fee processed for order", __FUNCTION__);
+            }
+
             // Set role 'B' utxos used in the order
             tr->b_setUtxos(utxoItems);
 
@@ -1676,45 +1744,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         return true;
     }
 
-    // acceptor fee
-    uint256 feetxtd;
-    if (xtx->role == 'B')
-    {
-        // tx with acceptor fee
-        WalletConnectorPtr conn = xapp.connectorByCurrency(xtx->toCurrency);
-        if (!conn)
-        {
-            LogOrderMsg(txid.GetHex(), "no connector for <" + xtx->toCurrency + ">", __FUNCTION__);
-            return true;
-        }
-
-        std::string strtxid;
-        if (!rpc::storeDataIntoBlockchain(xtx->rawFeeTx, strtxid))
-        {
-            UniValue log_obj(UniValue::VOBJ);
-            log_obj.pushKV("orderid", txid.GetHex());
-            log_obj.pushKV("fee_hex", xtx->rawFeeTx);
-            LogOrderMsg(log_obj, "snode fee submission failed, canceling", __FUNCTION__);
-            sendCancelTransaction(xtx, crBadFeeTx);
-            return true;
-        }
-
-        feetxtd = uint256S(strtxid);
-
-        if(feetxtd.IsNull())
-        {
-            UniValue log_obj(UniValue::VOBJ);
-            log_obj.pushKV("orderid", txid.GetHex());
-            log_obj.pushKV("fee_hex", xtx->rawFeeTx);
-            LogOrderMsg(log_obj, "snode fee submission failed, no fee txid received, trying again", __FUNCTION__);
-            xapp.processLater(txid, packet);
-            return true;
-        }
-
-        // Unlock fee utxos after fee has been sent to the network
-        xapp.unlockFeeUtxos(xtx->feeUtxos);
-    }
-
     xtx->state = TransactionDescr::trInitialized;
     xuiConnector.NotifyXBridgeTransactionChanged(xtx->id);
 
@@ -1723,7 +1752,6 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     reply->append(hubAddress);
     reply->append(thisAddress);
     reply->append(txid.begin(), 32);
-    reply->append(feetxtd.begin(), 32);
 
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
@@ -1738,8 +1766,8 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    // size must be eq 104 bytes
-    if (packet->size() != 104)
+    // size must be eq 72 bytes
+    if (packet->size() != 72)
     {
         ERR() << "invalid packet size for xbcTransactionInitialized "
               << "need 104 received " << packet->size() << " "
@@ -1770,8 +1798,6 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
 
     // opponent public key
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
-
-    // TODO check fee transaction
 
     TransactionPtr tr = e.transaction(id);
     if (!tr->matches(id)) // ignore no matching orders
@@ -3376,6 +3402,9 @@ bool Session::Impl::processTransactionReject(XBridgePacketPtr packet) const
     if (!packet->verify(xtx->sPubKey))
         return true;
 
+    xtx->reason = reason;
+    LogOrderMsg(xtx, __FUNCTION__);
+
     // restore state on rejection
     xtx->state = TransactionDescr::trPending;
     // unlock coins
@@ -3389,6 +3418,7 @@ bool Session::Impl::processTransactionReject(XBridgePacketPtr packet) const
     xtx->role = 0;
     xtx->mPubKey.clear();
     xtx->mPrivKey.clear();
+    xtx->reason = crUnknown;
     // Restore states
     xtx->fromCurrency = xtx->origFromCurrency;
     xtx->toCurrency = xtx->origToCurrency;
@@ -3396,8 +3426,6 @@ bool Session::Impl::processTransactionReject(XBridgePacketPtr packet) const
     xtx->toAmount = xtx->origToAmount;
     // remove from pending packets (if added)
     xapp.removePackets(txid);
-
-    LogOrderMsg(xtx, __FUNCTION__);
 
     return true;
 }
