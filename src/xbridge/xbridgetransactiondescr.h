@@ -488,7 +488,7 @@ struct TransactionDescr
         return historical;
     }
 
-    bool setLogPayTx1() {
+    void setLogPayTx1() {
         LOCK(_lock);
         logPayTx1 = true;
     }
@@ -496,7 +496,7 @@ struct TransactionDescr
         LOCK(_lock);
         return logPayTx1;
     }
-    bool setLogPayTx2() {
+    void setLogPayTx2() {
         LOCK(_lock);
         logPayTx2 = true;
     }
