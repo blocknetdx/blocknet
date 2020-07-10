@@ -10,6 +10,7 @@
 
 #include <xbridge/xbridgewalletconnectorbtc.h>
 #include <xbridge/xbridgecryptoproviderbtc.h>
+#include <xbridge/cashaddr/cashaddrenc.h>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -25,6 +26,11 @@ public:
     bool init() override;
 
 public:
+    bool hasValidAddressPrefix(const std::string & addr) const override;
+    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const override;
+    std::vector<unsigned char> toXAddr(const std::string & addr) const override;
+    std::string scriptIdToString(const std::vector<unsigned char> & id) const override;
+
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,
                                  const std::vector<unsigned char> & mpubKey,
@@ -45,6 +51,9 @@ public:
 
 protected:
     bool replayProtectionEnabled(int64_t medianBlockTime);
+
+protected:
+    CashParams params;
 
 private:
     bool checkReplayProtectionEnabled();

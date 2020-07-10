@@ -7,9 +7,12 @@
 
 #include <xbridge/xbridgewalletconnectorbch.h>
 
+#include <xbridge/cashaddr/cashaddr.h>
 #include <xbridge/util/logger.h>
+#include <xbridge/xbitcoinaddress.h>
 #include <xbridge/xbitcointransaction.h>
 
+#include <base58.h>
 #include <primitives/transaction.h>
 
 
@@ -300,11 +303,60 @@ bool BchWalletConnector::init() {
     if (!BtcWalletConnector<BtcCryptoProvider>::init())
         return false;
     replayProtection = replayProtectionEnabled(mediantime);
+    if (cashAddrPrefix.empty())
+        cashAddrPrefix = "bitcoincash";
+    params.prefix = cashAddrPrefix;
     return true;
 }
 
-// TODO Blocknet BCH disable cashaddr
-// https://github.com/blocknetdx/blocknet/blob/2b15bf86273614dfcb959f4d219663246e5c4ac1/src/xbridge/xbridgewalletconnectorbch.cpp#L801
+bool BchWalletConnector::hasValidAddressPrefix(const std::string & addr) const {
+    CashTxDestination dst = DecodeCashAddr(addr, params);
+    if (IsValidCashDestination(dst))
+        return true;
+
+    std::vector<unsigned char> decoded;
+    if (!DecodeBase58Check(addr, decoded))
+        return false;
+
+    bool isP2PKH = memcmp(&addrPrefix[0],   &decoded[0], decoded.size()-sizeof(uint160)) == 0;
+    bool isP2SH  = memcmp(&scriptPrefix[0], &decoded[0], decoded.size()-sizeof(uint160)) == 0;
+
+    return isP2PKH || isP2SH;
+}
+
+std::string BchWalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const {
+    if (params.CashAddrPrefix().empty()) {
+        xbridge::XBitcoinAddress addr;
+        addr.Set(CKeyID(uint160(xaddr)), addrPrefix[0]);
+        return addr.ToString();
+    }
+    std::vector<uint8_t> data = PackAddrData(xaddr, PUBKEY_TYPE);
+    return cashaddr::Encode(params.CashAddrPrefix(), data);
+}
+
+std::vector<unsigned char> BchWalletConnector::toXAddr(const std::string & addr) const {
+    CashTxDestination dst = DecodeCashAddr(addr, params);
+    if (IsValidCashDestination(dst)) {
+        CashAddrContent content =
+                DecodeCashAddrContent(addr, params.CashAddrPrefix());
+        return content.hash;
+    }
+
+    std::vector<unsigned char> vaddr;
+    if (DecodeBase58Check(addr.c_str(), vaddr))
+        vaddr.erase(vaddr.begin());
+    return vaddr;
+}
+
+std::string BchWalletConnector::scriptIdToString(const std::vector<unsigned char> & id) const {
+    if (params.CashAddrPrefix().empty()) {
+        xbridge::XBitcoinAddress addr;
+        addr.Set(CScriptID(uint160(id)), scriptPrefix[0]);
+        return addr.ToString();
+    }
+    std::vector<uint8_t> data = PackAddrData(id, SCRIPT_TYPE);
+    return cashaddr::Encode(params.CashAddrPrefix(), data);
+}
 
 //******************************************************************************
 //******************************************************************************

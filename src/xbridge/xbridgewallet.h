@@ -142,6 +142,7 @@ public:
         isLockCoinsSupported        = other.isLockCoinsSupported;
         jsonver                     = other.jsonver;
         contenttype                 = other.contenttype;
+        cashAddrPrefix              = other.cashAddrPrefix;
 
         mediantime                  = other.mediantime; // useful for fork management
 
@@ -197,6 +198,8 @@ public:
 
     // median time
     int64_t                      mediantime{0};
+    // cash address prefix
+    std::string                  cashAddrPrefix;
 };
 
 } // namespace xbridge

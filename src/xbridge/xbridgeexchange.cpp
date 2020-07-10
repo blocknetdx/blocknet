@@ -125,6 +125,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         uint32_t    txVersion  = s.get<uint32_t>(*i + ".TxVersion", 1);
         std::string jsonver    = s.get<std::string>(*i + ".JSONVersion", "");
         std::string contenttype = s.get<std::string>(*i + ".ContentType", "");
+        std::string cashAddrPf = s.get<std::string>(*i + ".CashAddrPrefix", "");
 
         if (user.empty() || passwd.empty())
             WARN() << *i << " \"" << label << "\"" << " has empty credentials";
@@ -145,6 +146,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         wp.txVersion  = txVersion;
         wp.jsonver    = jsonver;
         wp.contenttype = contenttype;
+        wp.cashAddrPrefix = cashAddrPf;
     }
 
     return true;

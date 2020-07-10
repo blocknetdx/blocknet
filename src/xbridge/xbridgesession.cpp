@@ -590,21 +590,16 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         xbridge::LogOrderMsg(log_obj, "received order", __FUNCTION__);
     }
 
-    std::string saddrStr = sconn->fromXAddr(saddr);
-    std::string daddrStr = dconn->fromXAddr(daddr);
-
-    std::vector<unsigned char> firstUtxoSig = utxoItems.at(0).signature;
-
     CHashWriter ss(SER_GETHASH, 0);
-    ss << saddrStr
+    ss << saddr
        << scurrency
        << samount
-       << daddrStr
+       << daddr
        << dcurrency
        << damount
        << timestamp
        << blockHash
-       << firstUtxoSig;
+       << utxoItems.at(0).signature;
     uint256 checkId = ss.GetHash();
     if(checkId != id)
     {
@@ -2408,6 +2403,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     std::vector<unsigned char> counterPartyScript;
     connTo->createDepositUnlockScript(mPubKey, xtx->mPubKey, xtx->oHashedSecret, xtx->opponentLockTime, counterPartyScript);
     std::string counterPartyP2SH = connTo->scriptIdToString(connTo->getScriptId(counterPartyScript));
+    auto counterPartyScriptHex = HexStr(CScript() << OP_HASH160 << connTo->getScriptId(counterPartyScript) << OP_EQUAL);
 
     // Counter party voutN
     uint32_t counterPartyVoutN = 0;
@@ -2416,7 +2412,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     {
         uint64_t p2shAmount{0};
         bool isGood = false;
-        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
+        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -2869,6 +2865,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     std::vector<unsigned char> counterPartyScript;
     connTo->createDepositUnlockScript(xtx->oPubKey, xtx->mPubKey, hx, xtx->opponentLockTime, counterPartyScript);
     std::string counterPartyP2SH = connTo->scriptIdToString(connTo->getScriptId(counterPartyScript));
+    auto counterPartyScriptHex = HexStr(CScript() << OP_HASH160 << connTo->getScriptId(counterPartyScript) << OP_EQUAL);
 
     // Counter party voutN
     uint32_t counterPartyVoutN = 0;
@@ -2877,7 +2874,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     {
         uint64_t p2shAmount{0};
         bool isGood = false;
-        if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyP2SH, xtx->oOverpayment, isGood))
+        if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);

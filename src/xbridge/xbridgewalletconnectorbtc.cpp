@@ -2144,21 +2144,19 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
 
         // Check all vouts for valid deposit
         const json_spirit::Value & scriptPubKey = json_spirit::find_value(vout.get_obj(), "scriptPubKey");
-        const json_spirit::Value & addresses = json_spirit::find_value(scriptPubKey.get_obj(), "addresses");
-        if (scriptPubKey.type() == json_spirit::null_type || addresses.type() == json_spirit::null_type)
+        const json_spirit::Value & hex = json_spirit::find_value(scriptPubKey.get_obj(), "hex");
+        if (scriptPubKey.type() == json_spirit::null_type || hex.type() == json_spirit::null_type)
             continue;
 
         // Check that expected script and amounts match
-        for (auto & address : addresses.get_array()) {
-            if (expectedScript == address.get_str()) {
-                const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
-                const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
-                if (amount <= vamount.get_real()) {
-                    depositP2SHAmount = vamount.get_real();
-                    depositTxVout = static_cast<uint32_t>(n.get_int());
-                }
-                break; // done searching
+        if (expectedScript == hex.get_str()) {
+            const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
+            const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
+            if (amount <= vamount.get_real() + std::numeric_limits<double>::epsilon()) {
+                depositP2SHAmount = vamount.get_real();
+                depositTxVout = static_cast<uint32_t>(n.get_int());
             }
+            break; // done searching
         }
     }
 
