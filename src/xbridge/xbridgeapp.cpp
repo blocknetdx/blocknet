@@ -155,15 +155,6 @@ protected:
                                   const std::string & fromBlockHash, const std::string & toBlockHash);
 
     /**
-     * @brief hasNodeService - returns true if the specified node is found with the
-     *        a service.
-     * @param node
-     * @param service
-     * @return
-     */
-    static bool hasNodeService(const ::CPubKey & node, const std::string & service);
-
-    /**
      * @brief findShuffledNodesWithService - finds nodes with given services
      *        that have the given protocol version
      * @param - requested services
@@ -202,6 +193,14 @@ protected:
      * @param order
      */
     bool orderUtxosAreStillValid(TransactionDescrPtr order);
+
+    /**
+     * @brief If a service node was found with the specified service, return true.
+     * @param nodePubKey
+     * @param service
+     * @param checkRunning Default false
+     */
+    bool hasNodeService(const CPubKey & nodePubKey, const std::string & service, bool checkRunning=false);
 
 protected:
     // workers
@@ -2839,14 +2838,14 @@ std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
  * @brief Returns true if the service exists.
  * @param nodePubKey Pubkey of the node
  * @param service Service to search for
+ * @param checkRunning Will only return true if the service node is also running.
  * @return True if service is supported, otherwise false
  */
 //******************************************************************************
-bool App::Impl::hasNodeService(const ::CPubKey & nodePubKey,
-                               const std::string & service)
+bool App::Impl::hasNodeService(const CPubKey & nodePubKey, const std::string & service, bool checkRunning)
 {
     const auto & snode = sn::ServiceNodeMgr::instance().getSn(nodePubKey);
-    if (snode.isNull())
+    if (snode.isNull() || (checkRunning && !snode.running()))
         return false;
     return snode.hasService(service);
 }
@@ -3118,6 +3117,8 @@ void App::Impl::checkAndRelayPendingOrders() {
     if (txs.empty())
         return;
 
+    auto & xapp = xbridge::App::instance();
+
     for (const auto & i : txs) {
         TransactionDescrPtr order = i.second;
         if (!order->isLocal()) // only process local orders
@@ -3137,12 +3138,13 @@ void App::Impl::checkAndRelayPendingOrders() {
             CPubKey snode;
             auto notIn = order->excludedNodes();
             notIn.insert(oldsnode); // exclude the current snode
-            if (!xbridge::App::instance().findNodeWithService(currencies, snode, notIn)) {
+            if (!xapp.findNodeWithService(currencies, snode, notIn)) {
                 UniValue log_obj(UniValue::VOBJ);
                 log_obj.pushKV("orderid", order->id.GetHex());
                 log_obj.pushKV("from_currency", order->fromCurrency);
                 log_obj.pushKV("to_currency", order->toCurrency);
                 xbridge::LogOrderMsg(log_obj, "order may be stuck, trying to submit order to previous snode", __FUNCTION__);
+                // do not fail here, let the order be broadcasted on existing snode just in case (also may avoid stalling the order)
             } else {
                 // assign new snode
                 order->excludeNode(oldsnode);
@@ -3158,11 +3160,35 @@ void App::Impl::checkAndRelayPendingOrders() {
         }
         else if (pendingOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trPending) {
             order->updateTimestamp();
+
+            // Check that snode order is assigned to is still valid
+            CPubKey oldsnode;
+            oldsnode.Set(order->sPubKey.begin(), order->sPubKey.end());
+            if (!hasNodeService(oldsnode, order->fromCurrency, true) || !hasNodeService(oldsnode, order->toCurrency, true)) {
+                // Pick new servicenode
+                std::set<std::string> currencies{order->fromCurrency, order->toCurrency};
+                CPubKey newsnode;
+                auto notIn = order->excludedNodes();
+                notIn.insert(oldsnode); // exclude the current snode
+                if (!xapp.findNodeWithService(currencies, newsnode, notIn)) {
+                    UniValue log_obj(UniValue::VOBJ);
+                    log_obj.pushKV("orderid", order->id.GetHex());
+                    log_obj.pushKV("from_currency", order->fromCurrency);
+                    log_obj.pushKV("to_currency", order->toCurrency);
+                    xbridge::LogOrderMsg(log_obj, "failed to find service node, order may be stuck: trying to submit order to another snode", __FUNCTION__);
+                    // do not fail here, let the order be broadcasted on existing snode just in case (also may avoid stalling the order)
+                } else {
+                    // assign new snode
+                    order->excludeNode(oldsnode);
+                    order->assignServicenode(newsnode);
+                }
+            }
+
             // Only broadcast the order if the utxos are still valid
             if (orderUtxosAreStillValid(order))
                 sendPendingTransaction(order);
             else
-                xbridge::App::instance().cancelXBridgeTransaction(order->id, crBadAUtxo);
+                xapp.cancelXBridgeTransaction(order->id, crBadAUtxo);
         }
     }
 }

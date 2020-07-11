@@ -3264,7 +3264,8 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     }
 
     // Only Maker, Taker, or Servicenode can cancel order
-    if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey) && !packet->verify(xtx->mPubKey))
+    const auto iCanceled = packet->verify(xtx->mPubKey);
+    if (!packet->verify(xtx->sPubKey) && !packet->verify(xtx->oPubKey) && !iCanceled)
     {
         write_log(log_obj, "bad packet signature for cancelation request on order, not canceling");
         return true;
@@ -3288,7 +3289,14 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         write_log(o, errMsg);
     };
 
-    if (xtx->state < TransactionDescr::trCreated) { // if no deposits yet
+    // If order is new or pending (open), then rebroadcast on another snode
+    // only if our client didn't initiate the cancel.
+    if (xtx->state <= TransactionDescr::trPending && !iCanceled) {
+        boost::posix_time::ptime epoch(boost::gregorian::date(1970, 1, 1));
+        xtx->setUpdateTime(epoch); // will trigger an update
+        write_log(log_obj, "cancel received, rebroadcasting order on another service node");
+        return true;
+    } else if (xtx->state < TransactionDescr::trCreated) { // if no deposits yet
         xapp.moveTransactionToHistory(txid);
         cancel(log_obj, "counterparty cancel request");
         xuiConnector.NotifyXBridgeTransactionChanged(txid);

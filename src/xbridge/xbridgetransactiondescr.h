@@ -477,6 +477,11 @@ struct TransactionDescr
         return historical;
     }
 
+    void setUpdateTime(const boost::posix_time::ptime t) {
+        LOCK(_lock);
+        txtime = t;
+    }
+
     std::set<wallet::UtxoEntry> utxos() {
         LOCK(_lock);
         return {usedCoins.begin(), usedCoins.end()};
