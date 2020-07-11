@@ -3720,11 +3720,7 @@ void Session::getAddressBook() const
 //******************************************************************************
 bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
 {
-    DEBUG_TRACE();
-
-
-    if (packet->size() != 32)
-    {
+    if (packet->size() != 32) {
         ERR() << "invalid packet size for xbcTransactionFinished "
               << "need 32 bytes, received " << packet->size() << " "
               << __FUNCTION__;
@@ -3734,30 +3730,42 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
     // transaction id
     std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
     uint256 txid(stxid);
+    // snode key
+    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     xbridge::App & xapp = xbridge::App::instance();
 
-    TransactionDescrPtr xtx = xapp.transaction(txid);
-    if (xtx == nullptr)
-    {
-        LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
-        return true;
+    // check and process packet if bridge is exchange
+    Exchange & e = Exchange::instance();
+    if (e.isStarted()) {
+        TransactionPtr tr = e.transaction(txid);
+        if (!tr->matches(txid)) { // ignore no matching orders
+            LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
+            return true;
+        }
+        if (!packet->verify(e.pubKey())) {
+            LogOrderMsg(txid.GetHex(), "bad packet signature, not updating order state", __FUNCTION__);
+            return true;
+        }
+        LogOrderMsg(txid.GetHex(), "order finished", __FUNCTION__);
+    } else { // Non-exchange nodes
+        TransactionDescrPtr xtx = xapp.transaction(txid);
+        if (xtx == nullptr) {
+            LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
+            return true;
+        }
+        if (!packet->verify(xtx->sPubKey)) { // ignore packet if not from snode
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", txid.GetHex());
+            log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
+            log_obj.pushKV("received_snode", HexStr(spubkey));
+            LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
+            return true;
+        }
+        // update transaction state for gui
+        xtx->state = TransactionDescr::trFinished;
+        LogOrderMsg(xtx, __FUNCTION__);
     }
-    std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
-    if (!packet->verify(xtx->sPubKey))
-    {
-        UniValue log_obj(UniValue::VOBJ);
-        log_obj.pushKV("orderid", txid.GetHex());
-        log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
-        log_obj.pushKV("received_snode", HexStr(spubkey));
-        LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
-        return true;
-    }
-
-    // update transaction state for gui
-    xtx->state = TransactionDescr::trFinished;
-
-    LogOrderMsg(xtx, __FUNCTION__);
 
     xapp.moveTransactionToHistory(txid);
     xuiConnector.NotifyXBridgeTransactionChanged(txid);
