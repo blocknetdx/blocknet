@@ -989,6 +989,7 @@ void App::updateActiveWallets()
         wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
         wp.jsonver                     = s.get<std::string>(*i + ".JSONVersion", "");
         wp.contenttype                 = s.get<std::string>(*i + ".ContentType", "");
+        wp.cashAddrPrefix              = s.get<std::string>(*i + ".CashAddrPrefix", "");
 
         if (wp.m_user.empty() || wp.m_passwd.empty())
             WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
@@ -1680,25 +1681,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         blockHash = chainActive.Tip()->pprev->GetBlockHash();
     }
 
-    std::vector<unsigned char> firstUtxoSig = outputsForUse.at(0).signature;
-
-    CHashWriter ss(SER_GETHASH, 0);
-    ss << from
-       << fromCurrency
-       << fromAmount
-       << to
-       << toCurrency
-       << toAmount
-       << timestampValue
-       << blockHash
-       << firstUtxoSig;
-    id = ss.GetHash();
-
     ptr->hubAddress   = snodeAddress;
     ptr->sPubKey      = sPubKey;
     ptr->created      = timestamp;
     ptr->txtime       = timestamp;
-    ptr->id           = id;
     ptr->fromAddr     = from;
     ptr->from         = connFrom->toXAddr(from);
     ptr->fromCurrency = fromCurrency;
@@ -1713,6 +1699,19 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->origToAmount = toAmount;
     ptr->blockHash    = blockHash;
     ptr->role         = 'A';
+
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << ptr->from
+       << ptr->fromCurrency
+       << ptr->fromAmount
+       << ptr->to
+       << ptr->toCurrency
+       << ptr->toAmount
+       << timestampValue
+       << ptr->blockHash
+       << outputsForUse.at(0).signature;
+    id = ss.GetHash();
+    ptr->id = id;
 
     // Create partial order utxos
     if (partialOrder) {
@@ -1869,17 +1868,16 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     }
                 }
 
-                firstUtxoSig = ptr->usedCoins.at(0).signature;
                 CHashWriter ss2(SER_GETHASH, 0);
-                ss2 << from
-                    << fromCurrency
-                    << fromAmount
-                    << to
-                    << toCurrency
-                    << toAmount
+                ss2 << ptr->from
+                    << ptr->fromCurrency
+                    << ptr->fromAmount
+                    << ptr->to
+                    << ptr->toCurrency
+                    << ptr->toAmount
                     << timestampValue
-                    << blockHash
-                    << firstUtxoSig;
+                    << ptr->blockHash
+                    << ptr->usedCoins.at(0).signature;
                 id = ss2.GetHash();
 
                 ptr->id = id;
@@ -2328,6 +2326,8 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr, uint32
 
     // 20 bytes - id of transaction
     // 2x
+    //  4 bytes - snode fee tx size
+    //  n bytes - snode fee tx hex
     // 20 bytes - address
     //  8 bytes - currency
     //  4 bytes - amount
@@ -2335,6 +2335,9 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr, uint32
     //  8 bytes - block hash
     packet->append(ptr->hubAddress);
     packet->append(ptr->id.begin(), 32);
+    auto sfeetx = ParseHex(ptr->rawFeeTx);
+    packet->append(uint32_t(sfeetx.size())); // snode fee tx size
+    packet->append(sfeetx); // snode fee tx
     packet->append(ptr->from);
     packet->append(fc);
     packet->append(ptr->fromAmount);

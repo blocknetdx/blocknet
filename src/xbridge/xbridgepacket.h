@@ -135,6 +135,8 @@ enum XBridgeCommand
     // client accepting opened tx
     //    uint160 hub address
     //    uint256 client transaction id
+    //    uint32_t for snode feetx length
+    //    n bytes for snode feetx
     //    20 bytes source address
     //    8 bytes source currency
     //    uint64 source amount
@@ -179,11 +181,10 @@ enum XBridgeCommand
     //    uint64 destination amount
     xbcTransactionInit = 8,
     //
-    // xbcTransactionInitialized (104 bytes)
+    // xbcTransactionInitialized (72 bytes)
     //    uint160 hub address
     //    uint160 client address
     //    uint256 hub transaction id
-    //    uint256 fee transaction id
     xbcTransactionInitialized = 9,
 
     //

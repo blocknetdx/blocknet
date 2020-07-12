@@ -266,6 +266,8 @@ BITCOIN_CORE_H += \
   xbridge/bitcoinrpcconnector.h \
   xbridge/currency.h \
   xbridge/currencypair.h \
+  xbridge/cashaddr/cashaddr.h \
+  xbridge/cashaddr/cashaddrenc.h \
   xbridge/util/fastdelegate.h \
   xbridge/util/logger.h \
   xbridge/util/posixtimeconversion.h \
@@ -599,6 +601,8 @@ xbridge_libxbridge_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xbridge_libxbridge_a_SOURCES = \
   rpc/client.cpp \
   xbridge/bitcoinrpcconnector.cpp \
+  xbridge/cashaddr/cashaddr.cpp \
+  xbridge/cashaddr/cashaddrenc.cpp \
   xbridge/rpcxbridge.cpp \
   xbridge/util/logger.cpp \
   xbridge/util/posixtimeconversion.cpp \

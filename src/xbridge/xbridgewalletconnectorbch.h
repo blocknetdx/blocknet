@@ -1,4 +1,4 @@
-// Copyright (c) 2017-2019 The Blocknet developers
+// Copyright (c) 2017-2020 The Blocknet developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -10,6 +10,7 @@
 
 #include <xbridge/xbridgewalletconnectorbtc.h>
 #include <xbridge/xbridgecryptoproviderbtc.h>
+#include <xbridge/cashaddr/cashaddrenc.h>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -22,19 +23,14 @@ class BchWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
 {
 public:
     BchWalletConnector();
-
-    bool init();
-
-public:
-    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
-    std::vector<unsigned char> toXAddr(const std::string & addr) const;
+    bool init() override;
 
 public:
-    bool hasValidAddressPrefix(const std::string & addr) const;
+    bool hasValidAddressPrefix(const std::string & addr) const override;
+    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const override;
+    std::vector<unsigned char> toXAddr(const std::string & addr) const override;
+    std::string scriptIdToString(const std::vector<unsigned char> & id) const override;
 
-    std::string scriptIdToString(const std::vector<unsigned char> & id) const;
-
-public:
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,
                                  const std::vector<unsigned char> & mpubKey,
@@ -42,7 +38,7 @@ public:
                                  const std::vector<unsigned char> & innerScript,
                                  const uint32_t lockTime,
                                  std::string & txId,
-                                 std::string & rawTx);
+                                 std::string & rawTx) override;
 
     bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
                                   const std::vector<std::pair<std::string, double> > & outputs,
@@ -51,7 +47,17 @@ public:
                                   const std::vector<unsigned char> & xpubKey,
                                   const std::vector<unsigned char> & innerScript,
                                   std::string & txId,
-                                  std::string & rawTx);
+                                  std::string & rawTx) override;
+
+protected:
+    bool replayProtectionEnabled(int64_t medianBlockTime);
+
+protected:
+    CashParams params;
+
+private:
+    bool checkReplayProtectionEnabled();
+    bool replayProtection{false}; // BCH replay protection enforcement (SCRIPT_ENABLE_REPLAY_PROTECTION)
 };
 
 } // namespace xbridge

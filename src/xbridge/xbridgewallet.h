@@ -142,6 +142,9 @@ public:
         isLockCoinsSupported        = other.isLockCoinsSupported;
         jsonver                     = other.jsonver;
         contenttype                 = other.contenttype;
+        cashAddrPrefix              = other.cashAddrPrefix;
+
+        mediantime                  = other.mediantime; // useful for fork management
 
         return *this;
     }
@@ -192,6 +195,11 @@ public:
     std::string                  jsonver;
     // content type for rpc requests
     std::string                  contenttype;
+
+    // median time
+    int64_t                      mediantime{0};
+    // cash address prefix
+    std::string                  cashAddrPrefix;
 };
 
 } // namespace xbridge

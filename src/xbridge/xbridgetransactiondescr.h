@@ -117,6 +117,7 @@ struct TransactionDescr
         READWRITE(refTx);
         READWRITE(oBinTxId);
         READWRITE(oBinTxVout);
+        READWRITE(oBinTxP2SHAmount);
         READWRITE(oHashedSecret);
         READWRITE(oPayTxId);
         READWRITE(oPayTxTries);
@@ -148,6 +149,8 @@ struct TransactionDescr
         READWRITE(repostOrder);
         READWRITE(minFromAmount);
         READWRITE(historical);
+        READWRITE(logPayTx1);
+        READWRITE(logPayTx2);
     }
 
     void SetNull() {
@@ -184,6 +187,7 @@ struct TransactionDescr
         refTx.clear();
         oBinTxId.clear();
         oBinTxVout = 0;
+        oBinTxP2SHAmount = 0;
         oHashedSecret.clear();
         oPayTxId.clear();
         oPayTxTries = 0;
@@ -215,6 +219,8 @@ struct TransactionDescr
         repostOrder = false;
         minFromAmount = 0;
         historical = false;
+        logPayTx1 = false;
+        logPayTx2 = false;
     }
 
     uint256                    id;
@@ -261,6 +267,7 @@ struct TransactionDescr
     // counterparty info
     std::string                oBinTxId;
     uint32_t                   oBinTxVout{0};
+    uint64_t                   oBinTxP2SHAmount{0};
     std::vector<unsigned char> oHashedSecret;
     std::string                oPayTxId;
     uint32_t                   oPayTxTries{0};
@@ -313,6 +320,10 @@ struct TransactionDescr
 
     // Track if tx is historical tx
     bool historical{false};
+
+    // Track whether pay tx has been logged
+    bool logPayTx1{false};
+    bool logPayTx2{false};
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
@@ -475,6 +486,23 @@ struct TransactionDescr
     bool isHistorical() {
         LOCK(_lock);
         return historical;
+    }
+
+    void setLogPayTx1() {
+        LOCK(_lock);
+        logPayTx1 = true;
+    }
+    bool didLogPayTx1() {
+        LOCK(_lock);
+        return logPayTx1;
+    }
+    void setLogPayTx2() {
+        LOCK(_lock);
+        logPayTx2 = true;
+    }
+    bool didLogPayTx2() {
+        LOCK(_lock);
+        return logPayTx2;
     }
 
     void setUpdateTime(const boost::posix_time::ptime t) {
@@ -648,6 +676,7 @@ private:
         refTx                        = d.refTx;
         oBinTxId                     = d.oBinTxId;
         oBinTxVout                   = d.oBinTxVout;
+        oBinTxP2SHAmount             = d.oBinTxP2SHAmount;
         oHashedSecret                = d.oHashedSecret;
         oPayTxId                     = d.oPayTxId;
         oPayTxTries                  = d.oPayTxTries;
@@ -679,6 +708,8 @@ private:
         repostOrder                  = d.repostOrder;
         minFromAmount                = d.minFromAmount;
         historical                   = d.historical;
+        logPayTx1                    = d.logPayTx1;
+        logPayTx2                    = d.logPayTx2;
     }
 };
 

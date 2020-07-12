@@ -168,6 +168,10 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
         Object o = result.get_obj();
 
         info.blocks = find_value(o, "blocks").get_real();
+        // median time
+        auto mt = find_value(o, "mediantime");
+        if (mt.type() != null_type)
+            info.mediantime = mt.get_int64();
     }
     catch (std::exception & e)
     {
@@ -1517,6 +1521,9 @@ bool BtcWalletConnector<CryptoProvider>::init()
     // Calculate dust
     dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN : 5460;
 
+    // Set median time
+    mediantime = info.mediantime;
+
     return true;
 }
 
@@ -1970,6 +1977,7 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::string & depositTxId,
                                                                  const std::string & /*destination*/,
                                                                  double & amount,
+                                                                 uint64_t & p2shAmount,
                                                                  uint32_t & depositTxVout,
                                                                  const std::string & expectedScript,
                                                                  double & excessAmount,
@@ -2116,7 +2124,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
 
     // Add up all vout amounts
     double totalVoutAmount{0};
-    double p2shAmount{0};
+    double depositP2SHAmount{0};
     for (auto & vout : vouts) {
         const json_spirit::Value & amountObj = json_spirit::find_value(vout.get_obj(), "value");
         if (amountObj.type() != json_spirit::real_type) {
@@ -2136,25 +2144,23 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
 
         // Check all vouts for valid deposit
         const json_spirit::Value & scriptPubKey = json_spirit::find_value(vout.get_obj(), "scriptPubKey");
-        const json_spirit::Value & addresses = json_spirit::find_value(scriptPubKey.get_obj(), "addresses");
-        if (scriptPubKey.type() == json_spirit::null_type || addresses.type() == json_spirit::null_type)
+        const json_spirit::Value & hex = json_spirit::find_value(scriptPubKey.get_obj(), "hex");
+        if (scriptPubKey.type() == json_spirit::null_type || hex.type() == json_spirit::null_type)
             continue;
 
         // Check that expected script and amounts match
-        for (auto & address : addresses.get_array()) {
-            if (expectedScript == address.get_str()) {
-                const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
-                const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
-                if (amount <= vamount.get_real()) {
-                    p2shAmount = vamount.get_real();
-                    depositTxVout = static_cast<uint32_t>(n.get_int());
-                }
-                break; // done searching
+        if (expectedScript == hex.get_str()) {
+            const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
+            const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
+            if (amount <= vamount.get_real() + std::numeric_limits<double>::epsilon()) {
+                depositP2SHAmount = vamount.get_real();
+                depositTxVout = static_cast<uint32_t>(n.get_int());
             }
+            break; // done searching
         }
     }
 
-    if (p2shAmount == 0) {
+    if (depositP2SHAmount == 0) {
         LOG() << "tx " << depositTxId << " no valid p2sh in deposit transaction " << __FUNCTION__;
         return true; // done
     }
@@ -2170,14 +2176,15 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         return true; // done
     }
     // Make sure counterparty provided enough for the redeem fee
-    if (p2shAmount < amount + fee2 * 0.95) { // Allow 5% margin of error in fee amount
+    if (depositP2SHAmount < amount + fee2 * 0.95) { // Allow 5% margin of error in fee amount
         LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh redeem fees: " << fee2 * 0.95 << " " << __FUNCTION__;
         return true; // done
     }
     // we should pay ourselves any excess
-    if (p2shAmount > amount + fee2)
-        excessAmount = p2shAmount - amount - fee2;
+    if (depositP2SHAmount > amount + fee2)
+        excessAmount = depositP2SHAmount - amount - fee2;
 
+    p2shAmount = depositP2SHAmount * COIN;
     isGood = true;
     return true; // done
 }
