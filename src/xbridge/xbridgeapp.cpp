@@ -19,6 +19,7 @@
 #include <xbridge/xbridgewalletconnector.h>
 #include <xbridge/xbridgewalletconnectorbtc.h>
 #include <xbridge/xbridgewalletconnectorbch.h>
+#include <xbridge/xbridgewalletconnectordevault.h>
 #include <xbridge/xbridgewalletconnectordgb.h>
 #include <xbridge/xbridgewalletconnectorbtg.h>
 #include <xbridge/xbridgepacket.h>
@@ -1058,6 +1059,11 @@ void App::updateActiveWallets()
         else if (wp.method == "BTG")
         {
             conn.reset(new BTGWalletConnector);
+            *conn = wp;
+        }
+        else if (wp.method == "DEVAULT")
+        {
+            conn.reset(new DevaultWalletConnector);
             *conn = wp;
         }
         else
