@@ -172,6 +172,10 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
         auto mt = find_value(o, "mediantime");
         if (mt.type() != null_type)
             info.mediantime = mt.get_int64();
+        // best block hash
+        const auto & bbh = find_value(o, "bestblockhash");
+        if (bbh.type() != null_type)
+            info.bestblockhash = uint256S(bbh.get_str());
     }
     catch (std::exception & e)
     {

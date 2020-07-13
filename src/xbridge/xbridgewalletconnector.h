@@ -45,11 +45,13 @@ struct WalletInfo
     double   relayFee;
     uint32_t blocks;
     int64_t mediantime;
+    uint256 bestblockhash;
 
     WalletInfo()
         : relayFee(0)
         , blocks(0)
         , mediantime(0)
+        , bestblockhash(uint256())
     {
 
     }

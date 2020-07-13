@@ -18,6 +18,7 @@
 #include <xbridge/xbridgesession.h>
 #include <xbridge/xbridgewalletconnector.h>
 #include <xbridge/xbridgewalletconnectorbtc.h>
+#include <xbridge/xbridgewalletconnectorbcd.h>
 #include <xbridge/xbridgewalletconnectorbch.h>
 #include <xbridge/xbridgewalletconnectordevault.h>
 #include <xbridge/xbridgewalletconnectordgb.h>
@@ -1044,6 +1045,11 @@ void App::updateActiveWallets()
         else if (wp.method == "BTC" || wp.method == "SYS")
         {
             conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
+            *conn = wp;
+        }
+        else if (wp.method == "BCD")
+        {
+            conn.reset(new BCDWalletConnector);
             *conn = wp;
         }
         else if (wp.method == "BCH")
