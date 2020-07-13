@@ -992,7 +992,6 @@ static UniValue xrService(const JSONRPCRequest& request)
     {
       "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6",
       "error": null,
-      "id": 1,
       "uuid": "54b6ec00-8b06-4c2c-9e56-acdff4da69fe"
     }
 
@@ -1217,22 +1216,27 @@ static UniValue xrGetReply(const JSONRPCRequest& request)
       "uuid": "3c84d025-8a03-4b64-848f-99892fe481ff"
     }
 
-    Key          | Type | Description
-    -------------|------|--------------------------------------------------------
-    allreplies   | arr  | An array of objects with responses from each node. This
-                 |      | can be useful if you wanted to do your own analysis or
-                 |      | filtering of the responses.
-    reply        | int  | The node's response for the respective UUID call.
-    nodepubkey   | str  | The node ID.
-    score        | int  | The respective nodes score based on quality of service.
-                 |      | A score of -200 will ban the node for a 24hr period.
-                 |      | You can change the ban threshold with the
-                 |      | xrouterbanscore setting in blocknet.conf.
-    address      | str  | The Service Node's payment address.
-    exr          | bool | Whether the Service Node is an Enterprise XRouter node.
-                 |      | EXR nodes have greater throughput and service
-                 |      | capabilities.
-    uuid         | str  | The response ID.
+    Key            | Type | Description
+    ---------------|------|------------------------------------------------------
+    allreplies     | arr  | An array of objects with responses from each node.
+                   |      | This can be useful if you wanted to do your own
+                   |      | analysis or filtering of the responses.
+    reply          | int  | The node's response for the respective UUID call.
+    nodepubkey     | str  | The node ID.
+    score          | int  | The respective nodes score based on quality of
+                   |      | service. A score of -200 will ban the node for a 24hr
+                   |      | period. You can change the ban threshold with the
+                   |      | xrouterbanscore setting in blocknet.conf.
+    address        | str  | The Service Node's payment address.
+    exr            | bool | Whether the Service Node is an Enterprise XRouter
+                   |      | node. EXR nodes have greater throughput and service
+                   |      | capabilities.
+    mostcommon     | str  | The most common response (i.e. the response with the
+                   |      | most consensus). This is the value returned for
+                   |      | `reply` when making the originating call.
+    mostcommoncount| int  | The amount of nodes that responded with the
+                   |      | `mostcommon` reply.
+    uuid           | str  | The response ID.
                 )"
                 },
                 RPCExamples{
