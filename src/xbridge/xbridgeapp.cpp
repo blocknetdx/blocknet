@@ -23,6 +23,7 @@
 #include <xbridge/xbridgewalletconnectordevault.h>
 #include <xbridge/xbridgewalletconnectordgb.h>
 #include <xbridge/xbridgewalletconnectorbtg.h>
+#include <xbridge/xbridgewalletconnectorstealth.h>
 #include <xbridge/xbridgepacket.h>
 #include <xbridge/xuiconnector.h>
 #include <xrouter/xrouterapp.h>
@@ -1070,6 +1071,11 @@ void App::updateActiveWallets()
         else if (wp.method == "DEVAULT")
         {
             conn.reset(new DevaultWalletConnector);
+            *conn = wp;
+        }
+        else if (wp.method == "STEALTH" || wp.method == "XST")
+        {
+            conn.reset(new StealthWalletConnector);
             *conn = wp;
         }
         else
