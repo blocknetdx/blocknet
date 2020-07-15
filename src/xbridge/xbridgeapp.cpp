@@ -1573,11 +1573,13 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         const auto fromAmountDecimal = xBridgeValueFromAmount(fromAmount);
         auto partialSplitVoutsTotal = static_cast<double>(partialUtxosRequiredForMinimum) * partialSplitAmount;
-        if (fromAmountDecimal - partialSplitVoutsTotal < 0) {
+        if (fromAmountDecimal + std::numeric_limits<double>::epsilon() - partialSplitVoutsTotal < 0) {
             WARN() << "insufficient funds for partial order <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::INSIFFICIENT_FUNDS;
         }
         partialRemainderVoutTotal = fromAmountDecimal - partialSplitVoutsTotal;
+        if (partialRemainderVoutTotal < 0)
+            partialRemainderVoutTotal = 0;
         partialRemainderIsDust = connFrom->isDustAmount(partialRemainderVoutTotal + partialPerUtxoFees);
         partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : 0);
         partialOrderVouts = partialUtxosRequiredForMinimum + (partialRemainderRequired && !partialRemainderIsDust ? 1 : 0);
