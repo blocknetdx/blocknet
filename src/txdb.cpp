@@ -260,7 +260,7 @@ bool CBlockTreeDB::ReadFlag(const std::string &name, bool &fValue) {
     return true;
 }
 
-bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
+bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, const int lastBlockHeight, std::function<CBlockIndex*(const uint256&)> insertBlockIndex)
 {
     std::unique_ptr<CDBIterator> pcursor(NewIterator());
 
@@ -270,7 +270,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
     uiInterface.ShowProgress("Loading block index", 0, false);
 
     const int group{50000}; // shard count
-    const int estTotalBlocks = static_cast<int>((double)consensusParams.lastCheckpointHeight * 1.15);
+    const int estTotalBlocks = lastBlockHeight > consensusParams.lastCheckpointHeight ? lastBlockHeight : consensusParams.lastCheckpointHeight;
 
     std::atomic<int> counter{0};
     std::atomic<double> pcounter{0};
@@ -340,7 +340,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                         continue;
                     }
 
-                    progress(1, estTotalBlocks, 30);
+                    progress(1, estTotalBlocks, 15);
                 }
             });
         }
@@ -385,7 +385,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             pindexNew->hashStakeBlock = diskindex.hashStakeBlock;
             pindexNew->hashProofOfStake = diskindex.hashProofOfStake;
 
-            progress(1, estTotalBlocks, 15);
+            progress(1, estTotalBlocks, 10);
         }
         return true;
     };
@@ -411,7 +411,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                         blocks.reserve(std::min<int>(group, consensusParams.lastCheckpointHeight));
                     }
                 }
-                progress(1, estTotalBlocks, 25);
+                progress(1, estTotalBlocks, 45);
                 pcursor->Next();
             } else {
                 return error("%s: failed to read value", __func__);
