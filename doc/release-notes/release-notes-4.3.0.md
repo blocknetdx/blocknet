@@ -15,6 +15,8 @@ Notable changes
 Changelog
 ================
 
+- 935c14fa5 [xbridge] fix rounding error on partial order input check
+- a4e85ea0b Release notes 4.3.0
 - 9d592114d [core] incorporate last block height in chain load progress
 - 169989685 [xbridge] snode should reject taker on bad price
 - 951e5c175 [xbridge] partial orders should use utxos xaddr
