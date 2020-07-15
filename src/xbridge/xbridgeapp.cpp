@@ -3154,7 +3154,7 @@ void App::Impl::checkAndRelayPendingOrders() {
         auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 240; // 4min
         auto newOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 15; // 15sec
 
-        if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew)
+        if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew && !order->isPartialOrderPending())
         {
             // exclude the old snode
             CPubKey oldsnode;
@@ -3486,7 +3486,8 @@ void App::Impl::checkAndEraseExpiredTransactions()
             boost::posix_time::time_duration td = currentTime - tx->txtime;
             boost::posix_time::time_duration tc = currentTime - tx->created;
             if (tx->state == xbridge::TransactionDescr::trNew &&
-                td.total_seconds() > xbridge::Transaction::pendingTTL)
+                td.total_seconds() > xbridge::Transaction::pendingTTL &&
+                !tx->isPartialOrderPending()) // do not expire a pending partial order
             {
                 tx->state = xbridge::TransactionDescr::trOffline;
                 stateChanged = true;
