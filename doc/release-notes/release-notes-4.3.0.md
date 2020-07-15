@@ -15,7 +15,27 @@ Notable changes
 Changelog
 ================
 
-- db30383d0 4.3.0
+- 9d592114d [core] incorporate last block height in chain load progress
+- 169989685 [xbridge] snode should reject taker on bad price
+- 951e5c175 [xbridge] partial orders should use utxos xaddr
+- 88c98c563 [xbridge] do not try to repost pending partial orders in trNew state
+- bdab8bb6d [xbridge] support stealthcoin
+- 9b15039a1 [xbridge] support devault
+- 1362c349a [xbridge] support BCD
+- ca4c7ba8f Fix xr help messages
+- 2152783c2 [xbridge] support BTG
+- 987c0608a [xbridge] improve order finished handling
+- ddee044d2 [xbridge] improve snode fee processing for dos protection
+- bee4aab14 [xbridge] bch support cashaddr
+- 8a6d20d5c [xbridge] remove bool return from setters
+- 8f5112ddc [xbridge] bch support for forkid and replay protection
+- ce39a4399 [xbridge] fix log-tx order spam on retries
+- 482765a74 [xbridge] incorporate bch sighash replay protection
+- ec59e5331 [xbridge] rebroadcast open orders canceled by snodes
+- ce35601a6 [xbridge] snode selection fallback for pending orders
+- 40e0cd831 [xbridge] add connection check fallback for failed thread
+- 1e507de50 [xbridge] remove fallback min fee
+- b4f16aab0 4.3.0 release notes
 - 0757b245a [gov] improve initial download time while govdb is active
 - dce89241d [gov] use llabs on int64 types
 - 192e17f52 [gov] add spent utxo index for tracking invalidated votes
