@@ -522,8 +522,8 @@ bool Transaction::tryJoin(const TransactionPtr other)
             log_obj.pushKV("orderid", id().GetHex());
             log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));
             log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(makerPrice));
-            xbridge::LogOrderMsg(log_obj, "taker price doesn't match maker expected price", __FUNCTION__);
-            return true;
+            xbridge::LogOrderMsg(log_obj, "taker price doesn't match maker expected price (join)", __FUNCTION__);
+            return false;
         }
 
         if (m_sourceAmount < other->m_destAmount || m_destAmount < other->m_sourceAmount) {
