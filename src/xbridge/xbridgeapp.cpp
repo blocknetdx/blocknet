@@ -1824,7 +1824,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     entry.txId = txid;
                     entry.vout = i;
                     entry.amount = vouts[i].second;
-                    entry.address = vouts[i].first;
+                    entry.address = connFrom->fromXAddr(connFrom->toXAddr(vouts[i].first));
                     ptr->usedCoins.push_back(entry);
                     partialNewTotalUtxosAmount += entry.amount;
                     if (xBridgeIntFromReal(partialVoutsTotal - partialNewTotalUtxosAmount) <= 0)
