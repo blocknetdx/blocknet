@@ -46,11 +46,6 @@ namespace rpc
         int vout;
         double amount;
     };
-    bool listUnspent(const std::string & rpcuser,
-                     const std::string & rpcpasswd,
-                     const std::string & rpcip,
-                     const std::string & rpcport,
-                     std::vector<Unspent> & entries);
 
     bool createRawTransaction(const std::string & rpcuser,
                               const std::string & rpcpasswd,

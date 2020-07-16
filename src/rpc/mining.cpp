@@ -992,6 +992,8 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
                     "  \"lastupdated\": n,          (numeric) Unix time the staker was last updated\n"
                     "  \"lastupdatedstr\": \"xxx\", (string) Human readable last updated time\n"
                     "  \"lastblockprocessed\": n,   (numeric) Last block processed for staking\n"
+                    "  \"fullyunlocked\": n,        (boolean) Wallet fully unlocked\n"
+                    "  \"unlockedforstaking\": n,   (boolean) Wallet unlocked for staking only\n"
                     "  \"status\": \"xxx\",         (string) Status message\n"
                     "}\n"
                 },
@@ -1003,6 +1005,12 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
     }
 
     UniValue obj(UniValue::VOBJ);
+
+    bool connected{false};
+    g_connman->ForEachNode([&connected](CNode *pnode) {
+        if (pnode->fSuccessfullyConnected && !pnode->fInbound)
+            connected = true;
+    });
 
 #ifdef ENABLE_WALLET
     const auto stakingEnabled = gArgs.GetBoolArg("-staking", true);
@@ -1018,7 +1026,7 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
         balance += pwallet->GetBalance();
     }
 
-    const auto staking = stakingEnabled && !allLocked && balance > 0 && !IsInitialBlockDownload();
+    const auto staking = stakingEnabled && !allLocked && balance > 0 && connected && !IsInitialBlockDownload();
 
     std::string msg;
     if (!stakingEnabled)
@@ -1029,6 +1037,8 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
         msg = "Wallet is locked, unlock the wallet to resume staking";
     else if (balance <= 0)
         msg = "Available staking balance is 0. Staking will resume once the staking balance > 0 and staking inputs are mature";
+    else if (!connected)
+        msg = "Staking is paused, no outgoing peers were detected";
     else if (staking)
         msg = "Staking is active";
 
@@ -1036,6 +1046,9 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
     obj.pushKV("lastupdated", lastUpdatedTime);
     obj.pushKV("lastupdatedstr", lastUpdatedStr);
     obj.pushKV("lastblockprocessed", lastBlock);
+    obj.pushKV("fullyunlocked", !allLocked && !util::unlockedForStakingOnly);
+    obj.pushKV("unlockedforstaking", util::unlockedForStakingOnly);
+    obj.pushKV("hasoutgoingpeers", connected);
     obj.pushKV("status", msg);
     return obj;
 #else
@@ -1043,6 +1056,9 @@ static UniValue getstakingstatus(const JSONRPCRequest& request)
     obj.pushKV("lastupdated", 0);
     obj.pushKV("lastupdatedstr", "");
     obj.pushKV("lastblockprocessed", 0);
+    obj.pushKV("fullyunlocked", false);
+    obj.pushKV("unlockedforstaking", false);
+    obj.pushKV("hasoutgoingpeers", connected);
     obj.pushKV("status", "Staking is inactive because the wallet is disabled");
     return obj;
 #endif // ENABLE_WALLET

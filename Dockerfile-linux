@@ -42,7 +42,7 @@ COPY . $PROJECTDIR/
 RUN mkdir -p $DISTDIR \
   && cd $PROJECTDIR \
   && rm -r $BASEPREFIX \
-  && tar xzvf depends-v4.2.0-lin-bionic.tar.gz \
+  && tar xzf depends-v4.2.0-lin-bionic.tar.gz \
   && chmod +x ./autogen.sh; sync \
   && ./autogen.sh \
   && CONFIG_SITE=$BASEPREFIX/$HOST/share/config.site ./configure CC=gcc-8 CXX=g++-8 CFLAGS="-g3 -O0" CXXFLAGS="-g3 -O0" --enable-debug --prefix=/ \

@@ -266,6 +266,8 @@ BITCOIN_CORE_H += \
   xbridge/bitcoinrpcconnector.h \
   xbridge/currency.h \
   xbridge/currencypair.h \
+  xbridge/cashaddr/cashaddr.h \
+  xbridge/cashaddr/cashaddrenc.h \
   xbridge/util/fastdelegate.h \
   xbridge/util/logger.h \
   xbridge/util/posixtimeconversion.h \
@@ -280,6 +282,7 @@ BITCOIN_CORE_H += \
   xbridge/xbitcointransaction.h \
   xbridge/xbridgeapp.h \
   xbridge/xbridgecryptoproviderbtc.h \
+  xbridge/xbridgedb.h \
   xbridge/xbridgedef.h \
   xbridge/xbridgeexchange.h \
   xbridge/xbridgepacket.h \
@@ -291,9 +294,13 @@ BITCOIN_CORE_H += \
   xbridge/xbridgetransactionmember.h \
   xbridge/xbridgewallet.h \
   xbridge/xbridgewalletconnector.h \
+  xbridge/xbridgewalletconnectorbcd.h \
   xbridge/xbridgewalletconnectorbch.h \
   xbridge/xbridgewalletconnectorbtc.h \
   xbridge/xbridgewalletconnectordgb.h \
+  xbridge/xbridgewalletconnectorbtg.h \
+  xbridge/xbridgewalletconnectordevault.h \
+  xbridge/xbridgewalletconnectorstealth.h \
   xbridge/xuiconnector.h
 
 # Blocknet XRouter
@@ -598,6 +605,8 @@ xbridge_libxbridge_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 xbridge_libxbridge_a_SOURCES = \
   rpc/client.cpp \
   xbridge/bitcoinrpcconnector.cpp \
+  xbridge/cashaddr/cashaddr.cpp \
+  xbridge/cashaddr/cashaddrenc.cpp \
   xbridge/rpcxbridge.cpp \
   xbridge/util/logger.cpp \
   xbridge/util/posixtimeconversion.cpp \
@@ -610,6 +619,7 @@ xbridge_libxbridge_a_SOURCES = \
   xbridge/xbitcointransaction.cpp \
   xbridge/xbridgeapp.cpp \
   xbridge/xbridgecryptoproviderbtc.cpp \
+  xbridge/xbridgedb.cpp \
   xbridge/xbridgeexchange.cpp \
   xbridge/xbridgepacket.cpp \
   xbridge/xbridgerpc.cpp \
@@ -619,9 +629,13 @@ xbridge_libxbridge_a_SOURCES = \
   xbridge/xbridgetransactiondescr.cpp \
   xbridge/xbridgetransactionmember.cpp \
   xbridge/xbridgewalletconnector.cpp \
+  xbridge/xbridgewalletconnectorbcd.cpp \
   xbridge/xbridgewalletconnectorbch.cpp \
   xbridge/xbridgewalletconnectorbtc.cpp \
   xbridge/xbridgewalletconnectordgb.cpp \
+  xbridge/xbridgewalletconnectorbtg.cpp \
+  xbridge/xbridgewalletconnectordevault.cpp \
+  xbridge/xbridgewalletconnectorstealth.cpp \
   $(JSON_H) \
   $(BITCOIN_CORE_H)
 

@@ -554,7 +554,7 @@ std::string App::printConfigs()
         o.pushKV("nodepubkey", HexStr(spubkey));
         o.pushKV("paymentaddress", settings->paymentAddress(xrDefault));
         o.pushKV("config", settings->publicText());
-        UniValue p_val(UniValue::VARR);
+        UniValue p_val(UniValue::VOBJ);
         for (const auto & p : settings->getPlugins()) {
             auto pp = settings->getPluginSettings(p);
             if (pp)
@@ -1548,7 +1548,7 @@ std::string App::getReply(const std::string & id)
             if (!uv.read(reply))
                 po.pushKV("reply", reply);
             else
-                po.pushKV("reply", uv.get_obj());
+                po.pushKV("reply", uv);
         } catch (...) {
             po.pushKV("reply", reply);
         }
@@ -1744,6 +1744,7 @@ void App::snodeConfigJSON(const std::map<NodeAddr, std::pair<XRouterSettingsPtr,
                 plg.emplace_back("fetchlimit", settings->commandFetchLimit(xrService, plugin));
                 plg.emplace_back("timeout", settings->commandTimeout(xrService, plugin));
                 plg.emplace_back("disabled", !settings->isAvailableCommand(xrService, plugin));
+                plg.emplace_back("help", settings->help(xrService, plugin));
                 plugins.emplace_back(plugin, plg);
             }
         }

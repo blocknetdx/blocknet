@@ -270,55 +270,6 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
 
 //*****************************************************************************
 //*****************************************************************************
-bool storeDataIntoBlockchain(const std::string & rawTx, std::string & txid)
-{
-    LOCK(cs_rpcBlockchainStore);
-
-    int errCode = 0;
-    std::string errMessage;
-
-    try
-    {
-        CMutableTransaction mtx;
-        if (!DecodeHexTx(mtx, rawTx, true, false))
-            throw std::runtime_error("TX decode failed");
-
-        CTransactionRef tx(MakeTransactionRef(std::move(mtx)));
-        const CAmount highfee{::maxTxFee};
-        uint256 txhash;
-        std::string errstr;
-        const TransactionError err = BroadcastTransaction(tx, txhash, errstr, highfee);
-        if (TransactionError::OK != err)
-            throw std::runtime_error(errstr);
-
-        txid = txhash.GetHex();
-
-        TXLOG() << "submitting fee to service node, feetx " << rawTx;
-    }
-    catch (std::runtime_error & e)
-    {
-        // specified error
-        errCode = -1;
-        errMessage = e.what();
-    }
-    catch (...)
-    {
-        errCode = -1;
-        errMessage = "failed to send feetx, unknown error";
-    }
-
-    if (errCode != 0)
-    {
-        TXERR() << "failed to send feetx " << rawTx;
-        LOG() << "error sending the fee transaction, code " << errCode << " " << errMessage << " " << __FUNCTION__;
-        return false;
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
 bool unspentP2PKH(std::vector<xbridge::wallet::UtxoEntry> & utxos)
 {
     auto coins = availableCoins(true, 1);

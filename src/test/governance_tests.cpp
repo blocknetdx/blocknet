@@ -320,6 +320,7 @@ bool cleanup(int blockCount, CWallet *wallet=nullptr) {
         InvalidateBlock(state, params, chainActive.Tip(), false);
     ActivateBestChain(state, params); SyncWithValidationInterfaceQueue();
     gArgs.ForceSetArg("-proposaladdress", "");
+    removeGovernanceDBFiles();
     gov::Governance::instance().reset();
     if (wallet) {
         std::vector<CWalletTx> wtx;
@@ -877,6 +878,93 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
             BOOST_CHECK_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
             auto pvs = gov::Governance::instance().getVotes(proposal.getHash());
             BOOST_CHECK_MESSAGE(pvs.size() == 1 && !pvs[0].spent(), "Expecting 1 unspent vote");
+        }
+        // Clean up
+        UnregisterValidationInterface(otherwallet.get());
+        otherwallet.reset();
+        cleanup(resetBlocks, wallet.get());
+        ReloadWallet();
+    }
+
+    UnregisterValidationInterface(&gov::Governance::instance());
+    cleanup(chainActive.Height(), wallet.get());
+    ReloadWallet();
+}
+
+BOOST_FIXTURE_TEST_CASE(governance_tests_votes_changescutoff, TestChainPoS)
+{
+    RegisterValidationInterface(&gov::Governance::instance());
+
+    auto *params = (CChainParams*)&Params();
+    params->consensus.voteMinUtxoAmount = 20*COIN;
+    params->consensus.voteBalance = 200*COIN;
+    const auto & consensus = params->GetConsensus();
+    CTxDestination dest(coinbaseKey.GetPubKey().GetID());
+    std::vector<COutput> coins;
+    {
+        LOCK2(cs_main, wallet->cs_wallet);
+        wallet->AvailableCoins(*locked_chain, coins);
+    }
+    BOOST_CHECK_MESSAGE(!coins.empty(), "Vote tests require available coins");
+    const gov::VinHash & vinHash = gov::makeVinHash(coins.front().GetInputCoin().outpoint);
+    std::set<gov::VinHash> vinHashes{vinHash};
+
+    // Check normal proposal
+    gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
+                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+    BOOST_CHECK_MESSAGE(proposal.isValid(consensus), "Basic proposal should be valid");
+
+    // Casting change votes inside voting cutoff period should not influence the tally
+    {
+        const auto resetBlocks = chainActive.Height();
+        CKey key; key.MakeNewKey(true);
+        const auto & newDest = GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY);
+        bool firstRun;
+        auto otherwallet = std::make_shared<CWallet>(*chain, WalletLocation(), WalletDatabase::CreateMock());
+        otherwallet->LoadWallet(firstRun);
+        AddKey(*otherwallet, key);
+        otherwallet->SetBroadcastTransactions(true);
+        rescanWallet(otherwallet.get());
+        RegisterValidationInterface(otherwallet.get());
+        // Vote inputs
+        {
+            CTransactionRef tx;
+            CTransactionRef txVoteInput;
+            bool sent = sendToAddress(wallet.get(), newDest, 200 * COIN, tx)
+                     && sendToAddress(wallet.get(), newDest, 3 * COIN, txVoteInput);
+            BOOST_CHECK_MESSAGE(sent, "Send to another address failed");
+        }
+        // Create proposal
+        {
+            CTransactionRef ptx; // proposal tx
+            std::string failReason;
+            gov::SubmitProposal(proposal, {wallet}, consensus, ptx, g_connman.get(), &failReason);
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+        }
+        // 1) Vote on a proposal
+        gov::ProposalVote proposalVoteYes{proposal, gov::YES};
+        {
+            std::vector<CTransactionRef> txs;
+            std::string failReason;
+            bool success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVoteYes}, {otherwallet}, consensus, txs, g_connman.get(), &failReason);
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Submit votes failed: %s", failReason));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_CHECK_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+        }
+        // 2) Stake to cutoff period
+        StakeBlocks(gov::NextSuperblock(consensus, chainActive.Height()) - consensus.votingCutoff), SyncWithValidationInterfaceQueue();
+        // 3) Attempt to change vote
+        {
+            gov::ProposalVote proposalVoteNo{proposal, gov::NO};
+            std::vector<CTransactionRef> txs;
+            std::string failReason;
+            bool success = gov::SubmitVotes(std::vector<gov::ProposalVote>{proposalVoteNo}, {otherwallet}, consensus, txs, g_connman.get(), &failReason);
+            BOOST_REQUIRE_MESSAGE(success, strprintf("Change vote failed: %s", failReason));
+            StakeBlocks(1), SyncWithValidationInterfaceQueue();
+            auto vs = gov::Governance::instance().getVotes(proposal.getHash());
+            BOOST_REQUIRE_MESSAGE(vs.size() == 1, strprintf("Expecting 1 vote, found %u", vs.size()));
+            BOOST_CHECK_MESSAGE(vs[0].getVote() == proposalVoteYes.vote, strprintf("Expecting vote to remain unchanged in cutoff period"));
         }
         // Clean up
         UnregisterValidationInterface(otherwallet.get());

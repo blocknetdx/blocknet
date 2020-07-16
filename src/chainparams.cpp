@@ -105,10 +105,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1589565600; // May 15, 2020
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("00000000000000000000000000000000000000000000000403efd01ca1b33a6d"); // block 1367315
+        consensus.nMinimumChainWork = uint256S("00000000000000000000000000000000000000000000000563b4a73316dfc193"); // block 1522597
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x28483eea85f9ddd028be0100e8930439bb7ff564d59f13a4eac2aea1036e7c9f"); // block 1367315
+        consensus.defaultAssumeValid = uint256S("0x1ee481216e8eef8ce5e98389dc1a95085748c4ae6b0c77bc60b456e482fca3a4"); // block 1522597
 
         // Last POW block
         consensus.lastPOWBlock = 2000;
@@ -130,7 +130,7 @@ public:
         pchMessageStart[3] = 0xa3;
         nDefaultPort = 41412;
         nPruneAfterHeight = std::numeric_limits<uint64_t>::max(); // Pruning not supported
-        m_assumed_blockchain_size = 1;
+        m_assumed_blockchain_size = 3;
         m_assumed_chain_state_size = 1;
 
         genesis = CreateGenesisBlock(1502214073, 734967, UintToArith256(consensus.powLimit).GetCompact(), 1, 250 * COIN);
@@ -174,6 +174,7 @@ public:
                 {1212162, uint256S("0x3e16a50c22e23f7c6b93567a540e2e830f3ac774755896d12234dce30d1db06a")},
                 {1301200, uint256S("0x016477330d5f04aeb7f93971ef7fb8c4c15aedc4281f43753aee4fa13a54ccd5")},
                 {1367315, uint256S("0x28483eea85f9ddd028be0100e8930439bb7ff564d59f13a4eac2aea1036e7c9f")},
+                {1522597, uint256S("0x1ee481216e8eef8ce5e98389dc1a95085748c4ae6b0c77bc60b456e482fca3a4")},
             }
         };
         // Assign last checkpoint height, used to estimate initial load time
@@ -184,9 +185,9 @@ public:
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats 43200 [block_hash]
-            /* nTime    */ 1583952825,
-            /* nTxCount */ 3057093,
-            /* dTxRate  */ 0.03880640632088561
+            /* nTime    */ 1593836305,
+            /* nTxCount */ 3376960,
+            /* dTxRate  */ 0.03353379319107036
         };
 
         /* enable fallback fee on mainnet */
@@ -276,10 +277,10 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1577750400; // December 31, 2019
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("00000000000000000000000000000000000000000000000060ea1c6a32e52516");
+        consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000008da8d3d2e63fb960");
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0xfd935a7af6c3ba6c776ed08aeafea7cef435441157918f20f7efba20b35e4fd2"); // 192874
+        consensus.defaultAssumeValid = uint256S("0x07df8d108cf2bb7db773b84b99a9afc0d3f9c0f9c85ff9b0b87225cf0150b471"); // 663538
 
         consensus.lastPOWBlock = 31;
         consensus.stakeMinAge = 60;
@@ -330,6 +331,7 @@ public:
             {
                 {0, uint256S("0x0fd62ae4f74c7ee0c11ef60fc5a2e69a5c02eaee2e77b21c3db70934b5a5c8b9")},
                 {302806, uint256S("0x54d0094600b90ae113cd54360058206b00eb1db2a5a9ae9a95e40f553edb2042")},
+                {663538, uint256S("0x07df8d108cf2bb7db773b84b99a9afc0d3f9c0f9c85ff9b0b87225cf0150b471")},
             }
         };
         // Assign last checkpoint height, used to estimate initial load time
@@ -340,9 +342,9 @@ public:
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats
-            /* nTime    */ 1569438390,
-            /* nTxCount */ 607030,
-            /* dTxRate  */ 0.03213750146763548
+            /* nTime    */ 1593837804,
+            /* nTxCount */ 1331560,
+            /* dTxRate  */ 0.03318975611066963
         };
 
         /* enable fallback fee on testnet */

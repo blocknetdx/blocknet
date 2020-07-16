@@ -53,7 +53,7 @@ BasicTestingSetup::BasicTestingSetup(const std::string& chainName)
 
 BasicTestingSetup::~BasicTestingSetup()
 {
-    fs::remove_all(m_path_root);
+    try { fs::remove_all(m_path_root); } catch(...) { }
     ECC_Stop();
 }
 

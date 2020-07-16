@@ -125,6 +125,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         uint32_t    txVersion  = s.get<uint32_t>(*i + ".TxVersion", 1);
         std::string jsonver    = s.get<std::string>(*i + ".JSONVersion", "");
         std::string contenttype = s.get<std::string>(*i + ".ContentType", "");
+        std::string cashAddrPf = s.get<std::string>(*i + ".CashAddrPrefix", "");
 
         if (user.empty() || passwd.empty())
             WARN() << *i << " \"" << label << "\"" << " has empty credentials";
@@ -145,6 +146,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         wp.txVersion  = txVersion;
         wp.jsonver    = jsonver;
         wp.contenttype = contenttype;
+        wp.cashAddrPrefix = cashAddrPf;
     }
 
     return true;
@@ -306,7 +308,9 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items,
                                  uint256                              & blockHash,
-                                 bool                                 & isCreated)
+                                 bool                                 & isCreated,
+                                 const bool                             isPartialOrder = false,
+                                 const uint64_t                         minFromAmount = 0)
 {
     DEBUG_TRACE();
 
@@ -353,7 +357,9 @@ bool Exchange::createTransaction(const uint256                        & txid,
                                                destCurrency, destAmount,
                                                timestamp,
                                                blockHash,
-                                               mpubkey));
+                                               mpubkey,
+                                               isPartialOrder,
+                                               minFromAmount));
     if (!tr->isValid())
     {
         xbridge::LogOrderMsg(txid.GetHex(), "rejected order because it failed validity checks", __FUNCTION__);
@@ -415,7 +421,8 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::string                    & destCurrency,
                                  const uint64_t                       & destAmount,
                                  const std::vector<unsigned char>     & mpubkey,
-                                 const std::vector<wallet::UtxoEntry> & items)
+                                 const std::vector<wallet::UtxoEntry> & items,
+                                 const bool                             isPartialOrderAllowed = false)
 {
     DEBUG_TRACE();
 
@@ -439,7 +446,8 @@ bool Exchange::acceptTransaction(const uint256                        & txid,
                                                sourceCurrency, sourceAmount,
                                                destAddr,
                                                destCurrency, destAmount,
-                                               std::time(0), uint256(), mpubkey));
+                                               std::time(0), uint256(), mpubkey,
+                                               isPartialOrderAllowed, 0));
     if (!tr->isValid())
     {
         xbridge::LogOrderMsg(txid.GetHex(), "rejecting order because the transaction failed validity checks", __FUNCTION__);

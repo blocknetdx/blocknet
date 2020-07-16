@@ -39,6 +39,8 @@ static const int64_t nMaxBlockDBCache = 16;
 static const int64_t nMaxTxIndexCache = 3096;
 //! Max memory allocated to coin DB specific cache (MiB)
 static const int64_t nMaxCoinsDBCache = 32;
+//! Max memory allocated to governance cache (MiB)
+static const int64_t nMaxGovDBCache = 16;
 
 /** CCoinsView backed by the coin database (chainstate/) */
 class CCoinsViewDB final : public CCoinsView
@@ -95,7 +97,7 @@ public:
     void ReadReindexing(bool &fReindexing);
     bool WriteFlag(const std::string &name, bool fValue);
     bool ReadFlag(const std::string &name, bool &fValue);
-    bool LoadBlockIndexGuts(const Consensus::Params& consensusParams, std::function<CBlockIndex*(const uint256&)> insertBlockIndex);
+    bool LoadBlockIndexGuts(const Consensus::Params& consensusParams, int lastBlockHeight, std::function<CBlockIndex*(const uint256&)> insertBlockIndex);
 };
 
 #endif // BITCOIN_TXDB_H

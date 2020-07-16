@@ -5,12 +5,11 @@
 //******************************************************************************
 //******************************************************************************
 
-#ifndef BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORBCH_H
-#define BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORBCH_H
+#ifndef BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORSTEALTH_H
+#define BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORSTEALTH_H
 
 #include <xbridge/xbridgewalletconnectorbtc.h>
 #include <xbridge/xbridgecryptoproviderbtc.h>
-#include <xbridge/cashaddr/cashaddrenc.h>
 
 //*****************************************************************************
 //*****************************************************************************
@@ -19,18 +18,11 @@ namespace xbridge
 
 //******************************************************************************
 //******************************************************************************
-class BchWalletConnector : public BtcWalletConnector<BtcCryptoProvider>
-{
+class StealthWalletConnector : public BtcWalletConnector<BtcCryptoProvider> {
 public:
-    BchWalletConnector();
-    bool init() override;
+    StealthWalletConnector();
 
 public:
-    bool hasValidAddressPrefix(const std::string & addr) const override;
-    std::string fromXAddr(const std::vector<unsigned char> & xaddr) const override;
-    std::vector<unsigned char> toXAddr(const std::string & addr) const override;
-    std::string scriptIdToString(const std::vector<unsigned char> & id) const override;
-
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
                                  const std::vector<std::pair<std::string, double> > & outputs,
                                  const std::vector<unsigned char> & mpubKey,
@@ -48,16 +40,8 @@ public:
                                   const std::vector<unsigned char> & innerScript,
                                   std::string & txId,
                                   std::string & rawTx) override;
-
-protected:
-    bool replayProtectionEnabled(int64_t medianBlockTime);
-    bool checkReplayProtectionEnabled();
-
-protected:
-    CashParams params;
-    bool replayProtection{false}; // BCH replay protection enforcement (SCRIPT_ENABLE_REPLAY_PROTECTION)
 };
 
 } // namespace xbridge
 
-#endif // BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORBCH_H
+#endif // BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORSTEALTH_H

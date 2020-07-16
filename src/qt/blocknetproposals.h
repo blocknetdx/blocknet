@@ -85,16 +85,6 @@ private Q_SLOTS:
     void setNumBlocks(int count, const QDateTime & blockDate, double nVerificationProgress, bool header);
 
 private:
-    int getChainHeight() const {
-        int height{std::numeric_limits<int>::max()};
-        {
-            LOCK(cs_main);
-            height = chainActive.Height();
-        }
-        return height;
-    }
-
-private:
     QVBoxLayout *layout;
     ClientModel *clientModel;
     WalletModel *walletModel;

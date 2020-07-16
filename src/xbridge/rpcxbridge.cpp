@@ -145,12 +145,21 @@ UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetNewTokenAddress",
-                "\nReturns a new address for the specified token.\n",
+                "\nReturns a new address for the specified asset.\n",
                 {
-                    {"ticker", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker symbol of the token you want to generate an address for (e.g. LTC)."},
+                    {"ticker", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker symbol of the asset you want to generate an address for (e.g. LTC)."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    [
+        "SVTbaYZ8oApVn3uNyimst3GKyvvfzXQgdK"
+    ]
+
+    Key                    | Type | Description
+    -----------------------|------|----------------------------------------------
+    Array                  | arr  | An array containing the newly generated
+                           |      | address for the given asset.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetNewTokenAddress", "BTC")
@@ -184,7 +193,13 @@ UniValue dxLoadXBridgeConf(const JSONRPCRequest& request)
                 "\nHot loads the xbridge.conf file. Note, this may disrupt trades in progress.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    true
+
+    Type | Description
+    -----|----------------------------------------------
+    bool | `true`: Successfully reloaded file.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxLoadXBridgeConf", "")
@@ -217,11 +232,23 @@ UniValue dxGetLocalTokens(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetLocalTokens",
-                "\nReturns a list of tokens supported by your node.\n"
-                "You can only trade with these supported tokens.\n",
+                "\nReturns a list of assets supported by your node. "
+                "You can only trade on markets with assets returned in both dxGetNetworkTokens and dxGetLocalTokens.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    [
+        "BLOCK",
+        "LTC",
+        "MONA",
+        "SYS"
+    ]
+
+    Key                    | Type | Description
+    -----------------------|------|----------------------------------------------
+    Array                  | arr  | An array of all the assets supported by the
+                           |      | local client.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetLocalTokens", "")
@@ -249,10 +276,26 @@ UniValue dxGetNetworkTokens(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetNetworkTokens",
-                "\nReturns a list of tokens supported by the network.\n",
+                "\nReturns a list of all the assets currently supported by the network. "
+                "You can only trade on markets with assets returned in both dxGetNetworkTokens and dxGetLocalTokens.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    [
+        "BLOCK",
+        "BTC",
+        "DGB",
+        "LTC",
+        "MONA",
+        "PIVX",
+        "SYS"
+    ]
+
+    Key                    | Type | Description
+    -----------------------|------|----------------------------------------------
+    Array                  | arr  | An array of all the assets supported by the
+                           |      | network.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetNetworkTokens", "")
@@ -289,10 +332,66 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetOrders",
-                "\nReturns a list of all orders. You will only see orders for tokens supported by your node.\n",
+                "\nReturns a list of all orders of every market pair. \n"
+                "It will only return orders for assets returned in dxGetLocalTokens.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    [
+        {
+            "id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "maker": "SYS",
+            "maker_size": "100.000000",
+            "taker": "LTC",
+            "taker_size": "10.500000",
+            "updated_at": "2018-01-15T18:25:05.12345Z",
+            "created_at": "2018-01-15T18:15:30.12345Z",
+            "order_type": "partial",
+            "partial_minimum": "10.000000",
+            "partial_repost": false,
+            "status": "open"
+        },
+        {
+            "id": "a1f40d53f75357eb914554359b207b7b745cf096dbcb028eb77b7b7e4043c6b4",
+            "maker": "SYS",
+            "maker_size": "0.100000",
+            "taker": "LTC",
+            "taker_size": "0.010000",
+            "updated_at": "2018-01-15T18:25:05.12345Z",
+            "created_at": "2018-01-15T18:15:30.12345Z",
+            "order_type": "exact",
+            "partial_minimum": "0.000000",
+            "partial_repost": false,
+            "status": "open"
+        }
+    ]
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    Array           | arr  | An array of all orders with each order having the
+                    |      | following parameters.
+    id              | str  | The order ID.
+    maker           | str  | Maker trading asset; the ticker of the asset being
+                    |      | sold by the maker.
+    maker_size      | str  | Maker trading size. String is used to preserve
+                    |      | precision.
+    taker           | str  | Taker trading asset; the ticker of the asset being
+                    |      | sold by the taker.
+    taker_size      | str  | Taker trading size. String is used to preserve
+                    |      | precision.
+    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
+                    |      | time the order was updated.
+    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
+                    |      | order was created.
+    order_type      | str  | The order type.
+    partial_minimum | str  | The minimum amount that can be taken. This applies
+                    |      | to `partial` order types and will show `0` on `
+                    |      | exact` order types.
+    partial_repost  | str  | Whether the order will be reposted or not. This
+                    |      | applies to `partial` order types and will show
+                    |      | `false` if you are not the maker of this order.
+    status          | str  | The order status.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetOrders", "")
@@ -337,6 +436,9 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
         jtr.emplace_back(Pair("taker_size",     xbridge::xBridgeStringValueFromAmount(tr->toAmount)));
         jtr.emplace_back(Pair("updated_at",     xbridge::iso8601(tr->txtime)));
         jtr.emplace_back(Pair("created_at",     xbridge::iso8601(tr->created)));
+        jtr.emplace_back(Pair("order_type",     tr->orderType()));
+        jtr.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(tr->minFromAmount)));
+        jtr.emplace_back(Pair("partial_repost", tr->repostOrder));
         jtr.emplace_back(Pair("status",         tr->strState()));
         result.emplace_back(jtr);
 
@@ -351,18 +453,48 @@ UniValue dxGetOrderFills(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetOrderFills",
-                "\nReturns all the recent trades by trade pair that have been filled\n"
-                "(i.e. completed). Maker symbol is always listed first. The [combined]\n"
-                "flag defaults to true. When set to false, [combined] will return only\n"
-                "maker trades. Switch maker and taker to return the reverse. This will\n"
-                "only return orders that have been filled in your current session.\n",
+                "\nReturns all the recent trades by trade pair that have been filled (i.e. completed). "
+                "This will only return orders that have been filled in your current session.\n",
                 {
-                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token sold by the maker (e.g. LTC)."},
-                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token sold by the taker (e.g. BLOCK)."},
-                    {"combined", RPCArg::Type::BOOL, "true", "If true, combines the results to return orders with the maker and taker as specified and orders with inverse."},
+                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset sold by the maker (e.g. LTC)."},
+                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset sold by the taker (e.g. BLOCK)."},
+                    {"combined", RPCArg::Type::BOOL, "true", "If true, combines the results to return orders with the maker and taker as specified as well as orders of the inverse market. If false, only returns filled orders with the maker and taker assets as specified."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    [
+        {
+            "id": "a1f40d53f75357eb914554359b207b7b745cf096dbcb028eb77b7b7e4043c6b4",
+            "time": "2018-01-16T13:15:05.12345Z",
+            "maker": "SYS",
+            "maker_size": "101.00000000",
+            "taker": "LTC",
+            "taker_size": "0.01000000"
+        },
+        {
+            "id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "time": "2018-01-16T13:15:05.12345Z",
+            "maker": "LTC",
+            "maker_size": "0.01000000",
+            "taker": "SYS",
+            "taker_size": "101.00000000"
+        }
+    ]
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    Array           | arr  | Array of orders sorted by date descending.
+    id              | str  | The order ID.
+    time            | str  | Time the order was filled.
+    maker           | str  | Maker trading asset; the ticker of the asset being
+                    |      | sold by the maker.
+    maker_size      | str  | Maker trading size. String is used to preserve
+                    |      | precision.
+    taker           | str  | Taker trading asset; the ticker of the asset being
+                    |      | sold by the taker.
+    taker_size      | str  | Taker trading size. String is used to preserve
+                    |      | precision.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetOrderFills", "BLOCK LTC")
@@ -417,6 +549,9 @@ UniValue dxGetOrderFills(const JSONRPCRequest& request)
         tmp.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(transaction->fromAmount)));
         tmp.emplace_back(Pair("taker",      transaction->toCurrency));
         tmp.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(transaction->toAmount)));
+        tmp.emplace_back(Pair("order_type", transaction->orderType()));
+        tmp.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(transaction->minFromAmount)));
+        tmp.emplace_back(Pair("partial_repost", transaction->repostOrder));
         arr.emplace_back(tmp);
 
     }
@@ -428,10 +563,11 @@ UniValue dxGetOrderHistory(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetOrderHistory",
-                "\nReturns the order history over a specified time interval.\n",
+                "\nReturns the OHLCV data by trade pair for a specified time range and interval. "
+                "It can return the order history for any asset since all trade history is stored on-chain.\n",
                 {
-                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token sold by the maker (e.g. LTC)."},
-                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token sold by the taker (e.g. BLOCK)."},
+                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset sold by the maker (e.g. LTC)."},
+                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset sold by the taker (e.g. BLOCK)."},
                     {"start_time", RPCArg::Type::NUM, RPCArg::Optional::NO, "The Unix time in seconds for the start time boundary to search."},
                     {"end_time", RPCArg::Type::NUM, RPCArg::Optional::NO, "The Unix time in seconds for the end time boundary to search."},
                     {"granularity", RPCArg::Type::NUM, RPCArg::Optional::NO, "Time interval slice in seconds. The slice options are: " + xQuery::supported_seconds_csv()},
@@ -441,7 +577,31 @@ UniValue dxGetOrderHistory(const JSONRPCRequest& request)
                     // {"interval_timestamp", RPCArg::Type::STR, "at_start", "The timestamp at start of the interval. The options are [at_start | at_end]."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    [
+        //[ time, low, high, open, close, volume, id(s) ],
+        [ "2018-01-16T13:15:05.12345Z", 1.10, 2.0, 1.10, 1.4, 1000, [ "0cc2e8a7222f1416cda996031ca21f67b53431614e89651887bc300499a6f83e" ] ],
+        [ "2018-01-16T14:15:05.12345Z", 0, 0, 0, 0, 0, [] ],
+        [ "2018-01-16T15:15:05.12345Z", 1.12, 2.2, 1.10, 1.4, 1000, [ "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9", "0cc2e8a7222f1416cda996031ca21f67b53431614e89651887bc300499a6f83e", "a1f40d53f75357eb914554359b207b7b745cf096dbcb028eb77b7b7e4043c6b4" ] ],
+        [ "2018-01-16T16:15:05.12345Z", 1.14, 2.0, 1.10, 1.4, 1000, [ "a1f40d53f75357eb914554359b207b7b745cf096dbcb028eb77b7b7e4043c6b4" ] ],
+        [ "2018-01-16T17:15:05.12345Z", 1.15, 2.0, 1.10, 1.4, 1000, [ "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a" ] ]
+    ]
+
+    Key           | Type  | Description
+    --------------|-------|------------------------------------------------------
+    time          | str   | ISO 8601 datetime, with microseconds, of the time at
+                  |       | the beginning of the time slice.
+    low           | float | Exchange rate lower bound within the time slice.
+    high          | float | Exchange rate upper bound within the time slice.
+    open          | float | Exchange rate of first filled order at the beginning
+                  |       | of the time slice.
+    close         | float | Exchange rate of last filled order at the end of the
+                  |       | time slice.
+    volume        | int   | Total volume of the taker asset within the time
+                  |       | slice.
+    order_ids     | arr   | Array of GUIDs of all filled orders within the time
+                  |       | slice.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetOrderHistory", "SYS LTC 1540660180 1540660420 60")
@@ -524,7 +684,45 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
                     {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The order ID."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+        "id": "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
+        "maker": "SYS",
+        "maker_size": "0.100",
+        "taker": "LTC",
+        "taker_size": "0.01",
+        "updated_at": "1970-01-01T00:00:00.00000Z",
+        "created_at": "2018-01-15T18:15:30.12345Z",
+        "order_type": "exact",
+        "partial_minimum": "0.000000",
+        "partial_repost": false,
+        "status": "open"
+    }
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    id              | str  | The order ID.
+    maker           | str  | Maker trading asset; the ticker of the asset being
+                    |      | sold by the maker.
+    maker_size      | str  | Maker trading size. String is used to preserve
+                    |      | precision.
+    taker           | str  | Taker trading asset; the ticker of the asset being
+                    |      | sold by the taker.
+    taker_size      | str  | Taker trading size. String is used to preserve
+                    |      | precision.
+    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
+                    |      | time the order was updated.
+    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
+                    |      | order was created.
+    order_type      | str  | The order type.
+    partial_minimum | str  | The minimum amount that can be taken. This applies
+                    |      | to `partial` order types and will show `0` on
+                    |      | `exact` order types.
+    partial_repost  | str  | Whether the order will be reposted or not. This
+                    |      | applies to `partial` order types and will show
+                    |      | `false` if you are not the maker of this order.
+    status          | str  | The order status.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432")
@@ -564,6 +762,9 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
     result.emplace_back(Pair("taker_size",  xbridge::xBridgeStringValueFromAmount(order->toAmount)));
     result.emplace_back(Pair("updated_at",  xbridge::iso8601(order->txtime)));
     result.emplace_back(Pair("created_at",  xbridge::iso8601(order->created)));
+    result.emplace_back(Pair("order_type", order->orderType()));
+    result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(order->minFromAmount)));
+    result.emplace_back(Pair("partial_repost", order->repostOrder));
     result.emplace_back(Pair("status",      order->strState()));
     return uret(result);
 }
@@ -573,26 +774,73 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxMakeOrder",
-                "\nCreate a new order. You can only create orders for markets with tokens\n"
-                "supported by your node. There are no fees to make orders. [dryrun] will\n"
-                "validate the order without submitting the order to the network.\n"
+                "\nCreate a new exact order. Exact orders must be taken for the full order amount. "
+                "For partial orders, see dxMakePartialOrder.\n"
+                "You can only create orders for markets with assets supported by your node (view with dxGetLocalTokens) "
+                "and the network (view with dxGetNetworkTokens). There are no fees to make orders.\n"
                 "\nNote:\n"
-                "XBridge will first attempt to use funds from the specified maker address.\n"
-                "If this address does not have sufficient funds to cover the order, then\n"
-                "it will pull funds from other addresses in the wallet. Change is\n"
+                "XBridge will first attempt to use funds from the specified maker address. "
+                "If this address does not have sufficient funds to cover the order, then "
+                "it will pull funds from other addresses in the wallet. Change is "
                 "deposited to the address with the largest input used.\n",
                 {
-                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token being sold by the maker (e.g. LTC)."},
-                    {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker token being sent."},
-                    {"maker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The maker address containing tokens being sent."},
-                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token being bought by the maker (e.g. BLOCK)."},
-                    {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker token to be received."},
-                    {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving token."},
+                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being sold by the maker (e.g. LTC)."},
+                    {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker asset being sent."},
+                    {"maker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The maker address containing asset being sent."},
+                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being bought by the maker (e.g. BLOCK)."},
+                    {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker asset to be received."},
+                    {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
                     {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "The order type. Options: exact"},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+        "id": "4306a107113c4562afa6273ecd9a3990ead53a0227f74ddd9122272e453ae07d",
+        "maker": "SYS",
+        "maker_size": "1.000000",
+        "maker_address": "SVTbaYZ8olpVn3uNyImst3GKyrvfzXQgdK",
+        "taker": "LTC",
+        "taker_size": "0.100000",
+        "taker_address": "LVvFhZroMRGTtg1hHp7jVew3YoZRX8y35Z",
+        "updated_at": "2018-01-16T00:00:00.00000Z",
+        "created_at": "2018-01-15T18:15:30.12345Z",
+        "block_id": "38729344720548447445023782734923740427863289632489723984723",
+        "order_type": "exact",
+        "partial_minimum": "0.000000",
+        "partial_repost": false,
+        "status": "created"
+    }
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    id              | str  | The order ID. Reposted partial orders are given a
+                    |      | new order ID.
+    maker           | str  | Maker trading asset; the ticker of the asset being
+                    |      | sold by the maker.
+    maker_size      | str  | Maker trading size. String is used to preserve
+                    |      | precision.
+    maker_address   | str  | Maker address for sending the outgoing asset.
+    taker           | str  | Taker trading asset; the ticker of the asset being
+                    |      | sold by the taker.
+    taker_size      | str  | Taker trading size. String is used to preserve
+                    |      | precision.
+    taker_address   | str  | Maker address for receiving the incoming asset.
+    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
+                    |      | time the order was updated.
+    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
+                    |      | order was created.
+    block_id        | str  | The hash of the current block on the Blocknet
+                    |      | blockchain at the time the order was created.
+    order_type      | str  | The order type.
+    partial_minimum | str  | The minimum amount that can be taken. This applies
+                    |      | to `partial` order types and will show `0` on
+                    |      | `exact` order types.
+    partial_repost  | str  | Whether the order will be reposted or not. This only
+                    |      | applies to `partial` order types and will always
+                    |      | show `false` if you are not the maker.
+    status          | str  | The order status.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact")
@@ -714,6 +962,9 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
             result.emplace_back(Pair("taker_size",
                                      xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
             result.emplace_back(Pair("taker_address", toAddress));
+            result.emplace_back(Pair("order_type", "exact"));
+            result.emplace_back(Pair("partial_minimum","0"));
+            result.emplace_back(Pair("partial_repost", false));
             result.emplace_back(Pair("status", "created"));
             return uret(result);
         }
@@ -733,7 +984,6 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     default:
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
-
 
     uint256 id = uint256();
     uint256 blockHash = uint256();
@@ -755,6 +1005,9 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("created_at",     xbridge::iso8601(createdTime)));
         obj.emplace_back(Pair("updated_at",     xbridge::iso8601(boost::posix_time::microsec_clock::universal_time()))); // TODO Need actual updated time, this is just estimate
         obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
+        obj.emplace_back(Pair("order_type",     "exact"));
+        obj.emplace_back(Pair("partial_minimum","0"));
+        obj.emplace_back(Pair("partial_repost", false));
         obj.emplace_back(Pair("status",         "created"));
         return uret(obj);
 
@@ -763,46 +1016,72 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     }
 }
 
-UniValue dxTakeOrder(const JSONRPCRequest& request)
-{
-    if (request.fHelp)
+UniValue dxTakeOrder(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 5)
         throw std::runtime_error(
             RPCHelpMan{"dxTakeOrder",
-                "\nThis call is used to accept an order. You can only take orders for markets\n"
-                "with tokens supported by your node. Taking an order has a 0.015 BLOCK fee.\n"
-                "[dryrun] will evaluate input without accepting the order (test run).\n"
+                "\nThis call is used to take an order. You can only take orders for assets supported "
+                "by your node (view with dxGetLocalTokens). Taking your own order is not supported. "
+                "Taking an order has a 0.015 BLOCK fee.\n"
                 "\nNote:\n"
-                "XBridge will first attempt to use funds from the specified from_address.\n"
-                "If this address does not have sufficient funds to cover the order, then\n"
-                "it will pull funds from other addresses in the wallet. Change is\n"
+                "XBridge will first attempt to use funds from the specified from_address. "
+                "If this address does not have sufficient funds to cover the order, then "
+                "it will pull funds from other addresses in the wallet. Change is "
                 "deposited to the address with the largest input used.\n",
                 {
                     {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The ID of the order being filled."},
-                    {"from_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address containing tokens being sent."},
-                    {"to_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address for the receiving token."},
+                    {"from_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address containing asset being sent."},
+                    {"to_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address for the receiving asset."},
+                    {"amount", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "The amount to take (allowed only on partial orders)"},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+        "id": "4306aa07113c4562ffa6278ecd9a3990ead53a0227f74ddd9122272e453ae07d",
+        "maker": "SYS",
+        "maker_size": "0.100",
+        "taker": "LTC",
+        "taker_size": "0.01",
+        "updated_at": "1970-01-01T00:00:00.00000Z",
+        "created_at": "2018-01-15T18:15:30.12345Z",
+        "order_type": "exact",
+        "partial_minimum": "0.000000",
+        "partial_repost": false,
+        "status": "accepting"
+    }
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    id              | str  | The order ID.
+    maker           | str  | Maker trading asset; the ticker of the asset being
+                    |      | sold by the maker.
+    maker_size      | str  | Maker trading size. String is used to preserve
+                    |      | precision.
+    taker           | str  | Taker trading asset; the ticker of the asset being
+                    |      | sold by the taker.
+    taker_size      | str  | Taker trading size. String is used to preserve
+                    |      | precision.
+    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
+                    |      | time the order was updated.
+    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
+                    |      | order was created.
+    status          | str  | The order status.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxTakeOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR")
                   + HelpExampleRpc("dxTakeOrder", "\"524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\"")
-                  + HelpExampleCli("dxTakeOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR dryrun")
-                  + HelpExampleRpc("dxTakeOrder", "\"524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"dryrun\"")
+                  + HelpExampleCli("dxTakeOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 0.5")
+                  + HelpExampleRpc("dxTakeOrder", "\"524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"0.5\"")
+                  + HelpExampleCli("dxTakeOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 0.5 dryrun")
+                  + HelpExampleRpc("dxTakeOrder", "\"524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"0.5\", \"dryrun\"")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if ((params.size() != 3) && (params.size() != 4))
-    {
-        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "(id) (from_address) (to_address) (dryrun)[optional]"));
-    }
-
-    uint256 id = uint256S(params[0].get_str());
-    std::string fromAddress    = params[1].get_str();
-    std::string toAddress      = params[2].get_str();
+    uint256 id = uint256S(request.params[0].get_str());
+    std::string fromAddress = request.params[1].get_str();
+    std::string toAddress = request.params[2].get_str();
 
     xbridge::App &app = xbridge::App::instance();
 
@@ -812,10 +1091,22 @@ UniValue dxTakeOrder(const JSONRPCRequest& request)
                                "The from_address and to_address cannot be the same: " + fromAddress));
     }
 
+    double amount{0};
+    if (request.params.size() >= 4) {
+        const auto amountStr = request.params[3].get_str();
+        if (!amountStr.empty()) {
+            amount = boost::lexical_cast<double>(amountStr);
+            if (amount <= 0) {
+                return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                        "The amount cannot be less than or equal to 0: " + request.params[3].get_str()));
+            }
+        }
+    }
+
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
-    if (params.size() == 4) {
-        std::string dryrunParam = params[3].get_str();
+    if (request.params.size() == 5) {
+        std::string dryrunParam = request.params[4].get_str();
         if (dryrunParam != "dryrun") {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
@@ -823,8 +1114,37 @@ UniValue dxTakeOrder(const JSONRPCRequest& request)
     }
 
     Object result;
-    xbridge::TransactionDescrPtr txDescr;
-    auto statusCode = app.checkAcceptParams(id, txDescr, fromAddress);
+    xbridge::Error statusCode;
+    xbridge::TransactionDescrPtr txDescr = app.transaction(id);
+    if (!txDescr) {
+        WARN() << "transaction not found " << __FUNCTION__;
+        return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__));
+    }
+
+    uint64_t fromSize = txDescr->toAmount;
+    uint64_t toSize = txDescr->fromAmount;
+
+    // If no amount is specified on a partial order by default use the full
+    // order sizes (will result in the entire partial order being taken).
+    if (txDescr->isPartialOrderAllowed() && xbridge::xBridgeAmountFromReal(amount) > 0) {
+        if (xbridge::xBridgeAmountFromReal(amount) < txDescr->minFromAmount) {
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "The minimum amount for this order is: " +
+                        xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
+        } else if (xbridge::xBridgeAmountFromReal(amount) > txDescr->fromAmount) {
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "The maximum amount for this order is: " +
+                        xbridge::xBridgeStringValueFromAmount(txDescr->fromAmount)));
+        }
+        if (xbridge::xBridgeAmountFromReal(amount) < toSize) {
+            fromSize = xbridge::xBridgeAmountFromReal(amount) * xbridge::price(txDescr);
+            toSize = xbridge::xBridgeAmountFromReal(amount);
+        }
+    } else if (amount > 0) {
+        WARN() << "partial orders are not allowed for this order " << __FUNCTION__;
+        return uret(xbridge::makeError(xbridge::INVALID_PARTIAL_ORDER, __FUNCTION__));
+    }
+
+    // Check taker sending coin balance (toCurrency here because the swap frame of reference hasn't occurred yet)
+    statusCode = app.checkAcceptParams(txDescr->toCurrency, fromSize);
 
     switch (statusCode)
     {
@@ -835,7 +1155,7 @@ UniValue dxTakeOrder(const JSONRPCRequest& request)
         // taker [to] will match order [from] currency (due to pair swap happening later)
         xbridge::WalletConnectorPtr connTo = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
         // taker [from] will match order [to] currency (due to pair swap happening later)
-        xbridge::WalletConnectorPtr connFrom   = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
+        xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
         if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->toCurrency));
         if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->fromCurrency));
         // Check for valid toAddress
@@ -847,19 +1167,17 @@ UniValue dxTakeOrder(const JSONRPCRequest& request)
             return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
                                    ": " + txDescr->toCurrency + " address is bad. Are you using the correct address?"));
 
-        if(dryrun)
-        {
+        if (dryrun) {
             result.emplace_back(Pair("id", uint256().GetHex()));
-
             result.emplace_back(Pair("maker", txDescr->fromCurrency));
-            result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(txDescr->fromAmount)));
-
+            result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(fromSize)));
             result.emplace_back(Pair("taker", txDescr->toCurrency));
-            result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->toAmount)));
-
+            result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(toSize)));
             result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
             result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
-
+            result.emplace_back(Pair("order_type", txDescr->orderType()));
+            result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
+            result.emplace_back(Pair("partial_repost", txDescr->repostOrder));
             result.emplace_back(Pair("status", "filled"));
             return uret(result);
         }
@@ -883,34 +1201,32 @@ UniValue dxTakeOrder(const JSONRPCRequest& request)
 
     default:
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
-
     }
 
     // TODO swap is destructive on state (also complicates historical data)
     std::swap(txDescr->fromCurrency, txDescr->toCurrency);
     std::swap(txDescr->fromAmount, txDescr->toAmount);
 
-    statusCode = app.acceptXBridgeTransaction(id, fromAddress, toAddress);
+    statusCode = app.acceptXBridgeTransaction(id, fromAddress, toAddress, fromSize, toSize);
     if (statusCode == xbridge::SUCCESS) {
-
         result.emplace_back(Pair("id", id.GetHex()));
-
         result.emplace_back(Pair("maker", txDescr->fromCurrency));
-        result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(txDescr->fromAmount)));
-
+        result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(fromSize)));
         result.emplace_back(Pair("taker", txDescr->toCurrency));
-        result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->toAmount)));
-
+        result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(toSize)));
         result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
         result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
-
+        result.emplace_back(Pair("order_type", txDescr->orderType()));
+        result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
+        result.emplace_back(Pair("partial_repost", txDescr->repostOrder));
         result.emplace_back(Pair("status", txDescr->strState()));
         return uret(result);
-
     } else {
         // restore state on error
-        std::swap(txDescr->fromCurrency, txDescr->toCurrency);
-        std::swap(txDescr->fromAmount, txDescr->toAmount);
+        txDescr->fromCurrency = txDescr->origFromCurrency;
+        txDescr->fromAmount = txDescr->origFromAmount;
+        txDescr->toCurrency = txDescr->origToCurrency;
+        txDescr->toAmount = txDescr->origToAmount;
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
 }
@@ -920,13 +1236,43 @@ UniValue dxCancelOrder(const JSONRPCRequest& request)
     if(request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxCancelOrder",
-                "\nThis call is used to cancel one of your own orders. This automatically\n"
+                "\nThis call is used to cancel one of your own orders. This automatically "
                 "rolls back the order if a trade is in process.\n",
                 {
                     {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The ID of the order to cancel."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+        "id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+        "maker": "SYS",
+        "maker_size": "0.100",
+        "maker_address": "SVTbaYZ8oApVn3uNyimst3GKyvvfzXQgdK",
+        "taker": "LTC",
+        "taker_size": "0.01",
+        "taker_address": "LVvFhzRoMRGTtGihHp7jVew3YoZRX8y35Z",
+        "updated_at": "1970-01-01T00:00:00.00000Z",
+        "created_at": "2018-01-15T18:15:30.12345Z",
+        "status": "canceled"
+    }
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    id              | str  | The order ID.
+    maker           | str  | Sending asset of party cancelling the order.
+    maker_size      | str  | Sending trading size. String is used to preserve
+                    |      | precision.
+    maker_address   | str  | Address for sending the outgoing asset.
+    taker           | str  | Receiving asset of party cancelling the order.
+    taker_size      | str  | Receiving trading size. String is used to preserve
+                    |      | precision.
+    taker_address   | str  | Address for receiving the incoming asset.
+    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
+                    |      | time the order was updated.
+    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
+                    |      | order was created.
+    status          | str  | The order status (canceled).
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxCancelOrder", "524137449d9a35fa707ee395abab32bedae91aa2aefb6e3611fcd8574863e432")
@@ -997,13 +1343,43 @@ UniValue dxFlushCancelledOrders(const JSONRPCRequest& request)
     if(request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxFlushCancelledOrders",
-                "\n(ageMillis)\n"
-                "This call flushes your cancelled orders that are older than [ageMillis].\n",
+                "\nThis call is used to remove your cancelled orders that are older than the specified amount of time.\n",
                 {
                     {"ageMillis", RPCArg::Type::NUM, "0", "Remove cancelled orders older than this amount of milliseconds."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    {
+        "ageMillis": 0,
+        "now": "20191126T024005.352285",
+        "durationMicrosec": 0,
+        "flushedOrders": [
+            {
+                "id": "582a02ada05c8a4bb39b34de0eb54767bcb95a7792e5865d3a0babece4715f47",
+                "txtime": "20191126T023945.855058",
+                "use_count": 1
+            },
+            {
+                "id": "a508cd8d110bdc0b1fd819a89d94cdbf702e3aa40edbe654af5d556ff3c43a0a",
+                "txtime": "20191126T023956.270409",
+                "use_count": 1
+            }
+        ]
+    }
+
+    Key               | Type | Description
+    ------------------|------|---------------------------------------------------
+    ageMillis         | int  | Millisecond value specified when making the call.
+    now               | str  | ISO 8601 datetime, with microseconds, of when the
+                      |      | call was executed.
+    durationMicrosec* | int  | The amount of time in milliseconds it took to
+                      |      | process the call.
+    flushedOrders     | arr  | Array of cancelled orders that were removed.
+    id                | str  | The order ID.
+    txtime            | str  | ISO 8601 datetime, with microseconds, of when the
+                      |      | order was created.
+    use_count*        | int  | This value is strictly for debugging purposes.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxFlushCancelledOrders", "")
@@ -1060,7 +1436,11 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
                 "\nDetail 1 - Returns the best bid and ask.\n"
                 "Detail 2 - Returns a list of aggregated orders. This is useful for charting.\n"
                 "Detail 3 - Returns a list of non-aggregated orders. This is useful for bot trading.\n"
-                "Detail 4 - Returns the best bid and ask with the order IDs.\n",
+                "Detail 4 - Returns the best bid and ask with the order IDs.\n"
+                "\nNote:\n"
+                "This call will only return orders for markets with both assets supported by your "
+                "node (view with dxGetLocalTokens). To view all orders, set ShowAllOrders=true in "
+                "your xbridge.conf header and reload it with dxLoadXBridgeConf.\n",
                 {
                     {"detail", RPCArg::Type::NUM, RPCArg::Optional::NO, "The detail level."},
                     {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the token being sold by the maker (e.g. LTC)."},
@@ -1549,11 +1929,68 @@ UniValue dxGetMyOrders(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetMyOrders",
-                "\nReturns a list of all of your orders (of all states).\n"
+                "\nReturns a list of all of your orders (of all states). "
                 "It will only return orders from your current session.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    [
+        {
+            "id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "maker": "SYS",
+            "maker_size": "100.000000",
+            "taker": "LTC",
+            "taker_size": "10.500000",
+            "updated_at": "2018-01-15T18:25:05.12345Z",
+            "created_at": "2018-01-15T18:15:30.12345Z",
+            "order_type": "partial",
+            "partial_minimum": "10.000000",
+            "partial_repost": true,
+            "status": "open"
+        },
+        {
+            "id": "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
+            "maker": "SYS",
+            "maker_size": "4.000000",
+            "taker": "LTC",
+            "taker_size": "0.400000",
+            "updated_at": "2018-01-15T18:25:05.12345Z",
+            "created_at": "2018-01-15T18:15:30.12345Z",
+            "order_type": "partial",
+            "partial_minimum": "0.400000",
+            "partial_repost": false,
+            "status": "open"
+        }
+    ]
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    Array           | arr  | An array of all orders with each order having the
+                    |      | following parameters.
+    id              | str  | The order ID.
+    maker           | str  | Maker trading asset; the ticker of the asset being
+                    |      | sold by the maker.
+    maker_size      | str  | Maker trading size. String is used to preserve
+                    |      | precision.
+    maker_address   | str  | Address for sending the outgoing asset.
+    taker           | str  | Taker trading asset; the ticker of the asset being
+                    |      | sold by the taker.
+    taker_size      | str  | Taker trading size. String is used to preserve
+                    |      | precision.
+    taker_address   | str  | Address for receiving the incoming asset.
+    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
+                    |      | time the order was updated.
+    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
+                    |      | order was created.
+    order_type      | str  | The order type.
+    partial_minimum | str  | The minimum amount that can be taken. This applies
+                    |      | to `partial` order types and will show `0` on
+                    |      | `exact` order types.
+    partial_repost  | str  | Whether the order will be reposted or not. This
+                    |      | applies to `partial` order types and will show
+                    |      | `false` for `exact` order types.
+    status          | str  | The order status.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetMyOrders", "")
@@ -1643,6 +2080,10 @@ UniValue dxGetMyOrders(const JSONRPCRequest& request)
         // dates
         o.emplace_back(Pair("updated_at", xbridge::iso8601(t->txtime)));
         o.emplace_back(Pair("created_at", xbridge::iso8601(t->created)));
+        // partial order details
+        o.emplace_back(Pair("order_type", t->orderType()));
+        o.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(t->minFromAmount)));
+        o.emplace_back(Pair("partial_repost", t->repostOrder));
         o.emplace_back(Pair("status", t->strState()));
 
         r.emplace_back(o);
@@ -1656,13 +2097,28 @@ UniValue dxGetTokenBalances(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetTokenBalances",
-                "\nReturns a list of available balances for all connected wallets on your\n"
-                "node. These balances do not include orders that are using locked UTXOs to\n"
-                "support a pending or open order. XBridge works best with pre-sliced UTXOs so\n"
-                "that your entire wallet balance is capable of multiple simultaneous trades.\n",
+                "\nReturns a list of available balances for all connected wallets on your "
+                "node (view with dxGetLocalTokens).\n"
+                "\nNote:\n"
+                "These balances do not include Segwit UTXOs or those being used in open or in process orders. "
+                "XBridge works best with pre-sliced UTXOs so that your entire wallet balance is capable of "
+                "multiple simultaneous trades. Use dxSplitInputs or dxSplitAddress to generate trading inputs.\n",
                 {},
                 RPCResult{
-                "\n"
+                R"(
+    {
+        "BLOCK": "250.83492174",
+        "LTC": "0.568942",
+        "MONA": "3.452",
+        "SYS": "1050.128493"
+    }
+
+    Key          | Type | Description
+    -------------|------|--------------------------------------------------------
+    Object       | obj  | Key-value object of the assets and respective balances.
+    -- key       | str  | The asset symbol.
+    -- value     | str  | The available wallet balance amount.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetTokenBalances", "")
@@ -1706,12 +2162,32 @@ UniValue dxGetLockedUtxos(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"dxGetLockedUtxos",
-                "\nReturns a list of locked UTXOs used in orders.\n",
+                "\nReturns a list of locked UTXOs used in orders. You can only use "
+                "this call if you have a Service Node setup.\n",
                 {
                     {"id", RPCArg::Type::STR_HEX, RPCArg::Optional::OMITTED, "The order ID. If omitted, a list of UTXOs used in all orders will be returned."},
                 },
                 RPCResult{
-                "\n"
+                R"(
+    [
+        {
+            "id" : "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "LTC" : [
+                6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a,
+                6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a,
+                6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a
+            ]
+        }
+    ]
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    id              | str  | The order ID.
+    Object          | obj  | Key-value object of the asset and UTXOs for the
+                    |      | forementioned order.
+    -- key          | str  | The asset symbol.
+    -- value        | arr  | The UTXOs locked for the given order ID.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("dxGetLockedUtxos", "")
@@ -1797,8 +2273,8 @@ UniValue gettradingdata(const JSONRPCRequest& request)
     if (request.fHelp || request.params.size() > 2)
         throw std::runtime_error(
             RPCHelpMan{"gettradingdata",
-                "\nReturns an object of XBridge trading records. This information is\n"
-                "pulled from on-chain history so pulling a large amount of blocks will\n"
+                "\nReturns an object of XBridge trading records. This information is "
+                "pulled from on-chain history so pulling a large amount of blocks will "
                 "result in longer response times.\n",
                 {
                     {"blocks", RPCArg::Type::NUM, "43200", "The number of blocks to return trade records for (60s block time)."},
@@ -1902,7 +2378,7 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
                 "result in longer response times.\n",
                 {
                     {"blocks", RPCArg::Type::NUM, "43200", "The number of blocks to return trade records for (60s block time)."},
-                    {"errors", RPCArg::Type::BOOL, "false", "show errors"},
+                    {"errors", RPCArg::Type::BOOL, "false", "Shows an error if an error is detected."},
                 },
                 RPCResult{
                 R"(
@@ -1926,29 +2402,22 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
         "taker_size": 0.001577,
         "maker": "SYS",
         "maker_size": 0.001420
-      },
-      {
-        "timestamp": 1559970139,
-        "fee_txid": "9cc4a0dae46f2f1849b3ab6f93ea1c59aeaf0e95662d90398814113f12127eae",
-        "nodepubkey": "BbrQKtutGBLuWHvq26EmHKuNaztnfBFWVB",
-        "id": "f74c614489bd77efe545c239d1f9a57363c5428e7401b2018d350",
-        "taker": "BLOCK",
-        "taker_size": 0.000231,
-        "maker": "SYS",
-        "maker_size": 0.001100
       }
     ]
 
-    Key          | Type | Description
-    -------------|------|----------------------------------------------------------------
-    timestamp    | int  | Unix epoch timestamp of when the trade took place.
-    fee_txid     | str  | The Blocknet trade fee transaction ID.
-    nodepubkey   | str  | The pubkey of the service node that received the trade fee.
-    id           | str  | The order ID.
-    taker        | str  | Taker trading asset; the ticker of the asset being sold by the taker.
-    taker_size   | int  | Taker trading size.
-    maker        | str  | Maker trading asset; the ticker of the asset being sold by the maker.
-    maker_size   | int  | Maker trading size.
+    Key         | Type | Description
+    ------------|------|---------------------------------------------------------
+    timestamp   | int  | Unix epoch timestamp of when the trade took place.
+    fee_txid    | str  | The Blocknet trade fee transaction ID.
+    nodepubkey  | str  | The pubkey of the service node that received the trade
+                |      | fee.
+    id          | str  | The order ID.
+    taker       | str  | Taker trading asset; the ticker of the asset being sold
+                |      | by the taker.
+    taker_size  | int  | Taker trading size.
+    maker       | str  | Maker trading asset; the ticker of the asset being sold
+                |      | by the maker.
+    maker_size  | int  | Maker trading size.
                 )"
                 },
                 RPCExamples{
@@ -2027,6 +2496,561 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
     return uret(records);
 }
 
+UniValue dxMakePartialOrder(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 6)
+        throw std::runtime_error(
+            RPCHelpMan{"dxMakePartialOrder",
+                "\nCreate a new partial order. Partial orders don't require the entire order to be filled. "
+                "For exact orders, see dxMakeOrder.\n"
+                "You can only create orders for markets with assets supported by your node (view with dxGetLocalTokens) "
+                "and the network (view with dxGetNetworkTokens). There are no fees to make orders. \n"
+                "\nWhen a partial order is created, multiple inputs will be selected or "
+                "generated. Using multiple inputs is optimal for allowing partial orders of "
+                "varying sizes while minimizing the amount of change (change not reposted). "
+                "This maximizes the amount remaining that can be immediately reposted.\n"
+                "\nThe way input selection/generation is done depends on your total "
+                "`maker_size` and `minimum_size`. XBridge will first attempt to find "
+                "existing inputs that are properly sized for the order. If needed, existing "
+                "inputs will automatically be split into the proper size at the time the "
+                "order is posted. While the inputs are being generated, the order will "
+                "remain in the `new` state. Once the generated inputs have 1 confirmation "
+                "the order will proceed to the `open` state.\n"
+                "\nNote:\n"
+                "XBridge will first attempt to use funds from the specified maker address. "
+                "If this address does not have sufficient funds to cover the order, then "
+                "it will pull funds from other addresses in the wallet. Change is "
+                "deposited to the address with the largest input used.\n",
+                {
+                    {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being sold by the maker (e.g. LTC)."},
+                    {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker asset being sent."},
+                    {"maker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The maker address containing asset being sent."},
+                    {"taker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being bought by the maker (e.g. BLOCK)."},
+                    {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker asset to be received."},
+                    {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
+                    {"minimum_size", RPCArg::Type::STR, RPCArg::Optional::NO, "Minimum maker_size that can be traded in the partial order."},
+                    {"repost", RPCArg::Type::STR, "true", "Repost partial order remainder after taken. Options: true/false"},
+                    {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
+                },
+                RPCResult{
+                R"(
+    {
+        "id": "4306a107113c4562afa6273ecd9a3990ead53a0227f74ddd9122272e453ae07d",
+        "maker": "SYS",
+        "maker_size": "1.000000",
+        "maker_address": "SVTbaYZ8olpVn3uNyImst3GKyrvfzXQgdK",
+        "taker": "LTC",
+        "taker_size": "0.100000",
+        "taker_address": "LVvFhZroMRGTtg1hHp7jVew3YoZRX8y35Z",
+        "updated_at": "2018-01-16T00:00:00.00000Z",
+        "created_at": "2018-01-15T18:15:30.12345Z",
+        "block_id": "38729344720548447445023782734923740427863289632489723984723",
+        "order_type": "partial",
+        "partial_minimum": "0.200000",
+        "partial_repost": true,
+        "status": "created"
+    }
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    id              | str  | The order ID. Reposted partial orders are given a
+                    |      | new order ID.
+    maker           | str  | Maker trading asset; the ticker of the asset being
+                    |      | sold by the maker.
+    maker_size      | str  | Maker trading size. String is used to preserve
+                    |      | precision.
+    maker_address   | str  | Maker address for sending the outgoing asset.
+    taker           | str  | Taker trading asset; the ticker of the asset being
+                    |      | sold by the taker.
+    taker_size      | str  | Taker trading size. String is used to preserve
+                    |      | precision.
+    taker_address   | str  | Maker address for receiving the incoming asset.
+    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
+                    |      | time the order was updated.
+    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
+                    |      | order was created.
+    block_id        | str  | The hash of the current block on the Blocknet
+                    |      | blockchain at the time the order was created.
+    order_type      | str  | The order type.
+    partial_minimum | str  | The minimum amount that can be taken. This applies
+                    |      | to `partial` order types and will show `0` on
+                    |      | `exact` order types.
+    partial_repost  | str  | Whether the order will be reposted or not. This only
+                    |      | applies to `partial` order types and will always
+                    |      | show `false` if you are not the maker.
+    status          | str  | The order status.
+                )"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 100")
+                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\"")
+                  + HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 100 true dryrun")
+                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\", \"true\", \"dryrun\"")
+                },
+            }.ToString());
+
+    if (!xbridge::xBridgeValidCoin(request.params[1].get_str())) {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "The maker_size is too precise. The maximum precision supported is " +
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return uret(error);
+    }
+
+    if (!xbridge::xBridgeValidCoin(request.params[4].get_str())) {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "The taker_size is too precise. The maximum precision supported is " +
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return uret(error);
+    }
+
+    std::string fromCurrency    = request.params[0].get_str();
+    double      fromAmount      = boost::lexical_cast<double>(request.params[1].get_str());
+    std::string fromAddress     = request.params[2].get_str();
+
+    std::string toCurrency      = request.params[3].get_str();
+    double      toAmount        = boost::lexical_cast<double>(request.params[4].get_str());
+    std::string toAddress       = request.params[5].get_str();
+    double      partialMinimum  = boost::lexical_cast<double>(request.params[6].get_str());
+
+    // Check that addresses are not the same
+    if (fromAddress == toAddress) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The maker_address and taker_address cannot be the same: " + fromAddress));
+    }
+
+    // Check upper limits
+    if (fromAmount > (double)xbridge::TransactionDescr::MAX_COIN ||
+            toAmount > (double)xbridge::TransactionDescr::MAX_COIN) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN)));
+    }
+    // Check lower limits
+    if (fromAmount <= 0 || toAmount <= 0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The minimum supported size is " + xbridge::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN)));
+    }
+
+    // Validate addresses
+    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
+    if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
+    if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
+
+    xbridge::App &app = xbridge::App::instance();
+
+    if (!app.isValidAddress(fromAddress, connFrom)) {
+        return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress));
+    }
+    if (!app.isValidAddress(toAddress, connTo)) {
+        return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress));
+    }
+    if(fromAmount <= .0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The maker_size must be greater than 0."));
+    }
+    if(toAmount <= .0) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The taker_size must be greater than 0."));
+    }
+    if (connFrom->isDustAmount(partialMinimum)) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The partial minimum_size is dust, i.e. it's too small."));
+    }
+
+    bool repost{true};
+    if (request.params.size() >= 8)
+        repost = !(request.params[7].get_str() == "false");
+
+    // Perform explicit check on dryrun to avoid executing order on bad spelling
+    bool dryrun = false;
+    if (request.params.size() == 9) {
+        std::string dryrunParam = request.params[8].get_str();
+        if (dryrunParam != "dryrun") {
+            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
+        }
+        dryrun = true;
+    }
+
+
+    Object result;
+    auto statusCode = app.checkCreateParams(fromCurrency, toCurrency,
+                                       xbridge::xBridgeAmountFromReal(fromAmount), fromAddress);
+    switch (statusCode) {
+    case xbridge::SUCCESS:{
+        // If dryrun
+        if (dryrun) {
+            result.emplace_back(Pair("id", uint256().GetHex()));
+            result.emplace_back(Pair("maker", fromCurrency));
+            result.emplace_back(Pair("maker_size",
+                                     xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(fromAmount))));
+            result.emplace_back(Pair("maker_address", fromAddress));
+            result.emplace_back(Pair("taker", toCurrency));
+            result.emplace_back(Pair("taker_size",
+                                     xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
+            result.emplace_back(Pair("taker_address", toAddress));
+            result.emplace_back(Pair("order_type", "partial"));
+            result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(partialMinimum))));
+            result.emplace_back(Pair("partial_repost",  repost));
+            result.emplace_back(Pair("status", "created"));
+            return uret(result);
+        }
+        break;
+    }
+
+    case xbridge::INVALID_CURRENCY: {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
+    }
+    case xbridge::NO_SESSION:{
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
+    }
+    case xbridge::INSIFFICIENT_FUNDS:{
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
+    }
+    case xbridge::NO_SERVICE_NODE:{
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency + "/" + toCurrency));
+    }
+
+    default:
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+    }
+
+    uint256 id = uint256();
+    uint256 blockHash = uint256();
+    statusCode = xbridge::App::instance().sendXBridgeTransaction(fromAddress, fromCurrency,
+            xbridge::xBridgeAmountFromReal(fromAmount), toAddress, toCurrency,
+            xbridge::xBridgeAmountFromReal(toAmount), std::vector<xbridge::wallet::UtxoEntry>{},
+            true, repost, xbridge::xBridgeAmountFromReal(partialMinimum), id, blockHash);
+
+    if (statusCode == xbridge::SUCCESS) {
+        Object obj;
+        obj.emplace_back(Pair("id",               id.GetHex()));
+        obj.emplace_back(Pair("maker_address",    fromAddress));
+        obj.emplace_back(Pair("maker",            fromCurrency));
+        obj.emplace_back(Pair("maker_size",       xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(fromAmount))));
+        obj.emplace_back(Pair("taker_address",    toAddress));
+        obj.emplace_back(Pair("taker",            toCurrency));
+        obj.emplace_back(Pair("taker_size",       xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
+        const auto &createdTime = xbridge::App::instance().transaction(id)->created;
+        obj.emplace_back(Pair("created_at",       xbridge::iso8601(createdTime)));
+        obj.emplace_back(Pair("updated_at",       xbridge::iso8601(boost::posix_time::microsec_clock::universal_time()))); // TODO Need actual updated time, this is just estimate
+        obj.emplace_back(Pair("block_id",         blockHash.GetHex()));
+        obj.emplace_back(Pair("order_type",       "partial"));
+        obj.emplace_back(Pair("partial_minimum",  xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(partialMinimum))));
+        obj.emplace_back(Pair("partial_repost",   repost));
+        obj.emplace_back(Pair("status",           "created"));
+        return uret(obj);
+
+    } else {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+    }
+}
+
+UniValue dxSplitAddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 6)
+        throw std::runtime_error(
+            RPCHelpMan{"dxSplitAddress",
+                "\nSplits unused coin in the given address into the specified size. Left over amounts "
+                "end up in change. UTXOs being used in existing orders will not be included by the "
+                "splitter (view with dxGetUtxos). You can only split UTXOs for assets supported by "
+                "your node (view with dxGetLocalTokens).\n",
+                {
+                   {"token", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker of the asset you want to split UTXOs for."},
+                   {"split_amount", RPCArg::Type::STR, RPCArg::Optional::NO, "The desired UTXO output size."},
+                   {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address to split UTXOs in. Only coin in this address will be split."},
+                   {"include_fees", RPCArg::Type::BOOL, "true", "Include the trade P2SH deposit fees in the split UTXO (add deposit fee to `spit_amount` value."},
+                   {"show_rawtx", RPCArg::Type::BOOL, "false", "Include the raw transaction in the response (rawtx can be submitted manually)."},
+                   {"submit", RPCArg::Type::BOOL, "true", "Submit the raw transaction to the network."},
+                },
+                RPCResult{
+                R"(
+    {
+        "token": "BLOCK",
+        "include_fees": true,
+        "split_amount_requested": "4.0",
+        "split_amount_with_fees": "4.00040000",
+        "split_utxo_count": 6,
+        "split_total": "24.44852981",
+        "txid": "7f87cba104b3c19f6e25fbc82b3cde5d73714e01d6a54943d3c8fb07ce315db4",
+        "rawtx": ""
+    }
+
+    Key                    | Type | Description
+    -----------------------|------|----------------------------------------------
+    token                  | str  | Asset you are splitting UTXOs for.
+    include_fees           | bool | Whether you requested to include the fees.
+    split_amount_requested | str  | Requested split amount.
+    split_amount_with_fees | str  | Requested split amount with fees included.
+    split_utxo_count       | int  | Amount of resulting split UTXOs.
+    split_total            | str  | Total amount of in the address prior to
+                           |      | splitting.
+    txid                   | str  | Hex string of the splitting transaction.
+    rawtx                  | str  | Hex string of the raw splitting transaction.
+                )"
+                },
+                RPCExamples{
+                   HelpExampleCli("dxSplitAddress", "BLOCK 10.5 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR")
+                   + HelpExampleRpc("dxSplitAddress", "\"BLOCK\", \"10.5\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\"")
+                   + HelpExampleCli("dxSplitAddress", "BLOCK 10.5 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR true false true")
+                   + HelpExampleRpc("dxSplitAddress", "\"BLOCK\", \"10.5\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", true, false, true")
+                },
+            }.ToString());
+
+    auto token = request.params[0].get_str();
+    auto splitAmount = request.params[1].get_str();
+    auto address = request.params[2].get_str();
+    bool includeFees{true};
+    bool showRawTx{false};
+    bool submitTx{true};
+    if (!request.params[3].isNull())
+        includeFees = request.params[3].get_bool();
+    if (!request.params[4].isNull())
+        showRawTx = request.params[4].get_bool();
+    if (!request.params[5].isNull())
+        submitTx = request.params[5].get_bool();
+
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+
+    auto utxos = xapp.getAllLockedUtxos(token);
+    const auto sa = boost::lexical_cast<double>(splitAmount);
+    std::string txid, rawtx, failReason;
+    double totalSplit{0};
+    double splitInclFees{0};
+    int splitCount{0};
+    if (!conn->splitUtxos(sa, address, includeFees, utxos, std::set<COutPoint>{}, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
+
+    int errorcode{0};
+    std::string txid2, errmsg;
+    if (submitTx && !conn->sendRawTransaction(rawtx, txid2, errorcode, errmsg))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, errmsg));
+
+    UniValue r(UniValue::VOBJ);
+    r.pushKV("token", token);
+    r.pushKV("include_fees", includeFees);
+    r.pushKV("split_amount_requested", splitAmount);
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_utxo_count", splitCount);
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("txid", txid);
+    r.pushKV("rawtx", showRawTx ? rawtx : "");
+    return r;
+}
+
+
+UniValue dxSplitInputs(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 7)
+        throw std::runtime_error(
+            RPCHelpMan{"dxSplitInputs",
+                "\nSplits specified UTXOs into the given size and address. Left over amounts "
+                "end up in change. UTXOs being used in existing orders will not be included "
+                "by the splitter (view with dxGetUtxos). You can only split UTXOs for assets "
+                "supported by your node (view with dxGetLocalTokens).\n",
+                {
+                   {"token", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker of the asset you want to split UTXOs for."},
+                   {"split_amount", RPCArg::Type::STR, RPCArg::Optional::NO, "The desired UTXO output size."},
+                   {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address split UTXOs and change will be sent to."},
+                   {"include_fees", RPCArg::Type::BOOL, RPCArg::Optional::NO, "Include the trade P2SH deposit fees in the split UTXO (add deposit fee to `spit_amount` value."},
+                   {"show_rawtx", RPCArg::Type::BOOL, RPCArg::Optional::NO, "Include the raw transaction in the response (can be submitted manually)."},
+                   {"submit", RPCArg::Type::BOOL, RPCArg::Optional::NO, "Submit the raw transaction to the network."},
+                   {"utxos", RPCArg::Type::ARR, RPCArg::Optional::NO, "List of UTXO inputs.",
+                    {
+                        {"", RPCArg::Type::OBJ, RPCArg::Optional::OMITTED, "",
+                         {
+                             {"txid", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The UTXO transaction ID."},
+                             {"vout", RPCArg::Type::NUM, RPCArg::Optional::NO, "The UTXO output index."},
+                         },
+                        },
+                    }}
+                },
+                RPCResult{
+                R"(
+    {
+        "token": "BLOCK",
+        "include_fees": true,
+        "split_amount_requested": "4.0",
+        "split_amount_with_fees": "4.00040000",
+        "split_utxo_count": 6,
+        "split_total": "24.44852981",
+        "txid": "7f87cba104b2c19f6e25fbc82b3cde5d73714e01d6a54943d3c8fb07ce315db4",
+        "rawtx": ""
+    }
+
+    Key                    | Type | Description
+    -----------------------|------|----------------------------------------------
+    token                  | str  | The asset you are splitting UTXOs for.
+    include_fees           | bool | Whether you requested to include the fees.
+    split_amount_requested | str  | The requested split amount.
+    split_amount_with_fees | str  | The requested split amount with fee included.
+    split_utxo_count       | int  | The amount of resulting split UTXOs.
+    split_total            | str  | The total amount of in the address prior to
+                           |      | splitting.
+    txid                   | str  | The hex string of the splitting transaction.
+    rawtx                  | str  | The hex string of the raw splitting
+                           |      | transaction.
+                )"
+                },
+                RPCExamples{
+                     HelpExampleCli("dxSplitInputs", "BLOCK 10.5 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR true false true [{\"txid\":\"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc\",\"vout\":0},{\"txid\":\"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc\",\"vout\":1}]")
+                   + HelpExampleRpc("dxSplitInputs", "\"BLOCK\", \"10.5\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", true, false, true, [{\"txid\":\"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc\",\"vout\":0},{\"txid\":\"ed7d16abd5c0bf42dec36335d0f63938f1d9c10e7202bc780b888a51d291d3dc\",\"vout\":1}]")
+                },
+            }.ToString());
+
+    auto token = request.params[0].get_str();
+    auto splitAmount = request.params[1].get_str();
+    auto address = request.params[2].get_str();
+    bool includeFees = request.params[3].get_bool();
+    bool showRawTx = request.params[4].get_bool();
+    bool submitTx = request.params[5].get_bool();
+    const auto paramUtxos = request.params[6].get_array();
+    if (paramUtxos.empty())
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "No utxos were specified"));
+
+    std::set<COutPoint> userUtxos;
+    for (const auto & val : paramUtxos.getValues()) {
+        std::map<std::string, UniValue> utxo;
+        val.getObjMap(utxo);
+        userUtxos.insert(COutPoint{uint256S(utxo["txid"].get_str()), (uint32_t)utxo["vout"].get_int()});
+    }
+
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+
+    auto excludedUtxos = xapp.getAllLockedUtxos(token);
+    for (const auto & utxo : excludedUtxos) {
+        COutPoint vout{uint256S(utxo.txId), utxo.vout};
+        if (userUtxos.count(vout))
+            return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "Cannot split utxo already in use: " + vout.ToString()));
+    }
+
+    const auto sa = boost::lexical_cast<double>(splitAmount);
+    std::string txid, rawtx, failReason;
+    double totalSplit{0};
+    double splitInclFees{0};
+    int splitCount{0};
+    if (!conn->splitUtxos(sa, address, includeFees, excludedUtxos, userUtxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
+
+    int errorcode{0};
+    std::string txid2, errmsg;
+    if (submitTx && !conn->sendRawTransaction(rawtx, txid2, errorcode, errmsg))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, errmsg));
+
+    UniValue r(UniValue::VOBJ);
+    r.pushKV("token", token);
+    r.pushKV("include_fees", includeFees);
+    r.pushKV("split_amount_requested", splitAmount);
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_utxo_count", splitCount);
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("txid", txid);
+    r.pushKV("rawtx", showRawTx ? rawtx : "");
+    return r;
+}
+
+UniValue dxGetUtxos(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 1 || request.params.size() > 2)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetUtxos",
+                "\nReturns all compatible and unlocked UTXOs for the specified asset. "
+                "Currently only P2PKH UTXOs are supported (Segwit UTXOs not supported). "
+                "You can only view UTXOs for assets supported by your node (view with dxGetLocalTokens).\n",
+                {
+                   {"token", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker of the asset you want to view UTXOs for."},
+                   {"include_used", RPCArg::Type::BOOL, "false", "Include UTXOs used in existing orders."},
+                },
+                RPCResult{
+                R"(
+    [
+        {
+            "txid": "c019edf2a71efcfc9b1ec50cd0d9db54c55b74acd0bcc81cefd6ffbba359a210",
+            "vout": 2,
+            "amount": "3.26211780",
+            "address": "BrPHj12ZSm7roD2gvrjRG2gD4TzeP1YDXG",
+            "scriptPubKey": "7b1ef56a92cec50cd0d147876a914ffd6fcbb4c5724a4057de",
+            "confirmations": 11904,
+            "orderid": ""
+        },
+        {
+            "txid": "a91c224c0725745cd0bcc81cefd6ffbba3f6cc36956cd566c50cd0d9db5c55b7",
+            "vout": 0,
+            "amount": "2.44485198",
+            "address": "BJYS5dd4Mx5bFxfYDX136SLrv5kGCZaUtF",
+            "scriptPubKey": "7e36ab914fc645b2b9fd5ce704f54bc34a59a56c9671eb355b",
+            "confirmations": 20690,
+            "orderid": "e1b0f4bf05e6c47506abf5d717c95baa1b6de79dd1758673a8cdd171ddad6578"
+        }
+    ]
+
+    Key             | Type | Description
+    ----------------|------|-----------------------------------------------------
+    txid            | str  | Transaction ID of the UTXO.
+    vout            | int  | Vout index of the UTXO.
+    amount          | str  | UTXO amount.
+    address         | str  | UTXO address.
+    scriptPubKey    | str  | UTXO address script pubkey.
+    confirmations   | int  | UTXO blockchain confirmation count.
+    orderid         | str  | The order ID if the UTXO is currently being used in
+                    |      | an order.
+                )"
+                },
+                RPCExamples{
+                     HelpExampleCli("dxGetUtxos", "BLOCK")
+                   + HelpExampleRpc("dxGetUtxos", "\"BLOCK\"")
+                   + HelpExampleCli("dxGetUtxos", "BTC")
+                   + HelpExampleRpc("dxGetUtxos", "\"BTC\"")
+                   + HelpExampleCli("dxGetUtxos", "BLOCK true")
+                   + HelpExampleRpc("dxGetUtxos", "\"BLOCK\", true")
+                },
+            }.ToString());
+
+    const auto token = request.params[0].get_str();
+    bool includeUsed{false};
+    if (!request.params[1].isNull())
+        includeUsed = request.params[1].get_bool();
+
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+
+    std::set<xbridge::wallet::UtxoEntry> excluded = xapp.getAllLockedUtxos(token);
+    std::vector<xbridge::wallet::UtxoEntry> unspent;
+    if (!conn->getUnspent(unspent, !includeUsed ? excluded : std::set<xbridge::wallet::UtxoEntry>{}))
+        return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "failed to get unspent transaction outputs"));
+
+    UniValue r(UniValue::VARR);
+    for (const auto & utxo : unspent) {
+        UniValue o(UniValue::VOBJ);
+        o.pushKV("txid", utxo.txId);
+        o.pushKV("vout", static_cast<int>(utxo.vout));
+        o.pushKV("amount", xbridge::xBridgeStringValueFromPrice(utxo.amount, conn->COIN));
+        o.pushKV("address", utxo.address);
+        o.pushKV("scriptPubKey", utxo.scriptPubKey);
+        o.pushKV("confirmations", static_cast<int>(utxo.confirmations));
+        o.pushKV("orderid", "");
+        if (excluded.count(utxo) > 0) {
+            auto orderid = xapp.orderWithUtxo(utxo);
+            o.pushKV("orderid", orderid.IsNull() ? "" : orderid.GetHex());
+        }
+        r.push_back(o);
+    }
+    return r;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category              name                       actor (function)          argNames
@@ -2039,6 +3063,7 @@ static const CRPCCommand commands[] =
     { "xbridge",            "dxGetNewTokenAddress",    &dxGetNewTokenAddress,    {} },
     { "xbridge",            "dxGetNetworkTokens",      &dxGetNetworkTokens,      {} },
     { "xbridge",            "dxMakeOrder",             &dxMakeOrder,             {} },
+    { "xbridge",            "dxMakePartialOrder",      &dxMakePartialOrder,      {} },
     { "xbridge",            "dxTakeOrder",             &dxTakeOrder,             {} },
     { "xbridge",            "dxCancelOrder",           &dxCancelOrder,           {} },
     { "xbridge",            "dxGetOrderHistory",       &dxGetOrderHistory,       {} },
@@ -2049,6 +3074,9 @@ static const CRPCCommand commands[] =
     { "xbridge",            "dxFlushCancelledOrders",  &dxFlushCancelledOrders,  {} },
     { "xbridge",            "gettradingdata",          &gettradingdata,          {} },
     { "xbridge",            "dxGetTradingData",        &dxGetTradingData,        {} },
+    { "xbridge",            "dxSplitAddress",          &dxSplitAddress,          {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit"} },
+    { "xbridge",            "dxSplitInputs",           &dxSplitInputs,           {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit", "utxos"} },
+    { "xbridge",            "dxGetUtxos",              &dxGetUtxos,              {"token", "include_used"} },
 };
 // clang-format on
 

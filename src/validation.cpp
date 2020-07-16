@@ -159,7 +159,7 @@ public:
     std::multimap<CBlockIndex*, CBlockIndex*> mapBlocksUnlinked;
     CBlockIndex *pindexBestInvalid = nullptr;
 
-    bool LoadBlockIndex(const Consensus::Params& consensus_params, CBlockTreeDB& blocktree) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
+    bool LoadBlockIndex(const Consensus::Params& consensus_params, CBlockTreeDB& blocktree, int lastBlockHeight) EXCLUSIVE_LOCKS_REQUIRED(cs_main);
 
     bool ActivateBestChain(CValidationState &state, const CChainParams& chainparams, std::shared_ptr<const CBlock> pblock);
 
@@ -3980,9 +3980,9 @@ CBlockIndex * CChainState::InsertBlockIndex(const uint256& hash)
     return pindexNew;
 }
 
-bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlockTreeDB& blocktree)
+bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlockTreeDB& blocktree, const int lastBlockHeight)
 {
-    if (!blocktree.LoadBlockIndexGuts(consensus_params, [this](const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs_main) { return this->InsertBlockIndex(hash); }))
+    if (!blocktree.LoadBlockIndexGuts(consensus_params, lastBlockHeight, [this](const uint256& hash) EXCLUSIVE_LOCKS_REQUIRED(cs_main) { return this->InsertBlockIndex(hash); }))
         return false;
 
     std::atomic<int> counter{0};
@@ -4062,9 +4062,6 @@ bool CChainState::LoadBlockIndex(const Consensus::Params& consensus_params, CBlo
 
 bool static LoadBlockIndexDB(const CChainParams& chainparams) EXCLUSIVE_LOCKS_REQUIRED(cs_main)
 {
-    if (!g_chainstate.LoadBlockIndex(chainparams.GetConsensus(), *pblocktree))
-        return false;
-
     // Load block file info
     pblocktree->ReadLastBlockFile(nLastBlockFile);
     vinfoBlockFile.resize(nLastBlockFile + 1);
@@ -4073,6 +4070,11 @@ bool static LoadBlockIndexDB(const CChainParams& chainparams) EXCLUSIVE_LOCKS_RE
         pblocktree->ReadBlockFileInfo(nFile, vinfoBlockFile[nFile]);
     }
     LogPrintf("%s: last block file info: %s\n", __func__, vinfoBlockFile[nLastBlockFile].ToString());
+
+    // Load block index
+    if (!g_chainstate.LoadBlockIndex(chainparams.GetConsensus(), *pblocktree, vinfoBlockFile[nLastBlockFile].nHeightLast))
+        return false;
+
     for (int nFile = nLastBlockFile + 1; true; nFile++) {
         CBlockFileInfo info;
         if (pblocktree->ReadBlockFileInfo(nFile, info)) {

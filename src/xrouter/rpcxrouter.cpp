@@ -69,38 +69,17 @@ static UniValue xrGetBlockCount(const JSONRPCRequest& request)
                 R"(
     {
       "reply": 611620,
-      "allreplies": [
-        {
-          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
-          "score": 35,
-          "reply": 611620
-        },
-        {
-          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
-          "score": 80,
-          "reply": 611620
-        }
-      ],
       "uuid": "34d0998e-a950-4fd8-b1d6-7571c83abb50"
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | int  | The latest block number of the specified blockchain. If using
-                 |      | a "node_count" greater than 1, this returns the most common
-                 |      | reply within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | int  | The latest block number of the specified blockchain from the
-                 |      | respective node.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
-    * This is only returned if using a "node_count" greater than 1.
+    -------------|------|--------------------------------------------------------
+    reply        | int  | The latest block number of the specified blockchain. If
+                 |      | using a "node_count" greater than 1, this returns the
+                 |      | most common reply. Use xrGetReply to view each nodes
+                 |      | individual response.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -152,38 +131,17 @@ static UniValue xrGetBlockHash(const JSONRPCRequest& request)
                 R"(
     {
       "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
-      "allreplies": [
-        {
-          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
-          "score": 0,
-          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
-        },
-        {
-          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
-          "score": 0,
-          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
-        }
-      ],
       "uuid": "3c84d025-8a03-4b64-848f-99892fe481ff"
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | int  | The latest block hash of the specified blockchain. If using a
-                 |      | "node_count" greater than 1, this returns the most common reply
-                 |      | within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | int  | The latest block hash of the specified blockchain from the
-                 |      | respective node.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
-    * This is only returned if using a "node_count" greater than 1.
+    -------------|------|--------------------------------------------------------
+    reply        | int  | The latest block hash of the specified blockchain. If
+                 |      | using a "node_count" greater than 1, this returns the
+                 |      | most common reply. Use xrGetReply to view each nodes
+                 |      | individual response.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -283,82 +241,17 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
         "previousblockhash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
         "nextblockhash": "000000006a625f06636b8bb6ac7b960a8d03705d1ace08b1a19da3fdcc99ddbd"
       },
-      "allreplies": [
-        {
-          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
-          "score": 80,
-          "reply": {
-            "hash": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
-            "confirmations": 611649,
-            "strippedsize": 215,
-            "size": 215,
-            "weight": 860,
-            "height": 1,
-            "version": 1,
-            "versionHex": "00000001",
-            "merkleroot": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
-            "tx": [
-              "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098"
-            ],
-            "time": 1231469665,
-            "mediantime": 1231469665,
-            "nonce": 2573394689,
-            "bits": "1d00ffff",
-            "difficulty": 1,
-            "chainwork": "0000000000000000000000000000000000000000000000000000000200020002",
-            "nTx": 1,
-            "previousblockhash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
-            "nextblockhash": "000000006a625f06636b8bb6ac7b960a8d03705d1ace08b1a19da3fdcc99ddbd"
-          }
-        },
-        {
-          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
-          "score": 34,
-          "reply": {
-            "hash": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
-            "confirmations": 611649,
-            "strippedsize": 215,
-            "size": 215,
-            "weight": 860,
-            "height": 1,
-            "version": 1,
-            "versionHex": "00000001",
-            "merkleroot": "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098",
-            "tx": [
-              "0e3e2357e806b6cdb1f70b54c3a3a17b6714ee1f0e68bebb44a74b1efd512098"
-            ],
-            "time": 1231469665,
-            "mediantime": 1231469665,
-            "nonce": 2573394689,
-            "bits": "1d00ffff",
-            "difficulty": 1,
-            "chainwork": "0000000000000000000000000000000000000000000000000000000200020002",
-            "nTx": 1,
-            "previousblockhash": "000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f",
-            "nextblockhash": "000000006a625f06636b8bb6ac7b960a8d03705d1ace08b1a19da3fdcc99ddbd"
-          }
-        }
-      ],
       "uuid": "24D5B4EB-8BB2-4FF6-8C82-9D52726494CF"
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | obj  | An object containing the block data for the specified block
-                 |      | hash and blockchain. If using a "node_count" greater than 1,
-                 |      | this  returns the most common reply within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | obj  | An object containing the block data for the specified block hash
-                 |      | and blockchain from the respective node.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
-    * This is only returned if using a "node_count" greater than 1.
+    -------------|------|--------------------------------------------------------
+    reply        | obj  | An object containing the block data for the specified
+                 |      | block hash and blockchain. If using a "node_count"
+                 |      | greater than 1, this returns the most common reply. Use
+                 |      | xrGetReply to view each nodes individual response.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -481,22 +374,14 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | obj  | An object containing the transaction data for the specified
-                 |      | transaction ID and blockchain. If using a "node_count" greater
-                 |      | than 1, this returns the most common reply within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | obj  | An object containing the transaction data for the specified
-                 |      | transaction ID and blockchain from the respective node.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
-    * This is only returned if using a "node_count" greater than 1.
+    -------------|------|--------------------------------------------------------
+    reply        | obj  | An object containing the transaction data for the
+                 |      | specified transaction ID and blockchain. If using a
+                 |      | "node_count" greater than 1, this returns the most
+                 |      | common reply. Use xrGetReply to view each nodes
+                 |      | individual response.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -552,7 +437,6 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
         throw std::runtime_error(
             RPCHelpMan{"xrDecodeRawTransaction",
                 "\nDecodes the specified transaction HEX and returns the transaction data in JSON format.\n",
-
                 {
                     {"blockchain", RPCArg::Type::STR, RPCArg::Optional::NO, "The blockchain, represented by the asset's ticker (BTC, LTC, SYS, etc.)."},
                     {"tx_hex", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "The raw transaction HEX to decode."},
@@ -620,22 +504,13 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | obj  | An object containing the decoded transaction data. If using a
-                 |      | "node_count" greater than 1, this returns the most common reply
-                 |      | within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | obj  | An object containing the decoded transaction data from the
-                 |      | respective node.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
-    * This is only returned if using a "node_count" greater than 1.
+    -------------|------|--------------------------------------------------------
+    reply        | obj  | An object containing the decoded transaction data. If
+                 |      | using a "node_count" greater than 1, this returns the
+                 |      | most common reply. Use xrGetReply to view each nodes
+                 |      | individual response.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -748,22 +623,14 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | arr  | An array containing objects of the block data for each requested
-                 |      | block on the specified blockchain. If using a "node_count" greater
-                 |      | than 1, this returns the most common reply within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | arr  | An array containing objects of the block data for each requested
-                 |      | block on the specified blockchain from the respective node.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
-    * This is only returned if using a "node_count" greater than 1.
+    -------------|------|--------------------------------------------------------
+    reply        | arr  | An array containing objects of the block data for each
+                 |      | requested block on the specified blockchain. If using a
+                 |      | "node_count" greater than 1, this returns the most
+                 |      | common reply. Use xrGetReply to view each nodes
+                 |      | individual response.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -900,24 +767,14 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | arr  | An array containing objects with the transaction data for each
-                 |      | requested transaction on the specified blockchain. If using a
-                 |      | "node_count" greater than 1, this returns the most common reply
-                 |      | within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | arr  | An array containing objects with the transaction data for each
-                 |      | requested transaction on the specified blockchain from the
-                 |      | respective node.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
-    * This is only returned if using a "node_count" greater than 1.
+    -------------|------|--------------------------------------------------------
+    reply        | arr  | An array containing objects with the transaction data
+                 |      | for each requested transaction on the specified
+                 |      | blockchain. If using a "node_count" greater than 1,
+                 |      | this returns the most common reply. Use xrGetReply to
+                 |      | view each nodes individual response.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -1135,17 +992,17 @@ static UniValue xrService(const JSONRPCRequest& request)
     {
       "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6",
       "error": null,
-      "id": 1,
       "uuid": "54b6ec00-8b06-4c2c-9e56-acdff4da69fe"
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
+    -------------|------|--------------------------------------------------------
     reply        | any  | The service's response data.
-    error        | obj  | The native error response if an error occurred, otherwise a
-                 |      | successful response will contain a null error.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
+    error        | obj  | The native error response if an error occurred,
+                 |      | otherwise a successful response will contain a null
+                 |      | error.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -1198,39 +1055,20 @@ static UniValue xrServiceConsensus(const JSONRPCRequest& request)
                 R"(
     {
       "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6",
-      "allreplies": [
-        {
-          "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
-          "score": 250,
-          "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6"
-        },
-        {
-          "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
-          "score": 300,
-          "reply": "00000000000000000005252906539bfe0145c6683b8a785aab2f36c1cdf41ff6"
-        }
-      ],
       "error": null,
-      "id": 1,
       "uuid": "2ab8ea00-3b16-9a4b-e69a-b4a3dac9abfe"
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | any  | The service's response data. If using a "node_count" greater
-                 |      | than 1, this returns the most common reply within "allreplies".
-    allreplies*  | arr  | An array of objects with responses from each node. This can be
-                 |      | useful if you wanted to do your own analysis/filtering of the
-                 |      | responses.
-    nodepubkey*  | str  | The node ID.
-    score*       | int  | The respective node's score based on quality of service. A score
-                 |      | of -200 will ban the node for a 24hr period. You can change the
-                 |      | ban threshold with the "xrouterbanscore" setting in blocknetdx.conf.
-    reply*       | arr  | The service's response data from the respective node.
-    error        | obj  | The native error response if an error occurred, otherwise a
-                 |      | successful response will contain a null error.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
+    -------------|------|--------------------------------------------------------
+    reply        | any  | The service's response data. If using a "node_count"
+                 |      | greater than 1, this returns the most common reply. Use
+                 |      | xrGetReply to view each nodes individual response.
+    error        | obj  | The native error response if an error occurred,
+                 |      | otherwise a successful response will contain a null
+                 |      | error.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -1299,10 +1137,10 @@ static UniValue xrSendTransaction(const JSONRPCRequest& request)
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
+    -------------|------|--------------------------------------------------------
     reply        | obj  | The transaction hash of the sent transaction.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -1357,27 +1195,48 @@ static UniValue xrGetReply(const JSONRPCRequest& request)
                 RPCResult{
                 R"(
     {
-      "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
       "allreplies": [
         {
+          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
           "nodepubkey": "02c6c79a75846fd9bb064788b03145e347fa5464558fa9030ebb009df2833369f0",
           "score": 35,
-          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
+          "address": "BqCtHRHmUVqkvqD7GhXVuHchzm77cLuXs1",
+          "exr": true
         },
         {
+          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
           "nodepubkey": "0370874cad6252bb94afa9a253c90122760ce2862e623b515e57bfe0697f3fc515",
           "score": 80,
-          "reply": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048"
+          "address": "Bqshd156VexPDKELxido2S2pDvqrRzSCi4",
+          "exr": true
         }
       ],
+      "mostcommon": "00000000839a8e6886ab5951d76f411475428afc90947ee320161bbf18eb6048",
+      "mostcommoncount": 2,
       "uuid": "3c84d025-8a03-4b64-848f-99892fe481ff"
     }
 
-    Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    reply        | arr  | The response for the previous call associated with the UUID.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
+    Key            | Type | Description
+    ---------------|------|------------------------------------------------------
+    allreplies     | arr  | An array of objects with responses from each node.
+                   |      | This can be useful if you wanted to do your own
+                   |      | analysis or filtering of the responses.
+    reply          | int  | The node's response for the respective UUID call.
+    nodepubkey     | str  | The node ID.
+    score          | int  | The respective nodes score based on quality of
+                   |      | service. A score of -200 will ban the node for a 24hr
+                   |      | period. You can change the ban threshold with the
+                   |      | xrouterbanscore setting in blocknet.conf.
+    address        | str  | The Service Node's payment address.
+    exr            | bool | Whether the Service Node is an Enterprise XRouter
+                   |      | node. EXR nodes have greater throughput and service
+                   |      | capabilities.
+    mostcommon     | str  | The most common response (i.e. the response with the
+                   |      | most consensus). This is the value returned for
+                   |      | `reply` when making the originating call.
+    mostcommoncount| int  | The amount of nodes that responded with the
+                   |      | `mostcommon` reply.
+    uuid           | str  | The response ID.
                 )"
                 },
                 RPCExamples{
@@ -1425,12 +1284,13 @@ static UniValue xrShowConfigs(const JSONRPCRequest& request)
     ]
 
     Key            | Type | Description
-    ---------------|------|-------------------------------------------------------------
+    ---------------|------|------------------------------------------------------
     nodepubkey     | str  | The node ID.
-    paymentaddress | str  | The node's payment address, may also be specific per command.
+    paymentaddress | str  | The node's payment address, may also be specific per
+                   |      | command.
     config         | str  | The raw text contents of your xrouter.conf.
-    plugins        | obj  | An object containing the raw configuration text contents for
-                   |      | each of this node's plugins.
+    plugins        | obj  | An object containing the raw configuration text
+                   |      | contents for each of this node's plugins.
                 )"
                 },
                 RPCExamples{
@@ -1455,9 +1315,9 @@ static UniValue xrReloadConfigs(const JSONRPCRequest& request)
                 R"(
     true
 
-    Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
-    true         | bool | A confirmation that `xrouter.conf` has been reloaded.
+    Type | Description
+    -----|-----------------------------------------------------------------------
+    bool | A confirmation that `xrouter.conf` has been reloaded.
                 )"
                 },
                 RPCExamples{
@@ -1485,7 +1345,7 @@ static UniValue xrStatus(const JSONRPCRequest& request)
     }
 
     Key          | Type | Description
-    -------------|------|-------------------------------------------------------------
+    -------------|------|--------------------------------------------------------
     xrouter      | bool | Signifies XRouter activation.
                  |      | true: XRouter is enabled.
                  |      | false: XRouter is disabled.
@@ -1516,53 +1376,66 @@ static UniValue xrConnectedNodes(const JSONRPCRequest& request)
                 RPCResult{
                 R"(
     Key            | Type  | Description
-    ---------------|-------|-------------------------------------------------------------
-    reply          | arr   | An array of nodes, supported services, and their respective
-                   |       | configs.
+    ---------------|-------|-----------------------------------------------------
+    reply          | arr   | An array of nodes, supported services, and their
+                   |       | respective configs.
     nodepubkey     | str   | The node ID.
-    score          | int   | The node's score based on quality of service. A score of -200
-                   |       | will ban the node for a 24hr period. You can change the ban
-                   |       | threshold with the xrouterbanscore setting in blocknet.conf.
+    score          | int   | The node's score based on quality of service. A
+                   |       | score of -200 will ban the node for a 24hr period.
+                   |       | You can change the ban threshold with the
+                   |       | xrouterbanscore setting in blocknet.conf.
     banned         | bool  | Signifies if the node is currently banned.
                    |       | true: Node is banned
                    |       | false: Node is not banned
     paymentaddress | str   | The node's payment address.
-    spvwallets     | arr   | An array of supported SPV wallets, represented by the asset's
-                   |       | ticker.
-    spvconfigs     | arr   | An array of each SPV wallet and command configurations.
-    spvwallet      | str   | The SPV wallet that the configurations under "commands" pertains to.
-    commands       | arr   | An array of each SPV wallet command and respective configs.
+    spvwallets     | arr   | An array of supported SPV wallets, represented by
+                   |       | the asset's ticker.
+    spvconfigs     | arr   | An array of each SPV wallet and command
+                   |       | configurations.
+    spvwallet      | str   | The SPV wallet that the configurations under
+                   |       | "commands" pertains to.
+    commands       | arr   | An array of each SPV wallet command and respective
+                   |       | configs.
     command        | str   | The SPV command.
-    fee            | float | The command fee, overrides the "feedefault" and "fees" values.
-                   |       | This priority has already been accounted for in this value.
-    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
-                   |       | of -1 means there is no limit. If you exceed this value you
-                   |       | will be penalized and eventually banned by this specific node.
-    paymentaddress | str   | The node's payment address for this specific command.
+    fee            | float | The command fee, overrides the "feedefault" and
+                   |       | "fees" values. This priority has already been
+                   |       | accounted for in this value.
+    requestlimit   | int   | The minimum time allowed between calls in
+                   |       | milliseconds. A value of -1 means there is no limit.
+                   |       | If you exceed this value you will be penalized and
+                   |       | eventually banned by this specific node.
+    paymentaddress | str   | The nodes payment address for this specific command.
     disabled       | bool  | Signifies if the node has disabled this command.
                    |       | true: Call is disabled and not supported.
                    |       | false: Call is enabled and supported.
-    feedefault     | float | The node's default service fee. This fee is overridden by the
-                   |       | values specified in "fees", SPV command configuration "fee",
-                   |       | and XCloud service command configuration "fee".
-    fees           | obj   | Object of SPV commands and respective fees. These values are
-                   |       | overridden by the SPV wallet-specific configuration "fee".
-    services       | obj   | Object of the node's XCloud service calls with respective properties.
+    feedefault     | float | The node's default service fee. This fee is
+                   |       | overridden by the values specified in "fees", SPV
+                   |       | command configuration "fee", and XCloud service
+                   |       | command configuration "fee".
+    fees           | obj   | Object of SPV commands and respective fees. These
+                   |       | values are overridden by the SPV wallet-specific
+                   |       | configuration "fee".
+    services       | obj   | Object of the node's XCloud service calls with
+                   |       | respective properties.
     parameters     | str   | Information on the parameters the command takes.
-    fee            | float | The service command fee. This overrides the "feedefault" value.
-    paymentaddress | str   | The node's payment address for this specific command.
-    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
-                   |       | of -1 means there is no limit. If you exceed this value you
-                   |       | will be penalized and eventually banned by this specific node.
-    fetchlimit     | int   | The maximum number of records returned. This pertains to calls
-                   |       | such as xrGetBlocks and xrGetTransactions where multiple
-                   |       | records are returned. A value of -1 means there is no limit. A
+    fee            | float | The service command fee. This overrides the
+                   |       | "feedefault" value.
+    paymentaddress | str   | The nodes payment address for this specific command.
+    requestlimit   | int   | The minimum time allowed between calls in
+                   |       | milliseconds. A value of -1 means there is no limit.
+                   |       | If you exceed this value you will be penalized and
+                   |       | eventually banned by this specific node.
+    fetchlimit     | int   | The maximum number of records returned. This
+                   |       | pertains to calls such as xrGetBlocks and
+                   |       | xrGetTransactions where multiple records are
+                   |       | returned. A value of -1 means there is no limit. A
                    |       | value of 0 means no blocks will be processed.
-    timeout        | int   | The value for "timeout" you set in xrouter.conf for this call.
-                   |       | Defines how long (in seconds) your client waits for a response
-                   |       | from a Service Node. The default value is 30.
-    uuid           | str   | The response ID, which can be used to view this response again
-                   |       | with xrGetReply.
+    timeout        | int   | The value for "timeout" you set in xrouter.conf for
+                   |       | this call. Defines how long (in seconds) your client
+                   |       | waits for a response from a Service Node. The
+                   |       | default value is 30.
+    uuid           | str   | The response ID, which can be used to view this
+                   |       | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -1593,13 +1466,10 @@ static UniValue xrConnect(const JSONRPCRequest& request)
     if (request.fHelp)
         throw std::runtime_error(
             RPCHelpMan{"xrConnect",
-                "\nConnects to XRouter nodes with the specified service and downloads their configs. "
-                "This command is useful to determine how much nodes are charging for services. It's "
-                "also useful to \"warm up\" connections. By connecting to nodes immediately before "
-                "making a large request it can speed up the reponse time (since those connections "
-                "will be open). However, XRouter nodes do close inactive connections after 15 seconds "
-                "so keep that in mind. After connecting, call xrConnectedNodes to display information "
-                "about these XRouter nodes.\n",
+                "This optional call is used to connect to XRouter nodes with the specified service. "
+                "It is no longer needed to use this command prior to making a call. All node configs "
+                "are now automatically downloaded. See xrConnectedNodes to review a detailed list of "
+                "nodes, their service offerings, and how much they are charging for their services.\n",
                 {
                     {"fully_qualified_service_name", RPCArg::Type::STR, RPCArg::Optional::NO, "Service name including the namespace. Must specify "
                                                                                               "xr:: for SPV commands and xrs:: for plugin commands. "
@@ -1611,53 +1481,66 @@ static UniValue xrConnect(const JSONRPCRequest& request)
                 RPCResult{
                 R"(
     Key            | Type  | Description
-    ---------------|-------|-------------------------------------------------------------
-    reply          | arr   | An array of nodes providing the specified service, along with
-                   |       | their configs.
+    ---------------|-------|-----------------------------------------------------
+    reply          | arr   | An array of nodes providing the specified service,
+                   |       | along with their configs.
     nodepubkey     | str   | The node ID.
-    score          | int   | The node's score based on quality of service. A score of -200
-                   |       | will ban the node for a 24hr period. You can change the ban
-                   |       | threshold with the xrouterbanscore setting in blocknet.conf.
+    score          | int   | The node's score based on quality of service. A
+                   |       | score of -200 will ban the node for a 24hr period.
+                   |       | You can change the ban threshold with the
+                   |       | xrouterbanscore setting in blocknet.conf.
     banned         | bool  | Signifies if the node is currently banned.
                    |       | true: Node is banned
                    |       | false: Node is not banned
     paymentaddress | str   | The node's payment address.
-    spvwallets     | arr   | An array of supported SPV wallets, represented by the asset's
-                   |       | ticker.
-    spvconfigs     | arr   | An array of each SPV wallet and command configurations.
-    spvwallet      | str   | The SPV wallet that the configurations under "commands" pertains to.
-    commands       | arr   | An array of each SPV wallet command and respective configs.
+    spvwallets     | arr   | An array of supported SPV wallets, represented by
+                   |       | the asset's ticker.
+    spvconfigs     | arr   | An array of each SPV wallet and command configs.
+    spvwallet      | str   | The SPV wallet that the configurations under
+                   |       | "commands" pertains to.
+    commands       | arr   | An array of each SPV wallet command and respective
+                   |       | configs.
     command        | str   | The SPV command.
-    fee            | float | The command fee, overrides the "feedefault" and "fees" values.
-                   |       | This priority has already been accounted for in this value.
-    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
-                   |       | of -1 means there is no limit. If you exceed this value you
-                   |       | will be penalized and eventually banned by this specific node.
-    paymentaddress | str   | The node's payment address for this specific command.
+    fee            | float | The command fee, overrides the "feedefault" and
+                   |       | "fees" values.
+                   |       | This priority has already been accounted for in
+                   |       | this value.
+    requestlimit   | int   | The minimum time allowed between calls in
+                   |       | milliseconds. A value of -1 means there is no limit.
+                   |       | If you exceed this value you will be penalized and
+                   |       | eventually banned by this specific node.
+    paymentaddress | str   | The nodes payment address for this specific command.
     disabled       | bool  | Signifies if the node has disabled this command.
                    |       | true: Call is disabled and not supported.
                    |       | false: Call is enabled and supported.
-    feedefault     | float | The node's default service fee. This fee is overridden by the
-                   |       | values specified in "fees", SPV command configuration "fee",
-                   |       | and XCloud service command configuration "fee".
-    fees           | obj   | Object of SPV commands and respective fees. These values are
-                   |       | overridden by the SPV wallet-specific configuration "fee".
-    services       | obj   | Object of the node's XCloud service calls with respective properties.
+    feedefault     | float | The node's default service fee. This fee is
+                   |       | overridden by the values specified in "fees", SPV
+                   |       | command configuration "fee", and XCloud service
+                   |       | command configuration "fee".
+    fees           | obj   | Object of SPV commands and respective fees. These
+                   |       | values are overridden by the SPV wallet-specific
+                   |       | configuration "fee".
+    services       | obj   | Object of the node's XCloud service calls with
+                   |       | respective properties.
     parameters     | str   | Information on the parameters the command takes.
-    fee            | float | The service command fee. This overrides the "feedefault" value.
-    paymentaddress | str   | The node's payment address for this specific command.
-    requestlimit   | int   | The minimum time allowed between calls in milliseconds. A value
-                   |       | of -1 means there is no limit. If you exceed this value you
-                   |       | will be penalized and eventually banned by this specific node.
-    fetchlimit     | int   | The maximum number of records returned. This pertains to calls
-                   |       | such as xrGetBlocks and xrGetTransactions where multiple
-                   |       | records are returned. A value of -1 means there is no limit. A
+    fee            | float | The service command fee. This overrides the
+                   |       | "feedefault" value.
+    paymentaddress | str   | The nodes payment address for this specific command.
+    requestlimit   | int   | The minimum time allowed between calls in
+                   |       | milliseconds. A value of -1 means there is no limit.
+                   |       | If you exceed this value you will be penalized and
+                   |       | eventually banned by this specific node.
+    fetchlimit     | int   | The maximum number of records returned. This
+                   |       | pertains to calls such as xrGetBlocks and
+                   |       | xrGetTransactions where multiple records are
+                   |       | returned. A value of -1 means there is no limit. A
                    |       | value of 0 means no blocks will be processed.
-    timeout        | int   | The value for "timeout" you set in xrouter.conf for this call.
-                   |       | Defines how long (in seconds) your client waits for a response
-                   |       | from a Service Node. The default value is 30.
-    uuid           | str   | The response ID, which can be used to view this response again
-                   |       | with xrGetReply.
+    timeout        | int   | The value for "timeout" you set in xrouter.conf for
+                   |       | this call. Defines how long (in seconds) your client
+                   |       | waits for a response from a Service Node. The
+                   |       | default value is 30.
+    uuid           | str   | The response ID, which can be used to view this
+                   |       | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -1767,16 +1650,17 @@ static UniValue xrGetNetworkServices(const JSONRPCRequest& request)
     }
 
     Key          | Type | Description
-    -------------|------|---------------------------------------
+    -------------|------|--------------------------------------------------------
     reply        | obj  | An object containing information on supported services.
-    spvwallets   | arr  | An array of supported SPV wallets, represented by the asset's
-                 |      | ticker.
+    spvwallets   | arr  | An array of supported SPV wallets, represented by the
+                 |      | asset's ticker.
     services     | arr  | An array of supported XCloud services.
-    nodecounts   | obj  | An object of supported SPV wallets and XCloud services with how many nodes support each.
+    nodecounts   | obj  | An object of supported SPV wallets and XCloud services
+                 |      | with how many nodes support each.
     -- key       | str  | The SPV wallet or XCloud service with it's namespace.
     -- value     | int  | The amount of nodes supporting each respective service.
-    uuid         | str  | The response ID, which can be used to view this response again
-                 |      | with xrGetReply.
+    uuid         | str  | The response ID, which can be used to view this
+                 |      | response again with xrGetReply.
                 )"
                 },
                 RPCExamples{
@@ -1839,7 +1723,13 @@ static UniValue xrUpdateNetworkServices(const JSONRPCRequest& request) {
                     {"node_count", RPCArg::Type::NUM, RPCArg::Optional::OMITTED, "1", "Query at most this number of service nodes. It's possible that fewer or none are available."},
                 },
                 RPCResult{
-                "true"
+                R"(
+    true
+
+    Type | Description
+    -----|-----------------------------------------------------------------------
+    bool | A confirmation that the latest Service Node list was received.
+                )"
                 },
                 RPCExamples{
                     HelpExampleCli("xrUpdateNetworkServices", "")

@@ -602,12 +602,12 @@ bool RevoteOnStake(const int & stakedHeight, const COutPoint & utxo, const CKey 
     // Find suitable sized input
     auto selinput = coins.front();
     // Only search for a larger sized coin if the smallest one is less than the target input amount
-    auto smallestInputBounds = abs(selinput.first.nValue - voteInputDesiredAmount);
+    auto smallestInputBounds = llabs(selinput.first.nValue - voteInputDesiredAmount);
     if (selinput.first.nValue < voteInputDesiredAmount && coins.size() > 1) {
         for (auto & item : coins) {
             if (selinput == item)
                 continue;
-            auto sbounds = abs(item.first.nValue - voteInputDesiredAmount);
+            auto sbounds = llabs(item.first.nValue - voteInputDesiredAmount);
             if (sbounds > smallestInputBounds)
                 break; // go with the smallest if the next one is further from desired input size
             smallestInputBounds = sbounds;

@@ -168,6 +168,14 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
         Object o = result.get_obj();
 
         info.blocks = find_value(o, "blocks").get_real();
+        // median time
+        auto mt = find_value(o, "mediantime");
+        if (mt.type() != null_type)
+            info.mediantime = mt.get_int64();
+        // best block hash
+        const auto & bbh = find_value(o, "bestblockhash");
+        if (bbh.type() != null_type)
+            info.bestblockhash = uint256S(bbh.get_str());
     }
     catch (std::exception & e)
     {
@@ -558,6 +566,8 @@ bool listUnspent(const std::string & rpcuser,
                     else if (v.name_ == confirmations)
                     {
                         confs = v.value_.get_int();
+                        u.confirmations = confs > 0 ? confs : 0;
+                        u.hasConfirmations = confs > 0;
                     }
                 }
 
@@ -1512,15 +1522,11 @@ bool BtcWalletConnector<CryptoProvider>::init()
     if (!this->getInfo(info))
         return false;
 
-    auto fallbackMinTxFee = static_cast<uint64_t>(info.relayFee * 2 * COIN);
-    if (minTxFee == 0 && feePerByte == 0 && fallbackMinTxFee == 0) { // non-relay fee coin
-        minTxFee = 3000000; // units (e.g. satoshis for btc)
-        dustAmount = 5460;
-        WARN() << currency << " \"" << title << "\"" << " Using minimum fee of 300k sats";
-    } else {
-        minTxFee = std::max(fallbackMinTxFee, minTxFee);
-        dustAmount = fallbackMinTxFee > 0 ? fallbackMinTxFee : minTxFee;
-    }
+    // Calculate dust
+    dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN : 5460;
+
+    // Set median time
+    mediantime = info.mediantime;
 
     return true;
 }
@@ -1893,7 +1899,8 @@ bool BtcWalletConnector<CryptoProvider>::isValidAddress(const std::string & addr
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::isDustAmount(const double & amount) const
 {
-    return (static_cast<uint64_t>(amount * COIN) < dustAmount);
+    // cast to int because amount could be negative
+    return static_cast<int64_t>(amount * static_cast<int64_t>(COIN)) < static_cast<int64_t>(dustAmount);
 }
 
 //******************************************************************************
@@ -1974,6 +1981,7 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::string & depositTxId,
                                                                  const std::string & /*destination*/,
                                                                  double & amount,
+                                                                 uint64_t & p2shAmount,
                                                                  uint32_t & depositTxVout,
                                                                  const std::string & expectedScript,
                                                                  double & excessAmount,
@@ -2120,7 +2128,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
 
     // Add up all vout amounts
     double totalVoutAmount{0};
-    double p2shAmount{0};
+    double depositP2SHAmount{0};
     for (auto & vout : vouts) {
         const json_spirit::Value & amountObj = json_spirit::find_value(vout.get_obj(), "value");
         if (amountObj.type() != json_spirit::real_type) {
@@ -2140,25 +2148,23 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
 
         // Check all vouts for valid deposit
         const json_spirit::Value & scriptPubKey = json_spirit::find_value(vout.get_obj(), "scriptPubKey");
-        const json_spirit::Value & addresses = json_spirit::find_value(scriptPubKey.get_obj(), "addresses");
-        if (scriptPubKey.type() == json_spirit::null_type || addresses.type() == json_spirit::null_type)
+        const json_spirit::Value & hex = json_spirit::find_value(scriptPubKey.get_obj(), "hex");
+        if (scriptPubKey.type() == json_spirit::null_type || hex.type() == json_spirit::null_type)
             continue;
 
         // Check that expected script and amounts match
-        for (auto & address : addresses.get_array()) {
-            if (expectedScript == address.get_str()) {
-                const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
-                const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
-                if (amount <= vamount.get_real()) {
-                    p2shAmount = vamount.get_real();
-                    depositTxVout = static_cast<uint32_t>(n.get_int());
-                }
-                break; // done searching
+        if (expectedScript == hex.get_str()) {
+            const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
+            const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
+            if (amount <= vamount.get_real() + std::numeric_limits<double>::epsilon()) {
+                depositP2SHAmount = vamount.get_real();
+                depositTxVout = static_cast<uint32_t>(n.get_int());
             }
+            break; // done searching
         }
     }
 
-    if (p2shAmount == 0) {
+    if (depositP2SHAmount == 0) {
         LOG() << "tx " << depositTxId << " no valid p2sh in deposit transaction " << __FUNCTION__;
         return true; // done
     }
@@ -2174,14 +2180,15 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         return true; // done
     }
     // Make sure counterparty provided enough for the redeem fee
-    if (p2shAmount < amount + fee2 * 0.95) { // Allow 5% margin of error in fee amount
+    if (depositP2SHAmount < amount + fee2 * 0.95) { // Allow 5% margin of error in fee amount
         LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh redeem fees: " << fee2 * 0.95 << " " << __FUNCTION__;
         return true; // done
     }
     // we should pay ourselves any excess
-    if (p2shAmount > amount + fee2)
-        excessAmount = p2shAmount - amount - fee2;
+    if (depositP2SHAmount > amount + fee2)
+        excessAmount = depositP2SHAmount - amount - fee2;
 
+    p2shAmount = depositP2SHAmount * COIN;
     isGood = true;
     return true; // done
 }
@@ -2577,6 +2584,183 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
     }
 
     txId  = paytxid;
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vector<XTxIn> inputs,
+                                                                  const std::vector<std::pair<std::string, double> > outputs,
+                                                                  std::string & txId, std::string & rawTx)
+{
+    xbridge::CTransactionPtr tx = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
+    rawTx = tx->toString();
+
+    // sign
+    bool complete = false;
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete)) {
+        LOG() << "sign transaction error " << __FUNCTION__;
+        return false;
+    }
+
+    if (!complete) {
+        LOG() << "transaction not fully signed " << __FUNCTION__;
+        return false;
+    }
+
+    std::string txid;
+    std::string json;
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) {
+        LOG() << "decode signed transaction error " << __FUNCTION__;
+        return false;
+    }
+
+    txId = txid;
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, const std::string addr,
+                                                    const bool includeFees, const std::set<wallet::UtxoEntry> excluded,
+                                                    const std::set<COutPoint> utxos, double & totalSplit,
+                                                    double & splitIncFees, int & splitCount, std::string & txId,
+                                                    std::string & rawTx, std::string & failReason)
+{
+    const auto hasUserSpecifiedUtxos = !utxos.empty();
+    if (isDustAmount(splitAmount)) {
+        failReason = "split amount is dust [" + std::to_string(splitAmount) + "]";
+        return false;
+    }
+    if (!isValidAddress(addr)) {
+        failReason = "address is invalid or not in the wallet for token " + currency;
+        return false;
+    }
+    std::vector<wallet::UtxoEntry> unspent;
+    if (!getUnspent(unspent, excluded)) {
+        failReason = "failed to get unspent transaction outputs for token " + currency;
+        return false;
+    }
+    if (hasUserSpecifiedUtxos) { // Check that user specified utxos are available
+        std::vector<wallet::UtxoEntry> newUnspent;
+        auto copyUtxos = utxos;
+        for (const auto & utxo : unspent) {
+            COutPoint vout{uint256S(utxo.txId), utxo.vout};
+            if (copyUtxos.count(vout)) {
+                copyUtxos.erase(vout);
+                newUnspent.push_back(utxo);
+            }
+        }
+        if (!copyUtxos.empty()) {
+            failReason = "user specified utxo was not found or is not available: " + copyUtxos.begin()->ToString();
+            return false;
+        }
+        unspent = newUnspent; // only use user specified utxos
+    }
+
+    const auto fee1 = minTxFee1(1, 3);
+    const auto fee2 = minTxFee2(1, 1);
+    const auto feesPerUtxo = fee1 + fee2;
+    // Round split size to the nearest xbridge unit
+    static double oneSubSat = 0.000000001; // help promote rounding to full sat
+    const auto splitSize = xBridgeValueFromAmount(xBridgeAmountFromReal(splitAmount + (includeFees ? feesPerUtxo : 0.))) + oneSubSat;
+
+    if (!hasUserSpecifiedUtxos) {
+        // Remove all utxos that already match the expected size or that don't match the specified address
+        unspent.erase(std::remove_if(unspent.begin(), unspent.end(),
+            [splitSize, addr](const wallet::UtxoEntry & entry) {
+                return xBridgeIntFromReal(splitSize) - xBridgeIntFromReal(entry.amount) == 0 || entry.address != addr;
+            }), unspent.end());
+    }
+
+    if (unspent.empty()) {
+        failReason = "failed to get unspent transaction outputs for token " + currency;
+        return false; // no available utxos
+    }
+
+    // Erase any utxos after 100 to prevent issues with creating txs that are too large
+    if (unspent.size() > 100)
+        unspent.erase(unspent.begin()+100, unspent.begin()+unspent.size());
+
+    double vinsTotal{0};
+    std::vector<xbridge::XTxIn> vins;
+    for (const auto & vin : unspent) {
+        vinsTotal += vin.amount;
+        vins.emplace_back(vin.txId, vin.vout, vin.amount);
+    }
+
+    auto outputCount = static_cast<int>(vinsTotal / splitSize);
+    if (outputCount < 1) {
+        failReason = "already split all unused utxos in address [" + addr + "]";
+        return false; // not enough coin
+    }
+    if (outputCount > 100)
+        outputCount = 100;
+
+    const auto remainder = vinsTotal - (outputCount * splitSize);
+    std::vector<std::pair<std::string, double>> vouts;
+    for (int i = 0; i < outputCount; ++i)
+        vouts.emplace_back(addr, splitSize);
+
+    const double txFees = minTxFee1(vins.size(), vouts.size());
+    const auto change = remainder - txFees;
+    // add remainder vout if not dust
+    if (!isDustAmount(change))
+        vouts.emplace_back(addr, change); // subtract fees
+    else {
+        // Remove any utxos consumed by fees
+        auto feesLeft = txFees;
+        while (feesLeft > std::numeric_limits<double>::epsilon() && !vouts.empty()) {
+            auto & vout = vouts[vouts.size()-1];
+            const auto voutAmount = vout.second;
+            const auto voutNewAmount = voutAmount - feesLeft;
+            // If vout doesn't cover the fee move to the next one (i.e. if new amount is too small or negative)
+            if (voutNewAmount <= std::numeric_limits<double>::epsilon()) {
+                vouts.erase(vouts.begin() + vouts.size());
+                outputCount -= 1;
+                feesLeft -= voutAmount; // subtract vout amount from leftover fees
+                continue;
+            }
+
+            vout.second = voutNewAmount;
+            if (isDustAmount(vout.second))
+                vouts.erase(vouts.begin()+vouts.size()); // remove output if dust
+            outputCount -= 1;
+
+            break;
+        }
+    }
+
+    if (vouts.empty()) {
+        failReason = "unable to split further, already split all unused utxos in address [" + addr + "]";
+        return false;
+    }
+
+    xbridge::CTransactionPtr tx = createTransaction(*this, vins, vouts, COIN, txVersion, 0, txWithTimeField);
+    rawTx = tx->toString();
+
+    // sign
+    bool complete = false;
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete) || !complete) {
+        failReason = "failed to sign the split transaction " + currency;
+        return false;
+    }
+
+    std::string txid;
+    std::string json;
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) {
+        failReason = "failed to decode the split transaction " + currency;
+        return false;
+    }
+
+    txId = txid;
+    totalSplit = vinsTotal;
+    splitIncFees = splitSize;
+    splitCount = outputCount;
 
     return true;
 }

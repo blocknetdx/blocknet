@@ -5,16 +5,12 @@
 //******************************************************************************
 //******************************************************************************
 
-#include <xbridge/xbridgewalletconnectorbch.h>
-
-#include <xbridge/cashaddr/cashaddr.h>
+#include <xbridge/xbridgewalletconnectordevault.h>
 #include <xbridge/util/logger.h>
-#include <xbridge/xbitcoinaddress.h>
 #include <xbridge/xbitcointransaction.h>
 
 #include <base58.h>
 #include <primitives/transaction.h>
-
 
 //*****************************************************************************
 //*****************************************************************************
@@ -23,34 +19,16 @@ namespace xbridge
 
 namespace rpc
 {
-
-//*****************************************************************************
-//*****************************************************************************
-bool getinfo(const std::string & rpcuser, const std::string & rpcpasswd,
-             const std::string & rpcip, const std::string & rpcport,
-             WalletInfo & info);
-
-bool getnetworkinfo(const std::string & rpcuser, const std::string & rpcpasswd,
-                    const std::string & rpcip, const std::string & rpcport,
-                    WalletInfo & info);
-
 bool decodeRawTransaction(const std::string & rpcuser, const std::string & rpcpasswd,
                           const std::string & rpcip, const std::string & rpcport,
                           const std::string & rawtx,
                           std::string & txid, std::string & tx);
-
-bool signRawTransaction(const std::string & rpcuser,
-                        const std::string & rpcpasswd,
-                        const std::string & rpcip,
-                        const std::string & rpcport,
-                        std::string & rawtx,
-                        bool & complete);
 }
 
 enum
 {
-    SCRIPT_ENABLE_SIGHASH_FORKID = (1U << 16),    // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/64fd3187598221673455a584dc25c63a48db18a0/src/script/script_flags.h#L85
-    SCRIPT_ENABLE_REPLAY_PROTECTION = (1U << 17), // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/64fd3187598221673455a584dc25c63a48db18a0/src/script/script_flags.h#L89
+    SCRIPT_ENABLE_SIGHASH_FORKID = (1U << 16),    // https://github.com/devaultcrypto/devault/blob/03e826eb6c9931dbbbf5294445c3300044b7e127/src/script/script_flags.h#L92
+    SCRIPT_ENABLE_REPLAY_PROTECTION = (1U << 17), // https://github.com/devaultcrypto/devault/blob/03e826eb6c9931dbbbf5294445c3300044b7e127/src/script/script_flags.h#L96
 };
 
 //******************************************************************************
@@ -58,7 +36,7 @@ enum
 namespace
 {
 
-// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/f25d2ad300d902f1e99ffaf7ff0037bbc586b44b/src/script/sighashtype.h#L14
+// https://github.com/devaultcrypto/devault/blob/8fa24a352a19819a65d2456c5695b46428601b52/src/script/sighashtype.h#L13
 /** Signature hash types/flags */
 enum {
     SIGHASH_ALL = 1,
@@ -153,9 +131,7 @@ public:
     }
 };
 
-//******************************************************************************
-//******************************************************************************
-// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1448
+// https://github.com/devaultcrypto/devault/blob/03e826eb6c9931dbbbf5294445c3300044b7e127/src/script/interpreter.cpp#L1354
 template <class T> uint256 GetPrevoutHash(const T &txTo) {
     CHashWriter ss(SER_GETHASH, 0);
     for (const auto &txin : txTo.vin) {
@@ -163,7 +139,6 @@ template <class T> uint256 GetPrevoutHash(const T &txTo) {
     }
     return ss.GetHash();
 }
-// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1456
 template <class T> uint256 GetSequenceHash(const T &txTo) {
     CHashWriter ss(SER_GETHASH, 0);
     for (const auto &txin : txTo.vin) {
@@ -171,7 +146,6 @@ template <class T> uint256 GetSequenceHash(const T &txTo) {
     }
     return ss.GetHash();
 }
-// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1464
 template <class T> uint256 GetOutputsHash(const T &txTo) {
     CHashWriter ss(SER_GETHASH, 0);
     for (const auto &txout : txTo.vout) {
@@ -187,16 +161,14 @@ typedef struct { // helper for bch cache pointer
     uint256 hashSequence;
     uint256 hashOutputs;
 } cache_t;
-// Reference: https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/script/interpreter.cpp#L1488
+// Reference: https://github.com/devaultcrypto/devault/blob/03e826eb6c9931dbbbf5294445c3300044b7e127/src/script/interpreter.cpp#L1399
 uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
                       unsigned int nIn, SigHashType sigHashType,
-                      const CAmount amount, bool replayProtection)
+                      const CAmount amount)
 {
     // XBRIDGE
     auto & txTo = *tx;
-    uint32_t flags = SCRIPT_ENABLE_SIGHASH_FORKID;
-    if (replayProtection)
-        flags |= SCRIPT_ENABLE_REPLAY_PROTECTION;
+    uint32_t flags = SCRIPT_ENABLE_SIGHASH_FORKID; // devault doesn't support SCRIPT_ENABLE_REPLAY_PROTECTION at this time
     cache_t *cache = nullptr;
     // END XBRIDGE
 
@@ -297,65 +269,16 @@ xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
 
 //******************************************************************************
 //******************************************************************************
-BchWalletConnector::BchWalletConnector() : BtcWalletConnector() {}
+DevaultWalletConnector::DevaultWalletConnector() : BchWalletConnector() {}
 
-bool BchWalletConnector::init() {
-    if (!BtcWalletConnector<BtcCryptoProvider>::init())
+bool DevaultWalletConnector::init() {
+    if (!BchWalletConnector::init())
         return false;
-    replayProtection = replayProtectionEnabled(mediantime);
-    if (cashAddrPrefix.empty())
-        cashAddrPrefix = "bitcoincash";
+    replayProtection = false; // devault doesn't support this fork
+    if (cashAddrPrefix.empty() || cashAddrPrefix == "bitcoincash") // override bitcoincash superclass
+        cashAddrPrefix = "devault";
     params.prefix = cashAddrPrefix;
     return true;
-}
-
-bool BchWalletConnector::hasValidAddressPrefix(const std::string & addr) const {
-    CashTxDestination dst = DecodeCashAddr(addr, params);
-    if (IsValidCashDestination(dst))
-        return true;
-
-    std::vector<unsigned char> decoded;
-    if (!DecodeBase58Check(addr, decoded))
-        return false;
-
-    bool isP2PKH = memcmp(&addrPrefix[0],   &decoded[0], decoded.size()-sizeof(uint160)) == 0;
-    bool isP2SH  = memcmp(&scriptPrefix[0], &decoded[0], decoded.size()-sizeof(uint160)) == 0;
-
-    return isP2PKH || isP2SH;
-}
-
-std::string BchWalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const {
-    if (params.CashAddrPrefix().empty()) {
-        xbridge::XBitcoinAddress addr;
-        addr.Set(CKeyID(uint160(xaddr)), addrPrefix[0]);
-        return addr.ToString();
-    }
-    std::vector<uint8_t> data = PackAddrData(xaddr, PUBKEY_TYPE);
-    return cashaddr::Encode(params.CashAddrPrefix(), data);
-}
-
-std::vector<unsigned char> BchWalletConnector::toXAddr(const std::string & addr) const {
-    CashTxDestination dst = DecodeCashAddr(addr, params);
-    if (IsValidCashDestination(dst)) {
-        CashAddrContent content =
-                DecodeCashAddrContent(addr, params.CashAddrPrefix());
-        return content.hash;
-    }
-
-    std::vector<unsigned char> vaddr;
-    if (DecodeBase58Check(addr.c_str(), vaddr))
-        vaddr.erase(vaddr.begin());
-    return vaddr;
-}
-
-std::string BchWalletConnector::scriptIdToString(const std::vector<unsigned char> & id) const {
-    if (params.CashAddrPrefix().empty()) {
-        xbridge::XBitcoinAddress addr;
-        addr.Set(CScriptID(uint160(id)), scriptPrefix[0]);
-        return addr.ToString();
-    }
-    std::vector<uint8_t> data = PackAddrData(id, SCRIPT_TYPE);
-    return cashaddr::Encode(params.CashAddrPrefix(), data);
 }
 
 //******************************************************************************
@@ -371,7 +294,7 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 
 //******************************************************************************
 //******************************************************************************
-bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
+bool DevaultWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
                                                  const std::vector<std::pair<std::string, double> > & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
                                                  const std::vector<unsigned char> & mprivKey,
@@ -380,7 +303,6 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
                                                  std::string & txId,
                                                  std::string & rawTx)
 {
-    auto rpe = checkReplayProtectionEnabled();
     xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, lockTime, txWithTimeField);
     // Correctly set tx input sequence. If lockTime is specified sequence must be 2^32-2, otherwise 2^32-1 (Final)
     uint32_t sequence = lockTime > 0 ? xbridge::SEQUENCE_FINAL-1 : xbridge::SEQUENCE_FINAL;
@@ -395,7 +317,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 
         SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN, rpe);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "bch sign transaction error " << __FUNCTION__;
@@ -437,7 +359,7 @@ bool BchWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 
 //******************************************************************************
 //******************************************************************************
-bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
+bool DevaultWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
                                                   const std::vector<std::pair<std::string, double> > & outputs,
                                                   const std::vector<unsigned char> & mpubKey,
                                                   const std::vector<unsigned char> & mprivKey,
@@ -446,14 +368,13 @@ bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
                                                   std::string & txId,
                                                   std::string & rawTx)
 {
-    auto rpe = checkReplayProtectionEnabled();
     xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
 
     CScript inner(innerScript.begin(), innerScript.end());
 
     SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN, rpe);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "bch sign transaction error " << __FUNCTION__;
@@ -491,22 +412,6 @@ bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
     txId  = paytxid;
 
     return true;
-}
-
-// https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/chainparams.cpp#L177
-bool BchWalletConnector::replayProtectionEnabled(int64_t medianBlockTime) {
-    return medianBlockTime >= 1605441600;
-}
-
-bool BchWalletConnector::checkReplayProtectionEnabled() {
-    if (replayProtection)
-        return true;
-    rpc::WalletInfo info;
-    if (!getInfo(info))
-        return false;
-    mediantime = info.mediantime;
-    replayProtection = replayProtectionEnabled(mediantime);
-    return replayProtection;
 }
 
 } // namespace xbridge

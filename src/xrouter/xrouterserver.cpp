@@ -971,12 +971,14 @@ bool XRouterServer::initKeyPair() {
 }
 
 std::string XRouterServer::parseResult(const std::string & res) {
-    Value res_val; read_string(res, res_val);
-    if (res_val.type() == obj_type) {
-        const auto & r_val = find_value(res_val.get_obj(), "result");
-        if (r_val.type() == null_type)
+    UniValue uv;
+    if (!uv.read(res))
+        return res;
+    if (uv.isObject()) {
+        const auto & r_val = find_value(uv, "result");
+        if (r_val.isNull())
             return res;
-        return write_string(r_val);
+        return r_val.getValStr();
     }
     return res;
 };

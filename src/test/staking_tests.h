@@ -49,7 +49,13 @@ static void rescanWallet(CWallet *w) {
     WalletRescanReserver reserver(w);
     reserver.reserve();
     w->ScanForWalletTransactions(chainActive.Genesis()->GetBlockHash(), {}, reserver, true);
-};
+}
+
+static void removeGovernanceDBFiles() {
+    try {
+        fs::remove_all(GetDataDir() / "indexes" / "governance");
+    } catch (...) {}
+}
 
 /**
  * Proof-of-Stake test chain.
@@ -280,6 +286,9 @@ struct TestChainPoS : public TestingSetup {
         m_coinbase_txns.clear();
         locked_chain.reset();
         chain.reset();
+        // clean governance db
+        removeGovernanceDBFiles();
+        gov::Governance::instance().reset();
     };
 
     std::unique_ptr<interfaces::Chain> chain = interfaces::MakeChain();
