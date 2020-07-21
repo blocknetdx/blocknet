@@ -427,7 +427,6 @@ void BlocknetAddressBook::onEditAddress() {
     auto *btn = qobject_cast<BlocknetLabelBtn*>(sender());
     Address data;
     data.address = btn->getID();
-    // Remove address from data model
     auto rows = walletModel->getAddressTableModel()->rowCount(QModelIndex());
     for (int row = rows - 1; row >= 0; --row) {
         auto index = walletModel->getAddressTableModel()->index(row, 0, QModelIndex());
