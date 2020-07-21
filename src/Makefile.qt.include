@@ -458,6 +458,8 @@ RES_ICONS += \
   qt/res/redesign/icons/block-icon.png \
   qt/res/redesign/icons/checkmark-off.png \
   qt/res/redesign/icons/checkmark-on.png \
+  qt/res/redesign/icons/checkmark-partial.png \
+  qt/res/redesign/icons/lock_closed_white.png \
   qt/res/redesign/icons/NavBarIcons/Active/AddressBookIcon.png \
   qt/res/redesign/icons/NavBarIcons/Active/AnnouncementsIcon.png \
   qt/res/redesign/icons/NavBarIcons/Active/DashboardIcon.png \
