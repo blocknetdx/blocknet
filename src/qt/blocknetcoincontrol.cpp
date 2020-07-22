@@ -291,11 +291,12 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     table->setColumnCount(COLUMN_TXVOUT + 1);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::ExtendedSelection);
     table->setAlternatingRowColors(true);
     table->setColumnWidth(COLUMN_PADDING, BGU::spi(10));
     table->setColumnWidth(COLUMN_CHECKBOX, BGU::spi(30));
     table->setShowGrid(false);
-    tree->setFocusPolicy(Qt::ClickFocus);
+    table->setFocusPolicy(Qt::ClickFocus);
     table->setContextMenuPolicy(Qt::CustomContextMenu);
     table->setColumnHidden(COLUMN_TXHASH, true);
     table->setColumnHidden(COLUMN_TXVOUT, true);
@@ -317,7 +318,7 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     tree->setColumnCount(COLUMN_TXVOUT + 1);
     tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tree->setSelectionBehavior(QAbstractItemView::SelectRows);
-    tree->setSelectionMode(QAbstractItemView::MultiSelection);
+    tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
     tree->setAlternatingRowColors(true);
     tree->setColumnWidth(COLUMN_PADDING, BGU::spi(10));
     tree->setColumnWidth(COLUMN_CHECKBOX, BGU::spi(30));
@@ -368,6 +369,10 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     auto *copyTransactionAction = new QAction(tr("Copy transaction ID"), this);
     auto *lockAction = new QAction(tr("Lock unspent"), this);
     auto *unlockAction = new QAction(tr("Unlock unspent"), this);
+    expandAll = new QAction(tr("Expand all"), this);
+    collapseAll = new QAction(tr("Collapse all"), this);
+    expandAll->setEnabled(false);
+    collapseAll->setEnabled(false);
 
     // context menu
     contextMenu->addAction(selectCoins);
@@ -383,6 +388,9 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     contextMenu->addSeparator();
     contextMenu->addAction(lockAction);
     contextMenu->addAction(unlockAction);
+    contextMenu->addSeparator();
+    contextMenu->addAction(expandAll);
+    contextMenu->addAction(collapseAll);
 
     layout->addWidget(tree);
     layout->addWidget(table);
@@ -436,151 +444,43 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     });
 
     connect(selectCoins, &QAction::triggered, this, [this]() {
-        auto updateUtxoFunc = [this](UTXO *utxo) {
-            if (!utxo || !utxo->isValid())
-                return false;
-            if (!utxo->locked)
-                utxo->checked = true; // do not select locked coins
-            return !utxo->locked;
-        };
-
         if (treeMode()) {
             auto items = tree->selectedItems();
             if (!items.empty()) {
                 unwatch();
-                QMap<std::string, UTXO*> utxos;
-                QList<QTreeWidgetItem*> qitems;
-                // Update table view
-                for (auto & item : items) {
-                    if (item->childCount() > 0) {
-                        for (int i = 0; i < item->childCount(); ++i)
-                            qitems.push_back(item->child(i));
-                    } else
-                        qitems.push_back(item);
-                }
-                for (auto & qitem : qitems) {
-                    UTXO *utxo = getTreeUtxo(qitem);
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        qitem->setCheckState(COLUMN_CHECKBOX, Qt::Checked);
-                        utxos[utxo->toString()] = utxo;
-                    }
-                }
-                // Update list view
-                for (int row = 0; row < table->rowCount(); row++) {
-                    auto *item = table->item(row, COLUMN_TXHASH);
-                    auto *utxo = getTableUtxo(item, row);
-                    if (utxo && utxos.count(utxo->toString())) {
-                        item = table->item(row, COLUMN_CHECKBOX);
-                        item->setCheckState(Qt::Checked);
-                    }
-                }
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Checked));
                 watch();
                 Q_EMIT tableUpdated();
             }
             return;
         }
-
         // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
-            QMap<std::string, UTXO*> utxos;
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto & idx : idxs) {
-                auto *item = table->item(idx.row(), idx.column());
-                if (item) {
-                    UTXO *utxo = getTableUtxo(item, idx.row());
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        item->setCheckState(Qt::Checked);
-                        utxos[utxo->toString()] = utxo;
-                    }
-                }
-            }
-            // Update tree
-            for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-                auto *topLevelItem = tree->topLevelItem(i);
-                for (int j = 0; j < topLevelItem->childCount(); ++j) {
-                    auto *item = topLevelItem->child(j);
-                    auto *utxo = getTreeUtxo(item);
-                    if (utxo && utxos.count(utxo->toString()))
-                        item->setCheckState(COLUMN_CHECKBOX, Qt::Checked);
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Checked));
             watch();
             Q_EMIT tableUpdated();
         }
     });
     connect(deselectCoins, &QAction::triggered, this, [this]() {
-        auto updateUtxoFunc = [this](UTXO *utxo) {
-            if (!utxo || !utxo->isValid())
-                return false;
-            if (!utxo->locked)
-                utxo->checked = false; // do not select locked coins
-            return !utxo->locked;
-        };
-
         if (treeMode()) {
             auto items = tree->selectedItems();
             if (!items.empty()) {
                 unwatch();
-                QMap<std::string, UTXO*> utxos;
-                QList<QTreeWidgetItem*> qitems;
-                // Update tree
-                for (auto & item : items) {
-                    if (item->childCount() > 0) {
-                        for (int i = 0; i < item->childCount(); ++i)
-                            qitems.push_back(item->child(i));
-                    } else
-                        qitems.push_back(item);
-                }
-                for (auto & qitem : qitems) {
-                    UTXO *utxo = getTreeUtxo(qitem);
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        qitem->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
-                        utxos[utxo->toString()] = utxo;
-                    }
-                }
-                // Update list view
-                for (int row = 0; row < table->rowCount(); row++) {
-                    auto *item = table->item(row, COLUMN_TXHASH);
-                    auto *utxo = getTableUtxo(item, row);
-                    if (utxo && utxos.count(utxo->toString())) {
-                        item = table->item(row, COLUMN_CHECKBOX);
-                        item->setCheckState(Qt::Unchecked);
-                    }
-                }
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Unchecked));
                 watch();
                 Q_EMIT tableUpdated();
             }
             return;
         }
-
         // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
-            QMap<std::string, UTXO*> utxos;
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto & idx : idxs) {
-                auto *item = table->item(idx.row(), idx.column());
-                if (item) {
-                    UTXO *utxo = getTableUtxo(item, idx.row());
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        item->setCheckState(Qt::Unchecked);
-                        utxos[utxo->toString()] = utxo;
-                    }
-                }
-            }
-            // Update tree
-            for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-                auto *topLevelItem = tree->topLevelItem(i);
-                for (int j = 0; j < topLevelItem->childCount(); ++j) {
-                    auto *item = topLevelItem->child(j);
-                    auto *utxo = getTreeUtxo(item);
-                    if (utxo && utxos.count(utxo->toString()))
-                        item->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Unchecked));
             watch();
             Q_EMIT tableUpdated();
         }
@@ -588,79 +488,13 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
 
     connect(selectAllCoins, &QAction::triggered, this, [this]() {
         unwatch();
-
-        // Select all coins in the tree
-        for (int row = 0; row < tree->topLevelItemCount(); ++row) {
-            auto *topLevelItem = tree->topLevelItem(row);
-            if (!topLevelItem)
-                continue;
-            for (int childIdx = 0; childIdx < topLevelItem->childCount(); ++childIdx) {
-                auto *item = topLevelItem->child(childIdx);
-                if (!item)
-                    continue;
-                UTXO *utxo = nullptr;
-                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                    if (!utxo->locked) { // do not select locked coins
-                        utxo->checked = true;
-                        item->setCheckState(COLUMN_CHECKBOX, Qt::Checked);
-                    }
-                }
-            }
-        }
-
-        // Select all coins in the list
-        for (int row = 0; row < table->rowCount(); ++row) {
-            auto *item = table->item(row, COLUMN_CHECKBOX);
-            if (item) {
-                UTXO *utxo = nullptr;
-                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                    if (!utxo->locked) { // do not select locked coins
-                        utxo->checked = true;
-                        item->setCheckState(Qt::Checked);
-                    }
-                }
-            }
-        }
-
+        updateTableUtxos(updateTreeCheckStates(allTreeItems(), Qt::Checked));
         watch();
         Q_EMIT tableUpdated();
     });
     connect(deselectAllCoins, &QAction::triggered, this, [this]() {
         unwatch();
-
-        // Deselect all coins in the tree
-        for (int row = 0; row < tree->topLevelItemCount(); ++row) {
-            auto *topLevelItem = tree->topLevelItem(row);
-            if (!topLevelItem)
-                continue;
-            for (int childIdx = 0; childIdx < topLevelItem->childCount(); ++childIdx) {
-                auto *item = topLevelItem->child(childIdx);
-                if (!item)
-                    continue;
-                UTXO *utxo = nullptr;
-                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                    if (!utxo->locked) { // do not select locked coins
-                        utxo->checked = false;
-                        item->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
-                    }
-                }
-            }
-        }
-
-        // Deselect all coins in the list
-        for (int row = 0; row < table->rowCount(); ++row) {
-            auto *item = table->item(row, COLUMN_CHECKBOX);
-            if (item) {
-                UTXO *utxo = nullptr;
-                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                    if (!utxo->locked) { // do not select locked coins
-                        utxo->checked = false;
-                        item->setCheckState(Qt::Unchecked);
-                    }
-                }
-            }
-        }
-
+        updateTableUtxos(updateTreeCheckStates(allTreeItems(), Qt::Unchecked));
         watch();
         Q_EMIT tableUpdated();
     });
@@ -699,164 +533,55 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     });
 
     connect(lockAction, &QAction::triggered, this, [this]() {
-        auto updateUtxoFunc = [this](UTXO *utxo) {
-            if (!utxo || !utxo->isValid())
-                return false;
-            utxo->locked = true;
-            utxo->unlocked = !utxo->locked;
-            utxo->checked = false;
-            return true;
-        };
-
-        // Update the tree and the corresponding list data
+        const bool locked{true};
         if (treeMode()) {
             auto items = tree->selectedItems();
             if (!items.empty()) {
                 unwatch();
-                QMap<std::string, UTXO*> utxos;
-                QList<QTreeWidgetItem*> qitems;
-                for (auto & item : items) {
-                    if (item->childCount() > 0) {
-                        for (int i = 0; i < item->childCount(); ++i)
-                            qitems.push_back(item->child(i));
-                    } else
-                        qitems.push_back(item);
-                }
-                for (auto & qitem : qitems) {
-                    UTXO *utxo = getTreeUtxo(qitem);
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        utxos[utxo->toString()] = utxo;
-                        qitem->setIcon(COLUMN_CHECKBOX, QIcon(":/redesign/lock_closed_white"));
-                        qitem->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
-                    }
-                }
-                // Update list view
-                for (int row = 0; row < table->rowCount(); row++) {
-                    auto *item = table->item(row, COLUMN_TXHASH);
-                    auto *utxo = getTableUtxo(item, row);
-                    if (utxo && utxos.count(utxo->toString())) {
-                        auto *cbItem = new QTableWidgetItem;
-                        cbItem->setIcon(QIcon(":/redesign/lock_closed_white"));
-                        table->setItem(row, COLUMN_CHECKBOX, cbItem);
-                    }
-                }
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Unchecked, &locked));
                 watch();
                 Q_EMIT tableUpdated();
             }
             return;
         }
-
         // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
-            QMap<std::string, UTXO*> utxos;
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto &idx : idxs) {
-                auto *item = table->item(idx.row(), COLUMN_TXHASH);
-                if (item) {
-                    auto *utxo = getTableUtxo(item, idx.row());
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        utxos[utxo->toString()] = utxo;
-                        auto *cbItem = new QTableWidgetItem;
-                        cbItem->setIcon(QIcon(":/redesign/lock_closed_white"));
-                        table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
-                    }
-                }
-            }
-            // Update tree
-            for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-                auto *topLevelItem = tree->topLevelItem(i);
-                for (int j = 0; j < topLevelItem->childCount(); ++j) {
-                    auto *item = topLevelItem->child(j);
-                    auto *utxo = getTreeUtxo(item);
-                    if (utxo && utxos.count(utxo->toString()))
-                        item->setIcon(COLUMN_CHECKBOX, QIcon(":/redesign/lock_closed_white"));
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Unchecked, &locked));
             watch();
             Q_EMIT tableUpdated();
         }
     });
     connect(unlockAction, &QAction::triggered, this, [this]() {
-        auto updateUtxoFunc = [this](UTXO *utxo) {
-            if (!utxo || !utxo->isValid())
-                return false;
-            utxo->locked = false;
-            utxo->unlocked = !utxo->locked;
-            utxo->checked = false;
-            return true;
-        };
-
-        // Update the tree and the corresponding list data
+        const bool locked{false};
         if (treeMode()) {
             auto items = tree->selectedItems();
             if (!items.empty()) {
                 unwatch();
-                QMap<std::string, UTXO*> utxos;
-                QList<QTreeWidgetItem*> qitems;
-                for (auto & item : items) {
-                    if (item->childCount() > 0) {
-                        for (int i = 0; i < item->childCount(); ++i)
-                            qitems.push_back(item->child(i));
-                    } else
-                        qitems.push_back(item);
-                }
-                for (auto & qitem : qitems) {
-                    UTXO *utxo = getTreeUtxo(qitem);
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        utxos[utxo->toString()] = utxo;
-                        qitem->setIcon(COLUMN_CHECKBOX, QIcon());
-                        qitem->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
-                    }
-                }
-                // Update list view
-                for (int row = 0; row < table->rowCount(); row++) {
-                    auto *item = table->item(row, COLUMN_TXHASH);
-                    auto *utxo = getTableUtxo(item, row);
-                    if (utxo && utxos.count(utxo->toString())) {
-                        auto *cbItem = new QTableWidgetItem;
-                        cbItem->setCheckState(Qt::Unchecked);
-                        table->setItem(row, COLUMN_CHECKBOX, cbItem);
-                    }
-                }
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Unchecked, &locked));
                 watch();
                 Q_EMIT tableUpdated();
             }
             return;
         }
-
         // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
-            QMap<std::string, UTXO*> utxos;
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto & idx : idxs) {
-                auto *item = table->item(idx.row(), COLUMN_TXHASH);
-                if (item) {
-                    auto *utxo = getTableUtxo(item, idx.row());
-                    if (utxo && updateUtxoFunc(utxo)) {
-                        utxos[utxo->toString()] = utxo;
-                        auto *cbItem = new QTableWidgetItem;
-                        cbItem->setCheckState(Qt::Unchecked);
-                        table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
-                    }
-                }
-            }
-            // Update tree
-            for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-                auto *topLevelItem = tree->topLevelItem(i);
-                for (int j = 0; j < topLevelItem->childCount(); ++j) {
-                    auto *item = topLevelItem->child(j);
-                    auto *utxo = getTreeUtxo(item);
-                    if (utxo && utxos.count(utxo->toString()))
-                        item->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Unchecked, &locked));
             watch();
             Q_EMIT tableUpdated();
         }
+    });
+
+    connect(expandAll, &QAction::triggered, this, [this]() {
+        tree->expandAll();
+    });
+    connect(collapseAll, &QAction::triggered, this, [this]() {
+        tree->collapseAll();
     });
 
     table->installEventFilter(this);
@@ -994,6 +719,8 @@ void BlocknetCoinControl::showContextMenu(QPoint pt) {
         auto *select = tree->selectionModel();
         selectCoins->setEnabled(select->hasSelection());
         deselectCoins->setEnabled(select->hasSelection());
+        expandAll->setEnabled(true);
+        collapseAll->setEnabled(true);
         auto *item = tree->itemAt(pt);
         if (!item) {
             contextItemTr = nullptr;
@@ -1005,6 +732,8 @@ void BlocknetCoinControl::showContextMenu(QPoint pt) {
         auto *select = table->selectionModel();
         selectCoins->setEnabled(select->hasSelection());
         deselectCoins->setEnabled(select->hasSelection());
+        expandAll->setEnabled(false);
+        collapseAll->setEnabled(false);
         auto *item = table->itemAt(pt);
         if (!item) {
             contextItem = nullptr;
@@ -1195,7 +924,7 @@ void BlocknetCoinControl::onTreeItemChanged(QTreeWidgetItem *item) {
 
 bool BlocknetCoinControl::eventFilter(QObject *obj, QEvent *event) {
     if (event->type() == QEvent::KeyPress && (obj == table || obj == tree)) {
-        auto *keyEvent = static_cast<QKeyEvent*>(event);
+        auto *keyEvent = dynamic_cast<QKeyEvent*>(event);
         if (keyEvent->key() == Qt::Key_Space) {
             if (obj == table && table->selectionModel()->hasSelection()) {
                 auto *select = table->selectionModel();
@@ -1295,4 +1024,110 @@ bool BlocknetCoinControl::eventFilter(QObject *obj, QEvent *event) {
         }
     }
     return QObject::eventFilter(obj, event);
+}
+
+void BlocknetCoinControl::updateTableUtxos(const QMap<std::string, UTXO*> & utxos) {
+    for (int row = 0; row < table->rowCount(); row++) {
+        auto *item = table->item(row, COLUMN_TXHASH);
+        auto *utxo = getTableUtxo(item, row);
+        if (utxo && utxos.count(utxo->toString())) {
+            auto *putxo = utxos[utxo->toString()];
+            auto *cbItem = new QTableWidgetItem;
+            if (putxo->locked)
+                cbItem->setIcon(QIcon(":/redesign/lock_closed_white"));
+            else
+                cbItem->setCheckState(putxo->checked ? Qt::Checked : Qt::Unchecked);
+            table->setItem(row, COLUMN_CHECKBOX, cbItem);
+        }
+    }
+}
+
+void BlocknetCoinControl::updateTreeUtxos(const QMap<std::string, UTXO*> & utxos) {
+    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+        auto *topLevelItem = tree->topLevelItem(i);
+        for (int j = 0; j < topLevelItem->childCount(); ++j) {
+            auto *item = topLevelItem->child(j);
+            auto *utxo = getTreeUtxo(item);
+            if (utxo && utxos.count(utxo->toString())) {
+                auto *putxo = utxos[utxo->toString()];
+                if (putxo->locked)
+                    item->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
+                else
+                    item->setCheckState(COLUMN_CHECKBOX, putxo->checked ? Qt::Checked : Qt::Unchecked);
+                item->setIcon(COLUMN_CHECKBOX, utxo->locked ? QIcon(":/redesign/lock_closed_white") : QIcon());
+            }
+        }
+    }
+}
+
+QMap<std::string, BlocknetCoinControl::UTXO*> BlocknetCoinControl::updateTableCheckStates(const QList<QModelIndex> & idxs, Qt::CheckState checkState, const bool *lockState) {
+    QMap<std::string, UTXO*> utxos;
+    for (auto & idx : idxs) {
+        auto *item = table->item(idx.row(), idx.column());
+        if (item) {
+            UTXO *utxo = getTableUtxo(item, idx.row());
+            if (lockState == nullptr && utxo && !utxo->locked && utxo->isValid()) {
+                utxo->checked = checkState == Qt::Checked;
+                item->setCheckState(checkState);
+                utxos[utxo->toString()] = utxo;
+            } else if (lockState != nullptr && utxo && utxo->isValid()) { // if lock state
+                utxo->locked = *lockState;
+                utxo->unlocked = !utxo->locked;
+                utxo->checked = false;
+                auto *cbItem = new QTableWidgetItem;
+                if (*lockState)
+                    cbItem->setIcon(QIcon(":/redesign/lock_closed_white"));
+                else
+                    cbItem->setCheckState(Qt::Unchecked);
+                table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
+                utxos[utxo->toString()] = utxo;
+            }
+        }
+    }
+    return utxos;
+}
+
+QMap<std::string, BlocknetCoinControl::UTXO*> BlocknetCoinControl::updateTreeCheckStates(const QList<QTreeWidgetItem*> & items, Qt::CheckState checkState, const bool *lockState) {
+    QMap<std::string, UTXO*> utxos;
+    QList<QTreeWidgetItem*> qitems;
+    for (auto & item : items) {
+        if (item->childCount() > 0) {
+            for (int i = 0; i < item->childCount(); ++i)
+                qitems.push_back(item->child(i));
+        } else
+            qitems.push_back(item);
+    }
+    for (auto & qitem : qitems) {
+        UTXO *utxo = getTreeUtxo(qitem);
+        if (lockState == nullptr && utxo && !utxo->locked && utxo->isValid()) { // non-lock state
+            utxo->checked = checkState == Qt::Checked;
+            qitem->setCheckState(COLUMN_CHECKBOX, checkState);
+            utxos[utxo->toString()] = utxo;
+        } else if (lockState != nullptr && utxo && utxo->isValid()) { // if lock state
+            utxo->checked = Qt::Unchecked;
+            utxo->locked = *lockState;
+            utxo->unlocked = !utxo->locked;
+            utxo->checked = false;
+            qitem->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
+            qitem->setIcon(COLUMN_CHECKBOX, utxo->locked ? QIcon(":/redesign/lock_closed_white") : QIcon());
+            utxos[utxo->toString()] = utxo;
+        }
+    }
+    return utxos;
+}
+
+QList<QTreeWidgetItem*> BlocknetCoinControl::allTreeItems() {
+    QList<QTreeWidgetItem*> r;
+    for (int row = 0; row < tree->topLevelItemCount(); ++row) {
+        auto *topLevelItem = tree->topLevelItem(row);
+        if (!topLevelItem)
+            continue;
+        for (int childIdx = 0; childIdx < topLevelItem->childCount(); ++childIdx) {
+            auto *item = topLevelItem->child(childIdx);
+            if (!item)
+                continue;
+            r.push_back(item);
+        }
+    }
+    return r;
 }

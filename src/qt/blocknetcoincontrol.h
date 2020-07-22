@@ -114,6 +114,8 @@ private:
     QTreeWidgetItem *contextItemTr = nullptr;
     QAction *selectCoins;
     QAction *deselectCoins;
+    QAction *expandAll;
+    QAction *collapseAll;
 
     ModelPtr dataModel = nullptr;
 
@@ -127,8 +129,16 @@ private:
     uint getVOut(QTreeWidgetItem *item);
     bool treeMode();
     void showTree(bool yes);
+
     UTXO* getTableUtxo(QTableWidgetItem *item, int row);
     UTXO* getTreeUtxo(QTreeWidgetItem *item);
+    void updateTableUtxos(const QMap<std::string, UTXO*> & utxos);
+    void updateTreeUtxos(const QMap<std::string, UTXO*> & utxos);
+    QMap<std::string, UTXO*> updateTableCheckStates(const QList<QModelIndex> & idxs, Qt::CheckState checkState, const bool *lockState=nullptr);
+    QMap<std::string, UTXO*> updateTreeCheckStates(const QList<QTreeWidgetItem*> & items, Qt::CheckState checkState, const bool *lockState=nullptr);
+    QList<QTreeWidgetItem*> allTreeItems();
+
+private:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
     enum {
