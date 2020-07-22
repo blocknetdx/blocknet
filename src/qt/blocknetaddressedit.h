@@ -88,7 +88,7 @@ public:
     BlocknetAddressEdit *form;
 protected:
     void resizeEvent(QResizeEvent *evt) override;
-    bool importPrivateKey(CKey & key, const QString & alias);
+    bool importPrivateKey(CKey & key, const QString & alias, const QString & addr);
 private:
     AddressTableModel *model;
     WalletModel *walletModel;
