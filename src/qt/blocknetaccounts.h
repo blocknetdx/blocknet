@@ -53,6 +53,9 @@ private:
         std::string label;
     };
 
+Q_SIGNALS:
+    void rescan(const std::string &);
+
 private:
     WalletModel *walletModel;
     QVBoxLayout *layout;

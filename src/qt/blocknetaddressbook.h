@@ -96,6 +96,7 @@ public Q_SLOTS:
 
 Q_SIGNALS:
     void send(const QString &);
+    void rescan(const std::string &);
 
 private Q_SLOTS:
     void onFilter();

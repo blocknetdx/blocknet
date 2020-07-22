@@ -86,6 +86,8 @@ public:
     explicit BlocknetAddressAddDialog(AddressTableModel *model, WalletModel *walletModel, Qt::WindowFlags f, QWidget *parent = nullptr);
     void accept() override;
     BlocknetAddressEdit *form;
+Q_SIGNALS:
+    void rescan(const std::string &);
 protected:
     void resizeEvent(QResizeEvent *evt) override;
     bool importPrivateKey(CKey & key, const QString & alias, const QString & addr);

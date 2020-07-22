@@ -194,6 +194,17 @@ bool BlocknetAddressAddDialog::importPrivateKey(CKey & key, const QString & alia
             }
 
             pwallet->LearnAllRelatedScripts(pubkey);
+
+            // Prompt user about rescan
+            QMessageBox::StandardButton retval = QMessageBox::question(this->parentWidget(), tr("Rescan the wallet"),
+                                                              tr("You imported a new wallet address. Would you like to rescan the blockchain to add "
+                                                                 "coin associated with this address? If you don't rescan, you may not see all your "
+                                                                 "coin.\n\nThis may take several minutes."),
+                                                              QMessageBox::Yes | QMessageBox::No,
+                                                              QMessageBox::No);
+
+            if (retval == QMessageBox::Yes)
+                Q_EMIT rescan(pwallet->GetName());
         }
     }
 

@@ -19,6 +19,7 @@
 
 #include <QHeaderView>
 #include <QSettings>
+#include <QTimer>
 
 BlocknetAccounts::BlocknetAccounts(QWidget *parent) : QFrame(parent), layout(new QVBoxLayout) {
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -305,20 +306,10 @@ void BlocknetAccounts::onCopyAddress() {
 void BlocknetAccounts::onAddAddress() {
     BlocknetAddressAddDialog dlg(walletModel->getAddressTableModel(), walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
     dlg.setStyleSheet(GUIUtil::loadStyleSheet());
-    connect(&dlg, &QDialog::accepted, this, [this, &dlg]() {
-        // If the user added a new private key, ask them if they want to perform a wallet rescan
-        if (!dlg.form->getKey().isEmpty()) {
-            QMessageBox::StandardButton retval = QMessageBox::question(this->parentWidget(), tr("Rescan the wallet"),
-                                      tr("You imported a new wallet address. Would you like to rescan the blockchain to add coin associated with this address? "
-                                         "If you don't rescan, you may not see all your coin.\n\nThis may take several minutes."),
-                                      QMessageBox::Yes | QMessageBox::No,
-                                      QMessageBox::No);
-
-            if (retval != QMessageBox::Yes)
-                return;
-
-            walletModel->showProgress(tr("Rescanning..."), 0);
-        }
+    connect(&dlg, &BlocknetAddressAddDialog::rescan, [this](std::string walletName) {
+        QTimer::singleShot(1000, [this,walletName]() {
+            Q_EMIT rescan(walletName);
+        });
     });
     dlg.exec();
 }
