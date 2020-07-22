@@ -834,11 +834,13 @@ void BlocknetCoinControl::showTree(bool yes) {
         table->hide();
         tree->setDisabled(false);
         tree->show();
+        tree->setFocus(Qt::FocusReason::MouseFocusReason);
     } else {
         tree->setDisabled(true);
         tree->hide();
         table->setDisabled(false);
         table->show();
+        table->setFocus(Qt::FocusReason::MouseFocusReason);
     }
 }
 
