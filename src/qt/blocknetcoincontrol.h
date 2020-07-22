@@ -129,6 +129,7 @@ private:
     void showTree(bool yes);
     UTXO* getTableUtxo(QTableWidgetItem *item, int row);
     UTXO* getTreeUtxo(QTreeWidgetItem *item);
+    bool eventFilter(QObject *obj, QEvent *event) override;
 
     enum {
         COLUMN_PADDING,

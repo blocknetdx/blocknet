@@ -295,7 +295,7 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     table->setColumnWidth(COLUMN_PADDING, BGU::spi(10));
     table->setColumnWidth(COLUMN_CHECKBOX, BGU::spi(30));
     table->setShowGrid(false);
-    table->setFocusPolicy(Qt::NoFocus);
+    tree->setFocusPolicy(Qt::ClickFocus);
     table->setContextMenuPolicy(Qt::CustomContextMenu);
     table->setColumnHidden(COLUMN_TXHASH, true);
     table->setColumnHidden(COLUMN_TXVOUT, true);
@@ -317,11 +317,11 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
     tree->setColumnCount(COLUMN_TXVOUT + 1);
     tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
     tree->setSelectionBehavior(QAbstractItemView::SelectRows);
-    tree->setSelectionMode(QAbstractItemView::ContiguousSelection);
+    tree->setSelectionMode(QAbstractItemView::MultiSelection);
     tree->setAlternatingRowColors(true);
     tree->setColumnWidth(COLUMN_PADDING, BGU::spi(10));
     tree->setColumnWidth(COLUMN_CHECKBOX, BGU::spi(30));
-    tree->setFocusPolicy(Qt::NoFocus);
+    tree->setFocusPolicy(Qt::ClickFocus);
     tree->setContextMenuPolicy(Qt::CustomContextMenu);
     tree->setColumnHidden(COLUMN_TXHASH, true);
     tree->setColumnHidden(COLUMN_TXVOUT, true);
@@ -858,6 +858,9 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFra
             Q_EMIT tableUpdated();
         }
     });
+
+    table->installEventFilter(this);
+    tree->installEventFilter(this);
 }
 
 void BlocknetCoinControl::setData(ModelPtr dataModel) {
@@ -1188,4 +1191,108 @@ void BlocknetCoinControl::onTreeItemChanged(QTreeWidgetItem *item) {
 
     watch();
     Q_EMIT tableUpdated();
+}
+
+bool BlocknetCoinControl::eventFilter(QObject *obj, QEvent *event) {
+    if (event->type() == QEvent::KeyPress && (obj == table || obj == tree)) {
+        auto *keyEvent = static_cast<QKeyEvent*>(event);
+        if (keyEvent->key() == Qt::Key_Space) {
+            if (obj == table && table->selectionModel()->hasSelection()) {
+                auto *select = table->selectionModel();
+                if (select->hasSelection()) {
+                    unwatch();
+                    QMap<std::string, UTXO*> utxos;
+                    auto idxs = select->selectedRows(COLUMN_CHECKBOX);
+                    for (auto & idx : idxs) {
+                        auto *item = table->item(idx.row(), idx.column());
+                        if (item) {
+                            UTXO *utxo = getTableUtxo(item, idx.row());
+                            if (utxo && !utxo->locked)
+                                utxos[utxo->toString()] = utxo;
+                        }
+                    }
+                    // First check if they're all selected to determine
+                    // whether to deselect. Only deselect if all utxos
+                    // are selected.
+                    bool shouldDeselect{true};
+                    for (auto & item : utxos) {
+                        if (!item->checked) {
+                            shouldDeselect = false;
+                            break;
+                        }
+                    }
+                    for (auto & item : utxos)
+                        item->checked = !shouldDeselect;
+                    // Update list
+                    for (auto & idx : idxs) {
+                        auto *item = table->item(idx.row(), idx.column());
+                        if (item)
+                            item->setCheckState(!shouldDeselect ? Qt::Checked : Qt::Unchecked);
+                    }
+                    // Update tree
+                    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+                        auto *topLevelItem = tree->topLevelItem(i);
+                        for (int j = 0; j < topLevelItem->childCount(); ++j) {
+                            auto *item = topLevelItem->child(j);
+                            auto *utxo = getTreeUtxo(item);
+                            if (utxo && utxos.count(utxo->toString()))
+                                item->setCheckState(COLUMN_CHECKBOX, utxos[utxo->toString()]->checked ? Qt::Checked : Qt::Unchecked);
+                        }
+                    }
+                    watch();
+                    table->setFocus(Qt::FocusReason::MouseFocusReason);
+                    Q_EMIT tableUpdated();
+                }
+            } else if (obj == tree && !tree->selectedItems().isEmpty()) {
+                auto items = tree->selectedItems();
+                if (!items.empty()) {
+                    unwatch();
+                    QMap<std::string, UTXO*> utxos;
+                    QList<QTreeWidgetItem*> qitems;
+                    // Update tree
+                    for (auto & item : items) {
+                        if (item->childCount() > 0) {
+                            for (int i = 0; i < item->childCount(); ++i)
+                                qitems.push_back(item->child(i));
+                        } else
+                            qitems.push_back(item);
+                    }
+                    for (auto & qitem : qitems) {
+                        UTXO *utxo = getTreeUtxo(qitem);
+                        if (utxo && !utxo->locked)
+                            utxos[utxo->toString()] = utxo;
+                    }
+                    // First check if they're all selected to determine
+                    // whether to deselect. Only deselect if all utxos
+                    // are selected.
+                    bool shouldDeselect{true};
+                    for (auto & item : utxos) {
+                        if (!item->checked) {
+                            shouldDeselect = false;
+                            break;
+                        }
+                    }
+                    for (auto & item : utxos)
+                        item->checked = !shouldDeselect;
+                    // Update tree
+                    for (auto & qitem : qitems)
+                        qitem->setCheckState(COLUMN_CHECKBOX, !shouldDeselect ? Qt::Checked : Qt::Unchecked);
+                    // Update list
+                    for (int row = 0; row < table->rowCount(); row++) {
+                        auto *item = table->item(row, COLUMN_TXHASH);
+                        auto *utxo = getTableUtxo(item, row);
+                        if (utxo && utxos.count(utxo->toString())) {
+                            item = table->item(row, COLUMN_CHECKBOX);
+                            item->setCheckState(!shouldDeselect ? Qt::Checked : Qt::Unchecked);
+                        }
+                    }
+                    watch();
+                    tree->setFocus(Qt::FocusReason::MouseFocusReason);
+                    Q_EMIT tableUpdated();
+                }
+            }
+            return true; // done
+        }
+    }
+    return QObject::eventFilter(obj, event);
 }
