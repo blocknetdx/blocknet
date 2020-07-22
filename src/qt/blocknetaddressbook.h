@@ -32,6 +32,9 @@ public:
         QString alias;
         QString address;
         int type;
+        bool operator<(const Address & other) const {
+            return address.toStdString() < other.address.toStdString();
+        }
     };
 
     enum {
@@ -64,11 +67,28 @@ private:
     enum {
         COLUMN_ACTION,
         COLUMN_AVATAR,
+        COLUMN_PADDING1,
         COLUMN_ALIAS,
+        COLUMN_PADDING2,
         COLUMN_ADDRESS,
+        COLUMN_PADDING3,
         COLUMN_COPY,
         COLUMN_EDIT,
         COLUMN_DELETE,
+    };
+
+    class LabelItem : public QTableWidgetItem {
+    public:
+        explicit LabelItem() = default;
+        bool operator < (const QTableWidgetItem & other) const override {
+            if (label.empty())
+                return false;
+            auto *oitem = reinterpret_cast<const LabelItem*>(&other);
+            if (oitem->label.empty())
+                return true;
+            return label < oitem->label;
+        };
+        std::string label;
     };
 
 public Q_SLOTS:

@@ -17,6 +17,7 @@
 enum BlocknetPage {
     DASHBOARD = 1,
     ADDRESSBOOK,
+    ACCOUNTS,
     SEND,
     QUICKSEND,
     REQUEST,

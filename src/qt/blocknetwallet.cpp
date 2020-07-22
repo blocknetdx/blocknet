@@ -4,6 +4,7 @@
 
 #include <qt/blocknetwallet.h>
 
+#include <qt/blocknetaccounts.h>
 #include <qt/blocknetaddressbook.h>
 #include <qt/blocknetfontmgr.h>
 #include <qt/blocknetquicksend.h>
@@ -159,6 +160,12 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             addressBook->setWalletModel(walletModel);
             connect(addressBook, &BlocknetAddressBook::send, this, &BlocknetWallet::onSendToAddress);
             screen = addressBook;
+            break;
+        }
+        case BlocknetPage::ACCOUNTS: {
+            auto *accounts = new BlocknetAccounts;
+            accounts->setWalletModel(walletModel);
+            screen = accounts;
             break;
         }
         case BlocknetPage::SEND: {

@@ -41,6 +41,7 @@ private:
     QButtonGroup *group;
     BlocknetIconLabel *dashboard;
     BlocknetIconLabel *addressBook;
+    BlocknetIconLabel *accounts;
     BlocknetIconLabel *sendFunds;
     BlocknetIconLabel *requestFunds;
     BlocknetIconLabel *transactionHistory;
