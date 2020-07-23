@@ -26,12 +26,13 @@ public:
     explicit BlocknetAddressEdit(bool editMode, const QString &title, const QString &buttonString, QWidget *parent = nullptr);
     QSize sizeHint() const override;
     bool validated();
-    bool setNewAddress(const CTxDestination & dest);
+    bool setNewAddress(const CTxDestination & dest, const CPubKey & pkey);
     void setData(const QString &address, const QString &alias, const int &type, const QString &key);
     QString getAddress();
     QString getAlias();
     QString getKey();
     QString getType();
+    CPubKey getPubKey();
 
 Q_SIGNALS:
     void cancel();
@@ -64,6 +65,7 @@ private:
     QRadioButton *otherUserBtn;
     BlocknetFormBtn *confirmBtn;
     BlocknetFormBtn *cancelBtn;
+    CPubKey pubkey;
 };
 
 class BlocknetAddressEditDialog : public QDialog {

@@ -60,8 +60,10 @@ BlocknetAddressAddDialog::BlocknetAddressAddDialog(AddressTableModel *model, Wal
     this->setWindowTitle(tr("Address Book"));
     form = new BlocknetAddressEdit(false, tr("New Address"), tr("Add Address"), this);
     CPubKey pubkey;
-    if (walletModel->wallet().getKeyFromPool(false, pubkey))
-        form->setNewAddress(CTxDestination(pubkey.GetID()));
+    if (walletModel->wallet().canGetAddresses() && walletModel->wallet().getKeyFromPool(false, pubkey))
+        form->setNewAddress(GetDestinationForKey(pubkey, OutputType::LEGACY), pubkey);
+    else
+        QMessageBox::warning(this, tr("Wallet was unable to generate a new address"), tr("Try using getnewaddress command in Tools -> Debug Console"));
     form->show();
     connect(form, &BlocknetAddressEdit::accept, this, &QDialog::accept);
     connect(form, &BlocknetAddressEdit::cancel, this, &QDialog::reject);
@@ -86,12 +88,10 @@ void BlocknetAddressAddDialog::accept() {
                 return;
             }
             if (import()) {
-                model->addRow(form->getType(), form->getAlias(), form->getAddress(), model->GetDefaultAddressType());
                 QDialog::accept();
                 return;
             }
         } else if (import()) {
-            model->addRow(form->getType(), form->getAlias(), form->getAddress(), model->GetDefaultAddressType());
             QDialog::accept();
             return;
         }
@@ -106,14 +106,19 @@ void BlocknetAddressAddDialog::accept() {
         }
 
         // add send or receive address
-        const auto dest = DecodeDestination(form->getAddress().toStdString());
         if (form->getType() == AddressTableModel::Send) {
-            walletModel->wallet().delAddressBook(dest);
+            const auto dest = DecodeDestination(form->getAddress().toStdString());
             walletModel->wallet().setAddressBook(dest, form->getAlias().toStdString(), "send");
         } else if (form->getType() == AddressTableModel::Receive) {
+            CTxDestination dest;
+            auto pubkey = form->getPubKey();
+            if (pubkey.IsFullyValid()) {
+                walletModel->wallet().learnRelatedScripts(pubkey, OutputType::LEGACY);
+                dest = GetDestinationForKey(pubkey, OutputType::LEGACY);
+            } else
+                dest = DecodeDestination(form->getAddress().toStdString());
             walletModel->wallet().setAddressBook(dest, form->getAlias().toStdString(), "receive");
         }
-        model->addRow(form->getType(), form->getAlias(), form->getAddress(), model->GetDefaultAddressType());
     }
 
     QDialog::accept();
@@ -309,6 +314,12 @@ void BlocknetAddressEdit::setData(const QString &address, const QString &alias, 
         createAddressTi->lineEdit->setText(key);
         createAddressTi->setEnabled(!otherUserBtn->isChecked());
     }
+    if (!key.isEmpty()) {
+        auto secret = DecodeSecret(key.toStdString());
+        if (secret.IsValid())
+            pubkey = secret.GetPubKey();
+    } else
+        pubkey = CPubKey();
 }
 
 QString BlocknetAddressEdit::getAddress() {
@@ -329,6 +340,15 @@ QString BlocknetAddressEdit::getType() {
     if (myAddressBtn->isChecked())
         return AddressTableModel::Receive;
     return AddressTableModel::Send;
+}
+
+CPubKey BlocknetAddressEdit::getPubKey() {
+    CTxDestination dest1 = GetDestinationForKey(pubkey, OutputType::LEGACY);
+    CTxDestination dest2 = DecodeDestination(getAddress().toStdString());
+    if (dest1 == dest2)
+        return pubkey;
+    else
+        return CPubKey();
 }
 
 void BlocknetAddressEdit::clear() {
@@ -361,8 +381,9 @@ void BlocknetAddressEdit::onPrivateKey(const QString &) {
     auto err = !secret.IsValid();
     createAddressTi->setError(err);
     if (!err) {
-        CTxDestination address(secret.GetPubKey().GetID());
-        addressTi->lineEdit->setText(QString::fromStdString(EncodeDestination(address)));
+        const auto dest = GetDestinationForKey(secret.GetPubKey(), OutputType::LEGACY);
+        pubkey = secret.GetPubKey();
+        addressTi->lineEdit->setText(QString::fromStdString(EncodeDestination(dest)));
         myAddressBtn->setChecked(true);
         otherUserBtn->setChecked(false);
         otherUserBtn->setEnabled(false);
@@ -410,9 +431,10 @@ void BlocknetAddressEdit::onOtherUser(bool checked) {
     createAddressTi->setEnabled(!otherUserBtn->isChecked());
 }
 
-bool BlocknetAddressEdit::setNewAddress(const CTxDestination & dest) {
+bool BlocknetAddressEdit::setNewAddress(const CTxDestination & dest, const CPubKey & pkey) {
     if (!IsValidDestination(dest))
         return false;
+    pubkey = pkey;
     myAddressBtn->setChecked(true);
     addressTi->lineEdit->setText(QString::fromStdString(EncodeDestination(dest)));
     return true;
