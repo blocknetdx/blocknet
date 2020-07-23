@@ -221,8 +221,6 @@ BlocknetCoinControl QTableWidget, BlocknetCoinControl QTreeWidget { color: white
 #coinControlDialog { background-color: #172F49; }
 #coinControlDialog #feePanel { background-color: #172F49; }
 #coinControlDialog #feePanel QLabel { font-size: 13pt; color: white; font-family: "Roboto"; }
-#coinControlDialog QTableView::item:not:first-child, #coinControlDialog QTableWidget::item:not:first-child, #coinControlDialog QTreeWidget::item:not:first-child { padding: 0 15px; }
-#coinControlDialog QHeaderView::section:not:first-child { padding: 3px 0 3px 15px; }
 
 BlocknetBIP38Tool QScrollArea { background-color:transparent; }
 BlocknetBIP38Tool #contentFrame { background-color:transparent; }

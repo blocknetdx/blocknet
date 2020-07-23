@@ -103,9 +103,17 @@ private Q_SLOTS:
     void onTreeItemChanged(QTreeWidgetItem *item);
 
 private:
+    class BlocknetTableWidget : public QTableWidget {
+    public:
+        QModelIndex itemIndex(QTableWidgetItem *item) {
+            return indexFromItem(item);
+        }
+    };
+
+private:
     WalletModel *walletModel = nullptr;
     QVBoxLayout *layout;
-    QTableWidget *table;
+    BlocknetTableWidget *table;
     QTreeWidget *tree;
     QRadioButton *listRb;
     QRadioButton *treeRb;
@@ -114,6 +122,14 @@ private:
     QTreeWidgetItem *contextItemTr = nullptr;
     QAction *selectCoins;
     QAction *deselectCoins;
+    QAction *selectAllCoins;
+    QAction *deselectAllCoins;
+    QAction *copyAmountAction;
+    QAction *copyLabelAction;
+    QAction *copyAddressAction;
+    QAction *copyTransactionAction;
+    QAction *lockAction;
+    QAction *unlockAction;
     QAction *expandAll;
     QAction *collapseAll;
 
@@ -142,12 +158,17 @@ private:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
     enum {
-        COLUMN_PADDING,
+        COLUMN_PADDING1,
         COLUMN_CHECKBOX,
+        COLUMN_PADDING2,
         COLUMN_AMOUNT,
+        COLUMN_PADDING3,
         COLUMN_LABEL,
+        COLUMN_PADDING4,
         COLUMN_ADDRESS,
+        COLUMN_PADDING5,
         COLUMN_DATE,
+        COLUMN_PADDING6,
         COLUMN_CONFIRMATIONS,
         COLUMN_TXHASH,
         COLUMN_TXVOUT,
@@ -172,19 +193,47 @@ private:
             return data(PriorityRole).toDouble() < other.data(PriorityRole).toDouble();
         };
     };
+    class LabelItem : public QTableWidgetItem {
+    public:
+        explicit LabelItem() = default;
+        bool operator < (const QTableWidgetItem & other) const override {
+            auto label = data(Qt::DisplayRole).toString();
+            auto otherlabel = other.data(Qt::DisplayRole).toString();
+            if (label.contains("(") && otherlabel.contains("("))
+                return label.toStdString() < otherlabel.toStdString();
+            if (label.contains("("))
+                return false;
+            if (otherlabel.contains("("))
+                return true;
+            return label.toStdString() < otherlabel.toStdString();
+        };
+    };
 
     class TreeWidgetItem : public QTreeWidgetItem {
     public:
         explicit TreeWidgetItem(QTreeWidgetItem *parent = nullptr) : QTreeWidgetItem(parent) { }
         bool operator<(const QTreeWidgetItem & other) const {
             int column = treeWidget()->sortColumn();
+
+            if (column == COLUMN_LABEL) {
+                auto label = data(column, Qt::DisplayRole).toString();
+                auto otherlabel = other.data(column, Qt::DisplayRole).toString();
+                if (label.contains("(") && otherlabel.contains("("))
+                    return label.toStdString() < otherlabel.toStdString();
+                if (label.contains("("))
+                    return false;
+                if (otherlabel.contains("("))
+                    return true;
+                return label.toStdString() < otherlabel.toStdString();
+            }
+
             if (column == BlocknetCoinControl::COLUMN_AMOUNT || column == BlocknetCoinControl::COLUMN_CONFIRMATIONS)
                 return data(column, Qt::UserRole).toLongLong() < other.data(column, Qt::UserRole).toLongLong();
             else if (column == BlocknetCoinControl::COLUMN_DATE)
                 return data(column, Qt::UserRole).toDateTime().toMSecsSinceEpoch() < other.data(column, Qt::UserRole).toDateTime().toMSecsSinceEpoch();
+
             return QTreeWidgetItem::operator<(other);
         }
-
         int64_t camount{0};
     };
 
