@@ -1416,7 +1416,7 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
         const std::string to, const std::string toCurrency, const double makerPrice, const uint64_t minFromAmount,
-        const std::vector<wallet::UtxoEntry> utxos)
+        const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
     double repostAmount{0};
     for (const auto & utxo : utxos)
@@ -1446,7 +1446,7 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
 
     uint256 id, blockHash;
     return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, utxos,
-            usePartial, usePartial, minFromAmount, id, blockHash);
+            usePartial, usePartial, minFromAmount, id, blockHash, parentid);
 }
 
 //******************************************************************************
@@ -1476,7 +1476,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const bool repostOrder,
                                            const uint64_t partialMinimum,
                                            uint256 & id,
-                                           uint256 & blockHash)
+                                           uint256 & blockHash,
+                                           const uint256 parentid)
 {
     // search for service node
     std::set<std::string> currencies{fromCurrency, toCurrency};
@@ -1737,7 +1738,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
        << ptr->blockHash
        << outputsForUse.at(0).signature;
     id = ss.GetHash();
-    ptr->id = id;
+    ptr->id = id; // overwritten by partial order designation below
+    ptr->setParentOrder(parentid);
 
     // Create partial order utxos
     if (partialOrder) {
@@ -3796,6 +3798,84 @@ uint256 App::orderWithUtxo(const wallet::UtxoEntry & utxo) {
     return uint256();
 }
 
+std::vector<TransactionDescrPtr> App::getPartialOrderChain(const uint256 orderid) {
+    xbridge::TransactionDescrPtr rorder = nullptr;
+    std::vector<TransactionDescrPtr> orders;
+
+    // Filter local partial orders
+    TransactionMap trList = transactions();
+    for (const auto & i : trList) {
+        const auto & t = i.second;
+        if (!t->isLocal() || !t->isPartialOrderAllowed())
+            continue;
+        if (t->id == orderid)
+            rorder = t;
+        orders.push_back(t);
+    }
+
+    // Add historical partial orders
+    TransactionMap histOrders = history();
+    for (auto & item : histOrders) {
+        const auto & t = item.second;
+        if (t->isLocal() && t->isPartialOrderAllowed()) {
+            if (t->id == orderid)
+                rorder = t;
+            orders.push_back(t);
+        }
+    }
+
+    if (orders.empty() || !rorder) // If no orders then return
+        return {};
+
+    // sort ascending by utxo sizes
+    std::sort(orders.begin(), orders.end(),
+          [](const xbridge::TransactionDescrPtr & a,  const xbridge::TransactionDescrPtr & b) {
+              return (a->utxoCount()) < (b->utxoCount());
+          });
+
+    // Find the partial order chain:
+    // 1) Find all partial order children
+    // 2) Find all partial order parents
+    std::vector<xbridge::TransactionDescrPtr> orderChain{rorder};
+    for (int i = 0; i < orders.size(); ++i) {
+        auto & t = orders[i];
+        if (t == rorder) {
+            // Search orders with fewer utxos than user specified order id
+            auto currentid = t->id;
+            auto currentptr = t;
+            for (int j = i-1; j >= 0; --j) {
+                auto & ptrChild = orders[j];
+                if (ptrChild->getParentOrder() == currentid) {
+                    orderChain.insert(orderChain.begin(), ptrChild);
+                    if (ptrChild->utxoCount() < currentptr->utxoCount())
+                        currentid = currentptr->id;
+                }
+            }
+            // Search orders with more utxos than user specified order id
+            currentid = t->id;
+            currentptr = t;
+            for (int k = i+1; k < (int)orders.size(); ++k) {
+                auto & ptrParent = orders[k];
+                if (currentptr->getParentOrder() == ptrParent->id) {
+                    orderChain.insert(orderChain.end(), ptrParent);
+                    if (ptrParent->utxoCount() > currentptr->utxoCount())
+                        currentptr = ptrParent;
+                }
+            }
+            break;
+        }
+    }
+
+    // Sort ascending by created time so that the first order in the chain
+    // is displayed first.
+    std::sort(orderChain.begin(), orderChain.end(),
+          [](const xbridge::TransactionDescrPtr & a,  const xbridge::TransactionDescrPtr & b) {
+              return a->created < b->created;
+          });
+
+    return std::move(orderChain);
+}
+
 std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
 {
     UniValue log_obj(UniValue::VOBJ);
@@ -3836,6 +3916,9 @@ std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
     log_obj.pushKV("partial_allowed", tx->isPartialOrderAllowed());
     log_obj.pushKV("partial_repost", tx->isPartialRepost());
     log_obj.pushKV("partial_minimum", xbridge::xBridgeStringValueFromAmount(tx->minFromAmount));
+    log_obj.pushKV("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(tx->origFromAmount));
+    log_obj.pushKV("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(tx->origToAmount));
+    log_obj.pushKV("partial_parent_id", tx->getParentOrder().GetHex());
     log_obj.pushKV("state", tx->strState());
     log_obj.pushKV("block_hash", tx->blockHash.GetHex());
     log_obj.pushKV("updated_at", iso8601(tx->txtime));

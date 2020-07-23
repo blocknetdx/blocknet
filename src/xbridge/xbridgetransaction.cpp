@@ -641,6 +641,8 @@ std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
     log_obj.pushKV("taker_addr", (!tx->b_address().empty() && connTo ? connTo->fromXAddr(tx->b_address()) : ""));
     log_obj.pushKV("order_type", tx->orderType());
     log_obj.pushKV("partial_minimum", xbridge::xBridgeStringValueFromAmount(tx->min_partial_amount()));
+    log_obj.pushKV("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(tx->a_initial_amount()));
+    log_obj.pushKV("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(tx->b_initial_amount()));
     log_obj.pushKV("state", tx->strState());
     log_obj.pushKV("block_hash", tx->blockHash().GetHex());
     log_obj.pushKV("created_at", xbridge::iso8601(tx->createdTime()));
