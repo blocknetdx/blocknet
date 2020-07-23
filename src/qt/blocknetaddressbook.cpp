@@ -80,7 +80,7 @@ BlocknetAddressBook::BlocknetAddressBook(bool slimMode, int filter, QWidget *par
 
     auto *addAddressBtn = new BlocknetIconBtn(":/redesign/QuickActions/AddressButtonIcon.png");
 
-    addButtonLbl = new QLabel(tr("New Address"));
+    addButtonLbl = new QLabel(tr("Create New Address"));
     addButtonLbl->setObjectName("h4");
 
     filterLbl = new QLabel(tr("Filter by:"));
