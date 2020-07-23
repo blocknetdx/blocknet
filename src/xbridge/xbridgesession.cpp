@@ -3322,7 +3322,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 
     // If order is new or pending (open), then rebroadcast on another snode
     // only if our client didn't initiate the cancel.
-    if (xtx->state <= TransactionDescr::trPending && !iCanceled) {
+    if (xtx->isLocal() && xtx->state <= TransactionDescr::trPending && !iCanceled) {
         auto requireUpdateTime = boost::posix_time::second_clock::universal_time() - boost::posix_time::seconds(241);
         xtx->setUpdateTime(requireUpdateTime); // will trigger an update (240 seconds stale)
         write_log(log_obj, "cancel received, rebroadcasting order on another service node");
