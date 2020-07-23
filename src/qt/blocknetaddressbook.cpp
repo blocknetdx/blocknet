@@ -452,13 +452,15 @@ void BlocknetAddressBook::onEditAddress() {
 void BlocknetAddressBook::onDoubleClick(int row, int col) {
     if (row >= filteredData.size()) // check index
         return;
-    auto data = filteredData[row];
-    if (!slimMode) {
-        BlocknetAddressEditDialog dlg(walletModel->getAddressTableModel(), walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
-        dlg.setData(data.address, data.alias, data.type, QString());
-        dlg.exec();
-    } else {
-        Q_EMIT send(data.address);
+    auto *item = table->item(row, COLUMN_ADDRESS);
+    auto addr = item->data(Qt::DisplayRole).toString();
+    for (auto & account : filteredData) {
+        if (account.address.toStdString() == addr.toStdString()) {
+            BlocknetAddressEditDialog dlg(walletModel->getAddressTableModel(), walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
+            dlg.setData(account.address, account.alias, account.type, QString());
+            dlg.exec();
+            break;
+        }
     }
 }
 
