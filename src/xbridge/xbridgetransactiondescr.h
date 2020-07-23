@@ -151,6 +151,7 @@ struct TransactionDescr
         READWRITE(historical);
         READWRITE(logPayTx1);
         READWRITE(logPayTx2);
+        READWRITE(parentOrder);
     }
 
     void SetNull() {
@@ -221,6 +222,7 @@ struct TransactionDescr
         historical = false;
         logPayTx1 = false;
         logPayTx2 = false;
+        parentOrder.SetNull();
     }
 
     uint256                    id;
@@ -324,6 +326,8 @@ struct TransactionDescr
     // Track whether pay tx has been logged
     bool logPayTx1{false};
     bool logPayTx2{false};
+
+    uint256 parentOrder; // Parent order id of a partial order
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;
@@ -510,9 +514,31 @@ struct TransactionDescr
         txtime = t;
     }
 
+    void setParentOrder(const uint256 orderid) {
+        LOCK(_lock);
+        parentOrder = orderid;
+    }
+
+    uint256 getParentOrder() {
+        LOCK(_lock);
+        return parentOrder;
+    }
+
     std::set<wallet::UtxoEntry> utxos() {
         LOCK(_lock);
         return {usedCoins.begin(), usedCoins.end()};
+    }
+
+    std::set<wallet::UtxoEntry> origUtxos() {
+        LOCK(_lock);
+        std::set<wallet::UtxoEntry> r{usedCoins.begin(), usedCoins.end()};
+        r.insert(repostCoins.begin(), repostCoins.end());
+        return std::move(r);
+    }
+
+    int utxoCount() {
+        LOCK(_lock);
+        return usedCoins.size() + repostCoins.size();
     }
 
     const std::string refundAddress() {
@@ -710,6 +736,7 @@ private:
         historical                   = d.historical;
         logPayTx1                    = d.logPayTx1;
         logPayTx2                    = d.logPayTx2;
+        parentOrder                  = d.parentOrder;
     }
 };
 

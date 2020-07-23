@@ -1298,6 +1298,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         log_obj.pushKV("to_currency", dcurrency);
         log_obj.pushKV("to_amount", xbridge::xBridgeStringValueFromAmount(damount));
         log_obj.pushKV("partial_minimum", xbridge::xBridgeStringValueFromAmount(trPending->min_partial_amount()));
+        log_obj.pushKV("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(trPending->a_initial_amount()));
+        log_obj.pushKV("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(trPending->b_initial_amount()));
         xbridge::LogOrderMsg(log_obj, "accepting taker order request", __FUNCTION__);
     }
 
@@ -2195,7 +2197,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         try {
             const auto status = xapp.repostXBridgeTransaction(xtx->fromAddr, xtx->fromCurrency, xtx->toAddr, xtx->toCurrency,
                     xBridgeValueFromAmount(xtx->origFromAmount)/xBridgeValueFromAmount(xtx->origToAmount), xtx->minFromAmount,
-                    xtx->repostCoins);
+                    xtx->repostCoins, xtx->id);
             if (status == xbridge::INSIFFICIENT_FUNDS)
                 LogOrderMsg(xtx->id.GetHex(), "not reposting the partial order because all available utxos have been used up", __FUNCTION__);
             else if (status != xbridge::SUCCESS)

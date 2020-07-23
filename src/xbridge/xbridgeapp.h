@@ -260,7 +260,8 @@ public:
                                  bool repostOrder,
                                  uint64_t partialMinimum,
                                  uint256 & id,
-                                 uint256 & blockHash);
+                                 uint256 & blockHash,
+                                 const uint256 parentid=uint256());
 
     /**
      * @brief sendXBridgeTransaction - create new xbridge transaction and send to network
@@ -293,10 +294,11 @@ public:
      * @param makerPrice - use this price (priced in maker_size/taker_size) to determine taker size
      * @param minFromAmount - the minimum size that can be taken from maker
      * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
+     * @param parentid - Parent order id
      * @return xbridge::SUCCESS if success, else error code
      */
     Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
-            double makerPrice, uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos);
+            double makerPrice, uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid=uint256());
 
     // TODO make protected
     /**
@@ -714,6 +716,13 @@ public:
      * @return
      */
     uint256 orderWithUtxo(const wallet::UtxoEntry & utxo);
+
+    /**
+     * Returns the partial order chain for the specified order.
+     * @param orderid
+     * @return
+     */
+    std::vector<TransactionDescrPtr> getPartialOrderChain(uint256 orderid);
 
 protected:
     void clearMempool();
