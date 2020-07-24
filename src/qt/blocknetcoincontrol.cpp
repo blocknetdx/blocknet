@@ -4,8 +4,6 @@
 
 #include <qt/blocknetcoincontrol.h>
 
-#include <qt/blocknetguiutil.h>
-
 #include <qt/addresstablemodel.h>
 #include <qt/bitcoinunits.h>
 #include <qt/optionsmodel.h>
@@ -15,6 +13,7 @@
 
 #include <QApplication>
 #include <QAbstractItemView>
+#include <QButtonGroup>
 #include <QClipboard>
 #include <QHBoxLayout>
 #include <QHeaderView>
@@ -60,7 +59,7 @@ BlocknetCoinControlDialog::BlocknetCoinControlDialog(WalletModel *w, QWidget *pa
     btnBoxLayout->addStretch(1);
 
     // Manages the coin list
-    cc = new BlocknetCoinControl;
+    cc = new BlocknetCoinControl(nullptr, w);
 
     // Manages the selected coin details
     feePanel = new QFrame;
@@ -277,9 +276,11 @@ void BlocknetCoinControlDialog::updateUTXOState() {
 /**
  * @brief Manages and displays the coin control input list.
  * @param parent
+ * @param w Wallet model
  */
-BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layout(new QVBoxLayout),
-                                                           table(new QTableWidget), contextMenu(new QMenu) {
+BlocknetCoinControl::BlocknetCoinControl(QWidget *parent, WalletModel *w) : QFrame(parent), walletModel(w), layout(new QVBoxLayout),
+    table(new BlocknetTableWidget), tree(new QTreeWidget), contextMenu(new QMenu)
+{
     // this->setStyleSheet("border: 1px solid red");
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     layout->setContentsMargins(QMargins());
@@ -290,40 +291,106 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
     table->setColumnCount(COLUMN_TXVOUT + 1);
     table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::ExtendedSelection);
     table->setAlternatingRowColors(true);
-    table->setColumnWidth(COLUMN_PADDING, BGU::spi(10));
-    table->setColumnWidth(COLUMN_CHECKBOX, BGU::spi(30));
+    table->setColumnWidth(COLUMN_PADDING1, BGU::spi(1));
+    table->setColumnWidth(COLUMN_PADDING2, BGU::spi(1));
+    table->setColumnWidth(COLUMN_PADDING3, BGU::spi(1));
+    table->setColumnWidth(COLUMN_PADDING4, BGU::spi(1));
+    table->setColumnWidth(COLUMN_PADDING5, BGU::spi(1));
+    table->setColumnWidth(COLUMN_PADDING6, BGU::spi(1));
     table->setShowGrid(false);
-    table->setFocusPolicy(Qt::NoFocus);
+    table->setFocusPolicy(Qt::ClickFocus);
     table->setContextMenuPolicy(Qt::CustomContextMenu);
     table->setColumnHidden(COLUMN_TXHASH, true);
     table->setColumnHidden(COLUMN_TXVOUT, true);
     table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    table->verticalHeader()->setDefaultSectionSize(BGU::spi(60));
+    table->verticalHeader()->setDefaultSectionSize(BGU::spi(25));
     table->verticalHeader()->setVisible(false);
     table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     table->horizontalHeader()->setSortIndicatorShown(true);
     table->horizontalHeader()->setSectionsClickable(true);
     table->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING, QHeaderView::Fixed);
-    table->horizontalHeader()->setSectionResizeMode(COLUMN_CHECKBOX, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING1, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING2, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING3, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING4, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING5, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING6, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_CHECKBOX, QHeaderView::ResizeToContents);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_AMOUNT, QHeaderView::ResizeToContents);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_ADDRESS, QHeaderView::ResizeToContents);
-    table->setHorizontalHeaderLabels({ "", "", tr("Amount"), tr("Label"), tr("Address"), tr("Date"), tr("Confirmations"), tr("Priority"), "" });
+    table->setHorizontalHeaderLabels({ "", "", "", tr("Amount"), "", tr("Label"), "", tr("Address"), "", tr("Date"), "", tr("Confirmations"), "" });
+
+    // tree
+    tree->setContentsMargins(QMargins());
+    tree->setColumnCount(COLUMN_TXVOUT + 1);
+    tree->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    tree->setSelectionBehavior(QAbstractItemView::SelectRows);
+    tree->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    tree->setAlternatingRowColors(true);
+    tree->setColumnWidth(COLUMN_PADDING1, BGU::spi(1));
+    tree->setColumnWidth(COLUMN_PADDING2, BGU::spi(1));
+    tree->setColumnWidth(COLUMN_PADDING3, BGU::spi(1));
+    tree->setColumnWidth(COLUMN_PADDING4, BGU::spi(1));
+    tree->setColumnWidth(COLUMN_PADDING5, BGU::spi(1));
+    tree->setColumnWidth(COLUMN_PADDING6, BGU::spi(1));
+    tree->setFocusPolicy(Qt::ClickFocus);
+    tree->setContextMenuPolicy(Qt::CustomContextMenu);
+    tree->setColumnHidden(COLUMN_TXHASH, true);
+    tree->setColumnHidden(COLUMN_TXVOUT, true);
+    tree->header()->setDefaultAlignment(Qt::AlignLeft);
+    tree->header()->setSortIndicatorShown(true);
+    tree->header()->setSectionsClickable(true);
+    tree->header()->setSectionResizeMode(QHeaderView::Stretch);
+    tree->header()->setSectionResizeMode(COLUMN_PADDING1, QHeaderView::Fixed);
+    tree->header()->setSectionResizeMode(COLUMN_PADDING2, QHeaderView::Fixed);
+    tree->header()->setSectionResizeMode(COLUMN_PADDING3, QHeaderView::Fixed);
+    tree->header()->setSectionResizeMode(COLUMN_PADDING4, QHeaderView::Fixed);
+    tree->header()->setSectionResizeMode(COLUMN_PADDING5, QHeaderView::Fixed);
+    tree->header()->setSectionResizeMode(COLUMN_PADDING6, QHeaderView::Fixed);
+    tree->header()->setSectionResizeMode(COLUMN_CHECKBOX, QHeaderView::ResizeToContents);
+    tree->header()->setSectionResizeMode(COLUMN_AMOUNT, QHeaderView::ResizeToContents);
+    tree->header()->setSectionResizeMode(COLUMN_ADDRESS, QHeaderView::ResizeToContents);
+    tree->setUniformRowHeights(true);
+    tree->setItemDelegate(new TreeDelegate);
+    tree->setHeaderLabels({ "", "", "", tr("Amount"), "", tr("Label"), "", tr("Address"), "", tr("Date"), "", tr("Confirmations"), "" });
+
+    // Tree mode
+    auto *treeBox = new QFrame;
+    auto *treeBoxLayout = new QHBoxLayout;
+    treeBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    treeBox->setContentsMargins(QMargins());
+    treeBox->setLayout(treeBoxLayout);
+    treeBoxLayout->setSpacing(BGU::spi(20));
+    listRb = new QRadioButton(tr("List mode"));
+    treeRb = new QRadioButton(tr("Tree mode"));
+    treeBoxLayout->addStretch(1);
+    treeBoxLayout->addWidget(listRb);
+    treeBoxLayout->addWidget(treeRb);
+    treeBoxLayout->addStretch(1);
+    auto *group = new QButtonGroup;
+    group->addButton(listRb, 0);
+    group->addButton(treeRb, 1);
+    group->setExclusive(true);
 
     // context menu actions
     selectCoins = new QAction(tr("Select coins"), this);
     deselectCoins = new QAction(tr("Deselect coins"), this);
     selectCoins->setEnabled(false);
     deselectCoins->setEnabled(false);
-    auto *selectAllCoins = new QAction(tr("Select all coins"), this);
-    auto *deselectAllCoins = new QAction(tr("Deselect all coins"), this);
-    auto *copyAmountAction = new QAction(tr("Copy amount"), this);
-    auto *copyLabelAction = new QAction(tr("Copy label"), this);
-    auto *copyAddressAction = new QAction(tr("Copy address"), this);
-    auto *copyTransactionAction = new QAction(tr("Copy transaction ID"), this);
-    auto *lockAction = new QAction(tr("Lock unspent"), this);
-    auto *unlockAction = new QAction(tr("Unlock unspent"), this);
+    selectAllCoins = new QAction(tr("Select all coins"), this);
+    deselectAllCoins = new QAction(tr("Deselect all coins"), this);
+    copyAmountAction = new QAction(tr("Copy amount"), this);
+    copyLabelAction = new QAction(tr("Copy label"), this);
+    copyAddressAction = new QAction(tr("Copy address"), this);
+    copyTransactionAction = new QAction(tr("Copy transaction ID"), this);
+    lockAction = new QAction(tr("Lock unspent"), this);
+    unlockAction = new QAction(tr("Unlock unspent"), this);
+    expandAll = new QAction(tr("Expand all"), this);
+    collapseAll = new QAction(tr("Collapse all"), this);
+    expandAll->setEnabled(false);
+    collapseAll->setEnabled(false);
 
     // context menu
     contextMenu->addAction(selectCoins);
@@ -339,60 +406,103 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
     contextMenu->addSeparator();
     contextMenu->addAction(lockAction);
     contextMenu->addAction(unlockAction);
+    contextMenu->addSeparator();
+    contextMenu->addAction(expandAll);
+    contextMenu->addAction(collapseAll);
 
+    layout->addWidget(tree);
     layout->addWidget(table);
+    layout->addWidget(treeBox);
 
-    // Restore sorting preferences
-    QSettings s;
-    if (s.contains("nCoinControlSortColumn") && s.contains("nCoinControlSortOrder"))
-        table->horizontalHeader()->setSortIndicator(s.value("nCoinControlSortColumn").toInt(),
-                static_cast<Qt::SortOrder>(s.value("nCoinControlSortOrder").toInt()));
+    // By default hide the tree view
+    {
+        QSettings settings;
+        if (settings.contains("showTreeMode")) {
+            const auto b = settings.value("showTreeMode").toBool();
+            listRb->setChecked(!b);
+            treeRb->setChecked(b);
+            showTree(b);
+        } else {
+            listRb->setChecked(true);
+            treeRb->setChecked(false);
+            showTree(false);
+            settings.setValue("showTreeMode", false);
+        }
+    }
 
     connect(table, &QTableWidget::customContextMenuRequested, this, &BlocknetCoinControl::showContextMenu);
+    connect(tree, &QTableWidget::customContextMenuRequested, this, &BlocknetCoinControl::showContextMenu);
     connect(table->horizontalHeader(), &QHeaderView::sortIndicatorChanged, this, [this](int column, Qt::SortOrder order) {
         QSettings settings;
-        settings.setValue("nCoinControlSortOrder", table->horizontalHeader()->sortIndicatorOrder());
-        settings.setValue("nCoinControlSortColumn", table->horizontalHeader()->sortIndicatorSection());
+        // ignore sorting on columns less than or equal to pad2
+        if (column <= COLUMN_PADDING2 || column == COLUMN_PADDING3 || column == COLUMN_PADDING4
+            || column == COLUMN_PADDING5 || column == COLUMN_PADDING6) {
+            table->horizontalHeader()->setSortIndicator(settings.value("nCoinControlSortColumn").toInt(),
+                    static_cast<Qt::SortOrder>(settings.value("nCoinControlSortOrder").toInt()));
+            return;
+        }
+        settings.setValue("nCoinControlSortOrder", static_cast<int>(order));
+        settings.setValue("nCoinControlSortColumn", column);
+    });
+    connect(tree->header(), &QHeaderView::sortIndicatorChanged, this, [this](int column, Qt::SortOrder order) {
+        QSettings settings;
+        // ignore sorting on columns less than or equal to pad2
+        if (column <= COLUMN_PADDING2 || column == COLUMN_PADDING3 || column == COLUMN_PADDING4
+            || column == COLUMN_PADDING5 || column == COLUMN_PADDING6) {
+            tree->header()->setSortIndicator(settings.value("nCoinControlTreeSortColumn").toInt(),
+                    static_cast<Qt::SortOrder>(settings.value("nCoinControlTreeSortOrder").toInt()));
+            return;
+        }
+        settings.setValue("nCoinControlTreeSortOrder", static_cast<int>(order));
+        settings.setValue("nCoinControlTreeSortColumn", column);
+    });
+
+    // Tree mode
+    connect(group, static_cast<void(QButtonGroup::*)(int)>(&QButtonGroup::buttonClicked), this, [this](int button) {
+        const auto b = treeMode();
+        QSettings settings;
+        settings.setValue("showTreeMode", b);
+        showTree(b);
     });
 
     connect(selectCoins, &QAction::triggered, this, [this]() {
+        if (treeMode()) {
+            auto items = tree->selectedItems();
+            if (!items.empty()) {
+                unwatch();
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Checked));
+                watch();
+                Q_EMIT tableUpdated();
+            }
+            return;
+        }
+        // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto &idx : idxs) {
-                auto *item = table->item(idx.row(), idx.column());
-                if (item) {
-                    UTXO *utxo = nullptr;
-                    if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                        if (!utxo->locked) { // do not select locked coins
-                            utxo->checked = true;
-                            item->setCheckState(Qt::Checked);
-                        }
-                    }
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Checked));
             watch();
             Q_EMIT tableUpdated();
         }
     });
     connect(deselectCoins, &QAction::triggered, this, [this]() {
+        if (treeMode()) {
+            auto items = tree->selectedItems();
+            if (!items.empty()) {
+                unwatch();
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Unchecked));
+                watch();
+                Q_EMIT tableUpdated();
+            }
+            return;
+        }
+        // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto &idx : idxs) {
-                auto *item = table->item(idx.row(), idx.column());
-                if (item) {
-                    UTXO *utxo = nullptr;
-                    if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                        if (!utxo->locked) { // do not modify locked coins
-                            utxo->checked = false;
-                            item->setCheckState(Qt::Unchecked);
-                        }
-                    }
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Unchecked));
             watch();
             Q_EMIT tableUpdated();
         }
@@ -400,113 +510,104 @@ BlocknetCoinControl::BlocknetCoinControl(QWidget *parent) : QFrame(parent), layo
 
     connect(selectAllCoins, &QAction::triggered, this, [this]() {
         unwatch();
-        for (int row = 0; row < table->rowCount(); ++row) {
-            auto *item = table->item(row, COLUMN_CHECKBOX);
-            if (item) {
-                UTXO *utxo = nullptr;
-                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                    if (!utxo->locked) { // do not select locked coins
-                        utxo->checked = true;
-                        item->setCheckState(Qt::Checked);
-                    }
-                }
-            }
-        }
+        updateTableUtxos(updateTreeCheckStates(allTreeItems(), Qt::Checked));
         watch();
         Q_EMIT tableUpdated();
     });
     connect(deselectAllCoins, &QAction::triggered, this, [this]() {
         unwatch();
-        for (int row = 0; row < table->rowCount(); ++row) {
-            auto *item = table->item(row, COLUMN_CHECKBOX);
-            if (item) {
-                UTXO *utxo = nullptr;
-                if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                    if (!utxo->locked) { // do not select locked coins
-                        utxo->checked = false;
-                        item->setCheckState(Qt::Unchecked);
-                    }
-                }
-            }
-        }
+        updateTableUtxos(updateTreeCheckStates(allTreeItems(), Qt::Unchecked));
         watch();
         Q_EMIT tableUpdated();
     });
 
     connect(copyAmountAction, &QAction::triggered, this, [this]() {
-        if (contextItem) {
-            UTXO *utxo = nullptr;
-            if (utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+        UTXO *utxo = nullptr;
+        if (treeMode()) {
+            if (contextItemTr && utxoForHash(getTransactionHash(contextItemTr), getVOut(contextItemTr), utxo) && utxo != nullptr && utxo->isValid())
                 setClipboard(utxo->amount);
-        }
+        } else if (contextItem && utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+            setClipboard(utxo->amount);
     });
     connect(copyLabelAction, &QAction::triggered, this, [this]() {
-        if (contextItem) {
-            UTXO *utxo = nullptr;
-            if (utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+        UTXO *utxo = nullptr;
+        if (treeMode()) {
+            if (contextItemTr && utxoForHash(getTransactionHash(contextItemTr), getVOut(contextItemTr), utxo) && utxo != nullptr && utxo->isValid())
                 setClipboard(utxo->label);
-        }
+        } else if (contextItem && utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+            setClipboard(utxo->label);
     });
     connect(copyAddressAction, &QAction::triggered, this, [this]() {
-        if (contextItem) {
-            UTXO *utxo = nullptr;
-            if (utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+        UTXO *utxo = nullptr;
+        if (treeMode()) {
+            if (contextItemTr && utxoForHash(getTransactionHash(contextItemTr), getVOut(contextItemTr), utxo) && utxo != nullptr && utxo->isValid())
                 setClipboard(utxo->address);
-        }
+        } else if (contextItem && utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+            setClipboard(utxo->address);
     });
     connect(copyTransactionAction, &QAction::triggered, this, [this]() {
-        if (contextItem) {
-            UTXO *utxo = nullptr;
-            if (utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+        UTXO *utxo = nullptr;
+        if (treeMode()) {
+            if (contextItemTr && utxoForHash(getTransactionHash(contextItemTr), getVOut(contextItemTr), utxo) && utxo != nullptr && utxo->isValid())
                 setClipboard(utxo->transaction);
-        }
+        } else if (contextItem && utxoForHash(getTransactionHash(contextItem), getVOut(contextItem), utxo) && utxo != nullptr && utxo->isValid())
+            setClipboard(utxo->transaction);
     });
+
     connect(lockAction, &QAction::triggered, this, [this]() {
+        const bool locked{true};
+        if (treeMode()) {
+            auto items = tree->selectedItems();
+            if (!items.empty()) {
+                unwatch();
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Unchecked, &locked));
+                watch();
+                Q_EMIT tableUpdated();
+            }
+            return;
+        }
+        // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto &idx : idxs) {
-                auto *item = table->item(idx.row(), COLUMN_TXHASH);
-                if (item) {
-                    UTXO *utxo = nullptr;
-                    if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-                        utxo->locked = true;
-                        utxo->unlocked = !utxo->locked;
-                        utxo->checked = false;
-                        auto *cbItem = new QTableWidgetItem;
-                        cbItem->setIcon(QIcon(":/icons/lock_closed"));
-                        table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
-                    }
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Unchecked, &locked));
             watch();
             Q_EMIT tableUpdated();
         }
     });
     connect(unlockAction, &QAction::triggered, this, [this]() {
+        const bool locked{false};
+        if (treeMode()) {
+            auto items = tree->selectedItems();
+            if (!items.empty()) {
+                unwatch();
+                updateTableUtxos(updateTreeCheckStates(items, Qt::Unchecked, &locked));
+                watch();
+                Q_EMIT tableUpdated();
+            }
+            return;
+        }
+        // Update the list
         auto *select = table->selectionModel();
         if (select->hasSelection()) {
             unwatch();
             auto idxs = select->selectedRows(COLUMN_CHECKBOX);
-            for (auto &idx : idxs) {
-                auto *item = table->item(idx.row(), COLUMN_TXHASH);
-                if (item) {
-                    UTXO *utxo = nullptr;
-                    if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo->isValid()) {
-                        utxo->locked = false;
-                        utxo->unlocked = !utxo->locked;
-                        utxo->checked = false;
-                        auto *cbItem = new QTableWidgetItem;
-                        cbItem->setCheckState(Qt::Unchecked);
-                        table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
-                    }
-                }
-            }
+            updateTreeUtxos(updateTableCheckStates(idxs, Qt::Unchecked, &locked));
             watch();
             Q_EMIT tableUpdated();
         }
     });
+
+    connect(expandAll, &QAction::triggered, this, [this]() {
+        tree->expandAll();
+    });
+    connect(collapseAll, &QAction::triggered, this, [this]() {
+        tree->collapseAll();
+    });
+
+    table->installEventFilter(this);
+    tree->installEventFilter(this);
 }
 
 void BlocknetCoinControl::setData(ModelPtr dataModel) {
@@ -516,61 +617,111 @@ void BlocknetCoinControl::setData(ModelPtr dataModel) {
     table->clearContents();
     table->setRowCount(dataModel->data.count());
     table->setSortingEnabled(false);
+    tree->clear();
+    tree->setSortingEnabled(false);
+
+    std::map<QString, BlocknetCoinControl::TreeWidgetItem*> topLevelItems;
 
     for (int i = 0; i < dataModel->data.count(); ++i) {
         auto *d = dataModel->data[i];
 
+        // Tree top level item
+        BlocknetCoinControl::TreeWidgetItem *topLevelItemTr = nullptr;
+        if (topLevelItems.count(d->address))
+            topLevelItemTr = topLevelItems[d->address];
+        else {
+            topLevelItemTr = new BlocknetCoinControl::TreeWidgetItem;
+            topLevelItemTr->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable | Qt::ItemIsEnabled | Qt::ItemIsAutoTristate);
+            topLevelItemTr->setText(COLUMN_LABEL, d->label);
+            topLevelItemTr->setText(COLUMN_ADDRESS, d->address);
+            topLevelItemTr->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
+            topLevelItems[d->address] = topLevelItemTr;
+            tree->addTopLevelItem(topLevelItemTr);
+        }
+
+        // Current tree item
+        auto *treeItem = new BlocknetCoinControl::TreeWidgetItem(topLevelItemTr);
+
         // checkbox
         auto *cbItem = new QTableWidgetItem;
-        if (d->locked)
-            cbItem->setIcon(QIcon(":/icons/lock_closed"));
-        else cbItem->setCheckState(d->checked ? Qt::Checked : Qt::Unchecked);
+        if (d->locked) {
+            cbItem->setIcon(QIcon(":/redesign/lock_closed_white"));
+            treeItem->setIcon(COLUMN_CHECKBOX, QIcon(":/redesign/lock_closed_white"));
+        } else {
+            cbItem->setCheckState(d->checked ? Qt::Checked : Qt::Unchecked);
+            treeItem->setCheckState(COLUMN_CHECKBOX, d->checked ? Qt::Checked : Qt::Unchecked);
+        }
         table->setItem(i, COLUMN_CHECKBOX, cbItem);
 
         // amount
         auto *amountItem = new BlocknetCoinControl::NumberItem;
         amountItem->setData(Qt::DisplayRole, d->amount);
+        treeItem->setData(COLUMN_AMOUNT, Qt::DisplayRole, d->amount);
+        treeItem->setData(COLUMN_AMOUNT, Qt::UserRole, static_cast<long long>(d->camount));
         table->setItem(i, COLUMN_AMOUNT, amountItem);
+        // Add the amount to the associated top level item's total
+        topLevelItemTr->camount += d->camount;
+        topLevelItemTr->setData(COLUMN_AMOUNT, Qt::DisplayRole, BitcoinUnits::format(walletModel->getOptionsModel()->getDisplayUnit(), topLevelItemTr->camount));
+        topLevelItemTr->setData(COLUMN_AMOUNT, Qt::UserRole, static_cast<long long>(topLevelItemTr->camount));
 
         // label
-        auto *labelItem = new QTableWidgetItem;
+        auto *labelItem = new LabelItem;
         labelItem->setText(d->label);
         table->setItem(i, COLUMN_LABEL, labelItem);
+        treeItem->setText(COLUMN_LABEL, d->label);
 
         // address
         auto *addressItem = new QTableWidgetItem;
         addressItem->setText(d->address);
         table->setItem(i, COLUMN_ADDRESS, addressItem);
+        treeItem->setText(COLUMN_ADDRESS, d->address);
 
         // date
         auto *dateItem = new QTableWidgetItem;
         auto localDate = d->date.toLocalTime();
         dateItem->setData(Qt::DisplayRole, d->date);
+        treeItem->setData(COLUMN_DATE, Qt::DisplayRole, d->date);
+        treeItem->setData(COLUMN_DATE, Qt::UserRole, d->date);
         table->setItem(i, COLUMN_DATE, dateItem);
 
         // confirmations
         auto *confItem = new BlocknetCoinControl::NumberItem;
         confItem->setData(Qt::DisplayRole, QString::number(d->confirmations));
+        treeItem->setData(COLUMN_CONFIRMATIONS, Qt::DisplayRole, static_cast<int>(d->confirmations));
+        treeItem->setData(COLUMN_CONFIRMATIONS, Qt::UserRole, static_cast<int>(d->confirmations));
         table->setItem(i, COLUMN_CONFIRMATIONS, confItem);
-
-        // priority
-        auto *priorityItem = new BlocknetCoinControl::PriorityItem;
-        priorityItem->setData(PriorityItem::PriorityRole, d->priority);
-        priorityItem->setData(Qt::DisplayRole, getPriorityLabel(d->priority));
-        table->setItem(i, COLUMN_PRIORITY, priorityItem);
 
         // txhash
         auto *txhashItem = new QTableWidgetItem;
         txhashItem->setData(Qt::DisplayRole, d->transaction);
+        treeItem->setData(COLUMN_TXHASH, Qt::DisplayRole, d->transaction);
         table->setItem(i, COLUMN_TXHASH, txhashItem);
 
         // tx vout
         auto *txvoutItem = new QTableWidgetItem;
         txvoutItem->setData(Qt::DisplayRole, d->vout);
+        treeItem->setData(COLUMN_TXVOUT, Qt::DisplayRole, d->vout);
         table->setItem(i, COLUMN_TXVOUT, txvoutItem);
     }
 
     table->setSortingEnabled(true);
+    tree->setSortingEnabled(true);
+
+    // Restore sorting preferences
+    QSettings s;
+    if (s.contains("nCoinControlSortColumn") && s.contains("nCoinControlSortOrder")) {
+        table->horizontalHeader()->setSortIndicator(s.value("nCoinControlSortColumn").toInt(),
+                                                    static_cast<Qt::SortOrder>(s.value("nCoinControlSortOrder").toInt()));
+    } else {
+        table->horizontalHeader()->setSortIndicator(COLUMN_LABEL, Qt::SortOrder::AscendingOrder);
+    }
+    if (s.contains("nCoinControlTreeSortOrder") && s.contains("nCoinControlTreeSortOrder")) {
+        tree->header()->setSortIndicator(s.value("nCoinControlTreeSortOrder").toInt(),
+                                         static_cast<Qt::SortOrder>(s.value("nCoinControlTreeSortOrder").toInt()));
+    } else {
+        tree->header()->setSortIndicator(COLUMN_LABEL, Qt::SortOrder::AscendingOrder);
+    }
+
     watch();
 }
 
@@ -579,22 +730,56 @@ BlocknetCoinControl::ModelPtr BlocknetCoinControl::getData() {
 }
 
 void BlocknetCoinControl::sizeTo(const int minimumHeight, const int maximumHeight) {
-    int h = dataModel ? dataModel->data.count() * 60 : minimumHeight;
+    int h = dataModel ? dataModel->data.count() * 25 : minimumHeight;
     if (h > maximumHeight)
         h = maximumHeight;
     table->setFixedHeight(h);
 }
 
 void BlocknetCoinControl::showContextMenu(QPoint pt) {
-    auto *select = table->selectionModel();
-    selectCoins->setEnabled(select->hasSelection());
-    deselectCoins->setEnabled(select->hasSelection());
-    auto *item = table->itemAt(pt);
-    if (!item) {
+    if (treeMode()) {
+        auto *select = tree->selectionModel();
+        selectCoins->setEnabled(select->hasSelection());
+        deselectCoins->setEnabled(select->hasSelection());
+        selectAllCoins->setEnabled(select->hasSelection());
+        deselectAllCoins->setEnabled(select->hasSelection());
+        lockAction->setEnabled(select->hasSelection());
+        unlockAction->setEnabled(select->hasSelection());
+        expandAll->setEnabled(true);
+        collapseAll->setEnabled(true);
+        auto *item = tree->itemAt(pt);
+        if (!item) {
+            contextItemTr = nullptr;
+            return;
+        }
+        copyAmountAction->setEnabled(item->childCount() <= 0);
+        copyLabelAction->setEnabled(item->childCount() <= 0);
+        copyAddressAction->setEnabled(item->childCount() <= 0);
+        copyTransactionAction->setEnabled(item->childCount() <= 0);
+        contextItemTr = item;
         contextItem = nullptr;
-        return;
+    } else {
+        auto *select = table->selectionModel();
+        selectCoins->setEnabled(select->hasSelection());
+        deselectCoins->setEnabled(select->hasSelection());
+        selectAllCoins->setEnabled(select->hasSelection());
+        deselectAllCoins->setEnabled(select->hasSelection());
+        lockAction->setEnabled(select->hasSelection());
+        unlockAction->setEnabled(select->hasSelection());
+        expandAll->setEnabled(false);
+        collapseAll->setEnabled(false);
+        auto *item = table->itemAt(pt);
+        if (!item) {
+            contextItem = nullptr;
+            return;
+        }
+        copyAmountAction->setEnabled(true);
+        copyLabelAction->setEnabled(true);
+        copyAddressAction->setEnabled(true);
+        copyTransactionAction->setEnabled(true);
+        contextItem = item;
+        contextItemTr = nullptr;
     }
-    contextItem = item;
     contextMenu->exec(QCursor::pos());
 }
 
@@ -634,13 +819,21 @@ QString BlocknetCoinControl::getPriorityLabel(double dPriority) {
 }
 
 void BlocknetCoinControl::unwatch() {
+    table->blockSignals(true);
+    tree->blockSignals(true);
     table->setEnabled(false);
+    tree->setEnabled(false);
     disconnect(table, &QTableWidget::itemChanged, this, &BlocknetCoinControl::onItemChanged);
+    disconnect(tree, &QTreeWidget::itemChanged, this, &BlocknetCoinControl::onTreeItemChanged);
 }
 
 void BlocknetCoinControl::watch() {
+    table->blockSignals(false);
+    tree->blockSignals(false);
     table->setEnabled(true);
+    tree->setEnabled(true);
     connect(table, &QTableWidget::itemChanged, this, &BlocknetCoinControl::onItemChanged);
+    connect(tree, &QTreeWidget::itemChanged, this, &BlocknetCoinControl::onTreeItemChanged);
 }
 
 bool BlocknetCoinControl::utxoForHash(const QString transaction, const uint vout, UTXO *&utxo) {
@@ -661,10 +854,302 @@ uint BlocknetCoinControl::getVOut(QTableWidgetItem *item) {
     return table->item(item->row(), COLUMN_TXVOUT)->data(Qt::DisplayRole).toUInt();
 }
 
-void BlocknetCoinControl::onItemChanged(QTableWidgetItem *item) {
-    UTXO *utxo = nullptr;
-    if (utxoForHash(getTransactionHash(item), getVOut(item), utxo) && utxo != nullptr && utxo->isValid()) {
-        utxo->checked = item->checkState() == Qt::Checked;
-        Q_EMIT tableUpdated();
+QString BlocknetCoinControl::getTransactionHash(QTreeWidgetItem *item) {
+    return item->data(COLUMN_TXHASH, Qt::DisplayRole).toString();
+}
+
+uint BlocknetCoinControl::getVOut(QTreeWidgetItem *item) {
+    return item->data(COLUMN_TXVOUT, Qt::DisplayRole).toUInt();
+}
+
+bool BlocknetCoinControl::treeMode() {
+    return treeRb->isChecked();
+}
+
+void BlocknetCoinControl::showTree(bool yes) {
+    if (yes) {
+        table->setDisabled(true);
+        table->hide();
+        tree->setDisabled(false);
+        tree->show();
+        tree->setFocus(Qt::FocusReason::MouseFocusReason);
+    } else {
+        tree->setDisabled(true);
+        tree->hide();
+        table->setDisabled(false);
+        table->show();
+        table->setFocus(Qt::FocusReason::MouseFocusReason);
     }
+}
+
+BlocknetCoinControl::UTXO* BlocknetCoinControl::getTableUtxo(QTableWidgetItem *item, int row) {
+    UTXO *utxo = nullptr;
+    if (utxoForHash(getTransactionHash(item), getVOut(item), utxo)) {
+        if (!utxo->isValid())
+            utxo = nullptr;
+    }
+    return utxo;
+}
+
+BlocknetCoinControl::UTXO* BlocknetCoinControl::getTreeUtxo(QTreeWidgetItem *item) {
+    UTXO *utxo = nullptr;
+    if (utxoForHash(getTransactionHash(item), getVOut(item), utxo)) {
+        if (!utxo->isValid())
+            utxo = nullptr;
+    }
+    return utxo;
+}
+
+void BlocknetCoinControl::onItemChanged(QTableWidgetItem *item) {
+    unwatch();
+    auto idx = table->itemIndex(item);
+    UTXO *utxo = getTableUtxo(item, idx.row());
+    if (utxo && utxo->locked)
+        item->setCheckState(Qt::Unchecked);
+    else
+        updateTreeUtxos(updateTableCheckStates({idx}, item->checkState()));
+    watch();
+    Q_EMIT tableUpdated();
+}
+
+void BlocknetCoinControl::onTreeItemChanged(QTreeWidgetItem *item) {
+    if (item->checkState(COLUMN_CHECKBOX) == Qt::PartiallyChecked) // ignore indeterminate state changes
+        return;
+    unwatch();
+    UTXO *utxo = getTreeUtxo(item);
+    if (utxo && utxo->locked)
+        item->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
+    else
+        updateTableUtxos(updateTreeCheckStates({item}, item->checkState(COLUMN_CHECKBOX)));
+    watch();
+    Q_EMIT tableUpdated();
+}
+
+bool BlocknetCoinControl::eventFilter(QObject *obj, QEvent *event) {
+    if (event->type() == QEvent::KeyPress && (obj == table || obj == tree)) {
+        auto *keyEvent = dynamic_cast<QKeyEvent*>(event);
+        if (keyEvent->key() == Qt::Key_Space) {
+            if (obj == table && table->selectionModel()->hasSelection()) {
+                auto *select = table->selectionModel();
+                if (select->hasSelection()) {
+                    unwatch();
+                    QMap<std::string, UTXO*> utxos;
+                    auto idxs = select->selectedRows(COLUMN_CHECKBOX);
+                    for (auto & idx : idxs) {
+                        auto *item = table->item(idx.row(), idx.column());
+                        if (item) {
+                            UTXO *utxo = getTableUtxo(item, idx.row());
+                            if (utxo && !utxo->locked)
+                                utxos[utxo->toString()] = utxo;
+                        }
+                    }
+                    // First check if they're all selected to determine
+                    // whether to deselect. Only deselect if all utxos
+                    // are selected.
+                    bool shouldDeselect{true};
+                    for (auto & item : utxos) {
+                        if (!item->checked) {
+                            shouldDeselect = false;
+                            break;
+                        }
+                    }
+                    for (auto & item : utxos)
+                        item->checked = !shouldDeselect;
+                    // Update list
+                    for (auto & idx : idxs) {
+                        auto *item = table->item(idx.row(), idx.column());
+                        if (item)
+                            item->setCheckState(!shouldDeselect ? Qt::Checked : Qt::Unchecked);
+                    }
+                    // Update tree
+                    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+                        auto *topLevelItem = tree->topLevelItem(i);
+                        for (int j = 0; j < topLevelItem->childCount(); ++j) {
+                            auto *item = topLevelItem->child(j);
+                            auto *utxo = getTreeUtxo(item);
+                            if (utxo && utxos.count(utxo->toString()))
+                                item->setCheckState(COLUMN_CHECKBOX, utxos[utxo->toString()]->checked ? Qt::Checked : Qt::Unchecked);
+                        }
+                    }
+                    watch();
+                    table->setFocus(Qt::FocusReason::MouseFocusReason);
+                    Q_EMIT tableUpdated();
+                }
+            } else if (obj == tree && !tree->selectedItems().isEmpty()) {
+                auto items = tree->selectedItems();
+                if (!items.empty()) {
+                    unwatch();
+                    QMap<std::string, UTXO*> utxos;
+                    QList<QTreeWidgetItem*> qitems;
+                    // Update tree
+                    for (auto & item : items) {
+                        if (item->childCount() > 0) {
+                            for (int i = 0; i < item->childCount(); ++i)
+                                qitems.push_back(item->child(i));
+                        } else
+                            qitems.push_back(item);
+                    }
+                    for (auto & qitem : qitems) {
+                        UTXO *utxo = getTreeUtxo(qitem);
+                        if (utxo && !utxo->locked)
+                            utxos[utxo->toString()] = utxo;
+                    }
+                    // First check if they're all selected to determine
+                    // whether to deselect. Only deselect if all utxos
+                    // are selected.
+                    bool shouldDeselect{true};
+                    for (auto & item : utxos) {
+                        if (!item->checked) {
+                            shouldDeselect = false;
+                            break;
+                        }
+                    }
+                    for (auto & item : utxos)
+                        item->checked = !shouldDeselect;
+                    // Update tree
+                    for (auto & qitem : qitems)
+                        qitem->setCheckState(COLUMN_CHECKBOX, !shouldDeselect ? Qt::Checked : Qt::Unchecked);
+                    // Update list
+                    for (int row = 0; row < table->rowCount(); row++) {
+                        auto *item = table->item(row, COLUMN_TXHASH);
+                        auto *utxo = getTableUtxo(item, row);
+                        if (utxo && utxos.count(utxo->toString())) {
+                            item = table->item(row, COLUMN_CHECKBOX);
+                            item->setCheckState(!shouldDeselect ? Qt::Checked : Qt::Unchecked);
+                        }
+                    }
+                    watch();
+                    tree->setFocus(Qt::FocusReason::MouseFocusReason);
+                    Q_EMIT tableUpdated();
+                }
+            }
+            return true; // done
+        }
+    }
+    return QObject::eventFilter(obj, event);
+}
+
+void BlocknetCoinControl::updateTableUtxos(const QMap<std::string, UTXO*> & utxos) {
+    for (int row = 0; row < table->rowCount(); row++) {
+        auto *item = table->item(row, COLUMN_TXHASH);
+        auto *utxo = getTableUtxo(item, row);
+        if (utxo && utxos.count(utxo->toString())) {
+            auto *putxo = utxos[utxo->toString()];
+            auto *cbItem = new QTableWidgetItem;
+            if (putxo->locked) {
+                cbItem->setIcon(QIcon(":/redesign/lock_closed_white"));
+                cbItem->setFlags(cbItem->flags() ^ Qt::ItemIsEditable);
+            } else {
+                cbItem->setCheckState(putxo->checked ? Qt::Checked : Qt::Unchecked);
+                cbItem->setFlags(cbItem->flags() | Qt::ItemIsEditable);
+            }
+            table->setItem(row, COLUMN_CHECKBOX, cbItem);
+        }
+    }
+}
+
+void BlocknetCoinControl::updateTreeUtxos(const QMap<std::string, UTXO*> & utxos) {
+    for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+        auto *topLevelItem = tree->topLevelItem(i);
+        for (int j = 0; j < topLevelItem->childCount(); ++j) {
+            auto *item = topLevelItem->child(j);
+            auto *utxo = getTreeUtxo(item);
+            if (utxo && utxos.count(utxo->toString())) {
+                auto *putxo = utxos[utxo->toString()];
+                if (putxo->locked) {
+                    item->setIcon(COLUMN_CHECKBOX, QIcon(":/redesign/lock_closed_white"));
+                    item->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
+                    item->setFlags(item->flags() ^ Qt::ItemIsEditable);
+                } else {
+                    item->setIcon(COLUMN_CHECKBOX, QIcon());
+                    item->setCheckState(COLUMN_CHECKBOX, putxo->checked ? Qt::Checked : Qt::Unchecked);
+                    item->setFlags(item->flags() | Qt::ItemIsEditable);
+                }
+            }
+        }
+    }
+}
+
+QMap<std::string, BlocknetCoinControl::UTXO*> BlocknetCoinControl::updateTableCheckStates(const QList<QModelIndex> & idxs, Qt::CheckState checkState, const bool *lockState) {
+    QMap<std::string, UTXO*> utxos;
+    for (auto & idx : idxs) {
+        auto *item = table->item(idx.row(), idx.column());
+        if (item) {
+            UTXO *utxo = getTableUtxo(item, idx.row());
+            if (lockState == nullptr && utxo && !utxo->locked && utxo->isValid()) {
+                utxo->checked = checkState == Qt::Checked;
+                item->setCheckState(checkState);
+                utxos[utxo->toString()] = utxo;
+            } else if (lockState != nullptr && utxo && utxo->isValid()) { // if lock state
+                utxo->locked = *lockState;
+                utxo->unlocked = !utxo->locked;
+                utxo->checked = false;
+                auto *cbItem = new QTableWidgetItem;
+                if (utxo->locked) {
+                    cbItem->setIcon(QIcon(":/redesign/lock_closed_white"));
+                    cbItem->setFlags(cbItem->flags() ^ Qt::ItemIsEditable);
+                    walletModel->wallet().lockCoin({uint256S(utxo->transaction.toStdString()), utxo->vout});
+                } else {
+                    cbItem->setCheckState(Qt::Unchecked);
+                    cbItem->setFlags(cbItem->flags() | Qt::ItemIsEditable);
+                    walletModel->wallet().unlockCoin({uint256S(utxo->transaction.toStdString()), utxo->vout});
+                }
+                table->setItem(idx.row(), COLUMN_CHECKBOX, cbItem);
+                utxos[utxo->toString()] = utxo;
+            }
+        }
+    }
+    return utxos;
+}
+
+QMap<std::string, BlocknetCoinControl::UTXO*> BlocknetCoinControl::updateTreeCheckStates(const QList<QTreeWidgetItem*> & items, Qt::CheckState checkState, const bool *lockState) {
+    QMap<std::string, UTXO*> utxos;
+    QList<QTreeWidgetItem*> qitems;
+    for (auto & item : items) {
+        if (item->childCount() > 0) {
+            for (int i = 0; i < item->childCount(); ++i)
+                qitems.push_back(item->child(i));
+        } else
+            qitems.push_back(item);
+    }
+    for (auto & qitem : qitems) {
+        UTXO *utxo = getTreeUtxo(qitem);
+        if (lockState == nullptr && utxo && !utxo->locked && utxo->isValid()) { // non-lock state
+            utxo->checked = checkState == Qt::Checked;
+            qitem->setCheckState(COLUMN_CHECKBOX, checkState);
+            utxos[utxo->toString()] = utxo;
+        } else if (lockState != nullptr && utxo && utxo->isValid()) { // if lock state
+            utxo->locked = *lockState;
+            utxo->unlocked = !utxo->locked;
+            utxo->checked = false;
+            if (utxo->locked) {
+                qitem->setIcon(COLUMN_CHECKBOX, QIcon(":/redesign/lock_closed_white"));
+                qitem->setFlags(qitem->flags() ^ Qt::ItemIsEditable);
+                walletModel->wallet().lockCoin({uint256S(utxo->transaction.toStdString()), utxo->vout});
+            } else {
+                qitem->setIcon(COLUMN_CHECKBOX, QIcon());
+                qitem->setFlags(qitem->flags() | Qt::ItemIsEditable);
+                walletModel->wallet().unlockCoin({uint256S(utxo->transaction.toStdString()), utxo->vout});
+            }
+            qitem->setCheckState(COLUMN_CHECKBOX, Qt::Unchecked);
+            utxos[utxo->toString()] = utxo;
+        }
+    }
+    return utxos;
+}
+
+QList<QTreeWidgetItem*> BlocknetCoinControl::allTreeItems() {
+    QList<QTreeWidgetItem*> r;
+    for (int row = 0; row < tree->topLevelItemCount(); ++row) {
+        auto *topLevelItem = tree->topLevelItem(row);
+        if (!topLevelItem)
+            continue;
+        for (int childIdx = 0; childIdx < topLevelItem->childCount(); ++childIdx) {
+            auto *item = topLevelItem->child(childIdx);
+            if (!item)
+                continue;
+            r.push_back(item);
+        }
+    }
+    return r;
 }

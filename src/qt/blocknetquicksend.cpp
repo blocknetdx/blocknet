@@ -10,6 +10,7 @@
 #include <qt/blocknetsendfundsrequest.h>
 #include <qt/blocknetsendfundsutil.h>
 
+#include <qt/addresstablemodel.h>
 #include <qt/optionsmodel.h>
 #include <qt/sendcoinsdialog.h>
 
@@ -221,7 +222,8 @@ void BlocknetQuickSend::openAddressBook() {
 
 void BlocknetQuickSend::onAmountChanged() {
     BlocknetSendFundsModel model;
-    model.addRecipient(addressTi->text(), BlocknetSendFundsModel::stringToInt(amountTi->text(), displayUnit));
+    const auto addrLabel = walletModel->getAddressTableModel()->labelForAddress(addressTi->text());
+    model.addRecipient(addressTi->text(), BlocknetSendFundsModel::stringToInt(amountTi->text(), displayUnit), addrLabel);
 
     CCoinControl cc = model.getCoinControl(walletModel);
     if (!walletModel->wallet().isLocked()) { // if the wallet is unlocked, calculate exact fees
@@ -279,7 +281,8 @@ void BlocknetQuickSend::onSubmit() {
 
 WalletModel::SendCoinsReturn BlocknetQuickSend::submitFunds() {
     QList<SendCoinsRecipient> recipients;
-    recipients.push_back(SendCoinsRecipient{ addressTi->text(), QString(),
+    const auto addrLabel = walletModel->getAddressTableModel()->labelForAddress(addressTi->text());
+    recipients.push_back(SendCoinsRecipient{ addressTi->text(), addrLabel,
                                              BlocknetSendFundsModel::stringToInt(amountTi->text(), displayUnit),
                                              QString() });
     WalletModelTransaction currentTransaction(recipients);

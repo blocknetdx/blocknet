@@ -37,7 +37,7 @@ void BlocknetAddressEditDialog::accept() {
     // Edit address
     const auto dest = DecodeDestination(form->getAddress().toStdString());
     if (walletModel->wallet().getAddress(dest, nullptr, nullptr, nullptr))
-        walletModel->wallet().setAddressBook(dest, form->getAlias().toStdString(), "");
+        walletModel->wallet().setAddressBook(dest, form->getAlias().toStdString(), ""); // don't change purpose
     QDialog::accept();
 }
 

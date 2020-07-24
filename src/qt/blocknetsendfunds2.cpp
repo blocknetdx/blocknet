@@ -621,6 +621,7 @@ void BlocknetSendFunds2::onAmount(QString addr, QString amount) {
     SendCoinsRecipient recipient;
     recipient.address = addr;
     recipient.amount = newAmount;
+    recipient.label = walletModel->getAddressTableModel()->labelForAddress(addr);
     model->addRecipient(recipient);
 }
 
