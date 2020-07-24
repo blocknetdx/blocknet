@@ -30,6 +30,7 @@ KNOWN_VIOLATIONS=(
     "src/servicenode/servicenodemgr.h:.*to_lower"
     "src/xbridge/xbridgerpc.cpp:.*to_lower"
     "src/rpc/server.cpp:.*to_upper"
+    "src/rpc/server.cpp:.*to_lower"
     "src/xbridge/currency.h:.*toupper"
     "src/servicenode/servicenodemgr.h:.*trim"
     "src/xbridge/xbridgerpc.cpp:.*trim"

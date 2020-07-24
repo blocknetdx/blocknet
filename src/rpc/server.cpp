@@ -360,16 +360,20 @@ CRPCTable::CRPCTable()
     }
 }
 
-const CRPCCommand *CRPCTable::operator[](const std::string &name) const
+const CRPCCommand *CRPCTable::operator[](const std::string &pname) const
 {
+    std::string name = pname;
+    boost::to_lower(name, std::locale::classic());
     std::map<std::string, const CRPCCommand*>::const_iterator it = mapCommands.find(name);
     if (it == mapCommands.end())
         return nullptr;
     return (*it).second;
 }
 
-bool CRPCTable::appendCommand(const std::string& name, const CRPCCommand* pcmd)
+bool CRPCTable::appendCommand(const std::string& pname, const CRPCCommand* pcmd)
 {
+    std::string name = pname;
+    boost::to_lower(name, std::locale::classic());
     if (IsRPCRunning())
         return false;
 
