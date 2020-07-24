@@ -1799,6 +1799,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     UniValue log_obj(UniValue::VOBJ);
                     log_obj.pushKV("orderid", "unknown");
                     log_obj.pushKV("from_currency", connFrom->currency);
+                    log_obj.pushKV("partial_prep_tx", rawtx);
                     xbridge::LogOrderMsg(log_obj, "failed to create order, cannot create partial order utxos",
                                          __FUNCTION__);
                     return xbridge::Error::UNKNOWN_ERROR;
@@ -1811,6 +1812,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     UniValue log_obj(UniValue::VOBJ);
                     log_obj.pushKV("orderid", "unknown");
                     log_obj.pushKV("from_currency", connFrom->currency);
+                    log_obj.pushKV("partial_prep_tx", rawtx);
                     xbridge::LogOrderMsg(log_obj, "failed to create order, cannot submit partial order utxos transaction",
                                          __FUNCTION__);
                     return xbridge::Error::UNKNOWN_ERROR;
@@ -1922,6 +1924,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
         log_obj.pushKV("snode_pubkey", HexStr(pmn.getSnodePubKey()));
+        if (!ptr->partialOrderPrepTx.empty())
+            log_obj.pushKV("partial_prep_tx", ptr->partialOrderPrepTx);
         xbridge::LogOrderMsg(log_obj, "using servicenode for order", __FUNCTION__);
     }
 
