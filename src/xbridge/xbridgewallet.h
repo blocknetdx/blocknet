@@ -25,6 +25,7 @@
 //*****************************************************************************
 namespace xbridge
 {
+    CAmount xBridgeIntFromReal(double amount);
 
 //*****************************************************************************
 //*****************************************************************************
@@ -59,6 +60,10 @@ struct UtxoEntry
 
     COutPoint outpoint() const {
         return { uint256S(txId), vout };
+    }
+
+    CAmount camount() const {
+        return xBridgeIntFromReal(amount);
     }
 
     void setConfirmations(const uint32_t confs) {

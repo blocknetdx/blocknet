@@ -3188,10 +3188,10 @@ UniValue dxSplitAddress(const JSONRPCRequest& request)
         return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
 
     auto utxos = xapp.getAllLockedUtxos(token);
-    const auto sa = boost::lexical_cast<double>(splitAmount);
+    const CAmount sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    double totalSplit{0};
-    double splitInclFees{0};
+    CAmount totalSplit{0};
+    CAmount splitInclFees{0};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, utxos, std::set<COutPoint>{}, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
@@ -3204,10 +3204,10 @@ UniValue dxSplitAddress(const JSONRPCRequest& request)
     UniValue r(UniValue::VOBJ);
     r.pushKV("token", token);
     r.pushKV("include_fees", includeFees);
-    r.pushKV("split_amount_requested", splitAmount);
-    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_amount_requested", xbridge::xBridgeStringValueFromAmount(sa));
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromAmount(splitInclFees));
     r.pushKV("split_utxo_count", splitCount);
-    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromAmount(totalSplit));
     r.pushKV("txid", txid);
     r.pushKV("rawtx", showRawTx ? rawtx : "");
     return r;
@@ -3302,10 +3302,10 @@ UniValue dxSplitInputs(const JSONRPCRequest& request)
             return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "Cannot split utxo already in use: " + vout.ToString()));
     }
 
-    const auto sa = boost::lexical_cast<double>(splitAmount);
+    const CAmount sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    double totalSplit{0};
-    double splitInclFees{0};
+    CAmount totalSplit{0};
+    CAmount splitInclFees{0};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, excludedUtxos, userUtxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
@@ -3318,10 +3318,10 @@ UniValue dxSplitInputs(const JSONRPCRequest& request)
     UniValue r(UniValue::VOBJ);
     r.pushKV("token", token);
     r.pushKV("include_fees", includeFees);
-    r.pushKV("split_amount_requested", splitAmount);
-    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_amount_requested", xbridge::xBridgeStringValueFromAmount(sa));
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromAmount(splitInclFees));
     r.pushKV("split_utxo_count", splitCount);
-    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromAmount(totalSplit));
     r.pushKV("txid", txid);
     r.pushKV("rawtx", showRawTx ? rawtx : "");
     return r;
