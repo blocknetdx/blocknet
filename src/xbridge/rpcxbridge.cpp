@@ -354,7 +354,10 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
             "created_at": "2018-01-15T18:15:30.12345Z",
             "order_type": "partial",
             "partial_minimum": "10.000000",
+            "partial_orig_maker_size": "100.000000",
+            "partial_orig_taker_size": "10.500000",
             "partial_repost": false,
+            "partial_parent_id": "",
             "status": "open"
         },
         {
@@ -367,41 +370,47 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
             "created_at": "2018-01-15T18:15:30.12345Z",
             "order_type": "exact",
             "partial_minimum": "0.000000",
+            "partial_orig_maker_size": "0.000000",
+            "partial_orig_taker_size": "0.000000",
             "partial_repost": false,
+            "partial_parent_id": "",
             "status": "open"
         }
     ]
 
     Key                     | Type | Description
-    ------------------------|------|-----------------------------------------------------
-    Array                   | arr  | An array of all orders with each order having the
-                            |      | following parameters.
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
     id                      | str  | The order ID.
-    maker                   | str  | Maker trading asset; the ticker of the asset being
-                            |      | sold by the maker.
-    maker_size              | str  | Maker trading size. String is used to preserve
-                            |      | precision.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
     maker_address           | str  | Address for sending the outgoing asset.
-    taker                   | str  | Taker trading asset; the ticker of the asset being
-                            |      | sold by the taker.
-    taker_size              | str  | Taker trading size. String is used to preserve
-                            |      | precision.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
     taker_address           | str  | Address for receiving the incoming asset.
-    updated_at              | str  | ISO 8601 datetime, with microseconds, of the last
-                            |      | time the order was updated.
-    created_at              | str  | ISO 8601 datetime, with microseconds, of when the
-                            |      | order was created.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
     order_type              | str  | The order type.
-    partial_minimum         | str  | The minimum amount that can be taken. This applies
-                            |      | to `partial` order types and will show `0` on
-                            |      | `exact` order types.
-    partial_orig_maker_size | str  | The partial order original maker_size.
-    partial_orig_taker_size | str  | The partial order original taker_size.
-    partial_repost          | str  | Whether the order will be reposted or not. This
-                            |      | applies to `partial` order types and will show
-                            |      | `false` for `exact` order types.
-    partial_parent_id       | str  | The previous order id of a reposted partial order.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
     status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -712,40 +721,46 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
         "created_at": "2018-01-15T18:15:30.12345Z",
         "order_type": "exact",
         "partial_minimum": "0.000000",
+        "partial_orig_maker_size": "0.000000",
+        "partial_orig_taker_size": "0.000000",
         "partial_repost": false,
+        "partial_parent_id": "",
         "status": "open"
     }
 
     Key                     | Type | Description
-    ------------------------|------|-----------------------------------------------------
-    Array                   | arr  | An array of all orders with each order having the
-                            |      | following parameters.
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
     id                      | str  | The order ID.
-    maker                   | str  | Maker trading asset; the ticker of the asset being
-                            |      | sold by the maker.
-    maker_size              | str  | Maker trading size. String is used to preserve
-                            |      | precision.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
     maker_address           | str  | Address for sending the outgoing asset.
-    taker                   | str  | Taker trading asset; the ticker of the asset being
-                            |      | sold by the taker.
-    taker_size              | str  | Taker trading size. String is used to preserve
-                            |      | precision.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
     taker_address           | str  | Address for receiving the incoming asset.
-    updated_at              | str  | ISO 8601 datetime, with microseconds, of the last
-                            |      | time the order was updated.
-    created_at              | str  | ISO 8601 datetime, with microseconds, of when the
-                            |      | order was created.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
     order_type              | str  | The order type.
-    partial_minimum         | str  | The minimum amount that can be taken. This applies
-                            |      | to `partial` order types and will show `0` on
-                            |      | `exact` order types.
-    partial_orig_maker_size | str  | The partial order original maker_size.
-    partial_orig_taker_size | str  | The partial order original taker_size.
-    partial_repost          | str  | Whether the order will be reposted or not. This
-                            |      | applies to `partial` order types and will show
-                            |      | `false` for `exact` order types.
-    partial_parent_id       | str  | The previous order id of a reposted partial order.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
     status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -835,40 +850,46 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         "block_id": "38729344720548447445023782734923740427863289632489723984723",
         "order_type": "exact",
         "partial_minimum": "0.000000",
+        "partial_orig_maker_size": "0.000000",
+        "partial_orig_taker_size": "0.000000",
         "partial_repost": false,
+        "partial_parent_id": "",
         "status": "created"
     }
 
     Key                     | Type | Description
-    ------------------------|------|-----------------------------------------------------
-    Array                   | arr  | An array of all orders with each order having the
-                            |      | following parameters.
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
     id                      | str  | The order ID.
-    maker                   | str  | Maker trading asset; the ticker of the asset being
-                            |      | sold by the maker.
-    maker_size              | str  | Maker trading size. String is used to preserve
-                            |      | precision.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
     maker_address           | str  | Address for sending the outgoing asset.
-    taker                   | str  | Taker trading asset; the ticker of the asset being
-                            |      | sold by the taker.
-    taker_size              | str  | Taker trading size. String is used to preserve
-                            |      | precision.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
     taker_address           | str  | Address for receiving the incoming asset.
-    updated_at              | str  | ISO 8601 datetime, with microseconds, of the last
-                            |      | time the order was updated.
-    created_at              | str  | ISO 8601 datetime, with microseconds, of when the
-                            |      | order was created.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
     order_type              | str  | The order type.
-    partial_minimum         | str  | The minimum amount that can be taken. This applies
-                            |      | to `partial` order types and will show `0` on
-                            |      | `exact` order types.
-    partial_orig_maker_size | str  | The partial order original maker_size.
-    partial_orig_taker_size | str  | The partial order original taker_size.
-    partial_repost          | str  | Whether the order will be reposted or not. This
-                            |      | applies to `partial` order types and will show
-                            |      | `false` for `exact` order types.
-    partial_parent_id       | str  | The previous order id of a reposted partial order.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
     status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -2015,35 +2036,38 @@ UniValue dxGetMyOrders(const JSONRPCRequest& request)
     ]
 
     Key                     | Type | Description
-    ------------------------|------|-----------------------------------------------------
-    Array                   | arr  | An array of all orders with each order having the
-                            |      | following parameters.
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
     id                      | str  | The order ID.
-    maker                   | str  | Maker trading asset; the ticker of the asset being
-                            |      | sold by the maker.
-    maker_size              | str  | Maker trading size. String is used to preserve
-                            |      | precision.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
     maker_address           | str  | Address for sending the outgoing asset.
-    taker                   | str  | Taker trading asset; the ticker of the asset being
-                            |      | sold by the taker.
-    taker_size              | str  | Taker trading size. String is used to preserve
-                            |      | precision.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
     taker_address           | str  | Address for receiving the incoming asset.
-    updated_at              | str  | ISO 8601 datetime, with microseconds, of the last
-                            |      | time the order was updated.
-    created_at              | str  | ISO 8601 datetime, with microseconds, of when the
-                            |      | order was created.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
     order_type              | str  | The order type.
-    partial_minimum         | str  | The minimum amount that can be taken. This applies
-                            |      | to `partial` order types and will show `0` on
-                            |      | `exact` order types.
-    partial_orig_maker_size | str  | The partial order original maker_size.
-    partial_orig_taker_size | str  | The partial order original taker_size.
-    partial_repost          | str  | Whether the order will be reposted or not. This
-                            |      | applies to `partial` order types and will show
-                            |      | `false` for `exact` order types.
-    partial_parent_id       | str  | The previous order id of a reposted partial order.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
     status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -2201,35 +2225,38 @@ UniValue dxGetMyPartialOrderChain(const JSONRPCRequest& request) {
     ]
 
     Key                     | Type | Description
-    ------------------------|------|-----------------------------------------------------
-    Array                   | arr  | An array of all orders with each order having the
-                            |      | following parameters.
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
     id                      | str  | The order ID.
-    maker                   | str  | Maker trading asset; the ticker of the asset being
-                            |      | sold by the maker.
-    maker_size              | str  | Maker trading size. String is used to preserve
-                            |      | precision.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
     maker_address           | str  | Address for sending the outgoing asset.
-    taker                   | str  | Taker trading asset; the ticker of the asset being
-                            |      | sold by the taker.
-    taker_size              | str  | Taker trading size. String is used to preserve
-                            |      | precision.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
     taker_address           | str  | Address for receiving the incoming asset.
-    updated_at              | str  | ISO 8601 datetime, with microseconds, of the last
-                            |      | time the order was updated.
-    created_at              | str  | ISO 8601 datetime, with microseconds, of when the
-                            |      | order was created.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
     order_type              | str  | The order type.
-    partial_minimum         | str  | The minimum amount that can be taken. This applies
-                            |      | to `partial` order types and will show `0` on
-                            |      | `exact` order types.
-    partial_orig_maker_size | str  | The partial order original maker_size.
-    partial_orig_taker_size | str  | The partial order original taker_size.
-    partial_repost          | str  | Whether the order will be reposted or not. This
-                            |      | applies to `partial` order types and will show
-                            |      | `false` for `exact` order types.
-    partial_parent_id       | str  | The previous order id of a reposted partial order.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
     status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -2906,40 +2933,46 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         "block_id": "38729344720548447445023782734923740427863289632489723984723",
         "order_type": "partial",
         "partial_minimum": "0.200000",
+        "partial_orig_maker_size": "2.000000",
+        "partial_orig_taker_size": "0.200000",
         "partial_repost": true,
+        "partial_parent_id": "1faeba06827929f16490c61ba633522158e8d44163c47f735078eac0304c5eb6",
         "status": "created"
     }
 
     Key                     | Type | Description
-    ------------------------|------|-----------------------------------------------------
-    Array                   | arr  | An array of all orders with each order having the
-                            |      | following parameters.
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
     id                      | str  | The order ID.
-    maker                   | str  | Maker trading asset; the ticker of the asset being
-                            |      | sold by the maker.
-    maker_size              | str  | Maker trading size. String is used to preserve
-                            |      | precision.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
     maker_address           | str  | Address for sending the outgoing asset.
-    taker                   | str  | Taker trading asset; the ticker of the asset being
-                            |      | sold by the taker.
-    taker_size              | str  | Taker trading size. String is used to preserve
-                            |      | precision.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
     taker_address           | str  | Address for receiving the incoming asset.
-    updated_at              | str  | ISO 8601 datetime, with microseconds, of the last
-                            |      | time the order was updated.
-    created_at              | str  | ISO 8601 datetime, with microseconds, of when the
-                            |      | order was created.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
     order_type              | str  | The order type.
-    partial_minimum         | str  | The minimum amount that can be taken. This applies
-                            |      | to `partial` order types and will show `0` on
-                            |      | `exact` order types.
-    partial_orig_maker_size | str  | The partial order original maker_size.
-    partial_orig_taker_size | str  | The partial order original taker_size.
-    partial_repost          | str  | Whether the order will be reposted or not. This
-                            |      | applies to `partial` order types and will show
-                            |      | `false` for `exact` order types.
-    partial_parent_id       | str  | The previous order id of a reposted partial order.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
     status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
