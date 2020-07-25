@@ -199,7 +199,7 @@ std::string iso8601(const boost::posix_time::ptime &time)
     return ss.str();
 }
 
-std::string xBridgeStringValueFromAmount(uint64_t amount)
+std::string xBridgeStringValueFromAmount(CAmount amount)
 {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << xBridgeValueFromAmount(amount);
@@ -220,25 +220,24 @@ std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
     return ss.str();
 }
 
-double xBridgeValueFromAmount(uint64_t amount) {
-    return boost::numeric_cast<double>(amount) /
-            boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+double xBridgeValueFromAmount(CAmount amount) {
+    return static_cast<double>(amount)
+           / static_cast<double>(xbridge::TransactionDescr::COIN)
+           + 1.0 / static_cast<double>(::COIN * 10); // round up
 }
 
 /**
  * Does not round, but truncates because a utxo cannot pay if it's rounded up
  */
-int64_t xBridgeIntFromReal(double utxo_amount) {
+CAmount xBridgeIntFromReal(double utxo_amount) {
     double d = utxo_amount * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
-    auto r = static_cast<int64_t>(d);
+    d += 1.0 / static_cast<double>(::COIN * 10); // round up
+    auto r = static_cast<CAmount>(d);
     return r;
 }
 
-uint64_t xBridgeAmountFromReal(double val)
-{
-    double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
-    auto r = (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
-    return (uint64_t)r;
+CAmount xBridgeAmountFromReal(double val) {
+    return xBridgeIntFromReal(val);
 }
 
 bool xBridgeValidCoin(const std::string coin)

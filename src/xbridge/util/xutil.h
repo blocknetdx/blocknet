@@ -12,6 +12,7 @@
 #include <xbridge/util/xbridgeerror.h>
 #include <xbridge/xbridgedef.h>
 
+#include <amount.h>
 #include <uint256.h>
 #include <univalue.h>
 
@@ -78,12 +79,12 @@ namespace xbridge
 
     constexpr double xBridgeMaxPriceDeviation = 1.0 / 100000000.0;
     constexpr int xBridgePartialOrderMaxUtxos = 10;
-    double xBridgeValueFromAmount(uint64_t amount);
-    int64_t xBridgeIntFromReal(double val);
-    uint64_t xBridgeAmountFromReal(double val);
+    double xBridgeValueFromAmount(CAmount amount);
+    CAmount xBridgeIntFromReal(double val);
+    CAmount xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
     std::string xBridgeStringValueFromPrice(double price, uint64_t denomination);
-    std::string xBridgeStringValueFromAmount(uint64_t amount);
+    std::string xBridgeStringValueFromAmount(CAmount amount);
 
     /**
      * @brief Returns true if the input precision is supported by xbridge.

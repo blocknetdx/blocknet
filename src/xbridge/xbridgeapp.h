@@ -251,14 +251,14 @@ public:
      */
     Error sendXBridgeTransaction(const std::string & from,
                                  const std::string & fromCurrency,
-                                 const uint64_t & fromAmount,
+                                 const CAmount & fromAmount,
                                  const std::string & to,
                                  const std::string & toCurrency,
-                                 const uint64_t & toAmount,
+                                 const CAmount & toAmount,
                                  const std::vector<wallet::UtxoEntry> utxos,
                                  bool partialOrder,
                                  bool repostOrder,
-                                 uint64_t partialMinimum,
+                                 CAmount partialMinimum,
                                  uint256 & id,
                                  uint256 & blockHash,
                                  const uint256 parentid=uint256());
@@ -277,10 +277,10 @@ public:
      */
     Error sendXBridgeTransaction(const std::string & from,
                                  const std::string & fromCurrency,
-                                 const uint64_t & fromAmount,
+                                 const CAmount & fromAmount,
                                  const std::string & to,
                                  const std::string & toCurrency,
-                                 const uint64_t & toAmount,
+                                 const CAmount & toAmount,
                                  uint256 & id,
                                  uint256 & blockHash);
 
@@ -667,6 +667,7 @@ public:
      * @param requiredUtxoCount number of utxos required
      * @param requiredFeePerUtxo fees per utxo required
      * @param requiredSplitSize size of each utxo not including fee
+     * @param requiredRemainder size of the last utxo, the remainder
      * @param requiredPrepTxFees fees required to submit partial order prep tx
      * @param outputsForUse selected utxos
      * @param utxoAmount total amount of selected utxos
@@ -675,9 +676,9 @@ public:
      * @return
      */
     bool selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
-            const double requiredAmount, const int requiredUtxoCount, const double requiredFeePerUtxo,
-            const double requiredPrepTxFees, const double requiredSplitSize, std::vector<wallet::UtxoEntry> & outputsForUse,
-            double & utxoAmount, double & fees, bool & exactUtxoMatch) const;
+            const CAmount requiredAmount, const int requiredUtxoCount, const CAmount requiredFeePerUtxo,
+            const CAmount requiredPrepTxFees, const CAmount requiredSplitSize, const CAmount requiredRemainder,
+            std::vector<wallet::UtxoEntry> & outputsForUse, CAmount & utxoAmount, CAmount & fees, bool & exactUtxoMatch) const;
 
     /**
      * Unit tests: add xwallets
