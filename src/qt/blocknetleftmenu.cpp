@@ -46,6 +46,10 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     addressBook->setIcon(":/redesign/Active/AddressBookIcon.png", ":/redesign/Inactive/AddressBookIcon.png");
     addressBook->setLabel(tr("Address Book"));
 
+    accounts = new BlocknetIconLabel;
+    accounts->setIcon(":/redesign/Active/RequestFundsIcon.png", ":/redesign/Inactive/RequestFundsIcon.png");
+    accounts->setLabel(tr("Balances"));
+
     sendFunds = new BlocknetIconLabel;
     sendFunds->setIcon(":/redesign/Active/SendFundsIcon.png", ":/redesign/Inactive/SendFundsIcon.png");
     sendFunds->setLabel(tr("Send Funds"));
@@ -82,6 +86,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     group->setExclusive(false);
     group->addButton(dashboard, DASHBOARD);
     group->addButton(addressBook, ADDRESSBOOK);
+    group->addButton(accounts, ACCOUNTS);
     group->addButton(sendFunds, SEND);
 //    group->addButton(requestFunds, REQUEST);
     group->addButton(transactionHistory, HISTORY);
@@ -120,6 +125,7 @@ BlocknetLeftMenu::BlocknetLeftMenu(QFrame *parent) : QFrame(parent), layout(new 
     box2->layout()->setSpacing(BGU::spi(8));
     box2->layout()->addWidget(dashboard);
     box2->layout()->addWidget(addressBook);
+    box2->layout()->addWidget(accounts);
 
     auto *box3 = new QFrame;
     box3->setContentsMargins(padding);

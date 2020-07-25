@@ -170,6 +170,7 @@ QT_MOC_CPP += \
 if ENABLE_WALLET
 QT_MOC_CPP += \
   qt/moc_blocknetactionbtn.cpp \
+  qt/moc_blocknetaccounts.cpp \
   qt/moc_blocknetaddressbook.cpp \
   qt/moc_blocknetaddressbtn.cpp \
   qt/moc_blocknetaddressedit.cpp \
@@ -313,6 +314,7 @@ BITCOIN_QT_H = \
 # Blocknet Qt files
 BITCOIN_QT_H += \
   qt/blocknetactionbtn.h \
+  qt/blocknetaccounts.h \
   qt/blocknetaddressbook.h \
   qt/blocknetaddressbtn.h \
   qt/blocknetaddressedit.h \
@@ -554,6 +556,7 @@ BITCOIN_QT_WALLET_CPP = \
 # Blocknet wallet files
 BITCOIN_QT_WALLET_CPP += \
   qt/blocknetactionbtn.cpp \
+  qt/blocknetaccounts.cpp \
   qt/blocknetaddressbook.cpp \
   qt/blocknetaddressbtn.cpp \
   qt/blocknetaddressedit.cpp \

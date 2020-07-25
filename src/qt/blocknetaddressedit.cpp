@@ -60,8 +60,10 @@ BlocknetAddressAddDialog::BlocknetAddressAddDialog(AddressTableModel *model, Wal
     this->setWindowTitle(tr("Address Book"));
     form = new BlocknetAddressEdit(false, tr("New Address"), tr("Add Address"), this);
     CPubKey pubkey;
-    if (walletModel->wallet().getKeyFromPool(false, pubkey))
-        form->setNewAddress(CTxDestination(pubkey.GetID()));
+    if (walletModel->wallet().canGetAddresses() && walletModel->wallet().getKeyFromPool(false, pubkey))
+        form->setNewAddress(GetDestinationForKey(pubkey, OutputType::LEGACY), pubkey);
+    else
+        QMessageBox::warning(this, tr("Wallet was unable to generate a new address"), tr("Try using getnewaddress command in Tools -> Debug Console"));
     form->show();
     connect(form, &BlocknetAddressEdit::accept, this, &QDialog::accept);
     connect(form, &BlocknetAddressEdit::cancel, this, &QDialog::reject);
@@ -75,7 +77,7 @@ void BlocknetAddressAddDialog::accept() {
                 QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad private key"));
                 return false;
             }
-            return importPrivateKey(secret, form->getAlias());
+            return importPrivateKey(secret, form->getAlias(), form->getAddress());
         };
         // Request to unlock the wallet
         auto encStatus = walletModel->getEncryptionStatus();
@@ -93,24 +95,36 @@ void BlocknetAddressAddDialog::accept() {
             QDialog::accept();
             return;
         }
-    } else if (!form->getAddress().isEmpty() && IsValidDestinationString(form->getAddress().toStdString())) {
+    } else {
+        if (form->getAddress().isEmpty()) {
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Address cannot be blank"));
+            return;
+        }
+        if (!IsValidDestinationString(form->getAddress().toStdString())) {
+            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad or invalid address, please review"));
+            return;
+        }
+
         // add send or receive address
-        const auto dest = DecodeDestination(form->getAddress().toStdString());
         if (form->getType() == AddressTableModel::Send) {
-            walletModel->wallet().delAddressBook(dest);
+            const auto dest = DecodeDestination(form->getAddress().toStdString());
             walletModel->wallet().setAddressBook(dest, form->getAlias().toStdString(), "send");
         } else if (form->getType() == AddressTableModel::Receive) {
+            CTxDestination dest;
+            auto pubkey = form->getPubKey();
+            if (pubkey.IsFullyValid()) {
+                walletModel->wallet().learnRelatedScripts(pubkey, OutputType::LEGACY);
+                dest = GetDestinationForKey(pubkey, OutputType::LEGACY);
+            } else
+                dest = DecodeDestination(form->getAddress().toStdString());
             walletModel->wallet().setAddressBook(dest, form->getAlias().toStdString(), "receive");
         }
-    } else
-        model->addRow(form->getType(), form->getAlias(), form->getAddress(), model->GetDefaultAddressType());
+    }
 
     QDialog::accept();
 }
 
-bool BlocknetAddressAddDialog::importPrivateKey(CKey & key, const QString & alias) {
-    bool fRescan = true;
-
+bool BlocknetAddressAddDialog::importPrivateKey(CKey & key, const QString & alias, const QString & addr) {
     auto wallets = GetWallets();
     CWallet *pwallet = nullptr;
     for (auto & w : wallets) {
@@ -141,11 +155,6 @@ bool BlocknetAddressAddDialog::importPrivateKey(CKey & key, const QString & alia
             return false;
         }
 
-        if (fRescan && !reserver.reserve()) {
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Wallet is currently rescanning. Abort existing rescan or wait."));
-            return false;
-        }
-
         if (!key.IsValid()) {
             QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Bad private key"));
             return false;
@@ -160,12 +169,20 @@ bool BlocknetAddressAddDialog::importPrivateKey(CKey & key, const QString & alia
         {
             pwallet->MarkDirty();
 
-            // We don't know which corresponding address will be used;
-            // label all new addresses, and label existing addresses if a
-            // label was passed.
+            // Check all pubkey addresses for the one specified in the form.
+            bool found{false};
             for (const auto& dest : GetAllDestinationsForKey(pubkey)) {
-                if (!alias.isEmpty() || pwallet->mapAddressBook.count(dest) == 0)
+                if (EncodeDestination(dest) == addr.toStdString()) {
+                    found = true;
+                    pwallet->DelAddressBook(dest);
                     pwallet->SetAddressBook(dest, alias.toStdString(), "receive");
+                    break;
+                }
+            }
+
+            if (!found) {
+                QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Failed to add the key to the wallet"));
+                return false;
             }
 
             const auto vchAddress = key.GetPubKey().GetID();
@@ -182,18 +199,17 @@ bool BlocknetAddressAddDialog::importPrivateKey(CKey & key, const QString & alia
             }
 
             pwallet->LearnAllRelatedScripts(pubkey);
-        }
-    }
 
-    if (fRescan) {
-        int64_t time_begin = GetTime();
-        int64_t scanned_time = pwallet->RescanFromTime(0, reserver, true);
-        if (pwallet->IsAbortingRescan()) {
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Rescan aborted by user"));
-            return false;
-        } else if (scanned_time > time_begin) {
-            QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Rescan was unable to fully rescan the blockchain. Some transactions may be missing."));
-            return false;
+            // Prompt user about rescan
+            QMessageBox::StandardButton retval = QMessageBox::question(this->parentWidget(), tr("Rescan the wallet"),
+                                                              tr("You imported a new wallet address. Would you like to rescan the blockchain to add "
+                                                                 "coin associated with this address? If you don't rescan, you may not see all your "
+                                                                 "coin.\n\nThis may take several minutes."),
+                                                              QMessageBox::Yes | QMessageBox::No,
+                                                              QMessageBox::No);
+
+            if (retval == QMessageBox::Yes)
+                Q_EMIT rescan(pwallet->GetName());
         }
     }
 
@@ -298,6 +314,12 @@ void BlocknetAddressEdit::setData(const QString &address, const QString &alias, 
         createAddressTi->lineEdit->setText(key);
         createAddressTi->setEnabled(!otherUserBtn->isChecked());
     }
+    if (!key.isEmpty()) {
+        auto secret = DecodeSecret(key.toStdString());
+        if (secret.IsValid())
+            pubkey = secret.GetPubKey();
+    } else
+        pubkey = CPubKey();
 }
 
 QString BlocknetAddressEdit::getAddress() {
@@ -318,6 +340,15 @@ QString BlocknetAddressEdit::getType() {
     if (myAddressBtn->isChecked())
         return AddressTableModel::Receive;
     return AddressTableModel::Send;
+}
+
+CPubKey BlocknetAddressEdit::getPubKey() {
+    CTxDestination dest1 = GetDestinationForKey(pubkey, OutputType::LEGACY);
+    CTxDestination dest2 = DecodeDestination(getAddress().toStdString());
+    if (dest1 == dest2)
+        return pubkey;
+    else
+        return CPubKey();
 }
 
 void BlocknetAddressEdit::clear() {
@@ -350,8 +381,9 @@ void BlocknetAddressEdit::onPrivateKey(const QString &) {
     auto err = !secret.IsValid();
     createAddressTi->setError(err);
     if (!err) {
-        CTxDestination address(secret.GetPubKey().GetID());
-        addressTi->lineEdit->setText(QString::fromStdString(EncodeDestination(address)));
+        const auto dest = GetDestinationForKey(secret.GetPubKey(), OutputType::LEGACY);
+        pubkey = secret.GetPubKey();
+        addressTi->lineEdit->setText(QString::fromStdString(EncodeDestination(dest)));
         myAddressBtn->setChecked(true);
         otherUserBtn->setChecked(false);
         otherUserBtn->setEnabled(false);
@@ -399,9 +431,10 @@ void BlocknetAddressEdit::onOtherUser(bool checked) {
     createAddressTi->setEnabled(!otherUserBtn->isChecked());
 }
 
-bool BlocknetAddressEdit::setNewAddress(const CTxDestination & dest) {
+bool BlocknetAddressEdit::setNewAddress(const CTxDestination & dest, const CPubKey & pkey) {
     if (!IsValidDestination(dest))
         return false;
+    pubkey = pkey;
     myAddressBtn->setChecked(true);
     addressTi->lineEdit->setText(QString::fromStdString(EncodeDestination(dest)));
     return true;

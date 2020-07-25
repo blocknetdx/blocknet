@@ -199,6 +199,12 @@ BlocknetAddressBook QTableWidget::item { padding: 3px; }
 BlocknetAddressBook QTableWidget::item::selected BlocknetLabelBtn { color: white; }
 BlocknetAddressBookDialog { background-color: #172F49; }
 
+BlocknetAccounts #h4 { padding-left: 1px; }
+BlocknetAccounts #title { font-size: 11pt; color: white; font-family: "Roboto"; }
+BlocknetAccounts QTableWidget { color: white; background-color: transparent; }
+BlocknetAccounts QTableWidget QHeaderView { color: #37475C; }
+BlocknetAccounts QTableWidget::item::selected BlocknetLabelBtn { color: white; }
+
 BlocknetAddressEditDialog, BlocknetAddressAddDialog { background-color: #172F49; }
 BlocknetAddressEditDialog #h2, BlocknetAddressAddDialog #h2 { background-color: #172F49; border: 0; }
 BlocknetAddressEditDialog #readOnly:disabled, BlocknetAddressAddDialog #readOnly:disabled { color: #CCCCCC; border: 1px solid #CCCCCC; }
