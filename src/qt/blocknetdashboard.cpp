@@ -114,26 +114,47 @@ BlocknetDashboard::BlocknetDashboard(QFrame *parent) : QFrame(parent), layout(ne
     auto *recentTransactionsGridLayout = new QVBoxLayout;
     recentTransactionsGridLayout->setContentsMargins(QMargins());
     recentTransactions->setLayout(recentTransactionsGridLayout);
-    transactionsTbl = new BlocknetDashboardTable;
-    transactionsTbl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    transactionsTbl->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    transactionsTbl->setSelectionBehavior(QAbstractItemView::SelectRows);
-    transactionsTbl->setSelectionMode(QAbstractItemView::NoSelection);
-    transactionsTbl->setAlternatingRowColors(true);
-    transactionsTbl->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
-    transactionsTbl->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    transactionsTbl->setShowGrid(false);
-    transactionsTbl->setFocusPolicy(Qt::NoFocus);
-    transactionsTbl->setContextMenuPolicy(Qt::CustomContextMenu);
-    transactionsTbl->setSortingEnabled(true);
-    transactionsTbl->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    transactionsTbl->verticalHeader()->setDefaultSectionSize(BGU::spi(60));
-    transactionsTbl->verticalHeader()->setVisible(false);
-    transactionsTbl->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
-    transactionsTbl->horizontalHeader()->setSortIndicatorShown(false);
-    transactionsTbl->horizontalHeader()->setSectionsClickable(false);
-    transactionsTbl->horizontalHeader()->setVisible(false);
-    recentTransactionsGridLayout->addWidget(transactionsTbl, 1);
+    table = new QTableWidget;
+    table->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    table->setContentsMargins(QMargins());
+    table->setColumnCount(COLUMN_PADDING4 + 1);
+    table->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    table->setSelectionBehavior(QAbstractItemView::SelectRows);
+    table->setSelectionMode(QAbstractItemView::NoSelection);
+    table->setFocusPolicy(Qt::NoFocus);
+    table->setAlternatingRowColors(true);
+    table->setColumnWidth(COLUMN_PADDING1, 1);
+    table->setColumnWidth(COLUMN_PADDING2, 1);
+    table->setColumnWidth(COLUMN_PADDING3, 1);
+    table->setColumnWidth(COLUMN_PADDING4, 1);
+    table->setColumnWidth(COLUMN_STATUS, BGU::spi(3));
+    table->setColumnWidth(COLUMN_DATE, BGU::spi(60));
+    table->setColumnWidth(COLUMN_TIME, BGU::spi(72));
+    table->setShowGrid(false);
+    table->setVerticalScrollMode(QAbstractItemView::ScrollPerPixel);
+    table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    table->setContextMenuPolicy(Qt::CustomContextMenu);
+    table->setSortingEnabled(false);
+    table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
+    table->verticalHeader()->setDefaultSectionSize(BGU::spi(58));
+    table->verticalHeader()->setVisible(false);
+    table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
+    table->horizontalHeader()->setSortIndicatorShown(false);
+    table->horizontalHeader()->setSectionsClickable(false);
+    table->horizontalHeader()->setVisible(false);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING1, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING2, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING3, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING4, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_STATUS, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_DATE, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_TIME, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_TYPE, QHeaderView::ResizeToContents);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_AMOUNT, QHeaderView::ResizeToContents);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_TOADDRESS, QHeaderView::Stretch);
+    table->setItemDelegateForColumn(COLUMN_STATUS, new BlocknetDashboardCellItem);
+    table->setItemDelegateForColumn(COLUMN_DATE, new BlocknetDashboardCellItem);
+    recentTransactionsGridLayout->addWidget(table, 1);
 
     layout->addWidget(titleLbl, 0, Qt::AlignTop | Qt::AlignLeft);
     layout->addWidget(balanceLbl);
@@ -165,31 +186,105 @@ void BlocknetDashboard::setWalletModel(WalletModel *w) {
     displayUnit = walletModel->getOptionsModel()->getDisplayUnit();
     balanceChanged(walletModel->wallet().getBalances());
 
-    transactionsTbl->setWalletModel(walletModel);
-    transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetDashboardFilterProxy::DashboardStatus, QHeaderView::Fixed);
-    transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetDashboardFilterProxy::DashboardDate, QHeaderView::Fixed);
-    transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetDashboardFilterProxy::DashboardTime, QHeaderView::Fixed);
-    transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetDashboardFilterProxy::DashboardType, QHeaderView::ResizeToContents);
-    transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetDashboardFilterProxy::DashboardAmount, QHeaderView::ResizeToContents);
-    transactionsTbl->horizontalHeader()->setSectionResizeMode(BlocknetDashboardFilterProxy::DashboardToAddress, QHeaderView::Stretch);
-    transactionsTbl->setColumnWidth(BlocknetDashboardFilterProxy::DashboardStatus, BGU::spi(3));
-    transactionsTbl->setColumnWidth(BlocknetDashboardFilterProxy::DashboardDate, BGU::spi(60));
-    transactionsTbl->setColumnWidth(BlocknetDashboardFilterProxy::DashboardTime, BGU::spi(72));
+    auto *tableModel = walletModel->getTransactionTableModel();
+    filter = new BlocknetDashboardFilterProxy(walletModel->getOptionsModel(), this);
+    filter->setSourceModel(tableModel);
+    filter->setLimit(30);
+    filter->setDynamicSortFilter(true);
+    filter->setSortRole(Qt::EditRole);
+    filter->setFilterRole(Qt::EditRole);
+    filter->sort(BlocknetDashboardFilterProxy::DashboardDate, Qt::DescendingOrder);
+
+    initialize();
 
     // Watch for wallet changes
+    walletEvents(true);
+
+    connect(filter, &BlocknetDashboardFilterProxy::dataChanged, this, [this]() {
+        refreshTableData();
+    });
+}
+
+void BlocknetDashboard::initialize() {
+    if (!walletModel)
+        return;
+
+    dataModel.clear();
+
+    // Set up transaction list
+    auto *tableModel = walletModel->getTransactionTableModel();
+    for (int row = 0; row < filter->rowCount(QModelIndex()); ++row) {
+        BlocknetDashboard::DashboardTx tx;
+        updateData(row, tableModel, tx);
+        dataModel << tx;
+    }
+
+    this->setData(dataModel);
+}
+
+void BlocknetDashboard::setData(const QVector<DashboardTx> & data) {
+    walletEvents(false);
+    table->clearContents();
+    table->setRowCount(data.count());
+
+    for (int i = 0; i < data.count(); ++i) {
+        auto & d = data[i];
+        addData(i, d);
+    }
+
+    walletEvents(true);
+}
+
+void BlocknetDashboard::refreshTableData() {
+    walletEvents(false);
+    // Add new rows
+    const int filterRows = filter->rowCount(QModelIndex());
+    const int tableRows = table->rowCount();
+    if (filterRows > tableRows) {
+        table->setRowCount(filterRows);
+        for (int row = tableRows; row < filterRows; ++row) {
+            BlocknetDashboard::DashboardTx d;
+            addData(row, d);
+            dataModel << d;
+        }
+    }
+    // Update existing rows
+    for (int row = tableRows - 1; row >= 0; --row) {
+        if (filterRows < row) {
+            table->removeRow(row);
+            dataModel.removeAt(row);
+            table->setRowCount(row);
+            continue;
+        }
+        auto & d = dataModel[row];
+        updateData(row, walletModel->getTransactionTableModel(), d);
+        table->item(row, COLUMN_STATUS)->setData(Qt::EditRole, d.status);
+        table->item(row, COLUMN_DATE)->setData(Qt::DisplayRole, d.date);
+        table->item(row, COLUMN_DATE)->setData(Qt::EditRole, d.datetime);
+        table->item(row, COLUMN_TIME)->setData(Qt::DisplayRole, d.time);
+        table->item(row, COLUMN_TOADDRESS)->setData(Qt::DisplayRole, d.address);
+        table->item(row, COLUMN_TYPE)->setData(Qt::DisplayRole, d.type);
+        table->item(row, COLUMN_AMOUNT)->setData(Qt::DisplayRole, d.amount);
+        table->item(row, COLUMN_AMOUNT)->setData(Qt::ForegroundRole, d.amountColor);
+        // tooltip
+        table->item(row, COLUMN_STATUS)->setData(Qt::ToolTipRole, d.tooltip);
+        table->item(row, COLUMN_DATE)->setData(Qt::ToolTipRole, d.tooltip);
+        table->item(row, COLUMN_TIME)->setData(Qt::ToolTipRole, d.tooltip);
+        table->item(row, COLUMN_TOADDRESS)->setData(Qt::ToolTipRole, d.tooltip);
+        table->item(row, COLUMN_TYPE)->setData(Qt::ToolTipRole, d.tooltip);
+        table->item(row, COLUMN_AMOUNT)->setData(Qt::ToolTipRole, d.tooltip);
+    }
     walletEvents(true);
 }
 
 void BlocknetDashboard::showEvent(QShowEvent *event) {
     QWidget::showEvent(event);
-    walletEvents(true);
-    transactionsTbl->enter();
+    refreshTableData(); // turns on wallet events
 }
 
 void BlocknetDashboard::hideEvent(QHideEvent *event) {
     QWidget::hideEvent(event);
     walletEvents(false);
-    transactionsTbl->leave();
 }
 
 void BlocknetDashboard::balanceChanged(const interfaces::WalletBalances & balances) {
@@ -212,50 +307,90 @@ void BlocknetDashboard::updateBalance() {
 }
 
 void BlocknetDashboard::walletEvents(const bool on) {
+    table->blockSignals(true);
     if (walletModel && on) {
         connect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetDashboard::displayUnitChanged);
         displayUnitChanged(walletModel->getOptionsModel()->getDisplayUnit());
     } else if (walletModel) {
         disconnect(walletModel->getOptionsModel(), &OptionsModel::displayUnitChanged, this, &BlocknetDashboard::displayUnitChanged);
     }
+    table->blockSignals(false);
 }
 
-BlocknetDashboardTable::BlocknetDashboardTable(QWidget *parent) : QTableView(parent),
-                                                                  walletModel(nullptr) {
-}
-
-void BlocknetDashboardTable::setWalletModel(WalletModel *w) {
-    if (walletModel == w)
+void BlocknetDashboard::updateData(int row, TransactionTableModel *tableModel, DashboardTx & d) {
+    auto index = filter->index(row, 0);
+    auto sourceIndex = filter->mapToSource(index);
+    auto *rec = static_cast<TransactionRecord*>(tableModel->index(sourceIndex.row(), 0).internalPointer());
+    if (!rec)
         return;
-    walletModel = w;
 
-    if (walletModel == nullptr) {
-        setModel(nullptr);
-        return;
-    }
+    auto datetime = rec->time;
+    auto date = tableModel->formatTxDate(rec);
+    auto time = QDateTime::fromTime_t(static_cast<uint>(rec->time)).toString("h:mmap");
+    auto addr = tableModel->formatTxToAddress(rec, false);
+    if (addr.isEmpty())
+        addr = tr("n/a");
+    auto type = tableModel->formatTxType(rec);
+    auto amt = static_cast<CAmount>(rec->credit + rec->debit);
+    auto amount = BitcoinUnits::floorWithUnit(displayUnit, amt, 6, true, BitcoinUnits::separatorNever);
+    if (!rec->status.countsForBalance)
+        amount = QString("[%1]").arg(amount);
+    QColor amountColor("white");
+    if ((rec->credit + rec->debit) < 0)
+        amountColor = QColor(0xFB, 0x7F, 0x70);
+    else if ((rec->credit + rec->debit) > 0)
+        amountColor = QColor(0x4B, 0xF5, 0xC6);
+    auto tooltip = tableModel->formatTooltip(rec);
 
-    this->setItemDelegateForColumn(BlocknetDashboardFilterProxy::DashboardStatus, new BlocknetDashboardCellItem(this));
-    this->setItemDelegateForColumn(BlocknetDashboardFilterProxy::DashboardDate, new BlocknetDashboardCellItem(this));
-
-    // Set up transaction list
-    auto *filter = new BlocknetDashboardFilterProxy(walletModel->getOptionsModel(), this);
-    filter->setSourceModel(walletModel->getTransactionTableModel());
-    filter->setLimit(30);
-    filter->setDynamicSortFilter(true);
-    filter->setSortRole(Qt::EditRole);
-    filter->setFilterRole(Qt::EditRole);
-    filter->sort(BlocknetDashboardFilterProxy::DashboardDate, Qt::DescendingOrder);
-    setModel(filter);
+    d.outpoint = COutPoint(uint256S(rec->getTxHash().toStdString()), rec->getOutputIndex());
+    d.status = static_cast<int>(rec->status.status);
+    d.datetime = datetime;
+    d.date = date;
+    d.time = time;
+    d.address = addr;
+    d.type = type;
+    d.amount = amount;
+    d.amountColor = amountColor;
+    d.tooltip = tooltip;
 }
 
-void BlocknetDashboardTable::leave() {
-    this->blockSignals(true);
-    model()->blockSignals(true);
-}
-void BlocknetDashboardTable::enter() {
-    this->blockSignals(false);
-    model()->blockSignals(false);
-    setModel(model());
+void BlocknetDashboard::addData(int row, const DashboardTx & d) {
+    QColor white("white");
+
+    // color indicator
+    auto *colorItem = new QTableWidgetItem;
+    colorItem->setData(Qt::EditRole, d.status);
+    table->setItem(row, COLUMN_STATUS, colorItem);
+
+    // date
+    auto *dateItem = new QTableWidgetItem;
+    dateItem->setData(Qt::DisplayRole, d.date);
+    dateItem->setData(Qt::EditRole, d.datetime);
+    table->setItem(row, COLUMN_DATE, dateItem);
+
+    // time
+    auto *timeItem = new QTableWidgetItem;
+    timeItem->setData(Qt::DisplayRole, d.time);
+    timeItem->setData(Qt::ForegroundRole, white);
+    table->setItem(row, COLUMN_TIME, timeItem);
+
+    // address
+    auto *addressItem = new QTableWidgetItem;
+    addressItem->setData(Qt::DisplayRole, d.address);
+    addressItem->setData(Qt::ForegroundRole, white);
+    table->setItem(row, COLUMN_TOADDRESS, addressItem);
+
+    // type
+    auto *typeItem = new QTableWidgetItem;
+    typeItem->setData(Qt::DisplayRole, d.type);
+    typeItem->setData(Qt::ForegroundRole, white);
+    table->setItem(row, COLUMN_TYPE, typeItem);
+
+    // amount
+    auto *amountItem = new QTableWidgetItem;
+    amountItem->setData(Qt::DisplayRole, d.amount);
+    amountItem->setData(Qt::ForegroundRole, d.amountColor);
+    table->setItem(row, COLUMN_AMOUNT, amountItem);
 }
 
 BlocknetDashboardFilterProxy::BlocknetDashboardFilterProxy(OptionsModel *o, QObject *parent) : QSortFilterProxyModel(parent),
@@ -335,6 +470,8 @@ QVariant BlocknetDashboardFilterProxy::data(const QModelIndex &index, int role) 
                     str = QString("[%1]").arg(str);
                 return str;
             }
+            default:
+                return "";
         }
         break;
     case Qt::EditRole: // Edit role is used for sorting, so return the unformatted values
@@ -353,6 +490,8 @@ QVariant BlocknetDashboardFilterProxy::data(const QModelIndex &index, int role) 
                 return model->formatTxToAddress(rec, true);
             case DashboardAmount:
                 return static_cast<qint64>(rec->credit + rec->debit);
+            default:
+                return "";
             }
         break;
     case Qt::DecorationRole:
@@ -397,9 +536,9 @@ void BlocknetDashboardCellItem::paint(QPainter *painter, const QStyleOptionViewI
     painter->save();
 
     switch (index.column()) {
-        case BlocknetDashboardFilterProxy::DashboardStatus: {
+        case BlocknetDashboard::COLUMN_STATUS: {
             QColor color;
-            auto status = static_cast<TransactionStatus::Status>(index.data(Qt::DisplayRole).toInt());
+            auto status = static_cast<TransactionStatus::Status>(index.data(Qt::EditRole).toInt());
             switch (status) {
                 case TransactionStatus::Status::Confirmed:
                 case TransactionStatus::Status::Confirming:
@@ -423,7 +562,7 @@ void BlocknetDashboardCellItem::paint(QPainter *painter, const QStyleOptionViewI
             painter->fillRect(r, color);
             break;
         }
-        case BlocknetDashboardFilterProxy::DashboardDate: {
+        case BlocknetDashboard::COLUMN_DATE: {
             auto date = QDateTime::fromTime_t(index.data(Qt::EditRole).toULongLong());
             auto month = date.toString("MMM").toUpper();
             auto dt = date.toString("dd");
