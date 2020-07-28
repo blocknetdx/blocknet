@@ -1609,9 +1609,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             {
                 UniValue log_obj(UniValue::VOBJ);
                 log_obj.pushKV("currency", from);
-                log_obj.pushKV("partial_fees", xBridgeAmountFromReal(fees));
-                log_obj.pushKV("utxos_amount", xBridgeAmountFromReal(utxoAmount));
-                log_obj.pushKV("required_amount", xBridgeAmountFromReal(fromAmount + fees));
+                log_obj.pushKV("partial_fees", xBridgeValueFromAmount(fees));
+                log_obj.pushKV("utxos_amount", xBridgeValueFromAmount(utxoAmount));
+                log_obj.pushKV("required_amount", xBridgeValueFromAmount(fromAmount + fees));
                 log_obj.pushKV("utxo_count", (int)outputsForUse.size());
                 xbridge::LogOrderMsg(log_obj, "partial order utxo selection details for order", __FUNCTION__);
             }
