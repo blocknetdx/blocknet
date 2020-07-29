@@ -513,15 +513,20 @@ bool Transaction::tryJoin(const TransactionPtr other)
     if (m_partialAllowed)
     {
         // Taker amounts must agree with maker's asking price
-        const double makerPrice = xBridgeValueFromAmount(m_sourceAmount) / xBridgeValueFromAmount(m_destAmount);
-        const double takerPrice = xBridgeValueFromAmount(other->m_destAmount) / xBridgeValueFromAmount(other->m_sourceAmount);
-        // If maker or taker prices are 0, abort
-        // If the difference between maker and taker price is larger than max deviation, abort
-        if (makerPrice == 0 || takerPrice == 0 || fabs(makerPrice - takerPrice) > xBridgeMaxPriceDeviation) {
+        CAmount counterpartyA, counterpartyB;
+        if (m_sourceAmount >= m_destAmount) {
+            counterpartyA = m_sourceAmount / m_destAmount;
+            counterpartyB = other->m_destAmount / other->m_sourceAmount;
+        } else {
+            counterpartyA = m_destAmount / m_sourceAmount;
+            counterpartyB = other->m_sourceAmount / other->m_destAmount;
+        }
+        // Price match check (maker and taker)
+        if (counterpartyA != counterpartyB || counterpartyA - counterpartyB < 0) {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id().GetHex());
-            log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));
-            log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(makerPrice));
+            log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(xBridgeValueFromAmount(m_sourceAmount) / xBridgeValueFromAmount(m_destAmount)));
+            log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(xBridgeValueFromAmount(other->m_destAmount) / xBridgeValueFromAmount(other->m_sourceAmount)));
             xbridge::LogOrderMsg(log_obj, "taker price doesn't match maker expected price (join)", __FUNCTION__);
             return false;
         }

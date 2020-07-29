@@ -1415,14 +1415,14 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 //******************************************************************************
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
-        const std::string to, const std::string toCurrency, const double makerPrice, const uint64_t minFromAmount,
-        const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
+        const std::string to, const std::string toCurrency, const CAmount makerAmount, const CAmount takerAmount,
+        const uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
     double repostAmount{0};
     for (const auto & utxo : utxos)
         repostAmount += utxo.amount;
 
-    if (utxos.empty() || repostAmount < std::numeric_limits<double>::epsilon())
+    if (utxos.empty() || repostAmount > makerAmount)
         return xbridge::Error::INSIFFICIENT_FUNDS; // do not repost an order with insufficient funds
 
     WalletConnectorPtr connFrom = connectorByCurrency(fromCurrency);
@@ -1431,15 +1431,25 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
         WARN() << "no session for <" << (connFrom ? toCurrency : fromCurrency) << "> " << __FUNCTION__;
         return xbridge::Error::NO_SESSION;
     }
+    if (connFrom->isDustAmount(repostAmount))
+        return xbridge::Error::DUST;
 
     auto fromAmount = xBridgeAmountFromReal(repostAmount);
     const auto fee1 = xBridgeAmountFromReal(connFrom->minTxFee1(1, 3));
     const auto fee2 = xBridgeAmountFromReal(connFrom->minTxFee2(1, 1));
     fromAmount -= (fee1 + fee2) * utxos.size();
-    auto toAmount = static_cast<uint64_t>(static_cast<double>(fromAmount) / makerPrice);
     const bool usePartial = fromAmount > minFromAmount;
 
-    // Check the params
+    // To amount is calculated from the old price. Here we're doing integer
+    // division and not float division, so we change the divisor based on
+    // what the largest amount is, maker or taker amount.
+    CAmount toAmount;
+    if (makerAmount >= takerAmount)
+        toAmount = fromAmount / (makerAmount / takerAmount);
+    else
+        toAmount = fromAmount * (takerAmount / makerAmount);
+
+    // Check the params (checks for valid amount)
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
     if (statusCode != xbridge::SUCCESS)
         return statusCode;

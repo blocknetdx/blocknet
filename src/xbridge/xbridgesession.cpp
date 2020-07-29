@@ -1234,6 +1234,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             // if trJoined = send hold to client
             TransactionPtr tr = e.transaction(id);
             if (!tr->matches(id)) { // ignore no matching orders
+                trPending->setAccepting(false);
                 xbridge::LogOrderMsg(id.GetHex(), "rejecting taker order request, no order found with id", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
@@ -1241,6 +1242,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
             if (tr->state() != xbridge::Transaction::trJoined)
             {
+                trPending->setAccepting(false);
                 UniValue log_obj(UniValue::VOBJ);
                 log_obj.pushKV("orderid", tr->id().GetHex());
                 log_obj.pushKV("state", tr->state());
@@ -1256,6 +1258,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                 std::string errstr;
                 const TransactionError err = BroadcastTransaction(feeTxRef, txhash, errstr, highfee);
                 if (TransactionError::OK != err) {
+                    trPending->setAccepting(false);
                     UniValue o(UniValue::VOBJ);
                     o.pushKV("orderid", id.GetHex());
                     o.pushKV("fee_tx", HexStr(feeTx));
@@ -1285,6 +1288,9 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             reply1->sign(e.pubKey(), e.privKey());
 
             sendPacketBroadcast(reply1);
+        } else {
+            trPending->setAccepting(false);
+            sendRejectTransaction(id, crNotAccepted);
         }
     }
 
@@ -1387,13 +1393,20 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     xbridge::LogOrderMsg(id.GetHex(), "using service node " + HexStr(pksnode) + " for order", __FUNCTION__);
 
-    double makerPrice{0};
-    double takerPrice{0};
+    CAmount counterpartyA{0}, counterpartyB{0};
+    double makerPrice{0}, takerPrice{0};
 
     // Taker check that amounts match
     if (xtx->role == 'B') {
         makerPrice = xBridgeValueFromAmount(xtx->toAmount) / xBridgeValueFromAmount(xtx->fromAmount);
         takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
+        if (xtx->toAmount >= xtx->fromAmount) {
+            counterpartyA = xtx->toAmount / xtx->fromAmount;
+            counterpartyB = damount / samount;
+        } else {
+            counterpartyA = xtx->fromAmount / xtx->toAmount;
+            counterpartyB = samount / damount;
+        }
         if (samount != xtx->fromAmount) {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
@@ -1412,6 +1425,13 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     } else if (xtx->role == 'A') { // Handle taker checks
         makerPrice = xBridgeValueFromAmount(xtx->fromAmount) / xBridgeValueFromAmount(xtx->toAmount);
         takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
+        if (xtx->fromAmount >= xtx->toAmount) {
+            counterpartyA = xtx->fromAmount / xtx->toAmount;
+            counterpartyB = damount / samount;
+        } else {
+            counterpartyA = xtx->toAmount / xtx->fromAmount;
+            counterpartyB = samount / damount;
+        }
         // Taker cannot take more than maker has available
         if (damount > xtx->fromAmount) {
             UniValue log_obj(UniValue::VOBJ);
@@ -1445,10 +1465,8 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         }
     }
 
-    // Taker amounts must agree with maker's asking price
-    // If maker or taker prices are 0, abort
-    // If the difference between maker and taker price is larger than max deviation, abort
-    if (makerPrice == 0 || takerPrice == 0 || fabs(makerPrice - takerPrice) > xBridgeMaxPriceDeviation) {
+    // Price match check (maker and taker)
+    if (counterpartyA != counterpartyB || counterpartyA - counterpartyB < 0) {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
         log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));
@@ -2196,8 +2214,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     if (xtx->isPartialRepost()) {
         try {
             const auto status = xapp.repostXBridgeTransaction(xtx->fromAddr, xtx->fromCurrency, xtx->toAddr, xtx->toCurrency,
-                    xBridgeValueFromAmount(xtx->origFromAmount)/xBridgeValueFromAmount(xtx->origToAmount), xtx->minFromAmount,
-                    xtx->repostCoins, xtx->id);
+                    xtx->origFromAmount, xtx->origToAmount, xtx->minFromAmount, xtx->repostCoins, xtx->id);
             if (status == xbridge::INSIFFICIENT_FUNDS)
                 LogOrderMsg(xtx->id.GetHex(), "not reposting the partial order because all available utxos have been used up", __FUNCTION__);
             else if (status != xbridge::SUCCESS)
