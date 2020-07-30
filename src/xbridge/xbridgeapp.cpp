@@ -3817,7 +3817,8 @@ std::vector<TransactionDescrPtr> App::getPartialOrderChain(const uint256 orderid
     TransactionMap trList = transactions();
     for (const auto & i : trList) {
         const auto & t = i.second;
-        if (!t->isLocal() || !t->isPartialOrderAllowed())
+        // Associate exact orders that are child orders of partial orders
+        if (!t->isLocal() || (t->getParentOrder().IsNull() && !t->isPartialOrderAllowed()))
             continue;
         if (t->id == orderid)
             rorder = t;
@@ -3828,11 +3829,12 @@ std::vector<TransactionDescrPtr> App::getPartialOrderChain(const uint256 orderid
     TransactionMap histOrders = history();
     for (auto & item : histOrders) {
         const auto & t = item.second;
-        if (t->isLocal() && t->isPartialOrderAllowed()) {
-            if (t->id == orderid)
-                rorder = t;
-            orders.push_back(t);
-        }
+        // Associate exact orders that are child orders of partial orders
+        if (!t->isLocal() || (t->getParentOrder().IsNull() && !t->isPartialOrderAllowed()))
+            continue;
+        if (t->id == orderid)
+            rorder = t;
+        orders.push_back(t);
     }
 
     if (orders.empty() || !rorder) // If no orders then return

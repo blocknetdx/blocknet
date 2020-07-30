@@ -2425,8 +2425,8 @@ UniValue dxPartialOrderChainDetails(const JSONRPCRequest& request) {
     const auto makerAddress = connFrom ? connFrom->fromXAddr(firstOrder->from) : "";
     const auto takerAddress = connTo ? connTo->fromXAddr(firstOrder->to) : "";
     const auto partialMinimum = xbridge::xBridgeStringValueFromAmount(firstOrder->minFromAmount);
-    const auto makerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->fromAmount);
-    const auto takerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->toAmount);
+    const auto makerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->origFromAmount);
+    const auto takerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->origToAmount);
     const auto firstOrderTime = xbridge::iso8601(firstOrder->created);
     const auto lastOrderTime = xbridge::iso8601(lastOrder->txtime);
     int64_t totalSent{0}, totalReceived{0}, totalNotSent{0}, totalNotReceived{0};
