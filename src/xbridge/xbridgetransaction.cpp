@@ -512,17 +512,7 @@ bool Transaction::tryJoin(const TransactionPtr other)
 
     if (m_partialAllowed)
     {
-        // Taker amounts must agree with maker's asking price
-        CAmount counterpartyA, counterpartyB;
-        if (m_sourceAmount >= m_destAmount) {
-            counterpartyA = m_sourceAmount / m_destAmount;
-            counterpartyB = other->m_destAmount / other->m_sourceAmount;
-        } else {
-            counterpartyA = m_destAmount / m_sourceAmount;
-            counterpartyB = other->m_sourceAmount / other->m_destAmount;
-        }
-        // Price match check (maker and taker)
-        if (counterpartyA != counterpartyB || counterpartyA - counterpartyB < 0) {
+        if (!xBridgePartialOrderDriftCheck(m_sourceAmount, m_destAmount, other->m_sourceAmount, other->m_destAmount)) {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id().GetHex());
             log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(xBridgeValueFromAmount(m_sourceAmount) / xBridgeValueFromAmount(m_destAmount)));

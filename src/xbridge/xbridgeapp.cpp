@@ -1763,7 +1763,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 std::vector<xbridge::XTxIn> vins;
                 for (const auto & vin : ptr->usedCoins) {
                     // If we already have exact utxos, skip consuming those and subtract from expected total
-                    if (vin.camount() == partialMinimum + partialPerUtxoFees) {
+                    if (vin.camount() == partialMinimum + partialPerUtxoFees && partialUtxosRequiredForMinimum > 0) {
                         existingUtxos.push_back(vin);
                         partialUtxosRequiredForMinimum--;
                         partialVoutsTotal -= partialMinimum + partialPerUtxoFees;

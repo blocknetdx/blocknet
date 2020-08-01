@@ -1393,20 +1393,12 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     xbridge::LogOrderMsg(id.GetHex(), "using service node " + HexStr(pksnode) + " for order", __FUNCTION__);
 
-    CAmount counterpartyA{0}, counterpartyB{0};
     double makerPrice{0}, takerPrice{0};
-
+    bool failPriceCheck{false};
     // Taker check that amounts match
     if (xtx->role == 'B') {
         makerPrice = xBridgeValueFromAmount(xtx->toAmount) / xBridgeValueFromAmount(xtx->fromAmount);
         takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
-        if (xtx->toAmount >= xtx->fromAmount) {
-            counterpartyA = xtx->toAmount / xtx->fromAmount;
-            counterpartyB = damount / samount;
-        } else {
-            counterpartyA = xtx->fromAmount / xtx->toAmount;
-            counterpartyB = samount / damount;
-        }
         if (samount != xtx->fromAmount) {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
@@ -1422,16 +1414,12 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
             xbridge::LogOrderMsg(log_obj, "taker to amount from snode should match expected amount", __FUNCTION__);
             return true;
         }
+        // Taker's source currency is maker's dest currency. That is why
+        // toAmount and fromAmount's are flipped below
+        failPriceCheck = !xBridgePartialOrderDriftCheck(xtx->origFromAmount, xtx->origToAmount, xtx->fromAmount, xtx->toAmount);
     } else if (xtx->role == 'A') { // Handle taker checks
         makerPrice = xBridgeValueFromAmount(xtx->fromAmount) / xBridgeValueFromAmount(xtx->toAmount);
         takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
-        if (xtx->fromAmount >= xtx->toAmount) {
-            counterpartyA = xtx->fromAmount / xtx->toAmount;
-            counterpartyB = damount / samount;
-        } else {
-            counterpartyA = xtx->toAmount / xtx->fromAmount;
-            counterpartyB = samount / damount;
-        }
         // Taker cannot take more than maker has available
         if (damount > xtx->fromAmount) {
             UniValue log_obj(UniValue::VOBJ);
@@ -1463,10 +1451,12 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
                 return true;
             }
         }
+        // Maker's source currency is taker's dest currency.
+        failPriceCheck = !xBridgePartialOrderDriftCheck(xtx->fromAmount, xtx->toAmount, samount, damount);
     }
 
-    // Price match check (maker and taker)
-    if (counterpartyA != counterpartyB || counterpartyA - counterpartyB < 0) {
+    // Price match check
+    if (failPriceCheck) {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
         log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));

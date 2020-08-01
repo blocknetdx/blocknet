@@ -87,6 +87,25 @@ namespace xbridge
     std::string xBridgeStringValueFromAmount(CAmount amount);
 
     /**
+     * Return the new to amount from an original maker and taker size.
+     * @param newFromAmount
+     * @param fromAmount
+     * @param toAmount
+     * @return
+     */
+    CAmount xBridgeAmountFromPrice(const CAmount newFromAmount, const CAmount fromAmount, const CAmount toAmount);
+
+    /**
+     * Responsible for checking for an acceptable drift in partial orders.
+     * @param makerSource
+     * @param makerDest
+     * @param otherSource
+     * @param otherDest
+     * @return
+     */
+    bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmount otherSource, CAmount otherDest);
+
+    /**
      * @brief Returns true if the input precision is supported by xbridge.
      * @param coin Coin amount as string
      * @return true if valid, false if invalid

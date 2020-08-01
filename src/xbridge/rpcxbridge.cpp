@@ -1177,8 +1177,8 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
         return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__));
     }
 
-    uint64_t fromSize = txDescr->toAmount;
-    uint64_t toSize = txDescr->fromAmount;
+    CAmount fromSize = txDescr->toAmount;
+    CAmount toSize = txDescr->fromAmount;
 
     // If no amount is specified on a partial order by default use the full
     // order sizes (will result in the entire partial order being taken).
@@ -1191,8 +1191,8 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
                         xbridge::xBridgeStringValueFromAmount(txDescr->fromAmount)));
         }
         if (xbridge::xBridgeAmountFromReal(amount) < toSize) {
-            fromSize = xbridge::xBridgeAmountFromReal(amount) * xbridge::price(txDescr);
             toSize = xbridge::xBridgeAmountFromReal(amount);
+            fromSize = xbridge::xBridgeAmountFromPrice(toSize, txDescr->fromAmount, txDescr->toAmount);
         }
     } else if (amount > 0) {
         WARN() << "partial orders are not allowed for this order " << __FUNCTION__;

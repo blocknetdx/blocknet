@@ -311,6 +311,66 @@ double priceBid(const xbridge::TransactionDescrPtr ptr)
     return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
 }
 
+CAmount xBridgeAmountFromPrice(const CAmount newFromAmount, const CAmount fromAmount, const CAmount toAmount) {
+    // To amount is calculated from the old price. Here we're doing integer
+    // division and not float division, so we change the divisor based on
+    // what the largest amount is, maker or taker amount.
+    CAmount newToAmount;
+    if (fromAmount >= toAmount)
+        newToAmount = newFromAmount / (fromAmount / toAmount);
+    else
+        newToAmount = newFromAmount * (toAmount / fromAmount);
+    if (newToAmount < 1)
+        return 1;
+    return newToAmount;
+}
+
+bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmount otherSource, CAmount otherDest) {
+    bool success{true}; // error
+    // Exact order should always succeed
+    if (makerSource == otherDest && makerDest == otherSource)
+        return true;
+    // Taker amounts must agree with maker's asking price. Derive asking amounts from
+    // counterparty provided amounts. By deriving these amounts from the counterparty
+    // we can ensure price integrity.
+    const CAmount checkSourceAmount = xBridgeAmountFromPrice(makerDest, otherSource, otherDest);
+    const CAmount checkDestAmount = xBridgeAmountFromPrice(makerSource, otherDest, otherSource);
+    const CAmount checkSourceAmountOther = xBridgeAmountFromPrice(otherDest, makerSource, makerDest);
+    const CAmount checkDestAmountOther = xBridgeAmountFromPrice(otherSource, makerDest, makerSource);
+    // Price match check. The type of check changes based on whether there is a remainder when
+    // checking if the maker's total order amounts are divisible by the counterparty's partial
+    // order amounts. If the amounts are divisible then we expect an exact match. If the amounts
+    // are not divisible then we use a drift check on the smallest amount using an upper and
+    // lower bound check. This means the forgiveness could be anywhere from 100 sats to 1000 sats
+    // or more as the partially taken order sizes decrease in size.
+    if (makerSource % otherDest == 0 && makerDest % otherSource == 0) {
+        if (checkSourceAmountOther != otherSource
+            || checkDestAmountOther != otherDest
+            || checkSourceAmount != makerSource
+            || checkDestAmount != makerDest)
+            success = false;
+    } else if (checkSourceAmountOther != otherSource
+               || checkDestAmountOther != otherDest
+               || checkSourceAmount != makerSource
+               || checkDestAmount != makerDest)
+    {
+        const CAmount driftTakerSourceA = xBridgeAmountFromPrice(otherDest + 1, makerSource, makerDest);
+        const CAmount driftTakerSourceB = xBridgeAmountFromPrice(otherDest - 1, makerSource, makerDest);
+        const CAmount driftTakerSourceUpper = driftTakerSourceA > driftTakerSourceB ? driftTakerSourceA : driftTakerSourceB;
+        const CAmount driftTakerSourceLower = driftTakerSourceA < driftTakerSourceB ? driftTakerSourceA : driftTakerSourceB;
+        if (otherSource > driftTakerSourceUpper || otherSource < driftTakerSourceLower)
+            success = false;
+        const CAmount driftTakerDestA = xBridgeAmountFromPrice(otherSource + 1, makerDest, makerSource);
+        const CAmount driftTakerDestB = xBridgeAmountFromPrice(otherSource - 1, makerDest, makerSource);
+        const CAmount driftTakerDestUpper = driftTakerDestA > driftTakerDestB ? driftTakerDestA : driftTakerDestB;
+        const CAmount driftTakerDestLower = driftTakerDestA < driftTakerDestB ? driftTakerDestA : driftTakerDestB;
+        if (otherDest > driftTakerDestUpper || otherDest < driftTakerDestLower)
+            success = false;
+    }
+
+    return success;
+}
+
 json_spirit::Object makeError(const xbridge::Error statusCode, const std::string &function, const std::string &message)
 {
     Object error;
