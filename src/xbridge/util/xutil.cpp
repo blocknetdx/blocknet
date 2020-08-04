@@ -311,18 +311,28 @@ double priceBid(const xbridge::TransactionDescrPtr ptr)
     return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
 }
 
-CAmount xBridgeAmountFromPrice(const CAmount newFromAmount, const CAmount fromAmount, const CAmount toAmount) {
-    // To amount is calculated from the old price. Here we're doing integer
-    // division and not float division, so we change the divisor based on
-    // what the largest amount is, maker or taker amount.
-    CAmount newToAmount;
-    if (fromAmount >= toAmount)
-        newToAmount = newFromAmount / (fromAmount / toAmount);
-    else
-        newToAmount = newFromAmount * (toAmount / fromAmount);
-    if (newToAmount < 1)
+CAmount xBridgeDestAmountFromPrice(const CAmount counterpartySourceAmount, const CAmount sourceAmount, const CAmount destAmount) {
+    static CAmount c = 1000000;
+    const auto csa = counterpartySourceAmount * c;
+    const auto sa = sourceAmount * c;
+    const auto da = destAmount * c;
+    CAmount newDestAmount = csa * (static_cast<double>(da) / static_cast<double>(sa)) + 1;
+    newDestAmount /= c; // normalize
+    if (newDestAmount < 1)
         return 1;
-    return newToAmount;
+    return newDestAmount;
+}
+
+CAmount xBridgeSourceAmountFromPrice(const CAmount counterpartyDestAmount, const CAmount sourceAmount, const CAmount destAmount) {
+    static CAmount c = 1000000;
+    const auto cda = counterpartyDestAmount * c;
+    const auto sa = sourceAmount * c;
+    const auto da = destAmount * c;
+    CAmount newSourceAmount = cda * (static_cast<double>(sa) / static_cast<double>(da)) + 1;
+    newSourceAmount /= c; // normalize
+    if (newSourceAmount < 1)
+        return 1;
+    return newSourceAmount;
 }
 
 bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmount otherSource, CAmount otherDest) {
@@ -333,10 +343,10 @@ bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmou
     // Taker amounts must agree with maker's asking price. Derive asking amounts from
     // counterparty provided amounts. By deriving these amounts from the counterparty
     // we can ensure price integrity.
-    const CAmount checkSourceAmount = xBridgeAmountFromPrice(makerDest, otherSource, otherDest);
-    const CAmount checkDestAmount = xBridgeAmountFromPrice(makerSource, otherDest, otherSource);
-    const CAmount checkSourceAmountOther = xBridgeAmountFromPrice(otherDest, makerSource, makerDest);
-    const CAmount checkDestAmountOther = xBridgeAmountFromPrice(otherSource, makerDest, makerSource);
+    const CAmount checkSourceAmount = xBridgeSourceAmountFromPrice(makerDest, otherDest, otherSource);
+    const CAmount checkDestAmount = xBridgeDestAmountFromPrice(makerSource, otherDest, otherSource);
+    const CAmount checkSourceAmountOther = xBridgeSourceAmountFromPrice(otherDest, makerDest, makerSource);
+    const CAmount checkDestAmountOther = xBridgeDestAmountFromPrice(otherSource, makerDest, makerSource);
     // Price match check. The type of check changes based on whether there is a remainder when
     // checking if the maker's total order amounts are divisible by the counterparty's partial
     // order amounts. If the amounts are divisible then we expect an exact match. If the amounts
@@ -354,14 +364,14 @@ bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmou
                || checkSourceAmount != makerSource
                || checkDestAmount != makerDest)
     {
-        const CAmount driftTakerSourceA = xBridgeAmountFromPrice(otherDest + 1, makerSource, makerDest);
-        const CAmount driftTakerSourceB = xBridgeAmountFromPrice(otherDest - 1, makerSource, makerDest);
+        const CAmount driftTakerSourceA = xBridgeSourceAmountFromPrice(otherDest + 1, makerDest, makerSource);
+        const CAmount driftTakerSourceB = xBridgeSourceAmountFromPrice(otherDest - 1, makerDest, makerSource);
         const CAmount driftTakerSourceUpper = driftTakerSourceA > driftTakerSourceB ? driftTakerSourceA : driftTakerSourceB;
         const CAmount driftTakerSourceLower = driftTakerSourceA < driftTakerSourceB ? driftTakerSourceA : driftTakerSourceB;
         if (otherSource > driftTakerSourceUpper || otherSource < driftTakerSourceLower)
             success = false;
-        const CAmount driftTakerDestA = xBridgeAmountFromPrice(otherSource + 1, makerDest, makerSource);
-        const CAmount driftTakerDestB = xBridgeAmountFromPrice(otherSource - 1, makerDest, makerSource);
+        const CAmount driftTakerDestA = xBridgeDestAmountFromPrice(otherSource + 1, makerDest, makerSource);
+        const CAmount driftTakerDestB = xBridgeDestAmountFromPrice(otherSource - 1, makerDest, makerSource);
         const CAmount driftTakerDestUpper = driftTakerDestA > driftTakerDestB ? driftTakerDestA : driftTakerDestB;
         const CAmount driftTakerDestLower = driftTakerDestA < driftTakerDestB ? driftTakerDestA : driftTakerDestB;
         if (otherDest > driftTakerDestUpper || otherDest < driftTakerDestLower)

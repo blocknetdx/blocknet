@@ -1958,16 +1958,19 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return true;
     }
 
-    double outAmount = xBridgeValueFromAmount(xtx->fromAmount);
+    const double outAmount = xBridgeValueFromAmount(xtx->fromAmount);
+    const CAmount coutAmount = xtx->fromAmount;
 
-    double fee1      = 0;
-    double fee2      = connFrom->minTxFee2(1, 1);
-    double inAmount  = 0;
+    double inAmount = 0;
+    CAmount cfee1{0};
+    CAmount cfee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
+    CAmount cinAmount = xBridgeIntFromReal(inAmount);
+    CAmount coutAmountPlusFees{0};
 
     std::vector<wallet::UtxoEntry> usedInTx;
     for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) {
         // if we have enough utxos, skip
-        if (inAmount >= outAmount+fee1+fee2) {
+        if (inAmount >= xBridgeValueFromAmount(coutAmountPlusFees)) {
             if (!xtx->isPartialOrderAllowed())
                 break; // if not partial order, done
             // If this is a partial order store unused utxos for eventual repost
@@ -1981,17 +1984,22 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         }
         usedInTx.push_back(*it);
         inAmount += it->amount;
-        fee1 = connFrom->minTxFee1(usedInTx.size(), 3);
+        cinAmount = xBridgeIntFromReal(inAmount);
+        cfee1 = xBridgeIntFromReal(connFrom->minTxFee1(usedInTx.size(), 3));
+        coutAmountPlusFees = coutAmount+cfee1+cfee2;
         ++it;
     }
+
+    const double fee1 = xBridgeValueFromAmount(cfee1);
+    const double fee2 = xBridgeValueFromAmount(cfee2);
 
     {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());
-        log_obj.pushKV("fee1", fee1);
-        log_obj.pushKV("fee2", fee2);
+        log_obj.pushKV("fee1", xBridgeValueFromAmount(cfee1));
+        log_obj.pushKV("fee2", xBridgeValueFromAmount(cfee2));
         log_obj.pushKV("in_amount", inAmount);
-        log_obj.pushKV("out_amount", outAmount + fee1 + fee2);
+        log_obj.pushKV("out_amount", xBridgeValueFromAmount(coutAmountPlusFees));
         UniValue log_utxos(UniValue::VARR);
         for (const auto & entry : usedInTx) {
             UniValue log_utxo(UniValue::VOBJ);
@@ -2005,13 +2013,13 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     }
 
     // check amount
-    if (inAmount < outAmount+fee1+fee2)
+    if (inAmount < xBridgeValueFromAmount(coutAmountPlusFees))
     {
         // no money, cancel transaction
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());
         log_obj.pushKV("in_amount", inAmount);
-        log_obj.pushKV("out_amount", outAmount+fee1+fee2);
+        log_obj.pushKV("out_amount", xBridgeValueFromAmount(coutAmountPlusFees));
         LogOrderMsg(log_obj, "insufficient funds for order: expecting in amount to be >= out amount, canceling", __FUNCTION__);
         sendCancelTransaction(xtx, crNoMoney);
         return true;

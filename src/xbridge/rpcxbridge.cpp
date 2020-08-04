@@ -1192,7 +1192,7 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
         }
         if (xbridge::xBridgeAmountFromReal(amount) < toSize) {
             toSize = xbridge::xBridgeAmountFromReal(amount);
-            fromSize = xbridge::xBridgeAmountFromPrice(toSize, txDescr->fromAmount, txDescr->toAmount);
+            fromSize = xbridge::xBridgeSourceAmountFromPrice(toSize, txDescr->toAmount, txDescr->fromAmount);
         }
     } else if (amount > 0) {
         WARN() << "partial orders are not allowed for this order " << __FUNCTION__;

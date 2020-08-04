@@ -87,13 +87,21 @@ namespace xbridge
     std::string xBridgeStringValueFromAmount(CAmount amount);
 
     /**
-     * Return the new to amount from an original maker and taker size.
-     * @param newFromAmount
-     * @param fromAmount
-     * @param toAmount
+     * Return the counterparty destination amount from maker/taker price.
+     * @param counterpartySourceAmount
+     * @param sourceAmount
+     * @param destAmount
      * @return
      */
-    CAmount xBridgeAmountFromPrice(const CAmount newFromAmount, const CAmount fromAmount, const CAmount toAmount);
+    CAmount xBridgeDestAmountFromPrice(const CAmount counterpartySourceAmount, const CAmount sourceAmount, const CAmount destAmount);
+    /**
+     * Return the counterparty source amount from maker/taker price.
+     * @param counterpartyDestAmount
+     * @param sourceAmount
+     * @param destAmount
+     * @return
+     */
+    CAmount xBridgeSourceAmountFromPrice(const CAmount counterpartyDestAmount, const CAmount sourceAmount, const CAmount destAmount);
 
     /**
      * Responsible for checking for an acceptable drift in partial orders.

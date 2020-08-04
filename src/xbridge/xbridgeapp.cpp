@@ -1434,29 +1434,23 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
     if (connFrom->isDustAmount(repostAmount))
         return xbridge::Error::DUST;
 
-    auto fromAmount = xBridgeAmountFromReal(repostAmount);
+    auto newRepostAmount = xBridgeAmountFromReal(repostAmount);
     const auto fee1 = xBridgeAmountFromReal(connFrom->minTxFee1(1, 3));
     const auto fee2 = xBridgeAmountFromReal(connFrom->minTxFee2(1, 1));
-    fromAmount -= (fee1 + fee2) * utxos.size();
-    const bool usePartial = fromAmount > minFromAmount;
+    newRepostAmount -= (fee1 + fee2) * utxos.size();
+    const bool usePartial = newRepostAmount > minFromAmount;
 
-    // To amount is calculated from the old price. Here we're doing integer
-    // division and not float division, so we change the divisor based on
-    // what the largest amount is, maker or taker amount.
-    CAmount toAmount;
-    if (makerAmount >= takerAmount)
-        toAmount = fromAmount / (makerAmount / takerAmount);
-    else
-        toAmount = fromAmount * (takerAmount / makerAmount);
+    // Calculate new to amount (destination amount).
+    const CAmount toAmount = xBridgeDestAmountFromPrice(newRepostAmount, makerAmount, takerAmount);
 
     // Check the params (checks for valid amount)
-    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, fromAmount, from);
+    const auto statusCode = checkCreateParams(fromCurrency, toCurrency, newRepostAmount, from);
     if (statusCode != xbridge::SUCCESS)
         return statusCode;
 
     uint256 id, blockHash;
-    return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, utxos,
-            usePartial, usePartial, minFromAmount, id, blockHash, parentid);
+    return sendXBridgeTransaction(from, fromCurrency, newRepostAmount, to, toCurrency, toAmount, utxos,
+                                  usePartial, usePartial, minFromAmount, id, blockHash, parentid);
 }
 
 //******************************************************************************
