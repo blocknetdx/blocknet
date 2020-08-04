@@ -52,6 +52,12 @@ UniValue uret(const json_spirit::Value & o) {
     return uv;
 }
 
+std::string parseParentId(const uint256 & parentId) {
+    if (parentId.IsNull())
+        return "";
+    return parentId.GetHex();
+}
+
 /**
  * @brief TxOutToCurrencyPair inspects a CTxOut and returns currency pair transaction info
  * @param tx.vout - transaction outpoints with possible multisig/op_return
@@ -348,7 +354,10 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
             "created_at": "2018-01-15T18:15:30.12345Z",
             "order_type": "partial",
             "partial_minimum": "10.000000",
+            "partial_orig_maker_size": "100.000000",
+            "partial_orig_taker_size": "10.500000",
             "partial_repost": false,
+            "partial_parent_id": "",
             "status": "open"
         },
         {
@@ -361,36 +370,47 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
             "created_at": "2018-01-15T18:15:30.12345Z",
             "order_type": "exact",
             "partial_minimum": "0.000000",
+            "partial_orig_maker_size": "0.000000",
+            "partial_orig_taker_size": "0.000000",
             "partial_repost": false,
+            "partial_parent_id": "",
             "status": "open"
         }
     ]
 
-    Key             | Type | Description
-    ----------------|------|-----------------------------------------------------
-    Array           | arr  | An array of all orders with each order having the
-                    |      | following parameters.
-    id              | str  | The order ID.
-    maker           | str  | Maker trading asset; the ticker of the asset being
-                    |      | sold by the maker.
-    maker_size      | str  | Maker trading size. String is used to preserve
-                    |      | precision.
-    taker           | str  | Taker trading asset; the ticker of the asset being
-                    |      | sold by the taker.
-    taker_size      | str  | Taker trading size. String is used to preserve
-                    |      | precision.
-    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
-                    |      | time the order was updated.
-    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
-                    |      | order was created.
-    order_type      | str  | The order type.
-    partial_minimum | str  | The minimum amount that can be taken. This applies
-                    |      | to `partial` order types and will show `0` on `
-                    |      | exact` order types.
-    partial_repost  | str  | Whether the order will be reposted or not. This
-                    |      | applies to `partial` order types and will show
-                    |      | `false` if you are not the maker of this order.
-    status          | str  | The order status.
+    Key                     | Type | Description
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
+    id                      | str  | The order ID.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
+    maker_address           | str  | Address for sending the outgoing asset.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
+    taker_address           | str  | Address for receiving the incoming asset.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
+    order_type              | str  | The order type.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
+    status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -438,7 +458,10 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
         jtr.emplace_back(Pair("created_at",     xbridge::iso8601(tr->created)));
         jtr.emplace_back(Pair("order_type",     tr->orderType()));
         jtr.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(tr->minFromAmount)));
+        jtr.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(tr->origFromAmount)));
+        jtr.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(tr->origToAmount)));
         jtr.emplace_back(Pair("partial_repost", tr->repostOrder));
+        jtr.emplace_back(Pair("partial_parent_id", parseParentId(tr->getParentOrder())));
         jtr.emplace_back(Pair("status",         tr->strState()));
         result.emplace_back(jtr);
 
@@ -551,7 +574,10 @@ UniValue dxGetOrderFills(const JSONRPCRequest& request)
         tmp.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(transaction->toAmount)));
         tmp.emplace_back(Pair("order_type", transaction->orderType()));
         tmp.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(transaction->minFromAmount)));
+        tmp.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(transaction->origFromAmount)));
+        tmp.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(transaction->origToAmount)));
         tmp.emplace_back(Pair("partial_repost", transaction->repostOrder));
+        tmp.emplace_back(Pair("partial_parent_id", parseParentId(transaction->getParentOrder())));
         arr.emplace_back(tmp);
 
     }
@@ -695,33 +721,46 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
         "created_at": "2018-01-15T18:15:30.12345Z",
         "order_type": "exact",
         "partial_minimum": "0.000000",
+        "partial_orig_maker_size": "0.000000",
+        "partial_orig_taker_size": "0.000000",
         "partial_repost": false,
+        "partial_parent_id": "",
         "status": "open"
     }
 
-    Key             | Type | Description
-    ----------------|------|-----------------------------------------------------
-    id              | str  | The order ID.
-    maker           | str  | Maker trading asset; the ticker of the asset being
-                    |      | sold by the maker.
-    maker_size      | str  | Maker trading size. String is used to preserve
-                    |      | precision.
-    taker           | str  | Taker trading asset; the ticker of the asset being
-                    |      | sold by the taker.
-    taker_size      | str  | Taker trading size. String is used to preserve
-                    |      | precision.
-    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
-                    |      | time the order was updated.
-    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
-                    |      | order was created.
-    order_type      | str  | The order type.
-    partial_minimum | str  | The minimum amount that can be taken. This applies
-                    |      | to `partial` order types and will show `0` on
-                    |      | `exact` order types.
-    partial_repost  | str  | Whether the order will be reposted or not. This
-                    |      | applies to `partial` order types and will show
-                    |      | `false` if you are not the maker of this order.
-    status          | str  | The order status.
+    Key                     | Type | Description
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
+    id                      | str  | The order ID.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
+    maker_address           | str  | Address for sending the outgoing asset.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
+    taker_address           | str  | Address for receiving the incoming asset.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
+    order_type              | str  | The order type.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
+    status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -764,7 +803,10 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
     result.emplace_back(Pair("created_at",  xbridge::iso8601(order->created)));
     result.emplace_back(Pair("order_type", order->orderType()));
     result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(order->minFromAmount)));
+    result.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(order->origFromAmount)));
+    result.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(order->origToAmount)));
     result.emplace_back(Pair("partial_repost", order->repostOrder));
+    result.emplace_back(Pair("partial_parent_id", parseParentId(order->getParentOrder())));
     result.emplace_back(Pair("status",      order->strState()));
     return uret(result);
 }
@@ -808,38 +850,46 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         "block_id": "38729344720548447445023782734923740427863289632489723984723",
         "order_type": "exact",
         "partial_minimum": "0.000000",
+        "partial_orig_maker_size": "0.000000",
+        "partial_orig_taker_size": "0.000000",
         "partial_repost": false,
+        "partial_parent_id": "",
         "status": "created"
     }
 
-    Key             | Type | Description
-    ----------------|------|-----------------------------------------------------
-    id              | str  | The order ID. Reposted partial orders are given a
-                    |      | new order ID.
-    maker           | str  | Maker trading asset; the ticker of the asset being
-                    |      | sold by the maker.
-    maker_size      | str  | Maker trading size. String is used to preserve
-                    |      | precision.
-    maker_address   | str  | Maker address for sending the outgoing asset.
-    taker           | str  | Taker trading asset; the ticker of the asset being
-                    |      | sold by the taker.
-    taker_size      | str  | Taker trading size. String is used to preserve
-                    |      | precision.
-    taker_address   | str  | Maker address for receiving the incoming asset.
-    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
-                    |      | time the order was updated.
-    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
-                    |      | order was created.
-    block_id        | str  | The hash of the current block on the Blocknet
-                    |      | blockchain at the time the order was created.
-    order_type      | str  | The order type.
-    partial_minimum | str  | The minimum amount that can be taken. This applies
-                    |      | to `partial` order types and will show `0` on
-                    |      | `exact` order types.
-    partial_repost  | str  | Whether the order will be reposted or not. This only
-                    |      | applies to `partial` order types and will always
-                    |      | show `false` if you are not the maker.
-    status          | str  | The order status.
+    Key                     | Type | Description
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
+    id                      | str  | The order ID.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
+    maker_address           | str  | Address for sending the outgoing asset.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
+    taker_address           | str  | Address for receiving the incoming asset.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
+    order_type              | str  | The order type.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
+    status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -964,7 +1014,10 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
             result.emplace_back(Pair("taker_address", toAddress));
             result.emplace_back(Pair("order_type", "exact"));
             result.emplace_back(Pair("partial_minimum","0"));
+            result.emplace_back(Pair("partial_orig_maker_size", "0"));
+            result.emplace_back(Pair("partial_orig_taker_size", "0"));
             result.emplace_back(Pair("partial_repost", false));
+            result.emplace_back(Pair("partial_parent_id", parseParentId(uint256())));
             result.emplace_back(Pair("status", "created"));
             return uret(result);
         }
@@ -1007,7 +1060,10 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("block_id",       blockHash.GetHex()));
         obj.emplace_back(Pair("order_type",     "exact"));
         obj.emplace_back(Pair("partial_minimum","0"));
+        obj.emplace_back(Pair("partial_orig_maker_size", "0"));
+        obj.emplace_back(Pair("partial_orig_taker_size", "0"));
         obj.emplace_back(Pair("partial_repost", false));
+        obj.emplace_back(Pair("partial_parent_id", parseParentId(uint256())));
         obj.emplace_back(Pair("status",         "created"));
         return uret(obj);
 
@@ -1121,8 +1177,8 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
         return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__));
     }
 
-    uint64_t fromSize = txDescr->toAmount;
-    uint64_t toSize = txDescr->fromAmount;
+    CAmount fromSize = txDescr->toAmount;
+    CAmount toSize = txDescr->fromAmount;
 
     // If no amount is specified on a partial order by default use the full
     // order sizes (will result in the entire partial order being taken).
@@ -1135,8 +1191,8 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
                         xbridge::xBridgeStringValueFromAmount(txDescr->fromAmount)));
         }
         if (xbridge::xBridgeAmountFromReal(amount) < toSize) {
-            fromSize = xbridge::xBridgeAmountFromReal(amount) * xbridge::price(txDescr);
             toSize = xbridge::xBridgeAmountFromReal(amount);
+            fromSize = xbridge::xBridgeSourceAmountFromPrice(toSize, txDescr->toAmount, txDescr->fromAmount);
         }
     } else if (amount > 0) {
         WARN() << "partial orders are not allowed for this order " << __FUNCTION__;
@@ -1177,7 +1233,10 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
             result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
             result.emplace_back(Pair("order_type", txDescr->orderType()));
             result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
+            result.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origFromAmount)));
+            result.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origToAmount)));
             result.emplace_back(Pair("partial_repost", txDescr->repostOrder));
+            result.emplace_back(Pair("partial_parent_id", parseParentId(txDescr->getParentOrder())));
             result.emplace_back(Pair("status", "filled"));
             return uret(result);
         }
@@ -1218,7 +1277,10 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
         result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
         result.emplace_back(Pair("order_type", txDescr->orderType()));
         result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
+        result.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origFromAmount)));
+        result.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origToAmount)));
         result.emplace_back(Pair("partial_repost", txDescr->repostOrder));
+        result.emplace_back(Pair("partial_parent_id", parseParentId(txDescr->getParentOrder())));
         result.emplace_back(Pair("status", txDescr->strState()));
         return uret(result);
     } else {
@@ -1939,57 +2001,73 @@ UniValue dxGetMyOrders(const JSONRPCRequest& request)
             "id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
             "maker": "SYS",
             "maker_size": "100.000000",
+            "maker_address": "SVTbaYZ8olpVn3uNyImst3GKyrvfzXQgdK",
             "taker": "LTC",
             "taker_size": "10.500000",
+            "taker_address": "LVvFhZroMRGTtg1hHp7jVew3YoZRX8y35Z",
             "updated_at": "2018-01-15T18:25:05.12345Z",
             "created_at": "2018-01-15T18:15:30.12345Z",
             "order_type": "partial",
             "partial_minimum": "10.000000",
+            "partial_orig_maker_size": "100.000000",
+            "partial_orig_taker_size": "10.500000",
             "partial_repost": true,
+            "partial_parent_id": "",
             "status": "open"
         },
         {
             "id": "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
             "maker": "SYS",
             "maker_size": "4.000000",
+            "maker_address": "SVTbaYZ8olpVn3uNyImst3GKyrvfzXQgdK",
             "taker": "LTC",
             "taker_size": "0.400000",
+            "taker_address": "LVvFhZroMRGTtg1hHp7jVew3YoZRX8y35Z",
             "updated_at": "2018-01-15T18:25:05.12345Z",
             "created_at": "2018-01-15T18:15:30.12345Z",
             "order_type": "partial",
             "partial_minimum": "0.400000",
-            "partial_repost": false,
+            "partial_orig_maker_size": "4.000000",
+            "partial_orig_taker_size": "0.400000",
+            "partial_repost": true,
+            "partial_parent_id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
             "status": "open"
         }
     ]
 
-    Key             | Type | Description
-    ----------------|------|-----------------------------------------------------
-    Array           | arr  | An array of all orders with each order having the
-                    |      | following parameters.
-    id              | str  | The order ID.
-    maker           | str  | Maker trading asset; the ticker of the asset being
-                    |      | sold by the maker.
-    maker_size      | str  | Maker trading size. String is used to preserve
-                    |      | precision.
-    maker_address   | str  | Address for sending the outgoing asset.
-    taker           | str  | Taker trading asset; the ticker of the asset being
-                    |      | sold by the taker.
-    taker_size      | str  | Taker trading size. String is used to preserve
-                    |      | precision.
-    taker_address   | str  | Address for receiving the incoming asset.
-    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
-                    |      | time the order was updated.
-    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
-                    |      | order was created.
-    order_type      | str  | The order type.
-    partial_minimum | str  | The minimum amount that can be taken. This applies
-                    |      | to `partial` order types and will show `0` on
-                    |      | `exact` order types.
-    partial_repost  | str  | Whether the order will be reposted or not. This
-                    |      | applies to `partial` order types and will show
-                    |      | `false` for `exact` order types.
-    status          | str  | The order status.
+    Key                     | Type | Description
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
+    id                      | str  | The order ID.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
+    maker_address           | str  | Address for sending the outgoing asset.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
+    taker_address           | str  | Address for receiving the incoming asset.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
+    order_type              | str  | The order type.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
+    status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -2083,13 +2161,321 @@ UniValue dxGetMyOrders(const JSONRPCRequest& request)
         // partial order details
         o.emplace_back(Pair("order_type", t->orderType()));
         o.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(t->minFromAmount)));
+        o.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(t->origFromAmount)));
+        o.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(t->origToAmount)));
         o.emplace_back(Pair("partial_repost", t->repostOrder));
+        o.emplace_back(Pair("partial_parent_id", parseParentId(t->getParentOrder())));
         o.emplace_back(Pair("status", t->strState()));
 
         r.emplace_back(o);
     }
 
     return uret(r);
+}
+
+UniValue dxGetMyPartialOrderChain(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.empty() || request.params.size() > 1)
+        throw std::runtime_error(
+            RPCHelpMan{"dxGetMyPartialOrderChain",
+                "\nReturns a list of all orders related to the specified "
+                "order id. This includes partial orders that were repost "
+                "from a parent order.\n",
+                {
+                    {"order_id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Order id"},
+                },
+                RPCResult{
+                R"(
+    [
+        {
+            "id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "maker": "SYS",
+            "maker_size": "100.000000",
+            "maker_address": "SVTbaYZ8olpVn3uNyImst3GKyrvfzXQgdK",
+            "taker": "LTC",
+            "taker_size": "10.500000",
+            "taker_address": "LVvFhZroMRGTtg1hHp7jVew3YoZRX8y35Z",
+            "updated_at": "2018-01-15T18:25:05.12345Z",
+            "created_at": "2018-01-15T18:15:30.12345Z",
+            "order_type": "partial",
+            "partial_minimum": "10.000000",
+            "partial_orig_maker_size": "100.000000",
+            "partial_orig_taker_size": "10.500000",
+            "partial_repost": true,
+            "partial_parent_id": "",
+            "status": "open"
+        },
+        {
+            "id": "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a",
+            "maker": "SYS",
+            "maker_size": "4.000000",
+            "maker_address": "SVTbaYZ8olpVn3uNyImst3GKyrvfzXQgdK",
+            "taker": "LTC",
+            "taker_size": "0.400000",
+            "taker_address": "LVvFhZroMRGTtg1hHp7jVew3YoZRX8y35Z",
+            "updated_at": "2018-01-15T18:25:05.12345Z",
+            "created_at": "2018-01-15T18:15:30.12345Z",
+            "order_type": "partial",
+            "partial_minimum": "0.400000",
+            "partial_orig_maker_size": "4.000000",
+            "partial_orig_taker_size": "0.400000",
+            "partial_repost": true,
+            "partial_parent_id": "91d0ea83edc79b9a2041c51d08037cff87c181efb311a095dfdd4edbcc7993a9",
+            "status": "open"
+        }
+    ]
+
+    Key                     | Type | Description
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
+    id                      | str  | The order ID.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
+    maker_address           | str  | Address for sending the outgoing asset.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
+    taker_address           | str  | Address for receiving the incoming asset.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
+    order_type              | str  | The order type.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
+    status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
+                )"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxGetMyPartialOrderChain", "\"6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a\"")
+                  + HelpExampleRpc("dxGetMyPartialOrderChain", "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a")
+                },
+            }.ToString());
+
+    RPCTypeCheck(request.params, {UniValue::VSTR});
+    const auto orderid = uint256S(request.params[0].get_str());
+    if (orderid.IsNull())
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "bad order id"));
+
+    UniValue r(UniValue::VARR);
+
+    xbridge::App & xapp = xbridge::App::instance();
+    auto orderChain = xapp.getPartialOrderChain(orderid);
+
+    std::map<std::string, bool> seen;
+    for (const auto & t : orderChain) {
+        // do not process already seen orders
+        if (seen.count(t->id.GetHex()))
+            continue;
+        seen[t->id.GetHex()] = true;
+
+        xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(t->fromCurrency);
+        xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(t->toCurrency);
+
+        std::string makerAddress;
+        std::string takerAddress;
+        if (connFrom)
+            makerAddress = connFrom->fromXAddr(t->from);
+        if (connTo)
+            takerAddress = connTo->fromXAddr(t->to);
+
+        UniValue o(UniValue::VOBJ);
+        o.pushKV("id", t->id.GetHex());
+
+        // maker data
+        o.pushKV("maker", t->fromCurrency);
+        o.pushKV("maker_size", xbridge::xBridgeStringValueFromAmount(t->fromAmount));
+        o.pushKV("maker_address", makerAddress);
+        // taker data
+        o.pushKV("taker", t->toCurrency);
+        o.pushKV("taker_size", xbridge::xBridgeStringValueFromAmount(t->toAmount));
+        o.pushKV("taker_address", takerAddress);
+        // dates
+        o.pushKV("updated_at", xbridge::iso8601(t->txtime));
+        o.pushKV("created_at", xbridge::iso8601(t->created));
+        // partial order details
+        o.pushKV("order_type", t->orderType());
+        o.pushKV("partial_minimum", xbridge::xBridgeStringValueFromAmount(t->minFromAmount));
+        o.pushKV("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(t->origFromAmount));
+        o.pushKV("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(t->origToAmount));
+        o.pushKV("partial_repost", t->repostOrder);
+        o.pushKV("partial_parent_id", parseParentId(t->getParentOrder()));
+        o.pushKV("status", t->strState());
+
+        r.push_back(o);
+    }
+
+    return r;
+}
+
+UniValue dxPartialOrderChainDetails(const JSONRPCRequest& request) {
+    if (request.fHelp || request.params.empty() || request.params.size() > 1)
+        throw std::runtime_error(
+            RPCHelpMan{"dxPartialOrderChainDetails",
+                "\nReturns detailed information about a partial order "
+                "chain. This includes original amounts, total amount, "
+                "reported amounts sent and received and other information.\n",
+                {
+                    {"order_id", RPCArg::Type::STR_HEX, RPCArg::Optional::NO, "Order id"},
+                },
+                RPCResult{
+                R"(
+    {
+        "first_order_id": "0b28e7c7de9a048dd2cb28b7d91062a052d16adf6d1a2154aa99ab2321c29770",
+        "maker": "BLOCK",
+        "maker_address": "y4Fn5z58KFA4qLcktBFCrKc8UHrWnNaVym",
+        "taker": "LTC",
+        "taker_address": "LWvt2ygq8QDkVEcCkMWHR4qXCqL2gC9D2B",
+        "partial_minimum": "0.100000",
+        "partial_orig_maker_size": "0.100000",
+        "partial_orig_taker_size": "0.000100",
+        "first_order_time": "2020-07-23T23:52:05.999Z",
+        "last_order_time": "2020-07-23T23:58:34.604Z",
+        "total_reported_sent": "0.200000",
+        "total_reported_received": "0.000200",
+        "total_reported_notsent": "0.800000",
+        "total_reported_notreceived": "0.000800",
+        "total_orders_open": 0,
+        "total_orders_finished": 2,
+        "total_orders_canceled": 1,
+        "orders": [
+          "0b28e7c7de9a048dd2cb28b7d91062a052d16adf6d1a2154aa99ab2321c29770",
+          "d3afd3b5faf604245a6962214bd0460bec88ff275236480d24b9e5cd45d44c41",
+          "5d4bde2de3d6982ce40da82da3b55803f82e11672b2292c611aec9b54cc4c4c9"
+        ],
+        "p2sh_deposits": [
+          "a3bd9b849696946a06ad90b5e03337dba326400192d5b9b96ce0faf2cb513377",
+          "a29c4d06941877b501d0b5fe6dc054ca177f723e30a987f67a5871df8b14bfa5",
+          ""
+        ],
+        "p2sh_deposits_counterparty": [
+          "41e106c3668d097166cc4a5cce283a9079e769859c4a5467826506fc2547725e",
+          "c2f86465d26b3f90f559e3fe56a4a0aa44ee01e07f1e27b2236f16be92991f25",
+          ""
+        ]
+    }
+
+    Key                        | Type | Description
+    ---------------------------|------|-----------------------------------------------------
+    first_order_id             | str  | The order ID.
+    maker                      | str  | Maker trading asset; the ticker of the asset being
+                               |      | sold by the maker.
+    maker_address              | str  | Address for sending the outgoing asset.
+    taker                      | str  | Taker trading asset; the ticker of the asset being
+                               |      | sold by the taker.
+    taker_address              | str  | Address for receiving the incoming asset.
+    partial_minimum            | str  | The minimum amount that can be taken. This applies
+                               |      | to `partial` order types and will show `0` on
+                               |      | `exact` order types.
+    partial_orig_maker_size    | str  | The partial order original maker_size.
+    partial_orig_taker_size    | str  | The partial order original taker_size.
+    first_order_time           | str  | ISO 8601 datetime, with microseconds, of the last
+                               |      | time the order was updated.
+    last_order_time            | str  | ISO 8601 datetime, with microseconds, of when the
+                               |      | order was created.
+    total_reported_sent        | str  | Total amount of maker coin sent to traders.
+    total_reported_received    | str  | Total amount of taker coin received from traders.
+    total_reported_notsent     | str  | Total amount of maker coin not yet sent to traders.
+    total_reported_notreceived | str  | Total amount of taker coin not yet received from traders.
+    total_orders_open          | int  | Total number of open orders.
+    total_orders_finished      | int  | Total number of completed orders.
+    total_orders_canceled      | int  | Total number of canceled orders.
+    orders                     | arr  | All orders in the partial order chain.
+    p2sh_deposits              | arr  | All p2sh deposit txids sorted by "orders" data (1 for each order)
+    p2sh_deposits_counterparty | arr  | All p2sh counterparty deposit txids sorted by "orders" data (1 for each order)
+
+                )"
+                },
+                RPCExamples{
+                    HelpExampleCli("dxPartialOrderChainDetails", "\"6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a\"")
+                  + HelpExampleRpc("dxPartialOrderChainDetails", "6be548bc46a3dcc69b6d56529948f7e679dd96657f85f5870a017e005caa050a")
+                },
+            }.ToString());
+
+    RPCTypeCheck(request.params, {UniValue::VSTR});
+    const auto orderid = uint256S(request.params[0].get_str());
+    if (orderid.IsNull())
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "bad order id"));
+
+    xbridge::App & xapp = xbridge::App::instance();
+    auto orderChain = xapp.getPartialOrderChain(orderid);
+    if (orderChain.empty())
+        return UniValue(UniValue::VOBJ);
+
+    const auto firstOrder = orderChain[0];
+    const auto lastOrder = orderChain[orderChain.size()-1];
+    xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(firstOrder->fromCurrency);
+    xbridge::WalletConnectorPtr connTo = xapp.connectorByCurrency(firstOrder->toCurrency);
+    const auto firstOrderId = firstOrder->id;
+    const auto maker = firstOrder->fromCurrency;
+    const auto taker = firstOrder->toCurrency;
+    const auto makerAddress = connFrom ? connFrom->fromXAddr(firstOrder->from) : "";
+    const auto takerAddress = connTo ? connTo->fromXAddr(firstOrder->to) : "";
+    const auto partialMinimum = xbridge::xBridgeStringValueFromAmount(firstOrder->minFromAmount);
+    const auto makerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->origFromAmount);
+    const auto takerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->origToAmount);
+    const auto firstOrderTime = xbridge::iso8601(firstOrder->created);
+    const auto lastOrderTime = xbridge::iso8601(lastOrder->txtime);
+    int64_t totalSent{0}, totalReceived{0}, totalNotSent{0}, totalNotReceived{0};
+    int totalOpen{0}, totalInProgress{0}, totalFinished{0}, totalCanceled{0};
+    UniValue uvorders(UniValue::VARR);
+    UniValue uvp2sh(UniValue::VARR);
+    UniValue uvp2shcparty(UniValue::VARR);
+    for (const auto & t : orderChain) {
+        if (t->state == xbridge::TransactionDescr::trFinished) {
+            totalSent += t->fromAmount;
+            totalReceived += t->toAmount;
+            ++totalFinished;
+        } else {
+            totalNotSent += t->fromAmount;
+            totalNotReceived += t->toAmount;
+        }
+        if (t->state <= xbridge::TransactionDescr::trPending)
+            ++totalOpen;
+        if (t->state > xbridge::TransactionDescr::trPending && t->state < xbridge::TransactionDescr::trFinished)
+            ++totalInProgress;
+        if (t->state == xbridge::TransactionDescr::trCancelled)
+            ++totalCanceled;
+        uvorders.push_back(t->id.GetHex());
+        uvp2sh.push_back(t->binTxId);
+        uvp2shcparty.push_back(t->oBinTxId);
+    }
+
+    UniValue o(UniValue::VOBJ);
+    o.pushKV("first_order_id", firstOrderId.GetHex());
+    o.pushKV("maker", maker);
+    o.pushKV("maker_address", makerAddress);
+    o.pushKV("taker", taker);
+    o.pushKV("taker_address", takerAddress);
+    o.pushKV("partial_minimum", partialMinimum);
+    o.pushKV("partial_orig_maker_size", makerOrigSize);
+    o.pushKV("partial_orig_taker_size", takerOrigSize);
+    o.pushKV("first_order_time", firstOrderTime);
+    o.pushKV("last_order_time", lastOrderTime);
+    o.pushKV("total_reported_sent", xbridge::xBridgeStringValueFromAmount(totalSent));
+    o.pushKV("total_reported_received", xbridge::xBridgeStringValueFromAmount(totalReceived));
+    o.pushKV("total_reported_notsent", xbridge::xBridgeStringValueFromAmount(totalNotSent));
+    o.pushKV("total_reported_notreceived", xbridge::xBridgeStringValueFromAmount(totalNotReceived));
+    o.pushKV("total_orders_open", totalOpen);
+    o.pushKV("total_orders_finished", totalFinished);
+    o.pushKV("total_orders_canceled", totalCanceled);
+    o.pushKV("orders", uvorders);
+    o.pushKV("p2sh_deposits", uvp2sh);
+    o.pushKV("p2sh_deposits_counterparty", uvp2shcparty);
+    return o;
 }
 
 UniValue dxGetTokenBalances(const JSONRPCRequest& request)
@@ -2547,38 +2933,46 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         "block_id": "38729344720548447445023782734923740427863289632489723984723",
         "order_type": "partial",
         "partial_minimum": "0.200000",
+        "partial_orig_maker_size": "2.000000",
+        "partial_orig_taker_size": "0.200000",
         "partial_repost": true,
+        "partial_parent_id": "1faeba06827929f16490c61ba633522158e8d44163c47f735078eac0304c5eb6",
         "status": "created"
     }
 
-    Key             | Type | Description
-    ----------------|------|-----------------------------------------------------
-    id              | str  | The order ID. Reposted partial orders are given a
-                    |      | new order ID.
-    maker           | str  | Maker trading asset; the ticker of the asset being
-                    |      | sold by the maker.
-    maker_size      | str  | Maker trading size. String is used to preserve
-                    |      | precision.
-    maker_address   | str  | Maker address for sending the outgoing asset.
-    taker           | str  | Taker trading asset; the ticker of the asset being
-                    |      | sold by the taker.
-    taker_size      | str  | Taker trading size. String is used to preserve
-                    |      | precision.
-    taker_address   | str  | Maker address for receiving the incoming asset.
-    updated_at      | str  | ISO 8601 datetime, with microseconds, of the last
-                    |      | time the order was updated.
-    created_at      | str  | ISO 8601 datetime, with microseconds, of when the
-                    |      | order was created.
-    block_id        | str  | The hash of the current block on the Blocknet
-                    |      | blockchain at the time the order was created.
-    order_type      | str  | The order type.
-    partial_minimum | str  | The minimum amount that can be taken. This applies
-                    |      | to `partial` order types and will show `0` on
-                    |      | `exact` order types.
-    partial_repost  | str  | Whether the order will be reposted or not. This only
-                    |      | applies to `partial` order types and will always
-                    |      | show `false` if you are not the maker.
-    status          | str  | The order status.
+    Key                     | Type | Description
+    ------------------------|------|---------------------------------------------
+    Array                   | arr  | An array of all orders with each order
+                            |      | having the following parameters.
+    id                      | str  | The order ID.
+    maker                   | str  | Maker trading asset; the ticker of the asset
+                            |      | being sold by the maker.
+    maker_size              | str  | Maker trading size. String is used to
+                            |      | preserve precision.
+    maker_address           | str  | Address for sending the outgoing asset.
+    taker                   | str  | Taker trading asset; the ticker of the asset
+                            |      | being sold by the taker.
+    taker_size              | str  | Taker trading size. String is used to
+                            |      | preserve precision.
+    taker_address           | str  | Address for receiving the incoming asset.
+    updated_at              | str  | ISO 8601 datetime, with microseconds, of the
+                            |      | last time the order was updated.
+    created_at              | str  | ISO 8601 datetime, with microseconds, of
+                            |      | when the order was created.
+    order_type              | str  | The order type.
+    partial_minimum*        | str  | The minimum amount that can be taken.
+    partial_orig_maker_size*| str  | The partial order original maker_size.
+    partial_orig_taker_size*| str  | The partial order original taker_size.
+    partial_repost          | str  | Whether the order will be reposted or not.
+                            |      | This applies to `partial` order types and
+                            |      | will show `false` for `exact` order types.
+    partial_parent_id       | str  | The previous order id of a reposted partial
+                            |      | order. This will return an empty string if
+                            |      | there is no parent order.
+    status                  | str  | The order status.
+
+    * This only applies to `partial` order types and will show `0` on `exact`
+      order types.
                 )"
                 },
                 RPCExamples{
@@ -2696,7 +3090,10 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
             result.emplace_back(Pair("taker_address", toAddress));
             result.emplace_back(Pair("order_type", "partial"));
             result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(partialMinimum))));
+            result.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(fromAmount))));
+            result.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
             result.emplace_back(Pair("partial_repost",  repost));
+            result.emplace_back(Pair("partial_parent_id", parseParentId(uint256())));
             result.emplace_back(Pair("status", "created"));
             return uret(result);
         }
@@ -2742,7 +3139,10 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("block_id",         blockHash.GetHex()));
         obj.emplace_back(Pair("order_type",       "partial"));
         obj.emplace_back(Pair("partial_minimum",  xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(partialMinimum))));
+        obj.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(fromAmount))));
+        obj.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(xbridge::xBridgeAmountFromReal(toAmount))));
         obj.emplace_back(Pair("partial_repost",   repost));
+        obj.emplace_back(Pair("partial_parent_id", parseParentId(uint256())));
         obj.emplace_back(Pair("status",           "created"));
         return uret(obj);
 
@@ -2821,10 +3221,10 @@ UniValue dxSplitAddress(const JSONRPCRequest& request)
         return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
 
     auto utxos = xapp.getAllLockedUtxos(token);
-    const auto sa = boost::lexical_cast<double>(splitAmount);
+    const CAmount sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    double totalSplit{0};
-    double splitInclFees{0};
+    CAmount totalSplit{0};
+    CAmount splitInclFees{0};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, utxos, std::set<COutPoint>{}, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
@@ -2837,10 +3237,10 @@ UniValue dxSplitAddress(const JSONRPCRequest& request)
     UniValue r(UniValue::VOBJ);
     r.pushKV("token", token);
     r.pushKV("include_fees", includeFees);
-    r.pushKV("split_amount_requested", splitAmount);
-    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_amount_requested", xbridge::xBridgeStringValueFromAmount(sa));
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromAmount(splitInclFees));
     r.pushKV("split_utxo_count", splitCount);
-    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromAmount(totalSplit));
     r.pushKV("txid", txid);
     r.pushKV("rawtx", showRawTx ? rawtx : "");
     return r;
@@ -2935,10 +3335,10 @@ UniValue dxSplitInputs(const JSONRPCRequest& request)
             return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "Cannot split utxo already in use: " + vout.ToString()));
     }
 
-    const auto sa = boost::lexical_cast<double>(splitAmount);
+    const CAmount sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    double totalSplit{0};
-    double splitInclFees{0};
+    CAmount totalSplit{0};
+    CAmount splitInclFees{0};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, excludedUtxos, userUtxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
@@ -2951,10 +3351,10 @@ UniValue dxSplitInputs(const JSONRPCRequest& request)
     UniValue r(UniValue::VOBJ);
     r.pushKV("token", token);
     r.pushKV("include_fees", includeFees);
-    r.pushKV("split_amount_requested", splitAmount);
-    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromPrice(splitInclFees, ::COIN));
+    r.pushKV("split_amount_requested", xbridge::xBridgeStringValueFromAmount(sa));
+    r.pushKV("split_amount_with_fees", xbridge::xBridgeStringValueFromAmount(splitInclFees));
     r.pushKV("split_utxo_count", splitCount);
-    r.pushKV("split_total", xbridge::xBridgeStringValueFromPrice(totalSplit, ::COIN));
+    r.pushKV("split_total", xbridge::xBridgeStringValueFromAmount(totalSplit));
     r.pushKV("txid", txid);
     r.pushKV("rawtx", showRawTx ? rawtx : "");
     return r;
@@ -3053,30 +3453,32 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
 
 // clang-format off
 static const CRPCCommand commands[] =
-{ //  category              name                       actor (function)          argNames
-  //  --------------------- -------------------------- ------------------------- ----------
-    { "xbridge",            "dxGetOrderFills",         &dxGetOrderFills,         {} },
-    { "xbridge",            "dxGetOrders",             &dxGetOrders,             {} },
-    { "xbridge",            "dxGetOrder",              &dxGetOrder,              {} },
-    { "xbridge",            "dxGetLocalTokens",        &dxGetLocalTokens,        {} },
-    { "xbridge",            "dxLoadXBridgeConf",       &dxLoadXBridgeConf,       {} },
-    { "xbridge",            "dxGetNewTokenAddress",    &dxGetNewTokenAddress,    {} },
-    { "xbridge",            "dxGetNetworkTokens",      &dxGetNetworkTokens,      {} },
-    { "xbridge",            "dxMakeOrder",             &dxMakeOrder,             {} },
-    { "xbridge",            "dxMakePartialOrder",      &dxMakePartialOrder,      {} },
-    { "xbridge",            "dxTakeOrder",             &dxTakeOrder,             {} },
-    { "xbridge",            "dxCancelOrder",           &dxCancelOrder,           {} },
-    { "xbridge",            "dxGetOrderHistory",       &dxGetOrderHistory,       {} },
-    { "xbridge",            "dxGetOrderBook",          &dxGetOrderBook,          {} },
-    { "xbridge",            "dxGetTokenBalances",      &dxGetTokenBalances,      {} },
-    { "xbridge",            "dxGetMyOrders",           &dxGetMyOrders,           {} },
-    { "xbridge",            "dxGetLockedUtxos",        &dxGetLockedUtxos,        {} },
-    { "xbridge",            "dxFlushCancelledOrders",  &dxFlushCancelledOrders,  {} },
-    { "xbridge",            "gettradingdata",          &gettradingdata,          {} },
-    { "xbridge",            "dxGetTradingData",        &dxGetTradingData,        {} },
-    { "xbridge",            "dxSplitAddress",          &dxSplitAddress,          {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit"} },
-    { "xbridge",            "dxSplitInputs",           &dxSplitInputs,           {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit", "utxos"} },
-    { "xbridge",            "dxGetUtxos",              &dxGetUtxos,              {"token", "include_used"} },
+{ //  category             name                          actor (function)              argNames
+  //  -------------------- ----------------------------- ----------------------------- ----------
+    { "xbridge",           "dxGetOrderFills",            &dxGetOrderFills,             {} },
+    { "xbridge",           "dxGetOrders",                &dxGetOrders,                 {} },
+    { "xbridge",           "dxGetOrder",                 &dxGetOrder,                  {} },
+    { "xbridge",           "dxGetLocalTokens",           &dxGetLocalTokens,            {} },
+    { "xbridge",           "dxLoadXBridgeConf",          &dxLoadXBridgeConf,           {} },
+    { "xbridge",           "dxGetNewTokenAddress",       &dxGetNewTokenAddress,        {} },
+    { "xbridge",           "dxGetNetworkTokens",         &dxGetNetworkTokens,          {} },
+    { "xbridge",           "dxMakeOrder",                &dxMakeOrder,                 {} },
+    { "xbridge",           "dxMakePartialOrder",         &dxMakePartialOrder,          {} },
+    { "xbridge",           "dxTakeOrder",                &dxTakeOrder,                 {} },
+    { "xbridge",           "dxCancelOrder",              &dxCancelOrder,               {} },
+    { "xbridge",           "dxGetOrderHistory",          &dxGetOrderHistory,           {} },
+    { "xbridge",           "dxGetOrderBook",             &dxGetOrderBook,              {} },
+    { "xbridge",           "dxGetTokenBalances",         &dxGetTokenBalances,          {} },
+    { "xbridge",           "dxGetMyOrders",              &dxGetMyOrders,               {} },
+    { "xbridge",           "dxGetMyPartialOrderChain",   &dxGetMyPartialOrderChain,    {"order_id"} },
+    { "xbridge",           "dxPartialOrderChainDetails", &dxPartialOrderChainDetails,  {"order_id"} },
+    { "xbridge",           "dxGetLockedUtxos",           &dxGetLockedUtxos,            {} },
+    { "xbridge",           "dxFlushCancelledOrders",     &dxFlushCancelledOrders,      {} },
+    { "xbridge",           "gettradingdata",             &gettradingdata,              {} },
+    { "xbridge",           "dxGetTradingData",           &dxGetTradingData,            {} },
+    { "xbridge",           "dxSplitAddress",             &dxSplitAddress,              {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit"} },
+    { "xbridge",           "dxSplitInputs",              &dxSplitInputs,               {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit", "utxos"} },
+    { "xbridge",           "dxGetUtxos",                 &dxGetUtxos,                  {"token", "include_used"} },
 };
 // clang-format on
 

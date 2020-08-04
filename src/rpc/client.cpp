@@ -226,10 +226,10 @@ public:
     CRPCConvertTable();
 
     bool convert(const std::string& method, int idx) {
-        return (members.count(std::make_pair(method, idx)) > 0);
+        return (members.count(std::make_pair(lowercase(method), idx)) > 0);
     }
     bool convert(const std::string& method, const std::string& name) {
-        return (membersByName.count(std::make_pair(method, name)) > 0);
+        return (membersByName.count(std::make_pair(lowercase(method), name)) > 0);
     }
 };
 
@@ -239,9 +239,9 @@ CRPCConvertTable::CRPCConvertTable()
         (sizeof(vRPCConvertParams) / sizeof(vRPCConvertParams[0]));
 
     for (unsigned int i = 0; i < n_elem; i++) {
-        members.insert(std::make_pair(vRPCConvertParams[i].methodName,
+        members.insert(std::make_pair(lowercase(vRPCConvertParams[i].methodName),
                                       vRPCConvertParams[i].paramIdx));
-        membersByName.insert(std::make_pair(vRPCConvertParams[i].methodName,
+        membersByName.insert(std::make_pair(lowercase(vRPCConvertParams[i].methodName),
                                             vRPCConvertParams[i].paramName));
     }
 }

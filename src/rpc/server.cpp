@@ -362,7 +362,7 @@ CRPCTable::CRPCTable()
 
 const CRPCCommand *CRPCTable::operator[](const std::string &name) const
 {
-    std::map<std::string, const CRPCCommand*>::const_iterator it = mapCommands.find(name);
+    std::map<std::string, const CRPCCommand*>::const_iterator it = mapCommands.find(lowercase(name));
     if (it == mapCommands.end())
         return nullptr;
     return (*it).second;
@@ -374,11 +374,11 @@ bool CRPCTable::appendCommand(const std::string& name, const CRPCCommand* pcmd)
         return false;
 
     // don't allow overwriting for now
-    std::map<std::string, const CRPCCommand*>::const_iterator it = mapCommands.find(name);
+    std::map<std::string, const CRPCCommand*>::const_iterator it = mapCommands.find(lowercase(name));
     if (it != mapCommands.end())
         return false;
 
-    mapCommands[name] = pcmd;
+    mapCommands[lowercase(name)] = pcmd;
     return true;
 }
 

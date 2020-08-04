@@ -12,6 +12,7 @@
 #include <xbridge/util/xbridgeerror.h>
 #include <xbridge/xbridgedef.h>
 
+#include <amount.h>
 #include <uint256.h>
 #include <univalue.h>
 
@@ -78,12 +79,39 @@ namespace xbridge
 
     constexpr double xBridgeMaxPriceDeviation = 1.0 / 100000000.0;
     constexpr int xBridgePartialOrderMaxUtxos = 10;
-    double xBridgeValueFromAmount(uint64_t amount);
-    int64_t xBridgeIntFromReal(double val);
-    uint64_t xBridgeAmountFromReal(double val);
+    double xBridgeValueFromAmount(CAmount amount);
+    CAmount xBridgeIntFromReal(double val);
+    CAmount xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
     std::string xBridgeStringValueFromPrice(double price, uint64_t denomination);
-    std::string xBridgeStringValueFromAmount(uint64_t amount);
+    std::string xBridgeStringValueFromAmount(CAmount amount);
+
+    /**
+     * Return the counterparty destination amount from maker/taker price.
+     * @param counterpartySourceAmount
+     * @param sourceAmount
+     * @param destAmount
+     * @return
+     */
+    CAmount xBridgeDestAmountFromPrice(const CAmount counterpartySourceAmount, const CAmount sourceAmount, const CAmount destAmount);
+    /**
+     * Return the counterparty source amount from maker/taker price.
+     * @param counterpartyDestAmount
+     * @param sourceAmount
+     * @param destAmount
+     * @return
+     */
+    CAmount xBridgeSourceAmountFromPrice(const CAmount counterpartyDestAmount, const CAmount sourceAmount, const CAmount destAmount);
+
+    /**
+     * Responsible for checking for an acceptable drift in partial orders.
+     * @param makerSource
+     * @param makerDest
+     * @param otherSource
+     * @param otherDest
+     * @return
+     */
+    bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmount otherSource, CAmount otherDest);
 
     /**
      * @brief Returns true if the input precision is supported by xbridge.
