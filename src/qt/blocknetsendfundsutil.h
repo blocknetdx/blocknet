@@ -80,7 +80,7 @@ public:
     void addRecipient(const SendCoinsRecipient & recipient) {
         txRecipients_.push_back(recipient);
     }
-    void addRecipient(const QString & address, const CAmount amount, const QString & alias = QString()) {
+    void addRecipient(const QString & address, const CAmount amount, const QString & alias) {
         txRecipients_.push_back(SendCoinsRecipient{ address, alias, amount, QString() });
     }
     bool hasRecipient(const QString & address) {

@@ -80,7 +80,7 @@ BlocknetAddressBook::BlocknetAddressBook(bool slimMode, int filter, QWidget *par
 
     auto *addAddressBtn = new BlocknetIconBtn(":/redesign/QuickActions/AddressButtonIcon.png");
 
-    addButtonLbl = new QLabel(tr("New Address"));
+    addButtonLbl = new QLabel(tr("Create New Address"));
     addButtonLbl->setObjectName("h4");
 
     filterLbl = new QLabel(tr("Filter by:"));
@@ -99,7 +99,10 @@ BlocknetAddressBook::BlocknetAddressBook(bool slimMode, int filter, QWidget *par
     table->setSelectionMode(QAbstractItemView::SingleSelection);
     table->setFocusPolicy(Qt::NoFocus);
     table->setAlternatingRowColors(true);
-    table->setColumnWidth(COLUMN_ACTION, BGU::spi(50));
+    table->setColumnWidth(COLUMN_PADDING1, BGU::spi(1));
+    table->setColumnWidth(COLUMN_PADDING2, BGU::spi(1));
+    table->setColumnWidth(COLUMN_PADDING3, BGU::spi(1));
+    table->setColumnWidth(COLUMN_ACTION, BGU::spi(40));
     table->setColumnWidth(COLUMN_AVATAR, BGU::spi(50));
     table->setColumnWidth(COLUMN_COPY, BGU::spi(65));
     table->setColumnWidth(COLUMN_EDIT, BGU::spi(65));
@@ -110,20 +113,22 @@ BlocknetAddressBook::BlocknetAddressBook(bool slimMode, int filter, QWidget *par
     table->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     table->setContextMenuPolicy(Qt::CustomContextMenu);
     table->verticalHeader()->setSectionResizeMode(QHeaderView::Fixed);
-    table->verticalHeader()->setDefaultSectionSize(BGU::spi(78));
+    table->verticalHeader()->setDefaultSectionSize(BGU::spi(58));
     table->verticalHeader()->setVisible(false);
     table->horizontalHeader()->setDefaultAlignment(Qt::AlignLeft);
     table->horizontalHeader()->setSortIndicatorShown(true);
     table->horizontalHeader()->setSectionsClickable(true);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING1, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING2, QHeaderView::Fixed);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_PADDING3, QHeaderView::Fixed);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_ACTION, QHeaderView::Fixed);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_AVATAR, QHeaderView::Fixed);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_ALIAS, QHeaderView::ResizeToContents);
-    table->horizontalHeader()->setSectionResizeMode(COLUMN_ADDRESS, QHeaderView::ResizeToContents);
+    table->horizontalHeader()->setSectionResizeMode(COLUMN_ADDRESS, QHeaderView::Stretch);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_COPY, QHeaderView::Fixed);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_EDIT, QHeaderView::Fixed);
     table->horizontalHeader()->setSectionResizeMode(COLUMN_DELETE, QHeaderView::Fixed);
-    table->horizontalHeader()->setStretchLastSection(true);
-    table->setHorizontalHeaderLabels({ "", "", tr("Alias"), tr("Address"), "", "", "" });
+    table->setHorizontalHeaderLabels({ "", "", "", tr("Alias"), "", tr("Address"), "", "", "", "" });
 
     // If in slim mode, hide all columns except add, alias, and address
     if (slimMode) {
@@ -170,6 +175,16 @@ BlocknetAddressBook::BlocknetAddressBook(bool slimMode, int filter, QWidget *par
     connect(addAddressBtn, &BlocknetIconBtn::clicked, this, &BlocknetAddressBook::onAddAddress);
     connect(addressDropdown, &BlocknetDropdown::valueChanged, this, &BlocknetAddressBook::onFilter);
     connect(table, &QTableWidget::cellDoubleClicked, this, &BlocknetAddressBook::onDoubleClick);
+    connect(table->horizontalHeader(), &QHeaderView::sortIndicatorChanged, this, [this](int column, Qt::SortOrder order) {
+        QSettings settings;
+        if (column <= COLUMN_PADDING1 || column == COLUMN_PADDING2 || column == COLUMN_PADDING3) {
+            table->horizontalHeader()->setSortIndicator(settings.value("blocknetAddressBookSortColumn").toInt(),
+                    static_cast<Qt::SortOrder>(settings.value("blocknetAddressBookSortOrder").toInt()));
+            return;
+        }
+        settings.setValue("blocknetAddressBookSortOrder", static_cast<int>(order));
+        settings.setValue("blocknetAddressBookSortColumn", column);
+    });
 }
 
 void BlocknetAddressBook::setWalletModel(WalletModel *w) {
@@ -220,11 +235,6 @@ void BlocknetAddressBook::initialize() {
         };
         dataModel << a;
     }
-
-    // Sort on alias descending
-    std::sort(dataModel.begin(), dataModel.end(), [](const Address &a, const Address &b) {
-        return a.alias > b.alias;
-    });
 
     this->setData(filtered(dataModel, filteredOption));
 }
@@ -303,7 +313,8 @@ void BlocknetAddressBook::setData(const QVector<Address> &data) {
         table->setItem(i, COLUMN_AVATAR, avatarItem);
 
         // alias
-        auto *aliasItem = new QTableWidgetItem;
+        auto *aliasItem = new LabelItem;
+        aliasItem->label = d.alias.toStdString();
         aliasItem->setData(Qt::DisplayRole, d.alias);
         table->setItem(i, COLUMN_ALIAS, aliasItem);
 
@@ -377,6 +388,16 @@ void BlocknetAddressBook::setData(const QVector<Address> &data) {
     }
 
     table->setSortingEnabled(true);
+    QSettings settings;
+    if (settings.contains("blocknetAddressBookSortColumn") && settings.contains("blocknetAddressBookSortOrder")) {
+        const auto col = settings.value("blocknetAddressBookSortColumn").toInt();
+        const auto order = static_cast<Qt::SortOrder>(settings.value("blocknetAddressBookSortOrder").toInt());
+        table->horizontalHeader()->setSortIndicator(col, order);
+    } else {
+        table->horizontalHeader()->setSortIndicator(COLUMN_ALIAS, Qt::AscendingOrder);
+        settings.setValue("blocknetAddressBookSortColumn", COLUMN_ALIAS);
+        settings.setValue("blocknetAddressBookSortOrder", static_cast<int>(Qt::AscendingOrder));
+    }
     watch();
 }
 
@@ -401,24 +422,10 @@ void BlocknetAddressBook::onCopyAddress() {
 void BlocknetAddressBook::onAddAddress() {
     BlocknetAddressAddDialog dlg(walletModel->getAddressTableModel(), walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
     dlg.setStyleSheet(GUIUtil::loadStyleSheet());
-    connect(&dlg, &QDialog::accepted, this, [this, &dlg]() {
-        // If the user added a new private key, ask them if they want to perform a wallet rescan
-        if (!dlg.form->getKey().isEmpty()) {
-            QMessageBox::StandardButton retval = QMessageBox::question(this->parentWidget(), tr("Rescan the wallet"),
-                                      tr("You imported a new wallet address. Would you like to rescan the blockchain to add coin associated with this address? If you don't rescan, you may not see all your coin.\n\nThis may take several minutes."),
-                                      QMessageBox::Yes | QMessageBox::No,
-                                      QMessageBox::No);
-
-            if (retval != QMessageBox::Yes)
-                return;
-
-            walletModel->showProgress(tr("Rescanning..."), 0);
-            // TODO Blocknet Qt wallet rescan after add private key
-//            QTimer::singleShot(1000, [this]() {
-//                walletModel->RescanFromTime();
-//            });
-        }
-
+    connect(&dlg, &BlocknetAddressAddDialog::rescan, [this](std::string walletName) {
+        QTimer::singleShot(1000, [this,walletName]() {
+            Q_EMIT rescan(walletName);
+        });
     });
     dlg.exec();
 }
@@ -427,7 +434,6 @@ void BlocknetAddressBook::onEditAddress() {
     auto *btn = qobject_cast<BlocknetLabelBtn*>(sender());
     Address data;
     data.address = btn->getID();
-    // Remove address from data model
     auto rows = walletModel->getAddressTableModel()->rowCount(QModelIndex());
     for (int row = rows - 1; row >= 0; --row) {
         auto index = walletModel->getAddressTableModel()->index(row, 0, QModelIndex());
@@ -446,13 +452,15 @@ void BlocknetAddressBook::onEditAddress() {
 void BlocknetAddressBook::onDoubleClick(int row, int col) {
     if (row >= filteredData.size()) // check index
         return;
-    auto data = filteredData[row];
-    if (!slimMode) {
-        BlocknetAddressEditDialog dlg(walletModel->getAddressTableModel(), walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
-        dlg.setData(data.address, data.alias, data.type, QString());
-        dlg.exec();
-    } else {
-        Q_EMIT send(data.address);
+    auto *item = table->item(row, COLUMN_ADDRESS);
+    auto addr = item->data(Qt::DisplayRole).toString();
+    for (auto & account : filteredData) {
+        if (account.address.toStdString() == addr.toStdString()) {
+            BlocknetAddressEditDialog dlg(walletModel->getAddressTableModel(), walletModel, Qt::WindowSystemMenuHint | Qt::WindowTitleHint);
+            dlg.setData(account.address, account.alias, account.type, QString());
+            dlg.exec();
+            break;
+        }
     }
 }
 

@@ -211,6 +211,7 @@ public:
     std::string                a_payTxId() const;
     bool                       a_refunded() const { LOCK(m_lock); return m_a_refunded; }
     const std::vector<wallet::UtxoEntry> a_utxos() const { LOCK(m_lock); return m_a.utxos(); }
+    uint64_t                   a_initial_amount() const { LOCK(m_lock); return m_sourceInitialAmount; }
 
     std::vector<unsigned char> a_pk1() const;
 
@@ -226,6 +227,7 @@ public:
     std::string                b_payTxId() const;
     bool                       b_refunded() const { LOCK(m_lock); return m_b_refunded; }
     const std::vector<wallet::UtxoEntry> b_utxos() const { LOCK(m_lock); return m_b.utxos(); }
+    uint64_t                   b_initial_amount() const { LOCK(m_lock); return m_destInitialAmount; }
 
     uint64_t                   min_partial_amount() const { LOCK(m_lock); return m_minPartialAmount; }
 

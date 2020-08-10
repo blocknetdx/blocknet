@@ -340,7 +340,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                         continue;
                     }
 
-                    progress(1, estTotalBlocks, 15);
+                    progress(1, estTotalBlocks, 10);
                 }
             });
         }
@@ -385,7 +385,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
             pindexNew->hashStakeBlock = diskindex.hashStakeBlock;
             pindexNew->hashProofOfStake = diskindex.hashProofOfStake;
 
-            progress(1, estTotalBlocks, 10);
+            progress(1, estTotalBlocks, 40);
         }
         return true;
     };
@@ -411,7 +411,7 @@ bool CBlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, 
                         blocks.reserve(std::min<int>(group, consensusParams.lastCheckpointHeight));
                     }
                 }
-                progress(1, estTotalBlocks, 45);
+                progress(1, estTotalBlocks, 20);
                 pcursor->Next();
             } else {
                 return error("%s: failed to read value", __func__);

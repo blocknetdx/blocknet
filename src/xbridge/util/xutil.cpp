@@ -199,7 +199,7 @@ std::string iso8601(const boost::posix_time::ptime &time)
     return ss.str();
 }
 
-std::string xBridgeStringValueFromAmount(uint64_t amount)
+std::string xBridgeStringValueFromAmount(CAmount amount)
 {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << xBridgeValueFromAmount(amount);
@@ -220,25 +220,24 @@ std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
     return ss.str();
 }
 
-double xBridgeValueFromAmount(uint64_t amount) {
-    return boost::numeric_cast<double>(amount) /
-            boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+double xBridgeValueFromAmount(CAmount amount) {
+    return static_cast<double>(amount)
+           / static_cast<double>(xbridge::TransactionDescr::COIN)
+           + 1.0 / static_cast<double>(::COIN); // round up 1 sat
 }
 
 /**
  * Does not round, but truncates because a utxo cannot pay if it's rounded up
  */
-int64_t xBridgeIntFromReal(double utxo_amount) {
+CAmount xBridgeIntFromReal(double utxo_amount) {
     double d = utxo_amount * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
-    auto r = static_cast<int64_t>(d);
+    d += 1.0 / static_cast<double>(::COIN); // round up 1 sat
+    auto r = static_cast<CAmount>(d);
     return r;
 }
 
-uint64_t xBridgeAmountFromReal(double val)
-{
-    double d = val * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
-    auto r = (int64_t)(d > 0 ? d + 0.5 : d - 0.5);
-    return (uint64_t)r;
+CAmount xBridgeAmountFromReal(double val) {
+    return xBridgeIntFromReal(val);
 }
 
 bool xBridgeValidCoin(const std::string coin)
@@ -310,6 +309,76 @@ double priceBid(const xbridge::TransactionDescrPtr ptr)
         return  .0;
     }
     return xBridgeValueFromAmount(ptr->fromAmount) / xBridgeValueFromAmount(ptr->toAmount);
+}
+
+CAmount xBridgeDestAmountFromPrice(const CAmount counterpartySourceAmount, const CAmount sourceAmount, const CAmount destAmount) {
+    static CAmount c = 1000000;
+    const auto csa = counterpartySourceAmount * c;
+    const auto sa = sourceAmount * c;
+    const auto da = destAmount * c;
+    CAmount newDestAmount = csa * (static_cast<double>(da) / static_cast<double>(sa)) + 1;
+    newDestAmount /= c; // normalize
+    if (newDestAmount < 1)
+        return 1;
+    return newDestAmount;
+}
+
+CAmount xBridgeSourceAmountFromPrice(const CAmount counterpartyDestAmount, const CAmount sourceAmount, const CAmount destAmount) {
+    static CAmount c = 1000000;
+    const auto cda = counterpartyDestAmount * c;
+    const auto sa = sourceAmount * c;
+    const auto da = destAmount * c;
+    CAmount newSourceAmount = cda * (static_cast<double>(sa) / static_cast<double>(da)) + 1;
+    newSourceAmount /= c; // normalize
+    if (newSourceAmount < 1)
+        return 1;
+    return newSourceAmount;
+}
+
+bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmount otherSource, CAmount otherDest) {
+    bool success{true}; // error
+    // Exact order should always succeed
+    if (makerSource == otherDest && makerDest == otherSource)
+        return true;
+    // Taker amounts must agree with maker's asking price. Derive asking amounts from
+    // counterparty provided amounts. By deriving these amounts from the counterparty
+    // we can ensure price integrity.
+    const CAmount checkSourceAmount = xBridgeSourceAmountFromPrice(makerDest, otherDest, otherSource);
+    const CAmount checkDestAmount = xBridgeDestAmountFromPrice(makerSource, otherDest, otherSource);
+    const CAmount checkSourceAmountOther = xBridgeSourceAmountFromPrice(otherDest, makerDest, makerSource);
+    const CAmount checkDestAmountOther = xBridgeDestAmountFromPrice(otherSource, makerDest, makerSource);
+    // Price match check. The type of check changes based on whether there is a remainder when
+    // checking if the maker's total order amounts are divisible by the counterparty's partial
+    // order amounts. If the amounts are divisible then we expect an exact match. If the amounts
+    // are not divisible then we use a drift check on the smallest amount using an upper and
+    // lower bound check. This means the forgiveness could be anywhere from 100 sats to 1000 sats
+    // or more as the partially taken order sizes decrease in size.
+    if (makerSource % otherDest == 0 && makerDest % otherSource == 0) {
+        if (checkSourceAmountOther != otherSource
+            || checkDestAmountOther != otherDest
+            || checkSourceAmount != makerSource
+            || checkDestAmount != makerDest)
+            success = false;
+    } else if (checkSourceAmountOther != otherSource
+               || checkDestAmountOther != otherDest
+               || checkSourceAmount != makerSource
+               || checkDestAmount != makerDest)
+    {
+        const CAmount driftTakerSourceA = xBridgeSourceAmountFromPrice(otherDest + 1, makerDest, makerSource);
+        const CAmount driftTakerSourceB = xBridgeSourceAmountFromPrice(otherDest - 1, makerDest, makerSource);
+        const CAmount driftTakerSourceUpper = driftTakerSourceA > driftTakerSourceB ? driftTakerSourceA : driftTakerSourceB;
+        const CAmount driftTakerSourceLower = driftTakerSourceA < driftTakerSourceB ? driftTakerSourceA : driftTakerSourceB;
+        if (otherSource > driftTakerSourceUpper || otherSource < driftTakerSourceLower)
+            success = false;
+        const CAmount driftTakerDestA = xBridgeDestAmountFromPrice(otherSource + 1, makerDest, makerSource);
+        const CAmount driftTakerDestB = xBridgeDestAmountFromPrice(otherSource - 1, makerDest, makerSource);
+        const CAmount driftTakerDestUpper = driftTakerDestA > driftTakerDestB ? driftTakerDestA : driftTakerDestB;
+        const CAmount driftTakerDestLower = driftTakerDestA < driftTakerDestB ? driftTakerDestA : driftTakerDestB;
+        if (otherDest > driftTakerDestUpper || otherDest < driftTakerDestLower)
+            success = false;
+    }
+
+    return success;
 }
 
 json_spirit::Object makeError(const xbridge::Error statusCode, const std::string &function, const std::string &message)

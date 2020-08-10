@@ -136,6 +136,10 @@ BITCOIN_TESTS += \
 BITCOIN_TEST_SUITE += \
   test/xrouter_tests.h
 
+# Blocknet XBridge
+BITCOIN_TESTS += \
+  test/xbridge_tests.cpp
+
 if ENABLE_PROPERTY_TESTS
 BITCOIN_TESTS += \
   test/key_properties.cpp

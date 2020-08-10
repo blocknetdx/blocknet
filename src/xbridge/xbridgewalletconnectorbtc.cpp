@@ -2625,15 +2625,15 @@ bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vec
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, const std::string addr,
+bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, const std::string addr,
                                                     const bool includeFees, const std::set<wallet::UtxoEntry> excluded,
-                                                    const std::set<COutPoint> utxos, double & totalSplit,
-                                                    double & splitIncFees, int & splitCount, std::string & txId,
+                                                    const std::set<COutPoint> utxos, CAmount & totalSplit,
+                                                    CAmount & splitIncFees, int & splitCount, std::string & txId,
                                                     std::string & rawTx, std::string & failReason)
 {
     const auto hasUserSpecifiedUtxos = !utxos.empty();
-    if (isDustAmount(splitAmount)) {
-        failReason = "split amount is dust [" + std::to_string(splitAmount) + "]";
+    if (isDustAmount(xBridgeValueFromAmount(splitAmount))) {
+        failReason = "split amount is dust [" + xBridgeStringValueFromAmount(splitAmount) + "]";
         return false;
     }
     if (!isValidAddress(addr)) {
@@ -2662,18 +2662,16 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, co
         unspent = newUnspent; // only use user specified utxos
     }
 
-    const auto fee1 = minTxFee1(1, 3);
-    const auto fee2 = minTxFee2(1, 1);
-    const auto feesPerUtxo = fee1 + fee2;
-    // Round split size to the nearest xbridge unit
-    static double oneSubSat = 0.000000001; // help promote rounding to full sat
-    const auto splitSize = xBridgeValueFromAmount(xBridgeAmountFromReal(splitAmount + (includeFees ? feesPerUtxo : 0.))) + oneSubSat;
+    const CAmount fee1 = xBridgeIntFromReal(minTxFee1(1, 3));
+    const CAmount fee2 = xBridgeIntFromReal(minTxFee2(1, 1));
+    const CAmount feesPerUtxo = fee1 + fee2;
+    const CAmount splitSize = splitAmount + (includeFees ? feesPerUtxo : 0);
 
     if (!hasUserSpecifiedUtxos) {
         // Remove all utxos that already match the expected size or that don't match the specified address
         unspent.erase(std::remove_if(unspent.begin(), unspent.end(),
             [splitSize, addr](const wallet::UtxoEntry & entry) {
-                return xBridgeIntFromReal(splitSize) - xBridgeIntFromReal(entry.amount) == 0 || entry.address != addr;
+                return splitSize - entry.camount() == 0 || entry.address != addr;
             }), unspent.end());
     }
 
@@ -2686,10 +2684,10 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, co
     if (unspent.size() > 100)
         unspent.erase(unspent.begin()+100, unspent.begin()+unspent.size());
 
-    double vinsTotal{0};
+    CAmount vinsTotal{0};
     std::vector<xbridge::XTxIn> vins;
     for (const auto & vin : unspent) {
-        vinsTotal += vin.amount;
+        vinsTotal += vin.camount();
         vins.emplace_back(vin.txId, vin.vout, vin.amount);
     }
 
@@ -2701,25 +2699,25 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, co
     if (outputCount > 100)
         outputCount = 100;
 
-    const auto remainder = vinsTotal - (outputCount * splitSize);
-    std::vector<std::pair<std::string, double>> vouts;
+    const CAmount remainder = vinsTotal - (outputCount * splitSize);
+    std::vector<std::pair<std::string, CAmount>> vouts;
     for (int i = 0; i < outputCount; ++i)
         vouts.emplace_back(addr, splitSize);
 
-    const double txFees = minTxFee1(vins.size(), vouts.size());
-    const auto change = remainder - txFees;
+    const CAmount txFees = xBridgeIntFromReal(minTxFee1(vins.size(), vouts.size()));
+    const CAmount change = remainder - txFees;
     // add remainder vout if not dust
-    if (!isDustAmount(change))
-        vouts.emplace_back(addr, change); // subtract fees
+    if (!isDustAmount(xBridgeValueFromAmount(change)))
+        vouts.emplace_back(addr, change);
     else {
         // Remove any utxos consumed by fees
-        auto feesLeft = txFees;
-        while (feesLeft > std::numeric_limits<double>::epsilon() && !vouts.empty()) {
+        CAmount feesLeft = txFees;
+        while (feesLeft > 0 && !vouts.empty()) {
             auto & vout = vouts[vouts.size()-1];
-            const auto voutAmount = vout.second;
-            const auto voutNewAmount = voutAmount - feesLeft;
+            const CAmount voutAmount = vout.second;
+            const CAmount voutNewAmount = voutAmount - feesLeft;
             // If vout doesn't cover the fee move to the next one (i.e. if new amount is too small or negative)
-            if (voutNewAmount <= std::numeric_limits<double>::epsilon()) {
+            if (voutNewAmount <= 0) {
                 vouts.erase(vouts.begin() + vouts.size());
                 outputCount -= 1;
                 feesLeft -= voutAmount; // subtract vout amount from leftover fees
@@ -2727,7 +2725,7 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, co
             }
 
             vout.second = voutNewAmount;
-            if (isDustAmount(vout.second))
+            if (isDustAmount(xBridgeValueFromAmount(vout.second)))
                 vouts.erase(vouts.begin()+vouts.size()); // remove output if dust
             outputCount -= 1;
 
@@ -2740,7 +2738,10 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const double splitAmount, co
         return false;
     }
 
-    xbridge::CTransactionPtr tx = createTransaction(*this, vins, vouts, COIN, txVersion, 0, txWithTimeField);
+    std::vector<std::pair<std::string, double>> dvouts;
+    for (auto & vout : vouts)
+        dvouts.emplace_back(vout.first, xBridgeValueFromAmount(vout.second));
+    xbridge::CTransactionPtr tx = createTransaction(*this, vins, dvouts, COIN, txVersion, 0, txWithTimeField);
     rawTx = tx->toString();
 
     // sign

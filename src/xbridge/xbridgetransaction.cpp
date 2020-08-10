@@ -512,16 +512,11 @@ bool Transaction::tryJoin(const TransactionPtr other)
 
     if (m_partialAllowed)
     {
-        // Taker amounts must agree with maker's asking price
-        const double makerPrice = xBridgeValueFromAmount(m_sourceAmount) / xBridgeValueFromAmount(m_destAmount);
-        const double takerPrice = xBridgeValueFromAmount(other->m_destAmount) / xBridgeValueFromAmount(other->m_sourceAmount);
-        // If maker or taker prices are 0, abort
-        // If the difference between maker and taker price is larger than max deviation, abort
-        if (makerPrice == 0 || takerPrice == 0 || fabs(makerPrice - takerPrice) > xBridgeMaxPriceDeviation) {
+        if (!xBridgePartialOrderDriftCheck(m_sourceAmount, m_destAmount, other->m_sourceAmount, other->m_destAmount)) {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id().GetHex());
-            log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));
-            log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(makerPrice));
+            log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(xBridgeValueFromAmount(m_sourceAmount) / xBridgeValueFromAmount(m_destAmount)));
+            log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(xBridgeValueFromAmount(other->m_destAmount) / xBridgeValueFromAmount(other->m_sourceAmount)));
             xbridge::LogOrderMsg(log_obj, "taker price doesn't match maker expected price (join)", __FUNCTION__);
             return false;
         }
@@ -641,6 +636,8 @@ std::ostream & operator << (std::ostream & out, const TransactionPtr & tx)
     log_obj.pushKV("taker_addr", (!tx->b_address().empty() && connTo ? connTo->fromXAddr(tx->b_address()) : ""));
     log_obj.pushKV("order_type", tx->orderType());
     log_obj.pushKV("partial_minimum", xbridge::xBridgeStringValueFromAmount(tx->min_partial_amount()));
+    log_obj.pushKV("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(tx->a_initial_amount()));
+    log_obj.pushKV("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(tx->b_initial_amount()));
     log_obj.pushKV("state", tx->strState());
     log_obj.pushKV("block_hash", tx->blockHash().GetHex());
     log_obj.pushKV("created_at", xbridge::iso8601(tx->createdTime()));

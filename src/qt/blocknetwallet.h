@@ -23,11 +23,14 @@
 #include <QList>
 #include <QProgressDialog>
 
+#include <boost/thread.hpp>
+
 class BlocknetWallet : public QFrame {
     Q_OBJECT
 
 public:
     explicit BlocknetWallet(interfaces::Node & node, const PlatformStyle *platformStyle, QFrame *parent = nullptr);
+    ~BlocknetWallet() override;
 
     void setClientModel(ClientModel *c) { this->clientModel = c; }
 
@@ -85,6 +88,7 @@ public Q_SLOTS:
 protected Q_SLOTS:
     void onSendFunds();
     void onSendToAddress(const QString &);
+    void onRescanRequest(const std::string &);
     void goToDashboard();
     void goToQuickSend();
     void goToHistory();
@@ -102,6 +106,7 @@ private:
     ClientModel *clientModel;
     WalletModel *walletModel;
     BlocknetPage page;
+    boost::thread_group tg;
 
     BlocknetLeftMenu *leftMenu;
     QFrame *contentBox;

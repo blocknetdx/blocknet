@@ -21,11 +21,12 @@
 #include <QScrollArea>
 #include <QSortFilterProxyModel>
 #include <QTableView>
+#include <QTableWidget>
 #include <QVariant>
 #include <QVBoxLayout>
 #include <QVector>
 
-class BlocknetDashboardTable;
+class BlocknetDashboardFilterProxy;
 
 class BlocknetDashboard : public QFrame
 {
@@ -34,6 +35,32 @@ class BlocknetDashboard : public QFrame
 public:
     explicit BlocknetDashboard(QFrame *parent = nullptr);
     void setWalletModel(WalletModel *w);
+
+    enum {
+        COLUMN_STATUS,
+        COLUMN_DATE,
+        COLUMN_TIME,
+        COLUMN_PADDING1,
+        COLUMN_TOADDRESS,
+        COLUMN_PADDING2,
+        COLUMN_TYPE,
+        COLUMN_PADDING3,
+        COLUMN_AMOUNT,
+        COLUMN_PADDING4,
+    };
+
+    struct DashboardTx {
+        COutPoint outpoint;
+        int status;
+        qint64 datetime;
+        QString date;
+        QString time;
+        QString address;
+        QString type;
+        QString amount;
+        QColor amountColor;
+        QString tooltip;
+    };
 
 Q_SIGNALS:
     void quicksend();
@@ -50,6 +77,13 @@ protected:
 
 private Q_SLOTS:
     void onViewAll() { Q_EMIT history(); };
+
+private:
+    void initialize();
+    void setData(const QVector<DashboardTx> & data);
+    void updateData(int row, TransactionTableModel *tableModel, DashboardTx & d);
+    void addData(int row, const DashboardTx & d);
+    void refreshTableData();
 
 private:
     QVBoxLayout *layout;
@@ -71,27 +105,12 @@ private:
     QPushButton *viewAll;
     QLabel *recentTxsLbl;
     QFrame *recentTransactions;
-    BlocknetDashboardTable *transactionsTbl;
+    QTableWidget *table;
+    QVector<DashboardTx> dataModel;
+    BlocknetDashboardFilterProxy *filter;
 
     void updateBalance();
     void walletEvents(bool on);
-};
-
-class BlocknetDashboardTable : public QTableView {
-    Q_OBJECT
-
-public:
-    explicit BlocknetDashboardTable(QWidget *parent = nullptr);
-    void setWalletModel(WalletModel *w);
-    void leave();
-    void enter();
-
-Q_SIGNALS:
-
-public Q_SLOTS:
-
-private:
-    WalletModel *walletModel;
 };
 
 class BlocknetDashboardFilterProxy : public QSortFilterProxyModel {

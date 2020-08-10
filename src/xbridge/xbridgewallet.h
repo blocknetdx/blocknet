@@ -8,10 +8,12 @@
 #ifndef BLOCKNET_XBRIDGE_XBRIDGEWALLET_H
 #define BLOCKNET_XBRIDGE_XBRIDGEWALLET_H
 
+#include <primitives/transaction.h>
+#include <serialize.h>
 #include <sync.h>
+#include <uint256.h>
 
 #include <cstring>
-#include <serialize.h>
 #include <set>
 #include <stdint.h>
 #include <string>
@@ -23,6 +25,7 @@
 //*****************************************************************************
 namespace xbridge
 {
+    CAmount xBridgeIntFromReal(double amount);
 
 //*****************************************************************************
 //*****************************************************************************
@@ -53,6 +56,14 @@ struct UtxoEntry
     bool operator == (const UtxoEntry & r) const
     {
         return (txId == r.txId) && (vout ==r.vout);
+    }
+
+    COutPoint outpoint() const {
+        return { uint256S(txId), vout };
+    }
+
+    CAmount camount() const {
+        return xBridgeIntFromReal(amount);
     }
 
     void setConfirmations(const uint32_t confs) {

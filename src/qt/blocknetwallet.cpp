@@ -4,6 +4,7 @@
 
 #include <qt/blocknetwallet.h>
 
+#include <qt/blocknetaccounts.h>
 #include <qt/blocknetaddressbook.h>
 #include <qt/blocknetfontmgr.h>
 #include <qt/blocknetquicksend.h>
@@ -158,7 +159,15 @@ void BlocknetWallet::setPage(BlocknetPage page) {
             auto *addressBook = new BlocknetAddressBook;
             addressBook->setWalletModel(walletModel);
             connect(addressBook, &BlocknetAddressBook::send, this, &BlocknetWallet::onSendToAddress);
+            connect(addressBook, &BlocknetAddressBook::rescan, this, &BlocknetWallet::onRescanRequest);
             screen = addressBook;
+            break;
+        }
+        case BlocknetPage::ACCOUNTS: {
+            auto *accounts = new BlocknetAccounts;
+            accounts->setWalletModel(walletModel);
+            connect(accounts, &BlocknetAccounts::rescan, this, &BlocknetWallet::onRescanRequest);
+            screen = accounts;
             break;
         }
         case BlocknetPage::SEND: {
@@ -245,6 +254,28 @@ void BlocknetWallet::onSendToAddress(const QString &address) {
     setPage(BlocknetPage::SEND);
     if (sendFunds != nullptr)
         sendFunds->addAddress(address);
+}
+
+void BlocknetWallet::onRescanRequest(const std::string & walletName) {
+    tg.create_thread([walletName]() {
+        RenameThread("blocknet-rescan");
+        auto ws = GetWallets();
+        CWallet *pwallet = nullptr;
+        for (auto & w : ws) {
+            if (walletName == w->GetName()) {
+                pwallet = w.get();
+                break;
+            }
+        }
+        if (!pwallet)
+            return;
+        WalletRescanReserver reserver(pwallet);
+        if (!reserver.reserve())
+            return;
+        auto locked_chain = pwallet->chain().lock();
+        LOCK(pwallet->cs_wallet);
+        pwallet->RescanFromTime(0, reserver, true);
+    });
 }
 
 void BlocknetWallet::goToDashboard() {
@@ -419,4 +450,9 @@ void BlocknetWallet::processNewTransaction(const QModelIndex& parent, int start,
 
     Q_EMIT incomingTransaction(date, walletModel->getOptionsModel()->getDisplayUnit(), amount, type, address,
             label, walletModel->getWalletName());
+}
+
+BlocknetWallet::~BlocknetWallet() {
+    tg.interrupt_all();
+    tg.join_all();
 }

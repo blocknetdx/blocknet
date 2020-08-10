@@ -8,6 +8,8 @@
 #include <qt/blocknetguiutil.h>
 #include <qt/blockneticonbtn.h>
 
+#include <qt/addresstablemodel.h>
+
 #include <QKeyEvent>
 #include <QMessageBox>
 
@@ -137,7 +139,7 @@ void BlocknetSendFunds1::onAddressesChanged() {
     for (const QString &addr : addresses) {
         setAddresses.insert(addr);
         if (!model->hasRecipient(addr))
-            model->addRecipient(addr, 0);
+            model->addRecipient(addr, 0, walletModel->getAddressTableModel()->labelForAddress(addr));
     }
     // Remove any unspecified addresses
     for (const auto & r : model->txRecipients())  {

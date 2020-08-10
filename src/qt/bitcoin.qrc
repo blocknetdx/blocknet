@@ -128,6 +128,8 @@
         <file alias="HeaderViewArrowDown">res/redesign/icons/Table/HeaderViewArrowDown.png</file>
         <file alias="checkmark-on">res/redesign/icons/checkmark-on.png</file>
         <file alias="checkmark-off">res/redesign/icons/checkmark-off.png</file>
+        <file alias="checkmark-partial">res/redesign/icons/checkmark-partial.png</file>
+        <file alias="lock_closed_white">res/redesign/icons/lock_closed_white.png</file>
         <file alias="block-icon">res/redesign/icons/block-icon.png</file>
         <file alias="Roboto-Black.ttf">res/redesign/fonts/Roboto/Roboto-Black.ttf</file>
         <file alias="Roboto-BlackItalic.ttf">res/redesign/fonts/Roboto/Roboto-BlackItalic.ttf</file>

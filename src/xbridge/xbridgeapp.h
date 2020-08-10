@@ -251,16 +251,17 @@ public:
      */
     Error sendXBridgeTransaction(const std::string & from,
                                  const std::string & fromCurrency,
-                                 const uint64_t & fromAmount,
+                                 const CAmount & fromAmount,
                                  const std::string & to,
                                  const std::string & toCurrency,
-                                 const uint64_t & toAmount,
+                                 const CAmount & toAmount,
                                  const std::vector<wallet::UtxoEntry> utxos,
                                  bool partialOrder,
                                  bool repostOrder,
-                                 uint64_t partialMinimum,
+                                 CAmount partialMinimum,
                                  uint256 & id,
-                                 uint256 & blockHash);
+                                 uint256 & blockHash,
+                                 const uint256 parentid=uint256());
 
     /**
      * @brief sendXBridgeTransaction - create new xbridge transaction and send to network
@@ -276,10 +277,10 @@ public:
      */
     Error sendXBridgeTransaction(const std::string & from,
                                  const std::string & fromCurrency,
-                                 const uint64_t & fromAmount,
+                                 const CAmount & fromAmount,
                                  const std::string & to,
                                  const std::string & toCurrency,
-                                 const uint64_t & toAmount,
+                                 const CAmount & toAmount,
                                  uint256 & id,
                                  uint256 & blockHash);
 
@@ -290,13 +291,16 @@ public:
      * @param fromCurrency - source currency
      * @param to - destionation amount
      * @param toCurrency - destionation currency
-     * @param makerPrice - use this price (priced in maker_size/taker_size) to determine taker size
+     * @param makerAmount - maker's from amount
+     * @param takerAmount - maker's to amount
      * @param minFromAmount - the minimum size that can be taken from maker
      * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
+     * @param parentid - Parent order id
      * @return xbridge::SUCCESS if success, else error code
      */
     Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
-            double makerPrice, uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos);
+            CAmount makerAmount, CAmount takerAmount, uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos,
+            const uint256 parentid=uint256());
 
     // TODO make protected
     /**
@@ -665,6 +669,7 @@ public:
      * @param requiredUtxoCount number of utxos required
      * @param requiredFeePerUtxo fees per utxo required
      * @param requiredSplitSize size of each utxo not including fee
+     * @param requiredRemainder size of the last utxo, the remainder
      * @param requiredPrepTxFees fees required to submit partial order prep tx
      * @param outputsForUse selected utxos
      * @param utxoAmount total amount of selected utxos
@@ -673,9 +678,9 @@ public:
      * @return
      */
     bool selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
-            const double requiredAmount, const int requiredUtxoCount, const double requiredFeePerUtxo,
-            const double requiredPrepTxFees, const double requiredSplitSize, std::vector<wallet::UtxoEntry> & outputsForUse,
-            double & utxoAmount, double & fees, bool & exactUtxoMatch) const;
+            const CAmount requiredAmount, const int requiredUtxoCount, const CAmount requiredFeePerUtxo,
+            const CAmount requiredPrepTxFees, const CAmount requiredSplitSize, const CAmount requiredRemainder,
+            std::vector<wallet::UtxoEntry> & outputsForUse, CAmount & utxoAmount, CAmount & fees, bool & exactUtxoMatch) const;
 
     /**
      * Unit tests: add xwallets
@@ -714,6 +719,13 @@ public:
      * @return
      */
     uint256 orderWithUtxo(const wallet::UtxoEntry & utxo);
+
+    /**
+     * Returns the partial order chain for the specified order.
+     * @param orderid
+     * @return
+     */
+    std::vector<TransactionDescrPtr> getPartialOrderChain(uint256 orderid);
 
 protected:
     void clearMempool();

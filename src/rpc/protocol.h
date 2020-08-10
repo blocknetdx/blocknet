@@ -15,6 +15,8 @@
 
 #include <univalue.h>
 
+std::string lowercase(std::string s);
+
 //! HTTP status codes
 enum HTTPStatusCode
 {

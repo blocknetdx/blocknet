@@ -37,17 +37,19 @@ QCalendarWidget QAbstractItemView:disabled { color: #666; }
 QCalendarWidget QMenu { color: white; background-color: #6F8097; font-size: 10pt; font-family: "Roboto"; }
 QCalendarWidget QSpinBox { color: white; background-color: #051937; font-size: 10pt; font-family: "Roboto"; }
 QCalendarWidget QToolButton { color: white; background-color: #051937; font-family: "Roboto"; }
-QTableView, QTableWidget { background-color: #172F49; alternate-background-color: #0F2743; border-style: none; border: 0; }
-QTableView::item, QTableWidget::item { font-size: 10pt; font-family: "Roboto"; background-color: #172F49; }
-QTableView::item:alternate, QTableWidget::item:alternate { background-color: #0F2743; }
-QTableView::item::selected, QTableWidget::item::selected { color: white; background-color: #016AFF; }
-QTableView QHeaderView, QTableWidget QHeaderView, QTableWidget QHeaderView::section { background-color: #000D20; border-style: none; border: 0; }
-QTableView QHeaderView::section, QTableWidget QHeaderView::section { font-size: 9pt; color: #6F8097; font-family: "Roboto"; padding: 6px; }
-QTableView QHeaderView::section::selected, QTableWidget QHeaderView::section::selected { color: white; }
-QTableView::indicator:checked, QTableWidget::indicator:checked { image: url(:/redesign/checkmark-on); }
-QTableView::indicator:unchecked, QTableWidget::indicator:unchecked { image: url(:/redesign/checkmark-off); }
-QTableView QHeaderView::down-arrow, QTableView QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
-QTableView QHeaderView::up-arrow, QTableView QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
+QTableView, QTableWidget, QTreeWidget { background-color: #172F49; alternate-background-color: #0F2743; border-style: none; border: 0; }
+QTableView::item, QTableWidget::item, QTreeWidget::item { font-size: 10pt; font-family: "Roboto"; background-color: #172F49; }
+QTableView::item:alternate, QTableWidget::item:alternate, QTreeWidget::item:alternate { background-color: #0F2743; }
+QTableView::item::selected, QTableWidget::item::selected, QTreeWidget::item::selected { color: white; background-color: #016AFF; }
+QTableView QHeaderView, QTableWidget QHeaderView, QTableWidget QHeaderView::section, QTreeWidget QHeaderView::section { background-color: #000D20; border-style: none; border: 0; }
+QTableView QHeaderView::section, QTableWidget QHeaderView::section, QTreeWidget QHeaderView::section { font-size: 9pt; color: #6F8097; font-family: "Roboto"; padding: 6px; }
+QTableView QHeaderView::section::selected, QTableWidget QHeaderView::section::selected, QTreeWidget QHeaderView::section::selected { color: white; }
+QTableView::indicator:checked, QTableWidget::indicator:checked, QTreeWidget::indicator:checked { image: url(:/redesign/checkmark-on); }
+QTableView::indicator:unchecked, QTableWidget::indicator:unchecked, QTreeWidget::indicator:unchecked { image: url(:/redesign/checkmark-off); }
+QTableView::indicator:indeterminate, QTableWidget::indicator:indeterminate, QTreeWidget::indicator:indeterminate { image: url(:/redesign/checkmark-partial); }
+QTableView QHeaderView::down-arrow, QTableView QHeaderView::down-arrow, QTreeWidget QHeaderView::down-arrow { image: url(:/redesign/HeaderViewArrowDown); }
+QTableView QHeaderView::up-arrow, QTableView QHeaderView::up-arrow, QTreeWidget QHeaderView::up-arrow { image: url(:/redesign/HeaderViewArrowUp); }
+QTreeWidget::branch { color: #CCC; }
 
 BlocknetLeftMenu { background-color: #051937; }
 BlocknetLeftMenu BlocknetIconLabel { border: none; text-align: left; }
@@ -197,6 +199,12 @@ BlocknetAddressBook QTableWidget::item { padding: 3px; }
 BlocknetAddressBook QTableWidget::item::selected BlocknetLabelBtn { color: white; }
 BlocknetAddressBookDialog { background-color: #172F49; }
 
+BlocknetAccounts #h4 { padding-left: 1px; }
+BlocknetAccounts #title { font-size: 11pt; color: white; font-family: "Roboto"; }
+BlocknetAccounts QTableWidget { color: white; background-color: transparent; }
+BlocknetAccounts QTableWidget QHeaderView { color: #37475C; }
+BlocknetAccounts QTableWidget::item::selected BlocknetLabelBtn { color: white; }
+
 BlocknetAddressEditDialog, BlocknetAddressAddDialog { background-color: #172F49; }
 BlocknetAddressEditDialog #h2, BlocknetAddressAddDialog #h2 { background-color: #172F49; border: 0; }
 BlocknetAddressEditDialog #readOnly:disabled, BlocknetAddressAddDialog #readOnly:disabled { color: #CCCCCC; border: 1px solid #CCCCCC; }
@@ -215,7 +223,7 @@ BlocknetPeersList QTableView::item { padding: 3px; }
 BlocknetPeerDetails { border: 1px solid #37475C; background-color: #051937; }
 BlocknetPeerDetails #detailLbl { color: #6F8097; font-size: 12pt; }
 
-BlocknetCoinControl QTableWidget { color: white; }
+BlocknetCoinControl QTableWidget, BlocknetCoinControl QTreeWidget { color: white; }
 #coinControlDialog { background-color: #172F49; }
 #coinControlDialog #feePanel { background-color: #172F49; }
 #coinControlDialog #feePanel QLabel { font-size: 13pt; color: white; font-family: "Roboto"; }
