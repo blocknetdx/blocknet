@@ -50,7 +50,7 @@ Decentralized Atomic Swap Algo Summary
 -------
 
 ```Step1.
-Initiator creates secret X, and hashes it to create H(X). Initiator also creates public private key pair (pubkey i1,i2 / privkey i2,i2). Responder creates public private key pair (pubkey r1,r2 / privkey r1,r2).
+Initiator creates secret X, and hashes it to create H(X). Initiator also creates public private key pair (pubkey i1,i2 / privkey i1,i2). Responder creates public private key pair (pubkey r1,r2 / privkey r1,r2).
 
 Step 2.
 Initiator shares H(X) and pubkey i2 with responder. Responder shares pubkey r1 with intiator.
