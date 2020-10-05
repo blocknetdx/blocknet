@@ -34,6 +34,7 @@ KNOWN_VIOLATIONS=(
     "src/servicenode/servicenodemgr.h:.*trim"
     "src/xbridge/xbridgerpc.cpp:.*trim"
     "src/xbridge/util/xutil.cpp:.*strftime"
+    "src/xrouter/xrouterclient.cpp:.*fprintf"
 )
 
 REGEXP_IGNORE_EXTERNAL_DEPENDENCIES="^src/(crypto/ctaes/|leveldb/|secp256k1/|tinyformat.h|univalue/)"

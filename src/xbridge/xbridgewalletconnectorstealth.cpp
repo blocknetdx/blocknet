@@ -75,7 +75,7 @@ uint256 SignatureHash(CScript &scriptCode, const CTransactionPtr & tx,
         unsigned int nOut = nIn;
         if (nOut >= txTmp.vout.size())
         {
-            printf("ERROR: SignatureHash() : nOut=%d out of range\n", nOut);
+            LOG() << "stealth SignatureHash error vout index out of range" << __FUNCTION__;
             return uint256{};
         }
         txTmp.vout.resize(nOut+1);
