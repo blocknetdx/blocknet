@@ -1164,6 +1164,99 @@ bool CWallet::AbandonTransaction(interfaces::Chain::Lock& locked_chain, const ui
     return true;
 }
 
+bool CWallet::AbandonCoinstake(interfaces::Chain::Lock& locked_chain, const uint256& hashTx)
+{
+    auto locked_chain_recursive = chain().lock();  // Temporary. Removed in upcoming lock cleanup
+    LOCK(cs_wallet);
+
+    WalletBatch batch(*database, "r+");
+
+    std::set<uint256> todo;
+    std::set<uint256> done;
+
+    auto it = mapWallet.find(hashTx);
+    if (it == mapWallet.end())
+        return false;
+    CWalletTx& origtx = it->second;
+    if (!origtx.tx->IsCoinStake())
+        return false;
+
+    todo.insert(hashTx);
+
+    while (!todo.empty()) {
+        uint256 now = *todo.begin();
+        todo.erase(now);
+        done.insert(now);
+        auto it2 = mapWallet.find(now);
+        if (it2 == mapWallet.end())
+            continue;
+        CWalletTx& wtx = it2->second;
+        if (!wtx.isAbandoned()) {
+            // If the orig tx was not in block/mempool, none of its spends can be in mempool
+            assert(!wtx.InMempool());
+            wtx.nIndex = -1;
+            wtx.setAbandoned();
+            wtx.MarkDirty();
+            batch.WriteTx(wtx);
+            NotifyTransactionChanged(this, wtx.GetHash(), CT_UPDATED);
+            // Iterate over all its outputs, and mark transactions in the wallet that spend them abandoned too
+            TxSpends::const_iterator iter = mapTxSpends.lower_bound(COutPoint(now, 0));
+            while (iter != mapTxSpends.end() && iter->first.hash == now) {
+                if (!done.count(iter->second)) {
+                    todo.insert(iter->second);
+                }
+                iter++;
+            }
+            // If a transaction changes 'conflicted' state, that changes the balance
+            // available of the outputs it spends. So force those to be recomputed
+            MarkInputsDirty(wtx.tx);
+        }
+    }
+
+    auto itPrevout = mapWallet.find(origtx.tx->vin[0].prevout.hash);
+    if (itPrevout == mapWallet.end())
+        return false;
+
+    CTransactionRef prevoutTx;
+    uint256 hashBlock;
+    if (!GetTransaction(origtx.tx->vin[0].prevout.hash, prevoutTx, Params().GetConsensus(), hashBlock))
+        return false;
+    const CBlockIndex *pindex = nullptr;
+    {
+        LOCK(cs_main);
+        pindex = LookupBlockIndex(hashBlock);
+        if (!pindex)
+            return false;
+    }
+    CBlock block;
+    if (!ReadBlockFromDisk(block, pindex, Params().GetConsensus()))
+        return false;
+    int blockPos{0};
+    for (int i = 0; i < block.vtx.size(); ++i) {
+        if (block.vtx[i]->GetHash() == origtx.tx->vin[0].prevout.hash) {
+            blockPos = i;
+            break;
+        }
+    }
+
+    auto range = mapTxSpends.equal_range(origtx.tx->vin[0].prevout);
+    for (auto it3 = range.first; it3 != range.second; )
+        mapTxSpends.erase(it3++);
+    range = mapTxSpends.equal_range({origtx.GetHash(), static_cast<uint32_t>(origtx.nIndex)});
+    for (auto it3 = range.first; it3 != range.second; )
+        mapTxSpends.erase(it3++);
+
+    // Zap the orphaned stake tx
+    std::vector<uint256> zapTxs{origtx.GetHash()};
+    std::vector<uint256> zapOut;
+    if (ZapSelectTx(zapTxs, zapOut) != DBErrors::LOAD_OK)
+        return false;
+
+    SyncTransaction(itPrevout->second.tx, hashBlock, blockPos);
+
+    return true;
+}
+
 void CWallet::MarkConflicted(const uint256& hashBlock, const uint256& hashTx)
 {
     auto locked_chain = chain().lock();
@@ -1287,14 +1380,53 @@ void CWallet::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *p
 
     std::map<int, std::set<uint256>> aban;
     {
-        LOCK(cs_wallet);
-        aban = orphanedStakeTxs;
+        bool noOrphans{true};
+        {
+            LOCK(cs_wallet);
+            noOrphans = orphanedStakeTxs.empty();
+        }
+        // For txs that are connected, remove from orphan stake watcher
+        if (!noOrphans) {
+            CBlock block;
+            bool success{false};
+            {
+                LOCK(cs_main);
+                success = ReadBlockFromDisk(block, pindexNew, Params().GetConsensus());
+            }
+            if (success) {
+                std::set<uint256> txhashes;
+                for (auto & tx : block.vtx)
+                    txhashes.insert(tx->GetHash());
+                {
+                    LOCK(cs_wallet);
+                    for (auto it = orphanedStakeTxs.begin(); it != orphanedStakeTxs.end(); it++) {
+                        auto & orphanHashes = it->second;
+                        for (auto it2 = orphanHashes.begin(); it2 != orphanHashes.end(); it2++) {
+                            if (txhashes.count(*it2)) { // if orphan hash is in this block, erase it
+                                orphanHashes.erase(it2);
+                                if (orphanHashes.empty()) {
+                                    orphanedStakeTxs.erase(it);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        {
+            LOCK(cs_wallet);
+            aban = orphanedStakeTxs;
+        }
     }
     if (aban.empty())
         return;
 
     // Try and abandon orphaned coinstakes and vote txs
+    const int stakeCorrectionDrift{5};
     for (const auto & item : aban) {
+        if (pindexNew->nHeight < item.first + stakeCorrectionDrift)
+            continue;
         for (auto & txhash : item.second) {
             {
                 LOCK(mempool.cs);
@@ -1302,16 +1434,29 @@ void CWallet::UpdatedBlockTip(const CBlockIndex *pindexNew, const CBlockIndex *p
                 if (entry != mempool.mapTx.end())
                     mempool.removeRecursive(entry->GetTx(), MemPoolRemovalReason::REORG);
             }
-            if (TransactionCanBeAbandoned(txhash)) {
+            bool coinstake{false};
+            {
+                LOCK(cs_wallet);
+                auto it = mapWallet.find(txhash);
+                if (it == mapWallet.end())
+                    continue;
+                coinstake = it->second.tx->IsCoinStake();
+            }
+            bool abandoned{false};
+            {
                 auto locked_chain = chain().lock();
-                if (AbandonTransaction(*locked_chain, txhash)) {
-                    LOCK(cs_wallet);
-                    if (!orphanedStakeTxs.count(item.first))
-                        continue;
-                    orphanedStakeTxs[item.first].erase(txhash);
-                    if (orphanedStakeTxs[item.first].empty())
-                        orphanedStakeTxs.erase(item.first);
-                }
+                if (coinstake && AbandonCoinstake(*locked_chain, txhash))
+                    abandoned = true;
+                else if (!coinstake && AbandonTransaction(*locked_chain, txhash))
+                    abandoned = true;
+            }
+            if (abandoned) {
+                LOCK(cs_wallet);
+                if (!orphanedStakeTxs.count(item.first))
+                    continue;
+                orphanedStakeTxs[item.first].erase(txhash);
+                if (orphanedStakeTxs[item.first].empty())
+                    orphanedStakeTxs.erase(item.first);
             }
         }
     }
@@ -1342,7 +1487,7 @@ void CWallet::abandonOrphanedCoinstake(const std::shared_ptr<const CBlock> & pbl
         if (pindex)
             blockHeight = pindex->nHeight;
     }
-    if (!TransactionCanBeAbandoned(ptx->GetHash()) || !AbandonTransaction(locked_chain, ptx->GetHash())) {
+    {
         LOCK(cs_wallet);
         orphanedStakeTxs[blockHeight].insert(ptx->GetHash());
     }
@@ -1362,18 +1507,17 @@ void CWallet::abandonOrphanedCoinstake(const std::shared_ptr<const CBlock> & pbl
     for (const auto & vote : vs) {
         if (!txhashes.count(vote.getUtxo().hash))
             continue;
-        // abandon any transactions that vote utxos are referencing
-        if (TransactionCanBeAbandoned(vote.getOutpoint().hash)) {
-            if (AbandonTransaction(locked_chain, vote.getOutpoint().hash)) {
-                continue;
-            } else {
-                LOCK(cs_wallet);
-                orphanedStakeTxs[blockHeight].insert(vote.getOutpoint().hash);
-            }
-        } else {
+        bool coinstake{false};
+        {
             LOCK(cs_wallet);
-            orphanedStakeTxs[blockHeight].insert(vote.getOutpoint().hash);
+            auto it = mapWallet.find(vote.getOutpoint().hash);
+            if (it == mapWallet.end())
+                continue;
+            coinstake = it->second.tx->IsCoinStake();
         }
+        // Track any transactions that vote utxos are referencing
+        LOCK(cs_wallet);
+        orphanedStakeTxs[blockHeight].insert(vote.getOutpoint().hash);
     }
 }
 

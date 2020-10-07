@@ -57,6 +57,8 @@ static void removeGovernanceDBFiles() {
     } catch (...) {}
 }
 
+bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount & amount, CTransactionRef & tx);
+
 /**
  * Proof-of-Stake test chain.
  */

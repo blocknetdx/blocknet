@@ -54,26 +54,6 @@ int nextSuperblock(const int & block, const int & superblock) {
     return block + (superblock - block % superblock);
 }
 
-bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount & amount, CTransactionRef & tx) {
-    // Create and send the transaction
-    CReserveKey reservekey(wallet);
-    CAmount nFeeRequired;
-    std::string strError;
-    std::vector<CRecipient> vecSend;
-    int nChangePosRet = -1;
-    CRecipient recipient = {GetScriptForDestination(dest), amount, false};
-    vecSend.push_back(recipient);
-    CCoinControl cc;
-    auto locked_chain = wallet->chain().lock();
-    if (!wallet->CreateTransaction(*locked_chain, vecSend, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
-        return false;
-
-    CValidationState state;
-    auto sent = wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
-    BOOST_CHECK_MESSAGE(state.IsValid(), state.GetRejectReason());
-    return sent && state.IsValid();
-}
-
 bool sendToRecipients(CWallet *wallet, const std::vector<CRecipient> & recipients, CTransactionRef & tx, std::vector<std::pair<CTxOut,COutPoint>> *recvouts=nullptr) {
     // Create and send the transaction
     CReserveKey reservekey(wallet);
@@ -1191,7 +1171,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
     otherwallet->SetBroadcastTransactions(true);
     rescanWallet(otherwallet.get());
     const int voteInputs{2};
-    const CAmount voteInputAmount{1*COIN};
+    const CAmount voteInputAmount{5*COIN};
     const CAmount totalVoteAmount = consensus.voteBalance*2;
     const auto voteUtxoCount = static_cast<int>(totalVoteAmount/consensus.voteMinUtxoAmount);
     const auto maxVotes = totalVoteAmount/consensus.voteBalance;
