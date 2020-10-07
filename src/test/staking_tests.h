@@ -106,8 +106,8 @@ struct TestChainPoS : public TestingSetup {
             g_txindex->Start();
             g_txindex->Sync();
 
-            // Stake some blocks
-            StakeBlocks(5);
+            // Stake some blocks, use while loop to force fee calcs
+            StakeBlocks(5); SyncWithValidationInterfaceQueue();
             return cachedChain;
         }
 
