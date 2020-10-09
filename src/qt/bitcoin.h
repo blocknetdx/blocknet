@@ -62,7 +62,7 @@ class BitcoinApplication: public QApplication
 {
     Q_OBJECT
 public:
-    explicit BitcoinApplication(interfaces::Node& node, int &argc, char **argv);
+    explicit BitcoinApplication(interfaces::Node& node);
     ~BitcoinApplication();
     static bool isClassic();
 
