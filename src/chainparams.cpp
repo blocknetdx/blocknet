@@ -254,8 +254,8 @@ public:
         consensus.nRuleChangeActivationThreshold = 45; // 75% for testchains
         consensus.nMinerConfirmationWindow = 60;
         consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].bit = 28;
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = 1199145601; // January 1, 2008
-        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = 1230767999; // December 31, 2008
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_TESTDUMMY].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // Deployment of BIP68, BIP112, and BIP113.
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].bit = 0;
@@ -264,26 +264,26 @@ public:
 
         // Deployment of SegWit (BIP141, BIP143, and BIP147)
         consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].bit = 1;
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nStartTime = 1573850059; // November 15, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_SEGWIT].nTimeout = 1573936459; // November 16, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // Deployment of staker network fees
         consensus.vDeployments[Consensus::DEPLOYMENT_NETWORKFEES].bit = 2;
-        consensus.vDeployments[Consensus::DEPLOYMENT_NETWORKFEES].nStartTime = 1559692800; // June 5, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_NETWORKFEES].nTimeout = 1577750400; // December 31, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // Deployment of staker p2pkh support
         consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].bit = 3;
-        consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nStartTime = 1559692800; // June 5, 2019
-        consensus.vDeployments[Consensus::DEPLOYMENT_STAKEP2PKH].nTimeout = 1577750400; // December 31, 2019
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nStartTime = Consensus::BIP9Deployment::ALWAYS_ACTIVE;
+        consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000008da8d3d2e63fb960");
+        consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000002339c4c29a7a1"); // 1040
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x07df8d108cf2bb7db773b84b99a9afc0d3f9c0f9c85ff9b0b87225cf0150b471"); // 663538
+        consensus.defaultAssumeValid = uint256S("0x48fe73d7ef667bf3c06179c86478e0c0ac18efec175fadc16f6a382f476185be"); // 1040
 
-        consensus.lastPOWBlock = 31;
+        consensus.lastPOWBlock = 50;
         consensus.stakeMinAge = 60;
         consensus.stakingModiferV2Block = 1;
         consensus.coinMaturity = 15;
@@ -294,7 +294,7 @@ public:
         pchMessageStart[0] = 0x45;
         pchMessageStart[1] = 0x76;
         pchMessageStart[2] = 0x65;
-        pchMessageStart[3] = 0xba;
+        pchMessageStart[3] = 0xbb;
         nDefaultPort = 41474;
         nPruneAfterHeight = std::numeric_limits<uint64_t>::max(); // Pruning not supported
         m_assumed_blockchain_size = 1;
@@ -308,10 +308,9 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         // nodes with support for servicebits filtering should be at the top
-        vSeeds.emplace_back("3.16.3.126"); // Blocknet update services or use dns
-        vSeeds.emplace_back("18.224.130.185");
-        vSeeds.emplace_back("18.213.44.27");
-        vSeeds.emplace_back("34.196.102.239");
+        vSeeds.emplace_back("testnet-seed1.blocknet.co");
+        vSeeds.emplace_back("testnet-seed2.blocknet.co");
+        vSeeds.emplace_back("3.17.240.214");
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,139);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,19);
@@ -327,12 +326,11 @@ public:
         fRequireStandard = false;
         fMineBlocksOnDemand = false;
 
-
         checkpointData = {
             {
                 {0, uint256S("0x0fd62ae4f74c7ee0c11ef60fc5a2e69a5c02eaee2e77b21c3db70934b5a5c8b9")},
-                {302806, uint256S("0x54d0094600b90ae113cd54360058206b00eb1db2a5a9ae9a95e40f553edb2042")},
-                {663538, uint256S("0x07df8d108cf2bb7db773b84b99a9afc0d3f9c0f9c85ff9b0b87225cf0150b471")},
+                {50, uint256S("0x00031ab84aadb151e91a0ed96761e9e8174485f0a4631fd7e86e9eafb75e49a6")},
+                {1040, uint256S("0x48fe73d7ef667bf3c06179c86478e0c0ac18efec175fadc16f6a382f476185be")},
             }
         };
         // Assign last checkpoint height, used to estimate initial load time
@@ -343,9 +341,9 @@ public:
 
         chainTxData = ChainTxData{
             // Data from rpc: getchaintxstats
-            /* nTime    */ 1593837804,
-            /* nTxCount */ 1331560,
-            /* dTxRate  */ 0.03318975611066963
+            /* nTime    */ 1609870869,
+            /* nTxCount */ 2031,
+            /* dTxRate  */ 0.04444444444444445
         };
 
         /* enable fallback fee on testnet */
@@ -353,11 +351,11 @@ public:
         consensus.defaultFallbackFee = CFeeRate(2000);
 
         // Governance
-        consensus.superblock = 144;
+        consensus.superblock = 200;
         consensus.proposalCutoff = 20;
         consensus.votingCutoff = 10;
         consensus.proposalMaxAmount = 20000 * COIN;
-        consensus.governanceBlock = 267500;
+        consensus.governanceBlock = 2000;
 
         // subsidy func testnet
         consensus.GetBlockSubsidy = [](const int & blockHeight, const Consensus::Params & consensusParams) {
@@ -365,6 +363,8 @@ public:
                 return 5000 * COIN;
             else if (blockHeight > consensusParams.lastPOWBlock && blockHeight % consensusParams.superblock == 0)
                 return consensusParams.proposalMaxAmount + 1 * COIN;
+            else if (blockHeight <= 1440)
+                return 1000 * COIN;
             return 1 * COIN;
         };
     }
