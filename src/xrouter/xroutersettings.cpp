@@ -741,6 +741,11 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
         if (!boost::filesystem::exists(p)) {
             saveConf(p,
                      "[Main]"                                                                                            + eol +
+                     "#! It is highly recommended to setup an Enterprise XRouter Proxy (EXR Proxy):"                     + eol +
+                     "#! https://github.com/blocknetdx/exrproxy"                                                         + eol +
+                     "#! host and port below should point to the exr proxy so that xrouter clients can"                  + eol +
+                     "#! query services."                                                                                + eol +
+                     ""                                                                                                  + eol +
                      "#! host is a mandatory field, this tells the XRouter network how to find your node."               + eol +
                      "#! DNS and ip addresses are acceptable values."                                                    + eol +
                      "#! host=mynode.example.com"                                                                        + eol +
@@ -752,6 +757,17 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
                      "#! port=41412"                                                                                     + eol +
                      "#! port=80"                                                                                        + eol +
                      "#! port=8080"                                                                                      + eol +
+                     ""                                                                                                  + eol +
+                     "#! wallets connects xr:: namespaced tokens to xrouter (optional)."                                 + eol +
+                     "#! The wallet specified in the list must be configured in [datadir]/xbridge.conf"                  + eol +
+                     "#! wallets=BLOCK,BTC,LTC"                                                                          + eol +
+                     "wallets="                                                                                          + eol +
+                     ""                                                                                                  + eol +
+                     "#! plugins connects xrs:: oracles and microservices to xrouter (optional)."                        + eol +
+                     "#! A conf file matching the name of the plugin should be stored in the [datadir]/plugins"          + eol +
+                     "#! directory. Example: CustomPlugin1.conf"                                                         + eol +
+                     "#! plugins=CustomPlugin1,CustomPlugin2"                                                            + eol +
+                     "plugins="                                                                                          + eol +
                      ""                                                                                                  + eol +
                      "#! tls signals to the xrouter network that your endpoint supports TLS/SSL connections."            + eol +
                      "#! The default is 0 (false)."                                                                      + eol +
