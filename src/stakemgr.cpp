@@ -121,7 +121,7 @@ bool StakeMgr::Update(std::vector<std::shared_ptr<CWallet>> & wallets, const CBl
 
     lastBlockHeight = tipHeight;
     lastUpdateTime = endTime;
-    LogPrint(BCLog::ALL, "Staker: %u\n", lastBlockHeight);
+    LogPrint(BCLog::STAKE, "Staker: %u\n", lastBlockHeight);
     return !stakeTimes.empty();
 }
 
