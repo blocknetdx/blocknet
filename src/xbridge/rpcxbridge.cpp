@@ -2528,17 +2528,39 @@ UniValue dxGetTokenBalances(const JSONRPCRequest& request)
     double walletBalance = boost::numeric_cast<double>(xbridge::availableBalance()) / boost::numeric_cast<double>(COIN);
     res.emplace_back("Wallet", xbridge::xBridgeStringValueFromPrice(walletBalance));
 
-    // Add connected wallet balances
+    // Add connected wallet balances (fetch balances concurrently)
     const auto &connectors = xbridge::App::instance().connectors();
+    std::condition_variable cv;
+    Mutex cv_mu;
+    Mutex mu; // lock writes to res
+    int cores = GetNumCores()/2;
+    if (cores > connectors.size())
+        cores = connectors.size();
+    if (cores <= 0)
+        cores = 1;
+    int count = 0;
+    boost::thread_group tg;
     for(const auto &connector : connectors)
     {
-        const auto & excluded = xbridge::App::instance().getAllLockedUtxos(connector->currency);
-        const auto balance = connector->getWalletBalance(excluded);
-
-        //ignore not connected wallets
-        if(balance >= 0)
-            res.emplace_back(connector->currency, xbridge::xBridgeStringValueFromPrice(balance));
+        count++;
+        tg.create_thread([&cv,&mu,&count,&connector,&res]() {
+            RenameThread("blocknet-balance-check");
+            const auto & excluded = xbridge::App::instance().getAllLockedUtxos(connector->currency);
+            const auto balance = connector->getWalletBalance(excluded);
+            {
+                LOCK(mu);
+                if (balance >= 0) // Ignore results from disconnected wallets
+                    res.emplace_back(connector->currency, xbridge::xBridgeStringValueFromPrice(balance));
+                count--;
+            }
+            cv.notify_one();
+        });
+        while (count >= cores) { // block when queue is full
+            WAIT_LOCK(cv_mu, lock);
+            cv.wait(lock);
+        }
     }
+    tg.join_all(); // wait for all to complete
 
     return uret(res);
 }
