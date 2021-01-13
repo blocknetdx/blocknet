@@ -120,6 +120,11 @@ public:
         running = false;
         cond.notify_all();
     }
+
+    int queueSize() {
+        LOCK(cs);
+        return queue.size();
+    }
 };
 
 struct HTTPPathHandler
@@ -239,8 +244,9 @@ static void http_request_cb(struct evhttp_request* req, void* arg)
         return;
     }
 
-    LogPrint(BCLog::HTTP, "Received a %s request for %s from %s\n",
-             RequestMethodString(hreq->GetRequestMethod()), SanitizeString(hreq->GetURI(), SAFE_CHARS_URI).substr(0, 100), hreq->GetPeer().ToString());
+    LogPrint(BCLog::HTTP, "Received a %s request for %s from %s Queue size: %d\n",
+             RequestMethodString(hreq->GetRequestMethod()), SanitizeString(hreq->GetURI(), SAFE_CHARS_URI).substr(0, 100), hreq->GetPeer().ToString(),
+             workQueue->queueSize());
 
     // Find registered handler for prefix
     std::string strURI = hreq->GetURI();
