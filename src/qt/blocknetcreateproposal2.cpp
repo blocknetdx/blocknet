@@ -48,22 +48,40 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
 
     auto *div2 = new BlocknetHDiv;
 
-    auto *proposalGrid = new QFrame;
-    auto *proposalLayout = new QGridLayout;
-    proposalLayout->setContentsMargins(QMargins());
-    proposalGrid->setLayout(proposalLayout);
+    auto *amountGrid = new QFrame;
+    auto *amountLayout = new QGridLayout;
+    amountLayout->setContentsMargins(QMargins());
+    amountGrid->setLayout(amountLayout);
 
-    proposalDetailTitleLbl = new QLabel(tr("Proposal"));
-    proposalDetailTitleLbl->setObjectName("h4");
+    amountLbl = new QLabel(tr("Amount"));
+    amountLbl->setObjectName("h4");
 
-    proposalDetailLbl = new QLabel;
-    proposalDetailLbl->setObjectName("detail");
-    proposalDetailLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
+    amountValLbl = new QLabel;
+    amountValLbl->setObjectName("detail");
+    amountValLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
 
-    proposalLayout->addWidget(proposalDetailTitleLbl, 0, 0);
-    proposalLayout->addWidget(proposalDetailLbl, 0, 1, Qt::AlignRight);
+    amountLayout->addWidget(amountLbl, 0, 0);
+    amountLayout->addWidget(amountValLbl, 0, 1, Qt::AlignRight);
 
     auto *div3 = new BlocknetHDiv;
+
+    auto *descGrid = new QFrame;
+    auto *descLayout = new QGridLayout;
+    descLayout->setContentsMargins(QMargins());
+    descGrid->setLayout(descLayout);
+
+    descLbl = new QLabel(tr("Description"));
+    descLbl->setObjectName("h4");
+
+    descValLbl = new QLabel;
+    descValLbl->setObjectName("detail");
+    descValLbl->setWordWrap(true);
+    descValLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
+
+    descLayout->addWidget(descLbl, 0, 0);
+    descLayout->addWidget(descValLbl, 0, 1, Qt::AlignRight);
+
+    auto *div4 = new BlocknetHDiv;
 
     auto *addrGrid = new QFrame;
     auto *addrGridLayout = new QGridLayout;
@@ -77,7 +95,7 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
     addrGridLayout->addWidget(proposalAddrLbl, 0, 0);
     addrGridLayout->addWidget(proposalAddrValLbl, 0, 1, Qt::AlignRight);
 
-    auto *div4 = new BlocknetHDiv;
+    auto *div5 = new BlocknetHDiv;
 
     auto *urlGrid = new QFrame;
     auto *urlGridLayout = new QGridLayout;
@@ -91,7 +109,7 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
     urlGridLayout->addWidget(urlLbl, 0, 0);
     urlGridLayout->addWidget(urlValLbl, 0, 1, Qt::AlignRight);
 
-    auto *div5 = new BlocknetHDiv;
+    auto *div6 = new BlocknetHDiv;
 
     auto *feeGrid = new QFrame;
     auto *feeLayout = new QGridLayout;
@@ -107,24 +125,6 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
 
     feeLayout->addWidget(feeTitleLbl, 0, 0);
     feeLayout->addWidget(feeLbl, 0, 1, Qt::AlignRight);
-
-    auto *div6 = new BlocknetHDiv;
-
-    auto *descGrid = new QFrame;
-    auto *descLayout = new QVBoxLayout;
-    descLayout->setContentsMargins(QMargins());
-    descGrid->setLayout(descLayout);
-
-    descLbl = new QLabel(tr("Description"));
-    descLbl->setObjectName("h4");
-
-    descValLbl = new QLabel;
-    descValLbl->setObjectName("detail");
-    descValLbl->setWordWrap(true);
-    descValLbl->setTextInteractionFlags(Qt::TextSelectableByMouse);
-
-    descLayout->addWidget(descLbl);
-    descLayout->addWidget(descValLbl);
 
     auto *div7 = new BlocknetHDiv;
 
@@ -159,22 +159,23 @@ BlocknetCreateProposal2::BlocknetCreateProposal2(int id, QFrame *parent) : Block
     layout->addSpacing(spacing);
     layout->addWidget(div2);
     layout->addSpacing(spacing);
-    layout->addWidget(proposalGrid);
+    layout->addWidget(amountGrid);
     layout->addSpacing(spacing);
     layout->addWidget(div3);
     layout->addSpacing(spacing);
-    layout->addWidget(addrGrid);
+    layout->addWidget(descGrid);
     layout->addSpacing(spacing);
     layout->addWidget(div4);
     layout->addSpacing(spacing);
-    layout->addWidget(urlGrid);
+    layout->addWidget(addrGrid);
     layout->addSpacing(spacing);
     layout->addWidget(div5);
     layout->addSpacing(spacing);
-    layout->addWidget(feeGrid);
+    layout->addWidget(urlGrid);
     layout->addSpacing(spacing);
     layout->addWidget(div6);
-    layout->addWidget(descGrid);
+    layout->addSpacing(spacing);
+    layout->addWidget(feeGrid);
     layout->addSpacing(spacing);
     layout->addWidget(div7);
     layout->addSpacing(BGU::spi(20));
@@ -191,7 +192,7 @@ void BlocknetCreateProposal2::setModel(const BlocknetCreateProposalPageModel & m
     this->model = m;
     subtitleLbl->setText(tr("Review Proposal (Superblock %1)").arg(model.superblock));
     proposalLbl->setText(QString::fromStdString(model.name));
-    proposalDetailLbl->setText(tr("Total payment of %1").arg(BitcoinUnits::floorWithUnit(BitcoinUnit::BTC,
+    amountValLbl->setText(tr("%1").arg(BitcoinUnits::floorWithUnit(BitcoinUnit::BTC,
             model.amount * COIN, 2, false, BitcoinUnits::separatorNever)));
     proposalAddrValLbl->setText(QString::fromStdString(EncodeDestination(model.address)));
     urlValLbl->setText(QString::fromStdString(model.url));
