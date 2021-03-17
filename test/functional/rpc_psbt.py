@@ -7,7 +7,7 @@
 
 from decimal import Decimal
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import assert_equal, assert_raises_rpc_error, connect_nodes_bi, disconnect_nodes, find_output, sync_blocks
+from test_framework.util import assert_equal, assert_greater_than, assert_raises_rpc_error, connect_nodes_bi, disconnect_nodes, find_output, sync_blocks
 
 import json
 import os
@@ -20,6 +20,11 @@ class PSBTTest(BitcoinTestFramework):
     def set_test_params(self):
         self.setup_clean_chain = False
         self.num_nodes = 3
+        self.extra_args = [
+            ["-walletrbf=1"],
+            ["-walletrbf=0"],
+            []
+        ]
 
     def skip_test_if_missing_module(self):
         self.skip_if_no_wallet()
@@ -123,6 +128,15 @@ class PSBTTest(BitcoinTestFramework):
         assert_equal(walletprocesspsbt_out['complete'], True)
         self.nodes[1].sendrawtransaction(self.nodes[1].finalizepsbt(walletprocesspsbt_out['psbt'])['hex'])
 
+        # feeRate of 0.1 BTC / KB produces a total fee slightly below -maxtxfee (~0.05280000):
+        res = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2wpkh_pos},{"txid":txid,"vout":p2sh_p2wpkh_pos},{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():29.99}, 0, {"feeRate": 0.1})
+        assert_greater_than(res["fee"], 0.05)
+        assert_greater_than(0.06, res["fee"])
+
+        # feeRate of 10 BTC / KB produces a total fee well above -maxtxfee
+        # previously this was silently capped at -maxtxfee
+        assert_raises_rpc_error(-4, "Fee exceeds maximum configured by -maxtxfee", self.nodes[1].walletcreatefundedpsbt, [{"txid":txid,"vout":p2wpkh_pos},{"txid":txid,"vout":p2sh_p2wpkh_pos},{"txid":txid,"vout":p2pkh_pos}], {self.nodes[1].getnewaddress():29.99}, 0, {"feeRate": 10})
+
         # partially sign multisig things with node 1
         psbtx = self.nodes[1].walletcreatefundedpsbt([{"txid":txid,"vout":p2wsh_pos},{"txid":txid,"vout":p2sh_pos},{"txid":txid,"vout":p2sh_p2wsh_pos}], {self.nodes[1].getnewaddress():29.99})['psbt']
         walletprocesspsbt_out = self.nodes[1].walletprocesspsbt(psbtx)
@@ -144,10 +158,12 @@ class PSBTTest(BitcoinTestFramework):
         new_psbt = self.nodes[0].converttopsbt(rawtx['hex'])
         self.nodes[0].decodepsbt(new_psbt)
 
-        # Make sure that a psbt with signatures cannot be converted
+        # Make sure that a non-psbt with signatures cannot be converted
+        # Error could be either "TX decode failed" (segwit inputs causes parsing to fail) or "Inputs must not have scriptSigs and scriptWitnesses"
+        # We must set iswitness=True because the serialized transaction has inputs and is therefore a witness transaction
         signedtx = self.nodes[0].signrawtransactionwithwallet(rawtx['hex'])
-        assert_raises_rpc_error(-22, "TX decode failed", self.nodes[0].converttopsbt, signedtx['hex'])
-        assert_raises_rpc_error(-22, "TX decode failed", self.nodes[0].converttopsbt, signedtx['hex'], False)
+        assert_raises_rpc_error(-22, "", self.nodes[0].converttopsbt, hexstring=signedtx['hex'], iswitness=True)
+        assert_raises_rpc_error(-22, "", self.nodes[0].converttopsbt, hexstring=signedtx['hex'], permitsigdata=False, iswitness=True)
         # Unless we allow it to convert and strip signatures
         self.nodes[0].converttopsbt(signedtx['hex'], True)
 
@@ -189,18 +205,18 @@ class PSBTTest(BitcoinTestFramework):
         # replaceable arg
         block_height = self.nodes[0].getblockcount()
         unspent = self.nodes[0].listunspent()[0]
-        psbtx_info = self.nodes[0].walletcreatefundedpsbt([{"txid":unspent["txid"], "vout":unspent["vout"]}], [{self.nodes[2].getnewaddress():unspent["amount"]+1}], block_height+2, {"replaceable":True}, False)
+        psbtx_info = self.nodes[0].walletcreatefundedpsbt([{"txid":unspent["txid"], "vout":unspent["vout"]}], [{self.nodes[2].getnewaddress():unspent["amount"]+1}], block_height+2, {"replaceable":False}, False)
         decoded_psbt = self.nodes[0].decodepsbt(psbtx_info["psbt"])
         for tx_in, psbt_in in zip(decoded_psbt["tx"]["vin"], decoded_psbt["inputs"]):
-           assert_equal(tx_in["sequence"], MAX_BIP125_RBF_SEQUENCE)
-           assert "bip32_derivs" not in psbt_in
+            assert_greater_than(tx_in["sequence"], MAX_BIP125_RBF_SEQUENCE)
+            assert "bip32_derivs" not in psbt_in
         assert_equal(decoded_psbt["tx"]["locktime"], block_height+2)
 
-        # Same construction with only locktime set
-        psbtx_info = self.nodes[0].walletcreatefundedpsbt([{"txid":unspent["txid"], "vout":unspent["vout"]}], [{self.nodes[2].getnewaddress():unspent["amount"]+1}], block_height, {}, True)
+        # Same construction with only locktime set and RBF explicitly enabled
+        psbtx_info = self.nodes[0].walletcreatefundedpsbt([{"txid":unspent["txid"], "vout":unspent["vout"]}], [{self.nodes[2].getnewaddress():unspent["amount"]+1}], block_height, {"replaceable": True}, True)
         decoded_psbt = self.nodes[0].decodepsbt(psbtx_info["psbt"])
         for tx_in, psbt_in in zip(decoded_psbt["tx"]["vin"], decoded_psbt["inputs"]):
-            assert tx_in["sequence"] > MAX_BIP125_RBF_SEQUENCE
+            assert_equal(tx_in["sequence"], MAX_BIP125_RBF_SEQUENCE)
             assert "bip32_derivs" in psbt_in
         assert_equal(decoded_psbt["tx"]["locktime"], block_height)
 
@@ -208,8 +224,15 @@ class PSBTTest(BitcoinTestFramework):
         psbtx_info = self.nodes[0].walletcreatefundedpsbt([{"txid":unspent["txid"], "vout":unspent["vout"]}], [{self.nodes[2].getnewaddress():unspent["amount"]+1}])
         decoded_psbt = self.nodes[0].decodepsbt(psbtx_info["psbt"])
         for tx_in in decoded_psbt["tx"]["vin"]:
-            assert tx_in["sequence"] > MAX_BIP125_RBF_SEQUENCE
+            assert_equal(tx_in["sequence"], MAX_BIP125_RBF_SEQUENCE)
         assert_equal(decoded_psbt["tx"]["locktime"], 0)
+
+        # Same construction without optional arguments, for a node with -walletrbf=0
+        unspent1 = self.nodes[1].listunspent()[0]
+        psbtx_info = self.nodes[1].walletcreatefundedpsbt([{"txid":unspent1["txid"], "vout":unspent1["vout"]}], [{self.nodes[2].getnewaddress():unspent1["amount"]+1}], block_height)
+        decoded_psbt = self.nodes[1].decodepsbt(psbtx_info["psbt"])
+        for tx_in in decoded_psbt["tx"]["vin"]:
+            assert_greater_than(tx_in["sequence"], MAX_BIP125_RBF_SEQUENCE)
 
         # Make sure change address wallet does not have P2SH innerscript access to results in success
         # when attempting BnB coin selection
@@ -337,6 +360,16 @@ class PSBTTest(BitcoinTestFramework):
         joined = self.nodes[0].joinpsbts([psbt, psbt2])
         joined_decoded = self.nodes[0].decodepsbt(joined)
         assert len(joined_decoded['inputs']) == 4 and len(joined_decoded['outputs']) == 2 and "final_scriptwitness" not in joined_decoded['inputs'][3] and "final_scriptSig" not in joined_decoded['inputs'][3]
+
+        # Check that joining shuffles the inputs and outputs
+        # 10 attempts should be enough to get a shuffled join
+        shuffled = False
+        for i in range(0, 10):
+            shuffled_joined = self.nodes[0].joinpsbts([psbt, psbt2])
+            shuffled |= joined != shuffled_joined
+            if shuffled:
+                break
+        assert shuffled
 
         # Newly created PSBT needs UTXOs and updating
         addr = self.nodes[1].getnewaddress("", "p2sh-segwit")

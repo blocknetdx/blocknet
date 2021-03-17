@@ -54,26 +54,6 @@ int nextSuperblock(const int & block, const int & superblock) {
     return block + (superblock - block % superblock);
 }
 
-bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount & amount, CTransactionRef & tx) {
-    // Create and send the transaction
-    CReserveKey reservekey(wallet);
-    CAmount nFeeRequired;
-    std::string strError;
-    std::vector<CRecipient> vecSend;
-    int nChangePosRet = -1;
-    CRecipient recipient = {GetScriptForDestination(dest), amount, false};
-    vecSend.push_back(recipient);
-    CCoinControl cc;
-    auto locked_chain = wallet->chain().lock();
-    if (!wallet->CreateTransaction(*locked_chain, vecSend, tx, reservekey, nFeeRequired, nChangePosRet, strError, cc))
-        return false;
-
-    CValidationState state;
-    auto sent = wallet->CommitTransaction(tx, {}, {}, reservekey, g_connman.get(), state);
-    BOOST_CHECK_MESSAGE(state.IsValid(), state.GetRejectReason());
-    return sent && state.IsValid();
-}
-
 bool sendToRecipients(CWallet *wallet, const std::vector<CRecipient> & recipients, CTransactionRef & tx, std::vector<std::pair<CTxOut,COutPoint>> *recvouts=nullptr) {
     // Create and send the transaction
     CReserveKey reservekey(wallet);
@@ -320,6 +300,7 @@ bool cleanup(int blockCount, CWallet *wallet=nullptr) {
         InvalidateBlock(state, params, chainActive.Tip(), false);
     ActivateBestChain(state, params); SyncWithValidationInterfaceQueue();
     gArgs.ForceSetArg("-proposaladdress", "");
+    gArgs.ForceSetArg("-maxtxfee", "");
     removeGovernanceDBFiles();
     gov::Governance::instance().reset();
     if (wallet) {
@@ -790,6 +771,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
 
 BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -893,6 +875,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
 
 BOOST_FIXTURE_TEST_CASE(governance_tests_votes_changescutoff, TestChainPoS)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -980,6 +963,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_changescutoff, TestChainPoS)
 
 BOOST_FIXTURE_TEST_CASE(governance_tests_undo_submissions, TestChainPoS)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -1162,6 +1146,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_undo_submissions, TestChainPoS)
 
 BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     auto pos_ptr = std::make_shared<TestChainPoS>(false);
     auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
@@ -1191,7 +1176,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
     otherwallet->SetBroadcastTransactions(true);
     rescanWallet(otherwallet.get());
     const int voteInputs{2};
-    const CAmount voteInputAmount{1*COIN};
+    const CAmount voteInputAmount{5*COIN};
     const CAmount totalVoteAmount = consensus.voteBalance*2;
     const auto voteUtxoCount = static_cast<int>(totalVoteAmount/consensus.voteMinUtxoAmount);
     const auto maxVotes = totalVoteAmount/consensus.voteBalance;
@@ -1394,6 +1379,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
 
 BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     RegisterValidationInterface(&gov::Governance::instance());
 
     auto *params = (CChainParams*)&Params();
@@ -1608,6 +1594,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
 
 BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     auto *params = (CChainParams*)&Params();
     const auto & consensus = params->GetConsensus();
     CTxDestination dest(coinbaseKey.GetPubKey().GetID());
@@ -1812,6 +1799,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
 BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     auto pos_ptr = std::make_shared<TestChainPoS>(false);
     auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
@@ -1911,7 +1899,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 
         // Prep vote utxo
         CTransactionRef sendtx;
-        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 5 * COIN, sendtx);
         BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
         BOOST_REQUIRE_MESSAGE(accepted, "Proposal fee account should confirm to the network before continuing");
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -2238,6 +2226,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
 
 BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     auto pos_ptr = std::make_shared<TestChainPoS>(false);
     auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());
@@ -2337,7 +2326,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
 
         // Prep vote utxo
         CTransactionRef sendtx;
-        bool accepted = sendToAddress(pos.wallet.get(), dest, 2 * COIN, sendtx);
+        bool accepted = sendToAddress(pos.wallet.get(), dest, 5 * COIN, sendtx);
         BOOST_CHECK_MESSAGE(accepted, "Failed to create vote network fee payment address");
         BOOST_REQUIRE_MESSAGE(accepted, "Proposal fee account should confirm to the network before continuing");
         pos.StakeBlocks(1), SyncWithValidationInterfaceQueue();
@@ -2966,6 +2955,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_proposals)
 
 BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     auto pos_ptr = std::make_shared<TestChainPoS>(false);
     auto & pos = *pos_ptr;
     auto *params = (CChainParams*)&Params();
@@ -3182,6 +3172,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
 
 BOOST_AUTO_TEST_CASE(governance_tests_rpc)
 {
+    gArgs.ForceSetArg("-maxtxfee", "500000000");
     auto pos_ptr = std::make_shared<TestChainPoS>(false);
     auto & pos = *pos_ptr;
     RegisterValidationInterface(&gov::Governance::instance());

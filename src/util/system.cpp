@@ -685,7 +685,7 @@ void PrintExceptionContinue(const std::exception* pex, const char* pszThread)
 {
     std::string message = FormatException(pex, pszThread);
     LogPrintf("\n\n************************\n%s\n", message);
-    fprintf(stderr, "\n\n************************\n%s\n", message.c_str());
+    tfm::format(std::cerr, "\n\n************************\n%s\n", message.c_str());
 }
 
 fs::path GetDefaultDataDir()
@@ -971,7 +971,7 @@ bool ArgsManager::ReadConfigFiles(std::string& error, bool ignore_invalid_keys)
                 }
             }
             for (const std::string& to_include : includeconf) {
-                fprintf(stderr, "warning: -includeconf cannot be used from included files; ignoring -includeconf=%s\n", to_include.c_str());
+                tfm::format(std::cerr, "warning: -includeconf cannot be used from included files; ignoring -includeconf=%s\n", to_include.c_str());
             }
         }
     }
@@ -1121,11 +1121,12 @@ void AllocateFileRange(FILE *file, unsigned int offset, unsigned int length) {
         fcntl(fileno(file), F_PREALLOCATE, &fst);
     }
     ftruncate(fileno(file), fst.fst_length);
-#elif defined(__linux__)
+#else
+    #if defined(__linux__)
     // Version using posix_fallocate
     off_t nEndPos = (off_t)offset + length;
-    posix_fallocate(fileno(file), 0, nEndPos);
-#else
+    if (0 == posix_fallocate(fileno(file), 0, nEndPos)) return;
+    #endif
     // Fallback version
     // TODO: just write one byte per block
     static const char buf[65536] = {};
@@ -1241,10 +1242,11 @@ int GetNumCores()
 
 std::string CopyrightHolders(const std::string& strPrefix)
 {
-    std::string strCopyrightHolders = strPrefix + strprintf(_(COPYRIGHT_HOLDERS), _(COPYRIGHT_HOLDERS_SUBSTITUTION));
+    const auto copyright_devs = strprintf(_(COPYRIGHT_HOLDERS), COPYRIGHT_HOLDERS_SUBSTITUTION);
+    std::string strCopyrightHolders = strPrefix + copyright_devs;
 
-    // Check for untranslated substitution to make sure Bitcoin Core copyright is not removed by accident
-    if (strprintf(COPYRIGHT_HOLDERS, COPYRIGHT_HOLDERS_SUBSTITUTION).find("Bitcoin Core") == std::string::npos) {
+    // Make sure Bitcoin Core copyright is not removed by accident
+    if (copyright_devs.find("Bitcoin Core") == std::string::npos) {
         strCopyrightHolders += "\n" + strPrefix + "The Bitcoin Core developers";
     }
     return strCopyrightHolders;

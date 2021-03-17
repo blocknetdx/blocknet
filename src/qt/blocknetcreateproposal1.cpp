@@ -221,7 +221,9 @@ bool BlocknetCreateProposal1::validated() {
         LOCK(cs_main);
         currentBlock = chainActive.Height();
     }
-    if (!gov::Governance::outsideProposalCutoff(govProposal, currentBlock, Params().GetConsensus())) {
+    // Add 1 to the current block in the proposal cutoff check because this proposal won't confirm
+    // until the next block at the earliest.
+    if (!gov::Governance::outsideProposalCutoff(govProposal, currentBlock + 1, Params().GetConsensus())) {
         QMessageBox::warning(this->parentWidget(), tr("Issue"), tr("Failed to submit proposal because the proposal cutoff time has passed"));
         return false;
     }

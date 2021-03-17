@@ -57,6 +57,8 @@ static void removeGovernanceDBFiles() {
     } catch (...) {}
 }
 
+bool sendToAddress(CWallet *wallet, const CTxDestination & dest, const CAmount & amount, CTransactionRef & tx);
+
 /**
  * Proof-of-Stake test chain.
  */
@@ -106,8 +108,8 @@ struct TestChainPoS : public TestingSetup {
             g_txindex->Start();
             g_txindex->Sync();
 
-            // Stake some blocks
-            StakeBlocks(5);
+            // Stake some blocks, use while loop to force fee calcs
+            StakeBlocks(5); SyncWithValidationInterfaceQueue();
             return cachedChain;
         }
 

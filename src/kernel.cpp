@@ -465,12 +465,12 @@ unsigned int GetStakeEntropyBit(const uint256 & blockHash, const int64_t & block
     if (IsProtocolV05(static_cast<uint64_t>(blockTime))) {
         unsigned int nEntropyBit = 0;
         nEntropyBit = static_cast<unsigned int>(UintToArith256(blockHash).GetLow64() & 1llu); // last bit of block hash
-        LogPrint(BCLog::ALL, "GetStakeEntropyBit: hashBlock=%s nEntropyBit=%u\n", blockHash.ToString().c_str(), nEntropyBit);
+        LogPrint(BCLog::STAKE, "GetStakeEntropyBit: hashBlock=%s nEntropyBit=%u\n", blockHash.ToString().c_str(), nEntropyBit);
         return nEntropyBit;
     }
 
     unsigned int nEntropyBit = static_cast<unsigned int>(UintToArith256(blockHash).Get64() & 1);
-    LogPrint(BCLog::ALL, "GetStakeEntropyBit: hashBlock=%s nEntropyBit=%u\n", blockHash.ToString().c_str(), nEntropyBit);
+    LogPrint(BCLog::STAKE, "GetStakeEntropyBit: hashBlock=%s nEntropyBit=%u\n", blockHash.ToString().c_str(), nEntropyBit);
     return nEntropyBit;
 }
 

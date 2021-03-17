@@ -37,7 +37,7 @@ public:
     //! Avoid partial use of funds sent to a given address
     bool m_avoid_partial_spends;
     //! Fee estimation mode to control arguments to estimateSmartFee
-    FeeEstimateMode m_fee_mode;
+    FeeEstimateMode m_fee_mode = FeeEstimateMode::ECONOMICAL;
     //! 0-fee
     bool m_zero_fee;
 
