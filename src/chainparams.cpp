@@ -329,11 +329,7 @@ public:
         checkpointData = {
             {
                 {0, uint256S("0x0fd62ae4f74c7ee0c11ef60fc5a2e69a5c02eaee2e77b21c3db70934b5a5c8b9")},
-<<<<<<< HEAD
                 {50, uint256S("0x0003f993248beab1bb9ad8d470e858e320fb9670e1f1a93058779bc4a2553e77")},
-=======
-                {50, uint256S("0x000065ff3b9229cc3b67713c04c941938ec89b8f0695b90ab58ebf92acac66e2")},
->>>>>>> Fix/testnet (#540)
             }
         };
         // Assign last checkpoint height, used to estimate initial load time
