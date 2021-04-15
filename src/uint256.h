@@ -104,6 +104,39 @@ public:
     }
 };
 
+/** 128-bit opaque blob.
+ * @note This type is called uint128 for historical reasons only. It is an
+ * opaque blob of 128 bits and has no integer operations. Use arith_uint128 if
+ * those are required.
+ */
+class uint128 : public base_blob<128> {
+public:
+    uint128() {}
+    explicit uint128(const std::vector<unsigned char>& vch) : base_blob<128>(vch) {}
+};
+
+/* uint256 from const char *.
+ * This is a separate function because the constructor uint256(const char*) can result
+ * in dangerously catching uint256(0).
+ */
+inline uint128 uint128S(const char *str)
+{
+    uint128 rv;
+    rv.SetHex(str);
+    return rv;
+}
+
+/* uint256 from std::string.
+ * This is a separate function because the constructor uint256(const std::string &str) can result
+ * in dangerously catching uint256(0) via std::string(const char*).
+ */
+inline uint128 uint128S(const std::string& str)
+{
+    uint128 rv;
+    rv.SetHex(str);
+    return rv;
+}
+
 /** 160-bit opaque blob.
  * @note This type is called uint160 for historical reasons only. It is an opaque
  * blob of 160 bits and has no integer operations.
