@@ -268,7 +268,7 @@ protected:
 App::Impl::Impl()
     : m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
     , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-    , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
+    , m_timer(m_timerIo, boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)))
 {
 
 }
@@ -3747,7 +3747,7 @@ void App::Impl::onTimer()
         }
     }
 
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)));
     m_timer.async_wait(boost::bind(&Impl::onTimer, this));
 }
 
