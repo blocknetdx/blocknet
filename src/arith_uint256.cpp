@@ -186,6 +186,37 @@ unsigned int base_uint<BITS>::bits() const
     return 0;
 }
 
+// Explicit instantiations for base_uint<128>
+template base_uint<128>::base_uint(const std::string&);
+template base_uint<128>& base_uint<128>::operator<<=(unsigned int);
+template base_uint<128>& base_uint<128>::operator>>=(unsigned int);
+template base_uint<128>& base_uint<128>::operator*=(uint32_t b32);
+template base_uint<128>& base_uint<128>::operator*=(const base_uint<128>& b);
+template base_uint<128>& base_uint<128>::operator/=(const base_uint<128>& b);
+template int base_uint<128>::CompareTo(const base_uint<128>&) const;
+template bool base_uint<128>::EqualTo(uint64_t) const;
+template double base_uint<128>::getdouble() const;
+template<> std::string base_uint<128>::GetHex() const { return ArithToUint128(*this).GetHex(); }
+template std::string base_uint<128>::ToString() const;
+template<> void base_uint<128>::SetHex(const char* psz) { *this = UintToArith128(uint128S(psz)); }
+template void base_uint<128>::SetHex(const std::string&);
+template unsigned int base_uint<128>::bits() const;
+
+uint128 ArithToUint128(const arith_uint128 &a)
+{
+    uint128 b;
+    for(int x=0; x<a.WIDTH; ++x)
+        WriteLE32(b.begin() + x*4, a.pn[x]);
+    return b;
+}
+arith_uint128 UintToArith128(const uint128 &a)
+{
+    arith_uint128 b;
+    for(int x=0; x<b.WIDTH; ++x)
+        b.pn[x] = ReadLE32(a.begin() + x*4);
+    return b;
+}
+
 // Explicit instantiations for base_uint<256>
 template base_uint<256>::base_uint(const std::string&);
 template base_uint<256>& base_uint<256>::operator<<=(unsigned int);

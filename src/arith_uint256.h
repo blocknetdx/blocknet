@@ -14,6 +14,7 @@
 #include <string>
 #include <vector>
 
+class uint128;
 class uint256;
 class uint512;
 
@@ -252,6 +253,21 @@ public:
         return pn[2 * n] | (uint64_t)pn[2 * n + 1] << 32;
     }
 };
+
+/** 128-bit unsigned big integer. */
+class arith_uint128 : public base_uint<128> {
+public:
+    arith_uint128() {}
+    arith_uint128(const base_uint<128>& b) : base_uint<128>(b) {}
+    arith_uint128(uint64_t b) : base_uint<128>(b) {}
+    explicit arith_uint128(const std::string& str) : base_uint<128>(str) {}
+
+    friend uint128 ArithToUint128(const arith_uint128 &);
+    friend arith_uint128 UintToArith128(const uint128 &);
+};
+
+uint128 ArithToUint128(const arith_uint128 &);
+arith_uint128 UintToArith128(const uint128 &);
 
 /** 256-bit unsigned big integer. */
 class arith_uint256 : public base_uint<256> {
