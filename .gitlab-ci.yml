@@ -23,6 +23,8 @@ build_linux:
     expire_in: 3 weeks
     paths:
       - dist/bin
+  tags:
+    - hosted-linux
 
 build_win:
   stage: build
@@ -51,6 +53,8 @@ build_win:
     expire_in: 3 weeks
     paths:
       - dist/bin
+  tags:
+    - hosted-linux
 
 build_mac:
   stage: build
