@@ -3034,6 +3034,12 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     std::string toAddress       = request.params[5].get_str();
     double      partialMinimum  = boost::lexical_cast<double>(request.params[6].get_str());
 
+    // Check if min_size > maker_size 
+    if (partialMinimum > fromAmount) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The minimum_size can't be more than maker_size"));
+    }
+
     // Check that addresses are not the same
     if (fromAddress == toAddress) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
