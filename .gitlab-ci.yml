@@ -22,7 +22,7 @@ build_linux:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - /opt/blocknetdx/blocknet/dist/bin
   tags:
     - hosted-linux
 
@@ -52,7 +52,7 @@ build_win:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - /opt/blocknetdx/blocknet/dist/bin
   tags:
     - hosted-linux
 
@@ -81,7 +81,7 @@ build_mac:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - /opt/blocknetdx/blocknet/dist/bin
 
 test_artifacts:
   stage: test
