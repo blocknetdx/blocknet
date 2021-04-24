@@ -18,7 +18,7 @@ build_linux:
     - "make -j10"
     - "make install DESTDIR=\"$DISTDIR\""
     - "make clean"
-    - "ls \"$DISTDIR\""
+    - "ls \"$DISTDIR/bin\""
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     expire_in: 3 weeks
