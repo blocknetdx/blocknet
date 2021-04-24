@@ -18,11 +18,12 @@ build_linux:
     - "make -j10"
     - "make install DESTDIR=\"$DISTDIR\""
     - "make clean"
+    - "ls dist/bin"
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     expire_in: 3 weeks
     paths:
-      - /opt/blocknetdx/blocknet/dist//bin/blocknetd
+      - dist/bin
   tags:
     - hosted-linux
 
@@ -52,7 +53,7 @@ build_win:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win"
     expire_in: 3 weeks
     paths:
-      - /opt/blocknetdx/blocknet/dist//bin/blocknetd
+      - dist/bin
   tags:
     - hosted-linux
 
@@ -81,7 +82,7 @@ build_mac:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac"
     expire_in: 3 weeks
     paths:
-      - /opt/blocknetdx/blocknet/dist//bin/blocknetd
+      - dist/bin
   tags:
     - hosted-linux
 
