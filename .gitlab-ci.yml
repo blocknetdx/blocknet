@@ -23,7 +23,7 @@ build_linux:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     expire_in: 3 weeks
     paths:
-      - /builds/blocknetdx/blocknet/dist/bin
+      - blocknet/dist/bin
   tags:
     - hosted-linux
 
