@@ -19,7 +19,6 @@ build_linux:
     - "make install DESTDIR=\"$DISTDIR\""
     - "make clean"
     - "tar -cvf _artifact.tar.gz \"$DISTDIR\""
-    - "cp _artifact.tar.gz \"$CI_PROJECT_DIR\"/_artifact.tar.gz"
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     expire_in: 3 weeks
