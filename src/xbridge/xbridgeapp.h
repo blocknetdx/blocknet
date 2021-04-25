@@ -254,14 +254,14 @@ public:
      */
     Error sendXBridgeTransaction(const std::string & from,
                                  const std::string & fromCurrency,
-                                 const CAmount & fromAmount,
+                                 const amount_t & fromAmount,
                                  const std::string & to,
                                  const std::string & toCurrency,
-                                 const CAmount & toAmount,
+                                 const amount_t & toAmount,
                                  const std::vector<wallet::UtxoEntry> utxos,
                                  bool partialOrder,
                                  bool repostOrder,
-                                 CAmount partialMinimum,
+                                 amount_t partialMinimum,
                                  const bool autoSplit,
                                  const bool useAllFunds,
                                  uint256 & id,
@@ -284,10 +284,10 @@ public:
      */
     Error sendXBridgeTransaction(const std::string & from,
                                  const std::string & fromCurrency,
-                                 const CAmount & fromAmount,
+                                 const amount_t & fromAmount,
                                  const std::string & to,
                                  const std::string & toCurrency,
-                                 const CAmount & toAmount,
+                                 const amount_t & toAmount,
                                  const bool useAllFunds,
                                  uint256 & id,
                                  uint256 & blockHash);
@@ -308,8 +308,8 @@ public:
      * @return xbridge::SUCCESS if success, else error code
      */
     Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
-            CAmount makerAmount, CAmount takerAmount, uint64_t minFromAmount, uint64_t repostAmount,
-            const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid=uint256());
+            amount_t makerAmount, amount_t takerAmount, amount_t minFromAmount, amount_t repostAmount, const std::vector<wallet::UtxoEntry> utxos,
+            const uint256 parentid=uint256());
 
     // TODO make protected
     /**
@@ -329,7 +329,7 @@ public:
      * @return xbridge::SUCCESS, if transaction success accepted
      */
     Error acceptXBridgeTransaction(const uint256 & id, const std::string & from, const std::string & to,
-                                   uint64_t fromSize, uint64_t toSize);
+                                   amount_t fromSize, amount_t toSize);
 
     /**
      * @brief cancelXBridgeTransaction - cancel xbridge transaction
@@ -358,7 +358,7 @@ public:
      * @param fromAmount - amount to be taken
      * @return xbridge::SUCCESS, if all parameters valid
      */
-    xbridge::Error checkAcceptParams(std::string fromCurrency, uint64_t fromAmount);
+    xbridge::Error checkAcceptParams(std::string fromCurrency, amount_t fromAmount);
 
     /**
      * @brief checkCreateParams - checks parameter needs to success created transaction
@@ -378,7 +378,7 @@ public:
      * @return xbridge::SUCCES, if  the session currency is open and
      * on account has sufficient funds for operations
      */
-    xbridge::Error checkAmount(const std::string &currency, const uint64_t &amount, const std::string &address = "");
+    xbridge::Error checkAmount(const std::string &currency, const amount_t &amount, const std::string &address = "");
 
     /**
      * Store list of orders to watch for counterparty spent deposit.
@@ -687,9 +687,9 @@ public:
      */
     bool selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
             const std::function<double(uint32_t, uint32_t)> &minTxFee1,
-            const CAmount requiredAmount, const int requiredUtxoCount, const CAmount requiredFeePerUtxo,
-            const int requiredPrepTxVouts, const CAmount requiredSplitSize, const CAmount requiredRemainder,
-            std::vector<wallet::UtxoEntry> & outputsForUse, CAmount & utxoAmount, CAmount & fees, bool & exactUtxoMatch) const;
+            const amount_t requiredAmount, const int requiredUtxoCount, const amount_t requiredFeePerUtxo,
+            const int requiredPrepTxVouts, const amount_t requiredSplitSize, const amount_t requiredRemainder,
+            std::vector<wallet::UtxoEntry> & outputsForUse, amount_t & utxoAmount, amount_t & fees, bool & exactUtxoMatch) const;
 
     /**
      * Unit tests: add xwallets

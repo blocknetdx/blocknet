@@ -203,7 +203,7 @@ public:
     std::vector<unsigned char> a_address() const;
     std::vector<unsigned char> a_destination() const;
     std::string                a_currency() const;
-    uint64_t                   a_amount() const;
+    amount_t                   a_amount() const;
     std::string                a_payTx() const;
     std::string                a_refTx() const { LOCK(m_lock); return m_a.refTx(); }
     std::string                a_bintxid() const;
@@ -211,7 +211,7 @@ public:
     std::string                a_payTxId() const;
     bool                       a_refunded() const { LOCK(m_lock); return m_a_refunded; }
     const std::vector<wallet::UtxoEntry> a_utxos() const { LOCK(m_lock); return m_a.utxos(); }
-    uint64_t                   a_initial_amount() const { LOCK(m_lock); return m_sourceInitialAmount; }
+    amount_t                   a_initial_amount() const { LOCK(m_lock); return m_sourceInitialAmount; }
 
     std::vector<unsigned char> a_pk1() const;
 
@@ -219,7 +219,7 @@ public:
     std::vector<unsigned char> b_address() const;
     std::vector<unsigned char> b_destination() const;
     std::string                b_currency() const;
-    uint64_t                   b_amount() const;
+    amount_t                   b_amount() const;
     std::string                b_payTx() const;
     std::string                b_refTx() const { LOCK(m_lock); return m_b.refTx(); }
     std::string                b_bintxid() const;
@@ -227,9 +227,9 @@ public:
     std::string                b_payTxId() const;
     bool                       b_refunded() const { LOCK(m_lock); return m_b_refunded; }
     const std::vector<wallet::UtxoEntry> b_utxos() const { LOCK(m_lock); return m_b.utxos(); }
-    uint64_t                   b_initial_amount() const { LOCK(m_lock); return m_destInitialAmount; }
+    amount_t                   b_initial_amount() const { LOCK(m_lock); return m_destInitialAmount; }
 
-    uint64_t                   min_partial_amount() const { LOCK(m_lock); return m_minPartialAmount; }
+    amount_t                   min_partial_amount() const { LOCK(m_lock); return m_minPartialAmount; }
 
     std::vector<unsigned char> b_pk1() const;
 
@@ -310,12 +310,12 @@ private:
     std::string                m_sourceCurrency;
     std::string                m_destCurrency;
 
-    uint64_t                   m_sourceAmount;
-    uint64_t                   m_destAmount;
-    uint64_t                   m_sourceInitialAmount;
-    uint64_t                   m_destInitialAmount;
+    amount_t                   m_sourceAmount;
+    amount_t                   m_destAmount;
+    amount_t                   m_sourceInitialAmount;
+    amount_t                   m_destInitialAmount;
 
-    uint64_t                   m_minPartialAmount;
+    amount_t                   m_minPartialAmount;
 
     std::string                m_bintxid1;
     std::string                m_bintxid2;

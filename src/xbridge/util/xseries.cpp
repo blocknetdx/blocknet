@@ -33,7 +33,9 @@ namespace {
         if (not(tr.state == xbridge::TransactionDescr::trFinished)) return;
         if (not query.period.contains(tr.txtime)) return;
         if (not is_equivalent_pair(tr, query)) return;
-        if (is_too_small(tr.fromAmount) || is_too_small(tr.toAmount)) return;
+        // TODO
+        assert(false && "implementatin needed");
+        // if (is_too_small(tr.fromAmount) || is_too_small(tr.toAmount)) return;
         matches.emplace_back(query.with_txids == xQuery::WithTxids::Included
                              ? tr.id.GetHex() : xid_t{},
                              ccy::Asset{ccy::Currency{tr.fromCurrency,
@@ -185,7 +187,9 @@ xAggregate xAggregate::inverse() const {
 }
 
 void xAggregate::update(const CurrencyPair& x, xQuery::WithTxids with_txids) {
-    price_t price{x.price<price_t>()};
+    // TODO
+    assert(false && "implementatin needed");
+    price_t price = 0; // {x.price<price_t>()};
     if (open == 0) {
         open = high = low = price;
     }

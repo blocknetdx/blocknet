@@ -1421,13 +1421,12 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 //******************************************************************************
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
-        const std::string to, const std::string toCurrency, const CAmount makerAmount, const CAmount takerAmount,
-        const uint64_t minFromAmount, uint64_t repostAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
+        const std::string to, const std::string toCurrency, const amount_t makerAmount, const amount_t takerAmount,
+        const amount_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
-    double availableValue{0};
+    amount_t repostAmount{0};
     for (const auto & utxo : utxos)
-        availableValue += utxo.amount;
-    auto availableAmount = xBridgeAmountFromReal(availableValue);
+        repostAmount += utxo.amount;
 
     if (utxos.empty() || repostAmount > availableAmount || repostAmount > makerAmount)
         return xbridge::Error::INSUFFICIENT_FUNDS; // do not repost an order with insufficient funds
@@ -1442,17 +1441,17 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
         WARN() << "no session for <" << (connFrom ? toCurrency : fromCurrency) << "> " << __FUNCTION__;
         return xbridge::Error::NO_SESSION;
     }
-    if (connFrom->isDustAmount(xBridgeValueFromAmount(repostAmount)))
+    if (connFrom->isDustAmount(repostAmount))
         return xbridge::Error::DUST;
 
-    auto newRepostAmount = repostAmount;
+    auto newRepostAmount = xBridgeAmountFromReal(repostAmount);
     const auto fee1 = xBridgeAmountFromReal(connFrom->minTxFee1(1, 3));
     const auto fee2 = xBridgeAmountFromReal(connFrom->minTxFee2(1, 1));
     newRepostAmount -= (fee1 + fee2) * utxos.size();
     const bool usePartial = newRepostAmount > minFromAmount;
 
     // Calculate new to amount (destination amount).
-    const CAmount toAmount = xBridgeDestAmountFromPrice(newRepostAmount, makerAmount, takerAmount);
+    const amount_t toAmount = xBridgeDestAmountFromPrice(newRepostAmount, makerAmount, takerAmount);
 
     // Check the params (checks for valid amount)
     const auto statusCode = checkCreateParams(fromCurrency, toCurrency, newRepostAmount, from);
@@ -1468,11 +1467,11 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
 //******************************************************************************
 xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & fromCurrency,
-                                           const CAmount & fromAmount,
+                                           const amount_t & fromAmount,
                                            const std::string & to,
                                            const std::string & toCurrency,
-                                           const CAmount & toAmount,
-                                           const bool useAllFunds,
+                                           const amount_t & toAmount,                                           
+					   const bool useAllFunds,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
@@ -1483,14 +1482,14 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 //******************************************************************************
 xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & fromCurrency,
-                                           const CAmount & fromAmount,
+                                           const amount_t & fromAmount,
                                            const std::string & to,
                                            const std::string & toCurrency,
-                                           const CAmount & toAmount,
+                                           const amount_t & toAmount,
                                            const std::vector<wallet::UtxoEntry> utxos,
                                            const bool partialOrder,
                                            const bool repostOrder,
-                                           const CAmount partialMinimum,
+                                           const amount_t partialMinimum,
                                            const bool autoSplit,
                                            const bool useAllFunds,
                                            uint256 & id,
@@ -1570,16 +1569,16 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     int partialUtxosRequiredForMinimum{0};
     bool partialRemainderRequired{false};
-    CAmount partialVoutsTotal{0};
-    CAmount partialPerUtxoFees{0};
-    CAmount partialRemainderVoutTotal{0};
+    amount_t partialVoutsTotal{0};
+    amount_t partialPerUtxoFees{0};
+    amount_t partialRemainderVoutTotal{0};
     bool partialRemainderIsDust{false};
     int partialOrderVouts{0};
     bool partialExactUtxoMatch{false};
     if (partialOrder && utxos.empty()) {
         // Partial order support
-        partialUtxosRequiredForMinimum = static_cast<int>(fromAmount / partialMinimum);
-        if (partialUtxosRequiredForMinimum >= xBridgePartialOrderMaxUtxos) {
+        partialUtxosRequiredForMinimum = amount_t(fromAmount / partialMinimum).Get64();
+        if (partialUtxosRequiredForMinimum > xBridgePartialOrderMaxUtxos) {
             partialUtxosRequiredForMinimum = xBridgePartialOrderMaxUtxos - 1; // support 1 utxo for excess remainder
             partialRemainderRequired = true;
         } else if (fromAmount % partialMinimum != 0)
@@ -1587,19 +1586,19 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
         // Estimated fees if taker were to take the minimum order
         // (i.e. if 1 utxo were to be used to fulfill the partial order)
-        CAmount partialFee1 = xBridgeIntFromReal(connFrom->minTxFee1(1, 3));
-        CAmount partialFee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
+        amount_t partialFee1 = xBridgeIntFromReal(connFrom->minTxFee1(1, 3));
+        amount_t partialFee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
         partialPerUtxoFees = partialFee1 + partialFee2;
-        CAmount partialFees = (partialUtxosRequiredForMinimum + (partialRemainderRequired ? 1 : 0)) * partialPerUtxoFees;
+        amount_t partialFees = amount_t(partialUtxosRequiredForMinimum + (partialRemainderRequired ? 1 : 0)) * partialPerUtxoFees;
 
-        CAmount partialSplitVoutsTotal = partialUtxosRequiredForMinimum * partialMinimum;
+        amount_t partialSplitVoutsTotal = amount_t(partialUtxosRequiredForMinimum) * partialMinimum;
         if (fromAmount - partialSplitVoutsTotal < 0) {
             WARN() << "insufficient funds for partial order <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::INSUFFICIENT_FUNDS;
         }
         partialRemainderVoutTotal = fromAmount - partialSplitVoutsTotal;
         partialRemainderIsDust = connFrom->isDustAmount(xBridgeValueFromAmount(partialRemainderVoutTotal + partialPerUtxoFees));
-        partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : 0);
+        partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : amount_t(0));
         partialOrderVouts = partialUtxosRequiredForMinimum + (partialRemainderRequired && !partialRemainderIsDust ? 1 : 0);
     }
 
@@ -1634,8 +1633,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         };
 
         if (partialOrder) {
-            CAmount utxoAmount{0};
-            CAmount fees{0};
+            amount_t utxoAmount{0};
+            amount_t fees{0};
 
             // Select utxos
             // Note: account for a change output, hence the (partialOrderVouts + 1)
@@ -1676,7 +1675,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 log_obj.pushKV("fee1", (static_cast<double>(fee1) / TransactionDescr::COIN));
                 log_obj.pushKV("fee2", (static_cast<double>(fee2) / TransactionDescr::COIN));
                 log_obj.pushKV("utxos_amount", (static_cast<double>(utxoAmount) / TransactionDescr::COIN));
-                log_obj.pushKV("required_amount", (static_cast<double>(fromAmount + fee1 + fee2) / TransactionDescr::COIN));
+                log_obj.pushKV("required_amount", ((fromAmount + fee1 + fee2) / TransactionDescr::COIN).GetHex());
                 xbridge::LogOrderMsg(log_obj, "utxo selection details for order", __FUNCTION__);
             }
         }
@@ -1753,10 +1752,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     CHashWriter ss(SER_GETHASH, 0);
     ss << ptr->from
        << ptr->fromCurrency
-       << ptr->fromAmount
+       << ptr->fromAmount.GetHex()
        << ptr->to
        << ptr->toCurrency
-       << ptr->toAmount
+       << ptr->toAmount.GetHex()
        << timestampValue
        << ptr->blockHash
        << outputsForUse.at(0).signature;
@@ -1936,10 +1935,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 CHashWriter ss2(SER_GETHASH, 0);
                 ss2 << ptr->from
                     << ptr->fromCurrency
-                    << ptr->fromAmount
+                    << ptr->fromAmount.GetHex()
                     << ptr->to
                     << ptr->toCurrency
-                    << ptr->toAmount
+                    << ptr->toAmount.GetHex()
                     << timestampValue
                     << ptr->blockHash
                     << ptr->usedCoins.at(0).signature;
@@ -2105,7 +2104,7 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
 //******************************************************************************
 //******************************************************************************
 Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from, const std::string & to,
-                                    const uint64_t fromSize, const uint64_t toSize)
+                                    const amount_t fromSize, const amount_t toSize)
 {
     TransactionDescrPtr ptr;
 
@@ -2156,7 +2155,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         return xbridge::Error::DUST;
     }
 
-    if (availableBalance() < xBridgeAmountFromReal(connTo->serviceNodeFee))
+    if (availableBalance() < connTo->serviceNodeFee)
     {
         revertOrder(ptr);
         return xbridge::Error::INSUFFICIENT_FUNDS_DX;
@@ -2209,9 +2208,9 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
     json_spirit::Array info;
     info.push_back("");
     info.push_back(ptr->fromCurrency);
-    info.push_back(ptr->fromAmount);
+    info.push_back(ptr->fromAmount.GetHex());
     info.push_back(ptr->toCurrency);
-    info.push_back(ptr->toAmount);
+    info.push_back(ptr->toAmount.GetHex());
     std::string strInfo = write_string(json_spirit::Value(info));
     info.erase(info.begin());
 
@@ -2536,7 +2535,7 @@ bool App::isValidAddress(const std::string & address, WalletConnectorPtr & conn)
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const std::string fromCurrency, const uint64_t fromAmount) {
+Error App::checkAcceptParams(const std::string fromCurrency, const amount_t fromAmount) {
     return checkAmount(fromCurrency, fromAmount, "");
 }
 
@@ -2559,7 +2558,7 @@ Error App::checkCreateParams(const std::string & fromCurrency,
 //******************************************************************************
 //******************************************************************************
 Error App::checkAmount(const std::string & currency,
-                       const uint64_t    & amount,
+                       const amount_t    & amount,
                        const std::string & address)
 {
     // check amount
@@ -3078,23 +3077,23 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
 
 bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
         const std::function<double(uint32_t, uint32_t)> &minTxFee1,
-        const CAmount requiredAmount, const int requiredUtxoCount, const CAmount requiredFeePerUtxo,
-        const int requiredPrepTxVouts, const CAmount requiredSplitSize, const CAmount requiredRemainder,
-        std::vector<wallet::UtxoEntry> & outputsForUse, CAmount & utxoAmount, CAmount & fees, bool & exactUtxoMatch) const
+        const amount_t requiredAmount, const int requiredUtxoCount, const amount_t requiredFeePerUtxo,
+        const amount_t requiredPrepTxFees, const amount_t requiredSplitSize, const amount_t requiredRemainder,
+        std::vector<wallet::UtxoEntry> & outputsForUse, amount_t & utxoAmount, amount_t & fees, bool & exactUtxoMatch) const
 {
     utxoAmount = 0;
     fees = 0;
     exactUtxoMatch = false;
 
     std::vector<wallet::UtxoEntry> utxos(outputs.begin(), outputs.end()); // copy
-    CAmount totalAmountNeeded = requiredAmount + fees;
-    CAmount totalExactSplitSizeNeeded = (requiredSplitSize + requiredFeePerUtxo) * requiredUtxoCount;
-    CAmount totalRemainderNeeded = requiredRemainder > 0 ? requiredRemainder + requiredFeePerUtxo : 0;
-    CAmount requiredPrepTxFees = 0;
+    amount_t totalAmountNeeded = requiredAmount + fees;
+    amount_t totalExactSplitSizeNeeded = (requiredSplitSize + requiredFeePerUtxo) * requiredUtxoCount;
+    amount_t totalRemainderNeeded = requiredRemainder > 0 ? requiredRemainder + requiredFeePerUtxo : 0;
+    amount_t requiredPrepTxFees = 0;
     int idealUtxoCount = 0;
 
     // Find all ideal utxos (i.e. those matching split size and fees)
-    const CAmount requiredSplitSizeAmt = requiredSplitSize + requiredFeePerUtxo;
+    const amount_t requiredSplitSizeAmt = requiredSplitSize + requiredFeePerUtxo;
     for (auto it = utxos.begin(); it != utxos.end(); ) {
         auto & utxo = *it;
         if (utxo.camount() == requiredSplitSizeAmt && utxoAmount < totalExactSplitSizeNeeded) {
@@ -3105,7 +3104,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
             ++idealUtxoCount;
             continue;
         }
-        if (requiredRemainder > 0 && utxo.camount() == requiredRemainder) {
+        if (requiredRemainder > amount_t(0) && utxo.camount() == requiredRemainder) {
             utxoAmount += utxo.camount();
             fees += requiredFeePerUtxo;
             outputsForUse.push_back(utxo);
@@ -3122,7 +3121,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
     // required utxos exists.
     totalAmountNeeded = requiredAmount + fees;
     // The <= 1 is the margin of error allowance
-    if ((outputsForUse.size() == requiredUtxoCount || (requiredRemainder > 0 && outputsForUse.size() == requiredUtxoCount + 1)) && totalAmountNeeded - utxoAmount <= 0) {
+    if ((outputsForUse.size() == requiredUtxoCount || (requiredRemainder > amount_t(0) && outputsForUse.size() == requiredUtxoCount + 1)) && totalAmountNeeded - utxoAmount <= 0) {
         exactUtxoMatch = true;
         return true;
     }
@@ -3169,8 +3168,9 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
             // At this point we want to pick utxos that are larger than the required split amount to limit
             // total utxos selected. If all the required split utxos have been selected then make sure
             // we have enough inputs to cover change.
-            if (utxo.camount() >= requiredSplitSize + requiredFeePerUtxo) {
+            if (utxo.camount() >= amount_t(requiredSplitSize + requiredFeePerUtxo)) {
                 utxoAmount += utxo.camount();
+                fees += requiredFeePerUtxo;
                 outputsForUse.push_back(utxo);
                 it = utxos.erase(it); // remove selected utxo
                 ++count;

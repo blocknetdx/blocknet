@@ -8,6 +8,7 @@
 #ifndef BLOCKNET_XBRIDGE_XBRIDGEWALLET_H
 #define BLOCKNET_XBRIDGE_XBRIDGEWALLET_H
 
+#include "xbridgedef.h"
 #include <primitives/transaction.h>
 #include <serialize.h>
 #include <sync.h>
@@ -25,7 +26,7 @@
 //*****************************************************************************
 namespace xbridge
 {
-    CAmount xBridgeIntFromReal(double amount);
+    amount_t xBridgeIntFromReal(double amount);
 
 //*****************************************************************************
 //*****************************************************************************
@@ -62,7 +63,7 @@ struct UtxoEntry
         return { uint256S(txId), vout };
     }
 
-    CAmount camount() const {
+    amount_t camount() const {
         return xBridgeIntFromReal(amount);
     }
 

@@ -237,17 +237,17 @@ struct TransactionDescr
 
     std::vector<unsigned char> from;
     std::string                fromCurrency;
-    uint64_t                   fromAmount;
+    amount_t                   fromAmount;
     std::string                fromAddr;
     std::vector<unsigned char> to;
     std::string                toCurrency;
-    uint64_t                   toAmount;
+    amount_t                   toAmount;
     std::string                toAddr;
 
     std::string                origFromCurrency;
-    uint64_t                   origFromAmount{0};
+    amount_t                   origFromAmount{0};
     std::string                origToCurrency;
-    uint64_t                   origToAmount{0};
+    amount_t                   origToAmount{0};
 
     uint32_t                   lockTime;
     uint32_t                   opponentLockTime;
@@ -325,7 +325,7 @@ struct TransactionDescr
     // repost potential change (wait for confirmations)
     bool     repostOrderChange{false};
     // partial order amounts
-    uint64_t minFromAmount{0};
+    amount_t minFromAmount{0};
 
     // Track if tx is historical tx
     bool historical{false};

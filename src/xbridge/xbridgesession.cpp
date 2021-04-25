@@ -410,11 +410,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    // size must be > 152 bytes
-    if (packet->size() < 152)
+    // size must be > 164 bytes
+    if (packet->size() < 164)
     {
         ERR() << "invalid packet size for xbcTransaction "
-              << "need min 152 bytes, received " << packet->size() << " "
+              << "need min 164 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -445,16 +445,16 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string scurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t samount = *static_cast<boost::uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t samount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(amount_t);
 
     // destination
     std::vector<unsigned char> daddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
     offset += XBridgePacket::addressSize;
     std::string dcurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t damount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(amount_t);
 
     uint64_t timestamp = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint64_t);
@@ -474,8 +474,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     bool isPartialOrder = *static_cast<uint16_t *>(static_cast<void *>(packet->data()+offset)) == 1;
     offset += sizeof(uint16_t);
 
-    uint64_t minFromAmount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t minFromAmount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(amount_t);
 
     // utxos count
     uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
@@ -691,10 +691,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 134)
+    if (packet->size() != 146)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 134 received " << packet->size() << " "
+              << "need 146 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -705,13 +705,13 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t samount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    amount_t samount = *reinterpret_cast<amount_t *>(packet->data()+offset);
+    offset += sizeof(amount_t);
 
     std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t damount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    amount_t damount = *reinterpret_cast<amount_t *>(packet->data()+offset);
+    offset += sizeof(amount_t);
 
     auto hubAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
 
@@ -773,9 +773,9 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
             ptr->allowPartialOrders();
         offset += sizeof(uint16_t);
 
-        uint64_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+        amount_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
         ptr->minFromAmount = minFromAmount;
-        offset += sizeof(uint64_t);
+        offset += sizeof(amount_t);
 
         // update timestamp
         ptr->updateTimestamp();
@@ -851,8 +851,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         return true;
     }
 
-    // size must be >= 188 bytes
-    if (packet->size() < 188)
+    // size must be >= 196 bytes
+    if (packet->size() < 196)
     {
         ERR() << "invalid packet size for xbcTransactionAccepting "
               << "need min 188 bytes, received " << packet->size() << " "
@@ -916,8 +916,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string scurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t samount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(amount_t);
     uint32_t sourceHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
     offset += sizeof(uint32_t);
     std::vector<unsigned char> sourceHashRaw(packet->data() + offset, packet->data() + offset + 8);
@@ -929,8 +929,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string dcurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t damount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(amount_t);
     uint32_t destinationHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
     offset += sizeof(uint32_t);
     std::vector<unsigned char> destinationHashRaw(packet->data() + offset, packet->data() + offset + 8);
@@ -1137,7 +1137,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     }
 
     // Total amount included in taker utxos
-    const auto camount = xBridgeAmountFromReal(commonAmount);
+    const amount_t camount = xBridgeAmountFromReal(commonAmount);
 
     // Check that supplied utxos covers taker's reported source amount
     if (camount < samount)
@@ -1324,10 +1324,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 68)
+    if (packet->size() != 76)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 68 received " << packet->size() << " "
+              << "need 76 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1349,10 +1349,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // requested amounts (taker from and to amounts)
-    uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t samount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(amount_t);
+    amount_t damount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(amount_t);
 
     TransactionDescrPtr xtx = xapp.transaction(id);
     if (!xtx)
@@ -1676,10 +1676,10 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    if (packet->size() != 144)
+    if (packet->size() != 152)
     {
         ERR() << "incorrect packet size for xbcTransactionInit "
-              << "need 144 bytes, received " << packet->size() << " "
+              << "need 152 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1736,16 +1736,16 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string   fromCurrency(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t      fromAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t      fromAmount(*reinterpret_cast<amount_t *>(packet->data()+offset));
+    offset += sizeof(amount_t);
 
     std::vector<unsigned char> to(packet->data()+offset,
                                   packet->data()+offset+XBridgePacket::addressSize);
     offset += XBridgePacket::addressSize;
     std::string   toCurrency(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t      toAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    amount_t      toAmount(*reinterpret_cast<amount_t *>(packet->data()+offset));
+    offset += sizeof(amount_t);
 
     if(xtx->id           != txid &&
        xtx->from         != from &&
@@ -1963,14 +1963,14 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return true;
     }
 
-    const double outAmount = xBridgeValueFromAmount(xtx->fromAmount);
-    const CAmount coutAmount = xtx->fromAmount;
+    const double   outAmount  = xBridgeValueFromAmount(xtx->fromAmount);
+    const amount_t coutAmount = xtx->fromAmount;
 
     double inAmount = 0;
-    CAmount cfee1{0};
-    CAmount cfee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
-    CAmount cinAmount = xBridgeIntFromReal(inAmount);
-    CAmount coutAmountPlusFees{0};
+    amount_t cfee1{0};
+    amount_t cfee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
+    amount_t cinAmount = xBridgeIntFromReal(inAmount);
+    amount_t coutAmountPlusFees{0};
 
     std::vector<wallet::UtxoEntry> usedInTx;
     for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) {
