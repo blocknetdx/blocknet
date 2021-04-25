@@ -2,6 +2,7 @@ build_linux:
   stage: build
   image: blocknetdx/devbuilds:gitlab-linux
   script:
+    - "pwd"
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
     - "export BASEPREFIX=$PROJECTDIR/depends"
     - "export BASEPREFIX_CACHE=/proj/depends-cache"
@@ -19,7 +20,6 @@ build_linux:
     - "make install DESTDIR=\"$DISTDIR\""
 #     - "make clean"
     - "ls \"$DISTDIR/bin\""
-    - "pwd"
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     untracked: true
