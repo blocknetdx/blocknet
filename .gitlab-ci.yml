@@ -28,7 +28,7 @@ build_linux:
       - "*/*/dist/bin"
       - blocknetdx/blocknet/dist/bin
       - / 
-      - **/dist/bin
+      - "**/dist/bin"
   tags:
     - hosted-linux
 
