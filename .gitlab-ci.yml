@@ -19,6 +19,7 @@ build_linux:
     - "make install DESTDIR=\"$DISTDIR\""
 #     - "make clean"
     - "ls \"$DISTDIR/bin\""
+    - "pwd"
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     untracked: true
