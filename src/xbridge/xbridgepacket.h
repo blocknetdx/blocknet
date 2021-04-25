@@ -8,8 +8,9 @@
 #ifndef BLOCKNET_XBRIDGE_XBRIDGEPACKET_H
 #define BLOCKNET_XBRIDGE_XBRIDGEPACKET_H
 
-#include <xbridge/util/logger.h>
-#include <xbridge/version.h>
+#include "xbridge/util/logger.h"
+#include "xbridge/version.h"
+#include "arith_uint256.h"
 
 #include <vector>
 #include <deque>
@@ -443,6 +444,15 @@ public:
     }
 
     void append(const uint64_t data)
+    {
+        m_body.reserve(m_body.size() + sizeof(data));
+        unsigned char * ptr = (unsigned char *)&data;
+        std::copy(ptr, ptr+sizeof(data), std::back_inserter(m_body));
+        sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
+        __oldSizeField() = sizeField()+__headerDifference;
+    }
+
+    void append(const arith_uint128 data)
     {
         m_body.reserve(m_body.size() + sizeof(data));
         unsigned char * ptr = (unsigned char *)&data;
