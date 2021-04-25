@@ -22,13 +22,9 @@ build_linux:
     - "ls \"$DISTDIR/bin\""
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
-    untracked: true
     expire_in: 3 weeks
     paths:
-      - "*/dist/bin"
-      - "*/*/dist/bin"
-      - blocknetdx/blocknet/dist/bin
-      - "**/dist/bin"
+      - "/builds/blocknetdx/blocknet/dist/bin"
   tags:
     - hosted-linux
 
