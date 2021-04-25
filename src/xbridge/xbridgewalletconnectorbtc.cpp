@@ -2874,10 +2874,10 @@ bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vec
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, const std::string addr,
+bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, const std::string addr,
                                                     const bool includeFees, const std::set<wallet::UtxoEntry> excluded,
-                                                    const std::set<COutPoint> utxos, CAmount & totalSplit,
-                                                    CAmount & splitIncFees, int & splitCount, std::string & txId,
+                                                    const std::set<COutPoint> utxos, amount_t & totalSplit,
+                                                    amount_t & splitIncFees, int & splitCount, std::string & txId,
                                                     std::string & rawTx, std::string & failReason)
 {
     const auto hasUserSpecifiedUtxos = !utxos.empty();
@@ -2911,10 +2911,10 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, c
         unspent = newUnspent; // only use user specified utxos
     }
 
-    const CAmount fee1 = xBridgeIntFromReal(minTxFee1(1, 3));
-    const CAmount fee2 = xBridgeIntFromReal(minTxFee2(1, 1));
-    const CAmount feesPerUtxo = fee1 + fee2;
-    const CAmount splitSize = splitAmount + (includeFees ? feesPerUtxo : 0);
+    const amount_t fee1 = xBridgeIntFromReal(minTxFee1(1, 3));
+    const amount_t fee2 = xBridgeIntFromReal(minTxFee2(1, 1));
+    const amount_t feesPerUtxo = fee1 + fee2;
+    const amount_t splitSize = splitAmount + (includeFees ? feesPerUtxo : amount_t(0));
 
     if (!hasUserSpecifiedUtxos) {
         // Remove all utxos that already match the expected size or that don't match the specified address
@@ -2933,14 +2933,14 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, c
     if (unspent.size() > 100)
         unspent.erase(unspent.begin()+100, unspent.begin()+unspent.size());
 
-    CAmount vinsTotal{0};
+    amount_t vinsTotal{0};
     std::vector<xbridge::XTxIn> vins;
     for (const auto & vin : unspent) {
         vinsTotal += vin.camount();
         vins.emplace_back(vin.txId, vin.vout, vin.amount);
     }
 
-    auto outputCount = static_cast<int>(vinsTotal / splitSize);
+    auto outputCount = (vinsTotal / splitSize).Get64();
     if (outputCount < 1) {
         failReason = "already split all unused utxos in address [" + addr + "]";
         return false; // not enough coin
@@ -2948,25 +2948,25 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const CAmount splitAmount, c
     if (outputCount > 100)
         outputCount = 100;
 
-    const CAmount remainder = vinsTotal - (outputCount * splitSize);
-    std::vector<std::pair<std::string, CAmount>> vouts;
+    const amount_t remainder = vinsTotal - (xbridge::amount_t(outputCount) * splitSize);
+    std::vector<std::pair<std::string, amount_t>> vouts;
     for (int i = 0; i < outputCount; ++i)
         vouts.emplace_back(addr, splitSize);
 
-    const CAmount txFees = xBridgeIntFromReal(minTxFee1(vins.size(), vouts.size()));
-    const CAmount change = remainder - txFees;
+    const amount_t txFees = xBridgeIntFromReal(minTxFee1(vins.size(), vouts.size()));
+    const amount_t change = remainder - txFees;
     // add remainder vout if not dust
     if (!isDustAmount(xBridgeValueFromAmount(change)))
         vouts.emplace_back(addr, change);
     else {
         // Remove any utxos consumed by fees
-        CAmount feesLeft = txFees;
-        while (feesLeft > 0 && !vouts.empty()) {
+        amount_t feesLeft = txFees;
+        while (feesLeft > xbridge::amount_t(0) && !vouts.empty()) {
             auto & vout = vouts[vouts.size()-1];
-            const CAmount voutAmount = vout.second;
-            const CAmount voutNewAmount = voutAmount - feesLeft;
+            const amount_t voutAmount = vout.second;
+            const amount_t voutNewAmount = voutAmount - feesLeft;
             // If vout doesn't cover the fee move to the next one (i.e. if new amount is too small or negative)
-            if (voutNewAmount <= 0) {
+            if (voutNewAmount <= xbridge::amount_t(0)) {
                 vouts.erase(vouts.begin() + vouts.size());
                 outputCount -= 1;
                 feesLeft -= voutAmount; // subtract vout amount from leftover fees

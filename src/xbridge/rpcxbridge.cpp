@@ -4,6 +4,7 @@
 
 #include <rpc/server.h>
 
+#include "xbridgedef.h"
 #include <xbridge/util/logger.h>
 #include <xbridge/util/settings.h>
 #include <xbridge/util/xbridgeerror.h>
@@ -742,7 +743,9 @@ UniValue dxGetOrderHistory(const JSONRPCRequest& request)
             ? query.granularity
             : boost::posix_time::seconds{0};
         for (const auto& x : result) {
-            double volume = x.fromVolume.amount<double>();
+            // TODO
+            assert(false && "implementation needed");
+            double volume = 0; // x.fromVolume.amount<double>();
             Array ohlc{
                 ArrayIL{xbridge::iso8601(x.timeEnd - offset), x.low, x.high, x.open, x.close, volume}
             };
@@ -1239,12 +1242,12 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
         return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__));
     }
 
-    CAmount fromSize = txDescr->toAmount;
-    CAmount toSize = txDescr->fromAmount;
+    xbridge::amount_t fromSize = txDescr->toAmount;
+    xbridge::amount_t toSize = txDescr->fromAmount;
 
     // If no amount is specified on a partial order by default use the full
     // order sizes (will result in the entire partial order being taken).
-    if (txDescr->isPartialOrderAllowed() && xbridge::xBridgeAmountFromReal(amount) > 0) {
+    if (txDescr->isPartialOrderAllowed() && xbridge::xBridgeAmountFromReal(amount) > xbridge::amount_t(0)) {
         if (xbridge::xBridgeAmountFromReal(amount) < txDescr->minFromAmount) {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "The minimum amount for this order is: " +
                         xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
@@ -1645,7 +1648,7 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
         {
             if(transaction.second == nullptr)
                 return false;
-            if (transaction.second->fromAmount <= 0 || transaction.second->toAmount <= 0)
+            if (transaction.second->fromAmount <= xbridge::amount_t(0) || transaction.second->toAmount <= xbridge::amount_t(0))
                 return false;
             if (transaction.second->state != xbridge::TransactionDescr::trPending)
                 return false;
@@ -1660,7 +1663,7 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
         {
             if(transaction.second == nullptr)
                 return false;
-            if (transaction.second->fromAmount <= 0 || transaction.second->toAmount <= 0)
+            if (transaction.second->fromAmount <= xbridge::amount_t(0) || transaction.second->toAmount <= xbridge::amount_t(0))
                 return false;
             if (transaction.second->state != xbridge::TransactionDescr::trPending)
                 return false;
@@ -2491,7 +2494,7 @@ UniValue dxPartialOrderChainDetails(const JSONRPCRequest& request) {
     const auto takerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->origToAmount);
     const auto firstOrderTime = xbridge::iso8601(firstOrder->created);
     const auto lastOrderTime = xbridge::iso8601(lastOrder->txtime);
-    int64_t totalSent{0}, totalReceived{0}, totalNotSent{0}, totalNotReceived{0};
+    xbridge::amount_t totalSent{0}, totalReceived{0}, totalNotSent{0}, totalNotReceived{0};
     int totalOpen{0}, totalInProgress{0}, totalFinished{0}, totalCanceled{0};
     UniValue uvorders(UniValue::VARR);
     UniValue uvp2sh(UniValue::VARR);
@@ -2817,15 +2820,17 @@ UniValue gettradingdata(const JSONRPCRequest& request)
                     });
                 break;
             case CurrencyPair::Tag::Valid:
+                // TODO
+                assert(false && "implementatin needed");
                 records.emplace_back(Object{
                             Pair{"timestamp",  timestamp},
                             Pair{"txid",       txid},
                             Pair{"to",         snode_pubkey},
                             Pair{"xid",        p.xid()},
                             Pair{"from",       p.from.currency().to_string()},
-                            Pair{"fromAmount", p.from.amount<double>()},
+                            Pair{"fromAmount", 0}, // p.from.amount<double>()},
                             Pair{"to",         p.to.currency().to_string()},
-                            Pair{"toAmount",   p.to.amount<double>()},
+                            Pair{"toAmount",   0}, // p.to.amount<double>()},
                             });
                 break;
             case CurrencyPair::Tag::Empty:
@@ -2945,15 +2950,17 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
                     });
                 break;
             case CurrencyPair::Tag::Valid:
+                // TODO
+                assert(false && "implementatin needed");
                 records.emplace_back(Object{
                             Pair{"timestamp",  timestamp},
                             Pair{"fee_txid",   txid},
                             Pair{"nodepubkey", snode_pubkey},
                             Pair{"id",         p.xid()},
                             Pair{"taker",      p.from.currency().to_string()},
-                            Pair{"taker_size", p.from.amount<double>()},
+                            Pair{"taker_size", 0}, // p.from.amount<double>()},
                             Pair{"maker",      p.to.currency().to_string()},
-                            Pair{"maker_size", p.to.amount<double>()},
+                            Pair{"maker_size", 0}, // p.to.amount<double>()},
                             });
                 break;
             case CurrencyPair::Tag::Empty:
@@ -3305,10 +3312,10 @@ UniValue dxSplitAddress(const JSONRPCRequest& request)
         return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
 
     auto utxos = xapp.getAllLockedUtxos(token);
-    const CAmount sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
+    const xbridge::amount_t sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    CAmount totalSplit{0};
-    CAmount splitInclFees{0};
+    xbridge::amount_t totalSplit{0};
+    xbridge::amount_t splitInclFees{0};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, utxos, std::set<COutPoint>{}, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
@@ -3419,10 +3426,10 @@ UniValue dxSplitInputs(const JSONRPCRequest& request)
             return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, "Cannot split utxo already in use: " + vout.ToString()));
     }
 
-    const CAmount sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
+    const xbridge::amount_t sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    CAmount totalSplit{0};
-    CAmount splitInclFees{0};
+    xbridge::amount_t totalSplit{0};
+    xbridge::amount_t splitInclFees{0};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, excludedUtxos, userUtxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));

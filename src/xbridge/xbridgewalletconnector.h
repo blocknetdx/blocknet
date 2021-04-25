@@ -187,8 +187,8 @@ public:
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 
-    virtual bool splitUtxos(CAmount splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
-                            std::set<COutPoint> utxos, CAmount & totalSplit, CAmount & splitIncFees, int & splitCount,
+    virtual bool splitUtxos(amount_t splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
+                            std::set<COutPoint> utxos, amount_t & totalSplit, amount_t & splitIncFees, int & splitCount,
                             std::string & txId, std::string & rawTx, std::string & failReason) = 0;
 
     virtual bool isUTXOSpentInTx(const std::string & txid, const std::string & utxoPrevTxId,
