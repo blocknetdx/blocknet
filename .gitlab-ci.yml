@@ -1,5 +1,11 @@
+stages:
+  - linux
+  - windows
+  - mac
+  - test
+
 build_linux:
-  stage: build
+  stage: linux
   image: blocknetdx/devbuilds:gitlab-linux
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
@@ -28,7 +34,7 @@ build_linux:
     - hosted-linux
 
 build_win:
-  stage: build
+  stage: windows
   image: blocknetdx/devbuilds:gitlab-win
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
@@ -59,7 +65,7 @@ build_win:
     - hosted-linux
 
 build_mac:
-  stage: build
+  stage: mac
   image: blocknetdx/devbuilds:gitlab-mac
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
