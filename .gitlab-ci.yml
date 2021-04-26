@@ -49,11 +49,12 @@ build_win:
     - "make install DESTDIR=\"$DISTDIR\""
     - "cp *win64-setup.exe $DISTDIR/bin/blocknet-win64-setup.exe"
     - "make clean"
+    - "tar -cvf _artifact.tar.gz \"$DISTDIR\""
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - _artifact.tar.gz
   tags:
     - hosted-linux
 
@@ -78,11 +79,12 @@ build_mac:
     - "mkdir -p $DISTDIR/bin && llvm-dsymutil-6.0 src/qt/blocknet-qt -o $DISTDIR/bin/blocknet-qt.dSYM"
     - "make install DESTDIR=\"$DISTDIR\""
     - "make clean"
+    - "tar -cvf _artifact.tar.gz \"$DISTDIR\""
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - _artifact.tar.gz
   tags:
     - hosted-linux
 
