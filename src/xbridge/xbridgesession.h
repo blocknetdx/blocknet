@@ -49,8 +49,6 @@ public:
 
     ~Session();
 
-    bool isWorking() const { return m_isWorking; }
-
 public:
     // helper functions
     /**
@@ -127,14 +125,8 @@ public:
      */
     bool refundTraderDeposit(const std::string & orderId, const std::string & currency, const uint32_t & lockTime,
                              const std::string & refTx, int32_t & errCode) const;
-
-private:
-    void setWorking() { m_isWorking = true; }
-    void setNotWorking() { m_isWorking = false; }
-
 private:
     std::unique_ptr<Impl> m_p;
-    bool m_isWorking;
 };
 
 } // namespace xbridge
