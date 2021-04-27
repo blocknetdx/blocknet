@@ -70,11 +70,21 @@ struct PrintErrorCode
 
 //*****************************************************************************
 //*****************************************************************************
+std::vector<unsigned char> rand20()
+{
+    std::vector<unsigned char> tmp;
+    GetStrongRandBytes(&tmp[0], 20);
+    return tmp;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 class Session::Impl
 {
     friend class Session;
 
 protected:
+    Impl();
     void init();
 
 protected:
@@ -140,7 +150,7 @@ protected:
     void sendTransaction(uint256 & id) const;
 
 protected:
-    std::vector<unsigned char> m_myid;
+    const std::vector<unsigned char> m_myid;
 
     typedef fastdelegate::FastDelegate1<XBridgePacketPtr, bool> PacketHandler;
     typedef std::map<const int, PacketHandler> PacketHandlersMap;
@@ -171,6 +181,14 @@ const std::vector<unsigned char> & Session::sessionAddr() const
 
 //*****************************************************************************
 //*****************************************************************************
+Session::Impl::Impl()
+    : m_myid(rand20())
+{
+
+}
+
+//*****************************************************************************
+//*****************************************************************************
 void Session::Impl::init()
 {
     if (m_handlers.size())
@@ -178,9 +196,6 @@ void Session::Impl::init()
         LOG() << "packet handlers map must be empty" << __FUNCTION__;
         return;
     }
-
-    m_myid.resize(20);
-    GetStrongRandBytes(&m_myid[0], 20);
 
     // process invalid
     m_handlers[xbcInvalid]                   .bind(this, &Impl::processInvalid);
