@@ -610,13 +610,6 @@ SessionPtr App::Impl::getSession()
     m_sessions.pop();
     m_sessions.push(ptr);
 
-    if(ptr->isWorking())
-    {
-        ptr = SessionPtr(new Session());
-        m_sessions.push(ptr);
-        m_sessionAddressMap[ptr->sessionAddr()] = ptr;
-    }
-
     return ptr;
 }
 
