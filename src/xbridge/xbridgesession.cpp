@@ -161,7 +161,6 @@ protected:
 //*****************************************************************************
 Session::Session()
     : m_p(new Impl)
-    , m_isWorking(false)
 {
     m_p->init();
 }
@@ -299,12 +298,9 @@ bool Session::processPacket(XBridgePacketPtr packet, CValidationState * state)
 {
     // DEBUG_TRACE();
 
-    setWorking();
-
     if (!m_p->decryptPacket(packet))
     {
         ERR() << "packet decoding error " << __FUNCTION__;
-        setNotWorking();
         return false;
     }
 
@@ -314,7 +310,6 @@ bool Session::processPacket(XBridgePacketPtr packet, CValidationState * state)
     {
         ERR() << "unknown command code <" << c << "> " << __FUNCTION__;
         m_p->m_handlers.at(xbcInvalid)(packet);
-        setNotWorking();
         return false;
     }
 
@@ -328,11 +323,9 @@ bool Session::processPacket(XBridgePacketPtr packet, CValidationState * state)
         }
 
         ERR() << "packet processing error <" << c << "> " << __FUNCTION__;
-        setNotWorking();
         return false;
     }
 
-    setNotWorking();
     return true;
 }
 
