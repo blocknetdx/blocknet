@@ -7,6 +7,7 @@ stages:
 build_linux:
   stage: linux
   image: blocknetdx/devbuilds:gitlab-linux
+  timeout: 3h 30m
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
     - "export BASEPREFIX=$PROJECTDIR/depends"
@@ -36,6 +37,7 @@ build_linux:
 build_win:
   stage: windows
   image: blocknetdx/devbuilds:gitlab-win
+  timeout: 3h 30m
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
     - "export BASEPREFIX=$PROJECTDIR/depends"
@@ -67,6 +69,7 @@ build_win:
 build_mac:
   stage: mac
   image: blocknetdx/devbuilds:gitlab-mac
+  timeout: 3h 30m
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
     - "export BASEPREFIX=$PROJECTDIR/depends"
