@@ -1,6 +1,13 @@
+stages:
+  - linux
+  - windows
+  - mac
+  - test
+
 build_linux:
-  stage: build
+  stage: linux
   image: blocknetdx/devbuilds:gitlab-linux
+  timeout: 3h 30m
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
     - "export BASEPREFIX=$PROJECTDIR/depends"
@@ -14,19 +21,23 @@ build_linux:
     - "./autogen.sh"
     - "CONFIG_SITE=\"$BASEPREFIX/$HOST/share/config.site\" ./configure CC=gcc-8 CXX=g++-8 CFLAGS=\"-g3 -O0\" CXXFLAGS=\"-g3 -O0\" --enable-debug --prefix=/"
     - "make clean"
-    - "echo \"Building with cores: 10\""
-    - "make -j10"
+    - "echo \"Building with cores: 4\""
+    - "make -j4"
     - "make install DESTDIR=\"$DISTDIR\""
     - "make clean"
+    - "tar -cvf _artifact.tar.gz \"$DISTDIR\""
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-linux"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - _artifact.tar.gz
+  tags:
+    - hosted-linux
 
 build_win:
-  stage: build
+  stage: windows
   image: blocknetdx/devbuilds:gitlab-win
+  timeout: 3h 30m
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
     - "export BASEPREFIX=$PROJECTDIR/depends"
@@ -46,15 +57,19 @@ build_win:
     - "make install DESTDIR=\"$DISTDIR\""
     - "cp *win64-setup.exe $DISTDIR/bin/blocknet-win64-setup.exe"
     - "make clean"
+    - "tar -cvf _artifact.tar.gz \"$DISTDIR\""
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-win"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - _artifact.tar.gz
+  tags:
+    - hosted-linux
 
 build_mac:
-  stage: build
+  stage: mac
   image: blocknetdx/devbuilds:gitlab-mac
+  timeout: 3h 30m
   script:
     - "export PROJECTDIR=/opt/blocknetdx/blocknet"
     - "export BASEPREFIX=$PROJECTDIR/depends"
@@ -73,11 +88,14 @@ build_mac:
     - "mkdir -p $DISTDIR/bin && llvm-dsymutil-6.0 src/qt/blocknet-qt -o $DISTDIR/bin/blocknet-qt.dSYM"
     - "make install DESTDIR=\"$DISTDIR\""
     - "make clean"
+    - "tar -cvf _artifact.tar.gz \"$DISTDIR\""
   artifacts:
     name: "blocknet-$CI_COMMIT_REF_NAME-$CI_COMMIT_SHA-mac"
     expire_in: 3 weeks
     paths:
-      - dist/bin
+      - _artifact.tar.gz
+  tags:
+    - hosted-linux
 
 test_artifacts:
   stage: test
