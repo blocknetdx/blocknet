@@ -79,12 +79,12 @@ namespace xbridge
 
     constexpr double xBridgeMaxPriceDeviation = 1.0 / 100000000.0;
     constexpr int xBridgePartialOrderMaxUtxos = 10;
-    double xBridgeValueFromAmount(CAmount amount);
-    CAmount xBridgeIntFromReal(double val);
-    CAmount xBridgeAmountFromReal(double val);
+    double xBridgeValueFromAmount(amount_t amount);
+    amount_t xBridgeIntFromReal(double val);
+    amount_t xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
     std::string xBridgeStringValueFromPrice(double price, uint64_t denomination);
-    std::string xBridgeStringValueFromAmount(CAmount amount);
+    std::string xBridgeStringValueFromAmount(amount_t amount);
 
     /**
      * Return the counterparty destination amount from maker/taker price.
@@ -93,7 +93,7 @@ namespace xbridge
      * @param destAmount
      * @return
      */
-    CAmount xBridgeDestAmountFromPrice(const CAmount counterpartySourceAmount, const CAmount sourceAmount, const CAmount destAmount);
+    amount_t xBridgeDestAmountFromPrice(const amount_t counterpartySourceAmount, const amount_t sourceAmount, const amount_t destAmount);
     /**
      * Return the counterparty source amount from maker/taker price.
      * @param counterpartyDestAmount
@@ -101,7 +101,7 @@ namespace xbridge
      * @param destAmount
      * @return
      */
-    CAmount xBridgeSourceAmountFromPrice(const CAmount counterpartyDestAmount, const CAmount sourceAmount, const CAmount destAmount);
+    amount_t xBridgeSourceAmountFromPrice(const amount_t counterpartyDestAmount, const amount_t sourceAmount, const amount_t destAmount);
 
     /**
      * Responsible for checking for an acceptable drift in partial orders.
@@ -111,7 +111,7 @@ namespace xbridge
      * @param otherDest
      * @return
      */
-    bool xBridgePartialOrderDriftCheck(CAmount makerSource, CAmount makerDest, CAmount otherSource, CAmount otherDest);
+    bool xBridgePartialOrderDriftCheck(amount_t makerSource, amount_t makerDest, amount_t otherSource, amount_t otherDest);
 
     /**
      * @brief Returns true if the input precision is supported by xbridge.
@@ -135,7 +135,7 @@ namespace xbridge
         // returns 6
      * \endverbatim
      */
-    unsigned int xBridgeSignificantDigits(int64_t amount);
+    unsigned int xBridgeSignificantDigits(amount_t amount);
      /** @brief makeError - generate standard json_sprit object with error description
      * @param statusCode - error code
      * @param function - nome of called function

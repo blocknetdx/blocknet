@@ -6,6 +6,8 @@
 #ifndef BITCOIN_ARITH_UINT256_H
 #define BITCOIN_ARITH_UINT256_H
 
+#include "serialize.h"
+
 #include <assert.h>
 #include <cstring>
 #include <limits>
@@ -13,7 +15,9 @@
 #include <stdint.h>
 #include <string>
 #include <vector>
+#include <cmath>
 
+class uint128;
 class uint256;
 class uint512;
 
@@ -206,10 +210,14 @@ public:
     int CompareTo(const base_uint& b) const;
     bool EqualTo(uint64_t b) const;
 
+    friend inline const base_uint operator+(const base_uint& a, const int & b) { return base_uint(a) += base_uint(b); }
+    friend inline const base_uint operator-(const base_uint& a, const int & b) { return base_uint(a) -= base_uint(b); }
+
     friend inline const base_uint operator+(const base_uint& a, const base_uint& b) { return base_uint(a) += b; }
     friend inline const base_uint operator-(const base_uint& a, const base_uint& b) { return base_uint(a) -= b; }
     friend inline const base_uint operator*(const base_uint& a, const base_uint& b) { return base_uint(a) *= b; }
     friend inline const base_uint operator/(const base_uint& a, const base_uint& b) { return base_uint(a) /= b; }
+    friend inline const base_uint operator%(const base_uint& a, const base_uint& b) { return base_uint(a) - (base_uint(a) / b) * b; }
     friend inline const base_uint operator|(const base_uint& a, const base_uint& b) { return base_uint(a) |= b; }
     friend inline const base_uint operator&(const base_uint& a, const base_uint& b) { return base_uint(a) &= b; }
     friend inline const base_uint operator^(const base_uint& a, const base_uint& b) { return base_uint(a) ^= b; }
@@ -252,6 +260,42 @@ public:
         return pn[2 * n] | (uint64_t)pn[2 * n + 1] << 32;
     }
 };
+
+/** 128-bit unsigned big integer. */
+class arith_uint128 : public base_uint<128> {
+public:
+    arith_uint128() {}
+    arith_uint128(const base_uint<128>& b) : base_uint<128>(b) {}
+    arith_uint128(uint64_t b) : base_uint<128>(b) {}
+    explicit arith_uint128(const std::string& str) : base_uint<128>(str) {}
+
+    friend uint128 ArithToUint128(const arith_uint128 &);
+    friend arith_uint128 UintToArith128(const uint128 &);
+
+    inline operator double() const {
+      return static_cast<double>(GetLow64()) + std::ldexp(static_cast<double>(Get64(1)), 64);
+    }
+
+    ADD_SERIALIZE_METHODS;
+
+    template <typename Stream, typename Operation>
+    inline void SerializationOp(Stream& s, Operation ser_action) {
+        if (!ser_action.ForRead()) 
+        {
+            std::string hex = GetHex();
+            READWRITE(hex);
+        } 
+        else 
+        {
+            std::string hex;
+            READWRITE(hex);
+            SetHex(hex);            
+        }
+    }
+};
+
+uint128 ArithToUint128(const arith_uint128 &);
+arith_uint128 UintToArith128(const uint128 &);
 
 /** 256-bit unsigned big integer. */
 class arith_uint256 : public base_uint<256> {

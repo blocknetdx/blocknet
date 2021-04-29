@@ -5,6 +5,8 @@
 #ifndef BLOCKNET_XBRIDGE_CURRENCY_H
 #define BLOCKNET_XBRIDGE_CURRENCY_H
 
+#include "xbridgedef.h"
+
 #include <boost/rational.hpp>
 
 #include <array>
@@ -60,7 +62,7 @@ namespace ccy {
         }
     };
 
-    using Amount = uint64_t;
+    using Amount = xbridge::amount_t;
     using Basis  = uint64_t;
 
     template<typename T> constexpr T pow10(size_t x) {

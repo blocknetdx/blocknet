@@ -370,7 +370,7 @@ std::string Transaction::a_currency() const
 
 //*****************************************************************************
 //*****************************************************************************
-uint64_t Transaction::a_amount() const
+amount_t Transaction::a_amount() const
 {
     LOCK(m_lock);
     return m_sourceAmount;
@@ -440,7 +440,7 @@ std::string Transaction::b_currency() const
 
 //*****************************************************************************
 //*****************************************************************************
-uint64_t Transaction::b_amount() const
+amount_t Transaction::b_amount() const
 {
     LOCK(m_lock);
     return m_destAmount;

@@ -8,6 +8,8 @@
 #ifndef BLOCKNET_XBRIDGE_XBRIDGEDEF_H
 #define BLOCKNET_XBRIDGE_XBRIDGEDEF_H
 
+#include "arith_uint256.h"
+
 #include <vector>
 #include <map>
 #include <queue>
@@ -20,6 +22,8 @@
 //******************************************************************************
 namespace xbridge
 {
+
+typedef arith_uint128 amount_t;
 
 class WalletConnector;
 typedef std::shared_ptr<WalletConnector> WalletConnectorPtr;

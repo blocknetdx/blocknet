@@ -278,7 +278,7 @@ public:
         consensus.vDeployments[Consensus::DEPLOYMENT_CSV].nTimeout = Consensus::BIP9Deployment::NO_TIMEOUT;
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0000000000000000000000000000000000000000000000000002339c4c29a7a1"); // 1040
+        consensus.nMinimumChainWork = uint256S("000000000000000000000000000000000000000000000000000000000000002c"); // 1040
 
         // By default assume that the signatures in ancestors of this block are valid.
         consensus.defaultAssumeValid = uint256S("0x48fe73d7ef667bf3c06179c86478e0c0ac18efec175fadc16f6a382f476185be"); // 1040
@@ -330,6 +330,7 @@ public:
             {
                 {0, uint256S("0x0fd62ae4f74c7ee0c11ef60fc5a2e69a5c02eaee2e77b21c3db70934b5a5c8b9")},
                 {50, uint256S("0x000065ff3b9229cc3b67713c04c941938ec89b8f0695b90ab58ebf92acac66e2")},
+
             }
         };
         // Assign last checkpoint height, used to estimate initial load time
