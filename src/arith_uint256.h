@@ -268,6 +268,9 @@ public:
     arith_uint128(const base_uint<128>& b) : base_uint<128>(b) {}
     arith_uint128(uint64_t b) : base_uint<128>(b) {}
     explicit arith_uint128(const std::string& str) : base_uint<128>(str) {}
+    explicit arith_uint128(float v);
+    explicit arith_uint128(double v);
+    explicit arith_uint128(long double v);
 
     friend uint128 ArithToUint128(const arith_uint128 &);
     friend arith_uint128 UintToArith128(const uint128 &);
