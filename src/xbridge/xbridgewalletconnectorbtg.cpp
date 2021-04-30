@@ -261,7 +261,7 @@ bool BTGWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 
         int nHashType = SIGHASH_ALL | SIGHASH_FORKID;
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount*COIN);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "btg sign transaction error " << __FUNCTION__;
@@ -318,7 +318,7 @@ bool BTGWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
 
     int nHashType = SIGHASH_ALL | SIGHASH_FORKID;
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "btg sign transaction error " << __FUNCTION__;

@@ -27,9 +27,9 @@ struct XTxIn
 {
     std::string txid;
     uint32_t    n;
-    double      amount;
+    amount_t    amount;
 
-    XTxIn(std::string _txid, uint32_t _n, double _amount)
+    XTxIn(std::string _txid, uint32_t _n, amount_t _amount)
         : txid(_txid)
         , n(_n)
         , amount(_amount)
@@ -120,6 +120,7 @@ public:
     virtual bool isValidAddress(const std::string & addr) const = 0;
 
     virtual bool isDustAmount(const double & amount) const = 0;
+    virtual bool isDustAmount(const amount_t & amount) const = 0;
 
     virtual bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey) = 0;
 

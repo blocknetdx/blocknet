@@ -1417,7 +1417,7 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
         const std::string to, const std::string toCurrency, const amount_t makerAmount, const amount_t takerAmount,
         const amount_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
-    amount_t repostAmount{0};
+    amount_t repostAmount{uint64_t(0)};
     for (const auto & utxo : utxos)
         repostAmount += utxo.amount;
 
@@ -1562,9 +1562,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
     int partialUtxosRequiredForMinimum{0};
     bool partialRemainderRequired{false};
-    amount_t partialVoutsTotal{0};
-    amount_t partialPerUtxoFees{0};
-    amount_t partialRemainderVoutTotal{0};
+    amount_t partialVoutsTotal{uint64_t(0)};
+    amount_t partialPerUtxoFees{uint64_t(0)};
+    amount_t partialRemainderVoutTotal{uint64_t(0)};
     bool partialRemainderIsDust{false};
     int partialOrderVouts{0};
     bool partialExactUtxoMatch{false};
@@ -1582,17 +1582,17 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         amount_t partialFee1 = xBridgeIntFromReal(connFrom->minTxFee1(1, 3));
         amount_t partialFee2 = xBridgeIntFromReal(connFrom->minTxFee2(1, 1));
         partialPerUtxoFees = partialFee1 + partialFee2;
-        amount_t partialFees = amount_t(partialUtxosRequiredForMinimum + (partialRemainderRequired ? 1 : 0)) * partialPerUtxoFees;
+        amount_t partialFees = amount_t(uint64_t(partialUtxosRequiredForMinimum + (partialRemainderRequired ? 1 : 0))) * partialPerUtxoFees;
 
-        amount_t partialSplitVoutsTotal = amount_t(partialUtxosRequiredForMinimum) * partialMinimum;
+        amount_t partialSplitVoutsTotal = amount_t(uint64_t(partialUtxosRequiredForMinimum)) * partialMinimum;
         if (fromAmount - partialSplitVoutsTotal < 0) {
             WARN() << "insufficient funds for partial order <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::INSUFFICIENT_FUNDS;
         }
         partialRemainderVoutTotal = fromAmount - partialSplitVoutsTotal;
         partialRemainderIsDust = connFrom->isDustAmount(xBridgeValueFromAmount(partialRemainderVoutTotal + partialPerUtxoFees));
-        partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : amount_t(0));
-        partialOrderVouts = partialUtxosRequiredForMinimum + (partialRemainderRequired && !partialRemainderIsDust ? 1 : 0);
+        partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : amount_t(uint64_t(0)));
+        partialOrderVouts = partialUtxosRequiredForMinimum + uint64_t((partialRemainderRequired && !partialRemainderIsDust ? 1 : 0));
     }
 
     TransactionDescrPtr ptr(new TransactionDescr);
@@ -1626,8 +1626,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         };
 
         if (partialOrder) {
-            amount_t utxoAmount{0};
-            amount_t fees{0};
+            amount_t utxoAmount{uint64_t(0)};
+            amount_t fees{uint64_t(0)};
 
             // Select utxos
             // Note: account for a change output, hence the (partialOrderVouts + 1)
@@ -1656,31 +1656,36 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
             // Select utxos
             if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, fromAmount,
-                             TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
+                             xbridge::COIN, outputsForUse, utxoAmount, fee1, fee2))
             {
                 WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
                 return xbridge::Error::INSUFFICIENT_FUNDS;
             }
 
             {
+                // TODO .Get64() check
                 UniValue log_obj(UniValue::VOBJ);
                 log_obj.pushKV("currency", from);
-                log_obj.pushKV("fee1", (static_cast<double>(fee1) / TransactionDescr::COIN));
-                log_obj.pushKV("fee2", (static_cast<double>(fee2) / TransactionDescr::COIN));
-                log_obj.pushKV("utxos_amount", (static_cast<double>(utxoAmount) / TransactionDescr::COIN));
-                log_obj.pushKV("required_amount", ((fromAmount + fee1 + fee2) / TransactionDescr::COIN).GetHex());
+                log_obj.pushKV("fee1", (arith_uint128(fee1) / xbridge::COIN).Get64());
+                log_obj.pushKV("fee2", (arith_uint128(fee2) / xbridge::COIN).Get64());
+                log_obj.pushKV("utxos_amount", (arith_uint128(utxoAmount) / xbridge::COIN).Get64());
+                log_obj.pushKV("required_amount", (arith_uint128(fromAmount + fee1 + fee2) / xbridge::COIN).Get64());
                 xbridge::LogOrderMsg(log_obj, "utxo selection details for order", __FUNCTION__);
             }
         }
 
-    } else {
+    } 
+    else 
+    {
         outputsForUse = utxos;
     }
 
     // sign used coins
-    for (auto & entry : outputsForUse) {
+    for (auto & entry : outputsForUse) 
+    {
         std::string signature;
-        if (!connFrom->signMessage(entry.address, entry.toString(), signature)) {
+        if (!connFrom->signMessage(entry.address, entry.toString(), signature)) 
+        {
             WARN() << "funds not signed <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::FUNDS_NOT_SIGNED;
         }
@@ -2288,7 +2293,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         // Select utxos
         std::vector<wallet::UtxoEntry> outputsForUse;
         if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, ptr->fromAmount,
-                         TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
+                         xbridge::COIN, outputsForUse, utxoAmount, fee1, fee2))
         {
             revertOrder(ptr);
             xbridge::LogOrderMsg(id.GetHex(), "not accepting order, insufficient funds for <" + ptr->fromCurrency + ">", __FUNCTION__);
@@ -2564,7 +2569,7 @@ Error App::checkAmount(const std::string & currency,
 
     // Check that wallet balance is larger than the smallest supported balance
     const auto & excluded = getAllLockedUtxos(currency);
-    if (conn->getWalletBalance(excluded, address) < (static_cast<double>(amount) / TransactionDescr::COIN)) {
+    if (conn->getWalletBalance(excluded, address) < (amount / xbridge::COIN)) {
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
         return xbridge::INSUFFICIENT_FUNDS;
     }
@@ -3097,7 +3102,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
             ++idealUtxoCount;
             continue;
         }
-        if (requiredRemainder > amount_t(0) && utxo.camount() == requiredRemainder) {
+        if (requiredRemainder > amount_t(uint64_t(0)) && utxo.camount() == requiredRemainder) {
             utxoAmount += utxo.camount();
             fees += requiredFeePerUtxo;
             outputsForUse.push_back(utxo);
@@ -3114,7 +3119,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
     // required utxos exists.
     totalAmountNeeded = requiredAmount + fees;
     // The <= 1 is the margin of error allowance
-    if ((outputsForUse.size() == requiredUtxoCount || (requiredRemainder > amount_t(0) && outputsForUse.size() == requiredUtxoCount + 1)) && totalAmountNeeded - utxoAmount <= 0) {
+    if ((outputsForUse.size() == requiredUtxoCount || (requiredRemainder > amount_t(uint64_t(0)) && outputsForUse.size() == requiredUtxoCount + 1)) && totalAmountNeeded - utxoAmount <= 0) {
         exactUtxoMatch = true;
         return true;
     }
