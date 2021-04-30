@@ -202,6 +202,28 @@ template<> void base_uint<128>::SetHex(const char* psz) { *this = UintToArith128
 template void base_uint<128>::SetHex(const std::string&);
 template unsigned int base_uint<128>::bits() const;
 
+arith_uint128 MakeUint128FromFloat(long double v) 
+{
+  // Go 50 bits at a time, that fits in a double
+  static_assert(std::numeric_limits<double>::digits >= 50, "");
+  static_assert(std::numeric_limits<long double>::digits <= 150, "");
+  // Undefined behavior if v is not finite or cannot fit into arith_uint128.
+  assert(std::isfinite(v) && v > -1 && v < std::ldexp(1.0L, 128));
+
+  v = std::ldexp(v, -100);
+  uint64_t w0 = static_cast<uint64_t>(static_cast<double>(std::trunc(v)));
+  v = std::ldexp(v - static_cast<double>(w0), 50);
+  uint64_t w1 = static_cast<uint64_t>(static_cast<double>(std::trunc(v)));
+  v = std::ldexp(v - static_cast<double>(w1), 50);
+  uint64_t w2 = static_cast<uint64_t>(static_cast<double>(std::trunc(v)));
+  return (static_cast<arith_uint128>(w0) << 100) | (static_cast<arith_uint128>(w1) << 50) |
+         static_cast<arith_uint128>(w2);
+}
+
+arith_uint128::arith_uint128(float v) : arith_uint128(MakeUint128FromFloat(v)) {}
+arith_uint128::arith_uint128(double v) : arith_uint128(MakeUint128FromFloat(v)) {}
+arith_uint128::arith_uint128(long double v) : arith_uint128(MakeUint128FromFloat(v)) {}
+
 uint128 ArithToUint128(const arith_uint128 &a)
 {
     uint128 b;
