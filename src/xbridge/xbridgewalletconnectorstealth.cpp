@@ -148,7 +148,7 @@ bool StealthWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
 
         int nHashType = SIGHASH_ALL;
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount * COIN);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64() * COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "stealth sign transaction error " << __FUNCTION__;
@@ -203,7 +203,7 @@ bool StealthWalletConnector::createPaymentTransaction(const std::vector<XTxIn> &
 
     int nHashType = SIGHASH_ALL;
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "stealth sign transaction error " << __FUNCTION__;

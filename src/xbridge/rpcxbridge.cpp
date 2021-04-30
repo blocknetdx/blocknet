@@ -140,9 +140,9 @@ CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& 
 
     return CurrencyPair{
             xtx[0].get_str(),    // xid
-            {ccy::Currency{xtx[1].get_str(),xbridge::TransactionDescr::COIN}, // fromCurrency
+            {ccy::Currency{xtx[1].get_str(),xbridge::COIN}, // fromCurrency
              xtx[2].get_uint64()},                                     // fromAmount
-            {ccy::Currency{xtx[3].get_str(),xbridge::TransactionDescr::COIN}, // toCurrency
+            {ccy::Currency{xtx[3].get_str(),xbridge::COIN}, // toCurrency
              xtx[4].get_uint64()}                                      // toAmount
     };
 }
@@ -978,7 +978,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
                       "The maker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return uret(error);
@@ -988,7 +988,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
                       "The taker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return uret(error);
@@ -1004,6 +1004,9 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
 
     std::string type            = params[6].get_str();
 
+    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
+
     // Validate the order type
     if (type != "exact") {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -1017,20 +1020,19 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     }
 
     // Check upper limits
-    if (fromAmount > (double)xbridge::TransactionDescr::MAX_COIN ||
-            toAmount > (double)xbridge::TransactionDescr::MAX_COIN) {
+    if (fromAmount > (double)xbridge::MAX_COIN ||
+            toAmount > (double)xbridge::MAX_COIN) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN)));
+                               "The maximum supported size is " + std::to_string(xbridge::MAX_COIN)));
     }
     // Check lower limits
+    // TODO update minimum check
     if (fromAmount <= 0 || toAmount <= 0) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The minimum supported size is " + xbridge::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN)));
+                               "The minimum supported size is " + connFrom->dustAmount));
     }
 
     // Validate addresses
-    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
-    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
     if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
     if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
 
@@ -1247,7 +1249,7 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
 
     // If no amount is specified on a partial order by default use the full
     // order sizes (will result in the entire partial order being taken).
-    if (txDescr->isPartialOrderAllowed() && xbridge::xBridgeAmountFromReal(amount) > xbridge::amount_t(0)) {
+    if (txDescr->isPartialOrderAllowed() && xbridge::xBridgeAmountFromReal(amount) > xbridge::amount_t(uint64_t(0))) {
         if (xbridge::xBridgeAmountFromReal(amount) < txDescr->minFromAmount) {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "The minimum amount for this order is: " +
                         xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
@@ -1648,10 +1650,15 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
         {
             if(transaction.second == nullptr)
                 return false;
-            if (transaction.second->fromAmount <= xbridge::amount_t(0) || transaction.second->toAmount <= xbridge::amount_t(0))
+            if (transaction.second->fromAmount <= xbridge::amount_t(uint64_t(0)) || 
+                transaction.second->toAmount <= xbridge::amount_t(uint64_t(0)))
+            {
                 return false;
+            }
             if (transaction.second->state != xbridge::TransactionDescr::trPending)
+            {
                 return false;
+            }
 
             return  ((transaction.second->toCurrency == toCurrency) &&
                     (transaction.second->fromCurrency == fromCurrency));
@@ -1663,10 +1670,15 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
         {
             if(transaction.second == nullptr)
                 return false;
-            if (transaction.second->fromAmount <= xbridge::amount_t(0) || transaction.second->toAmount <= xbridge::amount_t(0))
+            if (transaction.second->fromAmount <= xbridge::amount_t(uint64_t(0)) || 
+                transaction.second->toAmount <= xbridge::amount_t(uint64_t(0)))
+            {
                 return false;
+            }
             if (transaction.second->state != xbridge::TransactionDescr::trPending)
+            {
                 return false;
+            }
 
             return  ((transaction.second->toCurrency == fromCurrency) &&
                     (transaction.second->fromCurrency == toCurrency));
@@ -2494,7 +2506,7 @@ UniValue dxPartialOrderChainDetails(const JSONRPCRequest& request) {
     const auto takerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->origToAmount);
     const auto firstOrderTime = xbridge::iso8601(firstOrder->created);
     const auto lastOrderTime = xbridge::iso8601(lastOrder->txtime);
-    xbridge::amount_t totalSent{0}, totalReceived{0}, totalNotSent{0}, totalNotReceived{0};
+    xbridge::amount_t totalSent{uint64_t(0)}, totalReceived{uint64_t(0)}, totalNotSent{uint64_t(0)}, totalNotReceived{uint64_t(0)};
     int totalOpen{0}, totalInProgress{0}, totalFinished{0}, totalCanceled{0};
     UniValue uvorders(UniValue::VARR);
     UniValue uvp2sh(UniValue::VARR);
@@ -3078,7 +3090,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
                       "The maker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return uret(error);
@@ -3088,7 +3100,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
                       "The taker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) + " digits.")));
+                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return uret(error);
@@ -3103,6 +3115,9 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     std::string toAddress       = request.params[5].get_str();
     double      partialMinimum  = boost::lexical_cast<double>(request.params[6].get_str());
 
+    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
+
     // Check that addresses are not the same
     if (fromAddress == toAddress) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
@@ -3110,20 +3125,19 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     }
 
     // Check upper limits
-    if (fromAmount > (double)xbridge::TransactionDescr::MAX_COIN ||
-            toAmount > (double)xbridge::TransactionDescr::MAX_COIN) {
+    if (fromAmount > (double)xbridge::MAX_COIN ||
+            toAmount > (double)xbridge::MAX_COIN) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The maximum supported size is " + std::to_string(xbridge::TransactionDescr::MAX_COIN)));
+                               "The maximum supported size is " + std::to_string(xbridge::MAX_COIN)));
     }
     // Check lower limits
+    // TODO update minimum check
     if (fromAmount <= 0 || toAmount <= 0) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The minimum supported size is " + xbridge::xBridgeStringValueFromPrice(1.0/xbridge::TransactionDescr::COIN)));
+                               "The minimum supported size is " + connFrom->dustAmount));
     }
 
     // Validate addresses
-    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
-    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
     if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
     if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
 
@@ -3314,8 +3328,8 @@ UniValue dxSplitAddress(const JSONRPCRequest& request)
     auto utxos = xapp.getAllLockedUtxos(token);
     const xbridge::amount_t sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    xbridge::amount_t totalSplit{0};
-    xbridge::amount_t splitInclFees{0};
+    xbridge::amount_t totalSplit{uint64_t(0)};
+    xbridge::amount_t splitInclFees{uint64_t(0)};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, utxos, std::set<COutPoint>{}, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));
@@ -3428,8 +3442,8 @@ UniValue dxSplitInputs(const JSONRPCRequest& request)
 
     const xbridge::amount_t sa = xbridge::xBridgeIntFromReal(boost::lexical_cast<double>(splitAmount));
     std::string txid, rawtx, failReason;
-    xbridge::amount_t totalSplit{0};
-    xbridge::amount_t splitInclFees{0};
+    xbridge::amount_t totalSplit{uint64_t(0)};
+    xbridge::amount_t splitInclFees{uint64_t(0)};
     int splitCount{0};
     if (!conn->splitUtxos(sa, address, includeFees, excludedUtxos, userUtxos, totalSplit, splitInclFees, splitCount, txid, rawtx, failReason))
         return uret(xbridge::makeError(xbridge::BAD_REQUEST, __FUNCTION__, failReason));

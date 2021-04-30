@@ -6,7 +6,7 @@
 //*****************************************************************************
 
 #include <xbridge/xbridgewalletconnectorbtc.h>
-
+#include "xbridgetransactiondescr.h"
 #include <xbridge/util/logger.h>
 #include <xbridge/util/xutil.h>
 #include <xbridge/xbitcoinaddress.h>
@@ -2155,6 +2155,15 @@ bool BtcWalletConnector<CryptoProvider>::isDustAmount(const double & amount) con
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::isDustAmount(const amount_t & amount) const
+{
+    return (amount / xbridge::COIN * static_cast<int64_t>(COIN)).Get64() < static_cast<int64_t>(dustAmount);
+}
+
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::newKeyPair(std::vector<unsigned char> & pubkey,
                                     std::vector<unsigned char> & privkey)
 {
@@ -2914,7 +2923,7 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, 
     const amount_t fee1 = xBridgeIntFromReal(minTxFee1(1, 3));
     const amount_t fee2 = xBridgeIntFromReal(minTxFee2(1, 1));
     const amount_t feesPerUtxo = fee1 + fee2;
-    const amount_t splitSize = splitAmount + (includeFees ? feesPerUtxo : amount_t(0));
+    const amount_t splitSize = splitAmount + (includeFees ? feesPerUtxo : amount_t(uint64_t(0)));
 
     if (!hasUserSpecifiedUtxos) {
         // Remove all utxos that already match the expected size or that don't match the specified address
@@ -2933,7 +2942,7 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, 
     if (unspent.size() > 100)
         unspent.erase(unspent.begin()+100, unspent.begin()+unspent.size());
 
-    amount_t vinsTotal{0};
+    amount_t vinsTotal{uint64_t(0)};
     std::vector<xbridge::XTxIn> vins;
     for (const auto & vin : unspent) {
         vinsTotal += vin.camount();
@@ -2961,12 +2970,12 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, 
     else {
         // Remove any utxos consumed by fees
         amount_t feesLeft = txFees;
-        while (feesLeft > xbridge::amount_t(0) && !vouts.empty()) {
+        while (feesLeft > xbridge::amount_t(uint64_t(0)) && !vouts.empty()) {
             auto & vout = vouts[vouts.size()-1];
             const amount_t voutAmount = vout.second;
             const amount_t voutNewAmount = voutAmount - feesLeft;
             // If vout doesn't cover the fee move to the next one (i.e. if new amount is too small or negative)
-            if (voutNewAmount <= xbridge::amount_t(0)) {
+            if (voutNewAmount <= xbridge::amount_t(uint64_t(0))) {
                 vouts.erase(vouts.begin() + vouts.size());
                 outputCount -= 1;
                 feesLeft -= voutAmount; // subtract vout amount from leftover fees
