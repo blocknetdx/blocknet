@@ -317,7 +317,7 @@ bool DevaultWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
 
         SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount.Get64()*COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "bch sign transaction error " << __FUNCTION__;
@@ -374,7 +374,7 @@ bool DevaultWalletConnector::createPaymentTransaction(const std::vector<XTxIn> &
 
     SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount.Get64()*COIN);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "bch sign transaction error " << __FUNCTION__;

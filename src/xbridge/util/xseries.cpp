@@ -39,9 +39,9 @@ namespace {
         matches.emplace_back(query.with_txids == xQuery::WithTxids::Included
                              ? tr.id.GetHex() : xid_t{},
                              ccy::Asset{ccy::Currency{tr.fromCurrency,
-                                         xbridge::TransactionDescr::COIN}, tr.fromAmount},
+                                         xbridge::COIN}, tr.fromAmount},
                              ccy::Asset{ccy::Currency{tr.toCurrency,
-                                         xbridge::TransactionDescr::COIN},   tr.toAmount},
+                                         xbridge::COIN},   tr.toAmount},
                              tr.txtime);
     }
     void updateXSeriesHelper(std::vector<xAggregate>& series,

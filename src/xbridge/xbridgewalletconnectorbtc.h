@@ -238,6 +238,7 @@ public:
     bool isValidAddress(const std::string & addr) const;
 
     bool isDustAmount(const double & amount) const;
+    bool isDustAmount(const amount_t & amount) const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
 
