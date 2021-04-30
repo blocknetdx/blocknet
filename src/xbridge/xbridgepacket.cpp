@@ -12,6 +12,7 @@
 #include <random.h>
 #include <secp256k1.h>
 #include <support/allocators/secure.h>
+#include "uint256.h"
 
 //******************************************************************************
 //******************************************************************************
@@ -159,4 +160,51 @@ bool XBridgePacket::verify(const std::vector<unsigned char> & pubkey)
     }
 
     return verify();
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, unsigned char * data, const size_t size) const
+{
+    if (offset + size > this->size() || size == 0)
+    {
+        LOG() << "wrong packet size " << __FUNCTION__;
+        return 0;
+    }
+    memcpy(data, this->data() + offset, size);
+    return offset + size;
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, xbridge::amount_t & data) const
+{
+    // return read(offset, reinterpret_cast<unsigned char>(&data), sizeof(data));
+    uint128 tmp;
+    size_t tsize = read(offset, tmp.begin(), sizeof(data));
+    data = UintToArith128(tmp);
+    return tsize;
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, uint256 & data) const
+{
+    return read(offset, data.begin(), sizeof(data));
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, std::vector<unsigned char> & data, const size_t size) const
+{
+    data.resize(size, 0);
+    return read(offset, &data[0], size);
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, std::string & data, const size_t size) const
+{
+    data.resize(size, ' ');
+    return read(offset, reinterpret_cast<unsigned char *>(&data[0]), size);
 }
