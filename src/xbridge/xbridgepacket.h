@@ -11,6 +11,7 @@
 #include "xbridge/util/logger.h"
 #include "xbridge/version.h"
 #include "arith_uint256.h"
+#include "xbridge/xbridgedef.h"
 
 #include <vector>
 #include <deque>
@@ -325,6 +326,32 @@ public:
         signatureSize             = 65
     };
 
+public:
+    XBridgePacket() : m_body(headerSize, 0)
+    {
+        versionField()   = static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
+        timestampField() = static_cast<uint32_t>(time(0));
+    }
+
+    explicit XBridgePacket(const std::string& raw) : m_body(raw.begin(), raw.end())
+    {
+        timestampField() = static_cast<uint32_t>(time(0));
+    }
+
+    XBridgePacket(const XBridgePacket & other)
+    {
+        m_body = other.m_body;
+    }
+
+    XBridgePacket(XBridgeCommand c) : m_body(headerSize, 0)
+    {
+        versionField()   = static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
+        commandField()   = static_cast<uint32_t>(c);
+        timestampField() = static_cast<uint32_t>(time(0));
+    }
+
+
+public:
     uint32_t     size()    const     { return sizeField(); }
     uint32_t     allSize() const     { return static_cast<uint32_t>(m_body.size()); }
 
@@ -348,8 +375,9 @@ public:
 
     const std::vector<unsigned char> & body() const
                                             { return m_body; }
-    unsigned char  * header()               { return &m_body[0]; }
-    unsigned char  * data()                 { return &m_body[headerSize]; }
+    unsigned char        * header()         { return &m_body[0]; }
+    unsigned char        * data()           { return &m_body[headerSize]; }
+    const unsigned char  * data() const     { return &m_body[headerSize]; }
 
     void    clear()
     {
@@ -506,29 +534,6 @@ public:
         return true;
     }
 
-    XBridgePacket() : m_body(headerSize, 0)
-    {
-        versionField()   = static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
-        timestampField() = static_cast<uint32_t>(time(0));
-    }
-
-    explicit XBridgePacket(const std::string& raw) : m_body(raw.begin(), raw.end())
-    {
-        timestampField() = static_cast<uint32_t>(time(0));
-    }
-
-    XBridgePacket(const XBridgePacket & other)
-    {
-        m_body = other.m_body;
-    }
-
-    XBridgePacket(XBridgeCommand c) : m_body(headerSize, 0)
-    {
-        versionField()   = static_cast<uint32_t>(XBRIDGE_PROTOCOL_VERSION);
-        commandField()   = static_cast<uint32_t>(c);
-        timestampField() = static_cast<uint32_t>(time(0));
-    }
-
     XBridgePacket & operator = (const XBridgePacket & other)
     {
         m_body    = other.m_body;
@@ -540,6 +545,19 @@ public:
               const std::vector<unsigned char> & privkey);
     bool verify();
     bool verify(const std::vector<unsigned char> & pubkey);
+
+    size_t read(const size_t offset, unsigned char * data, const size_t size) const;
+
+    template<class _T>
+    size_t read(const size_t offset, _T & data) const
+    {
+        return read(offset, reinterpret_cast<unsigned char *>(&data), sizeof(_T));
+    }
+
+    size_t read(const size_t offset, xbridge::amount_t & data) const;
+    size_t read(const size_t offset, uint256 & data) const;
+    size_t read(const size_t offset, std::vector<unsigned char> & data, const size_t size) const;
+    size_t read(const size_t offset, std::string & data, const size_t size) const;
 
 protected:
     template<uint32_t INDEX>
