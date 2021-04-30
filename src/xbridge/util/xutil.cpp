@@ -202,14 +202,14 @@ std::string iso8601(const boost::posix_time::ptime &time)
 std::string xBridgeStringValueFromAmount(amount_t amount)
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << xBridgeValueFromAmount(amount);
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::COIN)) << xBridgeValueFromAmount(amount);
     return ss.str();
 }
 
 std::string xBridgeStringValueFromPrice(double price)
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::TransactionDescr::COIN)) << price;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::COIN)) << price;
     return ss.str();
 }
 
@@ -222,7 +222,7 @@ std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
 
 double xBridgeValueFromAmount(amount_t amount) {
     return static_cast<double>(amount)
-           / static_cast<double>(xbridge::TransactionDescr::COIN)
+           / static_cast<double>(xbridge::COIN)
            + 1.0 / static_cast<double>(::COIN); // round up 1 sat
 }
 
@@ -230,7 +230,7 @@ double xBridgeValueFromAmount(amount_t amount) {
  * Does not round, but truncates because a utxo cannot pay if it's rounded up
  */
 amount_t xBridgeIntFromReal(double utxo_amount) {
-    double d = utxo_amount * boost::numeric_cast<double>(xbridge::TransactionDescr::COIN);
+    double d = utxo_amount * boost::numeric_cast<double>(xbridge::COIN);
     d += 1.0 / static_cast<double>(::COIN); // round up 1 sat
     amount_t r = static_cast<amount_t>(d);
     return r;
@@ -257,7 +257,7 @@ bool xBridgeValidCoin(const std::string coin)
                 j = 0;
         }
     }
-    return n - j <= xBridgeSignificantDigits(xbridge::TransactionDescr::COIN);
+    return n - j <= xBridgeSignificantDigits(xbridge::COIN);
 }
 
 unsigned int xBridgeSignificantDigits(const amount_t amount)
@@ -268,7 +268,7 @@ unsigned int xBridgeSignificantDigits(const amount_t amount)
     do {
         n++;
         i /= 10;
-    } while (i > amount_t(1));
+    } while (i > amount_t(uint64_t(1)));
 
     return n;
 }
