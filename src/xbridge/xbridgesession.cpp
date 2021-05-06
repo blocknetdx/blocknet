@@ -867,24 +867,25 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     uint32_t offset = XBridgePacket::addressSize;
 
     // read packet data
-    std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 id(sid);
-    offset += XBridgePacket::hashSize;
+    uint256 id;
+    offset += packet->read(offset, id);
 
     // snode fee hex
-    uint32_t feeTxSize = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint32_t);
-    std::vector<unsigned char> feeTx(packet->data()+offset, packet->data()+offset+feeTxSize);
-    offset += feeTxSize;
+    uint32_t feeTxSize = 0;
+    offset += packet->read(offset, feeTxSize);
+    std::vector<unsigned char> feeTx;
+    offset += packet->read(offset, feeTx, feeTxSize);
 
     // Process the service node fee transaction before proceeding
     CTransactionRef feeTxRef = nullptr;
     WalletParam wp;
     auto & smgr = sn::ServiceNodeMgr::instance();
     auto snodeEntry = smgr.getActiveSn();
-    if (!snodeEntry.isNull()) {
+    if (!snodeEntry.isNull()) 
+    {
         CMutableTransaction mtx;
-        if (!DecodeHexTx(mtx, HexStr(feeTx), true)) {
+        if (!DecodeHexTx(mtx, HexStr(feeTx), true)) 
+        {
             UniValue o(UniValue::VOBJ);
             o.pushKV("orderid", id.GetHex());
             o.pushKV("fee_tx", HexStr(feeTx));
@@ -892,20 +893,27 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             sendRejectTransaction(id, crBadFeeTx);
             return false;
         }
+
         feeTxRef = MakeTransactionRef(std::move(mtx));
         auto snode = smgr.getSn(snodeEntry.key.GetPubKey());
         bool hasAddr{false};
-        for (const auto & o : feeTxRef->vout) {
+        for (const auto & o : feeTxRef->vout) 
+        {
             if (o.nValue < arith_uint128(wp.serviceNodeFee) * COIN)
+            {
                 continue;
+            }
             auto addr1 = o.scriptPubKey == GetScriptForDestination(snodeEntry.address);
             auto addr2 = !snode.isNull() && o.scriptPubKey == GetScriptForDestination(CTxDestination(snode.getPaymentAddress()));
-            if (addr1 || addr2) {
+            if (addr1 || addr2) 
+            {
                 hasAddr = true;
                 break;
             }
         }
-        if (!hasAddr) {
+
+        if (!hasAddr) 
+        {
             UniValue o(UniValue::VOBJ);
             o.pushKV("orderid", id.GetHex());
             o.pushKV("fee_tx", HexStr(feeTx));
@@ -916,36 +924,37 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     }
 
     // source
-    std::vector<unsigned char> saddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string scurrency((const char *)packet->data()+offset);
-    offset += 8;
-    amount_t samount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(amount_t);
-    uint32_t sourceHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
-    offset += sizeof(uint32_t);
-    std::vector<unsigned char> sourceHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::vector<unsigned char> saddr;
+    offset += packet->read(offset, saddr, XBridgePacket::addressSize);
+    std::string scurrency;
+    offset += packet->read(offset, scurrency, 8);
+    amount_t samount = 0;
+    offset += packet->read(offset, samount);
+    uint32_t sourceHeight = 0;
+    offset += packet->read(offset, sourceHeight);
+    std::vector<unsigned char> sourceHashRaw;
+    offset += packet->read(offset, sourceHashRaw, 8);
     std::string sourceHashTruncated(sourceHashRaw.begin(), sourceHashRaw.end());
-    offset += 8;
 
     // destination
-    std::vector<unsigned char> daddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string dcurrency((const char *)packet->data()+offset);
-    offset += 8;
-    amount_t damount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(amount_t);
-    uint32_t destinationHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
-    offset += sizeof(uint32_t);
-    std::vector<unsigned char> destinationHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::vector<unsigned char> daddr;
+    offset += packet->read(offset, daddr, XBridgePacket::addressSize);
+    std::string dcurrency;
+    offset += packet->read(offset, dcurrency, 8);
+    amount_t damount = 0;
+    offset += packet->read(offset, damount);
+    uint32_t destinationHeight = 0;
+    offset += packet->read(offset, destinationHeight);
+    std::vector<unsigned char> destinationHashRaw;
+    offset += packet->read(offset, destinationHashRaw, 8);
     std::string destinationHashTruncated(destinationHashRaw.begin(), destinationHashRaw.end());
-    offset += 8;
 
     std::vector<unsigned char> mpubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // If order already accepted, ignore further attempts
     TransactionPtr trExists = e.transaction(id);
-    if (trExists->matches(id)) {
+    if (trExists->matches(id)) 
+    {
         xbridge::LogOrderMsg(id.GetHex(), "order already accepted", __FUNCTION__);
         return true;
     }
@@ -959,7 +968,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr connDest = xapp.connectorByCurrency(dcurrency);
-    if (!conn || !connDest) {
+    if (!conn || !connDest) 
+    {
         xbridge::LogOrderMsg(id.GetHex(), "no connector for <" + (!conn ? scurrency : dcurrency) + ">", __FUNCTION__);
         sendRejectTransaction(id, crRpcError);
         return true;
@@ -980,47 +990,58 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         uint32_t destinationBlockHeightSnode;
         std::string destinationBlockHashSnode;
         std::string destinationBlockHashCounterparty;
-        if (conn->getBlockCount(sourceBlockHeightSnode) && conn->getBlockHash(sourceBlockHeightSnode, sourceBlockHashSnode)
-           && connDest->getBlockCount(destinationBlockHeightSnode) && connDest->getBlockHash(destinationBlockHeightSnode, destinationBlockHashSnode)
-           && conn->getBlockHash(sourceHeight, sourceBlockHashCounterparty) && connDest->getBlockHash(destinationHeight, destinationBlockHashCounterparty))
+        if (conn->getBlockCount(sourceBlockHeightSnode) && 
+            conn->getBlockHash(sourceBlockHeightSnode, sourceBlockHashSnode) && 
+            connDest->getBlockCount(destinationBlockHeightSnode) && 
+            connDest->getBlockHash(destinationBlockHeightSnode, destinationBlockHashSnode) && 
+            conn->getBlockHash(sourceHeight, sourceBlockHashCounterparty) && 
+            connDest->getBlockHash(destinationHeight, destinationBlockHashCounterparty))
         {
             // make sure source height is within 2 blocks
-            if (abs((int)sourceBlockHeightSnode - (int)sourceHeight) > 1) {
+            if (abs((int)sourceBlockHeightSnode - (int)sourceHeight) > 1) 
+            {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + scurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
             // make sure destination height is within 2 blocks
-            else if (abs((int)destinationBlockHeightSnode - (int)destinationHeight) > 1) {
+            else if (abs((int)destinationBlockHeightSnode - (int)destinationHeight) > 1) 
+            {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + dcurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
             // if taker's source height equals snode's source height make sure the truncated hash matches
-            else if (sourceBlockHeightSnode == sourceHeight && sourceBlockHashSnode.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) {
+            else if (sourceBlockHeightSnode == sourceHeight && sourceBlockHashSnode.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) 
+            {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has bad block hash for <" + scurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
             // if taker's destination height equals snode's destination height make sure the truncated hash matches
-            else if (destinationBlockHeightSnode == destinationHeight && destinationBlockHashSnode.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) {
+            else if (destinationBlockHeightSnode == destinationHeight && destinationBlockHashSnode.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) 
+            {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has bad block hash for <" + dcurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
             // if taker's source height is different than snode, make sure the snode's block hash on reported taker source height matches
-            else if (sourceBlockHashCounterparty.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) {
+            else if (sourceBlockHashCounterparty.substr(0, sourceHashTruncated.size()) != sourceHashTruncated) 
+            {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty might be on fork, it has bad block hash for <" + scurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
             // if taker's destination height is different than snode, make sure the snode's block hash on reported taker destination height matches
-            else if (destinationBlockHashCounterparty.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) {
+            else if (destinationBlockHashCounterparty.substr(0, destinationHashTruncated.size()) != destinationHashTruncated) 
+            {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty might be on fork, it has bad block hash for <" + dcurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
-        } else {
+        } 
+        else 
+        {
             xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, snode rpc error", __FUNCTION__);
             sendRejectTransaction(id, crRpcError);
             return true;
@@ -1029,11 +1050,13 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     }
 
     TransactionPtr trPending = e.pendingTransaction(id);
-    if (!trPending->matches(id)) {
+    if (!trPending->matches(id)) 
+    {
         xbridge::LogOrderMsg(id.GetHex(), "order not found", __FUNCTION__);
         return true;
     }
-    if (trPending->accepting()) {
+    if (trPending->accepting()) 
+    {
         xbridge::LogOrderMsg(id.GetHex(), "order already accepted", __FUNCTION__);
         return true;
     }
@@ -1044,7 +1067,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     //
 
     WalletConnectorPtr makerConn = xapp.connectorByCurrency(trPending->a_currency());
-    if (!makerConn) {
+    if (!makerConn) 
+    {
         trPending->setAccepting(false);
         xbridge::LogOrderMsg(id.GetHex(), "no maker connector for <" + trPending->a_currency() + ">", __FUNCTION__);
         sendRejectTransaction(id, crRpcError);
@@ -1052,8 +1076,10 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     }
 
     auto & makerUtxos = trPending->a_utxos();
-    for (auto entry : makerUtxos) {
-        if (!makerConn->getTxOut(entry)) {
+    for (auto entry : makerUtxos) 
+    {
+        if (!makerConn->getTxOut(entry)) 
+        {
             // Invalid utxos cancel order
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
@@ -1297,7 +1323,9 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             reply1->sign(e.pubKey(), e.privKey());
 
             sendPacketBroadcast(reply1);
-        } else {
+        } 
+        else 
+        {
             trPending->setAccepting(false);
             sendRejectTransaction(id, crNotAccepted);
         }
@@ -1340,23 +1368,21 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     uint32_t offset = 0;
 
     // servicenode addr
-    std::vector<unsigned char> hubAddress(packet->data()+offset,
-                                          packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    offset += packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
     // read packet data
-    std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 id(sid);
-    offset += XBridgePacket::hashSize;
+    uint256 id;
+    offset += packet->read(offset, id);
 
     // pubkey from packet
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // requested amounts (taker from and to amounts)
-    amount_t samount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(amount_t);
-    amount_t damount = *static_cast<amount_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(amount_t);
+    amount_t samount = 0;
+    offset += packet->read(offset, samount);
+    amount_t damount = 0;
+    offset += packet->read(offset, damount);
 
     TransactionDescrPtr xtx = xapp.transaction(id);
     if (!xtx)
@@ -1379,18 +1405,23 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     // Make sure that servicenode is still valid and in the snode list
     CPubKey pksnode;
     pksnode.Set(packet->pubkey(), packet->pubkey() + CPubKey::COMPRESSED_PUBLIC_KEY_SIZE);
-    if (!pksnode.IsFullyValid()) {
+    if (!pksnode.IsFullyValid()) 
+    {
         xbridge::LogOrderMsg(id.GetHex(), "bad snode public key", __FUNCTION__);
         return false;
     }
 
     // check servicenode
     auto snode = sn::ServiceNodeMgr::instance().getSn(pksnode);
-    if (snode.isNull()) {
+    if (snode.isNull()) 
+    {
         // try to uncompress pubkey and search
         if (pksnode.Decompress())
+        {
             snode = sn::ServiceNodeMgr::instance().getSn(pksnode);
-        if (snode.isNull()) {
+        }
+        if (snode.isNull()) 
+        {
             // bad service node, no more
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
@@ -1405,17 +1436,21 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     double makerPrice{0}, takerPrice{0};
     bool failPriceCheck{false};
     // Taker check that amounts match
-    if (xtx->role == 'B') {
+    if (xtx->role == 'B') 
+    {
         makerPrice = xBridgeValueFromAmount(xtx->toAmount) / xBridgeValueFromAmount(xtx->fromAmount);
         takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
-        if (samount != xtx->fromAmount) {
+        if (samount != xtx->fromAmount) 
+        {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
             log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(samount));
             log_obj.pushKV("expected_amount", xbridge::xBridgeStringValueFromAmount(xtx->fromAmount));
             xbridge::LogOrderMsg(log_obj, "taker from amount from snode should match expected amount", __FUNCTION__);
             return true;
-        } else if (damount != xtx->toAmount) {
+        } 
+        else if (damount != xtx->toAmount) 
+        {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
             log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(damount));
@@ -1423,14 +1458,19 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
             xbridge::LogOrderMsg(log_obj, "taker to amount from snode should match expected amount", __FUNCTION__);
             return true;
         }
+
         // Taker's source currency is maker's dest currency. That is why
         // toAmount and fromAmount's are flipped below
         failPriceCheck = !xBridgePartialOrderDriftCheck(xtx->origFromAmount, xtx->origToAmount, xtx->fromAmount, xtx->toAmount);
-    } else if (xtx->role == 'A') { // Handle taker checks
+    } 
+    else if (xtx->role == 'A') 
+    { 
+        // Handle taker checks
         makerPrice = xBridgeValueFromAmount(xtx->fromAmount) / xBridgeValueFromAmount(xtx->toAmount);
         takerPrice = xBridgeValueFromAmount(damount) / xBridgeValueFromAmount(samount);
         // Taker cannot take more than maker has available
-        if (damount > xtx->fromAmount) {
+        if (damount > xtx->fromAmount) 
+        {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
             log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(damount));
@@ -1440,7 +1480,8 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
         }
 
         // Taker cannot offer too much
-        if (samount > xtx->toAmount) {
+        if (samount > xtx->toAmount) 
+        {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
             log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(samount));
@@ -1449,9 +1490,11 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
             return true;
         }
 
-        if (xtx->isPartialOrderAllowed()) {
+        if (xtx->isPartialOrderAllowed()) 
+        {
             // Taker cannot take less than the maker's minimum
-            if (damount < xtx->minFromAmount) {
+            if (damount < xtx->minFromAmount) 
+            {
                 UniValue log_obj(UniValue::VOBJ);
                 log_obj.pushKV("orderid", id.GetHex());
                 log_obj.pushKV("received_amount", xbridge::xBridgeStringValueFromAmount(damount));
@@ -1465,7 +1508,8 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     }
 
     // Price match check
-    if (failPriceCheck) {
+    if (failPriceCheck) 
+    {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
         log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(takerPrice));
@@ -1525,7 +1569,8 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     }
 
     // At this point maker agrees with taker amounts, assign new amounts to maker's order
-    if (xtx->role == 'A') {
+    if (xtx->role == 'A') 
+    {
         xtx->fromAmount = damount;
         xtx->toAmount = samount;
     }
@@ -1576,21 +1621,22 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     uint32_t offset = XBridgePacket::addressSize;
 
-    std::vector<unsigned char> from(packet->data()+offset,
-                                    packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> from;
+    offset += packet->read(offset, from, XBridgePacket::addressSize);
 
     // transaction id
-    std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 id(sid);
-    offset += XBridgePacket::hashSize;
+    uint256 id;
+    offset += packet->read(offset, id);
 
     // packet pubkey
     std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     TransactionPtr tr = e.transaction(id);
-    if (!tr->matches(id)) // ignore no matching orders
+    if (!tr->matches(id)) 
+    {
+        // ignore no matching orders
         return true;
+    }
 
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
@@ -1691,17 +1737,14 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     xbridge::App & xapp = xbridge::App::instance();
     uint32_t offset = 0;
 
-    std::vector<unsigned char> thisAddress(packet->data(),
-                                           packet->data()+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> thisAddress;
+    offset += packet->read(offset, thisAddress, XBridgePacket::addressSize);
 
-    std::vector<unsigned char> hubAddress(packet->data()+offset,
-                                          packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    offset += packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
@@ -1714,6 +1757,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         LogOrderMsg(txid.GetHex(), "not a local order", __FUNCTION__);
         return true;
     }
+
     // Reject if snode key doesn't match original (prevent order manipulation)
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(xtx->sPubKey))
@@ -1735,21 +1779,19 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         return true;
     }
 
-    std::vector<unsigned char> from(packet->data()+offset,
-                                    packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string   fromCurrency(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += 8;
-    amount_t      fromAmount(*reinterpret_cast<amount_t *>(packet->data()+offset));
-    offset += sizeof(amount_t);
+    std::vector<unsigned char> from;
+    offset += packet->read(offset, from, XBridgePacket::addressSize);
+    std::string   fromCurrency;
+    offset += packet->read(offset, fromCurrency, 8);
+    amount_t      fromAmount = 0;
+    offset += packet->read(offset, fromAmount);
 
-    std::vector<unsigned char> to(packet->data()+offset,
-                                  packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string   toCurrency(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += 8;
-    amount_t      toAmount(*reinterpret_cast<amount_t *>(packet->data()+offset));
-    offset += sizeof(amount_t);
+    std::vector<unsigned char> to;
+    offset += packet->read(offset, to, XBridgePacket::addressSize);
+    std::string   toCurrency;
+    offset += packet->read(offset, toCurrency, 8);
+    amount_t      toAmount = 0;
+    offset += packet->read(offset, toAmount);
 
     if(xtx->id           != txid &&
        xtx->from         != from &&
@@ -1806,21 +1848,24 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
         return true;
     }
 
-    uint32_t offset{XBridgePacket::addressSize};
+    uint32_t offset = XBridgePacket::addressSize;
 
-    std::vector<unsigned char> from(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> from;
+    offset += packet->read(offset, from, XBridgePacket::addressSize);
 
     // transaction id
-    std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 id(sid);
+    uint256 id;
+    offset += packet->read(offset, id);
 
     // opponent public key
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     TransactionPtr tr = e.transaction(id);
-    if (!tr->matches(id)) // ignore no matching orders
+    if (!tr->matches(id)) 
+    {
+        // ignore no matching orders
         return true;
+    }
     
     if (!packet->verify(tr->a_pk1()) && !packet->verify(tr->b_pk1()))
     {
@@ -1868,7 +1913,10 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
 
             // TODO Blocknet Unlock maker utxos in partial order
             if (tr->isPartialAllowed())
-                e.unlockUtxos(tr->id()); // unlock to allow reposts
+            {
+                // unlock to allow reposts
+                e.unlockUtxos(tr->id());
+            }
         }
     }
 
@@ -1906,13 +1954,12 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+XBridgePacket::addressSize);
-    uint32_t offset = XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
     // transaction id
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
     // counterparty pubkey
     std::vector<unsigned char> mPubKey(packet->data()+offset, packet->data()+offset+XBridgePacket::pubkeySize);
@@ -1977,17 +2024,26 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     amount_t coutAmountPlusFees{uint64_t(0)};
 
     std::vector<wallet::UtxoEntry> usedInTx;
-    for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) {
+    for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) 
+    {
         // if we have enough utxos, skip
-        if (inAmount >= xBridgeValueFromAmount(coutAmountPlusFees)) {
+        if (inAmount >= xBridgeValueFromAmount(coutAmountPlusFees)) 
+        {
             if (!xtx->isPartialOrderAllowed())
+            {
                 break; // if not partial order, done
+            }
             // If this is a partial order store unused utxos for eventual repost
-            if (xtx->isPartialRepost()) {
+            if (xtx->isPartialRepost()) 
+            {
                 xtx->repostCoins.push_back(*it);
                 it = xtx->usedCoins.erase(it);
-            } else
+            } 
+            else
+            {
                 ++it;
+            }
+
             // next
             continue;
         }
@@ -2010,7 +2066,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         log_obj.pushKV("in_amount", inAmount);
         log_obj.pushKV("out_amount", xBridgeValueFromAmount(coutAmountPlusFees));
         UniValue log_utxos(UniValue::VARR);
-        for (const auto & entry : usedInTx) {
+        for (const auto & entry : usedInTx) 
+        {
             UniValue log_utxo(UniValue::VOBJ);
             log_utxo.pushKV("txid", entry.txId);
             log_utxo.pushKV("vout", static_cast<int>(entry.vout));
@@ -2101,7 +2158,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         if (inAmount > outAmount+fee1+fee2)
         {
             double rest = inAmount-outAmount-fee1-fee2;
-            if (!connFrom->isDustAmount(rest)) {
+            if (!connFrom->isDustAmount(rest))
+            {
                 outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
                 hasChange = true;
                 changeAddr = largestUtxo.address;
@@ -2295,27 +2353,30 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
 
     size_t offset = XBridgePacket::addressSize; // hub address
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binTxId.size()+1;
+    std::string binTxId;
+    offset += packet->read(offset, binTxId);
 
-    std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> hx;
+    offset += packet->read(offset, hx, XBridgePacket::addressSize);
 
-    uint32_t lockTimeA = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
+    uint32_t lockTimeA = 0;
+    offset += packet->read(offset, lockTimeA);
 
-    std::string refTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += refTxId.size()+1;
+    std::string refTxId;
+    offset += packet->read(offset, refTxId);
 
-    std::string refTx(reinterpret_cast<const char *>(packet->data()+offset));
+    std::string refTx;
+    offset += packet->read(offset, refTx);
 
     TransactionPtr tr = e.transaction(txid);
-    if (!tr->matches(txid)) // ignore no matching orders
+    if (!tr->matches(txid)) 
+    {
+        // ignore no matching orders
         return true;
+    }
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->a_pk1()))
@@ -2381,24 +2442,24 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+XBridgePacket::addressSize);
-    uint32_t offset = XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
     // transaction id
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::vector<unsigned char> mPubKey(packet->data()+offset, packet->data()+offset+XBridgePacket::pubkeySize);
-    offset += XBridgePacket::pubkeySize;
+    std::vector<unsigned char> mPubKey;
+    offset += packet->read(offset, mPubKey, XBridgePacket::pubkeySize);
 
-    std::string binATxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binATxId.size()+1;
+    std::string binATxId;
+    offset += packet->read(offset, binATxId);
 
-    std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> hx;
+    offset += packet->read(offset, hx, XBridgePacket::addressSize);
 
-    uint32_t lockTimeA = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    uint32_t lockTimeA = 0;
+    offset += packet->read(offset, lockTimeA);
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2460,7 +2521,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         return true;
     }
 
-    amount_t outAmount = xtx->fromAmount / xbridge::COIN;
+    amount_t outAmount   = xtx->fromAmount / xbridge::COIN;
     amount_t checkAmount = xtx->toAmount / xbridge::COIN;
 
     // check preliminary lock times for counterparty
@@ -2512,7 +2573,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
-        else {
+        else 
+        {
             xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
@@ -2545,7 +2607,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         log_obj.pushKV("in_amount", inAmount);
         log_obj.pushKV("out_amount", (outAmount + fee1 + fee2).Get64());
         UniValue log_utxos(UniValue::VARR);
-        for (const auto & entry : usedInTx) {
+        for (const auto & entry : usedInTx) 
+        {
             UniValue log_utxo(UniValue::VOBJ);
             log_utxo.pushKV("txid", entry.txId);
             log_utxo.pushKV("vout", static_cast<int>(entry.vout));
@@ -2570,12 +2633,12 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     }
 
     // store counterparty public key (packet verification)
-    xtx->oPubKey = mPubKey;
+    xtx->oPubKey           = mPubKey;
     // store counterparty tx info
-    xtx->oBinTxId = binATxId;
-    xtx->oBinTxVout = counterPartyVoutN;
+    xtx->oBinTxId          = binATxId;
+    xtx->oBinTxVout        = counterPartyVoutN;
     // store counterparty script
-    xtx->unlockScript = counterPartyScript;
+    xtx->unlockScript      = counterPartyScript;
     xtx->unlockP2SHAddress = counterPartyP2SH;
 
     // create transactions
@@ -2602,7 +2665,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // depositTx
     {
-        std::vector<xbridge::XTxIn>                  inputs;
+        std::vector<xbridge::XTxIn>                    inputs;
         std::vector<std::pair<std::string, amount_t> > outputs;
 
         // inputs
@@ -2624,7 +2687,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         {
             amount_t rest = inAmount-outAmount-fee1-fee2;
             if (!connFrom->isDustAmount(rest))
+            {
                 outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
+            }
         }
 
         assert(false && "implementation");
@@ -2660,8 +2725,10 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         // outputs
         {
             std::string addr = xtx->refundAddress();
-            if (addr.empty()) {
-                if (!connFrom->getNewAddress(addr)) {
+            if (addr.empty()) 
+            {
+                if (!connFrom->getNewAddress(addr)) 
+                {
                     // cancel order
                     LogOrderMsg(txid.GetHex(), "failed to getnewaddress for refund tx, canceling", __FUNCTION__);
                     sendCancelTransaction(xtx, crRpcError);
@@ -2699,7 +2766,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     {
         // Get the current block
         uint32_t blockCount{0};
-        if (!connFrom->getBlockCount(blockCount)) {
+        if (!connFrom->getBlockCount(blockCount)) 
+        {
             LogOrderMsg(txid.GetHex(), "failed to obtain block count from <" + xtx->fromCurrency + "> blockchain, canceling", __FUNCTION__);
             sendCancelTransaction(xtx, crRpcError);
             return true;
@@ -2781,24 +2849,27 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
 
     size_t offset = XBridgePacket::addressSize; // hub address
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binTxId.size()+1;
+    std::string binTxId;;
+    offset += packet->read(offset, binTxId);
 
-    uint32_t lockTimeB = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
+    uint32_t lockTimeB = 0;
+    offset += packet->read(offset, lockTimeB);
 
-    std::string refTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += refTxId.size()+1;
+    std::string refTxId;
+    offset += packet->read(offset, refTxId);
 
-    std::string refTx(reinterpret_cast<const char *>(packet->data()+offset));
+    std::string refTx;
+    offset += packet->read(offset, refTx);
 
     TransactionPtr tr = e.transaction(txid);
-    if (!tr->matches(txid)) // ignore no matching orders
+    if (!tr->matches(txid)) 
+    {
+        // ignore no matching orders
         return true;
+    }
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->b_pk1()))
@@ -2863,17 +2934,17 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+XBridgePacket::addressSize);
-    size_t offset = XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binTxId.size()+1;
+    std::string binTxId;
+    offset += packet->read(offset, binTxId);
 
-    uint32_t lockTimeB = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    uint32_t lockTimeB = 0;
+    offset += packet->read(offset, lockTimeB);
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2976,7 +3047,8 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
             sendCancelTransaction(xtx, crBadBDepositTx);
             return true;
         }
-        else {
+        else 
+        {
             xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
@@ -2993,12 +3065,17 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     // payTx
     {
         int32_t errCode = 0;
-        if (!redeemOrderCounterpartyDeposit(xtx, errCode)) {
-            if (errCode == RPCErrorCode::RPC_VERIFY_ERROR) { // missing inputs, wait deposit tx
+        if (!redeemOrderCounterpartyDeposit(xtx, errCode)) 
+        {
+            if (errCode == RPCErrorCode::RPC_VERIFY_ERROR) 
+            { 
+                // missing inputs, wait deposit tx
                 LogOrderMsg(txid.GetHex(), "redeem counterparty failed, trying to redeem again", __FUNCTION__);
                 xapp.processLater(txid, packet);
                 return true;
-            } else {
+            } 
+            else 
+            {
                 LogOrderMsg(txid.GetHex(), "failed to redeem p2sh deposit from counterparty, canceling", __FUNCTION__);
                 sendCancelTransaction(xtx, crBadBDepositTx);
                 return true;
@@ -3052,16 +3129,19 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
     size_t offset = XBridgePacket::addressSize; // hub address
 
     // order id
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
     // A side paytx id
-    std::string a_payTxId(reinterpret_cast<const char *>(packet->data()+offset));
+    std::string a_payTxId;
+    offset += packet->read(offset, a_payTxId);
 
     TransactionPtr tr = e.transaction(txid);
-    if (!tr->matches(txid)) // ignore no matching orders
+    if (!tr->matches(txid)) 
+    {
+        // ignore no matching orders
         return true;
+    }
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->a_pk1()))
@@ -3121,15 +3201,14 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+XBridgePacket::addressSize);
-    size_t offset = XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::string payTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += payTxId.size()+1;
+    std::string payTxId;
+    offset += packet->read(offset, payTxId);
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -3166,7 +3245,8 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
     }
 
     // Only use counterparties payTxId for a few iterations
-    if (xtx->otherPayTxTries() < xtx->maxOtherPayTxTries() && !xtx->isDoneWatching()) {
+    if (xtx->otherPayTxTries() < xtx->maxOtherPayTxTries() && !xtx->isDoneWatching()) 
+    {
         xtx->setOtherPayTxId(payTxId);
         xtx->tryOtherPayTx();
     }
@@ -3234,16 +3314,19 @@ bool Session::Impl::processTransactionConfirmedB(XBridgePacketPtr packet) const
 
     size_t offset = XBridgePacket::addressSize; // hub address
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
     // Pay tx id from B
-    std::string b_payTxId(reinterpret_cast<const char *>(packet->data()+offset));
+    std::string b_payTxId;
+    offset += packet->read(offset, b_payTxId);
 
     TransactionPtr tr = e.transaction(txid);
-    if (!tr->matches(txid)) // ignore no matching orders
+    if (!tr->matches(txid)) 
+    {
+        // ignore no matching orders
         return true;
+    }
 
     std::vector<unsigned char> pk1(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
     if (!packet->verify(tr->b_pk1()))
@@ -3305,14 +3388,16 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + 32));
+    uint256 txid;
+    size_t offset = packet->read(0, txid);
+    TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + offset));
 
-    auto write_log = [](UniValue o, const std::string & errMsg) {
-        o.pushKV("err_msg", errMsg);
-        LOG() << o.write();
-    };
+    auto write_log = [](UniValue o, const std::string & errMsg) 
+                        {
+                            o.pushKV("err_msg", errMsg);
+                            LOG() << o.write();
+                        };
+
     std::string errMsg;
     UniValue log_obj(UniValue::VOBJ);
     log_obj.pushKV("orderid", txid.GetHex());
@@ -3371,41 +3456,56 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     }
     
     // Set order cancel state
-    auto cancel = [&xapp, &conn, &xtx, &reason, &txid, &write_log](const UniValue & o, const std::string & errMsg) {
-        xapp.removePackets(txid);
-        xapp.unlockCoins(conn->currency, xtx->usedCoins);
-        if (xtx->state < TransactionDescr::trInitialized)
-            xapp.unlockFeeUtxos(xtx->feeUtxos);
-        xtx->state  = TransactionDescr::trCancelled;
-        xtx->reason = reason;
-        write_log(o, errMsg);
-    };
+    auto cancel = [&xapp, &conn, &xtx, &reason, &txid, &write_log](const UniValue & o, const std::string & errMsg) 
+                    {
+                        xapp.removePackets(txid);
+                        xapp.unlockCoins(conn->currency, xtx->usedCoins);
+                        if (xtx->state < TransactionDescr::trInitialized)
+                            xapp.unlockFeeUtxos(xtx->feeUtxos);
+                        xtx->state  = TransactionDescr::trCancelled;
+                        xtx->reason = reason;
+                        write_log(o, errMsg);
+                    };
 
     // If order is new or pending (open), then rebroadcast on another snode
     // only if our client didn't initiate the cancel.
-    if (xtx->isLocal() && xtx->state <= TransactionDescr::trPending && !iCanceled) {
+    if (xtx->isLocal() && xtx->state <= TransactionDescr::trPending && !iCanceled) 
+    {
         auto requireUpdateTime = boost::posix_time::second_clock::universal_time() - boost::posix_time::seconds(241);
         xtx->setUpdateTime(requireUpdateTime); // will trigger an update (240 seconds stale)
         write_log(log_obj, "cancel received, rebroadcasting order on another service node");
         return true;
-    } else if (xtx->state < TransactionDescr::trCreated) { // if no deposits yet
+    } 
+    else if (xtx->state < TransactionDescr::trCreated) 
+    { 
+        // if no deposits yet
         xapp.moveTransactionToHistory(txid);
         cancel(log_obj, "counterparty cancel request");
         xuiConnector.NotifyXBridgeTransactionChanged(txid);
         return true;
-    } else if (xtx->state == TransactionDescr::trCancelled) { // already canceled
+    } 
+    else if (xtx->state == TransactionDescr::trCancelled) 
+    { 
+        // already canceled
         write_log(log_obj, "already canceled");
         return true;
-    } else if (!xtx->didSendDeposit()) { // cancel if deposit not sent
+    } 
+    else if (!xtx->didSendDeposit()) 
+    { 
+        // cancel if deposit not sent
         cancel(log_obj, "counterparty cancel request");
         return true;
-    } else if (xtx->hasRedeemedCounterpartyDeposit()) { // Ignore if counterparty deposit already redeemed
+    } 
+    else if (xtx->hasRedeemedCounterpartyDeposit()) 
+    { 
+        // Ignore if counterparty deposit already redeemed
         write_log(log_obj, "counterparty already redeemed, ignore cancel");
         return true;
     }
 
     // If refund transaction id not defined, do not attempt to rollback
-    if (xtx->refTx.empty()) {
+    if (xtx->refTx.empty()) 
+    {
         cancel(log_obj, "could not find a refund transaction for order");
         return true;
     }
@@ -3419,9 +3519,12 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
 
     // Attempt to rollback transaction and redeem deposit (this can take time since locktime needs to expire)
     int32_t errCode = 0;
-    if (!redeemOrderDeposit(xtx, errCode)) {
+    if (!redeemOrderDeposit(xtx, errCode)) 
+    {
         xapp.processLater(txid, packet);
-    } else {
+    } 
+    else 
+    {
         // unlock coins (not fees)
         xapp.unlockCoins(conn->currency, xtx->usedCoins);
     }
@@ -3457,11 +3560,15 @@ bool Session::Impl::processTransactionReject(XBridgePacketPtr packet) const
     TransactionDescrPtr xtx = xapp.transaction(txid);
     // Do not proceed if we're not the taker or the state is beyond the accepting phase
     if (!xtx || xtx->role != 'B' || xtx->state > TransactionDescr::trAccepting)
+    {
         return true;
+    }
 
     // Only snode can reject an order
     if (!packet->verify(xtx->sPubKey))
+    {
         return true;
+    }
 
     xtx->reason = reason;
     LogOrderMsg(xtx, __FUNCTION__);
@@ -3559,7 +3666,8 @@ bool Session::Impl::sendCancelTransaction(const TransactionPtr & tx,
 //*****************************************************************************
 //*****************************************************************************
 bool Session::sendCancelTransaction(const TransactionDescrPtr & tx,
-                                    const TxCancelReason & reason) const {
+                                    const TxCancelReason & reason) const 
+{
     return m_p->sendCancelTransaction(tx, reason);
 }
 
@@ -3594,8 +3702,11 @@ bool Session::Impl::sendRejectTransaction(const uint256 & id,
                                           const TxCancelReason & reason) const
 {
     Exchange & e = Exchange::instance();
-    if (!e.isStarted()) // snode only
+    if (!e.isStarted()) 
+    {
+        // snode only
         return false;
+    }
 
     UniValue log_obj(UniValue::VOBJ);
     log_obj.pushKV("orderid", id.GetHex());
@@ -3658,6 +3769,8 @@ void Session::sendListOfTransactions() const
     }
 }
 
+//*****************************************************************************
+//*****************************************************************************
 void Session::Impl::sendTransaction(uint256 & id) const
 {
     Exchange & e = Exchange::instance();
@@ -3668,7 +3781,9 @@ void Session::Impl::sendTransaction(uint256 & id) const
 
     TransactionPtr tr = e.pendingTransaction(id);
     if (!tr->matches(id))
+    {
         return;
+    }
 
     XBridgePacketPtr packet(new XBridgePacket(xbcPendingTransaction));
 
@@ -3789,8 +3904,8 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
     }
 
     // transaction id
-    std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
-    uint256 txid(stxid);
+    uint256 txid;
+    packet->read(0, txid);
     // snode key
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
@@ -3798,24 +3913,34 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
 
     // check and process packet if bridge is exchange
     Exchange & e = Exchange::instance();
-    if (e.isStarted()) {
+    if (e.isStarted()) 
+    {
         TransactionPtr tr = e.transaction(txid);
-        if (!tr->matches(txid)) { // ignore no matching orders
+        if (!tr->matches(txid)) 
+        { 
+            // ignore no matching orders
             LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
             return true;
         }
-        if (!packet->verify(e.pubKey())) {
+        if (!packet->verify(e.pubKey())) 
+        {
             LogOrderMsg(txid.GetHex(), "bad packet signature, not updating order state", __FUNCTION__);
             return true;
         }
         LogOrderMsg(txid.GetHex(), "order finished", __FUNCTION__);
-    } else { // Non-exchange nodes
+    } 
+    else 
+    { 
+        // Non-exchange nodes
         TransactionDescrPtr xtx = xapp.transaction(txid);
-        if (xtx == nullptr) {
+        if (xtx == nullptr) 
+        {
             LogOrderMsg(txid.GetHex(), "unknown order", __FUNCTION__);
             return true;
         }
-        if (!packet->verify(xtx->sPubKey)) { // ignore packet if not from snode
+        if (!packet->verify(xtx->sPubKey)) 
+        { 
+            // ignore packet if not from snode
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", txid.GetHex());
             log_obj.pushKV("expected_snode", HexStr(xtx->sPubKey));
@@ -3823,6 +3948,7 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
             LogOrderMsg(log_obj, "wrong servicenode handling order", __FUNCTION__);
             return true;
         }
+
         // update transaction state for gui
         xtx->state = TransactionDescr::trFinished;
         LogOrderMsg(xtx, __FUNCTION__);
@@ -3834,38 +3960,55 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
     return true;
 }
 
-bool Session::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const {
+//*****************************************************************************
+//*****************************************************************************
+bool Session::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const 
+{
     return m_p->redeemOrderDeposit(xtx, errCode);
 }
 
-bool Session::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const {
+//*****************************************************************************
+//*****************************************************************************
+bool Session::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const 
+{
     return m_p->redeemOrderCounterpartyDeposit(xtx, errCode);
 }
 
+//*****************************************************************************
+//*****************************************************************************
 bool Session::refundTraderDeposit(const std::string & orderId, const std::string & currency, const uint32_t & lockTime,
-                         const std::string & refTx, int32_t & errCode) const {
+                         const std::string & refTx, int32_t & errCode) const 
+{
     return m_p->refundTraderDeposit(orderId, currency, lockTime, refTx, errCode);
 }
 
-bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const {
+//*****************************************************************************
+//*****************************************************************************
+bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const 
+{
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr connFrom = xapp.connectorByCurrency(xtx->fromCurrency);
-    if (!connFrom) {
+    if (!connFrom) 
+    {
         LogOrderMsg(xtx->id.GetHex(), "rollback attempted failed, no connector for <" + xtx->fromCurrency + "> is the wallet running?", __FUNCTION__);
         return false;
     }
 
     auto & txid = xtx->id;
-    if (xtx->state < TransactionDescr::trCreated) {
+    if (xtx->state < TransactionDescr::trCreated) 
+    {
         return true; // done
     }
 
     // If refund transaction id not defined, do not attempt to rollback
-    if (xtx->refTx.empty()) {
+    if (xtx->refTx.empty()) 
+    {
         WalletConnectorPtr connTo = xapp.connectorByCurrency(xtx->toCurrency);
         auto fromAddr = connFrom->fromXAddr(xtx->from);
         auto toAddr = connTo ? connTo->fromXAddr(xtx->to) : "";
-        if (!xtx->binTx.empty()) { // if there's a bin tx but no rollback, could mean potential loss of funds
+        if (!xtx->binTx.empty()) 
+        { 
+            // if there's a bin tx but no rollback, could mean potential loss of funds
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", txid.GetHex());
             log_obj.pushKV("from_addr", fromAddr);
@@ -3924,18 +4067,23 @@ bool Session::Impl::redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t 
     return true; // success
 }
 
-bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const {
+//*****************************************************************************
+//*****************************************************************************
+bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const 
+{
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr connFrom = xapp.connectorByCurrency(xtx->fromCurrency);
     WalletConnectorPtr connTo = xapp.connectorByCurrency(xtx->toCurrency);
-    if (!connFrom || !connTo) {
+    if (!connFrom || !connTo) 
+    {
         LogOrderMsg(xtx->id.GetHex(), "failed to redeem order due to bad wallet connection, is " +
                                       (!connFrom ? xtx->fromCurrency : xtx->toCurrency) + " running?", __FUNCTION__);
         return false;
     }
 
     // Try and find the secret
-    if (!xtx->hasSecret()) {
+    if (!xtx->hasSecret()) 
+    {
         std::vector<unsigned char> x;
         bool isGood = false;
         if (!connFrom->getSecretFromPaymentTransaction(xtx->otherPayTxId(), xtx->binTxId, xtx->binTxVout, xtx->oHashedSecret, x, isGood))
@@ -3982,7 +4130,8 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
     if (false) // !connTo->createPaymentTransaction(inputs, outputs, xtx->mPubKey, xtx->mPrivKey, xtx->secret(), xtx->unlockScript, xtx->payTxId, xtx->payTx))
     {
         LogOrderMsg(xtx->id.GetHex(), "failed to create payment redeem transaction, retrying", __FUNCTION__);
-        if (!xtx->didLogPayTx2()) {
+        if (!xtx->didLogPayTx2()) 
+        {
             TXLOG() << "redeem counterparty deposit for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                     << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                     << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
@@ -3992,7 +4141,8 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
         return false;
     }
 
-    if (!xtx->didLogPayTx1()) {
+    if (!xtx->didLogPayTx1()) 
+    {
         TXLOG() << "redeem counterparty deposit for order " << xtx->id.ToString() << " (submit manually using sendrawtransaction) "
                 << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << fromAddr << ") / "
                 << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << toAddr   << ")" << std::endl
@@ -4013,14 +4163,19 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
     }
     else
     {
-        if (errCode == RPCErrorCode::RPC_VERIFY_ALREADY_IN_CHAIN) {
+        if (errCode == RPCErrorCode::RPC_VERIFY_ALREADY_IN_CHAIN) 
+        {
             LogOrderMsg(xtx->id.GetHex(), "redeem tx already found in chain, proceeding", __FUNCTION__);
         }
         else
         {
-            if (errCode == RPCErrorCode::RPC_VERIFY_ERROR) { // missing inputs, wait deposit tx
+            if (errCode == RPCErrorCode::RPC_VERIFY_ERROR) 
+            { 
+                // missing inputs, wait deposit tx
                 LogOrderMsg(xtx->id.GetHex(), "failed to redeem tx from counterparty: bad inputs, trying again", __FUNCTION__);
-            } else {
+            } 
+            else 
+            {
                 LogOrderMsg(xtx->id.GetHex(), "failed to redeem tx from counterparty, trying again", __FUNCTION__);
             }
             return false; // can't cancel, maker already redeemed taker funds
@@ -4033,18 +4188,22 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
 bool Session::Impl::refundTraderDeposit(const std::string & orderId, const std::string & currency, const uint32_t & lockTime,
                                         const std::string & refTx, int32_t & errCode) const
 {
     xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(currency);
-    if (!conn) {
+    if (!conn) 
+    {
         LogOrderMsg(orderId, "refund attempt failed, no connector for <" + currency + "> on order, is the wallet running?", __FUNCTION__);
         return false;
     }
 
     // If refund transaction id not defined, do not attempt to rollback
-    if (refTx.empty()) {
+    if (refTx.empty()) 
+    {
         LogOrderMsg(orderId, "Fatal error, unable to submit refund for <" + currency + "> on order due to an unknown refund tx", __FUNCTION__);
         errCode = RPCErrorCode::RPC_MISC_ERROR;
         return true; // done
@@ -4053,7 +4212,9 @@ bool Session::Impl::refundTraderDeposit(const std::string & orderId, const std::
     std::string sid;
     std::string errorMessage;
     if (!conn->sendRawTransaction(refTx, sid, errCode, errorMessage))
+    {
         return false;
+    }
 
     return true; // success
 }
