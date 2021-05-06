@@ -557,6 +557,7 @@ public:
     size_t read(const size_t offset, xbridge::amount_t & data) const;
     size_t read(const size_t offset, uint256 & data) const;
     size_t read(const size_t offset, std::vector<unsigned char> & data, const size_t size) const;
+    size_t read(const size_t offset, std::string & data) const;
     size_t read(const size_t offset, std::string & data, const size_t size) const;
 
 protected:
