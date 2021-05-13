@@ -10,6 +10,8 @@
 
 #include <random.h>
 #include <support/allocators/secure.h>
+#include <secp256k1.h>
+#include <secp256k1_recovery.h>
 
 //******************************************************************************
 //******************************************************************************
@@ -178,11 +180,13 @@ BtcCryptoProvider::BtcCryptoProvider()
     context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
     // Pass in a random blinding seed to the secp256k1 context.
-    std::vector<unsigned char, secure_allocator<unsigned char>> seed(32);
-    GetRandBytes(seed.data(), 32);
+    std::vector<unsigned char, secure_allocator<unsigned char>> seed(privateKeySize);
+    GetRandBytes(seed.data(), privateKeySize);
     bool ret = secp256k1_context_randomize(context, seed.data());
     if (!ret)
+    {
         ERR() << "can't randomize secp256k1 context " << __FUNCTION__;
+    }
 }
 
 //*****************************************************************************
@@ -203,11 +207,12 @@ bool BtcCryptoProvider::check(const std::vector<unsigned char> & key)
 //*****************************************************************************
 void BtcCryptoProvider::makeNewKey(std::vector<unsigned char> & key)
 {
-    key.resize(32);
+    key.resize(privateKeySize);
     do
     {
         GetStrongRandBytes(&key[0], key.size());
-    } while (!check(key));
+    } 
+    while (!check(key));
 }
 
 //*****************************************************************************
@@ -220,8 +225,8 @@ bool BtcCryptoProvider::getPubKey(const std::vector<unsigned char> & key, std::v
         return false;
     }
 
-    pub.resize(65);
-    size_t clen = 65;
+    pub.resize(publicKeySize);
+    size_t clen = publicKeySize;
     secp256k1_ec_pubkey_serialize(context, &pub[0],
                                   &clen, &pubkey,
                                   SECP256K1_EC_COMPRESSED);
@@ -235,8 +240,8 @@ bool BtcCryptoProvider::sign(const std::vector<unsigned char> & key,
                              const uint256 & data,
                              std::vector<unsigned char> & signature)
 {
-    size_t signatureLength = 72;
-    signature.resize(72);
+    size_t signatureLength = signatureSize;
+    signature.resize(signatureSize);
 
     secp256k1_ecdsa_signature sig;
     int ret = secp256k1_ecdsa_sign(context, &sig, data.begin(), &key[0],
@@ -275,6 +280,58 @@ bool BtcCryptoProvider::verify(const std::vector<unsigned char> & pubkey,
     // not historically been enforced in Bitcoin, so normalize them first.
     secp256k1_ecdsa_signature_normalize(context, &sig, &sig);
     return secp256k1_ecdsa_verify(context, &sig, data.begin(), &_pubkey);
+}
+
+//******************************************************************************
+//******************************************************************************
+bool BtcCryptoProvider::signCompact(const std::vector<unsigned char> & key,
+                                    const uint256 & data,
+                                    std::vector<unsigned char> & signature)
+{
+    const static bool isCompressed = true;
+    signature.resize(compactSignatureSize);
+    int rec = -1;
+    secp256k1_ecdsa_recoverable_signature sig;
+
+    int ret = secp256k1_ecdsa_sign_recoverable(context, &sig, data.begin(), &key[0], secp256k1_nonce_function_rfc6979, nullptr);
+    assert(ret);
+
+    ret = secp256k1_ecdsa_recoverable_signature_serialize_compact(context, &signature[1], &rec, &sig);
+    assert(ret);
+    assert(rec != -1);
+
+    signature[0] = 27 + rec + (isCompressed ? 4 : 0);
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool BtcCryptoProvider::recoverCompact(const uint256 & data,
+                                       const std::vector<unsigned char> & signature,
+                                       std::vector<unsigned char> & vpubkey)
+{
+    if (signature.size() != compactSignatureSize)
+    {
+        return false;
+    }
+
+    int recid = (signature[0] - 27) & 3;
+    bool fComp = ((signature[0] - 27) & 4) != 0;
+    secp256k1_pubkey pubkey;
+    secp256k1_ecdsa_recoverable_signature sig;
+    if (!secp256k1_ecdsa_recoverable_signature_parse_compact(context, &sig, &signature[1], recid)) 
+    {
+        return false;
+    }
+    if (!secp256k1_ecdsa_recover(context, &pubkey, &sig, data.begin())) 
+    {
+        return false;
+    }
+    vpubkey.resize(publicKeySize);
+    size_t publen = publicKeySize;
+    secp256k1_ec_pubkey_serialize(context, &vpubkey[0], &publen, &pubkey, fComp ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
+    return true;
+
 }
 
 } // namespace xbridge
