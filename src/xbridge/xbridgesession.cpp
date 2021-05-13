@@ -72,7 +72,7 @@ struct PrintErrorCode
 //*****************************************************************************
 std::vector<unsigned char> rand20()
 {
-    std::vector<unsigned char> tmp;
+    std::vector<unsigned char> tmp(20);
     GetStrongRandBytes(&tmp[0], 20);
     return tmp;
 }
