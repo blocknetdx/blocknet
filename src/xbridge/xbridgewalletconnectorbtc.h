@@ -194,10 +194,12 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
 template <class CryptoProvider>
 class BtcWalletConnector : public WalletConnector
 {
-    class Impl;
-
 public:
-    BtcWalletConnector() {}
+    BtcWalletConnector()
+        : m_isSignMessageWithWallet(true)
+        , m_isSignMessageWithPrivKey(true)
+    {}
+
 
     bool init();
 
@@ -314,6 +316,10 @@ public:
 
 protected:
     CryptoProvider m_cp;
+
+  private:
+    bool m_isSignMessageWithWallet;
+    bool m_isSignMessageWithPrivKey;
 };
 
 } // namespace xbridge
