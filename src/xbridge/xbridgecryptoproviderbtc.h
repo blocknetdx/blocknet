@@ -33,6 +33,8 @@ public:
     static constexpr unsigned int signatureSize             = 72;
     static constexpr unsigned int compactSignatureSize      = 65;
 
+    const static std::string messageMagic("XBridge Signed Message:\n");
+
 public:
     bool check(const std::vector<unsigned char> & key);
     void makeNewKey(std::vector<unsigned char> & key);
