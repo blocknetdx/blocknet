@@ -1715,11 +1715,15 @@ bool BtcWalletConnector<CryptoProvider>::signMessage(const std::string & address
 
     if (m_isSignMessageWithPrivKey)
     {
-        // TODO sign message with CryptoProvider
-        // if (signCompact())
-        // {
-        //     return true;
-        // }
+        CHashWriter ss(SER_GETHASH, 0);
+        ss << messageMagic;
+        ss << message;
+
+        if (signCompact(ss.GetHash(), signature))
+        {
+            // TODO maybe encodebase64?
+            return true;
+        }
 
         LOG() << "crypto provider sign message failed " << __FUNCTION__;
         m_isSignMessageWithWallet = false;
@@ -1735,6 +1739,9 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
                                        const std::string & message,
                                        const std::string & signature)
 {
+    // TODO
+    // m_isSignMessageWithWallet?
+    // m_isSignMessageWithPrivKey?
     if (!rpc::verifyMessage(m_user, m_passwd, m_ip, m_port,
                             address, message, signature))
     {
