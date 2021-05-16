@@ -119,6 +119,8 @@ public:
         , serviceNodeFee(.015)
         , txWithTimeField(false)
         , isLockCoinsSupported(false)
+        , walletName("")
+        , isWalletLoaded(false)
     {
         addrPrefix.resize(1, '\0');
         scriptPrefix.resize(1, '\0');
@@ -156,6 +158,9 @@ public:
         cashAddrPrefix              = other.cashAddrPrefix;
 
         mediantime                  = other.mediantime; // useful for fork management
+
+        walletName                  = other.walletName;
+        isWalletLoaded              = other.isWalletLoaded;
 
         return *this;
     }
@@ -211,6 +216,10 @@ public:
     int64_t                      mediantime{0};
     // cash address prefix
     std::string                  cashAddrPrefix;
+
+    // wallet name (used for multiwallet node, etc. bitcoin core, in loadwallet rpc call)
+    std::string                  walletName;
+    bool                         isWalletLoaded;
 };
 
 } // namespace xbridge
