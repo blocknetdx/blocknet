@@ -12,11 +12,14 @@
 #include <uint256.h>
 
 #include <vector>
+#include <string>
 
 //******************************************************************************
 //******************************************************************************
 namespace xbridge
 {
+
+const std::string messageMagic("XBridge Signed Message:\n");
 
 //******************************************************************************
 //******************************************************************************
@@ -32,8 +35,6 @@ public:
     static constexpr unsigned int compressedPublicKeySize   = 33;
     static constexpr unsigned int signatureSize             = 72;
     static constexpr unsigned int compactSignatureSize      = 65;
-
-    const static std::string messageMagic("XBridge Signed Message:\n");
 
 public:
     bool check(const std::vector<unsigned char> & key);

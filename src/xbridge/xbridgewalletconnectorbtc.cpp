@@ -1950,7 +1950,7 @@ bool BtcWalletConnector<CryptoProvider>::signMessage(const std::string & address
                                      const std::string & message,
                                      std::string & signature)
 {
-    if (m_isSignMessageWithWallet)
+    // if (m_isSignMessageWithWallet)
     {
         if (rpc::signMessage(m_user, m_passwd, m_ip, m_port,
                              address, message, signature))
@@ -1959,24 +1959,24 @@ bool BtcWalletConnector<CryptoProvider>::signMessage(const std::string & address
         }
 
         LOG() << "rpc::signMessage failed " << __FUNCTION__;
-        m_isSignMessageWithWallet = false;
+        // m_isSignMessageWithWallet = false;
     }
 
-    if (m_isSignMessageWithPrivKey)
-    {
-        CHashWriter ss(SER_GETHASH, 0);
-        ss << messageMagic;
-        ss << message;
+    // if (m_isSignMessageWithPrivKey)
+    // {
+    //     CHashWriter ss(SER_GETHASH, 0);
+    //     ss << messageMagic;
+    //     ss << message;
 
-        if (signCompact(ss.GetHash(), signature))
-        {
-            // TODO maybe encodebase64?
-            return true;
-        }
+    //     if (signCompact(ss.GetHash(), signature))
+    //     {
+    //         // TODO maybe encodebase64?
+    //         return true;
+    //     }
 
-        LOG() << "crypto provider sign message failed " << __FUNCTION__;
-        m_isSignMessageWithWallet = false;
-    }
+    //     LOG() << "crypto provider sign message failed " << __FUNCTION__;
+    //     m_isSignMessageWithWallet = false;
+    // }
 
     return false;
 }
