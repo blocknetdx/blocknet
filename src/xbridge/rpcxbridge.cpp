@@ -193,6 +193,53 @@ UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
     return uret(res);
 }
 
+UniValue dxValidateTokenAddress(const JSONRPCRequest& request)
+{
+    if (request.fHelp)
+        throw std::runtime_error(
+            RPCHelpMan{"dxValidateTokenAddress",
+                "\nValidate the token address, returns true if address is valid.\n",
+                {
+                    {"ticker", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker symbol of the asset you want to validate an address for (e.g. LTC)."},
+                    {"address", RPCArg::Type::STR, RPCArg::Optional::NO, "The address."},
+                },
+                    RPCResult{
+                R"(
+    true
+
+    Type | Description
+    -----|----------------------------------------------
+    bool | `true`: The address is valid.
+                )"
+                },
+            RPCExamples{
+                    HelpExampleCli("dxValidateTokenAddress", "BTC mqPrbq8d2pAfwS4n2yH6HfdcBTw1AhQPfZ")
+                  + HelpExampleRpc("dxValidateTokenAddress", "\"BTC\" \"mqPrbq8d2pAfwS4n2yH6HfdcBTw1AhQPfZ\"")
+                },
+            }.ToString());
+
+    Value js;
+    json_spirit::read_string(request.params.write(), js); 
+    Array params = js.get_array();
+
+    if (params.size() != 2)
+    {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "(ticker)"));
+    }
+
+    const std::string currency = params[0].get_str();
+    const std::string address  = params[1].get_str();
+
+    xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
+
+    if (conn) 
+    {
+        return conn->isValidAddress(address);
+    }
+
+    return false;
+}
+
 UniValue dxLoadXBridgeConf(const JSONRPCRequest& request)
 {
     if (request.fHelp)
@@ -3525,6 +3572,7 @@ static const CRPCCommand commands[] =
     { "xbridge",           "dxGetLocalTokens",           &dxGetLocalTokens,            {} },
     { "xbridge",           "dxLoadXBridgeConf",          &dxLoadXBridgeConf,           {} },
     { "xbridge",           "dxGetNewTokenAddress",       &dxGetNewTokenAddress,        {} },
+    { "xbridge",           "dxValidateTokenAddress",     &dxValidateTokenAddress,      {"token", "address"} },
     { "xbridge",           "dxGetNetworkTokens",         &dxGetNetworkTokens,          {} },
     { "xbridge",           "dxMakeOrder",                &dxMakeOrder,                 {} },
     { "xbridge",           "dxMakePartialOrder",         &dxMakePartialOrder,          {} },
