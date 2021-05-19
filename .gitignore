@@ -139,3 +139,6 @@ db4/
 .idea/
 cmake-build-debug/
 CMakeLists.txt
+
+# vscode
+.vscode/*
