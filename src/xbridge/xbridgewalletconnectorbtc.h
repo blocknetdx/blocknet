@@ -215,7 +215,7 @@ public:
 
     bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const;
 
-    bool getNewAddress(std::string & addr);
+    bool getNewAddress(std::string & addr, const std::string & type = "");
 
     bool getTxOut(wallet::UtxoEntry & entry);
 

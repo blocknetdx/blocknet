@@ -955,27 +955,56 @@ bool getNewAddress(const std::string & rpcuser,
                    const std::string & rpcpasswd,
                    const std::string & rpcip,
                    const std::string & rpcport,
-                   std::string & addr)
+                   std::string & addr,
+                   const std::string type = "")
 {
     try
     {
         LOG() << "rpc call <getnewaddress>";
 
-        Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
-
-        // Parse reply
-        const Value & result = find_value(reply, "result");
-        const Value & error  = find_value(reply, "error");
-
-        if (error.type() != null_type)
+        Object reply;
+        
+        do
         {
+            Array params;
+            if (!type.empty())
+            {
+                params.push_back("");
+                params.push_back(type);
+            }
+            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
+
+            // Parse reply
+            Value error  = find_value(reply, "error");
+            if (error.type() == null_type)
+            {
+                break;
+            }
+
+            int errorCode = find_value(error.get_obj(), "code").get_int();
+            if (!type.empty() && errorCode != -5)
+            {
+                // check errorCode == -5, Unknown address type
+                // try without type, type not supported?
+                params.clear();
+                reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
+            }
+
+            error  = find_value(reply, "error");
+            if (error.type() == null_type)
+            {
+                break;
+            }
+
             // Error
             LOG() << "error: " << write_string(error, false);
             // int code = find_value(error.get_obj(), "code").get_int();
             return false;
-        }
-        else if (result.type() != str_type)
+        } 
+        while (false);
+        
+        const Value & result = find_value(reply, "result");
+        if (result.type() != str_type)
         {
             // Result
             LOG() << "result not an string " <<
@@ -1748,9 +1777,9 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr)
+bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr, const std::string & type)
 {
-    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr))
+    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr, type))
     {
         LOG() << "rpc::getNewAddress failed " << __FUNCTION__;
         return false;
