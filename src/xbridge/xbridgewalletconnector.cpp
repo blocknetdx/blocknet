@@ -75,10 +75,10 @@ double WalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & exc
 /**
  * \brief Generate and return new wallet address
  */
-std::string WalletConnector::getNewTokenAddress()
+std::string WalletConnector::getNewTokenAddress(const std::string & type)
 {
     std::string newaddress = "";
-    if (!getNewAddress(newaddress))
+    if (!getNewAddress(newaddress, type))
     {
         LOG() << "getNewAddress failed " << __FUNCTION__;
         return "";
