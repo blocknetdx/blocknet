@@ -84,18 +84,18 @@ public:
 public:
     // wallet RPC
 
-    virtual bool getNewAddress(std::string & addr) = 0;
+    virtual bool getNewAddress(std::string & addr, const std::string & type = "") = 0;
 
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
     double getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
 
-    std::string getNewTokenAddress();
+    std::string getNewTokenAddress(const std::string & type = "");
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
     virtual bool loadWallet(const std::string & walletName) const = 0;
-    
+
     virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const = 0;
 
     virtual bool getBlock(const std::string & blockHash, std::string & rawBlock) = 0;
