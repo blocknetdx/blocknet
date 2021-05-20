@@ -1013,7 +1013,6 @@ void App::updateActiveWallets()
         if (walletName != wp.walletName)
         {
             wp.walletName              = walletName;
-            wp.isWalletLoaded          = false;
         } 
 
         if (wp.m_user.empty() || wp.m_passwd.empty())
