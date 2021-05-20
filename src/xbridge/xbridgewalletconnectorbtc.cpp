@@ -261,6 +261,107 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
 
 //*****************************************************************************
 //*****************************************************************************
+bool getwalletinfo(const std::string & rpcuser, const std::string & rpcpasswd,
+                   const std::string & rpcip, const std::string & rpcport,
+                   std::string & currentWallet)
+{
+    try
+    {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getwalletinfo", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Object o          = result.get_obj();
+        Value  walletName = find_value(o, "walletname");
+        if (walletName.is_null())
+        {
+            // not supported
+            currentWallet.clear();
+        }
+        else
+        {
+            currentWallet = walletName.get_str();
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getwalletinfo exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool listwallets(const std::string & rpcuser, const std::string & rpcpasswd,
+                const std::string & rpcip, const std::string & rpcport,
+                std::vector<std::string> & wallets)
+{
+    try
+    {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listwallets", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != array_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Array arr = result.get_array();
+        for (const Value & v : arr)
+        {
+            wallets.emplace_back(v.get_str());
+        }
+
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "listwallets exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getblock(const std::string & rpcuser, const std::string & rpcpasswd,
                   const std::string & rpcip, const std::string & rpcport,
                   const std::string & blockHash, std::string & rawBlock)
@@ -1620,10 +1721,8 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::init()
 {
     // try to load wallet
-    if (!walletName.empty() && !isWalletLoaded)
+    if (!walletName.empty())
     {
-        isWalletLoaded = true;
-
         if (!loadWallet(walletName))
         {
             return false;
@@ -1724,6 +1823,19 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::loadWallet(const std::string & walletName) const
 {
+    std::vector<std::string> wallets;
+    if (!rpc::listwallets(m_user, m_passwd, m_ip, m_port, wallets))
+    {
+        // not supported
+        return true;
+    }
+
+    if (std::find(wallets.begin(), wallets.end(), walletName) != wallets.end())
+    {
+        // already loaded
+        return true;
+    }
+
     LOG() << currency << " loading <" << walletName << "> wallet " << __FUNCTION__;
 
     if (!rpc::loadwallet(m_user, m_passwd, m_ip, m_port, walletName))
