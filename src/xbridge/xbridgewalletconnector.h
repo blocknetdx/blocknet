@@ -42,10 +42,10 @@ namespace rpc
 {
 struct WalletInfo
 {
-    double   relayFee;
-    uint32_t blocks;
-    int64_t mediantime;
-    uint256 bestblockhash;
+    double      relayFee;
+    uint32_t    blocks;
+    int64_t     mediantime;
+    uint256     bestblockhash;
 
     WalletInfo()
         : relayFee(0)
