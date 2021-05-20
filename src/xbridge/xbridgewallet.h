@@ -120,7 +120,6 @@ public:
         , txWithTimeField(false)
         , isLockCoinsSupported(false)
         , walletName("")
-        , isWalletLoaded(false)
     {
         addrPrefix.resize(1, '\0');
         scriptPrefix.resize(1, '\0');
@@ -160,7 +159,6 @@ public:
         mediantime                  = other.mediantime; // useful for fork management
 
         walletName                  = other.walletName;
-        isWalletLoaded              = other.isWalletLoaded;
 
         return *this;
     }
@@ -219,7 +217,6 @@ public:
 
     // wallet name (used for multiwallet node, etc. bitcoin core, in loadwallet rpc call)
     std::string                  walletName;
-    bool                         isWalletLoaded;
 };
 
 } // namespace xbridge
