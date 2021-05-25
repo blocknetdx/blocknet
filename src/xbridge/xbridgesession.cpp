@@ -481,6 +481,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
     offset += sizeof(uint32_t);
 
+    if (isPartialOrder && minFromAmount > samount) {
+        xbridge::LogOrderMsg(id.GetHex(), "rejecting order, maker size can't be less than minimum size", __FUNCTION__);
+        return true;
+    }
+
     if (isPartialOrder && utxoItemsCount > xBridgePartialOrderMaxUtxos) {
         xbridge::LogOrderMsg(id.GetHex(), "rejecting order, partial order has too many utxos", __FUNCTION__);
         return true;
