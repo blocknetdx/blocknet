@@ -482,7 +482,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     offset += sizeof(uint32_t);
 
     if (isPartialOrder && minFromAmount > samount) {
-        xbridge::LogOrderMsg(id.GetHex(), "rejecting order, maker size can't be less than minimum size", __FUNCTION__);
+        xbridge::LogOrderMsg(id.GetHex(), "rejecting order, minimum size cannot be greater than maker size", __FUNCTION__);
         return true;
     }
 
