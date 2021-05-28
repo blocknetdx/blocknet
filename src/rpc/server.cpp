@@ -19,6 +19,7 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 #include <memory> // for unique_ptr
 #include <unordered_map>
@@ -189,7 +190,7 @@ std::string CRPCTable::help(const std::string& strCommand, const JSONRPCRequest&
     {
         const CRPCCommand *pcmd = command.second;
         std::string strMethod = pcmd->name;
-        if ((strCommand != "" || pcmd->category == "hidden") && strMethod != strCommand)
+        if ((strCommand != "" || pcmd->category == "hidden") && !boost::iequals(strMethod, strCommand))
             continue;
         jreq.strMethod = strMethod;
         try
