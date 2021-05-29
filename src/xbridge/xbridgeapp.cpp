@@ -268,7 +268,7 @@ protected:
 App::Impl::Impl()
     : m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
     , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-    , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
+    , m_timer(m_timerIo, boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)))
 {
 
 }
@@ -353,7 +353,8 @@ bool App::createConf()
                 "# TxWithTimeField=false"                                                      + eol +
                 "# LockCoinsSupported=false"                                                   + eol +
                 "# JSONVersion="                                                               + eol +
-                "# ContentType="                                                               + eol
+                "# ContentType="                                                               + eol +
+                "# WalletName="                                                                + eol
             );
         }
 
@@ -932,20 +933,27 @@ void App::updateActiveWallets()
     std::set<std::string> toRemove;
     {
         LOCK(m_p->m_connectorsLock);
-        for (auto & item : m_p->m_connectorCurrencyMap) {
+        for (auto & item : m_p->m_connectorCurrencyMap) 
+        {
             bool found = false;
-            for (auto & currency : wallets) {
-                if (item.first == currency) {
+            for (auto & currency : wallets) 
+            {
+                if (item.first == currency) 
+                {
                     found = true;
                     break;
                 }
             }
             if (!found)
+            {
                 toRemove.insert(item.first);
+            }
         }
     } // do not deadlock removeConnector(), it must be outside lock scope
     for (auto & currency : toRemove)
+    {
         removeConnector(currency);
+    }
 
     // Store connectors from config
     std::vector<WalletConnectorPtr> conns;
@@ -960,15 +968,21 @@ void App::updateActiveWallets()
     for (std::vector<std::string>::iterator i = wallets.begin(); i != wallets.end(); ++i)
     {
         // Ignore bad wallets until expiry
-        if (badWallets.count(*i)) {
+        if (badWallets.count(*i)) 
+        {
             const auto last_time = badWallets[*i];
             const auto current_time = boost::posix_time::second_clock::universal_time();
             // Wait ~5 minutes before doing wallet check on bad wallet
-            if (static_cast<boost::posix_time::time_duration>(current_time - last_time).total_seconds() >= 300) {
+            if (static_cast<boost::posix_time::time_duration>(current_time - last_time).total_seconds() >= 300) 
+            {
                 LOCK(m_updatingWalletsLock);
                 m_badWallets.erase(*i);
-            } else // not ready to do wallet check
+            } 
+            else
+            { 
+                // not ready to do wallet check
                 continue;
+            }
         }
 
         WalletParam wp;
@@ -996,23 +1010,34 @@ void App::updateActiveWallets()
         wp.contenttype                 = s.get<std::string>(*i + ".ContentType", "");
         wp.cashAddrPrefix              = s.get<std::string>(*i + ".CashAddrPrefix", "");
 
-        if (wp.m_user.empty() || wp.m_passwd.empty())
-            WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
+        std::string walletName         = s.get<std::string>(*i + ".WalletName", "");
+        if (walletName != wp.walletName)
+        {
+            wp.walletName              = walletName;
+        } 
 
-        if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) {
+        if (wp.m_user.empty() || wp.m_passwd.empty())
+        {
+            WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
+        }
+
+        if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
             removeConnector(wp.currency);
             continue;
         }
 
         // Check maker locktime reqs
-        if (wp.blockTime * XMIN_LOCKTIME_BLOCKS > XMAKER_LOCKTIME_TARGET_SECONDS) {
+        if (wp.blockTime * XMIN_LOCKTIME_BLOCKS > XMAKER_LOCKTIME_TARGET_SECONDS) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed maker locktime requirements";
             removeConnector(wp.currency);
             continue;
         }
         // Check taker locktime reqs (non-slow chains)
-        if (wp.blockTime < XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XTAKER_LOCKTIME_TARGET_SECONDS) {
+        if (wp.blockTime < XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XTAKER_LOCKTIME_TARGET_SECONDS) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
             removeConnector(wp.currency);
             continue;
@@ -1020,7 +1045,8 @@ void App::updateActiveWallets()
         // If this coin is a slow blockchain check to make sure locktime drift checks
         // are compatible with this chain. If not then ignore loading the token.
         // locktime calc should be less than taker locktime target
-        if (wp.blockTime >= XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XSLOW_TAKER_LOCKTIME_TARGET_SECONDS) {
+        if (wp.blockTime >= XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XSLOW_TAKER_LOCKTIME_TARGET_SECONDS) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
             removeConnector(wp.currency);
             continue;
@@ -1028,19 +1054,22 @@ void App::updateActiveWallets()
 
         // Confirmation compatibility check
         const auto maxConfirmations = std::max<uint32_t>(XLOCKTIME_DRIFT_SECONDS/wp.blockTime, XMAX_LOCKTIME_DRIFT_BLOCKS);
-        if (wp.requiredConfirmations > maxConfirmations) {
+        if (wp.requiredConfirmations > maxConfirmations) 
+        {
             ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed confirmation check, max allowed for this token is " << maxConfirmations;
             removeConnector(wp.currency);
             continue;
         }
 
-        if (wp.blockSize < 1024) {
+        if (wp.blockSize < 1024) 
+        {
             wp.blockSize = 1024;
             WARN() << wp.currency << " \"" << wp.title << "\"" << " Minimum block size required is 1024 kb";
         }
 
         xbridge::WalletConnectorPtr conn;
-        if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM") {
+        if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM") 
+        {
             LOG() << "ETH connector is not supported on XBridge at this time";
             continue;
         }
@@ -1108,7 +1137,8 @@ void App::updateActiveWallets()
     std::set<std::string> validWallets;
 
     // Process connections
-    if (!conns.empty()) {
+    if (!conns.empty()) 
+    {
         // TLDR: Multithreaded connection checks
         // The code below utilizes boost async to spawn threads up to the reported hardware concurrency
         // capabilities of the host. All of the wallets loaded into xbridge.conf will be checked here,
@@ -1122,11 +1152,13 @@ void App::updateActiveWallets()
         uint32_t pendingJobs = 0;
         uint32_t allJobs = static_cast<uint32_t>(conns.size());
         boost::thread_group tg;
-        auto check = [&muJobs,&pendingJobs,&allJobs,&badConnections,&validConnections](WalletConnectorPtr conn) {
+        auto check = [&muJobs,&pendingJobs,&allJobs,&badConnections,&validConnections](WalletConnectorPtr conn) 
+        {
             if (ShutdownRequested())
                 return;
             // Check that wallet is reachable
-            if (!conn->init()) {
+            if (!conn->init()) 
+            {
                 {
                     boost::mutex::scoped_lock l(muJobs);
                     --pendingJobs;
@@ -1144,14 +1176,17 @@ void App::updateActiveWallets()
         };
 
         // Synchronize all connection checks
-        try {
-            while (true) {
+        try 
+        {
+            while (true) 
+            {
                 boost::this_thread::interruption_point();
                 if (ShutdownRequested())
                     break;
 
                 const int32_t size = conns.size();
-                for (int32_t i = size - 1; i >= 0; --i) {
+                for (int32_t i = size - 1; i >= 0; --i) 
+                {
                     {
                         boost::mutex::scoped_lock l(muJobs);
                         if (pendingJobs >= maxPendingJobs)
@@ -1181,7 +1216,10 @@ void App::updateActiveWallets()
                 boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
             }
             tg.join_all();
-        } catch (...) { // bail on error (possible thread error etc)
+        } 
+        catch (...) 
+        { 
+            // bail on error (possible thread error etc)
             tg.interrupt_all();
             tg.join_all();
             LOCK(m_updatingWalletsLock);
@@ -1191,9 +1229,11 @@ void App::updateActiveWallets()
         }
 
         // Check for shutdown
-        if (!ShutdownRequested()) {
+        if (!ShutdownRequested()) 
+        {
             // Add valid connections
-            for (auto & conn : validConnections) {
+            for (auto & conn : validConnections) 
+            {
                 addConnector(conn);
                 validWallets.insert(conn->currency);
                 LOG() << conn->currency << " \"" << conn->title << "\"" << " connected " << conn->m_ip << ":" << conn->m_port;
@@ -1214,7 +1254,9 @@ void App::updateActiveWallets()
 
     // Let the exchange know about the new wallet list
     if (!ShutdownRequested())
+    {
         xbridge::Exchange::instance().loadWallets(validWallets);
+    }
 
     {
         LOCK(m_updatingWalletsLock);
@@ -3646,7 +3688,7 @@ void App::Impl::onTimer()
         }
     }
 
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)));
     m_timer.async_wait(boost::bind(&Impl::onTimer, this));
 }
 

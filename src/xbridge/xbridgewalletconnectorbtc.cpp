@@ -37,6 +37,79 @@ using namespace json_spirit;
 
 //*****************************************************************************
 //*****************************************************************************
+bool loadwallet(const std::string & rpcuser, const std::string & rpcpasswd,
+                const std::string & rpcip, const std::string & rpcport,
+                const std::string & walletName)
+{
+    try
+    {
+        LOG() << "rpc call <loadwallet>";
+
+        Array params;
+        params.push_back(walletName);
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "loadwallet", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error, but RPC_WALLET_ALREADY_LOADED = -35
+            Object o = error.get_obj();
+            const Value & code = find_value(o, "code");
+            if (code.type() != int_type || code.get_int() != -35)
+            {
+                LOG() << "error: " << write_string(error, false);
+                // int code = find_value(error.get_obj(), "code").get_int();
+                return false;
+            }
+        }
+
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        else
+        {
+            Object o = result.get_obj();
+
+            const Value & name = find_value(o, "name");
+            if (name.type() != null_type)
+            {
+                if (name.get_str() != walletName)
+                {
+                    WARN() << "loadwallet result is <" << name.get_str() << "> but requested <" << walletName << ">";
+                }
+            }
+
+            const Value & warn = find_value(o, "warning");
+            if (warn.type() != null_type)
+            {
+                if (!warn.get_str().empty())
+                {
+                    WARN() << "loadwallet warning: <" << warn.get_str();
+                }
+            }
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "loadwallet exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getinfo(const std::string & rpcuser, const std::string & rpcpasswd,
              const std::string & rpcip, const std::string & rpcport,
              WalletInfo & info)
@@ -126,7 +199,7 @@ bool getnetworkinfo(const std::string & rpcuser, const std::string & rpcpasswd,
     }
     catch (std::exception & e)
     {
-        LOG() << "getinfo exception " << e.what();
+        LOG() << "getgetnetworkinfoinfo exception " << e.what();
         return false;
     }
 
@@ -179,7 +252,108 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
     }
     catch (std::exception & e)
     {
-        LOG() << "getinfo exception " << e.what();
+        LOG() << "getblockchaininfo exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool getwalletinfo(const std::string & rpcuser, const std::string & rpcpasswd,
+                   const std::string & rpcip, const std::string & rpcport,
+                   std::string & currentWallet)
+{
+    try
+    {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getwalletinfo", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Object o          = result.get_obj();
+        Value  walletName = find_value(o, "walletname");
+        if (walletName.is_null())
+        {
+            // not supported
+            currentWallet.clear();
+        }
+        else
+        {
+            currentWallet = walletName.get_str();
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getwalletinfo exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool listwallets(const std::string & rpcuser, const std::string & rpcpasswd,
+                const std::string & rpcip, const std::string & rpcport,
+                std::vector<std::string> & wallets)
+{
+    try
+    {
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listwallets", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != array_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Array arr = result.get_array();
+        for (const Value & v : arr)
+        {
+            wallets.emplace_back(v.get_str());
+        }
+
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "listwallets exception " << e.what();
         return false;
     }
 
@@ -882,27 +1056,56 @@ bool getNewAddress(const std::string & rpcuser,
                    const std::string & rpcpasswd,
                    const std::string & rpcip,
                    const std::string & rpcport,
-                   std::string & addr)
+                   std::string & addr,
+                   const std::string type = "")
 {
     try
     {
         LOG() << "rpc call <getnewaddress>";
 
-        Array params;
-        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
-
-        // Parse reply
-        const Value & result = find_value(reply, "result");
-        const Value & error  = find_value(reply, "error");
-
-        if (error.type() != null_type)
+        Object reply;
+        
+        do
         {
+            Array params;
+            if (!type.empty())
+            {
+                params.push_back("");
+                params.push_back(type);
+            }
+            reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
+
+            // Parse reply
+            Value error  = find_value(reply, "error");
+            if (error.type() == null_type)
+            {
+                break;
+            }
+
+            int errorCode = find_value(error.get_obj(), "code").get_int();
+            if (!type.empty() && errorCode != -5)
+            {
+                // check errorCode == -5, Unknown address type
+                // try without type, type not supported?
+                params.clear();
+                reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
+            }
+
+            error  = find_value(reply, "error");
+            if (error.type() == null_type)
+            {
+                break;
+            }
+
             // Error
             LOG() << "error: " << write_string(error, false);
             // int code = find_value(error.get_obj(), "code").get_int();
             return false;
-        }
-        else if (result.type() != str_type)
+        } 
+        while (false);
+        
+        const Value & result = find_value(reply, "result");
+        if (result.type() != str_type)
         {
             // Result
             LOG() << "result not an string " <<
@@ -1420,9 +1623,14 @@ bool getRawMempool(const std::string & rpcuser, const std::string & rpcpasswd,
 
 } // namespace rpc
 
+//*****************************************************************************
+//*****************************************************************************
 namespace
 {
 
+
+//*****************************************************************************
+//*****************************************************************************
 /**
  * @brief SignatureHash  compute hash of transaction signature
  * @param scriptCode
@@ -1512,6 +1720,15 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransactionPtr & txTo,
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::init()
 {
+    // try to load wallet
+    if (!walletName.empty())
+    {
+        if (!loadWallet(walletName))
+        {
+            return false;
+        }
+    }
+
     // convert prefixes
     addrPrefix   = static_cast<char>(boost::lexical_cast<int>(addrPrefix.data()));
     scriptPrefix = static_cast<char>(boost::lexical_cast<int>(scriptPrefix.data()));
@@ -1520,7 +1737,9 @@ bool BtcWalletConnector<CryptoProvider>::init()
     // wallet info
     rpc::WalletInfo info;
     if (!this->getInfo(info))
+    {
         return false;
+    }
 
     // Calculate dust
     dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN : 5460;
@@ -1599,6 +1818,36 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::loadWallet(const std::string & walletName) const
+{
+    std::vector<std::string> wallets;
+    if (!rpc::listwallets(m_user, m_passwd, m_ip, m_port, wallets))
+    {
+        // not supported
+        return true;
+    }
+
+    if (std::find(wallets.begin(), wallets.end(), walletName) != wallets.end())
+    {
+        // already loaded
+        return true;
+    }
+
+    LOG() << currency << " loading <" << walletName << "> wallet " << __FUNCTION__;
+
+    if (!rpc::loadwallet(m_user, m_passwd, m_ip, m_port, walletName))
+    {
+        WARN() << currency << " loadwallet failed. Is the wallet name correct? "
+                << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
@@ -1640,9 +1889,9 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr)
+bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr, const std::string & type)
 {
-    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr))
+    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr, type))
     {
         LOG() << "rpc::getNewAddress failed " << __FUNCTION__;
         return false;
