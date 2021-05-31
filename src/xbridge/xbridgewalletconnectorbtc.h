@@ -9,6 +9,7 @@
 #define BLOCKNET_XBRIDGE_XBRIDGEWALLETCONNECTORBTC_H
 
 #include <xbridge/xbridgewalletconnector.h>
+#include "xbridge/util/logger.h"
 
 #include <event2/buffer.h>
 #include <rpc/protocol.h>
@@ -26,6 +27,8 @@
 #include <json/json_spirit_writer_template.h>
 
 #include <boost/lexical_cast.hpp>
+
+// #define XBRIDGE_LOG_RPC_CALLS
 
 //*****************************************************************************
 //*****************************************************************************
@@ -146,6 +149,11 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
 
     // Attach request data
     const auto tostring = json_spirit::write_string(json_spirit::Value(params), json_spirit::none, 8);
+
+#ifdef XBRIDGE_LOG_RPC_CALLS
+    LOG() << "XBRIDGE RPC CALL <<<--- " << strMethod << " " << tostring;
+#endif
+
     UniValue toval;
     if (!toval.read(tostring))
         throw std::runtime_error(strprintf("failed to decode json_spirit data: %s", tostring));
@@ -177,6 +185,10 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
         throw std::runtime_error(strprintf("server returned HTTP error %d", response.status));
     else if (response.body.empty())
         throw std::runtime_error("no response from server");
+
+#ifdef XBRIDGE_LOG_RPC_CALLS
+    LOG() << "XBRIDGE RPC CALL --->>> " << response.body;
+#endif
 
     // Parse reply
     json_spirit::Value valReply;
