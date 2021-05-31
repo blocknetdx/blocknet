@@ -288,7 +288,6 @@ BITCOIN_CORE_H += \
   xbridge/xbridgepacket.h \
   xbridge/xbridgerpc.h \
   xbridge/xbridgesession.h \
-  xbridge/xbridgesessiondcr.h \
   xbridge/xbridgetransaction.h \
   xbridge/xbridgetransactiondescr.h \
   xbridge/xbridgetransactionmember.h \
@@ -625,7 +624,6 @@ xbridge_libxbridge_a_SOURCES = \
   xbridge/xbridgepacket.cpp \
   xbridge/xbridgerpc.cpp \
   xbridge/xbridgesession.cpp \
-  xbridge/xbridgesessiondcr.cpp \
   xbridge/xbridgetransaction.cpp \
   xbridge/xbridgetransactiondescr.cpp \
   xbridge/xbridgetransactionmember.cpp \
