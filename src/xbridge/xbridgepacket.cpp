@@ -172,7 +172,7 @@ size_t XBridgePacket::read(const size_t offset, unsigned char * data, const size
         return 0;
     }
     memcpy(data, this->data() + offset, size);
-    return offset + size;
+    return size;
 }
 
 //******************************************************************************
@@ -223,5 +223,13 @@ size_t XBridgePacket::read(const size_t offset, std::string & data) const
 size_t XBridgePacket::read(const size_t offset, std::string & data, const size_t size) const
 {
     data.resize(size, ' ');
-    return read(offset, reinterpret_cast<unsigned char *>(&data[0]), size);
+    size_t result = read(offset, reinterpret_cast<unsigned char *>(&data[0]), size);
+    if (result > 0)
+    {
+        // data.erase(data.find_last_not_of(" \0\n\r\t")+1);
+        uint32_t i = data.size() - 1;
+        for (; i > 0 && data[i] == 0; --i) {}
+        data.resize(i + 1);
+    }
+    return result;
 }
