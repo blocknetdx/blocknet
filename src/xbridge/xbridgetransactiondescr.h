@@ -27,8 +27,8 @@ namespace xbridge
 boost::uint64_t timeToInt(const boost::posix_time::ptime &time);
 boost::posix_time::ptime intToTime(const uint64_t& number);
 
-const arith_uint128  COIN     = 1000000;
-const uint64_t       MAX_COIN = 100000000;
+const arith_uint128  COIN     = 1000000000000000000;
+// const uint64_t       MAX_COIN = 100000000;
 
 //******************************************************************************
 //******************************************************************************
