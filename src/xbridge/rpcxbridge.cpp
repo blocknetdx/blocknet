@@ -1014,13 +1014,15 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     }
 
     // Check upper limits
-    if (fromAmount > (double)xbridge::MAX_COIN ||
-            toAmount > (double)xbridge::MAX_COIN) {
-        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The maximum supported size is " + std::to_string(xbridge::MAX_COIN)));
-    }
+    // if (fromAmount > (double)xbridge::MAX_COIN ||
+    //         toAmount > (double)xbridge::MAX_COIN) {
+    //     return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+    //                            "The maximum supported size is " + std::to_string(xbridge::MAX_COIN)));
+    // }
+
     // Check lower limits
     // TODO update minimum check
+    // TODO use dust
     if (fromAmount <= 0 || toAmount <= 0) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "The minimum supported size is " + connFrom->dustAmount));
@@ -3136,13 +3138,15 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     }
 
     // Check upper limits
-    if (fromAmount > (double)xbridge::MAX_COIN ||
-            toAmount > (double)xbridge::MAX_COIN) {
-        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The maximum supported size is " + std::to_string(xbridge::MAX_COIN)));
-    }
+    // if (fromAmount > (double)xbridge::MAX_COIN ||
+    //         toAmount > (double)xbridge::MAX_COIN) {
+    //     return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+    //                            "The maximum supported size is " + std::to_string(xbridge::MAX_COIN)));
+    // }
+
     // Check lower limits
     // TODO update minimum check
+    // TODO use dust
     if (fromAmount <= 0 || toAmount <= 0) {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "The minimum supported size is " + connFrom->dustAmount));
