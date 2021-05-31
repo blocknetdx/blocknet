@@ -532,18 +532,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
             offset += packet->read(offset, entry.rawAddress, XBridgePacket::addressSize);
             offset += packet->read(offset, entry.signature, XBridgePacket::signatureSize);
 
-            // check signature
-            std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
-            if (!sconn->verifyMessage(entry.address, entry.toString(), signature))
-            {
-                UniValue log_obj(UniValue::VOBJ);
-                log_obj.pushKV("orderid", id.GetHex());
-                log_obj.pushKV("utxo_txid", entry.txId);
-                log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
-                xbridge::LogOrderMsg(log_obj, "bad utxo signature", __FUNCTION__);
-                continue;
-            }
-
             entry.address = sconn->fromXAddr(entry.rawAddress);
 
             // check txout
@@ -554,6 +542,18 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
                 log_obj.pushKV("utxo_txid", entry.txId);
                 log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
                 xbridge::LogOrderMsg(log_obj, "bad utxo entry", __FUNCTION__);
+                continue;
+            }
+
+            // check signature
+            std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
+            if (!sconn->verifyMessage(entry.address, entry.toString(), signature))
+            {
+                UniValue log_obj(UniValue::VOBJ);
+                log_obj.pushKV("orderid", id.GetHex());
+                log_obj.pushKV("utxo_txid", entry.txId);
+                log_obj.pushKV("utxo_vout", static_cast<int>(entry.vout));
+                xbridge::LogOrderMsg(log_obj, "bad utxo signature", __FUNCTION__);
                 continue;
             }
 
@@ -694,7 +694,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 146)
+    if (packet->size() != 158)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
               << "need 146 received " << packet->size() << " "
@@ -709,12 +709,12 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     TransactionDescrPtr ptr = xapp.transaction(txid);
 
     std::string scurrency;
-    offset += packet->read(offset, scurrency, 0);
+    offset += packet->read(offset, scurrency, 8);
     amount_t samount = 0;
     offset += packet->read(offset, samount);
 
     std::string dcurrency;
-    offset += packet->read(offset, dcurrency, 0);
+    offset += packet->read(offset, dcurrency, 8);
     amount_t damount = 0;
     offset += packet->read(offset, damount);
 
