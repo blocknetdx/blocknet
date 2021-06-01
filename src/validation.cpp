@@ -2042,7 +2042,7 @@ bool CChainState::ConnectBlock(const CBlock& block, CValidationState& state, CBl
             blockReward -= chainparams.GetConsensus().proposalMaxAmount; // normalize the reward amount (to not include superblock max allotted payment)
             blockReward += superblockPayment; // account for only the approved superblock payment to designated payees
         }
-        CAmount expectedFees = (IsNetworkFeesEnabled(pindex->pprev, chainparams.GetConsensus()) ? nFees : 0);
+        CAmount expectedFees = (IsNetworkFeesEnabled(pindex->pprev, chainparams.GetConsensus()) ? nFees : -1*nFees);
         if (pindex->nMint > blockReward + expectedFees)
             return state.DoS(100, error("ConnectBlock(): reward pays too much (actual=%s vs limit=%s)",
                                         FormatMoney(pindex->nMint), FormatMoney(blockReward + expectedFees)),
