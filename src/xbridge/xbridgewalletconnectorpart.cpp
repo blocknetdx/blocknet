@@ -367,7 +367,7 @@ bool PartWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inp
     CScript inner(innerScript.begin(), innerScript.end());
 
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL, inputs[0].amount*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL, inputs[0].amount.Get64() * COIN);
     if (!m_cp.sign(mprivKey, hash, signature)) {
         LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
         return false;
@@ -422,7 +422,7 @@ bool PartWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & in
     CScript inner(innerScript.begin(), innerScript.end());
 
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL, inputs[0].amount*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, SIGHASH_ALL, inputs[0].amount.Get64() * COIN);
     if (!m_cp.sign(mprivKey, hash, signature)) {
         LOG() << "sign transaction error, transaction canceled " << __FUNCTION__;
         return false;
