@@ -984,10 +984,10 @@ void App::updateActiveWallets()
         wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
         wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
         wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
-        wp.feePerByte                  = s.get<uint64_t>   (*i + ".FeePerByte", 0);
+        // wp.feePerByte                  = s.get<uint64_t>   (*i + ".FeePerByte", 0);
         wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
         wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
-//        wp.blockSize                   = s.get<int>        (*i + ".BlockSize", 0);
+        // wp.blockSize                   = s.get<int>        (*i + ".BlockSize", 0);
         wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
         wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
         wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);

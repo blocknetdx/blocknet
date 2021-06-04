@@ -1418,6 +1418,55 @@ bool getRawMempool(const std::string & rpcuser, const std::string & rpcpasswd,
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool estimatesmartfee(const std::string & rpcuser, const std::string & rpcpasswd,
+                      const std::string & rpcip,   const std::string & rpcport,
+                      const uint32_t    & blocks,
+                      double & fee)
+{
+    try
+    {
+        LOG() << "rpc call <estimatesmartfee>";
+
+        Array params;
+        params.push_back(static_cast<int>(blocks));
+        const Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "estimatesmartfee", params);
+
+        // reply
+        const Value & error  = find_value(reply, "error");
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+
+        const Value & result = find_value(reply, "result");
+        if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " << write_string(result, true);
+            return false;
+        }
+
+        Object o = result.get_obj();
+
+        const Value & relayFee = find_value(o, "feerate");
+        if (relayFee.type() != null_type)
+        {
+            fee = relayFee.get_real();
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "estimatesmartfee exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace rpc
 
 namespace
@@ -1520,15 +1569,42 @@ bool BtcWalletConnector<CryptoProvider>::init()
     // wallet info
     rpc::WalletInfo info;
     if (!this->getInfo(info))
+    {
         return false;
+    }
+
+    updateDynamicWalletParameters();
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+template <class CryptoProvider>
+void BtcWalletConnector<CryptoProvider>::updateDynamicWalletParameters()
+{
+    // wallet info
+    rpc::WalletInfo info;
+    if (!this->getInfo(info))
+    {
+        WARN() << currency << " failed to update dynamic wallet parameters. Is the wallet running? "
+                << __FUNCTION__;
+        return;
+    }
+
+    feePerByte = info.relayFee * COIN;
+
+    double smartFee = 0.;
+    if (estimateSmartFee(smartFee) && smartFee > 0)
+    {
+        feePerByte = smartFee * COIN;
+    }
 
     // Calculate dust
     dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN : 5460;
 
     // Set median time
     mediantime = info.mediantime;
-
-    return true;
 }
 
 //*****************************************************************************
@@ -1597,6 +1673,14 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
     }
 
     return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::estimateSmartFee(double & fee) const
+{
+    return rpc::estimatesmartfee(m_user, m_passwd, m_ip, m_port, 1, fee);
 }
 
 //******************************************************************************
