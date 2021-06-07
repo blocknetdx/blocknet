@@ -200,6 +200,8 @@ public:
     BtcWalletConnector() {}
 
     bool init();
+    void updateDynamicWalletParameters();
+
 
 public:
     // reimplement for currency
@@ -210,6 +212,8 @@ public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
 
     bool getInfo(rpc::WalletInfo & info) const;
+
+    bool estimateSmartFee(double & fee) const;
 
     bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const;
 

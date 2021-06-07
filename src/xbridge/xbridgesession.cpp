@@ -1958,6 +1958,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return true;
     }
 
+    // update fee parameters before tx create
+    connFrom->updateDynamicWalletParameters();
+
     const double outAmount = xBridgeValueFromAmount(xtx->fromAmount);
     const CAmount coutAmount = xtx->fromAmount;
 
@@ -2418,6 +2421,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         sendCancelTransaction(xtx, crRpcError);
         return true;
     }
+
+    // update fee parameters before tx create
+    connFrom->updateDynamicWalletParameters();
 
     double outAmount = static_cast<double>(xtx->fromAmount) / TransactionDescr::COIN;
     double checkAmount = static_cast<double>(xtx->toAmount) / TransactionDescr::COIN;
@@ -2881,6 +2887,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         return true;
     }
 
+    // update fee parameters before tx create
+    connTo->updateDynamicWalletParameters();
+
     double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
     double checkAmount = outAmount;
 
@@ -3135,6 +3144,9 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         xapp.processLater(txid, packet);
         return true;
     }
+
+    // update fee parameters before tx create
+    connTo->updateDynamicWalletParameters();
 
     // payTx
     {
