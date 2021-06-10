@@ -196,8 +196,6 @@ class BtcWalletConnector : public WalletConnector
 {
 public:
     BtcWalletConnector()
-        : m_isSignMessageWithWallet(true)
-        , m_isSignMessageWithPrivKey(true)
     {}
 
 
@@ -207,6 +205,7 @@ public:
     // reimplement for currency
     std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
     std::vector<unsigned char> toXAddr(const std::string & addr) const;
+    std::vector<unsigned char> toXKey(const std::string & skey) const;
 
 public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
@@ -226,8 +225,13 @@ public:
                             int32_t & errorCode,
                             std::string & message);
 
+    // sign/verify messages with wallet rpc
     bool signMessage(const std::string & address, const std::string & message, std::string & signature);
     bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature);
+
+    // sign/verify messages via cryptoprovider
+    bool signMessage(const std::string & address, const std::string & message, std::vector<unsigned char> & signature);
+    bool verifyMessage(const std::string & address, const std::string & message, const std::vector<unsigned char> & signature);
 
     bool getRawMempool(std::vector<std::string> & txids);
 
@@ -318,10 +322,6 @@ public:
 
 protected:
     CryptoProvider m_cp;
-
-  private:
-    bool m_isSignMessageWithWallet;
-    bool m_isSignMessageWithPrivKey;
 };
 
 } // namespace xbridge

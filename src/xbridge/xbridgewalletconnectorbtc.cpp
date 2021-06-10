@@ -1477,6 +1477,53 @@ bool verifyMessage(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
+bool dumpprivkey(const std::string & rpcuser, const std::string & rpcpasswd,
+                 const std::string & rpcip, const std::string & rpcport,
+                 const std::string & address, std::string & key)
+{
+    try
+    {
+        LOG() << "rpc call <dumpprivkey>";
+
+        Array params;
+        params.push_back(address);
+
+        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "dumpprivkey", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            // int code = find_value(error.get_obj(), "code").get_int();
+            return false;
+        }
+        else if (result.type() != str_type)
+        {
+            // Result
+            LOG() << "result not an string " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        key = result.get_str();
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "dumpprivkey exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getRawMempool(const std::string & rpcuser, const std::string & rpcpasswd,
                    const std::string & rpcip,   const std::string & rpcport,
                    std::vector<std::string> & txids)
@@ -1677,6 +1724,19 @@ std::vector<unsigned char> BtcWalletConnector<CryptoProvider>::toXAddr(const std
 //*****************************************************************************
 //*****************************************************************************
 template <class CryptoProvider>
+std::vector<unsigned char> BtcWalletConnector<CryptoProvider>::toXKey(const std::string & skey) const
+{
+    std::vector<unsigned char> key;
+    if (DecodeBase58Check(skey.c_str(), key))
+    {
+        key.erase(key.begin());
+    }
+    return key;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::requestAddressBook(std::vector<wallet::AddressBookEntry> & entries)
 {
     std::vector<std::string> addresses;
@@ -1838,47 +1898,23 @@ bool BtcWalletConnector<CryptoProvider>::signMessage(const std::string & address
                                      const std::string & message,
                                      std::string & signature)
 {
-    // if (m_isSignMessageWithWallet)
+    if (!rpc::signMessage(m_user, m_passwd, m_ip, m_port,
+                            address, message, signature))
     {
-        if (rpc::signMessage(m_user, m_passwd, m_ip, m_port,
-                             address, message, signature))
-        {
-            return true;
-        }
-
         LOG() << "rpc::signMessage failed " << __FUNCTION__;
-        // m_isSignMessageWithWallet = false;
+        return false;
     }
 
-    // if (m_isSignMessageWithPrivKey)
-    // {
-    //     CHashWriter ss(SER_GETHASH, 0);
-    //     ss << messageMagic;
-    //     ss << message;
-
-    //     if (signCompact(ss.GetHash(), signature))
-    //     {
-    //         // TODO maybe encodebase64?
-    //         return true;
-    //     }
-
-    //     LOG() << "crypto provider sign message failed " << __FUNCTION__;
-    //     m_isSignMessageWithWallet = false;
-    // }
-
-    return false;
+    return true;
 }
 
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & address,
-                                       const std::string & message,
-                                       const std::string & signature)
+                                                       const std::string & message,
+                                                       const std::string & signature)
 {
-    // TODO
-    // m_isSignMessageWithWallet?
-    // m_isSignMessageWithPrivKey?
     if (!rpc::verifyMessage(m_user, m_passwd, m_ip, m_port,
                             address, message, signature))
     {
@@ -1887,6 +1923,73 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
     }
 
     return true;
+}
+
+// const std::string MESSAGE_MAGIC = "Bitcoin Signed Message:\n";
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::signMessage(const std::string & address, 
+                                                     const std::string & message, 
+                                                     std::vector<unsigned char> & signature)
+{
+    // TODO use secure vector/string
+
+    std::string skey;
+    if (!rpc::dumpprivkey(m_user, m_passwd, m_ip, m_port, address, skey))
+    {
+        LOG() << "rpc::dumpprivkey failed " << __FUNCTION__;
+        return false;
+    }
+
+    std::vector<unsigned char> key = toXKey(skey);
+    if (!m_cp.check(key))
+    {
+        LOG() << "incorrect private key " << __FUNCTION__;
+        return false;
+    }
+
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << messageMagic;
+    ss << message;
+
+    if (!m_cp.signCompact(key, ss.GetHash(), signature))
+    {
+        LOG() << "error, not signed " << __FUNCTION__;
+        return false;
+    }
+
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & address, 
+                                                       const std::string & message, 
+                                                       const std::vector<unsigned char> & signature)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    ss << messageMagic;
+    ss << message;
+
+    std::vector<unsigned char> pubkey;
+    if (!m_cp.recoverCompact(ss.GetHash(), signature, pubkey))
+    {
+        LOG() << "error, pubkey not recovered " << __FUNCTION__;
+        return false;
+    }
+
+    std::vector<unsigned char> vaddr = toXAddr(address);
+    uint160 hash = Hash160(pubkey.begin(), pubkey.end());
+
+    if (std::equal(vaddr.begin(), vaddr.end(), hash.begin()))
+    {
+        return true;
+    }
+
+    return false;
 }
 
 //******************************************************************************

@@ -196,6 +196,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "dxSplitInputs", 5, "submit" },
     { "dxSplitInputs", 6, "utxos" },
     { "dxGetUtxos", 1, "include_used" },
+    { "dxSignMessage", 3, "withWallet" },
     { "xrGetBlockCount",1, "arg1" },
     { "xrGetBlockHash", 2, "arg2" },
     { "xrGetBlock", 2, "arg2" },

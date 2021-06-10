@@ -80,6 +80,7 @@ public:
     // reimplement for currency
     virtual std::string fromXAddr(const std::vector<unsigned char> & xaddr) const = 0;
     virtual std::vector<unsigned char> toXAddr(const std::string & addr) const = 0;
+    virtual std::vector<unsigned char> toXKey(const std::string & skey) const = 0;
 
 public:
     // wallet RPC
@@ -109,8 +110,13 @@ public:
                                     int32_t & errorCode,
                                     std::string & message) = 0;
 
+    // sign/verify messages with wallet rpc
     virtual bool signMessage(const std::string & address, const std::string & message, std::string & signature) = 0;
     virtual bool verifyMessage(const std::string & address, const std::string & message, const std::string & signature) = 0;
+
+    // sign/verify messages via cryptoprovider
+    virtual bool signMessage(const std::string & address, const std::string & message, std::vector<unsigned char> & signature) = 0;
+    virtual bool verifyMessage(const std::string & address, const std::string & message, const std::vector<unsigned char> & signature) = 0;
 
     virtual bool getRawMempool(std::vector<std::string> & txids) = 0;
 

@@ -3535,6 +3535,117 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
     return r;
 }
 
+UniValue dxSignMessage(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() < 3 || request.params.size() > 4)
+    {
+        throw std::runtime_error(
+            RPCHelpMan{"dxSignMessage",
+                "\nSign a message with the private key of an address.\n",
+                {
+                   {"token",      RPCArg::Type::STR,  RPCArg::Optional::NO, "The ticker of the asset."},
+                   {"address",    RPCArg::Type::STR,  RPCArg::Optional::NO, "The address to use for the private key."},
+                   {"message",    RPCArg::Type::STR,  RPCArg::Optional::NO, "The message to create a signature of."},
+                   {"withWallet", RPCArg::Type::BOOL, "false",              "Sign via signmessage rpc call (default true)."},
+                },
+                RPCResult{
+                    "\"signature\"          (string) The signature of the message encoded in base 64\n"
+                },
+                RPCExamples{
+                     HelpExampleCli("dxSignMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"my message\"")
+                   + HelpExampleRpc("dxSignMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"my message\"")
+                   + HelpExampleCli("dxSignMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"my message\" false")
+                   + HelpExampleRpc("dxSignMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"my message\" false")
+                },
+            }.ToString());
+    }
+
+    const std::string token = request.params[0].get_str();
+    const xbridge::App & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+    {
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+    }
+
+    const std::string address = request.params[1].get_str();
+    const std::string message = request.params[2].get_str();
+
+    bool withWallet = true;
+    if (request.params.size() > 3)
+    {
+        withWallet = request.params[3].get_bool();
+    }
+
+    std::string signature;
+    if (withWallet)
+    {
+        conn->signMessage(address, message, signature);
+    }
+    else
+    {
+        std::vector<unsigned char> sig;
+        conn->signMessage(address, message, sig);
+
+        signature = EncodeBase64(&sig[0], sig.size());
+    }
+
+    return signature;
+}
+
+UniValue dxVerifyMessage(const JSONRPCRequest& request)
+{
+    if (request.fHelp || request.params.size() != 4)
+    {
+        throw std::runtime_error(
+            RPCHelpMan{"dxVerifyMessage",
+                "\nVerify a signed message.\n",
+                {
+                   {"token",      RPCArg::Type::STR,  RPCArg::Optional::NO, "The ticker of the asset."},
+                   {"address",    RPCArg::Type::STR,  RPCArg::Optional::NO, "The address to use for the private key."},
+                   {"signature",  RPCArg::Type::STR,  RPCArg::Optional::NO, "The signature provided by the signer in base 64 encoding (see signmessage)."},
+                   {"message",    RPCArg::Type::STR,  RPCArg::Optional::NO, "The message to create a signature of."},
+                },
+                RPCResult{
+                    "true|false   (boolean) If the signature is verified or not.\n"
+                },
+                RPCExamples{
+                     HelpExampleCli("dxVerifyMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"")
+                   + HelpExampleRpc("dxVerifyMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\"")
+                   + HelpExampleCli("dxVerifyMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\" false")
+                   + HelpExampleRpc("dxVerifyMessage", "\"BTC\" \"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XX\" \"signature\" \"my message\" false")
+                },
+            }.ToString());
+    }
+
+    const std::string token = request.params[0].get_str();
+    const xbridge::App & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(token);
+    if (!conn)
+    {
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, token));
+    }
+
+    const std::string address   = request.params[1].get_str();
+    const std::string signature = request.params[2].get_str();
+    const std::string message   = request.params[3].get_str();
+
+    // try check with connector 
+    std::vector<unsigned char> sig = DecodeBase64(signature.data());
+    if (conn->verifyMessage(address, message, sig))
+    {
+        return true;
+    }
+
+    // verify with wallet
+    if (conn->verifyMessage(address, message, signature))
+    {
+        return true;
+    }
+
+    return false;
+}
+
 // clang-format off
 static const CRPCCommand commands[] =
 { //  category             name                          actor (function)              argNames
@@ -3564,6 +3675,8 @@ static const CRPCCommand commands[] =
     { "xbridge",           "dxSplitAddress",             &dxSplitAddress,              {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit"} },
     { "xbridge",           "dxSplitInputs",              &dxSplitInputs,               {"token", "splitamount", "address", "include_fees", "show_rawtx", "submit", "utxos"} },
     { "xbridge",           "dxGetUtxos",                 &dxGetUtxos,                  {"token", "include_used"} },
+    { "xbridge",           "dxSignMessage",              &dxSignMessage,               {"token", "address", "message", "withwallet"} },
+    { "xbridge",           "dxVerifyMessage",            &dxVerifyMessage,             {"token", "address", "signature", "message"} },
 };
 // clang-format on
 

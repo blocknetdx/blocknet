@@ -330,6 +330,7 @@ bool BtcCryptoProvider::recoverCompact(const uint256 & data,
     vpubkey.resize(publicKeySize);
     size_t publen = publicKeySize;
     secp256k1_ec_pubkey_serialize(context, &vpubkey[0], &publen, &pubkey, fComp ? SECP256K1_EC_COMPRESSED : SECP256K1_EC_UNCOMPRESSED);
+    vpubkey.resize(publen);
     return true;
 
 }

@@ -46,18 +46,6 @@ const unsigned int MAX_SIZE = 0x02000000;
 
 //******************************************************************************
 //******************************************************************************
-std::vector<unsigned char> toXAddr(const std::string & addr)
-{
-    std::vector<unsigned char> vaddr;
-    if (DecodeBase58Check(addr.c_str(), vaddr))
-    {
-        vaddr.erase(vaddr.begin());
-    }
-    return vaddr;
-}
-
-//******************************************************************************
-//******************************************************************************
 string JSONRPCRequest(const string& strMethod, const Array& params, const Value& id)
 {
     Object request;
@@ -520,19 +508,19 @@ std::string prevtxsJson(const std::vector<std::tuple<std::string, int, std::stri
 
 //*****************************************************************************
 //*****************************************************************************
-bool signRawTransaction(const std::string & rpcuser,
-                        const std::string & rpcpasswd,
-                        const std::string & rpcip,
-                        const std::string & rpcport,
-                        std::string & rawtx,
-                        bool & complete)
-{
-    std::vector<std::tuple<std::string, int, std::string, std::string> > arr;
-    std::string prevtxs = prevtxsJson(arr);
-    std::vector<string> keys;
-    return signRawTransaction(rpcuser, rpcpasswd, rpcip, rpcport,
-                              rawtx, prevtxs, keys, complete);
-}
+// bool signRawTransaction(const std::string & rpcuser,
+//                         const std::string & rpcpasswd,
+//                         const std::string & rpcip,
+//                         const std::string & rpcport,
+//                         std::string & rawtx,
+//                         bool & complete)
+// {
+//     std::vector<std::tuple<std::string, int, std::string, std::string> > arr;
+//     std::string prevtxs = prevtxsJson(arr);
+//     std::vector<string> keys;
+//     return signRawTransaction(rpcuser, rpcpasswd, rpcip, rpcport,
+//                               rawtx, prevtxs, keys, complete);
+// }
 
 //*****************************************************************************
 //*****************************************************************************
@@ -718,56 +706,6 @@ bool getNewPubKey(const std::string & rpcuser,
     catch (std::exception & e)
     {
         LOG() << "getnewpubkey exception " << e.what();
-        return false;
-    }
-
-    return true;
-}
-
-//*****************************************************************************
-//*****************************************************************************
-bool dumpPrivKey(const std::string & rpcuser,
-                 const std::string & rpcpasswd,
-                 const std::string & rpcip,
-                 const std::string & rpcport,
-                 const std::string & address,
-                 string & key)
-{
-    try
-    {
-        LOG() << "rpc call <dumpprivkey>";
-
-        Array params;
-        params.push_back(address);
-
-        Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "dumpprivkey", params);
-
-        // Parse reply
-        const Value & result = find_value(reply, "result");
-        const Value & error  = find_value(reply, "error");
-
-        if (error.type() != null_type)
-        {
-            // Error
-            LOG() << "error: " << write_string(error, false);
-            // int code = find_value(error.get_obj(), "code").get_int();
-            return false;
-        }
-        else if (result.type() != str_type)
-        {
-            // Result
-            LOG() << "result not an string " <<
-                     (result.type() == null_type ? "" :
-                      result.type() == str_type  ? result.get_str() :
-                                                   write_string(result, true));
-            return false;
-        }
-
-        key = result.get_str();
-    }
-    catch (std::exception & e)
-    {
-        LOG() << "dumpprivkey exception " << e.what();
         return false;
     }
 

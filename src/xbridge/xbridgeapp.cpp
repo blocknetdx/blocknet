@@ -1706,32 +1706,28 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     // sign used coins
-    for (auto & entry : outputsForUse) {
-        std::string signature;
-        if (!connFrom->signMessage(entry.address, entry.toString(), signature)) {
+    for (auto & entry : outputsForUse) 
+    {
+        entry.rawAddress = connFrom->toXAddr(entry.address);
+        xassert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+        if (entry.rawAddress.size() != 20) 
+        {
+            ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
+            return xbridge::Error::INVALID_ADDRESS;
+        }
+    
+        if (!connFrom->signMessage(entry.address, entry.toString(), entry.signature)) 
+        {
             WARN() << "funds not signed <" << fromCurrency << "> " << __FUNCTION__;
             return xbridge::Error::FUNDS_NOT_SIGNED;
         }
 
-        bool isInvalid = false;
-        entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
-        if (isInvalid) {
-            WARN() << "invalid signature <" << fromCurrency << "> " << __FUNCTION__;
-            return xbridge::Error::FUNDS_NOT_SIGNED;
-        }
-
-        entry.rawAddress = connFrom->toXAddr(entry.address);
-
-        if (entry.signature.size() != 65) {
+        xassert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+        if (entry.signature.size() != 65) 
+        {
             ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
             return xbridge::Error::INVALID_SIGNATURE;
         }
-        xassert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
-        if (entry.rawAddress.size() != 20) {
-            ERR() << "incorrect raw address length, need 20 bytes " << __FUNCTION__;
-            return xbridge::Error::INVALID_ADDRESS;
-        }
-        xassert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
     }
 
     ptr->usedCoins = outputsForUse;
@@ -1899,9 +1895,22 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 }
 
                 // sign used coins
-                for (auto & entry : ptr->usedCoins) {
-                    std::string signature;
-                    if (!connFrom->signMessage(entry.address, entry.toString(), signature)) {
+                for (auto & entry : ptr->usedCoins) 
+                {
+                    entry.rawAddress = connFrom->toXAddr(entry.address);
+                    xassert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
+                    if (entry.rawAddress.size() != 20) 
+                    {
+                        unlockCoins(ptr->fromCurrency, ptr->usedCoins);
+                        UniValue log_obj(UniValue::VOBJ);
+                        log_obj.pushKV("orderid", "unknown");
+                        log_obj.pushKV("from_currency", fromCurrency);
+                        xbridge::LogOrderMsg(log_obj, "incorrect raw address length, need 20 bytes", __FUNCTION__);
+                        return xbridge::Error::INVALID_ADDRESS;
+                    }
+
+                    if (!connFrom->signMessage(entry.address, entry.toString(), entry.signature)) 
+                    {
                         unlockCoins(ptr->fromCurrency, ptr->usedCoins);
                         UniValue log_obj(UniValue::VOBJ);
                         log_obj.pushKV("orderid", "unknown");
@@ -1910,34 +1919,15 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                         return xbridge::Error::FUNDS_NOT_SIGNED;
                     }
 
-                    bool isInvalid = false;
-                    entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
-                    if (isInvalid) {
-                        unlockCoins(ptr->fromCurrency, ptr->usedCoins);
-                        UniValue log_obj(UniValue::VOBJ);
-                        log_obj.pushKV("orderid", "unknown");
-                        log_obj.pushKV("from_currency", fromCurrency);
-                        xbridge::LogOrderMsg(log_obj, "invalid signature", __FUNCTION__);
-                        return xbridge::Error::FUNDS_NOT_SIGNED;
-                    }
-
-                    entry.rawAddress = connFrom->toXAddr(entry.address);
-
-                    if (entry.signature.size() != 65) {
+                    xassert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+                    if (entry.signature.size() != 65) 
+                    {
                         unlockCoins(ptr->fromCurrency, ptr->usedCoins);
                         UniValue log_obj(UniValue::VOBJ);
                         log_obj.pushKV("orderid", "unknown");
                         log_obj.pushKV("from_currency", fromCurrency);
                         xbridge::LogOrderMsg(log_obj, "incorrect signature length, need 65 bytes", __FUNCTION__);
                         return xbridge::Error::INVALID_SIGNATURE;
-                    }
-                    if (entry.rawAddress.size() != 20) {
-                        unlockCoins(ptr->fromCurrency, ptr->usedCoins);
-                        UniValue log_obj(UniValue::VOBJ);
-                        log_obj.pushKV("orderid", "unknown");
-                        log_obj.pushKV("from_currency", fromCurrency);
-                        xbridge::LogOrderMsg(log_obj, "incorrect raw address length, need 20 bytes", __FUNCTION__);
-                        return xbridge::Error::INVALID_ADDRESS;
                     }
                 }
 
@@ -2284,35 +2274,32 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         for (wallet::UtxoEntry & entry : outputsForUse)
         {
             xbridge::Error err = xbridge::Error::SUCCESS;
-            std::string signature;
-            if (!connFrom->signMessage(entry.address, entry.toString(), signature))
-            {
-                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, funds not signed <" + ptr->fromCurrency + ">", __FUNCTION__);
-                err = xbridge::Error::FUNDS_NOT_SIGNED;
-            }
-
-            bool isInvalid = false;
-            entry.signature = DecodeBase64(signature.c_str(), &isInvalid);
-            if (isInvalid)
-            {
-                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, invalid signature <" + ptr->fromCurrency + ">", __FUNCTION__);
-                err = xbridge::Error::FUNDS_NOT_SIGNED;
-            }
 
             entry.rawAddress = connFrom->toXAddr(entry.address);
-            if(entry.signature.size() != 65)
-            {
-                xbridge::LogOrderMsg(id.GetHex(), "not accepting order, incorrect signature length, need 65 bytes", __FUNCTION__);
-                err = xbridge::Error::INVALID_SIGNATURE;
-            }
-
+            xassert(entry.rawAddress.size() == 20 && "incorrect raw address length, need 20 bytes");
             if(entry.rawAddress.size() != 20)
             {
                 xbridge::LogOrderMsg(id.GetHex(), "not accepting order, incorrect raw address length, need 20 bytes", __FUNCTION__);
                 err = xbridge::Error::INVALID_ADDRESS;
             }
+            else
+            {
+                if (!connFrom->signMessage(entry.address, entry.toString(), entry.signature))
+                {
+                    xbridge::LogOrderMsg(id.GetHex(), "not accepting order, funds not signed <" + ptr->fromCurrency + ">", __FUNCTION__);
+                    err = xbridge::Error::FUNDS_NOT_SIGNED;
+                }
 
-            if (err) {
+                xassert(entry.signature.size() == 65 && "incorrect signature length, need 20 bytes");
+                if(entry.signature.size() != 65)
+                {
+                    xbridge::LogOrderMsg(id.GetHex(), "not accepting order, incorrect signature length, need 65 bytes", __FUNCTION__);
+                    err = xbridge::Error::INVALID_SIGNATURE;
+                }
+            }
+
+            if (err) 
+            {
                 revertOrder(ptr);
                 // unlock fee utxos on error
                 unlockFeeUtxos(ptr->feeUtxos);
