@@ -267,11 +267,11 @@ public:
 
     bool checkDepositTransaction(const std::string & depositTxId,
                                  const std::string & /*destination*/,
-                                 double & amount,
-                                 uint64_t & p2shAmount,
+                                 amount_t & amount,
+                                 amount_t & p2shAmount,
                                  uint32_t & depositTxVout,
                                  const std::string & expectedScript,
-                                 double & excessAmount,
+                                 amount_t & excessAmount,
                                  bool & isGood);
 
     bool getSecretFromPaymentTransaction(const std::string & paymentTxId,
@@ -291,14 +291,14 @@ public:
                                    const uint32_t lockTime,
                                    std::vector<unsigned char> & resultSript);
 
-    bool createDepositTransaction(const std::vector<XTxIn> & inputs,
-                                  const std::vector<std::pair<std::string, double> > & outputs,
+    bool createDepositTransaction(const std::vector<XTxIn>  & inputs,
+                                  const std::vector<XTxOut> & outputs,
                                   std::string & txId,
                                   uint32_t & txVout,
                                   std::string & rawTx);
 
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                 const std::vector<std::pair<std::string, double> > & outputs,
+                                 const std::vector<XTxOut> & outputs,
                                  const std::vector<unsigned char> & mpubKey,
                                  const std::vector<unsigned char> & mprivKey,
                                  const std::vector<unsigned char> & innerScript,
