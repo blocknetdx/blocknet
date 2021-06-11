@@ -1132,8 +1132,8 @@ bool createRawTransaction(const std::string & rpcuser,
                           const std::string & rpcpasswd,
                           const std::string & rpcip,
                           const std::string & rpcport,
-                          const std::vector<XTxIn> & inputs,
-                          const std::vector<std::pair<std::string, double> > & outputs,
+                          const std::vector<XTxIn>  & inputs,
+                          const std::vector<XTxOut> & outputs,
                           const uint32_t lockTime,
                           std::string & tx,
                           const bool cltv=false)
@@ -1156,9 +1156,9 @@ bool createRawTransaction(const std::string & rpcuser,
 
         // outputs
         Object o;
-        for (const std::pair<std::string, double> & dest : outputs)
+        for (const XTxOut & dest : outputs)
         {
-            o.push_back(Pair(dest.first, dest.second));
+            o.push_back(Pair(dest.address, dest.amount.Get64()));
         }
 
         Array params;
@@ -2262,11 +2262,11 @@ double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, 
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::string & depositTxId,
                                                                  const std::string & /*destination*/,
-                                                                 double & amount,
-                                                                 uint64_t & p2shAmount,
+                                                                 amount_t & amount,
+                                                                 amount_t & p2shAmount,
                                                                  uint32_t & depositTxVout,
                                                                  const std::string & expectedScript,
-                                                                 double & excessAmount,
+                                                                 amount_t & excessAmount,
                                                                  bool & isGood)
 {
     isGood  = false;
@@ -2652,8 +2652,8 @@ bool BtcWalletConnector<CryptoProvider>::createDepositUnlockScript(const std::ve
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vector<XTxIn> & inputs,
-                                                                  const std::vector<std::pair<std::string, double> > & outputs,
+bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vector<XTxIn>  & inputs,
+                                                                  const std::vector<XTxOut> & outputs,
                                                                   std::string & txId,
                                                                   uint32_t & txVout,
                                                                   std::string & rawTx)

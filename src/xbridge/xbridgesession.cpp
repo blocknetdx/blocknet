@@ -2555,10 +2555,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // check A deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
-        uint64_t p2shAmount{0};
+        amount_t p2shAmount(0UL);
         bool isGood = false;
-        assert(false && "implementation");
-        if (false) // !connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
+        if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -2692,8 +2691,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             }
         }
 
-        assert(false && "implementation");
-        if (false) // !connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
+        if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
         {
             // cancel transaction
             LogOrderMsg(txid.GetHex(), "failed to create deposit transaction, canceling", __FUNCTION__);
@@ -3029,10 +3027,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 
     // check B deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
-        uint64_t p2shAmount{0};
+        amount_t p2shAmount(0UL);
         bool isGood = false;
-        assert(false && "implementation");
-        if (false) // !connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
+        if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
         {
             // move packet to pending
             xapp.processLater(txid, packet);
@@ -4126,8 +4123,7 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
         outputs.emplace_back(toAddr, outAmount + xtx->oOverpayment);
     }
 
-    assert(false && "implementation");
-    if (false) // !connTo->createPaymentTransaction(inputs, outputs, xtx->mPubKey, xtx->mPrivKey, xtx->secret(), xtx->unlockScript, xtx->payTxId, xtx->payTx))
+    if (!connTo->createPaymentTransaction(inputs, outputs, xtx->mPubKey, xtx->mPrivKey, xtx->secret(), xtx->unlockScript, xtx->payTxId, xtx->payTx))
     {
         LogOrderMsg(xtx->id.GetHex(), "failed to create payment redeem transaction, retrying", __FUNCTION__);
         if (!xtx->didLogPayTx2()) 

@@ -403,12 +403,12 @@ BCDTransaction createTransaction() {
 }
 
 BCDTransaction createTransaction(const WalletConnector & conn,
-                                           const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
-                                           const uint64_t COIN,
-                                           const uint32_t txversion,
-                                           const uint32_t lockTime,
-                                           const uint256 preBlockHash)
+                                 const std::vector<XTxIn> & inputs,
+                                 const std::vector<XTxOut>  & outputs,
+                                 const uint64_t COIN,
+                                 const uint32_t txversion,
+                                 const uint32_t lockTime,
+                                 const uint256 preBlockHash)
 {
     BCDTransaction bcdTx;
     BCDTransaction *tx = &bcdTx;
@@ -421,9 +421,9 @@ BCDTransaction createTransaction(const WalletConnector & conn,
         tx->vin.emplace_back(COutPoint(uint256S(in.txid), in.n));
     }
 
-    for (const std::pair<std::string, double> & out : outputs)
+    for (const XTxOut & out : outputs)
     {
-        std::vector<unsigned char> id = conn.toXAddr(out.first);
+        std::vector<unsigned char> id = conn.toXAddr(out.address);
 
         CScript scr;
         scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
@@ -441,8 +441,8 @@ BCDWalletConnector::BCDWalletConnector() : BtcWalletConnector() {}
 
 //******************************************************************************
 //******************************************************************************
-bool BCDWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
+bool BCDWalletConnector::createRefundTransaction(const std::vector<XTxIn>  & inputs,
+                                                 const std::vector<XTxOut> & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
                                                  const std::vector<unsigned char> & mprivKey,
                                                  const std::vector<unsigned char> & innerScript,
@@ -451,7 +451,8 @@ bool BCDWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
                                                  std::string & rawTx)
 {
     rpc::WalletInfo info;
-    if (!getInfo(info)) {
+    if (!getInfo(info)) 
+    {
         LOG() << "bcd failed to obtain preBlockHash " << __FUNCTION__;
         return false;
     }

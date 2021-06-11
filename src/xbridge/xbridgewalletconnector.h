@@ -38,6 +38,14 @@ struct XTxIn
 
 //*****************************************************************************
 //*****************************************************************************
+struct XTxOut
+{
+    std::string address;
+    double      amount;
+};
+
+//*****************************************************************************
+//*****************************************************************************
 namespace rpc
 {
 struct WalletInfo
@@ -135,11 +143,11 @@ public:
 
     virtual bool checkDepositTransaction(const std::string & depositTxId,
                                          const std::string & /*destination*/,
-                                         double & amount,
-                                         uint64_t & p2shAmount,
+                                         amount_t & amount,
+                                         amount_t & p2shAmount,
                                          uint32_t & depositTxVout,
                                          const std::string & expectedScript,
-                                         double & excessAmount,
+                                         amount_t & excessAmount,
                                          bool & isGood) = 0;
 
     virtual bool getSecretFromPaymentTransaction(const std::string & paymentTxId,
@@ -159,14 +167,14 @@ public:
                                            const uint32_t lockTime,
                                            std::vector<unsigned char> & resultSript) = 0;
 
-    virtual bool createDepositTransaction(const std::vector<XTxIn> & inputs,
-                                          const std::vector<std::pair<std::string, double> > & outputs,
+    virtual bool createDepositTransaction(const std::vector<XTxIn>  & inputs,
+                                          const std::vector<XTxOut> & outputs,
                                           std::string & txId,
                                           uint32_t & txVout,
                                           std::string & rawTx) = 0;
 
-    virtual bool createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                         const std::vector<std::pair<std::string, double> > & outputs,
+    virtual bool createRefundTransaction(const std::vector<XTxIn>  & inputs,
+                                         const std::vector<XTxOut> & outputs,
                                          const std::vector<unsigned char> & mpubKey,
                                          const std::vector<unsigned char> & mprivKey,
                                          const std::vector<unsigned char> & innerScript,
@@ -174,8 +182,8 @@ public:
                                          std::string & txId,
                                          std::string & rawTx) = 0;
 
-    virtual bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                          const std::vector<std::pair<std::string, double> > & outputs,
+    virtual bool createPaymentTransaction(const std::vector<XTxIn>  & inputs,
+                                          const std::vector<XTxOut> & outputs,
                                           const std::vector<unsigned char> & mpubKey,
                                           const std::vector<unsigned char> & mprivKey,
                                           const std::vector<unsigned char> & xpubKey,
@@ -183,8 +191,8 @@ public:
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 
-    virtual bool createPartialTransaction(const std::vector<XTxIn> inputs,
-                                          const std::vector<std::pair<std::string, double> > outputs,
+    virtual bool createPartialTransaction(const std::vector<XTxIn>  & inputs,
+                                          const std::vector<XTxOut> & outputs,
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 
