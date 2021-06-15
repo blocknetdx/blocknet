@@ -1158,7 +1158,7 @@ bool createRawTransaction(const std::string & rpcuser,
         Object o;
         for (const XTxOut & dest : outputs)
         {
-            o.push_back(Pair(dest.address, dest.amount.Get64()));
+            o.push_back(Pair(dest.address, dest.amount));
         }
 
         Array params;
@@ -2170,18 +2170,9 @@ bool BtcWalletConnector<CryptoProvider>::isValidAddress(const std::string & addr
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::isDustAmount(const double & amount) const
-{
-    // cast to int because amount could be negative
-    return static_cast<int64_t>(amount * static_cast<int64_t>(COIN)) < static_cast<int64_t>(dustAmount);
-}
-
-//******************************************************************************
-//******************************************************************************
-template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::isDustAmount(const amount_t & amount) const
 {
-    return (amount / xbridge::COIN * static_cast<int64_t>(COIN)).Get64() < static_cast<int64_t>(dustAmount);
+    return static_cast<int64_t>(amount * static_cast<int64_t>(COIN)) < static_cast<int64_t>(dustAmount);
 }
 
 
@@ -2704,9 +2695,9 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField)
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
-                                           const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+xbridge::CTransactionPtr createTransaction(const WalletConnector      & conn,
+                                           const std::vector<XTxIn>   & inputs,
+                                           const std::vector<XTxOut>  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -2721,14 +2712,14 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
         tx->vin.push_back(CTxIn(COutPoint(uint256S(in.txid), in.n)));
     }
 
-    for (const std::pair<std::string, double> & out : outputs)
+    for (const XTxOut & out : outputs)
     {
-        std::vector<unsigned char> id = conn.toXAddr(out.first);
+        std::vector<unsigned char> id = conn.toXAddr(out.address);
 
         CScript scr;
         scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-        tx->vout.push_back(CTxOut(out.second * COIN, scr));
+        tx->vout.push_back(CTxOut(out.amount * COIN, scr));
     }
 
     return tx;
@@ -2737,8 +2728,8 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                                 const std::vector<std::pair<std::string, double> > & outputs,
+bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vector<XTxIn>  & inputs,
+                                                                 const std::vector<XTxOut> & outputs,
                                                                  const std::vector<unsigned char> & mpubKey,
                                                                  const std::vector<unsigned char> & mprivKey,
                                                                  const std::vector<unsigned char> & innerScript,
@@ -2809,8 +2800,8 @@ bool BtcWalletConnector<CryptoProvider>::createRefundTransaction(const std::vect
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                                  const std::vector<std::pair<std::string, double> > & outputs,
+bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vector<XTxIn>  & inputs,
+                                                                  const std::vector<XTxOut> & outputs,
                                                                   const std::vector<unsigned char> & mpubKey,
                                                                   const std::vector<unsigned char> & mprivKey,
                                                                   const std::vector<unsigned char> & xpubKey,
@@ -2873,8 +2864,8 @@ bool BtcWalletConnector<CryptoProvider>::createPaymentTransaction(const std::vec
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vector<XTxIn> inputs,
-                                                                  const std::vector<std::pair<std::string, double> > outputs,
+bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vector<XTxIn>  & inputs,
+                                                                  const std::vector<XTxOut> & outputs,
                                                                   std::string & txId, std::string & rawTx)
 {
     xbridge::CTransactionPtr tx = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
@@ -2882,19 +2873,22 @@ bool BtcWalletConnector<CryptoProvider>::createPartialTransaction(const std::vec
 
     // sign
     bool complete = false;
-    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete)) {
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete)) 
+    {
         LOG() << "sign transaction error " << __FUNCTION__;
         return false;
     }
 
-    if (!complete) {
+    if (!complete) 
+    {
         LOG() << "transaction not fully signed " << __FUNCTION__;
         return false;
     }
 
     std::string txid;
     std::string json;
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) {
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) 
+    {
         LOG() << "decode signed transaction error " << __FUNCTION__;
         return false;
     }
@@ -2914,42 +2908,51 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, 
                                                     std::string & rawTx, std::string & failReason)
 {
     const auto hasUserSpecifiedUtxos = !utxos.empty();
-    if (isDustAmount(xBridgeValueFromAmount(splitAmount))) {
+    if (isDustAmount(splitAmount)) 
+    {
         failReason = "split amount is dust [" + xBridgeStringValueFromAmount(splitAmount) + "]";
         return false;
     }
-    if (!isValidAddress(addr)) {
+    if (!isValidAddress(addr)) 
+    {
         failReason = "address is invalid or not in the wallet for token " + currency;
         return false;
     }
     std::vector<wallet::UtxoEntry> unspent;
-    if (!getUnspent(unspent, excluded)) {
+    if (!getUnspent(unspent, excluded)) 
+    {
         failReason = "failed to get unspent transaction outputs for token " + currency;
         return false;
     }
-    if (hasUserSpecifiedUtxos) { // Check that user specified utxos are available
+    if (hasUserSpecifiedUtxos) 
+    { 
+        // Check that user specified utxos are available
         std::vector<wallet::UtxoEntry> newUnspent;
         auto copyUtxos = utxos;
-        for (const auto & utxo : unspent) {
+        for (const auto & utxo : unspent) 
+        {
             COutPoint vout{uint256S(utxo.txId), utxo.vout};
-            if (copyUtxos.count(vout)) {
+            if (copyUtxos.count(vout)) 
+            {
                 copyUtxos.erase(vout);
                 newUnspent.push_back(utxo);
             }
         }
-        if (!copyUtxos.empty()) {
+        if (!copyUtxos.empty()) 
+        {
             failReason = "user specified utxo was not found or is not available: " + copyUtxos.begin()->ToString();
             return false;
         }
         unspent = newUnspent; // only use user specified utxos
     }
 
-    const amount_t fee1 = xBridgeIntFromReal(minTxFee1(1, 3));
-    const amount_t fee2 = xBridgeIntFromReal(minTxFee2(1, 1));
+    const amount_t fee1 = minTxFee1(1, 3);
+    const amount_t fee2 = minTxFee2(1, 1);
     const amount_t feesPerUtxo = fee1 + fee2;
     const amount_t splitSize = splitAmount + (includeFees ? feesPerUtxo : amount_t(uint64_t(0)));
 
-    if (!hasUserSpecifiedUtxos) {
+    if (!hasUserSpecifiedUtxos) 
+    {
         // Remove all utxos that already match the expected size or that don't match the specified address
         unspent.erase(std::remove_if(unspent.begin(), unspent.end(),
             [splitSize, addr](const wallet::UtxoEntry & entry) {
@@ -2957,85 +2960,101 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, 
             }), unspent.end());
     }
 
-    if (unspent.empty()) {
+    if (unspent.empty()) 
+    {
         failReason = "failed to get unspent transaction outputs for token " + currency;
         return false; // no available utxos
     }
 
     // Erase any utxos after 100 to prevent issues with creating txs that are too large
     if (unspent.size() > 100)
+    {
         unspent.erase(unspent.begin()+100, unspent.begin()+unspent.size());
+    }
 
-    amount_t vinsTotal{uint64_t(0)};
+    amount_t vinsTotal = 0;
     std::vector<xbridge::XTxIn> vins;
-    for (const auto & vin : unspent) {
+    for (const auto & vin : unspent) 
+    {
         vinsTotal += vin.camount();
         vins.emplace_back(vin.txId, vin.vout, vin.amount);
     }
 
-    auto outputCount = (vinsTotal / splitSize).Get64();
-    if (outputCount < 1) {
+    auto outputCount = vinsTotal / splitSize;
+    if (outputCount < 1) 
+    {
         failReason = "already split all unused utxos in address [" + addr + "]";
         return false; // not enough coin
     }
     if (outputCount > 100)
+    {
         outputCount = 100;
+    }
 
     const amount_t remainder = vinsTotal - (xbridge::amount_t(outputCount) * splitSize);
-    std::vector<std::pair<std::string, amount_t>> vouts;
+    std::vector<xbridge::XTxOut> vouts;
     for (int i = 0; i < outputCount; ++i)
+    {
         vouts.emplace_back(addr, splitSize);
+    }
 
-    const amount_t txFees = xBridgeIntFromReal(minTxFee1(vins.size(), vouts.size()));
+    const amount_t txFees = minTxFee1(vins.size(), vouts.size());
     const amount_t change = remainder - txFees;
     // add remainder vout if not dust
-    if (!isDustAmount(xBridgeValueFromAmount(change)))
+    if (!isDustAmount(change))
+    {
         vouts.emplace_back(addr, change);
-    else {
+    }
+    else 
+    {
         // Remove any utxos consumed by fees
         amount_t feesLeft = txFees;
-        while (feesLeft > xbridge::amount_t(uint64_t(0)) && !vouts.empty()) {
+        while (feesLeft > xbridge::amount_t(uint64_t(0)) && !vouts.empty()) 
+        {
             auto & vout = vouts[vouts.size()-1];
-            const amount_t voutAmount = vout.second;
+            const amount_t voutAmount = vout.amount;
             const amount_t voutNewAmount = voutAmount - feesLeft;
             // If vout doesn't cover the fee move to the next one (i.e. if new amount is too small or negative)
-            if (voutNewAmount <= xbridge::amount_t(uint64_t(0))) {
+            if (voutNewAmount <= 0) 
+            {
                 vouts.erase(vouts.begin() + vouts.size());
                 outputCount -= 1;
                 feesLeft -= voutAmount; // subtract vout amount from leftover fees
                 continue;
             }
 
-            vout.second = voutNewAmount;
-            if (isDustAmount(xBridgeValueFromAmount(vout.second)))
+            vout.amount = voutNewAmount;
+            if (isDustAmount(vout.amount))
+            {
                 vouts.erase(vouts.begin()+vouts.size()); // remove output if dust
+            }
             outputCount -= 1;
 
             break;
         }
     }
 
-    if (vouts.empty()) {
+    if (vouts.empty()) 
+    {
         failReason = "unable to split further, already split all unused utxos in address [" + addr + "]";
         return false;
     }
 
-    std::vector<std::pair<std::string, double>> dvouts;
-    for (auto & vout : vouts)
-        dvouts.emplace_back(vout.first, xBridgeValueFromAmount(vout.second));
-    xbridge::CTransactionPtr tx = createTransaction(*this, vins, dvouts, COIN, txVersion, 0, txWithTimeField);
+    xbridge::CTransactionPtr tx = createTransaction(*this, vins, vouts, COIN, txVersion, 0, txWithTimeField);
     rawTx = tx->toString();
 
     // sign
     bool complete = false;
-    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete) || !complete) {
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete) || !complete) 
+    {
         failReason = "failed to sign the split transaction " + currency;
         return false;
     }
 
     std::string txid;
     std::string json;
-    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) {
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, txid, json)) 
+    {
         failReason = "failed to decode the split transaction " + currency;
         return false;
     }

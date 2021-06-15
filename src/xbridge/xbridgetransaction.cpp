@@ -515,8 +515,8 @@ bool Transaction::tryJoin(const TransactionPtr other)
         if (!xBridgePartialOrderDriftCheck(m_sourceAmount, m_destAmount, other->m_sourceAmount, other->m_destAmount)) {
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id().GetHex());
-            log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(xBridgeValueFromAmount(m_sourceAmount) / xBridgeValueFromAmount(m_destAmount)));
-            log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(xBridgeValueFromAmount(other->m_destAmount) / xBridgeValueFromAmount(other->m_sourceAmount)));
+            log_obj.pushKV("received_price", xbridge::xBridgeStringValueFromPrice(m_sourceAmount / m_destAmount));
+            log_obj.pushKV("expected_price", xbridge::xBridgeStringValueFromPrice(other->m_destAmount / other->m_sourceAmount));
             xbridge::LogOrderMsg(log_obj, "taker price doesn't match maker expected price (join)", __FUNCTION__);
             return false;
         }

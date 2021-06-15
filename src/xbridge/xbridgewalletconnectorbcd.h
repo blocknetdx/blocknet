@@ -33,8 +33,8 @@ public:
                                  std::string & txId,
                                  std::string & rawTx) override;
 
-    bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                  const std::vector<std::pair<std::string, double> > & outputs,
+    bool createPaymentTransaction(const std::vector<XTxIn>  & inputs,
+                                  const std::vector<XTxOut> & outputs,
                                   const std::vector<unsigned char> & mpubKey,
                                   const std::vector<unsigned char> & mprivKey,
                                   const std::vector<unsigned char> & xpubKey,

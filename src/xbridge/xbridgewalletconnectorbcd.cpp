@@ -402,9 +402,9 @@ BCDTransaction createTransaction() {
     return BCDTransaction{};
 }
 
-BCDTransaction createTransaction(const WalletConnector & conn,
-                                 const std::vector<XTxIn> & inputs,
-                                 const std::vector<XTxOut>  & outputs,
+BCDTransaction createTransaction(const WalletConnector     & conn,
+                                 const std::vector<XTxIn>  & inputs,
+                                 const std::vector<XTxOut> & outputs,
                                  const uint64_t COIN,
                                  const uint32_t txversion,
                                  const uint32_t lockTime,
@@ -428,7 +428,7 @@ BCDTransaction createTransaction(const WalletConnector & conn,
         CScript scr;
         scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-        tx->vout.emplace_back(out.second * COIN, scr);
+        tx->vout.emplace_back(out.amount * COIN, scr);
     }
 
     return bcdTx;
@@ -471,7 +471,7 @@ bool BCDWalletConnector::createRefundTransaction(const std::vector<XTxIn>  & inp
 
         int nHashType = SIGHASH_ALL;
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN, SigVersion::BASE);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount * COIN, SigVersion::BASE);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "bcd sign transaction error " << __FUNCTION__;
@@ -509,8 +509,8 @@ bool BCDWalletConnector::createRefundTransaction(const std::vector<XTxIn>  & inp
 
 //******************************************************************************
 //******************************************************************************
-bool BCDWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
+bool BCDWalletConnector::createPaymentTransaction(const std::vector<XTxIn>  & inputs,
+                                                  const std::vector<XTxOut> & outputs,
                                                   const std::vector<unsigned char> & mpubKey,
                                                   const std::vector<unsigned char> & mprivKey,
                                                   const std::vector<unsigned char> & xpubKey,
@@ -530,7 +530,7 @@ bool BCDWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
 
     int nHashType = SIGHASH_ALL;
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN, SigVersion::BASE);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount * COIN, SigVersion::BASE);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "bcd sign transaction error " << __FUNCTION__;

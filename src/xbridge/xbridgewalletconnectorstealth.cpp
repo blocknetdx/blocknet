@@ -106,8 +106,8 @@ uint256 SignatureHash(CScript &scriptCode, const CTransactionPtr & tx,
 
 
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
-xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> > & outputs,
+xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn>  & inputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -115,8 +115,8 @@ xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
 
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
-                                           const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<XTxIn>  & inputs,
+                                           const std::vector<XTxOut>  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -125,14 +125,14 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 
 StealthWalletConnector::StealthWalletConnector() : BtcWalletConnector() { }
 
-bool StealthWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
-                                                 const std::vector<unsigned char> & mpubKey,
-                                                 const std::vector<unsigned char> & mprivKey,
-                                                 const std::vector<unsigned char> & innerScript,
-                                                 const uint32_t lockTime,
-                                                 std::string & txId,
-                                                 std::string & rawTx)
+bool StealthWalletConnector::createRefundTransaction(const std::vector<XTxIn>  & inputs,
+                                                     const std::vector<XTxOut> & outputs,
+                                                     const std::vector<unsigned char> & mpubKey,
+                                                     const std::vector<unsigned char> & mprivKey,
+                                                     const std::vector<unsigned char> & innerScript,
+                                                     const uint32_t lockTime,
+                                                     std::string & txId,
+                                                     std::string & rawTx)
 {
     xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, lockTime, txWithTimeField);
     // Correctly set tx input sequence. If lockTime is specified sequence must be 2^32-2, otherwise 2^32-1 (Final)
@@ -148,7 +148,7 @@ bool StealthWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
 
         int nHashType = SIGHASH_ALL;
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64() * COIN);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount * COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "stealth sign transaction error " << __FUNCTION__;
@@ -188,14 +188,14 @@ bool StealthWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
     return true;
 }
 
-bool StealthWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
-                                                  const std::vector<unsigned char> & mpubKey,
-                                                  const std::vector<unsigned char> & mprivKey,
-                                                  const std::vector<unsigned char> & xpubKey,
-                                                  const std::vector<unsigned char> & innerScript,
-                                                  std::string & txId,
-                                                  std::string & rawTx)
+bool StealthWalletConnector::createPaymentTransaction(const std::vector<XTxIn>  & inputs,
+                                                      const std::vector<XTxOut> & outputs,
+                                                      const std::vector<unsigned char> & mpubKey,
+                                                      const std::vector<unsigned char> & mprivKey,
+                                                      const std::vector<unsigned char> & xpubKey,
+                                                      const std::vector<unsigned char> & innerScript,
+                                                      std::string & txId,
+                                                      std::string & rawTx)
 {
     xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
 
@@ -203,7 +203,7 @@ bool StealthWalletConnector::createPaymentTransaction(const std::vector<XTxIn> &
 
     int nHashType = SIGHASH_ALL;
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount * COIN);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "stealth sign transaction error " << __FUNCTION__;

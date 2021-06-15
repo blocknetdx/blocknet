@@ -41,7 +41,12 @@ struct XTxIn
 struct XTxOut
 {
     std::string address;
-    double      amount;
+    amount_t    amount;
+
+    XTxOut(const std::string & addr, const amount_t val)
+        : address(addr)
+        , amount(val)
+    {}
 };
 
 //*****************************************************************************
@@ -96,7 +101,7 @@ public:
 
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
-    double getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
+    amount_t getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
 
     std::string getNewTokenAddress(const std::string & type = "");
 
@@ -129,7 +134,6 @@ public:
     virtual bool hasValidAddressPrefix(const std::string & addr) const = 0;
     virtual bool isValidAddress(const std::string & addr) const = 0;
 
-    virtual bool isDustAmount(const double & amount) const = 0;
     virtual bool isDustAmount(const amount_t & amount) const = 0;
 
     virtual bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey) = 0;
