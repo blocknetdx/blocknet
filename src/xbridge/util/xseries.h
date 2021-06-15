@@ -80,8 +80,8 @@ public:
            IntervalLimit limit,
            IntervalTimestamp interval_timestamp
     )
-        : fromCurrency{fromSymbol,xbridge::COIN}
-        , toCurrency{toSymbol,xbridge::COIN}
+        : fromCurrency{fromSymbol}
+        , toCurrency{toSymbol}
         , granularity{validate_granularity(g)}
         , period{get_start_time(start_time,granularity), get_end_time(end_time,granularity)}
         , with_txids{with_txids}
