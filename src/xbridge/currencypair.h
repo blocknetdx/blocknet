@@ -16,29 +16,54 @@ using xid_t = std::string;
 /**
  * @brief common structure for currency pair trade details from local history or blockchain
  */
-class CurrencyPair {
+class CurrencyPair 
+{
 public:
 
     // variables
-    boost::posix_time::ptime timeStamp{};
-    std::string xid_or_error{};
-    ccy::Asset from{};
-    ccy::Asset to{};
-    enum class Tag{Empty, Error, Valid} tag{Tag::Empty};
+    boost::posix_time::ptime timeStamp;
+
+    std::string xid_or_error;
+
+    ccy::Asset  from;
+    ccy::Asset  to;
+
+    enum Tag
+    {
+        Empty, 
+        Error, 
+        Valid
+    };
+
+    Tag tag;
 
     // ctors
-    CurrencyPair() = default;
-    CurrencyPair(const std::string& e) : xid_or_error{e}, tag{Tag::Error} {}
-    CurrencyPair(const xid_t& xid, const ccy::Asset& from,
-                 const ccy::Asset& to, boost::posix_time::ptime ts = boost::posix_time::ptime{})
-        : timeStamp(ts), xid_or_error(xid), from(from), to(to), tag{Tag::Valid}
+    CurrencyPair()
+        : tag(Tag::Empty) 
+    {}
+
+    CurrencyPair(const std::string & e) 
+        : xid_or_error(e)
+        , tag(Tag::Error) 
+    {}
+
+    CurrencyPair(const xid_t & xid, 
+                 const ccy::Asset & from, const ccy::Asset & to, 
+                 boost::posix_time::ptime ts = boost::posix_time::ptime{})
+        : timeStamp(ts)
+        , xid_or_error(xid)
+        , from(from)
+        , to(to)
+        , tag(Tag::Valid)
     {}
 
     // accessors
-    template<typename T = double> T price() const {
+    template<typename T = double> T price() const 
+    {
         return ccy::Asset::Price<T>{to, from}.value();
     }
-    std::string xid() const { return tag == Tag::Valid ? xid_or_error : std::string{}; }
+
+    std::string xid()   const { return tag == Tag::Valid ? xid_or_error : std::string{}; }
     std::string error() const { return tag == Tag::Error ? xid_or_error : std::string{}; }
 };
 
