@@ -62,8 +62,8 @@ namespace ccy {
         }
     };
 
-    using Amount = uint64_t;
-    using Basis  = uint64_t;
+    using Amount = xbridge::amount_t;
+    // using Basis  = uint64_t; // xbridge::amount_t;
 
     template<typename T> constexpr T pow10(size_t x) {
         return x ? 10*pow10<T>(x-1) : 1;
@@ -71,25 +71,25 @@ namespace ccy {
 
     class Currency {
         Symbol _sym{};
-        Basis _basis{0};
+        // Basis _basis{0};
     public:
         Currency() = default;
-        Currency(const std::string& sym, Basis basis)
-            : _sym{sym}, _basis{basis}
+        Currency(const std::string& sym/*, Basis basis*/)
+            : _sym{sym}/*, _basis{basis}*/
         {
-            if (not inRange())
-                throw std::out_of_range(
-                    "Currency basis="+std::to_string(basis)+" must be in range {"+
-                    std::to_string(min_basis())+".."+
-                    std::to_string(max_basis())+"}");
+            // if (not inRange())
+            //     throw std::out_of_range(
+            //         "Currency basis="+std::to_string(basis)+" must be in range {"+
+            //         std::to_string(min_basis())+".."+
+            //         std::to_string(max_basis())+"}");
         }
-        static inline constexpr Basis min_basis() { return pow10<Basis>( 0); }
-        static inline constexpr Basis max_basis() { return pow10<Basis>(18); } // Ethereum
-        Basis basis() const { return _basis; }
-        bool inRange() const { return basis() >= min_basis() && basis() <= max_basis(); }
+        // static inline constexpr Basis min_basis() { return pow10<Basis>( 0); }
+        // static inline constexpr Basis max_basis() { return pow10<Basis>(18); } // Ethereum
+        // Basis basis() const { return _basis; }
+        // bool inRange() const { return basis() >= min_basis() && basis() <= max_basis(); }
         std::string to_string() const { return _sym.to_string(); }
         bool operator==(const Currency& other ) const {
-            return _sym == other._sym && basis() == other.basis();
+            return _sym == other._sym /*&& basis() == other.basis()*/;
         }
         bool operator!=(const Currency& other ) const { return not (*this == other); }
         bool operator<(const Currency& other ) const { return _sym < other._sym; }
@@ -102,7 +102,7 @@ namespace ccy {
     class Asset {
         // variables
         Currency _currency{};
-        Amount _amount{uint64_t(0)};
+        Amount   _amount{0};
 
     public:
 
@@ -113,13 +113,15 @@ namespace ccy {
             Price() : _value{0} {}
             Price(const Asset& to, const Asset& from) {
                 if (from.accumulator() == 0) return;
-                auto ratio = to.amount_rational() / from.amount_rational();
-                using Rational = decltype(ratio);
-                using IntType = Rational::int_type;
-                IntType basis = to.currency().basis();
-                auto roundUp = Rational{1,2*basis};
-                auto rounded = boost::rational_cast<IntType>(basis * (ratio + roundUp));
-                _value = boost::rational_cast<T>(Rational{rounded, basis});
+                // auto ratio = to.amount_rational() / from.amount_rational();
+                auto ratio = to.amount() / from.amount();
+                // using Rational = decltype(ratio);
+                // using IntType = Rational::int_type;
+                // IntType basis = to.currency().basis();
+                // auto roundUp = Rational{1,2*basis};
+                // auto rounded = boost::rational_cast<IntType>(basis * (ratio + roundUp));
+                // _value = boost::rational_cast<T>(Rational{rounded, basis});
+                _value = ratio;
             }
             T value() const { return _value; }
         };
@@ -135,13 +137,14 @@ namespace ccy {
         const Amount& accumulator() const { return _amount; }
         const Currency& currency() const { return _currency; }
 
-        template<typename IntType = uintmax_t>
-        boost::rational<IntType> amount_rational() const {
-            return boost::rational<IntType>{_amount, currency().basis()};
-        }
+        // template<typename IntType = uintmax_t>
+        // boost::rational<IntType> amount_rational() const {
+        //     return boost::rational<IntType>{_amount, currency().basis()};
+        // }
 
         template<typename T = double> T amount() const {
-            return boost::rational_cast<T>(amount_rational());
+            // return boost::rational_cast<T>(amount_rational());
+            return _amount;
         }
 
         Asset& operator+=(const Asset& x) {
