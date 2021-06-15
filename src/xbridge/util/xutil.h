@@ -77,11 +77,11 @@ namespace xbridge
     boost::uint64_t timeToInt(const boost::posix_time::ptime &time);
     boost::posix_time::ptime intToTime(const uint64_t& number);
 
-    constexpr double xBridgeMaxPriceDeviation = 1.0 / 100000000.0;
+    // constexpr double xBridgeMaxPriceDeviation = 1.0 / 100000000.0;
     constexpr int xBridgePartialOrderMaxUtxos = 10;
-    double xBridgeValueFromAmount(amount_t amount);
-    amount_t xBridgeIntFromReal(double val);
-    amount_t xBridgeAmountFromReal(double val);
+    // double xBridgeValueFromAmount(amount_t amount);
+    // amount_t xBridgeIntFromReal(double val);
+    // amount_t xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
     std::string xBridgeStringValueFromPrice(double price, uint64_t denomination);
     std::string xBridgeStringValueFromAmount(amount_t amount);

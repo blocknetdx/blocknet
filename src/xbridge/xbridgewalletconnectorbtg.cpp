@@ -214,8 +214,8 @@ uint256 SignatureHash(const CScript & scriptCode, const CTransactionPtr & tx,
 //******************************************************************************
 //******************************************************************************
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
-xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> > & outputs,
+xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn>  & inputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -229,8 +229,8 @@ BTGWalletConnector::BTGWalletConnector() : BtcWalletConnector() {}
 //******************************************************************************
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
-                                           const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<XTxIn>  & inputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -238,8 +238,8 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 
 //******************************************************************************
 //******************************************************************************
-bool BTGWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
+bool BTGWalletConnector::createRefundTransaction(const std::vector<XTxIn>  & inputs,
+                                                 const std::vector<XTxOut> & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
                                                  const std::vector<unsigned char> & mprivKey,
                                                  const std::vector<unsigned char> & innerScript,
@@ -261,7 +261,7 @@ bool BTGWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 
         int nHashType = SIGHASH_ALL | SIGHASH_FORKID;
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount * COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "btg sign transaction error " << __FUNCTION__;
@@ -303,8 +303,8 @@ bool BTGWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 
 //******************************************************************************
 //******************************************************************************
-bool BTGWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
+bool BTGWalletConnector::createPaymentTransaction(const std::vector<XTxIn>  & inputs,
+                                                  const std::vector<XTxOut> & outputs,
                                                   const std::vector<unsigned char> & mpubKey,
                                                   const std::vector<unsigned char> & mprivKey,
                                                   const std::vector<unsigned char> & xpubKey,
@@ -318,7 +318,7 @@ bool BTGWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
 
     int nHashType = SIGHASH_ALL | SIGHASH_FORKID;
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount.Get64()*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, nHashType, inputs[0].amount * COIN);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "btg sign transaction error " << __FUNCTION__;

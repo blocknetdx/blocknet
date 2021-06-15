@@ -110,18 +110,18 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
     );
 
     // Select utxos
-    uint64_t utxoAmount{0};
-    uint64_t fee1{0};
-    uint64_t fee2{0};
+    xbridge::amount_t utxoAmount{0};
+    xbridge::amount_t fee1{0};
+    xbridge::amount_t fee2{0};
     auto minTxFee1 = [](const uint32_t & inputs, const uint32_t & outputs) -> double {
-        uint64_t fee = (192*inputs + 34*2) * 20;
+        xbridge::amount_t fee = (192*inputs + 34*2) * 20;
         return static_cast<double>(fee) / COIN;
     };
     auto minTxFee2 = [](const uint32_t & inputs, const uint32_t & outputs) -> double {
         return 0;
     };
-    if (!xbridge::App::instance().selectUtxos("", inputs, minTxFee1, minTxFee2, toamount,
-                                              COIN, outputsForUse, utxoAmount, fee1, fee2))
+    if (!xbridge::App::instance().selectUtxos("", inputs, minTxFee1, minTxFee2, toamount, 
+                                              outputsForUse, utxoAmount, fee1, fee2))
     {
         ERR() << "Insufficient funds for fee tx";
         return false;

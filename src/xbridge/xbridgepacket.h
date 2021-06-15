@@ -10,7 +10,6 @@
 
 #include "xbridge/util/logger.h"
 #include "xbridge/version.h"
-#include "arith_uint256.h"
 #include "xbridge/xbridgedef.h"
 
 #include <vector>
@@ -480,16 +479,7 @@ public:
         __oldSizeField() = sizeField()+__headerDifference;
     }
 
-    void append(const arith_uint128 data)
-    {
-        m_body.reserve(m_body.size() + sizeof(data));
-        unsigned char * ptr = (unsigned char *)&data;
-        std::copy(ptr, ptr+sizeof(data), std::back_inserter(m_body));
-        sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
-        __oldSizeField() = sizeField()+__headerDifference;
-    }
-
-    void append(const unsigned char * data, const int size)
+   void append(const unsigned char * data, const int size)
     {
         m_body.reserve(m_body.size() + size);
         std::copy(data, data+size, std::back_inserter(m_body));
@@ -513,6 +503,9 @@ public:
         sizeField() = static_cast<uint32_t>(m_body.size()) - headerSize;
         __oldSizeField() = sizeField()+__headerDifference;
     }
+
+    void append(const float data);
+    void append(const double data);
 
     bool copyFrom(const std::vector<unsigned char> & data)
     {
@@ -554,8 +547,10 @@ public:
         return read(offset, reinterpret_cast<unsigned char *>(&data), sizeof(_T));
     }
 
-    size_t read(const size_t offset, xbridge::amount_t & data) const;
     size_t read(const size_t offset, uint256 & data) const;
+    size_t read(const size_t offset, float & data) const;
+    size_t read(const size_t offset, double & data) const;
+
     size_t read(const size_t offset, std::vector<unsigned char> & data, const size_t size) const;
     size_t read(const size_t offset, std::string & data) const;
     size_t read(const size_t offset, std::string & data, const size_t size) const;

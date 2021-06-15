@@ -49,7 +49,7 @@ WalletConnector::WalletConnector()
  * The wallet balance for the specified address will be returned. Only utxo's associated with the address
  * are included.
  */
-double WalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string & addr) const
+amount_t WalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string & addr) const
 {
     std::vector<wallet::UtxoEntry> entries;
     if (!getUnspent(entries, excluded))
@@ -58,7 +58,7 @@ double WalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & exc
         return -1.;//return negative value for check in called methods
     }
 
-    double amount = 0;
+    amount_t amount = 0;
     for (const wallet::UtxoEntry & entry : entries)
     {
         // exclude utxo's not matching address

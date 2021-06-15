@@ -655,7 +655,6 @@ public:
      * @param minTxFee1 - function calculating fee1
      * @param minTxFee2 - function calculating fee2
      * @param requiredAmount - amount of required coins
-     * @param coinDenomination - int64_t coin denomination
      * @param outputsForUse - selected outputs for use
      * @param utxoAmount - total utxoAmount of selected outputs
      * @param fee1 - min tx fee for outputs
@@ -664,9 +663,9 @@ public:
     bool selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
             const std::function<double(uint32_t, uint32_t)> &minTxFee1,
             const std::function<double(uint32_t, uint32_t)> &minTxFee2,
-            const uint64_t &requiredAmount, const int64_t &coinDenomination,
+            const amount_t &requiredAmount, 
             std::vector<wallet::UtxoEntry> &outputsForUse,
-            uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const;
+            amount_t &utxoAmount, amount_t &fee1, amount_t &fee2) const;
 
     /**
      * selectPartialUtxos - Selects utxos for use with the partial order.

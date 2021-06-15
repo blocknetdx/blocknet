@@ -253,7 +253,6 @@ public:
     bool hasValidAddressPrefix(const std::string & addr) const;
     bool isValidAddress(const std::string & addr) const;
 
-    bool isDustAmount(const double & amount) const;
     bool isDustAmount(const amount_t & amount) const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
@@ -308,8 +307,8 @@ public:
                                  std::string & txId,
                                  std::string & rawTx);
 
-    bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                  const std::vector<std::pair<std::string, double> > & outputs,
+    bool createPaymentTransaction(const std::vector<XTxIn>  & inputs,
+                                  const std::vector<XTxOut> & outputs,
                                   const std::vector<unsigned char> & mpubKey,
                                   const std::vector<unsigned char> & mprivKey,
                                   const std::vector<unsigned char> & xpubKey,
@@ -317,10 +316,10 @@ public:
                                   std::string & txId,
                                   std::string & rawTx);
 
-    bool createPartialTransaction(const std::vector<XTxIn> inputs,
-                              const std::vector<std::pair<std::string, double> > outputs,
-                              std::string & txId,
-                              std::string & rawTx) override;
+    bool createPartialTransaction(const std::vector<XTxIn>  & inputs,
+                                  const std::vector<XTxOut> & outputs,
+                                  std::string & txId,
+                                  std::string & rawTx) override;
 
     bool splitUtxos(amount_t splitAmount, std::string addr, bool includeFees, std::set<wallet::UtxoEntry> excluded,
                     std::set<COutPoint> utxos, amount_t & totalSplit, amount_t & splitIncFees, int & splitCount,

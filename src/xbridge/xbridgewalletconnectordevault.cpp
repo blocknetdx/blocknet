@@ -260,8 +260,8 @@ uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
 //******************************************************************************
 //******************************************************************************
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
-xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> > & outputs,
+xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn>  & inputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -285,8 +285,8 @@ bool DevaultWalletConnector::init() {
 //******************************************************************************
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
-                                           const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<XTxIn>  & inputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -295,13 +295,13 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 //******************************************************************************
 //******************************************************************************
 bool DevaultWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
-                                                 const std::vector<unsigned char> & mpubKey,
-                                                 const std::vector<unsigned char> & mprivKey,
-                                                 const std::vector<unsigned char> & innerScript,
-                                                 const uint32_t lockTime,
-                                                 std::string & txId,
-                                                 std::string & rawTx)
+                                                     const std::vector<XTxOut> & outputs,
+                                                     const std::vector<unsigned char> & mpubKey,
+                                                     const std::vector<unsigned char> & mprivKey,
+                                                     const std::vector<unsigned char> & innerScript,
+                                                     const uint32_t lockTime,
+                                                     std::string & txId,
+                                                     std::string & rawTx)
 {
     xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, lockTime, txWithTimeField);
     // Correctly set tx input sequence. If lockTime is specified sequence must be 2^32-2, otherwise 2^32-1 (Final)
@@ -317,7 +317,7 @@ bool DevaultWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
 
         SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
         std::vector<unsigned char> signature;
-        uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount.Get64()*COIN);
+        uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount * COIN);
         if (!m_cp.sign(mprivKey, hash, signature))
         {
             LOG() << "bch sign transaction error " << __FUNCTION__;
@@ -360,13 +360,13 @@ bool DevaultWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
 //******************************************************************************
 //******************************************************************************
 bool DevaultWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
-                                                  const std::vector<unsigned char> & mpubKey,
-                                                  const std::vector<unsigned char> & mprivKey,
-                                                  const std::vector<unsigned char> & xpubKey,
-                                                  const std::vector<unsigned char> & innerScript,
-                                                  std::string & txId,
-                                                  std::string & rawTx)
+                                                      const std::vector<XTxOut> & outputs,
+                                                      const std::vector<unsigned char> & mpubKey,
+                                                      const std::vector<unsigned char> & mprivKey,
+                                                      const std::vector<unsigned char> & xpubKey,
+                                                      const std::vector<unsigned char> & innerScript,
+                                                      std::string & txId,
+                                                      std::string & rawTx)
 {
     xbridge::CTransactionPtr txUnsigned = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
 
@@ -374,7 +374,7 @@ bool DevaultWalletConnector::createPaymentTransaction(const std::vector<XTxIn> &
 
     SigHashType sigHashType = SigHashType(SIGHASH_ALL).withForkId();
     std::vector<unsigned char> signature;
-    uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount.Get64()*COIN);
+    uint256 hash = SignatureHash(inner, txUnsigned, 0, sigHashType, inputs[0].amount * COIN);
     if (!m_cp.sign(mprivKey, hash, signature))
     {
         LOG() << "bch sign transaction error " << __FUNCTION__;

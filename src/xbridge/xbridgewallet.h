@@ -26,7 +26,6 @@
 //*****************************************************************************
 namespace xbridge
 {
-    amount_t xBridgeIntFromReal(double amount);
 
 //*****************************************************************************
 //*****************************************************************************
@@ -64,7 +63,7 @@ struct UtxoEntry
     }
 
     amount_t camount() const {
-        return xBridgeIntFromReal(amount);
+        return amount;
     }
 
     void setConfirmations(const uint32_t confs) {
