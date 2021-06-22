@@ -694,10 +694,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 158)
+    if (packet->size() != 134)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
-              << "need 146 received " << packet->size() << " "
+              << "need 134 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1355,10 +1355,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 76)
+    if (packet->size() != 68)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
-              << "need 76 received " << packet->size() << " "
+              << "need 68 received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1726,10 +1726,10 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    if (packet->size() != 152)
+    if (packet->size() != 144)
     {
         ERR() << "incorrect packet size for xbcTransactionInit "
-              << "need 152 bytes, received " << packet->size() << " "
+              << "need 144 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
