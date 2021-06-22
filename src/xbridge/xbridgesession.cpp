@@ -1955,7 +1955,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     }
 
     std::vector<unsigned char> hubAddress;
-    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
+    size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
     // transaction id
     uint256 txid;
@@ -2445,7 +2445,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     }
 
     std::vector<unsigned char> hubAddress;
-    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
+    size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
     // transaction id
     uint256 txid;
@@ -2935,7 +2935,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     }
 
     std::vector<unsigned char> hubAddress;
-    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
+    size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
     uint256 txid;
     offset += packet->read(offset, txid);
@@ -3201,7 +3201,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
     }
 
     std::vector<unsigned char> hubAddress;
-    size_t offset = packet->read(offset, hubAddress, XBridgePacket::addressSize);
+    size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
     uint256 txid;
     offset += packet->read(offset, txid);
