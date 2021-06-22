@@ -165,16 +165,20 @@ CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& 
     // validate chain inputs
     try { xtx[0].get_str();    } catch(...) { return {"Bad ID" };          }
     try { xtx[1].get_str();    } catch(...) { return {"Bad from token" };  }
-    try { xtx[2].get_uint64(); } catch(...) { return {"Bad from amount" }; }
     try { xtx[3].get_str();    } catch(...) { return {"Bad to token" };    }
-    try { xtx[4].get_uint64(); } catch(...) { return {"Bad to amount" };   }
 
-    return CurrencyPair(xtx[0].get_str(),                                   // xid
+    const static xbridge::amount_t HISTORYCOIN     = 100000000;
+
+    double fromAmount = xtx[2].type() == int_type  ? xtx[2].get_uint64() / HISTORYCOIN :
+                        xtx[2].type() == real_type ? xtx[2].get_real() : 0;
+    double toAmount   = xtx[4].type() == int_type  ? xtx[4].get_uint64() / HISTORYCOIN :
+                        xtx[4].type() == real_type ? xtx[4].get_real() : 0;
+
+    return CurrencyPair(xtx[0].get_str(),                 // xid
                         {ccy::Currency{xtx[1].get_str()}, // fromCurrency
-                        xtx[2].get_uint64() / xbridge::xxxCOIN},            // fromAmount
+                        fromAmount},
                         {ccy::Currency{xtx[3].get_str()}, // toCurrency
-                        xtx[4].get_uint64() / xbridge::xxxCOIN}             // toAmount
-    );
+                        toAmount});
 }
 
 UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
