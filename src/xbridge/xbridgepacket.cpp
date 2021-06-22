@@ -303,7 +303,7 @@ size_t XBridgePacket::read(const size_t offset, std::vector<unsigned char> & dat
 size_t XBridgePacket::read(const size_t offset, std::string & data) const
 {
     size_t size = 0;
-    for (uint32_t size = 0; size + offset < this->m_body.size() - headerSize; ++size)
+    for (; size + offset < this->m_body.size() - headerSize; ++size)
     {
         if (m_body[size + offset] == 0)
         {
