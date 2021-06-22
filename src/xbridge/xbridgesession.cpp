@@ -2014,14 +2014,13 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return true;
     }
 
-    const double   outAmount  = xtx->fromAmount;
-    const amount_t coutAmount = xtx->fromAmount;
+    const double outAmount      = xtx->fromAmount;
 
     double inAmount             = 0;
     amount_t cfee1              = 0;
     amount_t cfee2              = connFrom->minTxFee2(1, 1);
     amount_t cinAmount          = inAmount;
-    amount_t coutAmountPlusFees = 0;
+    amount_t coutAmountPlusFees = outAmount+cfee1+cfee2;
 
     std::vector<wallet::UtxoEntry> usedInTx;
     for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) 
@@ -2051,7 +2050,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         inAmount          += it->amount;
         cinAmount          = inAmount;
         cfee1              = connFrom->minTxFee1(usedInTx.size(), 3);
-        coutAmountPlusFees = coutAmount+cfee1+cfee2;
+        coutAmountPlusFees = outAmount+cfee1+cfee2;
         ++it;
     }
 
