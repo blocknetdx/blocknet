@@ -899,7 +899,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         bool hasAddr{false};
         for (const auto & o : feeTxRef->vout) 
         {
-            if (o.nValue < wp.serviceNodeFee * COIN)
+            if (o.nValue < wp.serviceNodeFee * ::COIN)
             {
                 continue;
             }
