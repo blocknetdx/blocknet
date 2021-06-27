@@ -2938,6 +2938,8 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                     {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
                     {"minimum_size", RPCArg::Type::STR, RPCArg::Optional::NO, "Minimum maker_size that can be traded in the partial order."},
                     {"repost", RPCArg::Type::STR, "true", "Repost partial order remainder after taken. Options: true/false"},
+                    {"use_all_funds", RPCArg::Type::BOOL, /* default */ "true", "Use funds from all available addresses in the wallet as opposed to just the maker_address."},
+                    {"auto_split", RPCArg::Type::BOOL, /* default */ "true", "Split funds into multiple UTXOs if needed."},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
                 },
                 RPCResult{
@@ -3001,7 +3003,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                     HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 100")
                   + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\"")
                   + HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 100 true dryrun")
-                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\", \"true\", \"dryrun\"")
+                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\", \"true\", \"true\", \"true\", \"dryrun\"")
                 },
             }.ToString());
 
@@ -3083,9 +3085,17 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     if (request.params.size() >= 8)
         repost = !(request.params[7].get_str() == "false");
 
+    bool useAllFunds = true;
+    if (request.params.size() >= 9)
+        useAllFunds = request.params[8].get_bool();
+
+    bool autoSplit = true;
+    if (request.params.size() >= 10)
+        autoSplit = request.params[9].get_bool();
+
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
-    if (request.params.size() == 9) {
+    if (request.params.size() == 11) {
         std::string dryrunParam = request.params[8].get_str();
         if (dryrunParam != "dryrun") {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
