@@ -245,6 +245,9 @@ public:
      * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
      * @param partialOrder - partial order flag
      * @param partialMinimum - partial minimum amount
+     * @param autoSplit - funds are split into multiple UTXO if needed
+     * @param useAllFunds - allow the usage of any unlocked UTXO in the wallet (from any address),
+     *   otherwise only the from (maker) address is allowed
      * @param id - id of transaction
      * @param blockHash
      * @return xbridge::SUCCESS if success, else error code
@@ -259,6 +262,8 @@ public:
                                  bool partialOrder,
                                  bool repostOrder,
                                  CAmount partialMinimum,
+                                 const bool autoSplit,
+                                 const bool useAllFunds,
                                  uint256 & id,
                                  uint256 & blockHash,
                                  const uint256 parentid=uint256());

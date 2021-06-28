@@ -3154,7 +3154,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     statusCode = xbridge::App::instance().sendXBridgeTransaction(fromAddress, fromCurrency,
             xbridge::xBridgeAmountFromReal(fromAmount), toAddress, toCurrency,
             xbridge::xBridgeAmountFromReal(toAmount), std::vector<xbridge::wallet::UtxoEntry>{},
-            true, repost, xbridge::xBridgeAmountFromReal(partialMinimum), id, blockHash);
+            true, repost, xbridge::xBridgeAmountFromReal(partialMinimum), autoSplit, useAllFunds, id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
         Object obj;

@@ -1456,7 +1456,7 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
 
     uint256 id, blockHash;
     return sendXBridgeTransaction(from, fromCurrency, newRepostAmount, to, toCurrency, toAmount, utxos,
-                                  usePartial, usePartial, minFromAmount, id, blockHash, parentid);
+                                  usePartial, usePartial, minFromAmount, true, true, id, blockHash, parentid);
 }
 
 //******************************************************************************
@@ -1470,7 +1470,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
-    return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, std::vector<wallet::UtxoEntry>{}, false, false, 0, id, blockHash);
+    return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, std::vector<wallet::UtxoEntry>{}, false, false, 0, true, true, id, blockHash);
 }
 
 //******************************************************************************
@@ -1485,6 +1485,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const bool partialOrder,
                                            const bool repostOrder,
                                            const CAmount partialMinimum,
+                                           const bool autoSplit,
+                                           const bool useAllFunds,
                                            uint256 & id,
                                            uint256 & blockHash,
                                            const uint256 parentid)
@@ -1603,6 +1605,15 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         // Available utxos from from wallet
         std::vector<wallet::UtxoEntry> outputs;
         connFrom->getUnspent(outputs, excludedUtxos);
+
+        // Filter utxos by address
+        if (!useAllFunds) {
+            // Only allow utxos associated to the 'from' (maker) address
+            outputs.erase(
+                std::remove_if(outputs.begin(), outputs.end(),
+                    [&from](const wallet::UtxoEntry& utxo) { return utxo.address != from; }),
+                outputs.end());
+        }
 
         if (partialOrder) {
             const CAmount prepTxFee = xBridgeIntFromReal(connFrom->minTxFee1(10, partialOrderVouts + 1));
@@ -1758,6 +1769,15 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     return xbridge::Error::INVALID_AMOUNT;
                 }
             } else { // If no user supplied utxos, create the partial order prep transaction
+                if (!autoSplit) {
+                    unlockCoins(ptr->fromCurrency, ptr->usedCoins);
+                    UniValue log_obj(UniValue::VOBJ);
+                    log_obj.pushKV("orderid", "unknown");
+                    log_obj.pushKV("from_currency", connFrom->currency);
+                    xbridge::LogOrderMsg(log_obj, "failed to create order, not allowed to split utxos for partial order prep transaction", __FUNCTION__);
+                    return xbridge::Error::INSIFFICIENT_FUNDS;
+                }
+
                 std::vector<wallet::UtxoEntry> existingUtxos;
                 double vinsTotal{0};
                 std::vector<xbridge::XTxIn> vins;
