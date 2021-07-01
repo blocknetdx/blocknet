@@ -188,6 +188,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     { "gettradingdata", 1, "arg1" },
     { "dxGetTradingData", 0, "arg0" },
     { "dxGetTradingData", 1, "arg1" },
+    { "dxMakeOrder", 7, "use_all_funds" },
     { "dxMakePartialOrder", 8, "use_all_funds" },
     { "dxMakePartialOrder", 9, "auto_split" },
     { "dxSplitAddress", 3, "include_fees" },

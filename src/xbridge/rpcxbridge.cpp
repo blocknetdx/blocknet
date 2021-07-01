@@ -833,6 +833,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                     {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker asset to be received."},
                     {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
                     {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "The order type. Options: exact"},
+                    {"use_all_funds", RPCArg::Type::BOOL, /* default */ "true", "Use funds from all available addresses in the wallet as opposed to just the maker_address."},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
                 },
                 RPCResult{
@@ -896,7 +897,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                     HelpExampleCli("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact")
                   + HelpExampleRpc("dxMakeOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"exact\"")
                   + HelpExampleCli("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact dryrun")
-                  + HelpExampleRpc("dxMakeOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"exact\", \"dryrun\"")
+                  + HelpExampleRpc("dxMakeOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"exact\", \"true\", \"dryrun\"")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
@@ -985,10 +986,15 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "The taker_size must be greater than 0."));
     }
+
+    bool useAllFunds = true;
+    if (request.params.size() >= 8)
+        useAllFunds = request.params[7].get_bool();
+
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
-    if (params.size() == 8) {
-        std::string dryrunParam = params[7].get_str();
+    if (params.size() == 9) {
+        std::string dryrunParam = params[8].get_str();
         if (dryrunParam != "dryrun") {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
