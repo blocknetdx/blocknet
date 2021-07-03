@@ -1422,14 +1422,19 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
         const std::string to, const std::string toCurrency, const CAmount makerAmount, const CAmount takerAmount,
-        const uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
+        const uint64_t minFromAmount, uint64_t repostAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
-    double repostAmount{0};
+    double availableValue{0};
     for (const auto & utxo : utxos)
-        repostAmount += utxo.amount;
+        availableValue += utxo.amount;
+    auto availableAmount = xBridgeAmountFromReal(availableValue);
 
-    if (utxos.empty() || repostAmount > makerAmount)
+    if (utxos.empty() || repostAmount > availableAmount || repostAmount > makerAmount)
         return xbridge::Error::INSIFFICIENT_FUNDS; // do not repost an order with insufficient funds
+
+    // use everything that is available
+    if (repostAmount == 0)
+        repostAmount = availableAmount;
 
     WalletConnectorPtr connFrom = connectorByCurrency(fromCurrency);
     WalletConnectorPtr connTo = connectorByCurrency(toCurrency);
@@ -1437,10 +1442,10 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
         WARN() << "no session for <" << (connFrom ? toCurrency : fromCurrency) << "> " << __FUNCTION__;
         return xbridge::Error::NO_SESSION;
     }
-    if (connFrom->isDustAmount(repostAmount))
+    if (connFrom->isDustAmount(xBridgeValueFromAmount(repostAmount)))
         return xbridge::Error::DUST;
 
-    auto newRepostAmount = xBridgeAmountFromReal(repostAmount);
+    auto newRepostAmount = repostAmount;
     const auto fee1 = xBridgeAmountFromReal(connFrom->minTxFee1(1, 3));
     const auto fee2 = xBridgeAmountFromReal(connFrom->minTxFee2(1, 1));
     newRepostAmount -= (fee1 + fee2) * utxos.size();
@@ -1492,6 +1497,13 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            uint256 & blockHash,
                                            const uint256 parentid)
 {
+    /*
+     * Currently inputs cannot be directly specified by the user. Consequently utxos.empty() is true
+     * in most cases. The only exception is when a partial order is reposted and there is already a
+     * pre-selected set of remaining inputs. utxos.empty() is used to check whether it's a repost
+     * (called from repostXBridgeTransaction()).
+     */
+
     // search for service node
     std::set<std::string> currencies{fromCurrency, toCurrency};
     CPubKey snode;
@@ -1769,16 +1781,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
                     return xbridge::Error::INVALID_AMOUNT;
                 }
-            } else { // If no user supplied utxos, create the partial order prep transaction
-                if (!autoSplit) {
-                    unlockCoins(ptr->fromCurrency, ptr->usedCoins);
-                    UniValue log_obj(UniValue::VOBJ);
-                    log_obj.pushKV("orderid", "unknown");
-                    log_obj.pushKV("from_currency", connFrom->currency);
-                    xbridge::LogOrderMsg(log_obj, "failed to create order, not allowed to split utxos for partial order prep transaction", __FUNCTION__);
-                    return xbridge::Error::INSIFFICIENT_FUNDS;
-                }
-
+            } else if (autoSplit) { // If no user supplied utxos, create the partial order prep transaction
                 std::vector<wallet::UtxoEntry> existingUtxos;
                 double vinsTotal{0};
                 std::vector<xbridge::XTxIn> vins;
@@ -1937,7 +1940,30 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     LOCK(m_lock);
                     m_partialOrders.push_back(ptr);
                 }
+            } else {
+                // list order immediately without any splitting, but wait for change to confirm when reposting
+                // this has no effect, if the partial order is not set to being reposted in the first place
+                ptr->repostOrderChange = true;
             }
+        } else {
+            // partial order repost
+            // check whether there is an unconfirmed change utxo (should be a most one in the list)
+            // if that is the case, set order to pending and wait for confirmation
+            for (const auto & entry: utxos) {
+                if (entry.confirmations == 0) {
+                    ptr->partialOrderPrepTx = entry.txId;
+                    ptr->setPartialOrderPending(true);
+                    {
+                        LOCK(m_lock);
+                        m_partialOrders.push_back(ptr);
+                    }
+
+                    // ensure change keeps on being reposted
+                    ptr->repostOrderChange = true;
+                    break;
+                }
+            }
+
         }
     }
 
@@ -1973,7 +1999,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     updateConnector(connFrom, ptr->from, ptr->fromCurrency);
     updateConnector(connTo, ptr->to, ptr->toCurrency);
 
-    if (!partialOrder || !utxos.empty() || partialExactUtxoMatch) {
+    if (!partialOrder || partialExactUtxoMatch || !ptr->isPartialOrderPending()) {
         // notify ui about new order
         xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
@@ -1984,6 +2010,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     {
+        // The tx will be processed in checkAndRelayPendingOrders() and checkAndEraseExpiredTransactions()
+        // once the partialOrderPrepTx has confirmed, see processPendingPartialOrders().
+        // Need to either wait for a splitting tx or a change tx to confirm.
         LOCK(m_p->m_txLocker);
         m_p->m_transactions[id] = ptr;
     }

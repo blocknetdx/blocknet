@@ -302,13 +302,14 @@ public:
      * @param makerAmount - maker's from amount
      * @param takerAmount - maker's to amount
      * @param minFromAmount - the minimum size that can be taken from maker
+     * @param repostAmount - new size of the partial order
      * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
      * @param parentid - Parent order id
      * @return xbridge::SUCCESS if success, else error code
      */
     Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
-            CAmount makerAmount, CAmount takerAmount, uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos,
-            const uint256 parentid=uint256());
+            CAmount makerAmount, CAmount takerAmount, uint64_t minFromAmount, uint64_t repostAmount,
+            const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid=uint256());
 
     // TODO make protected
     /**

@@ -2066,6 +2066,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     auto fromAddr = connFrom->fromXAddr(xtx->from);
     auto toAddr = connTo->fromXAddr(xtx->to);
+    bool hasChange = false;
+    std::string changeAddr;
 
     // depositTx
     {
@@ -2090,8 +2092,11 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         if (inAmount > outAmount+fee1+fee2)
         {
             double rest = inAmount-outAmount-fee1-fee2;
-            if (!connFrom->isDustAmount(rest))
+            if (!connFrom->isDustAmount(rest)) {
                 outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
+                hasChange = true;
+                changeAddr = largestUtxo.address;
+            }
         }
 
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
@@ -2190,6 +2195,25 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             sendCancelTransaction(xtx, crBadADepositTx);
             return true;
         }
+
+        // Repost order preparations
+        // find the change utxo and add it as repost utxo
+        if(hasChange && xtx->isPartialRepost() && xtx->isRepostChangeAllowed()) {
+            wallet::UtxoEntry entry;
+            entry.address = changeAddr;
+            entry.txId = sentid;
+            entry.vout = 1; // second output is always the change, see above
+
+            // make sure we actually have the utxo
+            if (connFrom->getTxOut(entry)) {
+                // getTxOut silently updates the confirmations, however repostXBridgeTransaction assumes
+                // that the change is still unconfirmed, in order to avoid any race conditions, we set it manually
+                // confirmations will be properly check by processPendingPartialOrders later on
+                entry.confirmations = 0;
+                xtx->repostCoins.push_back(entry);
+            }
+        }
+
     }
 
     // send reply
@@ -2210,9 +2234,17 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     // Repost order
     if (xtx->isPartialRepost()) {
+        CAmount repostAmount = 0; // use everything that is available (from remaining confirmed utxos)
+        if(hasChange && xtx->isRepostChangeAllowed()) {
+            auto spent = xBridgeAmountFromReal(outAmount + fee2);
+            if (xtx->origFromAmount > spent) {
+                repostAmount = xtx->origFromAmount - spent;
+            }
+        }
+
         try {
             const auto status = xapp.repostXBridgeTransaction(xtx->fromAddr, xtx->fromCurrency, xtx->toAddr, xtx->toCurrency,
-                    xtx->origFromAmount, xtx->origToAmount, xtx->minFromAmount, xtx->repostCoins, xtx->id);
+                    xtx->origFromAmount, xtx->origToAmount, xtx->minFromAmount, repostAmount, xtx->repostCoins, xtx->id);
             if (status == xbridge::INSIFFICIENT_FUNDS)
                 LogOrderMsg(xtx->id.GetHex(), "not reposting the partial order because all available utxos have been used up", __FUNCTION__);
             else if (status != xbridge::SUCCESS)
