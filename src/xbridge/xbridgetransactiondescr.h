@@ -147,6 +147,7 @@ struct TransactionDescr
         READWRITE(partialOrdersAllowed);
         READWRITE(partialOrderPending);
         READWRITE(repostOrder);
+        READWRITE(repostOrderChange);
         READWRITE(minFromAmount);
         READWRITE(historical);
         READWRITE(logPayTx1);
@@ -218,6 +219,7 @@ struct TransactionDescr
         partialOrdersAllowed = false;
         partialOrderPending = false;
         repostOrder = false;
+        repostOrderChange = false;
         minFromAmount = 0;
         historical = false;
         logPayTx1 = false;
@@ -317,6 +319,8 @@ struct TransactionDescr
     bool     partialOrderPending{false};
     // repost partial order after completion
     bool     repostOrder{false};
+    // repost potential change (wait for confirmations)
+    bool     repostOrderChange{false};
     // partial order amounts
     uint64_t minFromAmount{0};
 
@@ -408,6 +412,16 @@ struct TransactionDescr
     bool isPartialRepost() {
         LOCK(_lock);
         return repostOrder;
+    }
+
+    void setRepostChange(const bool flag) {
+        LOCK(_lock);
+        repostOrderChange = flag;
+    }
+
+    bool isRepostChangeAllowed() {
+        LOCK(_lock);
+        return repostOrderChange;
     }
 
     void setPartialOrderPending(const bool flag) {
@@ -732,6 +746,7 @@ private:
         partialOrdersAllowed         = d.partialOrdersAllowed;
         partialOrderPending          = d.partialOrderPending;
         repostOrder                  = d.repostOrder;
+        repostOrderChange            = d.repostOrderChange;
         minFromAmount                = d.minFromAmount;
         historical                   = d.historical;
         logPayTx1                    = d.logPayTx1;
