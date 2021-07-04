@@ -748,6 +748,7 @@ private:
     CCriticalSection m_updatingWalletsLock;
     bool m_stopped{false};
 
+    // TODO rename: name misleading, can contain any pending order
     std::vector<TransactionDescrPtr> m_partialOrders;
     std::set<xbridge::wallet::UtxoEntry> m_feeUtxos;
     std::map<std::string, std::set<xbridge::wallet::UtxoEntry> > m_utxosDict;

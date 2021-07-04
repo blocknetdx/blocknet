@@ -1841,8 +1841,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                          __FUNCTION__);
                     return xbridge::Error::UNKNOWN_ERROR;
                 }
-                // Assign the prep tx id
-                ptr->partialOrderPrepTx = txid;
+                // Assign the prep tx (we own all outputs, just pick the first one)
+                ptr->orderPrepTx = COutPoint(uint256S(txid), 0);
 
                 unlockCoins(ptr->fromCurrency, ptr->usedCoins);
                 ptr->clearUsedCoins();
@@ -1935,7 +1935,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 id = ss2.GetHash();
 
                 ptr->id = id;
-                ptr->setPartialOrderPending(true);
+                ptr->setOrderPending(true);
                 {
                     LOCK(m_lock);
                     m_partialOrders.push_back(ptr);
@@ -1951,8 +1951,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             // if that is the case, set order to pending and wait for confirmation
             for (const auto & entry: utxos) {
                 if (entry.confirmations == 0) {
-                    ptr->partialOrderPrepTx = entry.txId;
-                    ptr->setPartialOrderPending(true);
+                    ptr->orderPrepTx = COutPoint(uint256S(entry.txId), entry.vout);
+                    ptr->setOrderPending(true);
                     {
                         LOCK(m_lock);
                         m_partialOrders.push_back(ptr);
@@ -1971,8 +1971,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
         log_obj.pushKV("snode_pubkey", HexStr(pmn.getSnodePubKey()));
-        if (!ptr->partialOrderPrepTx.empty())
-            log_obj.pushKV("partial_prep_tx", ptr->partialOrderPrepTx);
+        if (!ptr->orderPrepTx.IsNull())
+            log_obj.pushKV("prep_tx", ptr->orderPrepTx.ToString());
         xbridge::LogOrderMsg(log_obj, "using servicenode for order", __FUNCTION__);
     }
 
@@ -1999,7 +1999,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     updateConnector(connFrom, ptr->from, ptr->fromCurrency);
     updateConnector(connTo, ptr->to, ptr->toCurrency);
 
-    if (!partialOrder || partialExactUtxoMatch || !ptr->isPartialOrderPending()) {
+    if (!partialOrder || partialExactUtxoMatch || !ptr->isOrderPending()) {
         // notify ui about new order
         xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
@@ -3219,7 +3219,7 @@ void App::Impl::checkAndRelayPendingOrders() {
         auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 240; // 4min
         auto newOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 15; // 15sec
 
-        if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew && !order->isPartialOrderPending())
+        if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew && !order->isOrderPending())
         {
             // exclude the old snode
             CPubKey oldsnode;
@@ -3552,7 +3552,7 @@ void App::Impl::checkAndEraseExpiredTransactions()
             boost::posix_time::time_duration tc = currentTime - tx->created;
             if (tx->state == xbridge::TransactionDescr::trNew &&
                 td.total_seconds() > xbridge::Transaction::pendingTTL &&
-                !tx->isPartialOrderPending()) // do not expire a pending partial order
+                !tx->isOrderPending()) // do not expire a pending partial order
             {
                 tx->state = xbridge::TransactionDescr::trOffline;
                 stateChanged = true;
@@ -3716,8 +3716,8 @@ void App::processPendingPartialOrders() {
             continue;
 
         wallet::UtxoEntry entry;
-        entry.txId = ptr->partialOrderPrepTx;
-        entry.vout = 0;
+        entry.txId = ptr->orderPrepTx.hash.ToString();
+        entry.vout = ptr->orderPrepTx.n;
         if (!connFrom->getTxOut(entry))
             continue;
         if (!entry.hasConfirmations || entry.confirmations <= 0)
@@ -3739,7 +3739,7 @@ void App::removePendingPartialOrder(TransactionDescrPtr ptr) {
     auto it = m_partialOrders.begin();
     while (it != m_partialOrders.end()) {
         if (ptr->id == it->get()->id) {
-            ptr->setPartialOrderPending(false);
+            ptr->setOrderPending(false);
             m_partialOrders.erase(it);
             break;
         }
@@ -3809,7 +3809,7 @@ void App::loadOrders() {
             watchForSpentDeposit(tr);
 
         // Restore pending partial orders
-        if (tr->isPartialOrderPending())
+        if (tr->isOrderPending())
             m_partialOrders.push_back(tr);
     }
 }
