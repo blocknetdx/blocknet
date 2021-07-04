@@ -813,7 +813,7 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
 
 UniValue dxMakeOrder(const JSONRPCRequest& request)
 {
-    if (request.fHelp)
+    if (request.fHelp || request.params.size() < 7)
         throw std::runtime_error(
             RPCHelpMan{"dxMakeOrder",
                 "\nCreate a new exact order. Exact orders must be taken for the full order amount. "
@@ -901,14 +901,6 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-
-    if (params.size() < 7) {
-        throw runtime_error("dxMakeOrder (maker) (maker size) (maker address) (taker) (taker size)\n"
-                            "(taker address) (type) (dryrun)[optional]\n"
-                            "Create a new order. You can only create orders for markets with tokens\n"
-                            "supported by your node. There are no fees to make orders. [dryrun] will\n"
-                            "validate the order without submitting the order to the network (test run).");
-    }
 
     if (!xbridge::xBridgeValidCoin(params[1].get_str())) {
         Object error;
