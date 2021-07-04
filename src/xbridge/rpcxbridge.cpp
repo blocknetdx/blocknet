@@ -1048,7 +1048,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     uint256 blockHash = uint256();
     statusCode = xbridge::App::instance().sendXBridgeTransaction
           (fromAddress, fromCurrency, xbridge::xBridgeAmountFromReal(fromAmount),
-           toAddress, toCurrency, xbridge::xBridgeAmountFromReal(toAmount), id, blockHash);
+           toAddress, toCurrency, xbridge::xBridgeAmountFromReal(toAmount), useAllFunds, id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
 

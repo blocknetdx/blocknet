@@ -276,6 +276,8 @@ public:
      * @param to - destionation amount
      * @param toCurrency - destionation currency
      * @param toAmount - destionation amount
+     * @param useAllFunds - allow the usage of any unlocked UTXO in the wallet (from any address),
+     *   otherwise only the from (maker) address is allowed
      * @param id - id of transaction
      * @param blockHash
      * @return xbridge::SUCCESS if success, else error code
@@ -286,6 +288,7 @@ public:
                                  const std::string & to,
                                  const std::string & toCurrency,
                                  const CAmount & toAmount,
+                                 const bool useAllFunds,
                                  uint256 & id,
                                  uint256 & blockHash);
 

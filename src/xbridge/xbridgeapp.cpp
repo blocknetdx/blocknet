@@ -1467,10 +1467,11 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & to,
                                            const std::string & toCurrency,
                                            const CAmount & toAmount,
+                                           const bool useAllFunds,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
-    return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, std::vector<wallet::UtxoEntry>{}, false, false, 0, true, true, id, blockHash);
+    return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, std::vector<wallet::UtxoEntry>{}, false, false, 0, true, useAllFunds, id, blockHash);
 }
 
 //******************************************************************************
