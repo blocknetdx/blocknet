@@ -13,6 +13,7 @@
 #include <secp256k1.h>
 #include <support/allocators/secure.h>
 #include "uint256.h"
+#include "util/ieee-packing.hpp"
 
 //******************************************************************************
 //******************************************************************************
@@ -164,80 +165,9 @@ bool XBridgePacket::verify(const std::vector<unsigned char> & pubkey)
 
 //******************************************************************************
 //******************************************************************************
-static uint64_t pack754(long double f, uint8_t bits, uint8_t expbits)
-{
-    long double fnorm;
-    int shift;
-    uint64_t sign;
-    uint64_t exp;
-    uint64_t significand;
-    uint8_t significandbits = bits - expbits - 1;
-
-    if (f == 0.0) {
-        return 0;
-    }
-
-    if (f < 0) {
-        sign = 1;
-        fnorm = -f;
-    } else {
-        sign = 0;
-        fnorm = f;
-    }
-
-    shift = 0;
-    while (fnorm >= 2.0) {
-        fnorm /= 2.0;
-        shift++;
-    }
-    while (fnorm < 1.0) {
-        fnorm *= 2.0;
-        shift--;
-    }
-    fnorm = fnorm - 1.0;
-
-    significand = fnorm * ((1LL<<significandbits) + 0.5f);
-    // get the biased exponent
-    exp = shift + ((1<<(expbits-1)) - 1); // shift + bias
-    return (sign<<(bits-1)) | (exp<<significandbits) | significand;
-}
-
-//******************************************************************************
-//******************************************************************************
-static long double unpack754(uint64_t i, uint8_t bits, uint8_t expbits)
-{
-    long double result;
-    uint64_t shift;
-    unsigned bias;
-    uint8_t significandbits = bits - expbits - 1;
-
-    if (i == 0) {
-        return 0.0;
-    }
-    // pull the significand
-    result = (i&((1LL<<significandbits)-1)); // mask
-    result /= (1LL<<significandbits);
-    result += 1.0f;
-
-    bias = (1<<(expbits-1)) - 1;
-    shift = ((i>>significandbits) & ((1LL<<expbits)-1)) - bias;
-    while (shift > 0) {
-        result *= 2.0;
-        shift--;
-    }
-    while (shift < 0) {
-        result /= 2.0;
-        shift++;
-    }
-    result *= (i>>(bits-1))&1 ? -1.0 : 1.0;
-    return result;
-}
-
-//******************************************************************************
-//******************************************************************************
 void XBridgePacket::append(const float data)
 {
-    uint64_t value = pack754(data, 32, 8);
+    uint64_t value = pack_f64(data);
     append(value);
 }
 
@@ -245,7 +175,7 @@ void XBridgePacket::append(const float data)
 //******************************************************************************
 void XBridgePacket::append(const double data)
 {
-    uint64_t value = pack754(data, 64, 11);
+    uint64_t value = pack_f64(data);
     append(value);
 }
 
@@ -255,7 +185,7 @@ size_t XBridgePacket::read(const size_t offset, float & data) const
 {
     uint64_t value = 0;
     size_t size = read(offset, value);
-    data = static_cast<float>(unpack754(value, 64, 11));
+    data = static_cast<float>(unpack_f64(value));
     return size;
 }
 
@@ -265,7 +195,7 @@ size_t XBridgePacket::read(const size_t offset, double & data) const
 {
     uint64_t value = 0;
     size_t size = read(offset, value);
-    data = static_cast<double>(unpack754(value, 64, 11));
+    data = static_cast<double>(pack_f64(value));
     return size;
 
 }
