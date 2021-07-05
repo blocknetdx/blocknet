@@ -1947,23 +1947,29 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             }
         } else {
             // partial order repost
-            // check whether there is an unconfirmed change utxo (should be a most one in the list)
-            // if that is the case, set order to pending and wait for confirmation
-            for (const auto & entry: utxos) {
-                if (entry.confirmations == 0) {
-                    ptr->orderPrepTx = COutPoint(uint256S(entry.txId), entry.vout);
-                    ptr->setOrderPending(true);
-                    {
-                        LOCK(m_lock);
-                        m_partialOrders.push_back(ptr);
-                    }
+        }
+    }
 
-                    // ensure change keeps on being reposted
-                    ptr->repostOrderChange = true;
-                    break;
+    // Repost
+    if (!utxos.empty()) {
+        // Check whether there is an unconfirmed change utxo (should be at most one in the list)
+        // If that is the case, set order to pending and wait for confirmation
+        // A potential change utxo is added in processTransactionCreateA(), if repostOrderChange
+        // was set in the parent order.
+        for (const auto & entry: utxos) {
+            if (entry.confirmations == 0) {
+                ptr->orderPrepTx = COutPoint(uint256S(entry.txId), entry.vout);
+                ptr->setOrderPending(true);
+                {
+                    LOCK(m_lock);
+                    m_partialOrders.push_back(ptr);
                 }
-            }
 
+                // ensure change keeps on being reposted
+                ptr->repostOrderChange = true;
+
+                break;
+            }
         }
     }
 
@@ -1999,7 +2005,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     updateConnector(connFrom, ptr->from, ptr->fromCurrency);
     updateConnector(connTo, ptr->to, ptr->toCurrency);
 
-    if (!partialOrder || partialExactUtxoMatch || !ptr->isOrderPending()) {
+    if (!ptr->isOrderPending() || partialExactUtxoMatch) {
         // notify ui about new order
         xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
