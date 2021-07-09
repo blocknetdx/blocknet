@@ -2022,14 +2022,19 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
     {
         vaddr.erase(vaddr.begin());
 
-        CScript w;
-        w << OP_0 << ToByteVector(id);
+        std::vector<opcodetype> ops = {OP_0, OP_1};
 
-        uint160 hash = Hash160(w.begin(), w.end());
-
-        if (std::equal(vaddr.begin(), vaddr.end(), hash.begin()))
+        for (uint32_t i = 0; i < ops.size(); ++i)
         {
-            return true;
+            CScript w;
+            w << ops[i] << ToByteVector(id);
+
+            uint160 hash = Hash160(w.begin(), w.end());
+
+            if (std::equal(vaddr.begin(), vaddr.end(), hash.begin()))
+            {
+                return true;
+            }
         }
     }
 
