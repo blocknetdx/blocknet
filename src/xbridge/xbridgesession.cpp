@@ -522,11 +522,6 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
             entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
             offset += sizeof(uint32_t);
 
-            entry.rawAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
-            offset += XBridgePacket::addressSize;
-
-            entry.address = sconn->fromXAddr(entry.rawAddress);
-
             entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::signatureSize);
             offset += XBridgePacket::signatureSize;
 
@@ -1035,7 +1030,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     //
 
     WalletConnectorPtr makerConn = xapp.connectorByCurrency(trPending->a_currency());
-    if (!makerConn) {
+    if (!makerConn) 
+    {
         trPending->setAccepting(false);
         xbridge::LogOrderMsg(id.GetHex(), "no maker connector for <" + trPending->a_currency() + ">", __FUNCTION__);
         sendRejectTransaction(id, crRpcError);
@@ -1043,8 +1039,10 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     }
 
     auto & makerUtxos = trPending->a_utxos();
-    for (auto entry : makerUtxos) {
-        if (!makerConn->getTxOut(entry)) {
+    for (auto entry : makerUtxos) 
+    {
+        if (!makerConn->getTxOut(entry)) 
+        {
             // Invalid utxos cancel order
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
@@ -1097,8 +1095,6 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                                                           packet->data()+offset+XBridgePacket::addressSize);
             offset += XBridgePacket::addressSize;
 
-            entry.address = conn->fromXAddr(entry.rawAddress);
-
             entry.signature = std::vector<unsigned char>(packet->data()+offset,
                                                          packet->data()+offset+XBridgePacket::signatureSize);
             offset += XBridgePacket::signatureSize;
@@ -1114,8 +1110,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             }
 
             // check signature
-            std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
-            if (!conn->verifyMessage(entry.address, entry.toString(), signature))
+            // std::string signature = EncodeBase64(&entry.signature[0], entry.signature.size());
+            if (!conn->verifyMessage(entry.address, entry.toString(), entry.signature))
             {
                 UniValue log_obj(UniValue::VOBJ);
                 log_obj.pushKV("orderid", id.GetHex());

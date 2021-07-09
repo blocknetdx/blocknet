@@ -80,7 +80,9 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
             if (!ExtractDestination(coin.GetInputCoin().txout.scriptPubKey, destination))
                 continue; // skip incompatible addresses
             entry.address = EncodeDestination(destination);
-            entry.scriptPubKey = HexStr(coin.GetInputCoin().txout.scriptPubKey);
+            CScript tmp = coin.GetInputCoin().txout.scriptPubKey;
+            entry.scriptPubKey.resize(tmp.size());
+            memcpy(&entry.scriptPubKey[0], &tmp[0], tmp.size());
             entry.confirmations = coin.nDepth;
             inputs.emplace_back(entry);
         }
@@ -90,16 +92,16 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
     }
 
     // Remove all the excluded utxos
+    // TODO disable
     inputs.erase(
         std::remove_if(inputs.begin(), inputs.end(), [&excludedUtxos](xbridge::wallet::UtxoEntry & u) {
             if (excludedUtxos.count(u))
                 return true; // remove if in excluded list
 
             // Only accept p2pkh (like 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
-            std::vector<unsigned char> script = ParseHex(u.scriptPubKey);
-            if (script.size() == 25 &&
-                script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
-                script[23] == 0x88 && script[24] == 0xac)
+            if (u.scriptPubKey.size() == 25 &&
+                u.scriptPubKey[0] == 0x76 && u.scriptPubKey[1] == 0xa9 && u.scriptPubKey[2] == 0x14 &&
+                u.scriptPubKey[23] == 0x88 && u.scriptPubKey[24] == 0xac)
             {
                 return false; // keep
             }

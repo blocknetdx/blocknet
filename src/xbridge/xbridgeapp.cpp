@@ -2057,7 +2057,6 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
         uint256 txid = uint256S(entry.txId);
         packet->append(txid.begin(), 32);
         packet->append(entry.vout);
-        packet->append(entry.rawAddress);
         packet->append(entry.signature);
     }
 
@@ -2418,7 +2417,6 @@ bool App::Impl::sendAcceptingTransaction(const TransactionDescrPtr & ptr, uint32
         uint256 txid = uint256S(entry.txId);
         packet->append(txid.begin(), 32);
         packet->append(entry.vout);
-        packet->append(entry.rawAddress);
         packet->append(entry.signature);
     }
 

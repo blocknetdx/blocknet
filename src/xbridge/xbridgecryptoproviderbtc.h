@@ -19,7 +19,7 @@
 namespace xbridge
 {
 
-const std::string messageMagic("XBridge Signed Message:\n");
+// const std::string messageMagic("XBridge Signed Message:\n");
 
 //******************************************************************************
 //******************************************************************************

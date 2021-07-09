@@ -273,7 +273,8 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
 bool unspentP2PKH(std::vector<xbridge::wallet::UtxoEntry> & utxos)
 {
     auto coins = availableCoins(true, 1);
-    for (const std::pair<COutPoint, CTxOut> & out : coins) {
+    for (const std::pair<COutPoint, CTxOut> & out : coins) 
+    {
         wallet::UtxoEntry utxo;
 
         // Only support p2pkh (e.g. 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
@@ -288,7 +289,8 @@ bool unspentP2PKH(std::vector<xbridge::wallet::UtxoEntry> & utxos)
                 continue;
 
             utxo.address = EncodeDestination(address);
-            utxo.scriptPubKey = HexStr(pk.begin(), pk.end());
+            utxo.scriptPubKey.resize((out.second.scriptPubKey.size()));
+            memcpy(&utxo.scriptPubKey[0], &out.second.scriptPubKey[0], out.second.scriptPubKey.size());
 
         } else continue; // ignore unsupported addresses (p2sh, p2pk, etc)
 

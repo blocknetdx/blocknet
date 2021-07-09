@@ -634,7 +634,7 @@ bool listUnspent(const std::string & rpcuser,
                     }
                     else if (v.name_ == scriptPubKey)
                     {
-                        u.scriptPubKey = v.value_.get_str();
+                        u.scriptPubKey = ParseHex(v.value_.get_str());
                     }
                     else if (v.name_ == confirmations)
                     {
@@ -768,12 +768,16 @@ bool gettxout(const std::string & rpcuser,
         }
 
         Object o = result.get_obj();
-        txout.amount = find_value(o, "value").get_real();
+
+        txout.amount       = find_value(o, "value").get_real();
+        txout.scriptPubKey = ParseHex(find_value(o, "scriptPubKey").get_str());
 
         // Assign confirmations
         const auto & rconfs = find_value(o, "confirmations");
         if (rconfs.type() == int_type)
+        {
             txout.setConfirmations(rconfs.get_int());
+        }
     }
     catch (std::exception & e)
     {
@@ -1809,13 +1813,14 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
     }
 
     // Remove all the excluded utxos
+    // TODO disable
     inputs.erase(
         std::remove_if(inputs.begin(), inputs.end(), [&excluded, this](xbridge::wallet::UtxoEntry & u) {
             if (excluded.count(u))
                 return true; // remove if in excluded list
 
             // Only accept p2pkh (like 76a91476bba472620ff0ecbfbf93d0d3909c6ca84ac81588ac)
-            std::vector<unsigned char> script = ParseHex(u.scriptPubKey);
+            std::vector<unsigned char> script = u.scriptPubKey;
             if (script.size() == 25 &&
                 script[0] == 0x76 && script[1] == 0xa9 && script[2] == 0x14 &&
                 script[23] == 0x88 && script[24] == 0xac)
@@ -1856,13 +1861,27 @@ bool BtcWalletConnector<CryptoProvider>::getTxOut(wallet::UtxoEntry & entry)
     if (!rpc::gettxout(m_user, m_passwd, m_ip, m_port, entry))
     {
         return false;
-//        LOG() << "gettxout failed, trying call gettransaction " << __FUNCTION__;
-//
-//        if(!rpc::gettransaction(m_user, m_passwd, m_ip, m_port, entry))
-//        {
-//            WARN() << "both calls of gettxout and gettransaction failed " << __FUNCTION__;
-//            return false;
-//        }
+    }
+
+    if (entry.scriptPubKey.size() == 
+        entry.scriptPubKey[0] == OP_DUP && 
+        entry.scriptPubKey[1] == OP_HASH160 && 
+        entry.scriptPubKey[2] == 0x14 && 
+        entry.scriptPubKey[23] == OP_EQUALVERIFY && 
+        entry.scriptPubKey[24] == OP_CHECKSIG)
+    {
+        // p2pkh
+        entry.addressType = wallet::UtxoEntry::legacy;
+        entry.rawAddress.assign(&entry.scriptPubKey[3], &entry.scriptPubKey[23]);
+    }
+    else if (entry.scriptPubKey.size() == 23 &&
+             entry.scriptPubKey[0] == OP_HASH160 &&
+             entry.scriptPubKey[1] == 0x14 &&
+             entry.scriptPubKey[22] == OP_EQUAL)
+    {
+        // p2sh
+        entry.addressType = wallet::UtxoEntry::p2sh;
+        entry.rawAddress.assign(&entry.scriptPubKey[2], &entry.scriptPubKey[22]);
     }
 
     return true;
@@ -1925,7 +1944,7 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
     return true;
 }
 
-// const std::string MESSAGE_MAGIC = "Bitcoin Signed Message:\n";
+const std::string MESSAGE_MAGIC = "XBridge Signed Message:\n";
 
 //******************************************************************************
 //******************************************************************************
@@ -1951,7 +1970,7 @@ bool BtcWalletConnector<CryptoProvider>::signMessage(const std::string & address
     }
 
     CHashWriter ss(SER_GETHASH, 0);
-    ss << messageMagic;
+    ss << MESSAGE_MAGIC;
     ss << message;
 
     if (!m_cp.signCompact(key, ss.GetHash(), signature))
@@ -1971,7 +1990,7 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
                                                        const std::vector<unsigned char> & signature)
 {
     CHashWriter ss(SER_GETHASH, 0);
-    ss << messageMagic;
+    ss << MESSAGE_MAGIC;
     ss << message;
 
     std::vector<unsigned char> pubkey;
@@ -1981,13 +2000,39 @@ bool BtcWalletConnector<CryptoProvider>::verifyMessage(const std::string & addre
         return false;
     }
 
-    std::vector<unsigned char> vaddr = toXAddr(address);
-    uint160 hash = Hash160(pubkey.begin(), pubkey.end());
-
-    if (std::equal(vaddr.begin(), vaddr.end(), hash.begin()))
+    std::vector<unsigned char> vaddr;
+    if (!DecodeBase58Check(address.c_str(), vaddr))
     {
-        return true;
+        LOG() << "error, invalid address " << __FUNCTION__;
+        return false;
     }
+
+    uint160 id = Hash160(pubkey.begin(), pubkey.end());
+
+    if (addrPrefix[0] == vaddr[0])
+    {
+        vaddr.erase(vaddr.begin());
+        
+        if (std::equal(vaddr.begin(), vaddr.end(), id.begin()))
+        {
+            return true;
+        }
+    }
+    else if (scriptPrefix[0] == vaddr[0])
+    {
+        vaddr.erase(vaddr.begin());
+
+        CScript w;
+        w << OP_0 << ToByteVector(id);
+
+        uint160 hash = Hash160(w.begin(), w.end());
+
+        if (std::equal(vaddr.begin(), vaddr.end(), hash.begin()))
+        {
+            return true;
+        }
+    }
+
 
     return false;
 }
@@ -2285,13 +2330,19 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
 
         // Check for confirmations in raw transaction output
         json_spirit::Value txvConfCount = json_spirit::find_value(txo, "confirmations");
-        if (txvConfCount.type() != json_spirit::int_type) { // If not found check gettxout for confirmations
+        if (txvConfCount.type() != json_spirit::int_type) 
+        { 
+            // If not found check gettxout for confirmations
             wallet::UtxoEntry utxo;
             utxo.txId = depositTxId;
             utxo.vout = depositTxVout;
-            if (rpc::gettxout(m_user, m_passwd, m_ip, m_port, utxo) && utxo.hasConfirmations) {
+            if (getTxOut(utxo) && utxo.hasConfirmations) 
+            {
                 confs = utxo.confirmations;
-            } else { // confirmation field not found, fail
+            } 
+            else 
+            { 
+                // confirmation field not found, fail
                 LOG() << "confirmations data not found in gettxout for " << depositTxId
                       << " this order may be stuck and may need to be canceled " << __FUNCTION__;
                 return false;

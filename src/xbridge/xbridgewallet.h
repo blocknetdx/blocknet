@@ -35,15 +35,26 @@ typedef std::pair<std::string, std::vector<std::string> > AddressBookEntry;
 
 struct UtxoEntry
 {
-    std::string txId;
-    uint32_t    vout;
-    double      amount{0};
-    std::string address;
-    std::string scriptPubKey;
-    uint32_t    confirmations{0};
+    std::string                txId;
+    uint32_t                   vout;
+    double                     amount;
+    std::string                address;
+    std::vector<unsigned char> scriptPubKey;
+    uint32_t                   confirmations;
 
+    enum AddressType
+    {
+        unknown = 0,
+        legacy,
+        p2sh
+    };
+
+    AddressType                addressType;
     std::vector<unsigned char> rawAddress;
     std::vector<unsigned char> signature;
+
+    UtxoEntry() : amount(0), confirmations(0), addressType(unknown)
+    {}
 
     std::string toString() const;
     bool hasConfirmations{false};

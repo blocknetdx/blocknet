@@ -3523,7 +3523,7 @@ UniValue dxGetUtxos(const JSONRPCRequest& request)
         o.pushKV("vout", static_cast<int>(utxo.vout));
         o.pushKV("amount", xbridge::xBridgeStringValueFromPrice(utxo.amount, conn->COIN));
         o.pushKV("address", utxo.address);
-        o.pushKV("scriptPubKey", utxo.scriptPubKey);
+        o.pushKV("scriptPubKey", HexStr(utxo.scriptPubKey));
         o.pushKV("confirmations", static_cast<int>(utxo.confirmations));
         o.pushKV("orderid", "");
         if (excluded.count(utxo) > 0) {
