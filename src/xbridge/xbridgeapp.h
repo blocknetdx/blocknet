@@ -245,6 +245,9 @@ public:
      * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
      * @param partialOrder - partial order flag
      * @param partialMinimum - partial minimum amount
+     * @param autoSplit - funds are split into multiple UTXO if needed
+     * @param useAllFunds - allow the usage of any unlocked UTXO in the wallet (from any address),
+     *   otherwise only the from (maker) address is allowed
      * @param id - id of transaction
      * @param blockHash
      * @return xbridge::SUCCESS if success, else error code
@@ -259,6 +262,8 @@ public:
                                  bool partialOrder,
                                  bool repostOrder,
                                  CAmount partialMinimum,
+                                 const bool autoSplit,
+                                 const bool useAllFunds,
                                  uint256 & id,
                                  uint256 & blockHash,
                                  const uint256 parentid=uint256());
@@ -271,6 +276,8 @@ public:
      * @param to - destionation amount
      * @param toCurrency - destionation currency
      * @param toAmount - destionation amount
+     * @param useAllFunds - allow the usage of any unlocked UTXO in the wallet (from any address),
+     *   otherwise only the from (maker) address is allowed
      * @param id - id of transaction
      * @param blockHash
      * @return xbridge::SUCCESS if success, else error code
@@ -281,6 +288,7 @@ public:
                                  const std::string & to,
                                  const std::string & toCurrency,
                                  const CAmount & toAmount,
+                                 const bool useAllFunds,
                                  uint256 & id,
                                  uint256 & blockHash);
 
@@ -294,13 +302,14 @@ public:
      * @param makerAmount - maker's from amount
      * @param takerAmount - maker's to amount
      * @param minFromAmount - the minimum size that can be taken from maker
+     * @param repostAmount - new size of the partial order
      * @param utxos - use these unspent transaction outputs (implies fees will be subtracted from this total)
      * @param parentid - Parent order id
      * @return xbridge::SUCCESS if success, else error code
      */
     Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
-            CAmount makerAmount, CAmount takerAmount, uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos,
-            const uint256 parentid=uint256());
+            CAmount makerAmount, CAmount takerAmount, uint64_t minFromAmount, uint64_t repostAmount,
+            const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid=uint256());
 
     // TODO make protected
     /**
@@ -739,6 +748,7 @@ private:
     CCriticalSection m_updatingWalletsLock;
     bool m_stopped{false};
 
+    // TODO rename: name misleading, can contain any pending order
     std::vector<TransactionDescrPtr> m_partialOrders;
     std::set<xbridge::wallet::UtxoEntry> m_feeUtxos;
     std::map<std::string, std::set<xbridge::wallet::UtxoEntry> > m_utxosDict;

@@ -814,7 +814,7 @@ UniValue dxGetOrder(const JSONRPCRequest& request)
 
 UniValue dxMakeOrder(const JSONRPCRequest& request)
 {
-    if (request.fHelp)
+    if (request.fHelp || request.params.size() < 7)
         throw std::runtime_error(
             RPCHelpMan{"dxMakeOrder",
                 "\nCreate a new exact order. Exact orders must be taken for the full order amount. "
@@ -834,6 +834,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                     {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker asset to be received."},
                     {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
                     {"type", RPCArg::Type::STR, RPCArg::Optional::NO, "The order type. Options: exact"},
+                    {"use_all_funds", RPCArg::Type::BOOL, /* default */ "true", "Use funds from all available addresses in the wallet as opposed to just the maker_address."},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
                 },
                 RPCResult{
@@ -896,19 +897,11 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                 RPCExamples{
                     HelpExampleCli("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact")
                   + HelpExampleRpc("dxMakeOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"exact\"")
-                  + HelpExampleCli("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact dryrun")
-                  + HelpExampleRpc("dxMakeOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"exact\", \"dryrun\"")
+                  + HelpExampleCli("dxMakeOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR exact true dryrun")
+                  + HelpExampleRpc("dxMakeOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"exact\", \"true\", \"dryrun\"")
                 },
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
-
-    if (params.size() < 7) {
-        throw runtime_error("dxMakeOrder (maker) (maker size) (maker address) (taker) (taker size)\n"
-                            "(taker address) (type) (dryrun)[optional]\n"
-                            "Create a new order. You can only create orders for markets with tokens\n"
-                            "supported by your node. There are no fees to make orders. [dryrun] will\n"
-                            "validate the order without submitting the order to the network (test run).");
-    }
 
     if (!xbridge::xBridgeValidCoin(params[1].get_str())) {
         Object error;
@@ -986,10 +979,15 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "The taker_size must be greater than 0."));
     }
+
+    bool useAllFunds = true;
+    if (request.params.size() >= 8)
+        useAllFunds = request.params[7].get_bool();
+
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
-    if (params.size() == 8) {
-        std::string dryrunParam = params[7].get_str();
+    if (params.size() == 9) {
+        std::string dryrunParam = params[8].get_str();
         if (dryrunParam != "dryrun") {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
@@ -1043,7 +1041,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     uint256 blockHash = uint256();
     statusCode = xbridge::App::instance().sendXBridgeTransaction
           (fromAddress, fromCurrency, xbridge::xBridgeAmountFromReal(fromAmount),
-           toAddress, toCurrency, xbridge::xBridgeAmountFromReal(toAmount), id, blockHash);
+           toAddress, toCurrency, xbridge::xBridgeAmountFromReal(toAmount), useAllFunds, id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
 
@@ -2941,6 +2939,8 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                     {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
                     {"minimum_size", RPCArg::Type::STR, RPCArg::Optional::NO, "Minimum maker_size that can be traded in the partial order."},
                     {"repost", RPCArg::Type::STR, "true", "Repost partial order remainder after taken. Options: true/false"},
+                    {"use_all_funds", RPCArg::Type::BOOL, /* default */ "true", "Use funds from all available addresses in the wallet as opposed to just the maker_address."},
+                    {"auto_split", RPCArg::Type::BOOL, /* default */ "true", "Split funds into multiple UTXOs if needed."},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
                 },
                 RPCResult{
@@ -3003,8 +3003,8 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                 RPCExamples{
                     HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 100")
                   + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\"")
-                  + HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 100 true dryrun")
-                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\", \"true\", \"dryrun\"")
+                  + HelpExampleCli("dxMakePartialOrder", "LTC 25 LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H BLOCK 1000 BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR 100 true true true dryrun")
+                  + HelpExampleRpc("dxMakePartialOrder", "\"LTC\", \"25\", \"LLZ1pgb6Jqx8hu84fcr5WC5HMoKRUsRE8H\", \"BLOCK\", \"1000\", \"BWQrvmuHB4C68KH5V7fcn9bFtWN8y5hBmR\", \"100\", \"true\", \"true\", \"true\", \"dryrun\"")
                 },
             }.ToString());
 
@@ -3092,9 +3092,17 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     if (request.params.size() >= 8)
         repost = !(request.params[7].get_str() == "false");
 
+    bool useAllFunds = true;
+    if (request.params.size() >= 9)
+        useAllFunds = request.params[8].get_bool();
+
+    bool autoSplit = true;
+    if (request.params.size() >= 10)
+        autoSplit = request.params[9].get_bool();
+
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
-    if (request.params.size() == 9) {
+    if (request.params.size() == 11) {
         std::string dryrunParam = request.params[8].get_str();
         if (dryrunParam != "dryrun") {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
@@ -3153,7 +3161,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     statusCode = xbridge::App::instance().sendXBridgeTransaction(fromAddress, fromCurrency,
             xbridge::xBridgeAmountFromReal(fromAmount), toAddress, toCurrency,
             xbridge::xBridgeAmountFromReal(toAmount), std::vector<xbridge::wallet::UtxoEntry>{},
-            true, repost, xbridge::xBridgeAmountFromReal(partialMinimum), id, blockHash);
+            true, repost, xbridge::xBridgeAmountFromReal(partialMinimum), autoSplit, useAllFunds, id, blockHash);
 
     if (statusCode == xbridge::SUCCESS) {
         Object obj;

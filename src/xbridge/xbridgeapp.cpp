@@ -1422,14 +1422,19 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
         const std::string to, const std::string toCurrency, const CAmount makerAmount, const CAmount takerAmount,
-        const uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
+        const uint64_t minFromAmount, uint64_t repostAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
-    double repostAmount{0};
+    double availableValue{0};
     for (const auto & utxo : utxos)
-        repostAmount += utxo.amount;
+        availableValue += utxo.amount;
+    auto availableAmount = xBridgeAmountFromReal(availableValue);
 
-    if (utxos.empty() || repostAmount > makerAmount)
+    if (utxos.empty() || repostAmount > availableAmount || repostAmount > makerAmount)
         return xbridge::Error::INSIFFICIENT_FUNDS; // do not repost an order with insufficient funds
+
+    // use everything that is available
+    if (repostAmount == 0)
+        repostAmount = availableAmount;
 
     WalletConnectorPtr connFrom = connectorByCurrency(fromCurrency);
     WalletConnectorPtr connTo = connectorByCurrency(toCurrency);
@@ -1437,10 +1442,10 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
         WARN() << "no session for <" << (connFrom ? toCurrency : fromCurrency) << "> " << __FUNCTION__;
         return xbridge::Error::NO_SESSION;
     }
-    if (connFrom->isDustAmount(repostAmount))
+    if (connFrom->isDustAmount(xBridgeValueFromAmount(repostAmount)))
         return xbridge::Error::DUST;
 
-    auto newRepostAmount = xBridgeAmountFromReal(repostAmount);
+    auto newRepostAmount = repostAmount;
     const auto fee1 = xBridgeAmountFromReal(connFrom->minTxFee1(1, 3));
     const auto fee2 = xBridgeAmountFromReal(connFrom->minTxFee2(1, 1));
     newRepostAmount -= (fee1 + fee2) * utxos.size();
@@ -1456,7 +1461,7 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
 
     uint256 id, blockHash;
     return sendXBridgeTransaction(from, fromCurrency, newRepostAmount, to, toCurrency, toAmount, utxos,
-                                  usePartial, usePartial, minFromAmount, id, blockHash, parentid);
+                                  usePartial, usePartial, minFromAmount, true, true, id, blockHash, parentid);
 }
 
 //******************************************************************************
@@ -1467,10 +1472,11 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const std::string & to,
                                            const std::string & toCurrency,
                                            const CAmount & toAmount,
+                                           const bool useAllFunds,
                                            uint256 & id,
                                            uint256 & blockHash)
 {
-    return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, std::vector<wallet::UtxoEntry>{}, false, false, 0, id, blockHash);
+    return sendXBridgeTransaction(from, fromCurrency, fromAmount, to, toCurrency, toAmount, std::vector<wallet::UtxoEntry>{}, false, false, 0, true, useAllFunds, id, blockHash);
 }
 
 //******************************************************************************
@@ -1485,10 +1491,19 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                            const bool partialOrder,
                                            const bool repostOrder,
                                            const CAmount partialMinimum,
+                                           const bool autoSplit,
+                                           const bool useAllFunds,
                                            uint256 & id,
                                            uint256 & blockHash,
                                            const uint256 parentid)
 {
+    /*
+     * Currently inputs cannot be directly specified by the user. Consequently utxos.empty() is true
+     * in most cases. The only exception is when a partial order is reposted and there is already a
+     * pre-selected set of remaining inputs. utxos.empty() is used to check whether it's a repost
+     * (called from repostXBridgeTransaction()).
+     */
+
     // search for service node
     std::set<std::string> currencies{fromCurrency, toCurrency};
     CPubKey snode;
@@ -1603,6 +1618,15 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         // Available utxos from from wallet
         std::vector<wallet::UtxoEntry> outputs;
         connFrom->getUnspent(outputs, excludedUtxos);
+
+        // Filter utxos by address
+        if (!useAllFunds) {
+            // Only allow utxos associated to the 'from' (maker) address
+            outputs.erase(
+                std::remove_if(outputs.begin(), outputs.end(),
+                    [&from](const wallet::UtxoEntry& utxo) { return utxo.address != from; }),
+                outputs.end());
+        }
 
         if (partialOrder) {
             const CAmount prepTxFee = xBridgeIntFromReal(connFrom->minTxFee1(10, partialOrderVouts + 1));
@@ -1757,7 +1781,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     xbridge::LogOrderMsg(log_obj, "failed to create order, the maximum number of utxos on the order was exceeded", __FUNCTION__);
                     return xbridge::Error::INVALID_AMOUNT;
                 }
-            } else { // If no user supplied utxos, create the partial order prep transaction
+            } else if (autoSplit) { // If no user supplied utxos, create the partial order prep transaction
                 std::vector<wallet::UtxoEntry> existingUtxos;
                 double vinsTotal{0};
                 std::vector<xbridge::XTxIn> vins;
@@ -1817,8 +1841,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                                          __FUNCTION__);
                     return xbridge::Error::UNKNOWN_ERROR;
                 }
-                // Assign the prep tx id
-                ptr->partialOrderPrepTx = txid;
+                // Assign the prep tx (we own all outputs, just pick the first one)
+                ptr->orderPrepTx = COutPoint(uint256S(txid), 0);
 
                 unlockCoins(ptr->fromCurrency, ptr->usedCoins);
                 ptr->clearUsedCoins();
@@ -1911,11 +1935,40 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 id = ss2.GetHash();
 
                 ptr->id = id;
-                ptr->setPartialOrderPending(true);
+                ptr->setOrderPending(true);
                 {
                     LOCK(m_lock);
                     m_partialOrders.push_back(ptr);
                 }
+            } else {
+                // list order immediately without any splitting, but wait for change to confirm when reposting
+                // this has no effect, if the partial order is not set to being reposted in the first place
+                ptr->repostOrderChange = true;
+            }
+        } else {
+            // partial order repost
+        }
+    }
+
+    // Repost
+    if (!utxos.empty()) {
+        // Check whether there is an unconfirmed change utxo (should be at most one in the list)
+        // If that is the case, set order to pending and wait for confirmation
+        // A potential change utxo is added in processTransactionCreateA(), if repostOrderChange
+        // was set in the parent order.
+        for (const auto & entry: utxos) {
+            if (entry.confirmations == 0) {
+                ptr->orderPrepTx = COutPoint(uint256S(entry.txId), entry.vout);
+                ptr->setOrderPending(true);
+                {
+                    LOCK(m_lock);
+                    m_partialOrders.push_back(ptr);
+                }
+
+                // ensure change keeps on being reposted
+                ptr->repostOrderChange = true;
+
+                break;
             }
         }
     }
@@ -1924,8 +1977,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
         log_obj.pushKV("snode_pubkey", HexStr(pmn.getSnodePubKey()));
-        if (!ptr->partialOrderPrepTx.empty())
-            log_obj.pushKV("partial_prep_tx", ptr->partialOrderPrepTx);
+        if (!ptr->orderPrepTx.IsNull())
+            log_obj.pushKV("prep_tx", ptr->orderPrepTx.ToString());
         xbridge::LogOrderMsg(log_obj, "using servicenode for order", __FUNCTION__);
     }
 
@@ -1952,7 +2005,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     updateConnector(connFrom, ptr->from, ptr->fromCurrency);
     updateConnector(connTo, ptr->to, ptr->toCurrency);
 
-    if (!partialOrder || !utxos.empty() || partialExactUtxoMatch) {
+    if (!ptr->isOrderPending() || partialExactUtxoMatch) {
         // notify ui about new order
         xuiConnector.NotifyXBridgeTransactionReceived(ptr);
 
@@ -1963,6 +2016,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     {
+        // The tx will be processed in checkAndRelayPendingOrders() and checkAndEraseExpiredTransactions()
+        // once the partialOrderPrepTx has confirmed, see processPendingPartialOrders().
+        // Need to either wait for a splitting tx or a change tx to confirm.
         LOCK(m_p->m_txLocker);
         m_p->m_transactions[id] = ptr;
     }
@@ -3169,7 +3225,7 @@ void App::Impl::checkAndRelayPendingOrders() {
         auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 240; // 4min
         auto newOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 15; // 15sec
 
-        if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew && !order->isPartialOrderPending())
+        if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew && !order->isOrderPending())
         {
             // exclude the old snode
             CPubKey oldsnode;
@@ -3502,7 +3558,7 @@ void App::Impl::checkAndEraseExpiredTransactions()
             boost::posix_time::time_duration tc = currentTime - tx->created;
             if (tx->state == xbridge::TransactionDescr::trNew &&
                 td.total_seconds() > xbridge::Transaction::pendingTTL &&
-                !tx->isPartialOrderPending()) // do not expire a pending partial order
+                !tx->isOrderPending()) // do not expire a pending partial order
             {
                 tx->state = xbridge::TransactionDescr::trOffline;
                 stateChanged = true;
@@ -3666,8 +3722,8 @@ void App::processPendingPartialOrders() {
             continue;
 
         wallet::UtxoEntry entry;
-        entry.txId = ptr->partialOrderPrepTx;
-        entry.vout = 0;
+        entry.txId = ptr->orderPrepTx.hash.ToString();
+        entry.vout = ptr->orderPrepTx.n;
         if (!connFrom->getTxOut(entry))
             continue;
         if (!entry.hasConfirmations || entry.confirmations <= 0)
@@ -3689,7 +3745,7 @@ void App::removePendingPartialOrder(TransactionDescrPtr ptr) {
     auto it = m_partialOrders.begin();
     while (it != m_partialOrders.end()) {
         if (ptr->id == it->get()->id) {
-            ptr->setPartialOrderPending(false);
+            ptr->setOrderPending(false);
             m_partialOrders.erase(it);
             break;
         }
@@ -3759,7 +3815,7 @@ void App::loadOrders() {
             watchForSpentDeposit(tr);
 
         // Restore pending partial orders
-        if (tr->isPartialOrderPending())
+        if (tr->isOrderPending())
             m_partialOrders.push_back(tr);
     }
 }
