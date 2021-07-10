@@ -167,7 +167,7 @@ template<typename I> auto unpack_float(I x)
    return *reinterpret_cast<F*>(&x);
 #else
    if constexpr(sizeof(F) == 8) return detail::unpack_float<F, 11>(x);
-   return detail::unpack_float<T, 8>(x);
+   return detail::unpack_float<I, 8>(x);
 #endif
 }
 
