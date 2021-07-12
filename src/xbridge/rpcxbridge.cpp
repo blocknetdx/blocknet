@@ -3094,7 +3094,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
     if (request.params.size() == 11) {
-        std::string dryrunParam = request.params[8].get_str();
+        std::string dryrunParam = request.params[10].get_str();
         if (dryrunParam != "dryrun") {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
