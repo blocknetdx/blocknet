@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdio>
 #include <type_traits>
+#include <features.h>
 
 namespace detail
 {
