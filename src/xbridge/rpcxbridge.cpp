@@ -2940,7 +2940,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                     {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker asset to be received."},
                     {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
                     {"minimum_size", RPCArg::Type::STR, RPCArg::Optional::NO, "Minimum maker_size that can be traded in the partial order."},
-                    {"repost", RPCArg::Type::STR, "true", "Repost partial order remainder after taken. Options: true/false"},
+                    {"repost", RPCArg::Type::BOOL, /* default */ "true", "Repost partial order remainder after taken."},
                     {"use_all_funds", RPCArg::Type::BOOL, /* default */ "true", "Use funds from all available addresses in the wallet as opposed to just the maker_address."},
                     {"auto_split", RPCArg::Type::BOOL, /* default */ "true", "Split funds into multiple UTXOs if needed."},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
@@ -3092,7 +3092,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
 
     bool repost{true};
     if (request.params.size() >= 8)
-        repost = !(request.params[7].get_str() == "false");
+        repost = request.params[7].get_bool();
 
     bool useAllFunds = true;
     if (request.params.size() >= 9)
