@@ -822,9 +822,9 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                 "and the network (view with dxGetNetworkTokens). There are no fees to make orders.\n"
                 "\nNote:\n"
                 "XBridge will first attempt to use funds from the specified maker address. "
-                "If this address does not have sufficient funds to cover the order, then "
-                "it will pull funds from other addresses in the wallet. Change is "
-                "deposited to the address with the largest input used.\n",
+                "If this address does not have sufficient funds to cover the order and "
+                "`use_all_funds` is true, then it will pull funds from other addresses in "
+                "the wallet. Change is deposited to the address with the largest input used.\n",
                 {
                     {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being sold by the maker (e.g. LTC)."},
                     {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker asset being sent."},
@@ -2924,9 +2924,9 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                 "the order will proceed to the `open` state.\n"
                 "\nNote:\n"
                 "XBridge will first attempt to use funds from the specified maker address. "
-                "If this address does not have sufficient funds to cover the order, then "
-                "it will pull funds from other addresses in the wallet. Change is "
-                "deposited to the address with the largest input used.\n",
+                "If this address does not have sufficient funds to cover the order and "
+                "`use_all_funds` is true, then it will pull funds from other addresses in "
+                "the wallet. Change is deposited to the address with the largest input used.\n",
                 {
                     {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being sold by the maker (e.g. LTC)."},
                     {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker asset being sent."},
