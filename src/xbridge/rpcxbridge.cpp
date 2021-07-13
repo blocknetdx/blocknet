@@ -1066,6 +1066,8 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("status",         "created"));
         return uret(obj);
 
+    } else if (statusCode == xbridge::INSIFFICIENT_FUNDS) {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     } else {
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
@@ -3185,6 +3187,8 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("status",           "created"));
         return uret(obj);
 
+    } else if (statusCode == xbridge::INSIFFICIENT_FUNDS) {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     } else {
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
