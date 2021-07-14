@@ -2775,6 +2775,9 @@ bool App::findNodeWithService(const std::set<std::string> & services,
 {
     const uint32_t ver = version();
     auto list = m_p->findShuffledNodesWithService(services, ver, notIn);
+    LOG() << "findNodeWithService list.size: " << list.size();
+    for(CPubKey& e: list)
+        LOG() << e.GetHash().ToString();
     if (list.empty())
         return false;
     node = list.front();
@@ -2894,8 +2897,10 @@ std::vector<CPubKey> App::Impl::findShuffledNodesWithService(
 {
     std::vector<CPubKey> list;
     const auto & snodes = sn::ServiceNodeMgr::instance().list();
+    LOG() << "Enter findShuffledNodesWithService";
     for (const auto& x : snodes)
     {
+        LOG() << x.getSnodePubKey().GetHash().ToString();
         if (x.getXBridgeVersion() != version || notIn.count(x.getSnodePubKey()) || !x.running())
             continue;
 
@@ -3235,6 +3240,9 @@ void App::Impl::checkAndRelayPendingOrders() {
             std::set<std::string> currencies{order->fromCurrency, order->toCurrency};
             CPubKey snode;
             auto notIn = order->excludedNodes();
+            LOG() << "notIn size: " << notIn.size();
+            for(const auto& e: notIn)
+                LOG() << e.GetHash().ToString();
             notIn.insert(oldsnode); // exclude the current snode
             if (!xapp.findNodeWithService(currencies, snode, notIn)) {
                 UniValue log_obj(UniValue::VOBJ);
@@ -3243,6 +3251,7 @@ void App::Impl::checkAndRelayPendingOrders() {
                 log_obj.pushKV("to_currency", order->toCurrency);
                 xbridge::LogOrderMsg(log_obj, "order may be stuck, trying to submit order to previous snode", __FUNCTION__);
                 // do not fail here, let the order be broadcasted on existing snode just in case (also may avoid stalling the order)
+
             } else {
                 // assign new snode
                 order->excludeNode(oldsnode);
