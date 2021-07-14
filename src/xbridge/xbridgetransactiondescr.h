@@ -346,6 +346,10 @@ struct TransactionDescr
         LOCK(_lock);
         return _excludedSnodes;
     }
+    void excludedNodesClear() {
+        LOCK(_lock);
+        _excludedSnodes.clear();
+    }
 
     void setSecret(const std::vector<unsigned char> & secret) {
         LOCK(_lock);
