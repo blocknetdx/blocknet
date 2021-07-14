@@ -3252,8 +3252,10 @@ void App::Impl::checkAndRelayPendingOrders() {
                 log_obj.pushKV("to_currency", order->toCurrency);
                 xbridge::LogOrderMsg(log_obj, "order may be stuck, trying to submit order to previous snode", __FUNCTION__);
 
-                if (allowExcludedNodesClear && notIn.size() > 1)
+                if (allowExcludedNodesClear && notIn.size() > 1) {
+                    LOG() << "clearing excluded nodes";
                     order->excludedNodesClear();
+                }
 
                 // do not fail here, let the order be broadcasted on existing snode just in case (also may avoid stalling the order)
 
@@ -3289,9 +3291,10 @@ void App::Impl::checkAndRelayPendingOrders() {
                     log_obj.pushKV("to_currency", order->toCurrency);
                     xbridge::LogOrderMsg(log_obj, "failed to find service node, order may be stuck: trying to submit order to another snode", __FUNCTION__);
 
-                    if (allowExcludedNodesClear && notIn.size() > 1)
+                    if (allowExcludedNodesClear && notIn.size() > 1) {
+                        LOG() << "clearing excluded nodes (2)";
                         order->excludedNodesClear();
-
+                    }
                     // do not fail here, let the order be broadcasted on existing snode just in case (also may avoid stalling the order)
                 } else {
                     // assign new snode
