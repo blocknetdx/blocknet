@@ -3224,6 +3224,7 @@ void App::Impl::checkAndRelayPendingOrders() {
 
         auto pendingOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 240; // 4min
         auto newOrderShouldRebroadcast = (currentTime - order->txtime).total_seconds() >= 15; // 15sec
+        auto allowExcludedNodesClear = (currentTime - order->created).total_seconds() >= 600; // 10min
 
         if (newOrderShouldRebroadcast && order->state == xbridge::TransactionDescr::trNew && !order->isOrderPending())
         {
@@ -3242,6 +3243,10 @@ void App::Impl::checkAndRelayPendingOrders() {
                 log_obj.pushKV("from_currency", order->fromCurrency);
                 log_obj.pushKV("to_currency", order->toCurrency);
                 xbridge::LogOrderMsg(log_obj, "order may be stuck, trying to submit order to previous snode", __FUNCTION__);
+
+                if (allowExcludedNodesClear && notIn.size() > 1)
+                    order->excludedNodesClear();
+
                 // do not fail here, let the order be broadcasted on existing snode just in case (also may avoid stalling the order)
             } else {
                 // assign new snode
@@ -3274,6 +3279,10 @@ void App::Impl::checkAndRelayPendingOrders() {
                     log_obj.pushKV("from_currency", order->fromCurrency);
                     log_obj.pushKV("to_currency", order->toCurrency);
                     xbridge::LogOrderMsg(log_obj, "failed to find service node, order may be stuck: trying to submit order to another snode", __FUNCTION__);
+
+                    if (allowExcludedNodesClear && notIn.size() > 1)
+                        order->excludedNodesClear();
+
                     // do not fail here, let the order be broadcasted on existing snode just in case (also may avoid stalling the order)
                 } else {
                     // assign new snode
