@@ -823,9 +823,9 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
                 "and the network (view with dxGetNetworkTokens). There are no fees to make orders.\n"
                 "\nNote:\n"
                 "XBridge will first attempt to use funds from the specified maker address. "
-                "If this address does not have sufficient funds to cover the order, then "
-                "it will pull funds from other addresses in the wallet. Change is "
-                "deposited to the address with the largest input used.\n",
+                "If this address does not have sufficient funds to cover the order and "
+                "`use_all_funds` is true, then it will pull funds from other addresses in "
+                "the wallet. Change is deposited to the address with the largest input used.\n",
                 {
                     {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being sold by the maker (e.g. LTC)."},
                     {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker asset being sent."},
@@ -1066,6 +1066,8 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("status",         "created"));
         return uret(obj);
 
+    } else if (statusCode == xbridge::INSIFFICIENT_FUNDS) {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     } else {
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
@@ -2927,9 +2929,9 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                 "the order will proceed to the `open` state.\n"
                 "\nNote:\n"
                 "XBridge will first attempt to use funds from the specified maker address. "
-                "If this address does not have sufficient funds to cover the order, then "
-                "it will pull funds from other addresses in the wallet. Change is "
-                "deposited to the address with the largest input used.\n",
+                "If this address does not have sufficient funds to cover the order and "
+                "`use_all_funds` is true, then it will pull funds from other addresses in "
+                "the wallet. Change is deposited to the address with the largest input used.\n",
                 {
                     {"maker", RPCArg::Type::STR, RPCArg::Optional::NO, "The symbol of the asset being sold by the maker (e.g. LTC)."},
                     {"maker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the maker asset being sent."},
@@ -2938,7 +2940,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                     {"taker_size", RPCArg::Type::STR, RPCArg::Optional::NO, "The amount of the taker asset to be received."},
                     {"taker_address", RPCArg::Type::STR, RPCArg::Optional::NO, "The taker address for the receiving asset."},
                     {"minimum_size", RPCArg::Type::STR, RPCArg::Optional::NO, "Minimum maker_size that can be traded in the partial order."},
-                    {"repost", RPCArg::Type::STR, "true", "Repost partial order remainder after taken. Options: true/false"},
+                    {"repost", RPCArg::Type::BOOL, /* default */ "true", "Repost partial order remainder after taken."},
                     {"use_all_funds", RPCArg::Type::BOOL, /* default */ "true", "Use funds from all available addresses in the wallet as opposed to just the maker_address."},
                     {"auto_split", RPCArg::Type::BOOL, /* default */ "true", "Split funds into multiple UTXOs if needed."},
                     {"dryrun", RPCArg::Type::STR, RPCArg::Optional::OMITTED, "Simulate the order submission without actually submitting the order, i.e. a test run. Options: dryrun"},
@@ -3090,7 +3092,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
 
     bool repost{true};
     if (request.params.size() >= 8)
-        repost = !(request.params[7].get_str() == "false");
+        repost = request.params[7].get_bool();
 
     bool useAllFunds = true;
     if (request.params.size() >= 9)
@@ -3103,7 +3105,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
     if (request.params.size() == 11) {
-        std::string dryrunParam = request.params[8].get_str();
+        std::string dryrunParam = request.params[10].get_str();
         if (dryrunParam != "dryrun") {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
@@ -3185,6 +3187,8 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("status",           "created"));
         return uret(obj);
 
+    } else if (statusCode == xbridge::INSIFFICIENT_FUNDS) {
+        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     } else {
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
