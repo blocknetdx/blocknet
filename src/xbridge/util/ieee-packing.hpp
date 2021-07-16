@@ -3,7 +3,6 @@
 #include <cmath>
 #include <cstdio>
 #include <type_traits>
-#include <features.h>
 
 namespace detail
 {
@@ -167,7 +166,7 @@ template<typename I> auto unpack_float(I x)
 #ifdef __STDC_IEC_559__
    return *reinterpret_cast<F*>(&x);
 #else
-   if constexpr(sizeof(F) == 8) return detail::unpack_float<F, 11>(x);
+   if constexpr(sizeof(F) == 8) return detail::unpack_float<I, 11>(x);
    return detail::unpack_float<I, 8>(x);
 #endif
 }
