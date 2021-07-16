@@ -2145,7 +2145,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         return xbridge::Error::DUST;
     }
 
-    if (availableBalance() < connTo->serviceNodeFee)
+    if (availableBalance() < xBridgeAmountFromReal(connTo->serviceNodeFee))
     {
         revertOrder(ptr);
         return xbridge::Error::INSUFFICIENT_FUNDS_DX;
