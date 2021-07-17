@@ -149,24 +149,46 @@ template<typename I, int EXP_DIG> auto unpack_float(const I packed)
 
 } // namespace detail
 
-template<typename F> auto pack_float(F x)
+template<typename F> std::enable_if_t<sizeof(F) == 8, uint64_t> pack_float(F x)
 {
    using I = typename std::conditional_t<sizeof(F) == 8, uint64_t, uint32_t>;
+
 #ifdef __STDC_IEC_559__
    return *reinterpret_cast<I*>(&x);
 #else
-   if constexpr(sizeof(F) == 8) return detail::pack_float<F, 11>(x);
+   return detail::pack_float<F, 11>(x);
+#endif
+}
+
+template<typename F> std::enable_if_t<sizeof(F) == 4, uint32_t> pack_float(F x)
+{
+   using I = typename std::conditional_t<sizeof(F) == 8, uint64_t, uint32_t>;
+
+#ifdef __STDC_IEC_559__
+   return *reinterpret_cast<I*>(&x);
+#else
    return detail::pack_float<F, 8>(x);
 #endif
 }
 
-template<typename I> auto unpack_float(I x)
+template<typename I> std::enable_if_t<sizeof(I) == 8, double> unpack_float(I x)
 {
    using F = typename std::conditional_t<sizeof(I) == 8, double, float>;
+
 #ifdef __STDC_IEC_559__
    return *reinterpret_cast<F*>(&x);
 #else
-   if constexpr(sizeof(F) == 8) return detail::unpack_float<I, 11>(x);
+   return detail::unpack_float<I, 11>(x);
+#endif
+}
+
+template<typename I> std::enable_if_t<sizeof(I) == 4, float> unpack_float(I x)
+{
+   using F = typename std::conditional_t<sizeof(I) == 8, double, float>;
+
+#ifdef __STDC_IEC_559__
+   return *reinterpret_cast<F*>(&x);
+#else
    return detail::unpack_float<I, 8>(x);
 #endif
 }
