@@ -2148,7 +2148,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
     if (availableBalance() < connTo->serviceNodeFee)
     {
         revertOrder(ptr);
-        return xbridge::Error::INSIFFICIENT_FUNDS_DX;
+        return xbridge::Error::INSUFFICIENT_FUNDS_DX;
     }
 
     // service node pub key

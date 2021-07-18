@@ -42,7 +42,7 @@ namespace xbridge
         INVALID_STATE           = 1028,
         NOT_EXCHANGE_NODE       = 1029,
         DUST                    = 1030,
-        INSIFFICIENT_FUNDS_DX   = 1031,
+        INSUFFICIENT_FUNDS_DX   = 1031,
         NO_SERVICE_NODE         = 1032,
         INVALID_ONCHAIN_HISTORY = 1033,
         INVALID_PARTIAL_ORDER   = 1034
