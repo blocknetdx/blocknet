@@ -24,7 +24,7 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "invalid transaction state " + argument;
         case Error::NO_SESSION:
             return "No session for currency " + argument;
-        case Error::INSIFFICIENT_FUNDS:
+        case Error::INSUFFICIENT_FUNDS:
             return "Insufficient funds for " + argument;
         case Error::FUNDS_NOT_SIGNED:
             return "Funds not signed for " + argument;

@@ -1430,7 +1430,7 @@ xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::
     auto availableAmount = xBridgeAmountFromReal(availableValue);
 
     if (utxos.empty() || repostAmount > availableAmount || repostAmount > makerAmount)
-        return xbridge::Error::INSIFFICIENT_FUNDS; // do not repost an order with insufficient funds
+        return xbridge::Error::INSUFFICIENT_FUNDS; // do not repost an order with insufficient funds
 
     // use everything that is available
     if (repostAmount == 0)
@@ -1595,7 +1595,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         CAmount partialSplitVoutsTotal = partialUtxosRequiredForMinimum * partialMinimum;
         if (fromAmount - partialSplitVoutsTotal < 0) {
             WARN() << "insufficient funds for partial order <" << fromCurrency << "> " << __FUNCTION__;
-            return xbridge::Error::INSIFFICIENT_FUNDS;
+            return xbridge::Error::INSUFFICIENT_FUNDS;
         }
         partialRemainderVoutTotal = fromAmount - partialSplitVoutsTotal;
         if (partialRemainderVoutTotal < 0)
@@ -1637,7 +1637,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             if (!selectPartialUtxos(from, outputs, fromAmount, partialUtxosRequiredForMinimum, partialPerUtxoFees, prepTxFee,
                     partialMinimum, partialRemainderVoutTotal, outputsForUse, utxoAmount, fees, partialExactUtxoMatch)) {
                 WARN() << "partial order insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
-                return xbridge::Error::INSIFFICIENT_FUNDS;
+                return xbridge::Error::INSUFFICIENT_FUNDS;
             }
 
             {
@@ -1668,7 +1668,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                              TransactionDescr::COIN, outputsForUse, utxoAmount, fee1, fee2))
             {
                 WARN() << "insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
-                return xbridge::Error::INSIFFICIENT_FUNDS;
+                return xbridge::Error::INSUFFICIENT_FUNDS;
             }
 
             {
@@ -1721,7 +1721,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     if (ptr->usedCoins.empty() || (utxos.empty() && !lockCoins(connFrom->currency, ptr->usedCoins))) {
         ERR() << "failed to create order, cannot reuse utxo inputs for " << connFrom->currency
               << " across multiple orders " << __FUNCTION__;
-        return xbridge::Error::INSIFFICIENT_FUNDS;
+        return xbridge::Error::INSUFFICIENT_FUNDS;
     }
 
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
@@ -2229,7 +2229,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         if (!rpc::unspentP2PKH(feeOutputs)) {
             revertOrder(ptr);
             xbridge::LogOrderMsg(id.GetHex(), "insufficient BLOCK funds for service node fee payment", __FUNCTION__);
-            return xbridge::Error::INSIFFICIENT_FUNDS;
+            return xbridge::Error::INSUFFICIENT_FUNDS;
         }
 
         // Exclude the used uxtos
@@ -2249,7 +2249,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         {
             revertOrder(ptr);
             xbridge::LogOrderMsg(id.GetHex(), "order not accepted, failed to prepare the service node fee", __FUNCTION__);
-            return xbridge::Error::INSIFFICIENT_FUNDS;
+            return xbridge::Error::INSUFFICIENT_FUNDS;
         }
 
         // Lock the fee utxos
@@ -2290,7 +2290,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
             revertOrder(ptr);
             xbridge::LogOrderMsg(id.GetHex(), "not accepting order, insufficient funds for <" + ptr->fromCurrency + ">", __FUNCTION__);
             unlockFeeUtxos(ptr->feeUtxos);
-            return xbridge::Error::INSIFFICIENT_FUNDS;
+            return xbridge::Error::INSUFFICIENT_FUNDS;
         }
 
         // sign used coins
@@ -2343,7 +2343,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
             revertOrder(ptr);
             xbridge::LogOrderMsg(id.GetHex(), "not accepting order, cannot reuse utxo inputs for " + connFrom->currency +
                                      " across multiple orders ", __FUNCTION__);
-            return xbridge::Error::INSIFFICIENT_FUNDS;
+            return xbridge::Error::INSUFFICIENT_FUNDS;
         }
     }
 
@@ -2563,7 +2563,7 @@ Error App::checkAmount(const std::string & currency,
     const auto & excluded = getAllLockedUtxos(currency);
     if (conn->getWalletBalance(excluded, address) < (static_cast<double>(amount) / TransactionDescr::COIN)) {
         WARN() << "insufficient funds for <" << currency << "> " << __FUNCTION__;
-        return xbridge::INSIFFICIENT_FUNDS;
+        return xbridge::INSUFFICIENT_FUNDS;
     }
     return xbridge::SUCCESS;
 }

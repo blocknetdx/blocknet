@@ -30,7 +30,7 @@ namespace xbridge
         INVALID_TIME            = 1016,
         INVALID_CURRENCY        = 1017,
         NO_SESSION              = 1018,
-        INSIFFICIENT_FUNDS      = 1019,
+        INSUFFICIENT_FUNDS      = 1019,
         FUNDS_NOT_SIGNED        = 1020,
         TRANSACTION_NOT_FOUND   = 1021,
         UNKNOWN_SESSION         = 1022,
