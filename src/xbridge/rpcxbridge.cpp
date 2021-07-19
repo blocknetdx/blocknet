@@ -1029,7 +1029,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     case xbridge::NO_SESSION:{
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
     }
-    case xbridge::INSIFFICIENT_FUNDS:{
+    case xbridge::INSUFFICIENT_FUNDS:{
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     }
 
@@ -1066,7 +1066,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("status",         "created"));
         return uret(obj);
 
-    } else if (statusCode == xbridge::INSIFFICIENT_FUNDS) {
+    } else if (statusCode == xbridge::INSUFFICIENT_FUNDS) {
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     } else {
         return uret(xbridge::makeError(statusCode, __FUNCTION__));
@@ -1254,9 +1254,9 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
         return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, txDescr->toCurrency));
     }
 
-    case xbridge::INSIFFICIENT_FUNDS:
+    case xbridge::INSUFFICIENT_FUNDS:
     {
-        return uret(xbridge::makeError(xbridge::INSIFFICIENT_FUNDS, __FUNCTION__, fromAddress));
+        return uret(xbridge::makeError(xbridge::INSUFFICIENT_FUNDS, __FUNCTION__, fromAddress));
     }
 
     default:
@@ -3147,7 +3147,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     case xbridge::NO_SESSION:{
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
     }
-    case xbridge::INSIFFICIENT_FUNDS:{
+    case xbridge::INSUFFICIENT_FUNDS:{
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     }
     case xbridge::NO_SERVICE_NODE:{
@@ -3187,7 +3187,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
         obj.emplace_back(Pair("status",           "created"));
         return uret(obj);
 
-    } else if (statusCode == xbridge::INSIFFICIENT_FUNDS) {
+    } else if (statusCode == xbridge::INSUFFICIENT_FUNDS) {
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     } else {
         return uret(xbridge::makeError(statusCode, __FUNCTION__));

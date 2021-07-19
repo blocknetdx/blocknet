@@ -24,7 +24,7 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "invalid transaction state " + argument;
         case Error::NO_SESSION:
             return "No session for currency " + argument;
-        case Error::INSIFFICIENT_FUNDS:
+        case Error::INSUFFICIENT_FUNDS:
             return "Insufficient funds for " + argument;
         case Error::FUNDS_NOT_SIGNED:
             return "Funds not signed for " + argument;
@@ -62,7 +62,7 @@ const std::string xbridgeErrorText(const Error & error, const std::string & argu
             return "Blocknet is not running as an exchange node";
         case DUST:
             return "Amount is dust (very small)";
-        case INSIFFICIENT_FUNDS_DX:
+        case INSUFFICIENT_FUNDS_DX:
             return "Blocknet wallet amount is too small to cover the fee payment";
         case NO_SERVICE_NODE:
             return "Could not find a service node with required services: " + argument;

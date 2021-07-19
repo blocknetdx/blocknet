@@ -2250,7 +2250,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         try {
             const auto status = xapp.repostXBridgeTransaction(xtx->fromAddr, xtx->fromCurrency, xtx->toAddr, xtx->toCurrency,
                     xtx->origFromAmount, xtx->origToAmount, xtx->minFromAmount, repostAmount, xtx->repostCoins, xtx->id);
-            if (status == xbridge::INSIFFICIENT_FUNDS)
+            if (status == xbridge::INSUFFICIENT_FUNDS)
                 LogOrderMsg(xtx->id.GetHex(), "not reposting the partial order because all available utxos have been used up", __FUNCTION__);
             else if (status != xbridge::SUCCESS)
                 LogOrderMsg(xtx->id.GetHex(), "failed to repost the partial order", __FUNCTION__);
