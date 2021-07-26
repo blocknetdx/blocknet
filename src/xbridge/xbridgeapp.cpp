@@ -1579,7 +1579,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     if (partialOrder && utxos.empty()) {
         // Partial order support
         partialUtxosRequiredForMinimum = static_cast<int>(fromAmount / partialMinimum);
-        if (partialUtxosRequiredForMinimum > xBridgePartialOrderMaxUtxos) {
+        if (partialUtxosRequiredForMinimum >= xBridgePartialOrderMaxUtxos) {
             partialUtxosRequiredForMinimum = xBridgePartialOrderMaxUtxos - 1; // support 1 utxo for excess remainder
             partialRemainderRequired = true;
         } else if (fromAmount % partialMinimum != 0)
