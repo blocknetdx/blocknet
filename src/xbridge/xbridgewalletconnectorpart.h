@@ -42,6 +42,11 @@ public:
                                   const std::vector<unsigned char> & innerScript,
                                   std::string & txId,
                                   std::string & rawTx) override;
+
+    bool createPartialTransaction(const std::vector<XTxIn> inputs,
+                                  const std::vector<std::pair<std::string, double> > outputs,
+                                  std::string & txId,
+                                  std::string & rawTx) override;
 };
 
 } // namespace xbridge

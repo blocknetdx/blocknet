@@ -458,4 +458,38 @@ bool PartWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & in
     return true;
 }
 
+//******************************************************************************
+//******************************************************************************
+bool PartWalletConnector::createPartialTransaction(const std::vector<XTxIn> inputs,
+                                                   const std::vector<std::pair<std::string, double> > outputs,
+                                                   std::string & txId,
+                                                   std::string & rawTx)
+{
+    XParticlTransaction tx = createTransaction(*this, inputs, outputs, COIN, txVersion, 0, txWithTimeField);
+    rawTx = tx.toString();
+
+    // sign
+    bool complete = false;
+    if (!rpc::signRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, complete)) {
+        LOG() << "sign transaction error " << __FUNCTION__;
+        return false;
+    }
+
+    if (!complete) {
+        LOG() << "transaction not fully signed " << __FUNCTION__;
+        return false;
+    }
+
+    std::string partialTxid;
+    std::string json;
+    if (!rpc::decodeRawTransaction(m_user, m_passwd, m_ip, m_port, rawTx, partialTxid, json)) {
+        LOG() << "decode signed transaction error " << __FUNCTION__;
+        return false;
+    }
+
+    txId = partialTxid;
+
+    return true;
+}
+
 } // namespace xbridge
