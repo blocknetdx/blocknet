@@ -3216,6 +3216,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
     // final update
     requiredPrepTxFees = xBridgeIntFromReal(minTxFee1(outputsForUse.size() - idealUtxoCount, requiredPrepTxVouts));
     totalAmountNeeded = totalExactSplitSizeNeeded + totalRemainderNeeded + requiredPrepTxFees;
+    fees = outputsForUse.size() * requiredFeePerUtxo;
 
     if (outputsForUse.empty() || utxoAmount - totalAmountNeeded <= 0)
         return false;
