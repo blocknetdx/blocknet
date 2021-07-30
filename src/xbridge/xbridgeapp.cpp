@@ -1880,6 +1880,18 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
 
                 // sign used coins
                 for (auto & entry : ptr->usedCoins) {
+                    // CAmount to double conversion and the mere usage of double can lead to rounding errors.
+                    // We explicitly reload the amount values with the same method as the exchange (snode)
+                    // to avoid any discrepancies.
+                    if(!connFrom->getTxOut(entry)) {
+                        unlockCoins(ptr->fromCurrency, ptr->usedCoins);
+                        UniValue log_obj(UniValue::VOBJ);
+                        log_obj.pushKV("orderid", "unknown");
+                        log_obj.pushKV("from_currency", fromCurrency);
+                        xbridge::LogOrderMsg(log_obj, "could not find tx output", __FUNCTION__);
+                        return xbridge::Error::FUNDS_NOT_SIGNED;
+                    }
+
                     std::string signature;
                     if (!connFrom->signMessage(entry.address, entry.toString(), signature)) {
                         unlockCoins(ptr->fromCurrency, ptr->usedCoins);
