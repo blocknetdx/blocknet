@@ -33,6 +33,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 
 using namespace json_spirit;
 using namespace std;
@@ -1519,7 +1520,9 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
                   + HelpExampleRpc("dxGetOrderBook", "3, \"BLOCK\", \"LTC\", 60")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
+    Value js; 
+    json_spirit::read_string(request.params.write(), js); 
+    Array params = js.get_array();
 
     if ((params.size() < 3 || params.size() > 4))
     {
@@ -1588,8 +1591,8 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
             if (transaction.second->state != xbridge::TransactionDescr::trPending)
                 return false;
 
-            return  ((transaction.second->toCurrency == toCurrency) &&
-                    (transaction.second->fromCurrency == fromCurrency));
+            return  ( boost::iequals(transaction.second->toCurrency, toCurrency) &&
+                      boost::iequals(transaction.second->fromCurrency, fromCurrency) );
         });
 
         // bid orders are based in the second token in the trading pair (inverse of asks)
@@ -1603,8 +1606,8 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
             if (transaction.second->state != xbridge::TransactionDescr::trPending)
                 return false;
 
-            return  ((transaction.second->toCurrency == fromCurrency) &&
-                    (transaction.second->fromCurrency == toCurrency));
+            return  ( boost::iequals(transaction.second->toCurrency, fromCurrency) &&
+                      boost::iequals(transaction.second->fromCurrency, toCurrency));
         });
 
         std::vector<xbridge::TransactionDescrPtr> asksVector;
@@ -3033,6 +3036,12 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     double      toAmount        = boost::lexical_cast<double>(request.params[4].get_str());
     std::string toAddress       = request.params[5].get_str();
     double      partialMinimum  = boost::lexical_cast<double>(request.params[6].get_str());
+
+    // Check if min_size > maker_size 
+    if (partialMinimum > fromAmount) {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "The minimum_size can't be more than maker_size"));
+    }
 
     // Check that addresses are not the same
     if (fromAddress == toAddress) {
