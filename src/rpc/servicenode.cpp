@@ -698,6 +698,8 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
                 "    \"timelastseenstr\":\"xxxx\",     (string) ISO 8601 of last seen date\n"
                 "    \"exr\": n,                       (boolean) Enterprise XRouter compatibility\n"
                 "    \"status\":\"xxxx\",              (string) Status of this service node (e.g. running, offline)\n"
+                "    \"xbridgeprotocolversion\": xxxxx,(numeric) the XBridge protocol version\n"
+                "    \"xrouterprotocolversion\": xxxxx,(numeric) the XRouter protocol version\n"
                 "    \"services\":[...],               (array<string>) List of supported services\n"
                 "  }\n"
                 "  ,...\n"
@@ -722,6 +724,8 @@ static UniValue servicenodelist(const JSONRPCRequest& request)
         obj.pushKV("timelastseenstr", xbridge::iso8601(boost::posix_time::from_time_t(snode.getPingTime())));
         obj.pushKV("exr", snode.isEXRCompatible());
         obj.pushKV("status", !snode.isNull() && snode.running() ? "running" : "offline");
+        obj.pushKV("xbridgeprotocolversion", uint64_t(snode.getXBridgeVersion()));
+        obj.pushKV("xrouterprotocolversion", uint64_t(snode.getXRouterVersion()));
         obj.pushKV("score", xrouter::App::instance().isReady() ? xrouter::App::instance().getScore(snode.getHostPort()) : 0);
         UniValue services(UniValue::VARR);
         for (const auto & service : snode.serviceList())
