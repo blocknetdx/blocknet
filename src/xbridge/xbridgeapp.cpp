@@ -1579,7 +1579,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     if (partialOrder && utxos.empty()) {
         // Partial order support
         partialUtxosRequiredForMinimum = static_cast<int>(fromAmount / partialMinimum);
-        if (partialUtxosRequiredForMinimum > xBridgePartialOrderMaxUtxos) {
+        if (partialUtxosRequiredForMinimum >= xBridgePartialOrderMaxUtxos) {
             partialUtxosRequiredForMinimum = xBridgePartialOrderMaxUtxos - 1; // support 1 utxo for excess remainder
             partialRemainderRequired = true;
         } else if (fromAmount % partialMinimum != 0)
@@ -1598,8 +1598,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             return xbridge::Error::INSUFFICIENT_FUNDS;
         }
         partialRemainderVoutTotal = fromAmount - partialSplitVoutsTotal;
-        if (partialRemainderVoutTotal < 0)
-            partialRemainderVoutTotal = 0;
         partialRemainderIsDust = connFrom->isDustAmount(xBridgeValueFromAmount(partialRemainderVoutTotal + partialPerUtxoFees));
         partialVoutsTotal = partialFees + partialSplitVoutsTotal + (partialRemainderRequired && !partialRemainderIsDust ? partialRemainderVoutTotal : 0);
         partialOrderVouts = partialUtxosRequiredForMinimum + (partialRemainderRequired && !partialRemainderIsDust ? 1 : 0);
@@ -1628,13 +1626,20 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 outputs.end());
         }
 
+        auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee1(inputs, outputs);
+        };
+        auto minTxFee2 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
+            return connFrom->minTxFee2(inputs, outputs);
+        };
+
         if (partialOrder) {
-            const CAmount prepTxFee = xBridgeIntFromReal(connFrom->minTxFee1(10, partialOrderVouts + 1));
             CAmount utxoAmount{0};
             CAmount fees{0};
 
             // Select utxos
-            if (!selectPartialUtxos(from, outputs, fromAmount, partialUtxosRequiredForMinimum, partialPerUtxoFees, prepTxFee,
+            // Note: account for a change output, hence the (partialOrderVouts + 1)
+            if (!selectPartialUtxos(from, outputs, minTxFee1, fromAmount, partialUtxosRequiredForMinimum, partialPerUtxoFees, partialOrderVouts + 1,
                     partialMinimum, partialRemainderVoutTotal, outputsForUse, utxoAmount, fees, partialExactUtxoMatch)) {
                 WARN() << "partial order insufficient funds for <" << fromCurrency << "> " << __FUNCTION__;
                 return xbridge::Error::INSUFFICIENT_FUNDS;
@@ -1656,12 +1661,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             uint64_t fee2 = 0;
 
             // fee calcs should incorporate partial order splitting (i.e. number of splits * fee for single order)
-            auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
-                return connFrom->minTxFee1(inputs, outputs);
-            };
-            auto minTxFee2 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
-                return connFrom->minTxFee2(inputs, outputs);
-            };
 
             // Select utxos
             if (!selectUtxos(from, outputs, minTxFee1, minTxFee2, fromAmount,
@@ -2145,7 +2144,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         return xbridge::Error::DUST;
     }
 
-    if (availableBalance() < connTo->serviceNodeFee)
+    if (availableBalance() < xBridgeAmountFromReal(connTo->serviceNodeFee))
     {
         revertOrder(ptr);
         return xbridge::Error::INSUFFICIENT_FUNDS_DX;
@@ -3066,8 +3065,9 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
 }
 
 bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
+        const std::function<double(uint32_t, uint32_t)> &minTxFee1,
         const CAmount requiredAmount, const int requiredUtxoCount, const CAmount requiredFeePerUtxo,
-        const CAmount requiredPrepTxFees, const CAmount requiredSplitSize, const CAmount requiredRemainder,
+        const int requiredPrepTxVouts, const CAmount requiredSplitSize, const CAmount requiredRemainder,
         std::vector<wallet::UtxoEntry> & outputsForUse, CAmount & utxoAmount, CAmount & fees, bool & exactUtxoMatch) const
 {
     utxoAmount = 0;
@@ -3077,6 +3077,9 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
     std::vector<wallet::UtxoEntry> utxos(outputs.begin(), outputs.end()); // copy
     CAmount totalAmountNeeded = requiredAmount + fees;
     CAmount totalExactSplitSizeNeeded = (requiredSplitSize + requiredFeePerUtxo) * requiredUtxoCount;
+    CAmount totalRemainderNeeded = requiredRemainder > 0 ? requiredRemainder + requiredFeePerUtxo : 0;
+    CAmount requiredPrepTxFees = 0;
+    int idealUtxoCount = 0;
 
     // Find all ideal utxos (i.e. those matching split size and fees)
     const CAmount requiredSplitSizeAmt = requiredSplitSize + requiredFeePerUtxo;
@@ -3087,6 +3090,7 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
             fees += requiredFeePerUtxo;
             outputsForUse.push_back(utxo);
             it = utxos.erase(it); // remove selected utxo
+            ++idealUtxoCount;
             continue;
         }
         if (requiredRemainder > 0 && utxo.camount() == requiredRemainder) {
@@ -3141,9 +3145,12 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
 
     } else { // Find enough utxos to cover remaining partial order amount
         // At this point a prep tx will be required to support the order, include those fees here
+        int count = outputsForUse.size() - idealUtxoCount + 1;
         for (auto it = utxos.begin(); it != utxos.end(); ) {
             auto & utxo = *it;
-            totalAmountNeeded = requiredAmount + fees + requiredPrepTxFees;
+            requiredPrepTxFees = xBridgeIntFromReal(minTxFee1(count, requiredPrepTxVouts));
+            totalAmountNeeded = totalExactSplitSizeNeeded + totalRemainderNeeded + requiredPrepTxFees;
+
             if (totalAmountNeeded - utxoAmount <= 0)
                 break; // Stop searching when we've reached the required amount
 
@@ -3152,9 +3159,9 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
             // we have enough inputs to cover change.
             if (utxo.camount() >= requiredSplitSize + requiredFeePerUtxo) {
                 utxoAmount += utxo.camount();
-                fees += requiredFeePerUtxo;
                 outputsForUse.push_back(utxo);
                 it = utxos.erase(it); // remove selected utxo
+                ++count;
                 continue;
             }
 
@@ -3163,7 +3170,10 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
     }
 
     // Incorporate prep fees here
-    totalAmountNeeded = requiredAmount + fees + requiredPrepTxFees;
+    // Ideal utxos (matching size and fees) will not be resent, don't need to consider these for PrepTx fees.
+    // We are assuming that we add at least one more utxo (hence +1) to cover the remainder.
+    requiredPrepTxFees = xBridgeIntFromReal(minTxFee1(outputsForUse.size() - idealUtxoCount + 1, requiredPrepTxVouts));
+    totalAmountNeeded = totalExactSplitSizeNeeded + totalRemainderNeeded + requiredPrepTxFees;
 
     // Find the largest utxo to cover the remainder
     if (utxoAmount < totalAmountNeeded) {
@@ -3186,15 +3196,27 @@ bool App::selectPartialUtxos(const std::string & addr, const std::vector<wallet:
              [](const xbridge::wallet::UtxoEntry & a, const xbridge::wallet::UtxoEntry & b) {
                  return a.camount() > b.camount();
              });
+        int count = outputsForUse.size() - idealUtxoCount + 1;
         for (auto it = utxos.begin(); it != utxos.end(); ) {
             auto & utxo = *it;
+            requiredPrepTxFees = xBridgeIntFromReal(minTxFee1(count, requiredPrepTxVouts));
+            totalAmountNeeded = totalExactSplitSizeNeeded + totalRemainderNeeded + requiredPrepTxFees;
+
             if (totalAmountNeeded - utxoAmount <= 0)
                 break; // Stop searching when we've reached the required amount
+
             utxoAmount += utxo.camount();
             outputsForUse.push_back(utxo);
             it = utxos.erase(it); // remove selected utxo
+
+            ++count;
         }
     }
+
+    // final update
+    requiredPrepTxFees = xBridgeIntFromReal(minTxFee1(outputsForUse.size() - idealUtxoCount, requiredPrepTxVouts));
+    totalAmountNeeded = totalExactSplitSizeNeeded + totalRemainderNeeded + requiredPrepTxFees;
+    fees = outputsForUse.size() * requiredFeePerUtxo;
 
     if (outputsForUse.empty() || utxoAmount - totalAmountNeeded <= 0)
         return false;

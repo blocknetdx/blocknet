@@ -673,13 +673,12 @@ public:
      * @param addr Currency address
      * @param outputs Available utxos to search
      * @param minTxFee1 fee1 func
-     * @param minTxFee2 fee2 func
      * @param requiredAmount total required amount (not including fees)
      * @param requiredUtxoCount number of utxos required
      * @param requiredFeePerUtxo fees per utxo required
      * @param requiredSplitSize size of each utxo not including fee
      * @param requiredRemainder size of the last utxo, the remainder
-     * @param requiredPrepTxFees fees required to submit partial order prep tx
+     * @param requiredPrepTxVouts number of outputs required in the partial order prep tx
      * @param outputsForUse selected utxos
      * @param utxoAmount total amount of selected utxos
      * @param fees total amount of fees
@@ -687,8 +686,9 @@ public:
      * @return
      */
     bool selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
+            const std::function<double(uint32_t, uint32_t)> &minTxFee1,
             const CAmount requiredAmount, const int requiredUtxoCount, const CAmount requiredFeePerUtxo,
-            const CAmount requiredPrepTxFees, const CAmount requiredSplitSize, const CAmount requiredRemainder,
+            const int requiredPrepTxVouts, const CAmount requiredSplitSize, const CAmount requiredRemainder,
             std::vector<wallet::UtxoEntry> & outputsForUse, CAmount & utxoAmount, CAmount & fees, bool & exactUtxoMatch) const;
 
     /**
