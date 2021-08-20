@@ -12,6 +12,7 @@
 #include <base58.h>
 #include <pubkey.h>
 #include <sync.h>
+#include <primitives/transaction.h>
 
 #include <string>
 
@@ -142,11 +143,12 @@ struct TransactionDescr
         READWRITE(watchingDone);
         READWRITE(redeemedCounterpartyDeposit);
         READWRITE(depositSent);
+        READWRITE(orderPrepTx);
+        READWRITE(orderPending);
         READWRITE(repostCoins);
-        READWRITE(partialOrderPrepTx);
         READWRITE(partialOrdersAllowed);
-        READWRITE(partialOrderPending);
         READWRITE(repostOrder);
+        READWRITE(repostOrderChange);
         READWRITE(minFromAmount);
         READWRITE(historical);
         READWRITE(logPayTx1);
@@ -213,11 +215,12 @@ struct TransactionDescr
         watchingDone = false;
         redeemedCounterpartyDeposit = false;
         depositSent = false;
+        orderPrepTx.SetNull();
+        orderPending = false;
         repostCoins.clear();
-        partialOrderPrepTx.clear();
         partialOrdersAllowed = false;
-        partialOrderPending = false;
         repostOrder = false;
+        repostOrderChange = false;
         minFromAmount = 0;
         historical = false;
         logPayTx1 = false;
@@ -310,13 +313,17 @@ struct TransactionDescr
     bool     redeemedCounterpartyDeposit{false};
     bool     depositSent{false};
 
+    // pending orders
+    COutPoint orderPrepTx;
+    bool     orderPending{false};
+
     // is partial order allowed
     std::vector<xbridge::wallet::UtxoEntry> repostCoins;
-    std::string partialOrderPrepTx;
     bool     partialOrdersAllowed{false};
-    bool     partialOrderPending{false};
     // repost partial order after completion
     bool     repostOrder{false};
+    // repost potential change (wait for confirmations)
+    bool     repostOrderChange{false};
     // partial order amounts
     uint64_t minFromAmount{0};
 
@@ -410,14 +417,24 @@ struct TransactionDescr
         return repostOrder;
     }
 
-    void setPartialOrderPending(const bool flag) {
+    void setRepostChange(const bool flag) {
         LOCK(_lock);
-        partialOrderPending = flag;
+        repostOrderChange = flag;
     }
 
-    bool isPartialOrderPending() {
+    bool isRepostChangeAllowed() {
         LOCK(_lock);
-        return partialOrderPending;
+        return repostOrderChange;
+    }
+
+    void setOrderPending(const bool flag) {
+        LOCK(_lock);
+        orderPending = flag;
+    }
+
+    bool isOrderPending() {
+        LOCK(_lock);
+        return orderPending;
     }
 
     void setWatchBlock(const uint32_t block) {
@@ -727,11 +744,12 @@ private:
         watchingDone                 = d.watchingDone;
         redeemedCounterpartyDeposit  = d.redeemedCounterpartyDeposit;
         depositSent                  = d.depositSent;
+        orderPrepTx                  = d.orderPrepTx;
+        orderPending                 = d.orderPending;
         repostCoins                  = d.repostCoins;
-        partialOrderPrepTx           = d.partialOrderPrepTx;
         partialOrdersAllowed         = d.partialOrdersAllowed;
-        partialOrderPending          = d.partialOrderPending;
         repostOrder                  = d.repostOrder;
+        repostOrderChange            = d.repostOrderChange;
         minFromAmount                = d.minFromAmount;
         historical                   = d.historical;
         logPayTx1                    = d.logPayTx1;
