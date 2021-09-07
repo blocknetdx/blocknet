@@ -274,6 +274,23 @@ enum XBridgeCommand
     xbcTransactionReject = 26,
 
     //
+    //xbcEthVerifyTransactionConfirmA (72 bytes min)
+    //    uint160 hub address
+    //    uint160 client address
+    //    uint256 hub transaction id
+    xbcEthVerifyTransactionConfirmA = 27,
+    //
+    // xbcEthVerifyTransactionConfirmB (72 bytes min)
+    //    uint160 hub address
+    //    uint160 client address
+    //    uint256 hub transaction id
+    xbcEthVerifyTransactionConfirmB = 28,
+    //
+    // xbcEthVerifyTransactionCancel (32 bytes)
+    //    uint256  hub transaction id
+    xbcEthVerifyTransactionCancel = 29,
+
+    //
     // xbcServicesPing
     //    array of supported services
     //        string Service name
