@@ -37,8 +37,8 @@ private:
     QLabel *subtitleLbl;
     QLabel *proposalTitleLbl;
     QLabel *proposalLbl;
-    QLabel *proposalDetailTitleLbl;
-    QLabel *proposalDetailLbl;
+    QLabel *amountLbl;
+    QLabel *amountValLbl;
     QLabel *proposalAddrLbl;
     QLabel *proposalAddrValLbl;
     QLabel *urlLbl;

@@ -50,19 +50,19 @@ BlocknetCreateProposal3::BlocknetCreateProposal3(int id, QFrame *parent) : Block
 
     auto *div2 = new BlocknetHDiv;
 
-    auto *proposalGrid = new QFrame;
-    auto *proposalLayout = new QGridLayout;
-    proposalLayout->setContentsMargins(QMargins());
-    proposalGrid->setLayout(proposalLayout);
+    auto *amountGrid = new QFrame;
+    auto *amountLayout = new QGridLayout;
+    amountLayout->setContentsMargins(QMargins());
+    amountGrid->setLayout(amountLayout);
 
-    proposalDetailTitleLbl = new QLabel(tr("Proposal"));
-    proposalDetailTitleLbl->setObjectName("h5");
+    amountLbl = new QLabel(tr("Amount"));
+    amountLbl->setObjectName("h5");
 
-    proposalDetailLbl = new QLabel;
-    proposalDetailLbl->setObjectName("detail");
+    amountValLbl = new QLabel;
+    amountValLbl->setObjectName("detail");
 
-    proposalLayout->addWidget(proposalDetailTitleLbl, 0, 0);
-    proposalLayout->addWidget(proposalDetailLbl, 0, 1, Qt::AlignRight);
+    amountLayout->addWidget(amountLbl, 0, 0);
+    amountLayout->addWidget(amountValLbl, 0, 1, Qt::AlignRight);
 
     auto *div3 = new BlocknetHDiv;
 
@@ -122,7 +122,7 @@ BlocknetCreateProposal3::BlocknetCreateProposal3(int id, QFrame *parent) : Block
     layout->addSpacing(spacing);
     layout->addWidget(div2);
     layout->addSpacing(spacing);
-    layout->addWidget(proposalGrid);
+    layout->addWidget(amountGrid);
     layout->addSpacing(spacing);
     layout->addWidget(div3);
     layout->addSpacing(spacing);
@@ -161,7 +161,7 @@ void BlocknetCreateProposal3::setModel(const BlocknetCreateProposalPageModel & m
                                                   : QString::number(confs)));
 
     proposalLbl->setText(QString::fromStdString(model.name));
-    proposalDetailLbl->setText(tr("Total payment of %1").arg(BitcoinUnits::floorWithUnit(BitcoinUnits::BTC,
+    amountValLbl->setText(tr("%1").arg(BitcoinUnits::floorWithUnit(BitcoinUnits::BTC,
             model.amount * COIN, 2, false, BitcoinUnits::separatorNever)));
 
     if (!timer->isActive())
