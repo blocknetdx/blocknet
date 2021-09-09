@@ -75,6 +75,7 @@ public:
     }
 
     virtual bool init() = 0;
+    virtual void updateDynamicWalletParameters() = 0;
 
 public:
     // reimplement for currency

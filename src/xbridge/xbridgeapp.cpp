@@ -268,7 +268,7 @@ protected:
 App::Impl::Impl()
     : m_timerIoWork(new boost::asio::io_service::work(m_timerIo))
     , m_timerThread(boost::bind(&boost::asio::io_service::run, &m_timerIo))
-    , m_timer(m_timerIo, boost::posix_time::seconds(TIMER_INTERVAL))
+    , m_timer(m_timerIo, boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)))
 {
 
 }
@@ -985,10 +985,10 @@ void App::updateActiveWallets()
         wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
         wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
         wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
-        wp.feePerByte                  = s.get<uint64_t>   (*i + ".FeePerByte", 0);
+        // wp.feePerByte                  = s.get<uint64_t>   (*i + ".FeePerByte", 0);
         wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
         wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
-//        wp.blockSize                   = s.get<int>        (*i + ".BlockSize", 0);
+        // wp.blockSize                   = s.get<int>        (*i + ".BlockSize", 0);
         wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
         wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
         wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
@@ -3646,7 +3646,7 @@ void App::Impl::onTimer()
         }
     }
 
-    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(TIMER_INTERVAL));
+    m_timer.expires_at(m_timer.expires_at() + boost::posix_time::seconds(static_cast<int>(TIMER_INTERVAL)));
     m_timer.async_wait(boost::bind(&Impl::onTimer, this));
 }
 
