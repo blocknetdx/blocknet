@@ -772,10 +772,6 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         return true;
     }
 
-    uint16_t flags = 0;
-    offset += packet->read(offset, flags);
-    bool isPartialOrderAllowed = (flags == 1);
-
     // If the order state is canceled and the snode rebroadcasts, allow the
     // client the opportunity to re-accept the order.
     if (ptr && ptr->state != TransactionDescr::trCancelled)
@@ -792,9 +788,12 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
             ptr->state = TransactionDescr::trPending;
         }
 
-        offset += XBridgePacket::addressSize; // hub address
         offset += sizeof(uint64_t);           // created time
         offset += XBridgePacket::hashSize;    // block hash
+
+        uint16_t flags = 0;
+        offset += packet->read(offset, flags);
+        bool isPartialOrderAllowed = (flags == 1);
 
         if (isPartialOrderAllowed)
         {
@@ -837,6 +836,10 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     ptr->sPubKey      = spubkey;
 
     offset += packet->read(offset, ptr->blockHash);
+
+    uint16_t flags = 0;
+    offset += packet->read(offset, flags);
+    bool isPartialOrderAllowed = (flags == 1);
 
     if (isPartialOrderAllowed)
     {
@@ -914,9 +917,10 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             return false;
         }
 
+        bool hasAddr = false;
+
         feeTxRef = MakeTransactionRef(std::move(mtx));
         auto snode = smgr.getSn(snodeEntry.key.GetPubKey());
-        bool hasAddr{false};
         for (const auto & o : feeTxRef->vout) 
         {
             if (o.nValue < wp.serviceNodeFee * ::COIN)
