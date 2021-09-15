@@ -300,17 +300,17 @@ bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry>
 bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & sourceAddr,
                                  const std::string                    & sourceCurrency,
-                                 const uint64_t                       & sourceAmount,
+                                 const amount_t                       & sourceAmount,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
-                                 const uint64_t                       & destAmount,
+                                 const amount_t                       & destAmount,
                                  const uint64_t                       & timestamp,
                                  const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items,
                                  uint256                              & blockHash,
                                  bool                                 & isCreated,
                                  const bool                             isPartialOrder = false,
-                                 const uint64_t                         minFromAmount = 0)
+                                 const amount_t                         minFromAmount = 0)
 {
     DEBUG_TRACE();
 
@@ -416,10 +416,10 @@ bool Exchange::createTransaction(const uint256                        & txid,
 bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & sourceAddr,
                                  const std::string                    & sourceCurrency,
-                                 const uint64_t                       & sourceAmount,
+                                 const amount_t                       & sourceAmount,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
-                                 const uint64_t                       & destAmount,
+                                 const amount_t                       & destAmount,
                                  const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items,
                                  const bool                             isPartialOrderAllowed = false)

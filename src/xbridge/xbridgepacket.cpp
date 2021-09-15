@@ -195,7 +195,7 @@ size_t XBridgePacket::read(const size_t offset, double & data) const
 {
     uint64_t value = 0;
     size_t size = read(offset, value);
-    data = static_cast<double>(pack_f64(value));
+    data = static_cast<double>(unpack_f64(value));
     return size;
 
 }
@@ -235,7 +235,7 @@ size_t XBridgePacket::read(const size_t offset, std::string & data) const
     size_t size = 0;
     for (; size + offset < this->m_body.size() - headerSize; ++size)
     {
-        if (m_body[size + offset] == 0)
+        if (m_body[headerSize + size + offset] == 0)
         {
             break;
         }
