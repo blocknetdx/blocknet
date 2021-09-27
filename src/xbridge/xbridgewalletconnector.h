@@ -78,7 +78,7 @@ static const uint32_t SEQUENCE_FINAL = 0xffffffff;
 class WalletConnector : public WalletParam
 {
 public:
-    WalletConnector();
+    WalletConnector() {}
 
 public:
     WalletConnector & operator = (const WalletParam & other)
@@ -101,9 +101,7 @@ public:
 
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
-    amount_t getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
-
-    std::string getNewTokenAddress(const std::string & type = "");
+    virtual amount_t getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const = 0;
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 

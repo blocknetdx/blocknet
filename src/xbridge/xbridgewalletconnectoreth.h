@@ -23,17 +23,16 @@ public:
     std::vector<unsigned char> toXAddr(const std::string & addr) const;
 
 public:
-    bool getNewAddress(std::string & /*addr*/, const std::string & /*type*/ = "") { assert(false && "implementation"); return true; }
+    bool getNewAddress(std::string & addr, const std::string & /*type*/ = "");
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
-    double getWalletBalance(const std::string &addr = "") const;
+    amount_t getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
     bool getInfo(rpc::WalletInfo & /*info*/) const { return true; }
     
     bool loadWallet(const std::string & /*walletName*/) const { assert(false && "implementation"); return true; }
-    bool getUnspent(std::vector<wallet::UtxoEntry> & /*inputs*/, const std::set<wallet::UtxoEntry> & /*excluded*/) const { assert(false && "implementation"); return true; }
+    bool getUnspent(std::vector<wallet::UtxoEntry> & /*inputs*/, const std::set<wallet::UtxoEntry> & /*excluded*/) const { return true; }
     bool getBlock(const std::string & /*blockHash*/, std::string & /*rawBlock*/) { assert(false && "implementation"); return true; }
-    bool getBlockHash(const uint32_t & /*block*/, std::string & /*blockHash*/) { assert(false && "implementation"); return true; }
+    bool getBlockHash(const uint32_t & /*block*/, std::string & /*blockHash*/);
 
-    bool getUnspent(std::vector<wallet::UtxoEntry> & /*inputs*/, const bool /*withoutDust*/ = true) const { return true; }
     bool lockCoins(const std::vector<wallet::UtxoEntry> & /*inputs*/, const bool /*lock*/ = true) { return true; }
     bool getTxOut(wallet::UtxoEntry & /*entry*/) { return true; }
     bool sendRawTransaction(const std::string & /*rawtx*/,
@@ -45,11 +44,15 @@ public:
     bool verifyMessage(const std::string & /*address*/, const std::string & /*message*/, const std::string & /*signature*/) { return true; }
 
     bool getRawMempool(std::vector<std::string> & /*txids*/) { assert(false && "implementation");  return true; }
-    bool getBlockCount(uint32_t & /*blockCount*/) { assert(false && "implementation");  return true; }
+    bool getBlockCount(uint32_t & blockCount);
 
 public:
     bool hasValidAddressPrefix(const std::string & /*addr*/) const { return true; }
-    bool isValidAddress(const std::string & /*addr*/) const  { assert(false && "implementation"); return true; }
+    bool isValidAddress(const std::string & /*addr*/) const  
+    {
+        // TODO validate address 
+        return true; 
+    }
 
     bool isDustAmount(const double & /*amount*/) const { return false; }
 
@@ -212,7 +215,7 @@ private:
     };
 
     NetwortType m_networkType;
-    uint256 m_fromBlock;
+    uint32_t m_fromBlock;
     const std::string m_contractAddress = "0x078fb70CA9A3077cDF1cA32b4a9Cb74898963DA8";
     const std::string m_contractAddressTestnet = "0x078fb70CA9A3077cDF1cA32b4a9Cb74898963DA8";
 };

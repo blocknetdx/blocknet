@@ -1,3 +1,6 @@
+//*****************************************************************************
+//*****************************************************************************
+
 #include "xbridgewalletconnectoreth.h"
 #include "xbridgewalletconnectorbtc.h"
 
@@ -31,21 +34,37 @@
 // int ReadHTTPHeader(std::basic_istream<char>& stream, std::map<std::string, std::string>& mapHeadersRet);
 
 
+//*****************************************************************************
+//*****************************************************************************
 namespace xbridge
 {
 
+//*****************************************************************************
+//*****************************************************************************
+struct Block
+{
+    uint256  hash;
+    uint64_t timestamp;
+};
+
+//*****************************************************************************
+//*****************************************************************************
 // static
 // json_spirit::Object CallRPC(const std::string & rpcuser, const std::string & rpcpasswd,
 //                             const std::string & rpcip, const std::string & rpcport,
 //                             const std::string & strMethod, const json_spirit::Array & params,
 //                             const std::string & jsonver="", const std::string & contenttype="");
 
+//*****************************************************************************
+//*****************************************************************************
 json_spirit::Object CallRPC(const std::string & rpcip, const std::string & rpcport,
                             const std::string & strMethod, const json_spirit::Array & params)
 {
-    return CallRPC("", "", rpcip, rpcport, strMethod, params, "", "");
+    return CallRPC("", "", rpcip, rpcport, strMethod, params, "", "application/json");
 }
 
+//*****************************************************************************
+//*****************************************************************************
 namespace rpc
 {
 
@@ -145,6 +164,8 @@ using namespace boost::asio;
 //     return reply;
 // }
 
+//*****************************************************************************
+//*****************************************************************************
 namespace
 {
 
@@ -360,7 +381,7 @@ bool getTransactionByHash(const std::string & rpcip,
 //*****************************************************************************
 bool getBlockNumber(const std::string & rpcip,
                     const std::string & rpcport,
-                    uint256 & blockNumber)
+                    uint32_t & blockNumber)
 {
     try
     {
@@ -387,7 +408,8 @@ bool getBlockNumber(const std::string & rpcip,
             return false;
         }
 
-        blockNumber = uint256(result.get_str());
+        // 0x
+        blockNumber = std::stoi(result.get_str(), nullptr, 16);
     }
     catch (std::exception & e)
     {
@@ -438,6 +460,65 @@ bool getNetVersion(const std::string & rpcip,
     }
 
     return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool getBlock(const std::string & rpcip,
+              const std::string & rpcport,
+              const uint64_t blockNumber,
+              Block & block)
+{
+    try
+    {
+        LOG() << "rpc call <eth_getBlock>";
+
+        Object reply = CallRPC(rpcip, rpcport,
+                               "eth_getBlockByNumber", Array{as0xString(blockNumber), true});
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " << write_string(result, true);
+            return false;
+        }
+
+        const Value & blockHashValue = find_value(result.get_obj(), "hash");
+        if(blockHashValue.type() != str_type)
+        {
+            LOG() << "hash not an string " << write_string(blockHashValue, true);
+            return false;
+        }
+
+        block.hash = uint256S(blockHashValue.get_str());
+
+        const Value & blockTimestampValue = find_value(result.get_obj(), "timestamp");
+        if(blockTimestampValue.type() != str_type)
+        {
+            LOG() << "timestamp not an integer " << write_string(blockTimestampValue, true);
+            return false;
+        }
+
+        block.timestamp = std::stoi(blockTimestampValue.get_str(), nullptr, 16);
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getBlockNumber exception " << e.what();
+        return false;
+    }
+
+    return true;
+
 }
 
 //*****************************************************************************
@@ -720,6 +801,26 @@ std::vector<unsigned char> EthWalletConnector::toXAddr(const std::string & addr)
 
 //*****************************************************************************
 //*****************************************************************************
+bool EthWalletConnector::getNewAddress(std::string & addr, const std::string & /*type*/) 
+{ 
+    std::vector<std::string> accounts;
+    if (!rpc::getAccounts(m_ip, m_port, accounts))
+    {
+        return false;
+    }
+
+    if (accounts.empty())
+    {
+        addr = "NOT CREATED";
+        return false;
+    }
+
+    addr = accounts[0]; 
+    return true; 
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool EthWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry> & entries)
 {
     std::vector<std::string> accounts;
@@ -733,7 +834,7 @@ bool EthWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry
 
 //*****************************************************************************
 //*****************************************************************************
-double EthWalletConnector::getWalletBalance(const std::string& addr) const
+amount_t EthWalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr) const
 {
     uint256 balance;
 
@@ -765,6 +866,34 @@ double EthWalletConnector::getWalletBalance(const std::string& addr) const
     }
 
     return balance.divide(COIN);
+}
+
+//******************************************************************************
+//******************************************************************************
+bool EthWalletConnector::getBlockHash(const uint32_t & blockNumber, std::string & blockHash)
+{
+    Block block;
+    if (!rpc::getBlock(m_ip, m_port, blockNumber, block))
+    {
+        LOG() << "getBlock failed";
+        return false;
+    }
+
+    blockHash = block.hash.ToString();
+    return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool EthWalletConnector::getBlockCount(uint32_t & blockCount)
+{
+    if (!rpc::getBlockNumber(m_ip, m_port, blockCount))
+    {
+        LOG() << "getBlockNumber failed";
+        return false;
+    }
+
+    return true;
 }
 
 //******************************************************************************
@@ -807,7 +936,7 @@ bool EthWalletConnector::checkDepositTransaction(const std::string& depositTxId,
        return false;
    }
 
-   uint256 lastBlockNumber;
+   uint32_t lastBlockNumber;
    if (!rpc::getBlockNumber(m_ip, m_port, lastBlockNumber))
    {
        LOG() << "can't get last block number " << depositTxId << " " << __FUNCTION__;

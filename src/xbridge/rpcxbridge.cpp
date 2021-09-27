@@ -231,8 +231,8 @@ UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
     xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
     if (conn) 
     {
-        const auto addr = conn->getNewTokenAddress(type);
-        if (!addr.empty())
+        std::string addr;
+        if (conn->getNewAddress(addr, type))
         {
             res.emplace_back(addr);
         }

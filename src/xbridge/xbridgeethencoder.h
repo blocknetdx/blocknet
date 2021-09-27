@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <functional>
+#include <sstream>
 
 #include "uint256.h"
 #include "hash.h"
@@ -30,6 +31,13 @@ inline bytes asBytes(const std::string & value)
 inline std::string asString(const bytes & value)
 {
     return std::string((const char*)value.data(), (const char*)(value.data() + value.size()));
+}
+
+inline std::string as0xString(const uint64_t & value)
+{
+   std::ostringstream result;
+   result << "0x" << std::hex << value;
+   return result.str();
 }
 
 inline std::string as0xString(const std::string & value)

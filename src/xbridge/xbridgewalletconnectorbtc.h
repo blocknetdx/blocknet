@@ -182,7 +182,7 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
     } else if (response.status == HTTP_UNAUTHORIZED) {
         throw std::runtime_error("Authorization failed: Incorrect rpcuser or rpcpassword");
     } else if (response.status >= 400 && response.status != HTTP_BAD_REQUEST && response.status != HTTP_NOT_FOUND && response.status != HTTP_INTERNAL_SERVER_ERROR)
-        throw std::runtime_error(strprintf("server returned HTTP error %d", response.status));
+        throw std::runtime_error(strprintf("server returned HTTP error %d <%s>", response.status, response.body));
     else if (response.body.empty())
         throw std::runtime_error("no response from server");
 
@@ -222,6 +222,8 @@ public:
 
 public:
     bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries);
+
+    amount_t getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const;
 
     bool getInfo(rpc::WalletInfo & info) const;
 
