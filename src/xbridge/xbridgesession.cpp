@@ -106,6 +106,7 @@ protected:
     bool decryptPacket(XBridgePacketPtr packet) const;
 
 protected:
+    // handlers
     bool processInvalid(XBridgePacketPtr packet) const;
     bool processZero(XBridgePacketPtr packet) const;
     bool processXChatMessage(XBridgePacketPtr packet) const;
@@ -134,6 +135,14 @@ protected:
     bool processEthVerifyTransactionConfirmB(XBridgePacketPtr packet) const;
     bool processTransactionConfirmedB(XBridgePacketPtr packet) const;
 
+    bool processTransactionCancel(XBridgePacketPtr packet) const;
+    bool processEthVerifyTransactionCancel(XBridgePacketPtr packet) const;
+
+    bool processTransactionReject(XBridgePacketPtr packet) const;
+
+    bool processTransactionFinished(XBridgePacketPtr packet) const;
+
+protected:
     bool finishTransaction(TransactionPtr tr) const;
 
     bool sendCancelTransaction(const TransactionPtr & tx,
@@ -141,13 +150,6 @@ protected:
     bool sendCancelTransaction(const TransactionDescrPtr & tx,
                                const TxCancelReason & reason) const;
     bool sendRejectTransaction(const uint256 & id, const TxCancelReason & reason) const;
-
-    bool processTransactionCancel(XBridgePacketPtr packet) const;
-    bool processEthVerifyTransactionCancel(XBridgePacketPtr packet) const;
-
-    bool processTransactionReject(XBridgePacketPtr packet) const;
-
-    bool processTransactionFinished(XBridgePacketPtr packet) const;
 
 protected:
     bool redeemOrderDeposit(const TransactionDescrPtr & xtx, int32_t & errCode) const;
@@ -427,8 +429,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    // size must be > 164 bytes
-    if (packet->size() < 164)
+    // size must be > 112 bytes (without utxo)
+    if (packet->size() < 112)
     {
         ERR() << "invalid packet size for xbcTransaction "
               << "need min 164 bytes, received " << packet->size() << " "
@@ -572,7 +574,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         }
     }
 
-    if(sconn->currency != "ETH")
+    if (sconn->method != "ETH")
     {
         if (utxoItems.empty())
         {
@@ -626,8 +628,11 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
        << dcurrency
        << damount
        << timestamp
-       << blockHash
-       << utxoItems.at(0).signature;
+       << blockHash;
+    if (!utxoItems.empty())
+    {
+       ss << utxoItems.at(0).signature;
+    }
     uint256 checkId = ss.GetHash();
     if(checkId != id)
     {
@@ -1125,7 +1130,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     // utxo items
     std::vector<wallet::UtxoEntry> utxoItems;
 
-    if(conn->currency != "ETH")
+    if (conn->method != "ETH")
     {
         // array size
         uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
@@ -2050,35 +2055,43 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     amount_t coutAmountPlusFees = outAmount+cfee1+cfee2;
 
     std::vector<wallet::UtxoEntry> usedInTx;
-    for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) 
-    {
-        // if we have enough utxos, skip
-        if (inAmount >= coutAmountPlusFees) 
-        {
-            if (!xtx->isPartialOrderAllowed())
-            {
-                break; // if not partial order, done
-            }
-            // If this is a partial order store unused utxos for eventual repost
-            if (xtx->isPartialRepost()) 
-            {
-                xtx->repostCoins.push_back(*it);
-                it = xtx->usedCoins.erase(it);
-            } 
-            else
-            {
-                ++it;
-            }
 
-            // next
-            continue;
+    if (connFrom->method == "ETH")
+    {
+        inAmount = xtx->fromAmount;
+    }
+    else
+    {
+        for (auto it = xtx->usedCoins.begin(); it != xtx->usedCoins.end(); ) 
+        {
+            // if we have enough utxos, skip
+            if (inAmount >= coutAmountPlusFees) 
+            {
+                if (!xtx->isPartialOrderAllowed())
+                {
+                    break; // if not partial order, done
+                }
+                // If this is a partial order store unused utxos for eventual repost
+                if (xtx->isPartialRepost()) 
+                {
+                    xtx->repostCoins.push_back(*it);
+                    it = xtx->usedCoins.erase(it);
+                } 
+                else
+                {
+                    ++it;
+                }
+
+                // next
+                continue;
+            }
+            usedInTx.push_back(*it);
+            inAmount          += it->amount;
+            cinAmount          = inAmount;
+            cfee1              = connFrom->minTxFee1(usedInTx.size(), 3);
+            coutAmountPlusFees = outAmount+cfee1+cfee2;
+            ++it;
         }
-        usedInTx.push_back(*it);
-        inAmount          += it->amount;
-        cinAmount          = inAmount;
-        cfee1              = connFrom->minTxFee1(usedInTx.size(), 3);
-        coutAmountPlusFees = outAmount+cfee1+cfee2;
-        ++it;
     }
 
     const double fee1 = cfee1;
@@ -2152,7 +2165,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     }
 #endif
 
-    if(xtx->fromCurrency == "ETH")
+    if (connFrom->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
@@ -2634,7 +2647,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
-        if(connTo->currency == "ETH")
+        if (connTo->method == "ETH")
         {
             EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
@@ -2724,7 +2737,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     }
 #endif
 
-    if(xtx->fromCurrency == "ETH")
+    if (connFrom->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
@@ -3172,7 +3185,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
             xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
-        if(connFrom->currency == "ETH")
+        if (connFrom->method == "ETH")
         {
             EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
@@ -3194,7 +3207,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     xtx->unlockScript = counterPartyScript;
     xtx->unlockP2SHAddress = counterPartyP2SH;
 
-    if(xtx->toCurrency == "ETH")
+    if (connTo->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
@@ -3297,7 +3310,7 @@ bool Session::Impl::processEthVerifyTransactionConfirmA(XBridgePacketPtr packet)
         return true;
     }
 
-    if(xtx->toCurrency == "ETH")
+    if (conn->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(conn.get());
 
@@ -3492,7 +3505,7 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         return true;
     }
 
-    if(xtx->toCurrency == "ETH")
+    if (connTo->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
@@ -3584,7 +3597,7 @@ bool Session::Impl::processEthVerifyTransactionConfirmB(XBridgePacketPtr packet)
         return true;
     }
 
-    if(xtx->toCurrency == "ETH")
+    if (conn->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(conn.get());
 
@@ -3845,7 +3858,7 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     // remove from pending packets (if added)
     xapp.removePackets(txid);
 
-    if(xtx->fromCurrency == "ETH")
+    if (conn->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(conn.get());
 

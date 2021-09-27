@@ -5,8 +5,7 @@
 //*****************************************************************************
 //*****************************************************************************
 
-#include <xbridge/xbridgewalletconnector.h>
-#include <xbridge/util/logger.h>
+#include <xbridge/xbridgewallet.h>
 
 #include <base58.h>
 
@@ -30,61 +29,5 @@ std::string UtxoEntry::toString() const
 }
 
 } // namespace wallet
-
-//*****************************************************************************
-//*****************************************************************************
-WalletConnector::WalletConnector()
-{
-}
-
-//******************************************************************************
-//******************************************************************************
-
-/**
- * \brief Return the wallet balance; optionally for the specified address.
- * \param excluded List of utxos to exclude
- * \param addr Optional address to filter balance
- * \return returns the wallet balance for the address.
- *
- * The wallet balance for the specified address will be returned. Only utxo's associated with the address
- * are included.
- */
-amount_t WalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string & addr) const
-{
-    std::vector<wallet::UtxoEntry> entries;
-    if (!getUnspent(entries, excluded))
-    {
-        LOG() << "getUnspent failed " << __FUNCTION__;
-        return -1.;//return negative value for check in called methods
-    }
-
-    amount_t amount = 0;
-    for (const wallet::UtxoEntry & entry : entries)
-    {
-        // exclude utxo's not matching address
-        if (!addr.empty() && entry.address != addr)
-        {
-            continue;
-        }
-        amount += entry.amount;
-    }
-
-    return amount;
-}
-
-/**
- * \brief Generate and return new wallet address
- */
-std::string WalletConnector::getNewTokenAddress(const std::string & type)
-{
-    std::string newaddress = "";
-    if (!getNewAddress(newaddress, type))
-    {
-        LOG() << "getNewAddress failed " << __FUNCTION__;
-        return "";
-    }
-
-    return newaddress;
-}
 
 } // namespace xbridge

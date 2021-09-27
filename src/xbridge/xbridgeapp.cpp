@@ -914,11 +914,15 @@ void App::updateActiveWallets()
     {
         LOCK(m_updatingWalletsLock);
         if (m_updatingWallets)
+        {
             return;
+        }
         m_updatingWallets = true;
     }
     if (ShutdownRequested())
+    {
         return;
+    }
 
     Settings & s = settings();
     std::vector<std::string> wallets = s.exchangeWallets();
@@ -1547,10 +1551,15 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     auto pmn = sn::ServiceNodeMgr::instance().getSn(snode);
-    if (pmn.isNull()) {
-        if (snode.Decompress()) // try to uncompress pubkey and search
+    if (pmn.isNull()) 
+    {
+        if (snode.Decompress()) 
+        {
+            // try to uncompress pubkey and search
             pmn = sn::ServiceNodeMgr::instance().getSn(snode);
-        if (pmn.isNull()) {
+        }
+        if (pmn.isNull()) 
+        {
             ERR() << "Failed to find servicenode for pair " << boost::algorithm::join(currencies, ",") << " "
                   << " servicenode in xwallets is not in servicenode list " << __FUNCTION__;
             return xbridge::NO_SERVICE_NODE;
@@ -1655,7 +1664,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     TransactionDescrPtr ptr(new TransactionDescr);
     std::vector<wallet::UtxoEntry> outputsForUse;
 
-    if(connFrom->currency != "ETH")
+    if (connFrom->method != "ETH")
     {
         // Utxo selection only if supplied utxos are empty
         if (utxos.empty()) 
@@ -1751,8 +1760,6 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 return xbridge::Error::FUNDS_NOT_SIGNED;
             }
 
-            entry.rawAddress = connFrom->toXAddr(entry.address);
-
             if (entry.signature.size() != 65) {
                 ERR() << "incorrect signature length, need 65 bytes " << __FUNCTION__;
                 return xbridge::Error::INVALID_SIGNATURE;
@@ -1811,13 +1818,17 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
        << ptr->toCurrency
        << ptr->toAmount
        << timestampValue
-       << ptr->blockHash
-       << outputsForUse.at(0).signature;
+       << ptr->blockHash;
+    if (!outputsForUse.empty())
+    {
+       ss << outputsForUse.at(0).signature;
+    }
+
     id = ss.GetHash();
     ptr->id = id; // overwritten by partial order designation below
     ptr->setParentOrder(parentid);
 
-    if(connFrom->currency != "ETH")
+    if (connFrom->method != "ETH")
     {
         // Create partial order utxos
         if (partialOrder) 
@@ -2028,7 +2039,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", id.GetHex());
-        log_obj.pushKV("snode_pubkey", HexStr(pmn.getSnodePubKey()));
+        log_obj.pushKV("snode_pubkey", HexStr(snode));
         if (!ptr->partialOrderPrepTx.empty())
             log_obj.pushKV("partial_prep_tx", ptr->partialOrderPrepTx);
         xbridge::LogOrderMsg(log_obj, "using servicenode for order", __FUNCTION__);
@@ -2183,7 +2194,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         return xbridge::NO_SESSION;
     }
 
-    if (connFrom->currency != "ETH")
+    if (connFrom->method != "ETH")
     {
         // check dust
         if (connFrom->isDustAmount(ptr->fromAmount))
@@ -2394,7 +2405,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
             }
         }
     }
-    else if (connTo->currency != "ETH")
+    else if (connFrom->method != "ETH")
     {
         if (connTo->isDustAmount(ptr->toAmount))
         {
@@ -3883,7 +3894,8 @@ void App::loadOrders() {
     }
 }
 
-void App::saveOrders(bool force) {
+void App::saveOrders(bool force) 
+{
     LOCK(m_lock);
 
     {
@@ -3916,7 +3928,8 @@ void App::saveOrders(bool force) {
     xdb.Write(orders, force);
 }
 
-uint256 App::orderWithUtxo(const wallet::UtxoEntry & utxo) {
+uint256 App::orderWithUtxo(const wallet::UtxoEntry & utxo) 
+{
     LOCK(m_p->m_txLocker);
     for (const auto & order : m_p->m_transactions) {
         if (order.second->isLocal()) {
@@ -3928,7 +3941,8 @@ uint256 App::orderWithUtxo(const wallet::UtxoEntry & utxo) {
     return uint256();
 }
 
-std::vector<TransactionDescrPtr> App::getPartialOrderChain(const uint256 orderid) {
+std::vector<TransactionDescrPtr> App::getPartialOrderChain(const uint256 orderid) 
+{
     xbridge::TransactionDescrPtr rorder = nullptr;
     std::vector<TransactionDescrPtr> orders;
 
@@ -4063,10 +4077,15 @@ std::ostream & operator << (std::ostream& out, const TransactionDescrPtr& tx)
     return out;
 }
 
-WalletConnectorPtr ConnectorByCurrency(const std::string & currency) {
+//******************************************************************************
+//******************************************************************************
+WalletConnectorPtr ConnectorByCurrency(const std::string & currency) 
+{
     return App::instance().connectorByCurrency(currency);
 }
 
+//******************************************************************************
+//******************************************************************************
 std::string TxCancelReasonText(uint32_t reason) {
     const auto creason = static_cast<TxCancelReason>(reason);
     switch (creason) {
