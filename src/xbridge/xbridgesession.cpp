@@ -904,6 +904,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     std::vector<unsigned char> feeTx;
     offset += packet->read(offset, feeTx, feeTxSize);
 
+    xbridge::App & xapp = xbridge::App::instance();
+
     // Process the service node fee transaction before proceeding
     CTransactionRef feeTxRef = nullptr;
     WalletParam wp;
