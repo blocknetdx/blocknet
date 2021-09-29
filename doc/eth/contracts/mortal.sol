@@ -4,19 +4,16 @@ import "ownable.sol";
 
 contract Mortal is Ownable
 {
-    /* Define variable owner of the type address */
-    address owner;
-
     /* This function is executed at initialization and sets the owner of the contract */
-    function Mortal() 
+    constructor () public
     {
-        owner = msg.sender; 
+        _owner = msg.sender; 
     }
 
     /* Function to recover the funds on the contract */
-    function kill() 
+    function kill() public
     { 
-        if (msg.sender == owner) 
-        selfdestruct(owner); 
+        if (msg.sender == _owner) 
+        selfdestruct(_owner); 
     }
 }
