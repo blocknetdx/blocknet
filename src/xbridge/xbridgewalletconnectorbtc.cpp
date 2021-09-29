@@ -126,7 +126,7 @@ bool getnetworkinfo(const std::string & rpcuser, const std::string & rpcpasswd,
     }
     catch (std::exception & e)
     {
-        LOG() << "getinfo exception " << e.what();
+        LOG() << "getnetworkinfo exception " << e.what();
         return false;
     }
 
@@ -354,7 +354,7 @@ bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpassw
     }
     catch (std::exception & e)
     {
-        LOG() << "getinfo exception " << e.what();
+        LOG() << "getblockchaininfo exception " << e.what();
         return false;
     }
 
