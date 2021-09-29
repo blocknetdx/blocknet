@@ -135,6 +135,60 @@ bool getnetworkinfo(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
+bool getwalletinfo(const std::string & rpcuser, const std::string & rpcpasswd,
+                   const std::string & rpcip, const std::string & rpcport,
+                   std::string & currentWallet)
+{
+    try
+    {
+        LOG() << "rpc call <getwalletinfo>";
+
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getwalletinfo", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Object o          = result.get_obj();
+        Value  walletName = find_value(o, "walletname");
+        if (walletName.is_null())
+        {
+            // not supported
+            currentWallet.clear();
+        }
+        else
+        {
+            currentWallet = walletName.get_str();
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "getwalletinfo exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpasswd,
                        const std::string & rpcip, const std::string & rpcport,
                        WalletInfo & info)
