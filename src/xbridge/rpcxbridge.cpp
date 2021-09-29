@@ -194,14 +194,16 @@ UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
         type = params[1].get_str();
     }
 
+    auto & xapp = xbridge::App::instance();
+    xbridge::WalletConnectorPtr conn = xapp.connectorByCurrency(currency);
+    if (!conn)
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, currency));
+
     Array res;
 
-    xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
-    if (conn) {
-        const auto addr = conn->getNewTokenAddress(type);
-        if (!addr.empty())
-            res.emplace_back(addr);
-    }
+    const auto addr = conn->getNewTokenAddress(type);
+    if (!addr.empty())
+        res.emplace_back(addr);
 
     return uret(res);
 }
