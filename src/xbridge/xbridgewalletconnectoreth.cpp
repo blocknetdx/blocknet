@@ -279,7 +279,7 @@ bool sendTransaction(const std::string & rpcip,
 {
     try
     {
-        LOG() << "rpc call <eth_sendTransaction>";
+        LOG() << "rpc call <personal_sendTransaction>";
 
         Array params;
 
@@ -294,8 +294,11 @@ bool sendTransaction(const std::string & rpcip,
 
         params.push_back(transaction);
 
+        // TODO empty password
+        params.push_back("");
+
         Object reply = CallRPC(rpcip, rpcport,
-                               "eth_sendTransaction", params);
+                               "personal_sendTransaction", params);
 
         // Parse reply
         const Value & result = find_value(reply, "result");
@@ -381,7 +384,7 @@ bool getTransactionByHash(const std::string & rpcip,
 //*****************************************************************************
 bool getBlockNumber(const std::string & rpcip,
                     const std::string & rpcport,
-                    uint32_t & blockNumber)
+                    uint64_t & blockNumber)
 {
     try
     {
@@ -672,7 +675,7 @@ bool getEstimateGas(const std::string & rpcip,
 bool getLogs(const std::string & rpcip,
              const std::string & rpcport,
              const uint160 & address,
-             const uint256 & fromBlock,
+             const uint64_t & fromBlock,
              const std::string & topic,
              std::vector<std::string> & events,
              std::vector<std::string> & data)
@@ -684,7 +687,7 @@ bool getLogs(const std::string & rpcip,
         Array params;
 
         Object filter;
-        filter.push_back(Pair("fromBlock", as0xStringNumber(fromBlock)));
+        filter.push_back(Pair("fromBlock", as0xString(fromBlock)));
         filter.push_back(Pair("toBlock", "latest"));
         filter.push_back(Pair("address", as0xString(address)));
         filter.push_back(Pair("topics", Array{Value(), as0xString(topic)}));
@@ -887,12 +890,15 @@ bool EthWalletConnector::getBlockHash(const uint32_t & blockNumber, std::string 
 //******************************************************************************
 bool EthWalletConnector::getBlockCount(uint32_t & blockCount)
 {
-    if (!rpc::getBlockNumber(m_ip, m_port, blockCount))
+    // TODO make uint64 in param
+    uint64_t count = 0;
+    if (!rpc::getBlockNumber(m_ip, m_port, count))
     {
         LOG() << "getBlockNumber failed";
         return false;
     }
 
+    blockCount = static_cast<uint32_t>(count);
     return true;
 }
 
@@ -936,7 +942,7 @@ bool EthWalletConnector::checkDepositTransaction(const std::string& depositTxId,
        return false;
    }
 
-   uint32_t lastBlockNumber;
+   uint64_t lastBlockNumber;
    if (!rpc::getBlockNumber(m_ip, m_port, lastBlockNumber))
    {
        LOG() << "can't get last block number " << depositTxId << " " << __FUNCTION__;
@@ -973,6 +979,27 @@ uint32_t EthWalletConnector::lockTime(const char role) const
     }
 
     return lt;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool EthWalletConnector::acceptableLockTimeDrift(const char role, const uint32_t lckTime) const
+{
+    auto lt = lockTime(role);
+    if (lt == 0 || lt >= LOCKTIME_THRESHOLD || lckTime >= LOCKTIME_THRESHOLD)
+    {
+        return false;
+    }
+
+    const int64_t diff = static_cast<int64_t>(lt) - static_cast<int64_t>(lckTime);
+    // Locktime drift is at minimum XLOCKTIME_DRIFT_SECONDS. In cases with slow chains
+    // the locktime drift will increase to block time multiplied by the number of
+    // blocks representing the maximum allowed locktime drift.
+    //
+    // If drift determination changes here, update wallet validation checks and unit
+    // tests.
+    int64_t drift = std::max<int64_t>(XLOCKTIME_DRIFT_SECONDS, XMAX_LOCKTIME_DRIFT_BLOCKS * blockTime);
+    return diff * static_cast<int64_t>(blockTime) <= drift;
 }
 
 //*****************************************************************************

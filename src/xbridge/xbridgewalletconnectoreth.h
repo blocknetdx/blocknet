@@ -87,12 +87,7 @@ public:
 
     uint32_t lockTime(const char role) const;
 
-    bool acceptableLockTimeDrift(const char /*role*/, const uint32_t /*lckTime*/) const
-    {
-        assert(false && "implementation"); 
-        return false;
-    }
-
+    bool acceptableLockTimeDrift(const char /*role*/, const uint32_t /*lckTime*/) const;
 
     bool createDepositUnlockScript(const std::vector<unsigned char> & /*myPubKey*/,
                                    const std::vector<unsigned char> & /*otherPubKey*/,
