@@ -6,7 +6,7 @@ contract Ownable
     address _owner;
 
     /* This function is executed at initialization and sets the owner of the contract */
-    function Ownable() 
+    constructor () public
     {
         _owner = msg.sender; 
     }

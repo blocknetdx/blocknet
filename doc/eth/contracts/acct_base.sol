@@ -27,7 +27,7 @@ contract ACCTBase is Mortal
         uint256 refundTimePoint;
     }
 
-    mapping(bytes20 => Swap) private swaps;
+    mapping(bytes20 => Swap) public swaps;
 
     /** Event: An atomic swap has been initiated
      *
@@ -118,7 +118,7 @@ contract ACCTBase is Mortal
      * \param responder      Address of the responder on this blockchain
      * \param escrowDuration Escrow period, in seconds (from now)
      */
-    function initiate(bytes20 hashedSecret, address responder, uint256 escrowDuration) public payable isEmpty(hashedSecret);
+    function initiate(bytes20 hashedSecret, address responder, uint256 escrowDuration) public payable;
 
     /** Respond to an atomic swap from another blockchain
      *
@@ -126,18 +126,18 @@ contract ACCTBase is Mortal
      * \param initiator      Address of the initiator on this blockchain
      * \param escrowDuration Escrow period, in seconds (from now)
      */
-    function respond(bytes20 hashedSecret, address initiator, uint256 escrowDuration) public payable isEmpty(hashedSecret);
+    function respond(bytes20 hashedSecret, address initiator, uint256 escrowDuration) public payable;
 
     /** The initiator/responder wants its coins back
      *
      * \param hashedSecret Hash of initiator's secret
      */
-    function refund(bytes20 hashedSecret) public isRefundable(hashedSecret);
+    function refund(bytes20 hashedSecret) public;
 
     /** The initiator/responder wants to execute the deal
      *
      * \param hashedSecret Hash of initiator's secret
      * \param secret       Initiator's secret
      */
-    function redeem(bytes20 hashedSecret, bytes memory secret) public isRedeemable(hashedSecret, secret);
+    function redeem(bytes20 hashedSecret, bytes memory secret) public;
 }

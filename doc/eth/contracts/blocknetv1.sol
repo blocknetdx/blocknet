@@ -2,7 +2,7 @@ pragma solidity ^0.4.15;
 
 import "acct_base.sol";
 
-contract BlocknetDXv1 id ACCTBase
+contract BlocknetDXv1 is ACCTBase
 {
     /** Initiate an atomic swap to another blockchain
      *
@@ -35,14 +35,7 @@ contract BlocknetDXv1 id ACCTBase
      * \param initiator      Address of the initiator on this blockchain
      * \param escrowDuration Escrow period, in seconds (from now)
      */
-    function respond(
-        bytes20 hashedSecret,
-        address initiator,
-        uint256 escrowDuration
-    )
-        public
-        payable
-        isEmpty(hashedSecret)
+    function respond(bytes20 hashedSecret, address initiator, uint256 escrowDuration) public payable isEmpty(hashedSecret)
     {
         require(msg.value > 0);
         Swap storage swap = swaps[hashedSecret];
