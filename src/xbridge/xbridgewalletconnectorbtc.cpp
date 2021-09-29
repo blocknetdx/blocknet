@@ -238,6 +238,78 @@ bool listwallets(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
+bool loadwallet(const std::string & rpcuser, const std::string & rpcpasswd,
+                const std::string & rpcip, const std::string & rpcport,
+                const std::string & walletName)
+{
+    try
+    {
+        LOG() << "rpc call <loadwallet>";
+
+        Array params;
+        params.push_back(walletName);
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "loadwallet", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error, but RPC_WALLET_ALREADY_LOADED = -35
+            Object o = error.get_obj();
+            const Value & code = find_value(o, "code");
+            if (code.type() != int_type || code.get_int() != -35)
+            {
+                LOG() << "error: " << write_string(error, false);
+                return false;
+            }
+        }
+
+        else if (result.type() != obj_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        else
+        {
+            Object o = result.get_obj();
+
+            const Value & name = find_value(o, "name");
+            if (name.type() != null_type)
+            {
+                if (name.get_str() != walletName)
+                {
+                    WARN() << "loadwallet result is <" << name.get_str() << "> but requested <" << walletName << ">";
+                }
+            }
+
+            const Value & warn = find_value(o, "warning");
+            if (warn.type() != null_type)
+            {
+                if (!warn.get_str().empty())
+                {
+                    WARN() << "loadwallet warning: <" << warn.get_str();
+                }
+            }
+        }
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "loadwallet exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpasswd,
                        const std::string & rpcip, const std::string & rpcport,
                        WalletInfo & info)
