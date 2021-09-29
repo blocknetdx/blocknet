@@ -1687,6 +1687,15 @@ uint256 SignatureHash(const CScript& scriptCode, const CTransactionPtr & txTo,
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::init()
 {
+    // try to load wallet
+    if (!walletName.empty())
+    {
+        if (!loadWallet(walletName))
+        {
+            return false;
+        }
+    }
+
     // convert prefixes
     addrPrefix   = static_cast<char>(boost::lexical_cast<int>(addrPrefix.data()));
     scriptPrefix = static_cast<char>(boost::lexical_cast<int>(scriptPrefix.data()));
@@ -1769,6 +1778,36 @@ bool BtcWalletConnector<CryptoProvider>::getInfo(rpc::WalletInfo & info) const
                    << __FUNCTION__;
             return false;
         }
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::loadWallet(const std::string & walletName) const
+{
+    std::vector<std::string> wallets;
+    if (!rpc::listwallets(m_user, m_passwd, m_ip, m_port, wallets))
+    {
+        // not supported
+        return true;
+    }
+
+    if (std::find(wallets.begin(), wallets.end(), walletName) != wallets.end())
+    {
+        // already loaded
+        return true;
+    }
+
+    LOG() << currency << " loading <" << walletName << "> wallet " << __FUNCTION__;
+
+    if (!rpc::loadwallet(m_user, m_passwd, m_ip, m_port, walletName))
+    {
+        WARN() << currency << " loadwallet failed. Is the wallet name correct? "
+                << __FUNCTION__;
+        return false;
     }
 
     return true;

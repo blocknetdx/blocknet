@@ -154,6 +154,7 @@ public:
         jsonver                     = other.jsonver;
         contenttype                 = other.contenttype;
         cashAddrPrefix              = other.cashAddrPrefix;
+        walletName                  = other.walletName;
 
         mediantime                  = other.mediantime; // useful for fork management
 
@@ -211,6 +212,10 @@ public:
     int64_t                      mediantime{0};
     // cash address prefix
     std::string                  cashAddrPrefix;
+
+    // wallet name (used for clients with multiwallet support, like bitcoin core)
+    std::string                  walletName;
+
 };
 
 } // namespace xbridge

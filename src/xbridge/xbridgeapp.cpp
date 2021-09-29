@@ -353,7 +353,8 @@ bool App::createConf()
                 "# TxWithTimeField=false"                                                      + eol +
                 "# LockCoinsSupported=false"                                                   + eol +
                 "# JSONVersion="                                                               + eol +
-                "# ContentType="                                                               + eol
+                "# ContentType="                                                               + eol +
+                "# WalletName="                                                                + eol
             );
         }
 
@@ -995,6 +996,7 @@ void App::updateActiveWallets()
         wp.jsonver                     = s.get<std::string>(*i + ".JSONVersion", "");
         wp.contenttype                 = s.get<std::string>(*i + ".ContentType", "");
         wp.cashAddrPrefix              = s.get<std::string>(*i + ".CashAddrPrefix", "");
+        wp.walletName                  = s.get<std::string>(*i + ".WalletName", "");
 
         if (wp.m_user.empty() || wp.m_passwd.empty())
             WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
