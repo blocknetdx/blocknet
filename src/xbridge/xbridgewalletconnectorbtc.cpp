@@ -189,6 +189,55 @@ bool getwalletinfo(const std::string & rpcuser, const std::string & rpcpasswd,
 
 //*****************************************************************************
 //*****************************************************************************
+bool listwallets(const std::string & rpcuser, const std::string & rpcpasswd,
+                const std::string & rpcip, const std::string & rpcport,
+                std::vector<std::string> & wallets)
+{
+    try
+    {
+        LOG() << "rpc call <listwallets>";
+
+        Array params;
+        Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "listwallets", params);
+
+        // Parse reply
+        const Value & result = find_value(reply, "result");
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+        else if (result.type() != array_type)
+        {
+            // Result
+            LOG() << "result not an object " <<
+                     (result.type() == null_type ? "" :
+                      result.type() == str_type  ? result.get_str() :
+                                                   write_string(result, true));
+            return false;
+        }
+
+        Array arr = result.get_array();
+        for (const Value & v : arr)
+        {
+            wallets.emplace_back(v.get_str());
+        }
+
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "listwallets exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool getblockchaininfo(const std::string & rpcuser, const std::string & rpcpasswd,
                        const std::string & rpcip, const std::string & rpcport,
                        WalletInfo & info)
