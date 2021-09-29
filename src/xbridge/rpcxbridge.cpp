@@ -155,6 +155,7 @@ UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
                 "\nReturns a new address for the specified asset.\n",
                 {
                     {"ticker", RPCArg::Type::STR, RPCArg::Optional::NO, "The ticker symbol of the asset you want to generate an address for (e.g. LTC)."},
+                    {"type", RPCArg::Type::STR, /* default */ "\"\"", "The address type to use. Generally, options are \"legacy\", \"p2sh-segwit\", and \"bech32\". The default can be set with -addresstype in each connected wallet."},
                 },
                 RPCResult{
                 R"(
@@ -171,20 +172,33 @@ UniValue dxGetNewTokenAddress(const JSONRPCRequest& request)
                 RPCExamples{
                     HelpExampleCli("dxGetNewTokenAddress", "BTC")
                   + HelpExampleRpc("dxGetNewTokenAddress", "\"BTC\"")
+                  + HelpExampleCli("dxGetNewTokenAddress", "BTC legacy")
+                  + HelpExampleRpc("dxGetNewTokenAddress", "\"BTC\" \"legacy\"")
                 },
             }.ToString());
-    Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (params.size() != 1)
+    Value js; 
+    json_spirit::read_string(request.params.write(), js); 
+    Array params = js.get_array();
+
+    if (params.size() < 1)
+    {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "(ticker)"));
+    }
 
-    const auto currency = params[0].get_str();
+    const std::string currency = params[0].get_str();
+
+    std::string type("");
+    if (params.size() > 1)
+    {
+        type = params[1].get_str();
+    }
+
     Array res;
 
     xbridge::WalletConnectorPtr conn = xbridge::App::instance().connectorByCurrency(currency);
-
     if (conn) {
-        const auto addr = conn->getNewTokenAddress();
+        const auto addr = conn->getNewTokenAddress(type);
         if (!addr.empty())
             res.emplace_back(addr);
     }

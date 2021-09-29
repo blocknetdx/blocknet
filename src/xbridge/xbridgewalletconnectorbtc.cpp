@@ -882,13 +882,19 @@ bool getNewAddress(const std::string & rpcuser,
                    const std::string & rpcpasswd,
                    const std::string & rpcip,
                    const std::string & rpcport,
-                   std::string & addr)
+                   std::string & addr,
+                   const std::string type = "")
 {
     try
     {
         LOG() << "rpc call <getnewaddress>";
 
         Array params;
+        if (!type.empty())
+        {
+            params.push_back("");
+            params.push_back(type);
+        }
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "getnewaddress", params);
 
         // Parse reply
@@ -913,6 +919,7 @@ bool getNewAddress(const std::string & rpcuser,
         }
 
         addr = result.get_str();
+
     }
     catch (std::exception & e)
     {
@@ -1640,9 +1647,9 @@ bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntr
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr)
+bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr, const std::string & type)
 {
-    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr))
+    if (!rpc::getNewAddress(m_user, m_passwd, m_ip, m_port, addr, type))
     {
         LOG() << "rpc::getNewAddress failed " << __FUNCTION__;
         return false;
