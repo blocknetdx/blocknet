@@ -996,7 +996,6 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         return true;
     }
 
-    xbridge::App & xapp = xbridge::App::instance();
     WalletConnectorPtr conn = xapp.connectorByCurrency(scurrency);
     WalletConnectorPtr connDest = xapp.connectorByCurrency(dcurrency);
     if (!conn || !connDest) 
