@@ -199,24 +199,26 @@ std::string iso8601(const boost::posix_time::ptime &time)
     return ss.str();
 }
 
-std::string xBridgeStringValueFromAmount(amount_t amount)
+std::string xBridgeStringValueFromAmount(const amount_t amount, const uint64_t COIN)
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::COIN)) << amount;
+    // ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::COIN)) << amount;
+    ss << std::fixed << std::setprecision(0) << amount;
     return ss.str();
 }
 
-std::string xBridgeStringValueFromPrice(double price)
-{
-    std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::COIN)) << price;
-    return ss.str();
-}
+// std::string xBridgeStringValueFromPrice(double price)
+// {
+//     std::stringstream ss;
+//     // ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::COIN)) << price;
+//     ss << std::fixed << std::setprecision(0) << price;
+//     return ss.str();
+// }
 
-std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
+std::string xBridgeStringValueFromPrice(const double price, const uint64_t COIN)
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(denomination)) << price;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price;
     return ss.str();
 }
 
@@ -240,7 +242,7 @@ std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
 //     return xBridgeIntFromReal(val);
 // }
 
-bool xBridgeValidCoin(const std::string coin)
+bool xBridgeValidCoin(const std::string coin, const uint64_t COIN)
 {
     bool f = false;
     int n = 0;
@@ -259,7 +261,7 @@ bool xBridgeValidCoin(const std::string coin)
                 j = 0;
         }
     }
-    return n - j <= xBridgeSignificantDigits(xbridge::COIN);
+    return n - j <= xBridgeSignificantDigits(COIN);
 }
 
 unsigned int xBridgeSignificantDigits(const amount_t amount)
