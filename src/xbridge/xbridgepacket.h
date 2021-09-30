@@ -16,6 +16,8 @@
 #include <memory>
 #include <ctime>
 
+class uint256;
+
 //******************************************************************************
 //******************************************************************************
 enum TxCancelReason
@@ -349,6 +351,7 @@ public:
                                             { return m_body; }
     unsigned char  * header()               { return &m_body[0]; }
     unsigned char  * data()                 { return &m_body[headerSize]; }
+    const unsigned char * data() const      { return &m_body[headerSize]; }
 
     void    clear()
     {
@@ -530,6 +533,20 @@ public:
               const std::vector<unsigned char> & privkey);
     bool verify();
     bool verify(const std::vector<unsigned char> & pubkey);
+
+    size_t read(const size_t offset, unsigned char * data, const size_t size) const;
+
+    template<class _T>
+    size_t read(const size_t offset, _T & data) const
+    {
+        return read(offset, reinterpret_cast<unsigned char *>(&data), sizeof(_T));
+    }
+
+    size_t read(const size_t offset, uint256 & data) const;
+
+    size_t read(const size_t offset, std::vector<unsigned char> & data, const size_t size) const;
+    size_t read(const size_t offset, std::string & data) const;
+    size_t read(const size_t offset, std::string & data, const size_t size) const;
 
 protected:
     template<uint32_t INDEX>

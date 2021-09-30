@@ -12,6 +12,7 @@
 #include <random.h>
 #include <secp256k1.h>
 #include <support/allocators/secure.h>
+#include <uint256.h>
 
 //******************************************************************************
 //******************************************************************************
@@ -159,4 +160,65 @@ bool XBridgePacket::verify(const std::vector<unsigned char> & pubkey)
     }
 
     return verify();
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, unsigned char * data, const size_t size) const
+{
+    if (offset + size > this->size() || size == 0)
+    {
+        LOG() << "wrong packet size " << __FUNCTION__;
+        return 0;
+    }
+    memcpy(data, this->data() + offset, size);
+    return size;
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, uint256 & data) const
+{
+    return read(offset, data.begin(), sizeof(data));
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, std::vector<unsigned char> & data, const size_t size) const
+{
+    data.resize(size, 0);
+    return read(offset, &data[0], size);
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, std::string & data) const
+{
+    size_t size = 0;
+    for (; size + offset < this->m_body.size() - headerSize; ++size)
+    {
+        if (m_body[headerSize + size + offset] == 0)
+        {
+            break;
+        }
+    }
+
+    // increment one byte because '\0'
+    return read(offset, data, size) + 1;
+}
+
+//******************************************************************************
+//******************************************************************************
+size_t XBridgePacket::read(const size_t offset, std::string & data, const size_t size) const
+{
+    data.resize(size, ' ');
+    size_t result = read(offset, reinterpret_cast<unsigned char *>(&data[0]), size);
+    if (result > 0)
+    {
+        // data.erase(data.find_last_not_of(" \0\n\r\t")+1);
+        uint32_t i = data.size() - 1;
+        for (; i > 0 && data[i] == 0; --i) {}
+        data.resize(i + 1);
+    }
+    return result;
 }
