@@ -2654,7 +2654,8 @@ bool App::isValidAddress(const std::string & address, WalletConnectorPtr & conn)
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const std::string fromCurrency, const amount_t fromAmount) {
+Error App::checkAcceptParams(const std::string fromCurrency, const amount_t fromAmount) 
+{
     return checkAmount(fromCurrency, fromAmount, "");
 }
 

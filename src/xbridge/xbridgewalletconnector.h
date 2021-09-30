@@ -107,7 +107,7 @@ public:
 
     virtual bool loadWallet(const std::string & walletName) const = 0;
 
-    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & inputs, const std::set<wallet::UtxoEntry> & excluded) const = 0;
+    virtual bool getUnspent(std::vector<wallet::UtxoEntry> & outputs, const std::set<wallet::UtxoEntry> & excluded) const = 0;
 
     virtual bool getBlock(const std::string & blockHash, std::string & rawBlock) = 0;
 
