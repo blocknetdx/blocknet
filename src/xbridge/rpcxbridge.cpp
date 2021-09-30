@@ -1026,17 +1026,18 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     }
 
     std::string fromCurrency    = params[0].get_str();
-    double      fromAmount      = boost::lexical_cast<double>(params[1].get_str());
-    std::string fromAddress     = params[2].get_str();
-
     std::string toCurrency      = params[3].get_str();
-    double      toAmount        = boost::lexical_cast<double>(params[4].get_str());
-    std::string toAddress       = params[5].get_str();
-
-    std::string type            = params[6].get_str();
 
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
+
+    double      fromAmount      = std::stod(params[1].get_str()) * connFrom->COIN;
+    std::string fromAddress     = params[2].get_str();
+
+    double      toAmount        = std::stod(params[4].get_str()) * connTo->COIN;
+    std::string toAddress       = params[5].get_str();
+
+    std::string type            = params[6].get_str();
 
     // Validate the order type
     if (type != "exact") {
@@ -2673,7 +2674,7 @@ UniValue dxGetTokenBalances(const JSONRPCRequest& request)
             {
                 LOCK(mu);
                 if (balance >= 0) // Ignore results from disconnected wallets
-                    res.emplace_back(connector->currency, xbridge::xBridgeStringValueFromPrice(balance));
+                    res.emplace_back(connector->currency, xbridge::xBridgeStringValueFromPrice(balance, connector->COIN));
                 count--;
             }
             cv.notify_one();

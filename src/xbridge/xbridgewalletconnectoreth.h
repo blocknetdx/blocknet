@@ -210,7 +210,7 @@ private:
     };
 
     NetwortType m_networkType;
-    uint32_t m_fromBlock;
+    uint64_t m_fromBlock;
     const std::string m_contractAddress = "0x078fb70CA9A3077cDF1cA32b4a9Cb74898963DA8";
     const std::string m_contractAddressTestnet = "0x078fb70CA9A3077cDF1cA32b4a9Cb74898963DA8";
 };

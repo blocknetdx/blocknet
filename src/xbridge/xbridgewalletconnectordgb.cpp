@@ -134,8 +134,15 @@ bool DgbWalletConnector::createDepositTransaction(const std::vector<XTxIn>  & in
                                                   uint32_t & txVout,
                                                   std::string & rawTx)
 {
+    std::vector<XTxOut> outs = outputs;
+    for (XTxOut & o :outs)
+    {
+        // TODO use createTransaction instead raw, there may be a calculation error here
+        o.amount /= COIN;
+    }
+
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                   inputs, outputs, 0, rawTx, true))
+                                   inputs, outs, 0, rawTx, true))
     {
         // cancel transaction
         LOG() << "create transaction error, transaction canceled " << __FUNCTION__;
