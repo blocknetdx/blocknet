@@ -900,7 +900,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         auto snode = smgr.getSn(snodeEntry.key.GetPubKey());
         bool hasAddr{false};
         for (const auto & o : feeTxRef->vout) {
-            if (o.nValue < wp.serviceNodeFee * COIN)
+            if (o.nValue < wp.serviceNodeFee * ::COIN)
                 continue;
             auto addr1 = o.scriptPubKey == GetScriptForDestination(snodeEntry.address);
             auto addr2 = !snode.isNull() && o.scriptPubKey == GetScriptForDestination(CTxDestination(snode.getPaymentAddress()));
