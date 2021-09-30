@@ -541,7 +541,8 @@ UniValue dxGetOrders(const JSONRPCRequest& request)
 
         xbridge::WalletConnectorPtr connFrom = xapp.connectorByCurrency(tr->fromCurrency);
         xbridge::WalletConnectorPtr connTo   = xapp.connectorByCurrency(tr->toCurrency);
-        if ((!connFrom || !connTo) && !nowalletswitch ){
+        if ((!connFrom || !connTo) && !nowalletswitch )
+        {
             continue;
         }
 
@@ -1001,31 +1002,36 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
             }.ToString());
     Value js; json_spirit::read_string(request.params.write(), js); Array params = js.get_array();
 
-    if (!xbridge::xBridgeValidCoin(params[1].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "The maker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return uret(error);
-    }
-
-    if (!xbridge::xBridgeValidCoin(params[4].get_str())) {
-        Object error;
-        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
-                      "The taker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
-        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
-        error.emplace_back(Pair("name",     __FUNCTION__));
-        return uret(error);
-    }
-
     std::string fromCurrency    = params[0].get_str();
     std::string toCurrency      = params[3].get_str();
 
     xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
     xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
+
+    if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
+    if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
+
+    if (!xbridge::xBridgeValidCoin(params[1].get_str(), connFrom->COIN)) 
+    {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "The maker_size is too precise. The maximum precision supported is " +
+                              std::to_string(xbridge::xBridgeSignificantDigits(connFrom->COIN)) + " digits.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return uret(error);
+    }
+
+    if (!xbridge::xBridgeValidCoin(params[4].get_str(), connTo->COIN)) 
+    {
+        Object error;
+        error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
+                      "The taker_size is too precise. The maximum precision supported is " +
+                              std::to_string(xbridge::xBridgeSignificantDigits(connTo->COIN)) + " digits.")));
+        error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
+        error.emplace_back(Pair("name",     __FUNCTION__));
+        return uret(error);
+    }
 
     double      fromAmount      = std::stod(params[1].get_str()) * connFrom->COIN;
     std::string fromAddress     = params[2].get_str();
@@ -1063,11 +1069,7 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     }
 
     // Validate addresses
-    if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
-    if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
-
     xbridge::App &app = xbridge::App::instance();
-
     if (!app.isValidAddress(fromAddress, connFrom)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress));
@@ -3137,44 +3139,42 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
                 },
             }.ToString());
 
-    if (!xbridge::xBridgeValidCoin(request.params[1].get_str())) {
+    std::string fromCurrency    = request.params[0].get_str();
+    std::string toCurrency      = request.params[3].get_str();
+
+    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
+    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
+
+    if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
+    if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
+
+    if (!xbridge::xBridgeValidCoin(request.params[1].get_str(), connFrom->COIN)) {
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
                       "The maker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
+                              std::to_string(xbridge::xBridgeSignificantDigits(connFrom->COIN)) + " digits.")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return uret(error);
     }
 
-    if (!xbridge::xBridgeValidCoin(request.params[4].get_str())) 
+    if (!xbridge::xBridgeValidCoin(request.params[4].get_str(), connTo->COIN)) 
     {
         Object error;
         error.emplace_back(Pair("error",    xbridge::xbridgeErrorText(xbridge::INVALID_PARAMETERS,
                       "The taker_size is too precise. The maximum precision supported is " +
-                              std::to_string(xbridge::xBridgeSignificantDigits(xbridge::COIN)) + " digits.")));
+                              std::to_string(xbridge::xBridgeSignificantDigits(connTo->COIN)) + " digits.")));
         error.emplace_back(Pair("code",     xbridge::INVALID_PARAMETERS));
         error.emplace_back(Pair("name",     __FUNCTION__));
         return uret(error);
     }
 
-    std::string fromCurrency    = request.params[0].get_str();
     double      fromAmount      = boost::lexical_cast<double>(request.params[1].get_str());
     std::string fromAddress     = request.params[2].get_str();
 
-    std::string toCurrency      = request.params[3].get_str();
     double      toAmount        = boost::lexical_cast<double>(request.params[4].get_str());
     std::string toAddress       = request.params[5].get_str();
     double      partialMinimum  = boost::lexical_cast<double>(request.params[6].get_str());
-
-    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(fromCurrency);
-    xbridge::WalletConnectorPtr connTo   = xbridge::App::instance().connectorByCurrency(toCurrency);
-    
-    // Check if min_size > maker_size 
-    if (partialMinimum > fromAmount) {
-        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The minimum_size can't be more than maker_size"));
-    }
 
     // Check that addresses are not the same
     if (fromAddress == toAddress) 
@@ -3200,11 +3200,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     }
 
     // Validate addresses
-    if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + fromCurrency));
-    if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + toCurrency));
-
     xbridge::App &app = xbridge::App::instance();
-
     if (!app.isValidAddress(fromAddress, connFrom)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress));

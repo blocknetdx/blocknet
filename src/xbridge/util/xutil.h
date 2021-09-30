@@ -82,9 +82,8 @@ namespace xbridge
     // double xBridgeValueFromAmount(amount_t amount);
     // amount_t xBridgeIntFromReal(double val);
     // amount_t xBridgeAmountFromReal(double val);
-    std::string xBridgeStringValueFromPrice(double price);
-    std::string xBridgeStringValueFromPrice(double price, uint64_t denomination);
-    std::string xBridgeStringValueFromAmount(amount_t amount);
+    std::string xBridgeStringValueFromPrice(const double price, const uint64_t COIN = 0);
+    std::string xBridgeStringValueFromAmount(const amount_t amount, const uint64_t COIN = 0);
 
     /**
      * Return the counterparty destination amount from maker/taker price.
@@ -119,11 +118,11 @@ namespace xbridge
      * @return true if valid, false if invalid
      * Example:<br>
      * \verbatim￼
-        xBridgeValidCoin("0.000001")
+        xBridgeValidCoin("0.000001", COIN)
         // returns true
      * \endverbatim
      */
-    bool xBridgeValidCoin(std::string coin);
+    bool xBridgeValidCoin(std::string coin, const uint64_t COIN);
 
     /**
      * @brief Returns the number of digits in base 10 integer not including the most significant.
