@@ -428,9 +428,15 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     }
 
     // read packet data
-    std::vector<unsigned char> sid(packet->data(), packet->data()+XBridgePacket::hashSize);
-    uint256 id(sid);
-    uint32_t offset = XBridgePacket::hashSize;
+    uint256 id;
+    uint32_t offset = packet->read(0, id);
+
+    std::vector<unsigned char> mpubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    if (!packet->verify(mpubkey))
+    {
+        xbridge::LogOrderMsg(id.GetHex(), "bad counterparty packet signature", __FUNCTION__);
+        return true;
+    }
 
     // Check if order already exists, if it does ignore processing
     TransactionPtr t = e.pendingTransaction(id);
@@ -449,45 +455,37 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     }
 
     // source
-    std::vector<unsigned char> saddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string scurrency((const char *)packet->data()+offset);
-    offset += 8;
-    uint64_t samount = *static_cast<boost::uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    std::vector<unsigned char> saddr;
+    offset += packet->read(offset, saddr, XBridgePacket::addressSize);
+    std::string scurrency;
+    offset += packet->read(offset, scurrency, 8);
+    uint64_t samount = 0;
+    offset += packet->read(offset, samount);
 
     // destination
-    std::vector<unsigned char> daddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string dcurrency((const char *)packet->data()+offset);
-    offset += 8;
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    std::vector<unsigned char> daddr;
+    offset += packet->read(offset, daddr, XBridgePacket::addressSize);
+    std::string dcurrency;
+    offset += packet->read(offset, dcurrency, 8);
+    uint64_t damount = 0;
+    offset += packet->read(offset, damount);
 
-    uint64_t timestamp = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    uint64_t timestamp = 0;
+    offset += packet->read(offset, timestamp);
 
-    std::vector<unsigned char> sblockhash(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 blockHash(sblockhash);
-    offset += XBridgePacket::hashSize;
+    uint256 blockHash;
+    offset += packet->read(offset, blockHash);
 
-    std::vector<unsigned char> mpubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
+    uint16_t flags = 0;
+    offset += packet->read(offset, flags);
+    bool isPartialOrder = (flags == 1);
 
-    if (!packet->verify(mpubkey))
-    {
-        xbridge::LogOrderMsg(id.GetHex(), "bad counterparty packet signature", __FUNCTION__);
-        return true;
-    }
-
-    bool isPartialOrder = *static_cast<uint16_t *>(static_cast<void *>(packet->data()+offset)) == 1;
-    offset += sizeof(uint16_t);
-
-    uint64_t minFromAmount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    uint64_t minFromAmount = 0;
+    offset += packet->read(offset, minFromAmount);
 
     // utxos count
-    uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint32_t);
+    uint32_t utxoItemsCount = 0;
+    offset += packet->read(offset, utxoItemsCount);
 
     if (isPartialOrder && minFromAmount > samount) {
         xbridge::LogOrderMsg(id.GetHex(), "rejecting order, minimum size cannot be greater than maker size", __FUNCTION__);
@@ -526,23 +524,18 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
             wallet::UtxoEntry entry;
 
-            std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-            uint256 txid(stxid);
-            offset += XBridgePacket::hashSize;
+            uint256 txid;
+            offset += packet->read(offset, txid);
 
             entry.txId = txid.ToString();
 
-            entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-            offset += sizeof(uint32_t);
-
-            entry.rawAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+20);
-            offset += XBridgePacket::addressSize;
+            offset += packet->read(offset, entry.vout);
+            offset += packet->read(offset, entry.rawAddress, XBridgePacket::addressSize);
+            offset += packet->read(offset, entry.signature, XBridgePacket::signatureSize);
 
             entry.address = sconn->fromXAddr(entry.rawAddress);
 
-            entry.signature = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::signatureSize);
-            offset += XBridgePacket::signatureSize;
-
+            // check txout
             if (!sconn->getTxOut(entry))
             {
                 UniValue log_obj(UniValue::VOBJ);
