@@ -700,21 +700,21 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    uint32_t offset = XBridgePacket::hashSize;
+    uint256 txid;
+    uint32_t offset = packet->read(0, txid);
 
-    std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += 8;
-    uint64_t samount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    std::string scurrency;
+    offset += packet->read(offset, scurrency, 8);
+    uint64_t samount = 0;
+    offset += packet->read(offset, samount);
 
-    std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += 8;
-    uint64_t damount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    std::string dcurrency;
+    offset += packet->read(offset, dcurrency, 8);
+    uint64_t damount = 0;
+    offset += packet->read(offset, damount);
 
-    auto hubAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
+    std::vector<unsigned char> hubAddress;
+    offset += packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
     xbridge::App & xapp = App::instance();
     TransactionDescrPtr ptr = xapp.transaction(txid);
@@ -765,18 +765,17 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
             ptr->state = TransactionDescr::trPending;
         }
 
-        offset += XBridgePacket::addressSize; // hub address
         offset += sizeof(uint64_t);           // created time
         offset += XBridgePacket::hashSize;    // block hash
 
-        bool isPartialOrderAllowed = *reinterpret_cast<boost::uint16_t *>(packet->data()+offset) == 1;
+        uint16_t flags = 0;
+        offset += packet->read(offset, flags);
+        bool isPartialOrderAllowed = (flags == 1);
+
         if (isPartialOrderAllowed)
             ptr->allowPartialOrders();
-        offset += sizeof(uint16_t);
 
-        uint64_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-        ptr->minFromAmount = minFromAmount;
-        offset += sizeof(uint64_t);
+        offset += packet->read(offset, ptr->minFromAmount);
 
         // update timestamp
         ptr->updateTimestamp();
@@ -803,26 +802,24 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     ptr->origToAmount = damount;
 
     ptr->hubAddress   = hubAddress;
-    offset += XBridgePacket::addressSize;
 
-    ptr->created      = xbridge::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    uint64_t created = 0;
+    offset += packet->read(offset, created);
+    ptr->created      = xbridge::intToTime(created);
 
     ptr->state        = TransactionDescr::trPending;
     ptr->sPubKey      = spubkey;
 
-    std::vector<unsigned char> sblockhash(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    ptr->blockHash    = uint256(sblockhash);
-    offset += XBridgePacket::hashSize;
+    offset += packet->read(offset, ptr->blockHash);
 
-    bool isPartialOrderAllowed = *reinterpret_cast<boost::uint16_t *>(packet->data()+offset) == 1;
+    uint16_t flags = 0;
+    offset += packet->read(offset, flags);
+    bool isPartialOrderAllowed = (flags == 1);
+
     if (isPartialOrderAllowed)
         ptr->allowPartialOrders();
-    offset += sizeof(uint16_t);
 
-    uint64_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    ptr->minFromAmount = minFromAmount;
-    offset += sizeof(uint64_t);
+    offset += packet->read(offset, ptr->minFromAmount);
 
     xapp.appendTransaction(ptr);
 
