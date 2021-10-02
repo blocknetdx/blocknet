@@ -861,15 +861,14 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     uint32_t offset = XBridgePacket::addressSize;
 
     // read packet data
-    std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 id(sid);
-    offset += XBridgePacket::hashSize;
+    uint256 id;
+    offset += packet->read(offset, id);;
 
     // snode fee hex
-    uint32_t feeTxSize = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint32_t);
-    std::vector<unsigned char> feeTx(packet->data()+offset, packet->data()+offset+feeTxSize);
-    offset += feeTxSize;
+    uint32_t feeTxSize = 0;
+    offset += packet->read(offset, feeTxSize);
+    std::vector<unsigned char> feeTx;
+    offset += packet->read(offset, feeTx, feeTxSize);
 
     // Process the service node fee transaction before proceeding
     CTransactionRef feeTxRef = nullptr;
@@ -910,30 +909,30 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     }
 
     // source
-    std::vector<unsigned char> saddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string scurrency((const char *)packet->data()+offset);
-    offset += 8;
-    uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
-    uint32_t sourceHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
-    offset += sizeof(uint32_t);
-    std::vector<unsigned char> sourceHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::vector<unsigned char> saddr;
+    offset += packet->read(offset, saddr, XBridgePacket::addressSize);
+    std::string scurrency;
+    offset += packet->read(offset, scurrency, 8);
+    uint64_t samount = 0;
+    offset += packet->read(offset, samount);
+    uint32_t sourceHeight = 0;
+    offset += packet->read(offset, sourceHeight);
+    std::vector<unsigned char> sourceHashRaw;
+    offset += packet->read(offset, sourceHashRaw, 8);
     std::string sourceHashTruncated(sourceHashRaw.begin(), sourceHashRaw.end());
-    offset += 8;
 
     // destination
-    std::vector<unsigned char> daddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string dcurrency((const char *)packet->data()+offset);
-    offset += 8;
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
-    uint32_t destinationHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
-    offset += sizeof(uint32_t);
-    std::vector<unsigned char> destinationHashRaw(packet->data() + offset, packet->data() + offset + 8);
+    std::vector<unsigned char> daddr;
+    offset += packet->read(offset, daddr, XBridgePacket::addressSize);
+    std::string dcurrency;
+    offset += packet->read(offset, dcurrency, 8);
+    uint64_t damount = 0;
+    offset += packet->read(offset, damount);
+    uint32_t destinationHeight = 0;
+    offset += packet->read(offset, destinationHeight);
+    std::vector<unsigned char> destinationHashRaw;
+    offset += packet->read(offset, destinationHashRaw, 8);
     std::string destinationHashTruncated(destinationHashRaw.begin(), destinationHashRaw.end());
-    offset += 8;
 
     std::vector<unsigned char> mpubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
@@ -1069,8 +1068,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     std::vector<wallet::UtxoEntry> utxoItems;
     {
         // array size
-        uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-        offset += sizeof(uint32_t);
+        uint32_t utxoItemsCount = 0;
+        offset += packet->read(offset, utxoItemsCount);
 
         // items
         for (uint32_t i = 0; i < utxoItemsCount; ++i)
@@ -1087,25 +1086,18 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
             wallet::UtxoEntry entry;
 
-            std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-            uint256 txid(stxid);
-            offset += XBridgePacket::hashSize;
+            uint256 txid;
+            offset += packet->read(offset, txid);
 
             entry.txId = txid.ToString();
 
-            entry.vout = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
-            offset += sizeof(uint32_t);
-
-            entry.rawAddress = std::vector<unsigned char>(packet->data()+offset,
-                                                          packet->data()+offset+XBridgePacket::addressSize);
-            offset += XBridgePacket::addressSize;
+            offset += packet->read(offset, entry.vout);
+            offset += packet->read(offset, entry.rawAddress, XBridgePacket::addressSize);
+            offset += packet->read(offset, entry.signature, XBridgePacket::signatureSize);
 
             entry.address = conn->fromXAddr(entry.rawAddress);
 
-            entry.signature = std::vector<unsigned char>(packet->data()+offset,
-                                                         packet->data()+offset+XBridgePacket::signatureSize);
-            offset += XBridgePacket::signatureSize;
-
+            // check txout
             if (!conn->getTxOut(entry))
             {
                 UniValue log_obj(UniValue::VOBJ);
