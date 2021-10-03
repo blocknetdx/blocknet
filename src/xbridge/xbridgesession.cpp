@@ -3278,9 +3278,12 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    TxCancelReason reason = static_cast<TxCancelReason>(*reinterpret_cast<uint32_t*>(packet->data() + 32));
+    uint256 txid;
+    size_t offset = packet->read(0, txid);
+
+    uint32_t rawReason = 0;
+    offset += packet->read(offset, rawReason);
+    TxCancelReason reason = static_cast<TxCancelReason>(rawReason);
 
     auto write_log = [](UniValue o, const std::string & errMsg) {
         o.pushKV("err_msg", errMsg);
