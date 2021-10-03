@@ -1326,23 +1326,21 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     uint32_t offset = 0;
 
     // servicenode addr
-    std::vector<unsigned char> hubAddress(packet->data()+offset,
-                                          packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    offset += packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
     // read packet data
-    std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 id(sid);
-    offset += XBridgePacket::hashSize;
+    uint256 id;
+    offset += packet->read(offset, id);
 
     // pubkey from packet
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // requested amounts (taker from and to amounts)
-    uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    uint64_t samount = 0;
+    offset += packet->read(offset, samount);
+    uint64_t damount = 0;
+    offset += packet->read(offset, damount);
 
     TransactionDescrPtr xtx = xapp.transaction(id);
     if (!xtx)
