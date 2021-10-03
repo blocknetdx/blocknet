@@ -3768,8 +3768,9 @@ bool Session::Impl::processTransactionFinished(XBridgePacketPtr packet) const
     }
 
     // transaction id
-    std::vector<unsigned char> stxid(packet->data(), packet->data()+XBridgePacket::hashSize);
-    uint256 txid(stxid);
+    uint256 txid;
+    size_t offset = packet->read(0, txid);
+
     // snode key
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
