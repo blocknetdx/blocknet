@@ -1560,14 +1560,12 @@ bool Session::Impl::processTransactionHoldApply(XBridgePacketPtr packet) const
 
     uint32_t offset = XBridgePacket::addressSize;
 
-    std::vector<unsigned char> from(packet->data()+offset,
-                                    packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> from;
+    offset += packet->read(offset, from, XBridgePacket::addressSize);
 
     // transaction id
-    std::vector<unsigned char> sid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 id(sid);
-    offset += XBridgePacket::hashSize;
+    uint256 id;
+    offset += packet->read(offset, id);
 
     // packet pubkey
     std::vector<unsigned char> pubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
