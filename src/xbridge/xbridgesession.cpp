@@ -3026,12 +3026,12 @@ bool Session::Impl::processTransactionConfirmedA(XBridgePacketPtr packet) const
     size_t offset = XBridgePacket::addressSize; // hub address
 
     // order id
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
     // A side paytx id
-    std::string a_payTxId(reinterpret_cast<const char *>(packet->data()+offset));
+    std::string a_payTxId;
+    offset += packet->read(offset, a_payTxId);
 
     TransactionPtr tr = e.transaction(txid);
     if (!tr->matches(txid)) // ignore no matching orders
