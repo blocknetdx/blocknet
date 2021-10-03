@@ -3095,15 +3095,14 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+XBridgePacket::addressSize);
-    size_t offset = XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::string payTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += payTxId.size()+1;
+    std::string payTxId;
+    offset += packet->read(offset, payTxId);
 
     xbridge::App & xapp = xbridge::App::instance();
 
