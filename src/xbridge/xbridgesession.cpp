@@ -1883,16 +1883,16 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+XBridgePacket::addressSize);
-    uint32_t offset = XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
     // transaction id
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
     // counterparty pubkey
-    std::vector<unsigned char> mPubKey(packet->data()+offset, packet->data()+offset+XBridgePacket::pubkeySize);
+    std::vector<unsigned char> mPubKey;
+    offset += packet->read(offset, mPubKey, XBridgePacket::pubkeySize);
 
     xbridge::App & xapp = xbridge::App::instance();
 
