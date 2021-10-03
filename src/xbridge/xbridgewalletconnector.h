@@ -36,6 +36,17 @@ struct XTxIn
     {}
 };
 
+struct XTxOut
+{
+    std::string address;
+    double amount;
+
+    XTxOut(const std::string & addr, const double _amount)
+        : address(addr)
+        , amount(_amount)
+    {}
+};
+
 //*****************************************************************************
 //*****************************************************************************
 namespace rpc
