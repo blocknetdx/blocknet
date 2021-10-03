@@ -2358,24 +2358,24 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         return false;
     }
 
-    std::vector<unsigned char> hubAddress(packet->data(), packet->data()+XBridgePacket::addressSize);
-    uint32_t offset = XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
     // transaction id
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::vector<unsigned char> mPubKey(packet->data()+offset, packet->data()+offset+XBridgePacket::pubkeySize);
-    offset += XBridgePacket::pubkeySize;
+    std::vector<unsigned char> mPubKey;
+    offset += packet->read(offset, mPubKey, XBridgePacket::pubkeySize);
 
-    std::string binATxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binATxId.size()+1;
+    std::string binATxId;
+    offset += packet->read(offset, binATxId);
 
-    std::vector<unsigned char> hx(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> hx;
+    offset += packet->read(offset, hx, XBridgePacket::addressSize);
 
-    uint32_t lockTimeA = *reinterpret_cast<uint32_t *>(packet->data()+offset);
+    uint32_t lockTimeA = 0;
+    offset += packet->read(offset, lockTimeA);
 
     xbridge::App & xapp = xbridge::App::instance();
 
