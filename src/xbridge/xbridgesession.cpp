@@ -1673,17 +1673,14 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     xbridge::App & xapp = xbridge::App::instance();
     uint32_t offset = 0;
 
-    std::vector<unsigned char> thisAddress(packet->data(),
-                                           packet->data()+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> thisAddress;
+    offset += packet->read(offset, thisAddress, XBridgePacket::addressSize);
 
-    std::vector<unsigned char> hubAddress(packet->data()+offset,
-                                          packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
+    std::vector<unsigned char> hubAddress;
+    offset += packet->read(offset, hubAddress, XBridgePacket::addressSize);
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
     TransactionDescrPtr xtx = xapp.transaction(txid);
     if (!xtx)
@@ -1717,21 +1714,19 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
         return true;
     }
 
-    std::vector<unsigned char> from(packet->data()+offset,
-                                    packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string   fromCurrency(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += 8;
-    uint64_t      fromAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    std::vector<unsigned char> from;
+    offset += packet->read(offset, from, XBridgePacket::addressSize);
+    std::string fromCurrency;
+    offset += packet->read(offset, fromCurrency, 8);
+    uint64_t fromAmount = 0;
+    offset += packet->read(offset, fromAmount);
 
-    std::vector<unsigned char> to(packet->data()+offset,
-                                  packet->data()+offset+XBridgePacket::addressSize);
-    offset += XBridgePacket::addressSize;
-    std::string   toCurrency(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += 8;
-    uint64_t      toAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    std::vector<unsigned char> to;
+    offset += packet->read(offset, to, XBridgePacket::addressSize);
+    std::string toCurrency;
+    offset += packet->read(offset, toCurrency, 8);
+    uint64_t toAmount = 0;
+    offset += packet->read(offset, toAmount);
 
     if(xtx->id           != txid &&
        xtx->from         != from &&
