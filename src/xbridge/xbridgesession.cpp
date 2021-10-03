@@ -2756,20 +2756,20 @@ bool Session::Impl::processTransactionCreatedB(XBridgePacketPtr packet) const
 
     size_t offset = XBridgePacket::addressSize; // hub address
 
-    std::vector<unsigned char> stxid(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
-    uint256 txid(stxid);
-    offset += XBridgePacket::hashSize;
+    uint256 txid;
+    offset += packet->read(offset, txid);
 
-    std::string binTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += binTxId.size()+1;
+    std::string binTxId;;
+    offset += packet->read(offset, binTxId);
 
-    uint32_t lockTimeB = *reinterpret_cast<uint32_t *>(packet->data()+offset);
-    offset += sizeof(uint32_t);
+    uint32_t lockTimeB = 0;
+    offset += packet->read(offset, lockTimeB);
 
-    std::string refTxId(reinterpret_cast<const char *>(packet->data()+offset));
-    offset += refTxId.size()+1;
+    std::string refTxId;
+    offset += packet->read(offset, refTxId);
 
-    std::string refTx(reinterpret_cast<const char *>(packet->data()+offset));
+    std::string refTx;
+    offset += packet->read(offset, refTx);
 
     TransactionPtr tr = e.transaction(txid);
     if (!tr->matches(txid)) // ignore no matching orders
