@@ -2058,7 +2058,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     // depositTx
     {
         std::vector<xbridge::XTxIn>                  inputs;
-        std::vector<std::pair<std::string, double> > outputs;
+        std::vector<xbridge::XTxOut> outputs;
 
         // inputs
         wallet::UtxoEntry largestUtxo;
@@ -2072,14 +2072,14 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         // outputs
 
         // amount
-        outputs.push_back(std::make_pair(xtx->lockP2SHAddress, outAmount+fee2));
+        outputs.emplace_back(xtx->lockP2SHAddress, outAmount+fee2);
 
         // rest
         if (inAmount > outAmount+fee1+fee2)
         {
             double rest = inAmount-outAmount-fee1-fee2;
             if (!connFrom->isDustAmount(rest)) {
-                outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
+                outputs.emplace_back(largestUtxo.address, rest); // change back to largest input used in order
                 hasChange = true;
                 changeAddr = largestUtxo.address;
             }
@@ -2109,7 +2109,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     // refundTx
     {
         std::vector<xbridge::XTxIn>                  inputs;
-        std::vector<std::pair<std::string, double> > outputs;
+        std::vector<xbridge::XTxOut> outputs;
 
         // inputs from binTx
         inputs.emplace_back(xtx->binTxId, xtx->binTxVout, outAmount+fee2);
@@ -2127,7 +2127,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
                 }
             }
 
-            outputs.push_back(std::make_pair(addr, outAmount));
+            outputs.emplace_back(addr, outAmount);
         }
 
         if (!connFrom->createRefundTransaction(inputs, outputs,
@@ -2579,7 +2579,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     // depositTx
     {
         std::vector<xbridge::XTxIn>                  inputs;
-        std::vector<std::pair<std::string, double> > outputs;
+        std::vector<xbridge::XTxOut> outputs;
 
         // inputs
         wallet::UtxoEntry largestUtxo;
@@ -2593,14 +2593,14 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         // outputs
 
         // amount
-        outputs.push_back(std::make_pair(xtx->lockP2SHAddress, outAmount+fee2));
+        outputs.emplace_back(xtx->lockP2SHAddress, outAmount+fee2);
 
         // rest
         if (inAmount > outAmount+fee1+fee2)
         {
             double rest = inAmount-outAmount-fee1-fee2;
             if (!connFrom->isDustAmount(rest))
-                outputs.push_back(std::make_pair(largestUtxo.address, rest)); // change back to largest input used in order
+                outputs.emplace_back(largestUtxo.address, rest); // change back to largest input used in order
         }
 
         if (!connFrom->createDepositTransaction(inputs, outputs, xtx->binTxId, xtx->binTxVout, xtx->binTx))
@@ -2627,7 +2627,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     // refundTx
     {
         std::vector<xbridge::XTxIn>                  inputs;
-        std::vector<std::pair<std::string, double> > outputs;
+        std::vector<xbridge::XTxOut> outputs;
 
         // inputs from binTx
         inputs.emplace_back(xtx->binTxId, xtx->binTxVout, outAmount+fee2);
@@ -2644,7 +2644,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
                 }
             }
 
-            outputs.push_back(std::make_pair(addr, outAmount));
+            outputs.emplace_back(addr, outAmount);
         }
 
         if (!connFrom->createRefundTransaction(inputs, outputs,
@@ -3948,7 +3948,7 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
 
     double outAmount   = static_cast<double>(xtx->toAmount)/TransactionDescr::COIN;
     std::vector<xbridge::XTxIn>                  inputs;
-    std::vector<std::pair<std::string, double> > outputs;
+    std::vector<xbridge::XTxOut> outputs;
 
     // inputs from binTx
     inputs.emplace_back(xtx->oBinTxId, xtx->oBinTxVout, static_cast<double>(xtx->oBinTxP2SHAmount)/static_cast<double>(connTo->COIN));

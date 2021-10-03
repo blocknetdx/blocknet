@@ -1789,7 +1789,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     vins.emplace_back(vin.txId, vin.vout, vin.amount);
                 }
 
-                std::vector<std::pair<std::string, double>> vouts;
+                std::vector<xbridge::XTxOut> vouts;
                 for (int i = 0; i < partialUtxosRequiredForMinimum; ++i)
                     vouts.emplace_back(ptr->fromAddr, xBridgeValueFromAmount(partialMinimum + partialPerUtxoFees));
                 // add remainder vout if not dust
@@ -1845,8 +1845,8 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     xbridge::wallet::UtxoEntry entry;
                     entry.txId = txid;
                     entry.vout = i;
-                    entry.amount = vouts[i].second;
-                    entry.address = connFrom->fromXAddr(connFrom->toXAddr(vouts[i].first));
+                    entry.amount = vouts[i].amount;
+                    entry.address = connFrom->fromXAddr(connFrom->toXAddr(vouts[i].address));
                     ptr->usedCoins.push_back(entry);
                     partialNewTotalUtxosAmount += entry.camount();
                     if (partialVoutsTotal - partialNewTotalUtxosAmount <= 0)

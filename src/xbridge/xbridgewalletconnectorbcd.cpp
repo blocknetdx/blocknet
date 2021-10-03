@@ -404,7 +404,7 @@ BCDTransaction createTransaction() {
 
 BCDTransaction createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<XTxOut>  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -421,14 +421,14 @@ BCDTransaction createTransaction(const WalletConnector & conn,
         tx->vin.emplace_back(COutPoint(uint256S(in.txid), in.n));
     }
 
-    for (const std::pair<std::string, double> & out : outputs)
+    for (const auto & out : outputs)
     {
-        std::vector<unsigned char> id = conn.toXAddr(out.first);
+        std::vector<unsigned char> id = conn.toXAddr(out.address);
 
         CScript scr;
         scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-        tx->vout.emplace_back(out.second * COIN, scr);
+        tx->vout.emplace_back(out.amount * COIN, scr);
     }
 
     return bcdTx;
@@ -442,7 +442,7 @@ BCDWalletConnector::BCDWalletConnector() : BtcWalletConnector() {}
 //******************************************************************************
 //******************************************************************************
 bool BCDWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
+                                                 const std::vector<XTxOut> & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
                                                  const std::vector<unsigned char> & mprivKey,
                                                  const std::vector<unsigned char> & innerScript,
@@ -509,7 +509,7 @@ bool BCDWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 //******************************************************************************
 //******************************************************************************
 bool BCDWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
+                                                  const std::vector<XTxOut> & outputs,
                                                   const std::vector<unsigned char> & mpubKey,
                                                   const std::vector<unsigned char> & mprivKey,
                                                   const std::vector<unsigned char> & xpubKey,

@@ -107,7 +107,7 @@ uint256 SignatureHash(CScript &scriptCode, const CTransactionPtr & tx,
 
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
 xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> > & outputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -116,7 +116,7 @@ xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<XTxOut>  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -126,7 +126,7 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 StealthWalletConnector::StealthWalletConnector() : BtcWalletConnector() { }
 
 bool StealthWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
+                                                 const std::vector<XTxOut> & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
                                                  const std::vector<unsigned char> & mprivKey,
                                                  const std::vector<unsigned char> & innerScript,
@@ -189,7 +189,7 @@ bool StealthWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
 }
 
 bool StealthWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
+                                                  const std::vector<XTxOut> & outputs,
                                                   const std::vector<unsigned char> & mpubKey,
                                                   const std::vector<unsigned char> & mprivKey,
                                                   const std::vector<unsigned char> & xpubKey,

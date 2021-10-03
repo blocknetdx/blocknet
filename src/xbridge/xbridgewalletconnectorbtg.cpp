@@ -215,7 +215,7 @@ uint256 SignatureHash(const CScript & scriptCode, const CTransactionPtr & tx,
 //******************************************************************************
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
 xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> > & outputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -230,7 +230,7 @@ BTGWalletConnector::BTGWalletConnector() : BtcWalletConnector() {}
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<XTxOut>  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -239,7 +239,7 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 //******************************************************************************
 //******************************************************************************
 bool BTGWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
+                                                 const std::vector<XTxOut> & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
                                                  const std::vector<unsigned char> & mprivKey,
                                                  const std::vector<unsigned char> & innerScript,
@@ -304,7 +304,7 @@ bool BTGWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inpu
 //******************************************************************************
 //******************************************************************************
 bool BTGWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
+                                                  const std::vector<XTxOut> & outputs,
                                                   const std::vector<unsigned char> & mpubKey,
                                                   const std::vector<unsigned char> & mprivKey,
                                                   const std::vector<unsigned char> & xpubKey,

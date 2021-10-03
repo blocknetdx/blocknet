@@ -168,13 +168,13 @@ public:
                                            std::vector<unsigned char> & resultSript) = 0;
 
     virtual bool createDepositTransaction(const std::vector<XTxIn> & inputs,
-                                          const std::vector<std::pair<std::string, double> > & outputs,
+                                          const std::vector<XTxOut> & outputs,
                                           std::string & txId,
                                           uint32_t & txVout,
                                           std::string & rawTx) = 0;
 
     virtual bool createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                         const std::vector<std::pair<std::string, double> > & outputs,
+                                         const std::vector<XTxOut> & outputs,
                                          const std::vector<unsigned char> & mpubKey,
                                          const std::vector<unsigned char> & mprivKey,
                                          const std::vector<unsigned char> & innerScript,
@@ -183,7 +183,7 @@ public:
                                          std::string & rawTx) = 0;
 
     virtual bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                          const std::vector<std::pair<std::string, double> > & outputs,
+                                          const std::vector<XTxOut> & outputs,
                                           const std::vector<unsigned char> & mpubKey,
                                           const std::vector<unsigned char> & mprivKey,
                                           const std::vector<unsigned char> & xpubKey,
@@ -192,7 +192,7 @@ public:
                                           std::string & rawTx) = 0;
 
     virtual bool createPartialTransaction(const std::vector<XTxIn> inputs,
-                                          const std::vector<std::pair<std::string, double> > outputs,
+                                          const std::vector<XTxOut> outputs,
                                           std::string & txId,
                                           std::string & rawTx) = 0;
 

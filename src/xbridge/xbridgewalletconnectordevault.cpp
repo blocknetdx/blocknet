@@ -261,7 +261,7 @@ uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
 //******************************************************************************
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
 xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> > & outputs,
+                                           const std::vector<XTxOut> & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -286,7 +286,7 @@ bool DevaultWalletConnector::init() {
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
-                                           const std::vector<std::pair<std::string, double> >  & outputs,
+                                           const std::vector<XTxOut>  & outputs,
                                            const uint64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
@@ -295,7 +295,7 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
 //******************************************************************************
 //******************************************************************************
 bool DevaultWalletConnector::createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                                 const std::vector<std::pair<std::string, double> > & outputs,
+                                                 const std::vector<XTxOut> & outputs,
                                                  const std::vector<unsigned char> & mpubKey,
                                                  const std::vector<unsigned char> & mprivKey,
                                                  const std::vector<unsigned char> & innerScript,
@@ -360,7 +360,7 @@ bool DevaultWalletConnector::createRefundTransaction(const std::vector<XTxIn> & 
 //******************************************************************************
 //******************************************************************************
 bool DevaultWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                                  const std::vector<std::pair<std::string, double> > & outputs,
+                                                  const std::vector<XTxOut> & outputs,
                                                   const std::vector<unsigned char> & mpubKey,
                                                   const std::vector<unsigned char> & mprivKey,
                                                   const std::vector<unsigned char> & xpubKey,

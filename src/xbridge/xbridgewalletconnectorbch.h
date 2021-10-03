@@ -32,7 +32,7 @@ public:
     std::string scriptIdToString(const std::vector<unsigned char> & id) const override;
 
     bool createRefundTransaction(const std::vector<XTxIn> & inputs,
-                                 const std::vector<std::pair<std::string, double> > & outputs,
+                                 const std::vector<XTxOut> & outputs,
                                  const std::vector<unsigned char> & mpubKey,
                                  const std::vector<unsigned char> & mprivKey,
                                  const std::vector<unsigned char> & innerScript,
@@ -41,7 +41,7 @@ public:
                                  std::string & rawTx) override;
 
     bool createPaymentTransaction(const std::vector<XTxIn> & inputs,
-                                  const std::vector<std::pair<std::string, double> > & outputs,
+                                  const std::vector<XTxOut> & outputs,
                                   const std::vector<unsigned char> & mpubKey,
                                   const std::vector<unsigned char> & mprivKey,
                                   const std::vector<unsigned char> & xpubKey,
