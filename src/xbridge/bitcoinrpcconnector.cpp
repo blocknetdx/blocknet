@@ -76,7 +76,7 @@ static std::vector<std::pair<COutPoint,CTxOut>> availableCoins(const bool & only
 
 //*****************************************************************************
 //*****************************************************************************
-bool createFeeTransaction(const CScript & dstScript, const double amount, const double feePerByte,
+bool createFeeTransaction(const CScript & dstScript, const double _amount, const double feePerByte,
         const std::vector<unsigned char> & data, std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
         std::set<xbridge::wallet::UtxoEntry> & feeUtxos, std::string & rawTx)
 {
@@ -88,29 +88,31 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
 
     LOCK(cs_rpcBlockchainStore);
 
+    amount_t amount = _amount * COIN;
+
     int errCode = 0;
     std::string errMessage;
 
     try
     {
-        auto estFee = [feePerByte](const uint32_t inputs, const uint32_t outputs) -> double {
+        auto estFee = [feePerByte](const uint32_t inputs, const uint32_t outputs) -> amount_t {
             return (192 * inputs + 34 * outputs) * feePerByte;
         };
-        auto feeAmount = [&estFee](const double amt, const uint32_t inputs, const uint32_t outputs) -> double {
+        auto feeAmount = [&estFee](const amount_t amt, const uint32_t inputs, const uint32_t outputs) -> amount_t {
             return amt + estFee(inputs, outputs);
         };
 
         // Fee utxo selector
         auto selectFeeUtxos = [&estFee, &feeAmount](std::vector<xbridge::wallet::UtxoEntry> & a,
                                  std::vector<xbridge::wallet::UtxoEntry> & o,
-                                 const double amt) -> void
+                                 const amount_t amt) -> void
         {
             bool done{false};
             std::vector<xbridge::wallet::UtxoEntry> gt;
             std::vector<xbridge::wallet::UtxoEntry> lt;
 
             // Check ideal, find input that is larger than min amount and within range
-            double minAmount{feeAmount(amt, 1, 3)};
+            amount_t minAmount = feeAmount(amt, 1, 3);
             for (const auto & utxo : a) {
                 if (utxo.amount >= minAmount && utxo.amount < minAmount + estFee(1, 3) * 100) {
                     o.push_back(utxo);
@@ -150,11 +152,11 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
                      });
 
                 std::vector<xbridge::wallet::UtxoEntry> sel; // store all selected inputs
-                for (const auto & utxo : lt) {
+                for (const xbridge::wallet::UtxoEntry & utxo : lt) {
                     sel.push_back(utxo);
 
                     // Add amount and incorporate fee calc
-                    double runningAmount{0};
+                    amount_t runningAmount;
                     for (auto & u : sel)
                         runningAmount += u.amount;
                     runningAmount -= estFee(sel.size(), 3); // subtract estimated fees
@@ -182,8 +184,8 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
             throw std::runtime_error("Create transaction command finished with error, not enough utxos to cover fee");
 
         // Fee amount
-        double inputAmt{0};
-        double feeAmt{estFee(selUtxos.size(), 3)};
+        amount_t inputAmt = 0;
+        amount_t feeAmt{estFee(selUtxos.size(), 3)};
         std::string changeAddr{selUtxos[0].address};
 
         std::vector<COutPoint> vins;
@@ -195,13 +197,13 @@ bool createFeeTransaction(const CScript & dstScript, const double amount, const 
         }
 
         // Total change
-        const auto changeAmt = static_cast<CAmount>((inputAmt - amount - feeAmt)*COIN);
+        const CAmount changeAmt =(inputAmt - amount - feeAmt).Get64();
 
         std::vector<CTxOut> vouts;
         if (!data.empty())
             vouts.emplace_back(0, CScript() << OP_RETURN << ToByteVector(data));
 
-        vouts.emplace_back(static_cast<CAmount>(amount*COIN), dstScript);
+        vouts.emplace_back(amount.Get64(), dstScript);
 
         if (changeAmt >= 5460) // BLOCK dust check
             vouts.emplace_back(changeAmt, GetScriptForDestination(DecodeDestination(changeAddr)));
@@ -294,7 +296,7 @@ bool unspentP2PKH(std::vector<xbridge::wallet::UtxoEntry> & utxos)
 
         utxo.txId = out.first.hash.GetHex();
         utxo.vout = out.first.n;
-        utxo.amount = static_cast<double>(out.second.nValue) / static_cast<double>(COIN);
+        utxo.amount = out.second.nValue;
 
         utxos.push_back(utxo);
     }

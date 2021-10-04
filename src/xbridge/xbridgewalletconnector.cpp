@@ -24,7 +24,7 @@ namespace wallet
 std::string UtxoEntry::toString() const
 {
     std::ostringstream o;
-    o << txId << ":" << vout << ":" << amount << ":" << address;
+    o << txId << ":" << vout << ":" << std::to_string(amount.getldouble()) << ":" << address;
     return o.str();
 }
 

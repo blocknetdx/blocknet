@@ -54,7 +54,7 @@ public:
         return true; 
     }
 
-    bool isDustAmount(const double & /*amount*/) const { return false; }
+    bool isDustAmount(const amount_t & /*amount*/) const { return false; }
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
 

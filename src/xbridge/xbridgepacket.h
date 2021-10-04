@@ -521,8 +521,14 @@ public:
         __oldSizeField() = sizeField()+__headerDifference;
     }
 
+    void append(const uint256 & data)
+    {
+        append(data.begin(), 32);
+    }
+
     void append(const float data);
     void append(const double data);
+    void append(const long double data);
 
     bool copyFrom(const std::vector<unsigned char> & data)
     {

@@ -53,8 +53,8 @@ Transaction::Transaction(const uint256                    & id,
                          const uint64_t                   & created,
                          const uint256                    & blockHash,
                          const std::vector<unsigned char> & mpubkey,
-                         const bool                         partialAllowed = false,
-                         const uint64_t                     minFromAmount = 0)
+                         const bool                       & partialAllowed,
+                         const amount_t                   & minFromAmount)
     : m_id(id)
     , m_created(xbridge::intToTime(created))
     , m_last(boost::posix_time::microsec_clock::universal_time())

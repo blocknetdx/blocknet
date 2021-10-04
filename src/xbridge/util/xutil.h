@@ -64,7 +64,7 @@ namespace xbridge
      * @param ptr - pointer to transaction description
      * @return price of transaction
      */
-    double price(const xbridge::TransactionDescrPtr ptr);
+    amount_t price(const xbridge::TransactionDescrPtr ptr);
 
     /**
      * @brief priceAsk - the inverted price calculation. Used by asks to calculate price in terms of bid price.
@@ -72,7 +72,7 @@ namespace xbridge
      * @param ptr - pointer to transaction description
      * @return price of transaction
      */
-    double priceBid(const xbridge::TransactionDescrPtr ptr);
+    amount_t priceBid(const xbridge::TransactionDescrPtr ptr);
 
     boost::uint64_t timeToInt(const boost::posix_time::ptime &time);
     boost::posix_time::ptime intToTime(const uint64_t& number);
@@ -82,8 +82,10 @@ namespace xbridge
     // double xBridgeValueFromAmount(amount_t amount);
     // amount_t xBridgeIntFromReal(double val);
     // amount_t xBridgeAmountFromReal(double val);
-    std::string xBridgeStringValueFromPrice(const double price, const uint64_t COIN = 0);
-    std::string xBridgeStringValueFromAmount(const amount_t amount, const uint64_t COIN = 0);
+    std::string xBridgeStringValueFromPrice(const uint256 & price,     const amount_t & COIN = 0);
+    std::string xBridgeStringValueFromPrice(const double & price,      const amount_t & COIN = 0);
+    std::string xBridgeStringValueFromPrice(const long double & price, const amount_t & COIN = 0);
+    std::string xBridgeStringValueFromAmount(const amount_t & amount,  const amount_t & COIN = 0);
 
     /**
      * Return the counterparty destination amount from maker/taker price.
@@ -122,7 +124,7 @@ namespace xbridge
         // returns true
      * \endverbatim
      */
-    bool xBridgeValidCoin(std::string coin, const uint64_t COIN);
+    bool xBridgeValidCoin(std::string coin, const amount_t COIN);
 
     /**
      * @brief Returns the number of digits in base 10 integer not including the most significant.
@@ -135,6 +137,7 @@ namespace xbridge
      * \endverbatim
      */
     unsigned int xBridgeSignificantDigits(amount_t amount);
+
      /** @brief makeError - generate standard json_sprit object with error description
      * @param statusCode - error code
      * @param function - nome of called function

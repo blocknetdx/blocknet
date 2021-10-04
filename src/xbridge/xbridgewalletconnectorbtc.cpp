@@ -670,6 +670,7 @@ bool listUnspent(const std::string & rpcuser,
                  const std::string & rpcpasswd,
                  const std::string & rpcip,
                  const std::string & rpcport,
+                 const uint256     & COIN,
                  std::vector<wallet::UtxoEntry> & entries)
 {
     const static std::string txid("txid");
@@ -731,7 +732,7 @@ bool listUnspent(const std::string & rpcuser,
                     }
                     else if (v.name_ == amount)
                     {
-                        u.amount = v.value_.get_real();
+                        u.amount = COIN.multiply(v.value_.get_real(), COIN.Get64());
                     }
                     else if (v.name_ == scriptPubKey)
                     {
@@ -834,6 +835,7 @@ bool gettxout(const std::string & rpcuser,
               const std::string & rpcpasswd,
               const std::string & rpcip,
               const std::string & rpcport,
+              const amount_t    & COIN,
               wallet::UtxoEntry & txout)
 {
     try
@@ -869,7 +871,7 @@ bool gettxout(const std::string & rpcuser,
         }
 
         Object o = result.get_obj();
-        txout.amount = find_value(o, "value").get_real();
+        txout.amount = COIN.multiply(find_value(o, "value").get_real(), COIN.Get64());
 
         // Assign confirmations
         const auto & rconfs = find_value(o, "confirmations");
@@ -1158,7 +1160,7 @@ bool createRawTransaction(const std::string & rpcuser,
         Object o;
         for (const XTxOut & dest : outputs)
         {
-            o.push_back(Pair(dest.address, dest.amount));
+            o.push_back(Pair(dest.address, (dest.amount / COIN).getdouble()));
         }
 
         Array params;
@@ -1742,7 +1744,7 @@ bool BtcWalletConnector<CryptoProvider>::init()
     }
 
     // Calculate dust
-    dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN : 5460;
+    dustAmount = info.relayFee > 0 ? 0.546 * info.relayFee * COIN.Get64() : 5460;
 
     // Set median time
     mediantime = info.mediantime;
@@ -1854,15 +1856,10 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::getUnspent(std::vector<wallet::UtxoEntry> & outputs,
                                                     const std::set<wallet::UtxoEntry> & excluded) const
 {
-    if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, outputs))
+    if (!rpc::listUnspent(m_user, m_passwd, m_ip, m_port, COIN, outputs))
     {
         LOG() << "rpc::listUnspent failed " << __FUNCTION__;
         return false;
-    }
-
-    for (wallet::UtxoEntry & e : outputs)
-    {
-        e.amount *= COIN;
     }
 
     // Remove all the excluded utxos
@@ -1911,7 +1908,7 @@ bool BtcWalletConnector<CryptoProvider>::getNewAddress(std::string & addr, const
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::getTxOut(wallet::UtxoEntry & entry)
 {
-    if (!rpc::gettxout(m_user, m_passwd, m_ip, m_port, entry))
+    if (!rpc::gettxout(m_user, m_passwd, m_ip, m_port, COIN, entry))
     {
         return false;
 //        LOG() << "gettxout failed, trying call gettransaction " << __FUNCTION__;
@@ -1922,8 +1919,6 @@ bool BtcWalletConnector<CryptoProvider>::getTxOut(wallet::UtxoEntry & entry)
 //            return false;
 //        }
     }
-
-    entry.amount *= COIN;
 
     return true;
 }
@@ -2180,7 +2175,7 @@ bool BtcWalletConnector<CryptoProvider>::isValidAddress(const std::string & addr
 template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::isDustAmount(const amount_t & amount) const
 {
-    return static_cast<int64_t>(amount) < static_cast<int64_t>(dustAmount);
+    return amount.Get64() < dustAmount;
 }
 
 
@@ -2306,7 +2301,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
             wallet::UtxoEntry utxo;
             utxo.txId = depositTxId;
             utxo.vout = depositTxVout;
-            if (rpc::gettxout(m_user, m_passwd, m_ip, m_port, utxo) && utxo.hasConfirmations) {
+            if (rpc::gettxout(m_user, m_passwd, m_ip, m_port, COIN, utxo) && utxo.hasConfirmations) {
                 confs = utxo.confirmations;
             } else { // confirmation field not found, fail
                 LOG() << "confirmations data not found in gettxout for " << depositTxId
@@ -2344,7 +2339,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     json_spirit::Array vouts = voutso.get_array();
 
     // Add up all vin amounts (prevouts)
-    double totalVinAmount{0};
+    amount_t totalVinAmount = 0;
     for (auto & vin : vins) {
         const json_spirit::Value & txidObj = json_spirit::find_value(vin.get_obj(), "txid");
         if (txidObj.type() != json_spirit::str_type) {
@@ -2388,7 +2383,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
             return true; // done
         }
         bool foundVout{false};
-        amount_t vinAmount{0};
+        amount_t vinAmount = 0;
         for (const auto & vout : vinOuts) {
             const json_spirit::Value & valObj = json_spirit::find_value(vout.get_obj(), "value");
             const json_spirit::Value & nObj = json_spirit::find_value(vout.get_obj(), "n");
@@ -2408,9 +2403,10 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     }
 
     // Add up all vout amounts
-    amount_t totalVoutAmount{0};
-    amount_t depositP2SHAmount{0};
-    for (auto & vout : vouts) {
+    amount_t totalVoutAmount   = 0;
+    amount_t depositP2SHAmount = 0;
+    for (auto & vout : vouts) 
+    {
         const json_spirit::Value & amountObj = json_spirit::find_value(vout.get_obj(), "value");
         if (amountObj.type() != json_spirit::real_type) {
             LOG() << "tx " << depositTxId << " bad vout amount " << __FUNCTION__;
@@ -2451,18 +2447,21 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     }
 
     // Check if there's enough to cover fees
-    const double counterpartyFees = totalVinAmount - totalVoutAmount;
-    const double fee1 = minTxFee1(static_cast<uint32_t>(vins.size()), static_cast<uint32_t>(vouts.size())); // p2sh deposit fee
-    const double fee2 = minTxFee2(1, 1); // p2sh redeem fee
-    const double ourMinimumFees = fee1 * 0.95; // Allow 5% margin of error in fee amount
+    const amount_t counterpartyFees = totalVinAmount - totalVoutAmount;
+    const amount_t fee1 = minTxFee1(static_cast<uint32_t>(vins.size()), static_cast<uint32_t>(vouts.size())); // p2sh deposit fee
+    const amount_t fee2 = minTxFee2(1, 1); // p2sh redeem fee
+    const amount_t ourMinimumFees = fee1 * 0.95; // Allow 5% margin of error in fee amount
     // Check that counterparty provided enough to cover deposit network fee
-    if (counterpartyFees < 0 || counterpartyFees < ourMinimumFees) {
-        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh deposit fees: " << ourMinimumFees << " " << __FUNCTION__;
+    if (counterpartyFees < 0 || counterpartyFees < ourMinimumFees) 
+    {
+        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh deposit fees: " << ourMinimumFees.getldouble() << " " << __FUNCTION__;
         return true; // done
     }
     // Make sure counterparty provided enough for the redeem fee
-    if (depositP2SHAmount < amount + fee2 * 0.95) { // Allow 5% margin of error in fee amount
-        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh redeem fees: " << fee2 * 0.95 << " " << __FUNCTION__;
+    if (depositP2SHAmount < amount + fee2 * 0.95) 
+    { 
+        // Allow 5% margin of error in fee amount
+        LOG() << "tx " << depositTxId << " not enough inputs to cover p2sh redeem fees: " << (fee2 * 0.95).getldouble() << " " << __FUNCTION__;
         return true; // done
     }
     // we should pay ourselves any excess
@@ -2713,7 +2712,7 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField)
 xbridge::CTransactionPtr createTransaction(const WalletConnector      & conn,
                                            const std::vector<XTxIn>   & inputs,
                                            const std::vector<XTxOut>  & outputs,
-                                           const uint64_t COIN,
+                                           const amount_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField)
@@ -2734,7 +2733,7 @@ xbridge::CTransactionPtr createTransaction(const WalletConnector      & conn,
         CScript scr;
         scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-        tx->vout.push_back(CTxOut(out.amount, scr));
+        tx->vout.push_back(CTxOut(out.amount.Get64(), scr));
     }
 
     return tx;
@@ -3077,7 +3076,7 @@ bool BtcWalletConnector<CryptoProvider>::splitUtxos(const amount_t splitAmount, 
     txId = txid;
     totalSplit = vinsTotal;
     splitIncFees = splitSize;
-    splitCount = outputCount;
+    splitCount = static_cast<int>(outputCount.Get64());
 
     return true;
 }
@@ -3101,7 +3100,7 @@ amount_t BtcWalletConnector<CryptoProvider>::getWalletBalance(const std::set<wal
     if (!getUnspent(entries, excluded))
     {
         LOG() << "getUnspent failed " << __FUNCTION__;
-        return -1.;//return negative value for check in called methods
+        return 0;
     }
 
     amount_t amount = 0;

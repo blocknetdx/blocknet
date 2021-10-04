@@ -41,7 +41,7 @@ enum {
 // Reference: https://github.com/StealthSend/Stealth/blob/746829d9ee85523b7ecd0ee8676f05cb6bfce596/src/script.cpp#L1283
 uint256 SignatureHash(CScript &scriptCode, const CTransactionPtr & tx,
                       unsigned int nIn, int nHashType,
-                      const CAmount amount)
+                      const amount_t /*amount*/)
 {
     // XBRIDGE
     auto & txTo = *tx;
@@ -105,19 +105,11 @@ uint256 SignatureHash(CScript &scriptCode, const CTransactionPtr & tx,
 } // namespace
 
 
-xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
-xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn>  & inputs,
-                                           const std::vector<XTxOut> & outputs,
-                                           const uint64_t COIN,
-                                           const uint32_t txversion,
-                                           const uint32_t lockTime,
-                                           const bool txWithTimeField);
-
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn>  & inputs,
                                            const std::vector<XTxOut>  & outputs,
-                                           const uint64_t COIN,
+                                           const amount_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField = false);

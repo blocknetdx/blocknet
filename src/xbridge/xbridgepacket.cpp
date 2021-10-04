@@ -181,6 +181,14 @@ void XBridgePacket::append(const double data)
 
 //******************************************************************************
 //******************************************************************************
+void XBridgePacket::append(const long double data)
+{
+    uint64_t value = pack_f64(data);
+    append(value);
+}
+
+//******************************************************************************
+//******************************************************************************
 size_t XBridgePacket::read(const size_t offset, float & data) const
 {
     uint64_t value = 0;

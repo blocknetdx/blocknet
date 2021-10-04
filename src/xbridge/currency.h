@@ -62,8 +62,8 @@ namespace ccy {
         }
     };
 
-    using Amount = xbridge::amount_t;
-    // using Basis  = uint64_t; // xbridge::amount_t;
+    using Amount = long double; // xbridge::amount_t;
+    // using Basis  = uint64_t;
 
     template<typename T> constexpr T pow10(size_t x) {
         return x ? 10*pow10<T>(x-1) : 1;

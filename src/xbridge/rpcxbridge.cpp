@@ -169,10 +169,10 @@ CurrencyPair TxOutToCurrencyPair(const std::vector<CTxOut> & vout, std::string& 
 
     const static xbridge::amount_t HISTORYCOIN     = 100000000;
 
-    double fromAmount = xtx[2].type() == int_type  ? xtx[2].get_uint64() / HISTORYCOIN :
-                        xtx[2].type() == real_type ? xtx[2].get_real() : 0;
-    double toAmount   = xtx[4].type() == int_type  ? xtx[4].get_uint64() / HISTORYCOIN :
-                        xtx[4].type() == real_type ? xtx[4].get_real() : 0;
+    long double fromAmount = (xtx[2].type() == int_type  ? xtx[2].get_uint64() / HISTORYCOIN :
+                              xtx[2].type() == real_type ? xtx[2].get_real() : 0).getldouble();
+    long double toAmount   = (xtx[4].type() == int_type  ? xtx[4].get_uint64() / HISTORYCOIN :
+                              xtx[4].type() == real_type ? xtx[4].get_real() : 0).getldouble();
 
     return CurrencyPair(xtx[0].get_str(),                 // xid
                         {ccy::Currency{xtx[1].get_str()}, // fromCurrency
@@ -1033,13 +1033,13 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
         return uret(error);
     }
 
-    double      fromAmount      = std::stod(params[1].get_str()) * connFrom->COIN;
-    std::string fromAddress     = params[2].get_str();
+    xbridge::amount_t fromAmount = connFrom->COIN.multiply(std::stod(params[1].get_str()), connFrom->COIN.Get64());
+    std::string fromAddress      = params[2].get_str();
 
-    double      toAmount        = std::stod(params[4].get_str()) * connTo->COIN;
-    std::string toAddress       = params[5].get_str();
+    xbridge::amount_t toAmount   = connTo->COIN.multiply(std::stod(params[4].get_str()), connTo->COIN.Get64());
+    std::string toAddress        = params[5].get_str();
 
-    std::string type            = params[6].get_str();
+    std::string type             = params[6].get_str();
 
     // Validate the order type
     if (type != "exact") {
@@ -1292,7 +1292,7 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
 
     // If no amount is specified on a partial order by default use the full
     // order sizes (will result in the entire partial order being taken).
-    if (txDescr->isPartialOrderAllowed() && amount > xbridge::amount_t(0)) 
+    if (txDescr->isPartialOrderAllowed() && amount > xbridge::amount_t(uint64_t(0))) 
     {
         if (amount < txDescr->minFromAmount) 
         {
@@ -1765,10 +1765,11 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
 
         // floating point comparisons
         // see Knuth 4.2.2 Eq 36
-        auto floatCompare = [](const double a, const double b) -> bool
+        auto floatCompare = [](const xbridge::amount_t & a, const xbridge::amount_t & b) -> bool
         {
-            const auto epsilon = std::numeric_limits<double>::epsilon();
-            return (fabs(a - b) / fabs(a) <= epsilon) && (fabs(a - b) / fabs(b) <= epsilon);
+            return a == b;
+            // const auto epsilon = std::numeric_limits<double>::epsilon();
+            // return (fabs(a - b) / fabs(a) <= epsilon) && (fabs(a - b) / fabs(b) <= epsilon);
         };
 
         switch (detailLevel)

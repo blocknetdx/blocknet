@@ -110,14 +110,14 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
     );
 
     // Select utxos
-    xbridge::amount_t utxoAmount{0};
-    xbridge::amount_t fee1{0};
-    xbridge::amount_t fee2{0};
-    auto minTxFee1 = [](const uint32_t & inputs, const uint32_t & outputs) -> double {
+    xbridge::amount_t utxoAmount = 0;
+    xbridge::amount_t fee1 = 0;
+    xbridge::amount_t fee2 = 0;
+    auto minTxFee1 = [](const uint32_t & inputs, const uint32_t & outputs) -> xbridge::amount_t {
         xbridge::amount_t fee = (192*inputs + 34*2) * 20;
-        return static_cast<double>(fee) / COIN;
+        return fee / COIN;
     };
-    auto minTxFee2 = [](const uint32_t & inputs, const uint32_t & outputs) -> double {
+    auto minTxFee2 = [](const uint32_t & inputs, const uint32_t & outputs) -> xbridge::amount_t {
         return 0;
     };
     if (!xbridge::App::instance().selectUtxos("", inputs, minTxFee1, minTxFee2, toamount, 
@@ -128,13 +128,15 @@ bool createAndSignTransaction(const std::string & toaddress, const CAmount & toa
     }
 
     std::vector<xbridge::wallet::UtxoEntry> inputs_o;
-    CAmount change = utxoAmount - toamount - fee1;
+    // TODO amount_t
+    CAmount change = (utxoAmount - toamount - fee1).Get64();
     std::string largestInputAddress;
     double largestInput{0};
     for (const auto & a : outputsForUse) {
         if (a.amount > largestInput) {
             largestInputAddress = a.address;
-            largestInput = a.amount;
+            // TODO amount_t
+            largestInput = a.amount.Get64();
         }
         inputs_o.push_back(a);
     }

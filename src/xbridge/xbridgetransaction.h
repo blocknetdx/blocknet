@@ -80,8 +80,8 @@ public:
                 const uint64_t                   & created,
                 const uint256                    & blockHash,
                 const std::vector<unsigned char> & mpubkey,
-                bool                               partialAllowed,
-                uint64_t                           minFromAmount);
+                const bool                       & partialAllowed = false,
+                const amount_t                   & minFromAmount = 0);
 
     ~Transaction();
 
@@ -269,7 +269,7 @@ public:
      * @param takerPartialSource
      * @param takerPartialDest
      */
-    void joinPartialAmounts(const uint64_t takerPartialSource, const uint64_t takerPartialDest) {
+    void joinPartialAmounts(const amount_t takerPartialSource, const amount_t takerPartialDest) {
         LOCK(m_lock);
         m_sourceAmount = takerPartialDest; // maker matches taker's size
         m_destAmount = takerPartialSource; // maker matches taker's size

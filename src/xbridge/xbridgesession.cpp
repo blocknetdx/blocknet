@@ -584,8 +584,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
 
         if (commonAmount < samount)
         {
-            xbridge::LogOrderMsg(id.GetHex(), "order rejected, amount from utxo items <" + std::to_string(commonAmount) + "> "
-                                              "less than required <" + std::to_string(samount) + "> ", __FUNCTION__);
+            xbridge::LogOrderMsg(id.GetHex(), "order rejected, amount from utxo items <" + std::to_string(commonAmount.getldouble()) + "> "
+                                              "less than required <" + std::to_string(samount.getldouble()) + "> ", __FUNCTION__);
             return true;
         }
 
@@ -612,10 +612,10 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         log_obj.pushKV("orderid", id.GetHex());
         log_obj.pushKV("from_addr", HexStr(saddr));
         log_obj.pushKV("from_currency", scurrency);
-        log_obj.pushKV("from_amount", std::to_string(samount));
+        log_obj.pushKV("from_amount", std::to_string(samount.getldouble()));
         log_obj.pushKV("to_addr", HexStr(daddr));
         log_obj.pushKV("to_currency", dcurrency);
-        log_obj.pushKV("to_amount", std::to_string(damount));
+        log_obj.pushKV("to_amount", std::to_string(damount.getldouble()));
         xbridge::LogOrderMsg(log_obj, "received order", __FUNCTION__);
     }
 
@@ -719,7 +719,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 134)
+    if (packet->size() != 206)
     {
         ERR() << "incorrect packet size for xbcPendingTransaction "
               << "need 134 received " << packet->size() << " "
@@ -1125,7 +1125,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     // END Check if maker utxos are still valid
     //
 
-    double commonAmount = 0;
+    amount_t commonAmount = 0;
 
     // utxo items
     std::vector<wallet::UtxoEntry> utxoItems;
@@ -1207,8 +1207,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             trPending->setAccepting(false);
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
-            log_obj.pushKV("expecting_amount", samount);
-            log_obj.pushKV("received_amount", commonAmount);
+            log_obj.pushKV("expecting_amount", std::to_string(samount.getldouble()));
+            log_obj.pushKV("received_amount", std::to_string(commonAmount.getldouble()));
             xbridge::LogOrderMsg(log_obj, "taker order rejected, insufficient funds", __FUNCTION__);
             sendRejectTransaction(id, crNoMoney);
             return true;
@@ -1220,8 +1220,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             trPending->setAccepting(false);
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
-            log_obj.pushKV("expecting_amount", trPending->b_amount());
-            log_obj.pushKV("received_amount", samount);
+            log_obj.pushKV("expecting_amount", std::to_string(trPending->b_amount().getldouble()));
+            log_obj.pushKV("received_amount", std::to_string(samount.getldouble()));
             xbridge::LogOrderMsg(log_obj, "taker order rejected, insufficient funds", __FUNCTION__);
             sendRejectTransaction(id, crNoMoney);
             return true;
@@ -1242,8 +1242,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             trPending->setAccepting(false);
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
-            log_obj.pushKV("expecting_amount", trPending->min_partial_amount());
-            log_obj.pushKV("received_amount", damount);
+            log_obj.pushKV("expecting_amount", std::to_string(trPending->min_partial_amount().getldouble()));
+            log_obj.pushKV("received_amount", std::to_string(damount.getldouble()));
             xbridge::LogOrderMsg(log_obj, "taker order rejected, take amount must be greater than minimum", __FUNCTION__);
             sendRejectTransaction(id, crNoMoney);
             return true;
@@ -1255,8 +1255,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             trPending->setAccepting(false);
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
-            log_obj.pushKV("expecting_amount", trPending->a_amount());
-            log_obj.pushKV("received_amount", damount);
+            log_obj.pushKV("expecting_amount", std::to_string(trPending->a_amount().getldouble()));
+            log_obj.pushKV("received_amount", std::to_string(damount.getldouble()));
             xbridge::LogOrderMsg(log_obj, "taker order rejected, take amount must be smaller than maximum", __FUNCTION__);
             sendRejectTransaction(id, crNotAccepted);
             return true;
@@ -1268,8 +1268,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             trPending->setAccepting(false);
             UniValue log_obj(UniValue::VOBJ);
             log_obj.pushKV("orderid", id.GetHex());
-            log_obj.pushKV("expecting_amount", trPending->b_amount());
-            log_obj.pushKV("received_amount", samount);
+            log_obj.pushKV("expecting_amount", std::to_string(trPending->b_amount().getldouble()));
+            log_obj.pushKV("received_amount", std::to_string(samount.getldouble()));
             xbridge::LogOrderMsg(log_obj, "taker order rejected, offered amount must be less than the ask amount", __FUNCTION__);
             sendRejectTransaction(id, crNotAccepted);
             return true;
@@ -1388,7 +1388,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     DEBUG_TRACE();
 
-    if (packet->size() != 68)
+    if (packet->size() != 116)
     {
         ERR() << "incorrect packet size for xbcTransactionHold "
               << "need 68 received " << packet->size() << " "
@@ -1465,7 +1465,7 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
 
     xbridge::LogOrderMsg(id.GetHex(), "using service node " + HexStr(pksnode) + " for order", __FUNCTION__);
 
-    double makerPrice{0}, takerPrice{0};
+    amount_t makerPrice = 0, takerPrice = 0;
     bool failPriceCheck{false};
     // Taker check that amounts match
     if (xtx->role == 'B') 
@@ -2047,9 +2047,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         return true;
     }
 
-    const double outAmount      = xtx->fromAmount;
+    const amount_t outAmount    = xtx->fromAmount;
 
-    double inAmount             = 0;
+    amount_t inAmount           = 0;
     amount_t cfee1              = 0;
     amount_t cfee2              = connFrom->minTxFee2(1, 1);
     amount_t cinAmount          = inAmount;
@@ -2095,16 +2095,16 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         }
     }
 
-    const double fee1 = cfee1;
-    const double fee2 = cfee2;
+    const amount_t fee1 = cfee1;
+    const amount_t fee2 = cfee2;
 
     {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());
-        log_obj.pushKV("fee1", cfee1);
-        log_obj.pushKV("fee2", cfee2);
-        log_obj.pushKV("in_amount", inAmount);
-        log_obj.pushKV("out_amount", coutAmountPlusFees);
+        log_obj.pushKV("fee1", std::to_string(cfee1.getldouble()));
+        log_obj.pushKV("fee2", std::to_string(cfee2.getldouble()));
+        log_obj.pushKV("in_amount", std::to_string(inAmount.getldouble()));
+        log_obj.pushKV("out_amount", std::to_string(coutAmountPlusFees.getldouble()));
         UniValue log_utxos(UniValue::VARR);
         for (const auto & entry : usedInTx) 
         {
@@ -2124,8 +2124,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         // no money, cancel transaction
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());
-        log_obj.pushKV("in_amount", inAmount);
-        log_obj.pushKV("out_amount", coutAmountPlusFees);
+        log_obj.pushKV("in_amount", std::to_string(inAmount.getldouble()));
+        log_obj.pushKV("out_amount", std::to_string(coutAmountPlusFees.getldouble()));
         LogOrderMsg(log_obj, "insufficient funds for order: expecting in amount to be >= out amount, canceling", __FUNCTION__);
         sendCancelTransaction(xtx, crNoMoney);
         return true;
@@ -2247,7 +2247,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             // rest
             if (inAmount > outAmount+fee1+fee2)
             {
-                double rest = inAmount-outAmount-fee1-fee2;
+                amount_t rest = inAmount-outAmount-fee1-fee2;
                 if (!connFrom->isDustAmount(rest))
                 {
                     outputs.emplace_back(largestUtxo.address, rest); // change back to largest input used in order
@@ -2706,10 +2706,10 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     {
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());
-        log_obj.pushKV("fee1", fee1);
-        log_obj.pushKV("fee2", fee2);
-        log_obj.pushKV("in_amount", inAmount);
-        log_obj.pushKV("out_amount", outAmount + fee1 + fee2);
+        log_obj.pushKV("fee1", std::to_string(fee1.getldouble()));
+        log_obj.pushKV("fee2", std::to_string(fee2.getldouble()));
+        log_obj.pushKV("in_amount", std::to_string(inAmount.getldouble()));
+        log_obj.pushKV("out_amount", std::to_string((outAmount + fee1 + fee2).getldouble()));
         UniValue log_utxos(UniValue::VARR);
         for (const auto & entry : usedInTx) 
         {
@@ -2729,8 +2729,8 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         // no money, cancel transaction
         UniValue log_obj(UniValue::VOBJ);
         log_obj.pushKV("orderid", txid.GetHex());
-        log_obj.pushKV("in_amount", inAmount);
-        log_obj.pushKV("out_amount", outAmount+fee1+fee2);
+        log_obj.pushKV("in_amount", std::to_string(inAmount.getldouble()));
+        log_obj.pushKV("out_amount", std::to_string((outAmount+fee1+fee2).getldouble()));
         LogOrderMsg(log_obj, "insufficient funds for order: expecting in amount to be >= out amount, canceling", __FUNCTION__);
         sendCancelTransaction(xtx, crNoMoney);
         return true;

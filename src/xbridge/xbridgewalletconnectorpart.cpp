@@ -98,14 +98,14 @@ typedef struct { // helper for bch cache pointer
 } cache_t;
 // Reference: https://github.com/particl/particl-core/blob/d45e8ecf75646142c2d8525ccc18eaa4f73673e1/src/script/interpreter.cpp#L1617
 template <class T>
-uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn, int nHashType, CAmount amountValue
+uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn, int nHashType, amount_t amountValue
                       /*, const std::vector<uint8_t>& amount
                        *, SigVersion sigversion
                        *, const PrecomputedTransactionData* cache*/)
 {
     // XBRIDGE
     std::vector<uint8_t> amount(8);
-    SetAmount(amount, amountValue);
+    SetAmount(amount, amountValue.Get64());
     auto sigversion = SigVersion::BASE;
     cache_t *cache = nullptr;
     // END XBRIDGE
@@ -314,7 +314,7 @@ XParticlTransaction createTransaction(const bool txWithTimeField)
 XParticlTransaction createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn>  & inputs,
                                            const std::vector<XTxOut> & outputs,
-                                           const uint64_t COIN,
+                                           const amount_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField)
@@ -334,7 +334,7 @@ XParticlTransaction createTransaction(const WalletConnector & conn,
         CScript scr;
         scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-        tx.vout.push_back(CTxOut(out.amount * COIN, scr));
+        tx.vout.push_back(CTxOut((out.amount * COIN).Get64(), scr));
     }
 
     return tx;

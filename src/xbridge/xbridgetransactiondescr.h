@@ -269,11 +269,11 @@ struct TransactionDescr
     // counterparty info
     std::string                oBinTxId;
     uint32_t                   oBinTxVout{0};
-    uint64_t                   oBinTxP2SHAmount{0};
+    amount_t                   oBinTxP2SHAmount = 0;
     std::vector<unsigned char> oHashedSecret;
     std::string                oPayTxId;
     uint32_t                   oPayTxTries{0};
-    double                     oOverpayment{0};
+    amount_t                   oOverpayment = 0;
 
     // multisig address and redeem script
     std::string                lockP2SHAddress;
