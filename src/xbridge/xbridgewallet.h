@@ -37,7 +37,7 @@ struct UtxoEntry
 {
     std::string txId;
     uint32_t    vout;
-    double      amount{0};
+    amount_t    amount;
     std::string address;
     std::string scriptPubKey;
     uint32_t    confirmations{0};
@@ -109,10 +109,10 @@ class WalletParam
 public:
     WalletParam()
         : txVersion(1)
-        , COIN(0)
+        , COIN(uint64_t(0))
         , minTxFee(0)
         , feePerByte(0)
-        , dustAmount(0)
+        , dustAmount(uint64_t(0))
         , blockTime(0)
         , blockSize(1024)
         , requiredConfirmations(0)
@@ -179,7 +179,7 @@ public:
     std::string                  scriptPrefix;
     std::string                  secretPrefix;
     uint32_t                     txVersion;
-    uint64_t                     COIN;
+    amount_t                     COIN;
     uint64_t                     minTxFee;
     uint64_t                     feePerByte;
     uint64_t                     dustAmount;

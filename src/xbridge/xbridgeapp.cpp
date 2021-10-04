@@ -1613,7 +1613,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
         return xbridge::Error::DUST;
     }
 
-    int      partialUtxosRequiredForMinimum{0};
+    uint32_t partialUtxosRequiredForMinimum{0};
     bool     partialRemainderRequired{false};
     amount_t partialVoutsTotal{uint64_t(0)};
     amount_t partialPerUtxoFees{uint64_t(0)};
@@ -1625,7 +1625,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     if (partialOrder && utxos.empty()) 
     {
         // Partial order support
-        partialUtxosRequiredForMinimum = fromAmount / partialMinimum;
+        partialUtxosRequiredForMinimum = static_cast<uint32_t>((fromAmount / partialMinimum).Get64());
         if (partialUtxosRequiredForMinimum > xBridgePartialOrderMaxUtxos) 
         {
             partialUtxosRequiredForMinimum = xBridgePartialOrderMaxUtxos - 1; // support 1 utxo for excess remainder
@@ -1695,9 +1695,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 {
                     UniValue log_obj(UniValue::VOBJ);
                     log_obj.pushKV("currency", from);
-                    log_obj.pushKV("partial_fees", fees);
-                    log_obj.pushKV("utxos_amount", utxoAmount);
-                    log_obj.pushKV("required_amount", fromAmount + fees);
+                    log_obj.pushKV("partial_fees", fees.getdouble());
+                    log_obj.pushKV("utxos_amount", utxoAmount.getdouble());
+                    log_obj.pushKV("required_amount", (fromAmount + fees).getdouble());
                     log_obj.pushKV("utxo_count", (int)outputsForUse.size());
                     xbridge::LogOrderMsg(log_obj, "partial order utxo selection details for order", __FUNCTION__);
                 }
@@ -1729,10 +1729,10 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     // TODO .Get64() check
                     UniValue log_obj(UniValue::VOBJ);
                     log_obj.pushKV("currency", from);
-                    log_obj.pushKV("fee1", fee1);
-                    log_obj.pushKV("fee2", fee2);
-                    log_obj.pushKV("utxos_amount", utxoAmount);
-                    log_obj.pushKV("required_amount", fromAmount + fee1 + fee2);
+                    log_obj.pushKV("fee1", fee1.getdouble());
+                    log_obj.pushKV("fee2", fee2.getdouble());
+                    log_obj.pushKV("utxos_amount", utxoAmount.getdouble());
+                    log_obj.pushKV("required_amount", (fromAmount + fee1 + fee2).getdouble());
                     xbridge::LogOrderMsg(log_obj, "utxo selection details for order", __FUNCTION__);
                 }
             }
@@ -1855,7 +1855,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                 { 
                     // If no user supplied utxos, create the partial order prep transaction
                     std::vector<wallet::UtxoEntry> existingUtxos;
-                    amount_t vinsTotal{0};
+                    amount_t vinsTotal{uint64_t(0)};
                     std::vector<xbridge::XTxIn> vins;
                     for (const auto & vin : ptr->usedCoins) 
                     {
@@ -1927,7 +1927,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
                     ptr->clearUsedCoins();
                     ptr->usedCoins = existingUtxos; // add existing utxos
 
-                    CAmount partialNewTotalUtxosAmount{0};
+                    xbridge::amount_t partialNewTotalUtxosAmount;
                     for (int i = 0; i < vouts.size(); ++i) 
                     {
                         xbridge::wallet::UtxoEntry entry;
@@ -2256,9 +2256,9 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         json_spirit::Array info;
         info.push_back("");
         info.push_back(ptr->fromCurrency);
-        info.push_back(ptr->fromAmount);
+        info.push_back(std::to_string(ptr->fromAmount.getldouble()));
         info.push_back(ptr->toCurrency);
-        info.push_back(ptr->toAmount);
+        info.push_back(std::to_string(ptr->toAmount.getldouble()));
         std::string strInfo = write_string(json_spirit::Value(info));
         info.erase(info.begin());
 
@@ -2601,7 +2601,7 @@ Error App::checkAcceptParams(const std::string fromCurrency, const amount_t from
 //******************************************************************************
 Error App::checkCreateParams(const std::string & fromCurrency,
                              const std::string & toCurrency,
-                             const uint64_t    & fromAmount,
+                             const amount_t    & fromAmount,
                              const std::string & /*fromAddress*/)
 {
     // TODO need refactoring
@@ -3029,27 +3029,27 @@ T random_element(T begin, T end)
 //******************************************************************************
 //******************************************************************************
 bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
-                      const std::function<double(uint32_t, uint32_t)> &minTxFee1,
-                      const std::function<double(uint32_t, uint32_t)> &minTxFee2,
+                      const std::function<amount_t(uint32_t, uint32_t)> &minTxFee1,
+                      const std::function<amount_t(uint32_t, uint32_t)> &minTxFee2,
                       const amount_t &requiredAmount,
                       std::vector<wallet::UtxoEntry> &outputsForUse,
                       amount_t &utxoAmount, amount_t &fee1, amount_t &fee2) const
 {
-    auto feeAmount = [&minTxFee1,&minTxFee2](const double amt, const uint32_t inputs, const uint32_t outputs) -> double {
+    auto feeAmount = [&minTxFee1,&minTxFee2](const amount_t amt, const uint32_t inputs, const uint32_t outputs) -> amount_t {
         return amt + minTxFee1(inputs, outputs) + minTxFee2(1, 1);
     };
 
     // Fee utxo selector
     auto selUtxos = [&minTxFee1,&minTxFee2, &addr, &feeAmount](std::vector<xbridge::wallet::UtxoEntry> & a,
                         std::vector<xbridge::wallet::UtxoEntry> & o,
-                        const double amt) -> void
+                        const amount_t amt) -> void
     {
         bool done{false};
         std::vector<xbridge::wallet::UtxoEntry> gt;
         std::vector<xbridge::wallet::UtxoEntry> lt;
 
         // Check ideal, find input that is larger than min amount and within range
-        double minAmount{feeAmount(amt, 1, 3)};
+        amount_t minAmount{feeAmount(amt, 1, 3)};
         for (const auto & utxo : a) 
         {
             if (utxo.amount >= minAmount
@@ -3101,9 +3101,9 @@ bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEnt
                 sel.push_back(utxo);
 
                 // Add amount and incorporate fee calc
-                double fee1 = minTxFee1(sel.size(), 3);
-                double fee2 = minTxFee2(1, 1);
-                double runningAmount{(fee1 + fee2) * -1}; // subtract the fees
+                amount_t fee1 = minTxFee1(sel.size(), 3);
+                amount_t fee2 = minTxFee2(1, 1);
+                amount_t runningAmount{(fee1 + fee2) * -1}; // subtract the fees
 
                 for (auto & u : sel)
                     runningAmount += u.amount;

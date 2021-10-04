@@ -359,7 +359,7 @@ public:
      * @param fromAddress - address to pull utxo's from
      * @return xbridge::SUCCES, if all parameters valid
      */
-    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const uint64_t &fromAmount, const std::string &fromAddress);
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const amount_t &fromAmount, const std::string &fromAddress);
 
     /**
      * @brief checkAmount - checks wallet balance
@@ -652,8 +652,8 @@ public:
      * @param fee2
      */
     bool selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
-            const std::function<double(uint32_t, uint32_t)> &minTxFee1,
-            const std::function<double(uint32_t, uint32_t)> &minTxFee2,
+            const std::function<amount_t(uint32_t, uint32_t)> &minTxFee1,
+            const std::function<amount_t(uint32_t, uint32_t)> &minTxFee2,
             const amount_t &requiredAmount, 
             std::vector<wallet::UtxoEntry> &outputsForUse,
             amount_t &utxoAmount, amount_t &fee1, amount_t &fee2) const;

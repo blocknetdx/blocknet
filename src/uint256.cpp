@@ -159,6 +159,18 @@ double base_uint<BITS>::getdouble() const
 }
 
 template <unsigned int BITS>
+long double base_uint<BITS>::getldouble() const
+{
+    long double ret = 0.0;
+    long double fact = 1.0;
+    for (int i = 0; i < WIDTH; i++) {
+        ret += fact * pn[i];
+        fact *= 4294967296.0;
+    }
+    return ret;
+}
+
+template <unsigned int BITS>
 std::string base_uint<BITS>::GetHex() const
 {
     char psz[sizeof(pn) * 2 + 1];
@@ -244,6 +256,7 @@ template base_uint<160>& base_uint<160>::operator/=(const base_uint<160>& b);
 template int base_uint<160>::CompareTo(const base_uint<160>&) const;
 template bool base_uint<160>::EqualTo(uint64_t) const;
 template double base_uint<160>::getdouble() const;
+template long double base_uint<160>::getldouble() const;
 template std::string base_uint<160>::GetHex() const;
 template std::string base_uint<160>::ToString() const;
 template void base_uint<160>::SetHex(const char*);
@@ -262,6 +275,7 @@ template base_uint<256>& base_uint<256>::operator/=(const base_uint<256>& b);
 template int base_uint<256>::CompareTo(const base_uint<256>&) const;
 template bool base_uint<256>::EqualTo(uint64_t) const;
 template double base_uint<256>::getdouble() const;
+template long double base_uint<256>::getldouble() const;
 template std::string base_uint<256>::GetHex() const;
 template std::string base_uint<256>::ToString() const;
 template void base_uint<256>::SetHex(const char*);

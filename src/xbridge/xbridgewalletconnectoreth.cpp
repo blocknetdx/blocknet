@@ -868,7 +868,7 @@ amount_t EthWalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> 
         }
     }
 
-    return balance.getdouble();
+    return balance;
 }
 
 //******************************************************************************

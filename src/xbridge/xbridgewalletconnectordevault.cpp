@@ -164,7 +164,7 @@ typedef struct { // helper for bch cache pointer
 // Reference: https://github.com/devaultcrypto/devault/blob/03e826eb6c9931dbbbf5294445c3300044b7e127/src/script/interpreter.cpp#L1399
 uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
                       unsigned int nIn, SigHashType sigHashType,
-                      const CAmount amount)
+                      const amount_t amount)
 {
     // XBRIDGE
     auto & txTo = *tx;
@@ -216,7 +216,7 @@ uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
         // nSequence may already be contain in hashSequence.
         ss << txTo.vin[nIn].prevout;
         ss << scriptCode;
-        ss << amount;
+        ss << amount.Get64();
         ss << txTo.vin[nIn].nSequence;
         // Outputs (none/one/all, depending on flags)
         ss << hashOutputs;
@@ -259,16 +259,6 @@ uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
 
 //******************************************************************************
 //******************************************************************************
-xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
-xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn>  & inputs,
-                                           const std::vector<XTxOut> & outputs,
-                                           const uint64_t COIN,
-                                           const uint32_t txversion,
-                                           const uint32_t lockTime,
-                                           const bool txWithTimeField);
-
-//******************************************************************************
-//******************************************************************************
 DevaultWalletConnector::DevaultWalletConnector() : BchWalletConnector() {}
 
 bool DevaultWalletConnector::init() {
@@ -287,7 +277,7 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn>  & inputs,
                                            const std::vector<XTxOut> & outputs,
-                                           const uint64_t COIN,
+                                           const amount_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField = false);

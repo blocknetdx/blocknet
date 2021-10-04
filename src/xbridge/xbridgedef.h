@@ -23,7 +23,7 @@
 namespace xbridge
 {
 
-typedef double amount_t;
+typedef uint256 amount_t;
 
 class WalletConnector;
 typedef std::shared_ptr<WalletConnector> WalletConnectorPtr;

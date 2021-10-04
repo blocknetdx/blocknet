@@ -199,11 +199,11 @@ std::string iso8601(const boost::posix_time::ptime &time)
     return ss.str();
 }
 
-std::string xBridgeStringValueFromAmount(const amount_t amount, const uint64_t COIN)
+std::string xBridgeStringValueFromAmount(const amount_t & amount, const amount_t & COIN)
 {
     std::stringstream ss;
     // ss << std::fixed << std::setprecision(xBridgeSignificantDigits(xbridge::COIN)) << amount;
-    ss << std::fixed << std::setprecision(0) << amount;
+    ss << std::fixed << std::setprecision(0) << amount.getldouble();
     return ss.str();
 }
 
@@ -215,7 +215,21 @@ std::string xBridgeStringValueFromAmount(const amount_t amount, const uint64_t C
 //     return ss.str();
 // }
 
-std::string xBridgeStringValueFromPrice(const double price, const uint64_t COIN)
+std::string xBridgeStringValueFromPrice(const uint256 & price, const amount_t & COIN)
+{
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price.getldouble();
+    return ss.str();
+}
+
+std::string xBridgeStringValueFromPrice(const double & price, const amount_t & COIN)
+{
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price;
+    return ss.str();
+}
+
+std::string xBridgeStringValueFromPrice(const long double & price, const amount_t & COIN)
 {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price;
@@ -242,7 +256,7 @@ std::string xBridgeStringValueFromPrice(const double price, const uint64_t COIN)
 //     return xBridgeIntFromReal(val);
 // }
 
-bool xBridgeValidCoin(const std::string coin, const uint64_t COIN)
+bool xBridgeValidCoin(const std::string coin, const amount_t COIN)
 {
     bool f = false;
     int n = 0;
@@ -295,7 +309,7 @@ boost::posix_time::ptime intToTime(const uint64_t& number)
     return res;
 }
 
-double price(const xbridge::TransactionDescrPtr ptr)
+amount_t price(const xbridge::TransactionDescrPtr ptr)
 {
     if(ptr == nullptr) {
         return .0;
@@ -307,7 +321,7 @@ double price(const xbridge::TransactionDescrPtr ptr)
     }
     return ptr->toAmount / ptr->fromAmount;
 }
-double priceBid(const xbridge::TransactionDescrPtr ptr)
+amount_t priceBid(const xbridge::TransactionDescrPtr ptr)
 {
     if(ptr == nullptr) {
         return .0;

@@ -321,7 +321,7 @@ typedef struct { // helper for bcd cache pointer
 // Reference: https://github.com/eveybcd/BitcoinDiamond/blob/5688f3b27699447f32031836f1d74826b97ff0b6/src/script/interpreter.cpp#L1237
 template <class T>
 uint256 SignatureHash(const CScript &scriptCode, const T & txTo,
-                      unsigned int nIn, int nHashType, const CAmount amount,
+                      unsigned int nIn, int nHashType, const amount_t amount,
                       SigVersion sigversion)
 {
     // XBRIDGE
@@ -365,7 +365,7 @@ uint256 SignatureHash(const CScript &scriptCode, const T & txTo,
         // may already be contain in hashSequence.
         ss << txTo.vin[nIn].prevout;
         ss << scriptCode;
-        ss << amount;
+        ss << amount.Get64();
         ss << txTo.vin[nIn].nSequence;
         // Outputs (none/one/all, depending on flags)
         ss << hashOutputs;
@@ -405,7 +405,7 @@ BCDTransaction createTransaction() {
 BCDTransaction createTransaction(const WalletConnector     & conn,
                                  const std::vector<XTxIn>  & inputs,
                                  const std::vector<XTxOut> & outputs,
-                                 const uint64_t COIN,
+                                 const amount_t COIN,
                                  const uint32_t txversion,
                                  const uint32_t lockTime,
                                  const uint256 preBlockHash)
@@ -428,7 +428,7 @@ BCDTransaction createTransaction(const WalletConnector     & conn,
         CScript scr;
         scr << OP_DUP << OP_HASH160 << ToByteVector(id) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-        tx->vout.emplace_back(out.amount * COIN, scr);
+        tx->vout.emplace_back((out.amount * COIN).Get64(), scr);
     }
 
     return bcdTx;

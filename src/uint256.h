@@ -102,6 +102,8 @@ public:
     }
 
     double getdouble() const;
+    long double getldouble() const;
+
     double divide(const base_uint& b, const uint64_t& precision = 1000000) const
     {
         base_uint multipliedA = *this * precision;
