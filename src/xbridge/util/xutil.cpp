@@ -218,21 +218,21 @@ std::string xBridgeStringValueFromAmount(const amount_t & amount, const amount_t
 std::string xBridgeStringValueFromPrice(const uint256 & price, const amount_t & COIN)
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price.getldouble();
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price.getldouble() / (COIN == 0 ? 1 : COIN.Get64());
     return ss.str();
 }
 
 std::string xBridgeStringValueFromPrice(const double & price, const amount_t & COIN)
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price / (COIN == 0 ? 1 : COIN.Get64());
     return ss.str();
 }
 
 std::string xBridgeStringValueFromPrice(const long double & price, const amount_t & COIN)
 {
     std::stringstream ss;
-    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price;
+    ss << std::fixed << std::setprecision(xBridgeSignificantDigits(COIN)) << price / (COIN == 0 ? 1 : COIN.Get64());
     return ss.str();
 }
 
