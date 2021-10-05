@@ -34,6 +34,7 @@ bool createRawTransaction(const std::string & rpcuser,
                           const std::string & rpcport,
                           const std::vector<XTxIn>  & inputs,
                           const std::vector<XTxOut> & outputs,
+                          const uint256 & COIN,
                           const uint32_t lockTime,
                           std::string & tx,
                           bool cltv);
@@ -142,7 +143,7 @@ bool DgbWalletConnector::createDepositTransaction(const std::vector<XTxIn>  & in
     }
 
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                   inputs, outs, 0, rawTx, true))
+                                   inputs, outs, COIN, 0, rawTx, true))
     {
         // cancel transaction
         LOG() << "create transaction error, transaction canceled " << __FUNCTION__;

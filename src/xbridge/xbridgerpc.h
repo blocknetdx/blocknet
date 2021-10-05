@@ -8,6 +8,8 @@
 #ifndef BLOCKNET_XBRIDGE_XBRIDGERPC_H
 #define BLOCKNET_XBRIDGE_XBRIDGERPC_H
 
+#include "uint256.h"
+
 #include <vector>
 #include <string>
 #include <cstdint>
@@ -53,6 +55,7 @@ namespace rpc
                               const std::string & rpcport,
                               const std::vector<std::pair<std::string, int> > & inputs,
                               const std::vector<std::pair<std::string, double> > & outputs,
+                              const uint256 & COIN,
                               const uint32_t lockTime,
                               std::string & tx,
                               bool cltv);

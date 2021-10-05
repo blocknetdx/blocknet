@@ -2301,7 +2301,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
                 feeOutputs.end()
             );
 
-            double blockFeePerByte = 40 / static_cast<double>(::COIN);
+            amount_t blockFeePerByte = 40;
             if (!rpc::createFeeTransaction(destScript, connFrom->serviceNodeFee, blockFeePerByte,
                     data, feeOutputs, ptr->feeUtxos, ptr->rawFeeTx))
             {
