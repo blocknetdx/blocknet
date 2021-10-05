@@ -76,7 +76,7 @@ static std::vector<std::pair<COutPoint,CTxOut>> availableCoins(const bool & only
 
 //*****************************************************************************
 //*****************************************************************************
-bool createFeeTransaction(const CScript & dstScript, const double _amount, const double feePerByte,
+bool createFeeTransaction(const CScript & dstScript, const amount_t & amount, const amount_t & feePerByte,
         const std::vector<unsigned char> & data, std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
         std::set<xbridge::wallet::UtxoEntry> & feeUtxos, std::string & rawTx)
 {
@@ -87,8 +87,6 @@ bool createFeeTransaction(const CScript & dstScript, const double _amount, const
         throw std::runtime_error("Create transaction command finished with error, not enough utxos to cover fee");
 
     LOCK(cs_rpcBlockchainStore);
-
-    amount_t amount = _amount * COIN;
 
     int errCode = 0;
     std::string errMessage;

@@ -930,7 +930,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
         auto snode = smgr.getSn(snodeEntry.key.GetPubKey());
         for (const auto & o : feeTxRef->vout) 
         {
-            if (o.nValue < wp.serviceNodeFee * ::COIN)
+            if (o.nValue < wp.serviceNodeFee)
             {
                 continue;
             }
@@ -1336,7 +1336,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
                 UniValue msg(UniValue::VOBJ);
                 msg.pushKV("orderid", id.GetHex());
                 msg.pushKV("fee_txid", txhash.GetHex());
-                msg.pushKV("fee_amount", wp.serviceNodeFee);
+                msg.pushKV("fee_amount", std::to_string(wp.serviceNodeFee.getldouble()));
                 xbridge::LogOrderMsg(msg, "taker fee processed for order", __FUNCTION__);
             }
 
@@ -1759,7 +1759,7 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    if (packet->size() != 144)
+    if (packet->size() != 192)
     {
         ERR() << "incorrect packet size for xbcTransactionInit "
               << "need 144 bytes, received " << packet->size() << " "

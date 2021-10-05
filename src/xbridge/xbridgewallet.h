@@ -116,7 +116,7 @@ public:
         , blockTime(0)
         , blockSize(1024)
         , requiredConfirmations(0)
-        , serviceNodeFee(.015)
+        , serviceNodeFee(uint64_t(1500000))
         , txWithTimeField(false)
         , isLockCoinsSupported(false)
         , walletName("")
@@ -195,7 +195,7 @@ public:
     uint32_t                     requiredConfirmations;
 
     //service node fee, see rpc::createFeeTransaction
-    const double                 serviceNodeFee;
+    const amount_t               serviceNodeFee;
 
     // serialized transaction contains time field (default not)
     bool                         txWithTimeField;

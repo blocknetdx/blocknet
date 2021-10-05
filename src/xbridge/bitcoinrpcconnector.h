@@ -38,8 +38,9 @@ namespace rpc
      * @param rawTx
      * @return
      */
-    bool createFeeTransaction(const CScript & dstScript, const double amount,
-                              const double feePerByte,
+    bool createFeeTransaction(const CScript & dstScript, 
+                              const amount_t & amount,
+                              const amount_t & feePerByte,
                               const std::vector<unsigned char> & data,
                               std::vector<xbridge::wallet::UtxoEntry> & availUtxos,
                               std::set<xbridge::wallet::UtxoEntry> & feeUtxos,

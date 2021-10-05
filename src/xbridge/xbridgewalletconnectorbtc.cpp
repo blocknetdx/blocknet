@@ -1136,6 +1136,7 @@ bool createRawTransaction(const std::string & rpcuser,
                           const std::string & rpcport,
                           const std::vector<XTxIn>  & inputs,
                           const std::vector<XTxOut> & outputs,
+                          const amount_t & COIN,
                           const uint32_t lockTime,
                           std::string & tx,
                           const bool cltv=false)
@@ -1160,7 +1161,7 @@ bool createRawTransaction(const std::string & rpcuser,
         Object o;
         for (const XTxOut & dest : outputs)
         {
-            o.push_back(Pair(dest.address, (dest.amount / COIN).getdouble()));
+            o.push_back(Pair(dest.address, dest.amount.divide(COIN, COIN.Get64())));
         }
 
         Array params;
@@ -2390,7 +2391,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
             if (valObj.type() != json_spirit::real_type || nObj.type() != json_spirit::int_type)
                 continue;
             if (nObj.get_int() == vinTxVout) {
-                vinAmount = valObj.get_real() * COIN;
+                vinAmount = COIN.multiply(valObj.get_real(), COIN.Get64());
                 foundVout = true;
                 break;
             }
@@ -2417,11 +2418,11 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
             LOG() << "tx " << depositTxId << " bad vout n " << __FUNCTION__;
             return true; // done
         }
-        if (amountObj.get_real() * COIN < 0) {
+        if (COIN.multiply(amountObj.get_real(), COIN.Get64()) < 0) {
             LOG() << "tx " << depositTxId << " bad vout, has negative amount " << __FUNCTION__;
             return true; // done
         }
-        totalVoutAmount += amountObj.get_real() * COIN;
+        totalVoutAmount += COIN.multiply(amountObj.get_real(), COIN.Get64());
 
         // Check all vouts for valid deposit
         const json_spirit::Value & scriptPubKey = json_spirit::find_value(vout.get_obj(), "scriptPubKey");
@@ -2433,8 +2434,9 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
         if (expectedScript == hex.get_str()) {
             const json_spirit::Value & vamount = json_spirit::find_value(vout.get_obj(), "value");
             const json_spirit::Value & n = json_spirit::find_value(vout.get_obj(), "n");
-            if (amount <= vamount.get_real() * COIN + std::numeric_limits<double>::epsilon()) {
-                depositP2SHAmount = vamount.get_real() * COIN;
+            // TODO epsilon ???
+            if (amount <= COIN.multiply(vamount.get_real(), COIN.Get64()) + std::numeric_limits<double>::epsilon()) {
+                depositP2SHAmount = COIN.multiply(vamount.get_real(), COIN.Get64());
                 depositTxVout = static_cast<uint32_t>(n.get_int());
             }
             break; // done searching
@@ -2468,7 +2470,7 @@ bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::stri
     if (depositP2SHAmount > amount + fee2)
         excessAmount = depositP2SHAmount - amount - fee2;
 
-    p2shAmount = depositP2SHAmount * COIN;
+    p2shAmount = depositP2SHAmount;
     isGood = true;
     return true; // done
 }
@@ -2656,15 +2658,9 @@ bool BtcWalletConnector<CryptoProvider>::createDepositTransaction(const std::vec
                                                                   uint32_t & txVout,
                                                                   std::string & rawTx)
 {
-    std::vector<XTxOut> outs = outputs;
-    for (XTxOut & o :outs)
-    {
-        // TODO use createTransaction instead raw, there may be a calculation error here
-        o.amount /= COIN;
-    }
-
+    // TODO use createTransaction instead raw, there may be a calculation error here
     if (!rpc::createRawTransaction(m_user, m_passwd, m_ip, m_port,
-                                   inputs, outs, 0, rawTx, true))
+                                   inputs, outputs, COIN, 0, rawTx, true))
     {
         // cancel transaction
         LOG() << "create transaction error, transaction canceled " << __FUNCTION__;
