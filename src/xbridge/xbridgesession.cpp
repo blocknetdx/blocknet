@@ -1196,7 +1196,6 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
 
             utxoItems.push_back(entry);
         }
-    }
 
         // Total amount included in taker utxos
         const amount_t camount = commonAmount;
@@ -2166,6 +2165,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     }
 #endif
 
+    bool hasChange = false;
+    std::string changeAddr;
+
     if (connFrom->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
@@ -2222,8 +2224,6 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
         auto fromAddr = connFrom->fromXAddr(xtx->from);
         auto toAddr = connTo->fromXAddr(xtx->to);
-        bool hasChange = false;
-        std::string changeAddr;
 
         // depositTx
         {
@@ -2356,7 +2356,8 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
         // Repost order preparations
         // find the change utxo and add it as repost utxo
-        if(hasChange && xtx->isPartialRepost() && xtx->isRepostChangeAllowed()) {
+        if (hasChange && xtx->isPartialRepost() && xtx->isRepostChangeAllowed()) 
+        {
             wallet::UtxoEntry entry;
             entry.address = changeAddr;
             entry.txId = sentid;
@@ -2391,25 +2392,33 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     sendPacket(hubAddress, reply);
 
     // Repost order
-    if (xtx->isPartialRepost()) {
-        CAmount repostAmount = 0; // use everything that is available (from remaining confirmed utxos)
-        if(hasChange && xtx->isRepostChangeAllowed()) {
-            auto spent = xBridgeAmountFromReal(outAmount + fee2);
-            if (xtx->origFromAmount > spent) {
+    if (xtx->isPartialRepost()) 
+    {
+        amount_t repostAmount = 0; // use everything that is available (from remaining confirmed utxos)
+        if(hasChange && xtx->isRepostChangeAllowed()) 
+        {
+            amount_t spent = outAmount + fee2;
+            if (xtx->origFromAmount > spent) 
+            {
                 repostAmount = xtx->origFromAmount - spent;
             }
         }
 
-        try {
+        try 
+        {
             const auto status = xapp.repostXBridgeTransaction(xtx->fromAddr, xtx->fromCurrency, xtx->toAddr, xtx->toCurrency,
                     xtx->origFromAmount, xtx->origToAmount, xtx->minFromAmount, repostAmount, xtx->repostCoins, xtx->id);
             if (status == xbridge::INSUFFICIENT_FUNDS)
+            {
                 LogOrderMsg(xtx->id.GetHex(), "not reposting the partial order because all available utxos have been used up", __FUNCTION__);
             }
             else if (status != xbridge::SUCCESS)
             {
                 LogOrderMsg(xtx->id.GetHex(), "failed to repost the partial order", __FUNCTION__);
-        } catch (...) {
+            }
+        } 
+        catch (...) 
+        {
             LogOrderMsg(xtx->id.GetHex(), "failed to repost the partial order", __FUNCTION__);
         }
     }

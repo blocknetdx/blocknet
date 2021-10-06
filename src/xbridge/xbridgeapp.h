@@ -688,10 +688,12 @@ public:
      * @return
      */
     bool selectPartialUtxos(const std::string & addr, const std::vector<wallet::UtxoEntry> & outputs,
-            const std::function<double(uint32_t, uint32_t)> &minTxFee1,
-            const amount_t requiredAmount, const int requiredUtxoCount, const amount_t requiredFeePerUtxo,
-            const int requiredPrepTxVouts, const amount_t requiredSplitSize, const amount_t requiredRemainder,
-            std::vector<wallet::UtxoEntry> & outputsForUse, amount_t & utxoAmount, amount_t & fees, bool & exactUtxoMatch) const;
+                            const std::function<double(uint32_t, uint32_t)> &minTxFee1,
+                            const amount_t requiredAmount, const int requiredUtxoCount, 
+                            const amount_t requiredFeePerUtxo, const int requiredPrepTxVouts, 
+                            const amount_t requiredSplitSize, const amount_t requiredRemainder,
+                            std::vector<wallet::UtxoEntry> & outputsForUse, 
+                            amount_t & utxoAmount, amount_t & fees, bool & exactUtxoMatch) const;
 
     /**
      * Unit tests: add xwallets
