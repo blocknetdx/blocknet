@@ -3285,7 +3285,7 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
     {
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
     }
-    case xbridge::INSIFFICIENT_FUNDS:
+    case xbridge::INSUFFICIENT_FUNDS:
     {
         return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
     }

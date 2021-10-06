@@ -307,9 +307,12 @@ public:
      * @param parentid - Parent order id
      * @return xbridge::SUCCESS if success, else error code
      */
-    Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
-            amount_t makerAmount, amount_t takerAmount, amount_t minFromAmount, amount_t repostAmount, const std::vector<wallet::UtxoEntry> utxos,
-            const uint256 parentid=uint256());
+    Error repostXBridgeTransaction(std::string from, std::string fromCurrency, 
+                                   std::string to, std::string toCurrency,
+                                   amount_t makerAmount, amount_t takerAmount, 
+                                   amount_t minFromAmount, amount_t repostAmount, 
+                                   const std::vector<wallet::UtxoEntry> utxos,
+                                   const uint256 parentid = uint256());
 
     // TODO make protected
     /**

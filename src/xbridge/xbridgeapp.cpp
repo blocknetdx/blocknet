@@ -1463,7 +1463,7 @@ void App::moveTransactionToHistory(const uint256 & id)
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
                                              const std::string to, const std::string toCurrency, 
                                              const amount_t makerAmount, const amount_t takerAmount,
-                                             const amount_t minFromAmount, 
+                                             const amount_t minFromAmount, amount_t repostAmount,
                                              const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
     amount_t repostAmount{uint64_t(0)};
