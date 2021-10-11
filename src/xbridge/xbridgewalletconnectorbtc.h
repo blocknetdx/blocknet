@@ -150,14 +150,16 @@ static json_spirit::Object CallRPC(const std::string & rpcuser, const std::strin
     // Attach request data
     const auto tostring = json_spirit::write_string(json_spirit::Value(params), json_spirit::none, 8);
 
+    static uint64_t callId = 0;
+
 #ifdef XBRIDGE_LOG_RPC_CALLS
-    LOG() << "XBRIDGE RPC CALL <<<--- " << strMethod << " " << tostring;
+    LOG() << "XBRIDGE RPC CALL <<<--- id " << callId+1 << " " << strMethod << " " << tostring;
 #endif
 
     UniValue toval;
     if (!toval.read(tostring))
         throw std::runtime_error(strprintf("failed to decode json_spirit data: %s", tostring));
-    const auto reqobj = XBridgeJSONRPCRequestObj(strMethod, toval.get_array(), 1, jsonver);
+    const auto reqobj = XBridgeJSONRPCRequestObj(strMethod, toval.get_array(), ++callId, jsonver);
     std::string strRequest = reqobj.write() + "\n";
     struct evbuffer* output_buffer = evhttp_request_get_output_buffer(req.get());
     assert(output_buffer);
