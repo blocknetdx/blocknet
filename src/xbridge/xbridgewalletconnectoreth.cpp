@@ -966,18 +966,34 @@ bool EthWalletConnector::checkDepositTransaction(const std::string& depositTxId,
 //******************************************************************************
 uint32_t EthWalletConnector::lockTime(const char role) const
 {
+    uint32_t blockCount = 0;
+    if (!getBlockCount(blockCount))
+    {
+        LOG() << "wrong block count " << __FUNCTION__;
+        return 0;
+    }
+
+    // lock time
     uint32_t lt = 0;
     if (role == 'A')
     {
-        // 2h in seconds
-        lt = 7200;
+        uint32_t makerTime = XMAKER_LOCKTIME_TARGET_SECONDS;
+        uint32_t blocks = makerTime / blockTime;
+        if (blocks < XMIN_LOCKTIME_BLOCKS) blocks = XMIN_LOCKTIME_BLOCKS;
+        lt = blockCount + blocks;
     }
     else if (role == 'B')
     {
-        // 1h in seconds
-        lt = 3600;
+        uint32_t takerTime = XTAKER_LOCKTIME_TARGET_SECONDS;
+        if (blockTime >= XSLOW_BLOCKTIME_SECONDS)
+        {
+            // allow more time for slower chains
+            takerTime = XSLOW_TAKER_LOCKTIME_TARGET_SECONDS;
+        }
+        uint32_t blocks = takerTime / blockTime;
+        if (blocks < XMIN_LOCKTIME_BLOCKS) blocks = XMIN_LOCKTIME_BLOCKS;
+        lt = blockCount + blocks;
     }
-
     return lt;
 }
 
