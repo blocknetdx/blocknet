@@ -1935,13 +1935,14 @@ bool Session::Impl::processTransactionInitialized(XBridgePacketPtr packet) const
             // send create transaction command to clients
 
             // Send to Maker
-            XBridgePacketPtr reply1(new XBridgePacket(xbcTransactionCreateA));
-            reply1->append(m_myid);
-            reply1->append(id.begin(), 32);
-            reply1->append(tr->b_pk1());
-            reply1->sign(e.pubKey(), e.privKey());
+            XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCreateA));
+            reply->append(m_myid);
+            reply->append(id.begin(), 32);
+            reply->append(tr->b_pk1());
+            reply->append(tr->b_destination());
+            reply->sign(e.pubKey(), e.privKey());
 
-            sendPacket(tr->a_address(), reply1);
+            sendPacket(tr->a_address(), reply);
 
             // TODO Blocknet Unlock maker utxos in partial order
             if (tr->isPartialAllowed())
@@ -1978,10 +1979,10 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 {
     DEBUG_TRACE();
 
-    if (packet->size() != 85)
+    if (packet->size() < 85)
     {
         ERR() << "incorrect packet size for xbcTransactionCreateA "
-              << "need 85 bytes, received " << packet->size() << " "
+              << "need greather than 85 bytes, received " << packet->size() << " "
               << __FUNCTION__;
         return false;
     }
@@ -1989,12 +1990,16 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     std::vector<unsigned char> hubAddress;
     size_t offset = packet->read(0, hubAddress, XBridgePacket::addressSize);
 
-    // transaction id
+    // transaction id4
     uint256 txid;
     offset += packet->read(offset, txid);
 
     // counterparty pubkey
-    std::vector<unsigned char> mPubKey(packet->data()+offset, packet->data()+offset+XBridgePacket::pubkeySize);
+    std::vector<unsigned char> mPubKey;
+    offset += packet->read(offset, mPubKey, XBridgePacket::pubkeySize);
+
+    std::vector<unsigned char> destAddress;
+    offset += packet->read(offset, destAddress, XBridgePacket::addressSize);
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2150,7 +2155,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     // create transactions
 
     // hash of secret
-    std::vector<unsigned char> hx = connTo->getKeyId(xtx->xPubKey);
+    xtx->oHashedSecret = connTo->getKeyId(xtx->xPubKey);
 
 #ifdef LOG_KEYPAIR_VALUES
     {
@@ -2160,7 +2165,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         log_obj.pushKV("my_id", HexStr(connFrom->getKeyId(xtx->mPubKey)));
         log_obj.pushKV("other_pubkey", HexStr(mPubKey));
         log_obj.pushKV("other_id", HexStr(connFrom->getKeyId(mPubKey)));
-        log_obj.pushKV("x_secret", HexStr(hx));
+        log_obj.pushKV("x_secret", HexStr(xtx->oHashedSecret));
         LogOrderMsg(log_obj, "order keypair values, DO NOT SHARE with anyone", __FUNCTION__);
     }
 #endif
@@ -2172,13 +2177,14 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
-        std::vector<unsigned char> initiateParams = connEth->createInitiateData(xtx->oHashedSecret, xtx->to, xtx->lockTime);
+        std::vector<unsigned char> initiateParams = connEth->createInitiateData(xtx->oHashedSecret, destAddress, xtx->lockTime);
 
         uint256 estimateGas;
         if(!connEth->getEstimateGas(xtx->from, initiateParams, xtx->fromAmount, estimateGas))
         {
             LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
             xapp.processLater(txid, packet);
+            return true;
         }
 
         uint256 gasPrice;
@@ -2186,6 +2192,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         {
             LOG() << "can't process without gas price, process packet later" << __FUNCTION__;
             xapp.processLater(txid, packet);
+            return true;
         }
 
         uint256 totalValue = estimateGas * gasPrice + xtx->fromAmount;
@@ -2219,7 +2226,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     else
     {
         // create address for deposit
-        connFrom->createDepositUnlockScript(xtx->mPubKey, xtx->oPubKey, hx, xtx->lockTime, xtx->lockScript);
+        connFrom->createDepositUnlockScript(xtx->mPubKey, xtx->oPubKey, xtx->oHashedSecret, xtx->lockTime, xtx->lockScript);
         xtx->lockP2SHAddress = connFrom->scriptIdToString(connFrom->getScriptId(xtx->lockScript));
 
         auto fromAddr = connFrom->fromXAddr(xtx->from);
@@ -2382,7 +2389,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     reply->append(hubAddress);
     reply->append(txid.begin(), 32);
     reply->append(xtx->binTxId);
-    reply->append(hx);
+    reply->append(xtx->oHashedSecret);
     reply->append(xtx->lockTime);
     reply->append(xtx->refTxId);
     reply->append(xtx->refTx);
@@ -2513,17 +2520,18 @@ bool Session::Impl::processTransactionCreatedA(XBridgePacketPtr packet) const
         return true;
     }
 
-    XBridgePacketPtr reply2(new XBridgePacket(xbcTransactionCreateB));
-    reply2->append(m_myid);
-    reply2->append(txid.begin(), 32);
-    reply2->append(tr->a_pk1());
-    reply2->append(binTxId);
-    reply2->append(hx);
-    reply2->append(lockTimeA);
+    XBridgePacketPtr reply(new XBridgePacket(xbcTransactionCreateB));
+    reply->append(m_myid);
+    reply->append(txid.begin(), 32);
+    reply->append(tr->a_pk1());
+    reply->append(binTxId);
+    reply->append(hx);
+    reply->append(lockTimeA);
+    reply->append(tr->a_destination());
 
-    reply2->sign(e.pubKey(), e.privKey());
+    reply->sign(e.pubKey(), e.privKey());
 
-    sendPacket(tr->b_address(), reply2);
+    sendPacket(tr->b_address(), reply);
 
     LogOrderMsg(tr, __FUNCTION__);
 
@@ -2562,6 +2570,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     uint32_t lockTimeA = 0;
     offset += packet->read(offset, lockTimeA);
+
+    std::vector<unsigned char> destAddress;
+    offset += packet->read(offset, destAddress, XBridgePacket::addressSize);
 
     xbridge::App & xapp = xbridge::App::instance();
 
@@ -2681,9 +2692,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
         if (connTo->method == "ETH")
         {
-            EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
+            EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connTo.get());
 
-            if(!connEth->isInitiated(xtx->oHashedSecret, xtx->from, xtx->to, xtx->toAmount))
+            if(!connEth->isInitiated(xtx->oHashedSecret, xtx->from, destAddress, xtx->toAmount))
             {
                 // move packet to pending
                 xapp.processLater(txid, packet);
@@ -2773,7 +2784,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
 
-        std::vector<unsigned char> respondParams = connEth->createRespondData(xtx->oHashedSecret, xtx->to, xtx->lockTime);
+        std::vector<unsigned char> respondParams = connEth->createRespondData(xtx->oHashedSecret, destAddress, xtx->lockTime);
 
         uint256 estimateGas;
         if(!connEth->getEstimateGas(xtx->from, respondParams, xtx->fromAmount, estimateGas))
@@ -3215,9 +3226,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
             xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
-        if (connFrom->method == "ETH")
+        if (connTo->method == "ETH")
         {
-            EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
+            EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connTo.get());
 
             if(!connEth->isResponded(xtx->oHashedSecret, xtx->to, xtx->from, xtx->toAmount))
             {
