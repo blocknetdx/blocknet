@@ -249,7 +249,7 @@ public:
 
     bool getBlockHash(const uint32_t & block, std::string & blockHash);
 
-    bool getBlockCount(uint32_t & blockCount);
+    bool getBlockCount(uint32_t & blockCount) const;
 
 public:
     bool hasValidAddressPrefix(const std::string & addr) const;

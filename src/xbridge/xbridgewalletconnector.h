@@ -125,7 +125,7 @@ public:
 
     virtual bool getRawMempool(std::vector<std::string> & txids) = 0;
 
-    virtual bool getBlockCount(uint32_t & blockCount) = 0;
+    virtual bool getBlockCount(uint32_t & blockCount) const = 0;
 
 public:
     // helper functions

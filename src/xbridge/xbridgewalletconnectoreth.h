@@ -44,7 +44,7 @@ public:
     bool verifyMessage(const std::string & /*address*/, const std::string & /*message*/, const std::string & /*signature*/) { return true; }
 
     bool getRawMempool(std::vector<std::string> & /*txids*/) { assert(false && "implementation");  return true; }
-    bool getBlockCount(uint32_t & blockCount);
+    bool getBlockCount(uint32_t & blockCount) const;
 
 public:
     bool hasValidAddressPrefix(const std::string & /*addr*/) const { return true; }

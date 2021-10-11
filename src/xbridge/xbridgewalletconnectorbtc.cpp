@@ -2088,8 +2088,10 @@ bool BtcWalletConnector<CryptoProvider>::getBlockHash(const uint32_t & block, st
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
-bool BtcWalletConnector<CryptoProvider>::getBlockCount(uint32_t & blockCount) {
-    if (!rpc::getblockcount(m_user, m_passwd, m_ip, m_port, blockCount)) {
+bool BtcWalletConnector<CryptoProvider>::getBlockCount(uint32_t & blockCount) const
+{
+    if (!rpc::getblockcount(m_user, m_passwd, m_ip, m_port, blockCount)) 
+    {
         LOG() << "rpc::getblockhash failed " << __FUNCTION__;
         return false;
     }

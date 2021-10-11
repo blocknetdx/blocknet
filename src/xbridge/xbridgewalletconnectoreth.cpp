@@ -888,7 +888,7 @@ bool EthWalletConnector::getBlockHash(const uint32_t & blockNumber, std::string 
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::getBlockCount(uint32_t & blockCount)
+bool EthWalletConnector::getBlockCount(uint32_t & blockCount) const
 {
     // TODO make uint64 in param
     uint64_t count = 0;
