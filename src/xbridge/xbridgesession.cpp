@@ -2694,7 +2694,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         {
             EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connTo.get());
 
-            if(!connEth->isInitiated(xtx->oHashedSecret, xtx->from, destAddress, xtx->toAmount))
+            if(!connEth->isInitiated(xtx->oHashedSecret, xtx->from, xtx->to, xtx->toAmount))
             {
                 // move packet to pending
                 xapp.processLater(txid, packet);
@@ -3248,6 +3248,37 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
     xtx->unlockScript = counterPartyScript;
     xtx->unlockP2SHAddress = counterPartyP2SH;
 
+    // Try and find the secret
+    if (!xtx->hasSecret()) 
+    {
+        std::vector<unsigned char> x;
+        bool isGood = false;
+        if (!connFrom->getSecretFromPaymentTransaction(xtx->otherPayTxId(), xtx->binTxId, xtx->binTxVout, xtx->oHashedSecret, x, isGood))
+        {
+            // Keep looking for the maker pay tx, move packet to pending
+            xapp.processLater(txid, packet);
+            return true;
+        }
+        else if (!isGood)
+        {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", xtx->id.GetHex());
+            log_obj.pushKV("currency", xtx->fromCurrency);
+            log_obj.pushKV("counterparty_p2sh_txid", xtx->otherPayTxId());
+            log_obj.pushKV("my_spent_p2sh_deposit_txid", xtx->binTxId);
+            log_obj.pushKV("my_spent_p2sh_deposit_vout", static_cast<int>(xtx->binTxVout));
+            LogOrderMsg(log_obj, "secret not found in counterparty's pay tx on <" + xtx->fromCurrency + "> , counterparty could be misbehaving", __FUNCTION__);
+            return false;
+        }
+
+        // assign the secret
+        xtx->setSecret(x);
+        // done watching for spent pay tx
+        xtx->doneWatching();
+        xapp.unwatchSpentDeposit(xtx);
+        xapp.saveOrders(true);
+    }
+
     if (connTo->method == "ETH")
     {
         EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
@@ -3256,10 +3287,42 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 
         TXLOG() << "A redeem params " << HexStr(redeemParams) << " to " << connEth->fromXAddr(xtx->to);
 
-        //we can't calc estimate gas for methods that write anything into eth blockchain so just pass 0
-        //redeem transaction
+        uint256 estimateGas;
+        if (!connEth->getEstimateGas(xtx->to, redeemParams, 0, estimateGas))
+        {
+            LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
+
+        uint256 gasPrice;
+        if (!connEth->getGasPrice(gasPrice))
+        {
+            LOG() << "can't process without gas price, process packet later" << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
+
+        uint256 totalValue = estimateGas * gasPrice;
+
+        uint256 avaliableAmount;
+        if (!connEth->getBalance(xtx->from, avaliableAmount))
+        {
+            LOG() << "can't process without balance, process packet later" << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
+
+        if (avaliableAmount < totalValue)
+        {
+            LOG() << "client doesn't have enough amount on account, transaction canceled" << __FUNCTION__;
+            sendCancelTransaction(xtx, crNoMoney);
+            return true;
+        }
+
+        // redeem transaction
         uint256 trHash;
-        if(!connEth->callContractMethod(xtx->to, redeemParams, 0, 0, trHash))
+        if (!connEth->callContractMethod(xtx->to, redeemParams, 0, 0, trHash))
         {
             LOG() << "redeem tx not send, transaction canceled " << __FUNCTION__;
             sendCancelTransaction(xtx, crRpcError);
@@ -3374,9 +3437,8 @@ bool Session::Impl::processEthVerifyTransactionConfirmA(XBridgePacketPtr packet)
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedA));
     reply->append(hubAddress);
-    reply->append(thisAddress);
     reply->append(txid.begin(), 32);
-    reply->append(xtx->xPubKey);
+    reply->append(xtx->payTxId);
 
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
@@ -3546,18 +3608,81 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         return true;
     }
 
+    // Try and find the secret
+    if (!xtx->hasSecret()) 
+    {
+        std::vector<unsigned char> x;
+        bool isGood = false;
+        if (!connFrom->getSecretFromPaymentTransaction(xtx->otherPayTxId(), xtx->binTxId, xtx->binTxVout, xtx->oHashedSecret, x, isGood))
+        {
+            // Keep looking for the maker pay tx, move packet to pending
+            xapp.processLater(txid, packet);
+            return true;
+        }
+        else if (!isGood)
+        {
+            UniValue log_obj(UniValue::VOBJ);
+            log_obj.pushKV("orderid", xtx->id.GetHex());
+            log_obj.pushKV("currency", xtx->fromCurrency);
+            log_obj.pushKV("counterparty_p2sh_txid", xtx->otherPayTxId());
+            log_obj.pushKV("my_spent_p2sh_deposit_txid", xtx->binTxId);
+            log_obj.pushKV("my_spent_p2sh_deposit_vout", static_cast<int>(xtx->binTxVout));
+            LogOrderMsg(log_obj, "secret not found in counterparty's pay tx on <" + xtx->fromCurrency + "> , counterparty could be misbehaving", __FUNCTION__);
+            return false;
+        }
+
+        // assign the secret
+        xtx->setSecret(x);
+        // done watching for spent pay tx
+        xtx->doneWatching();
+        xapp.unwatchSpentDeposit(xtx);
+        xapp.saveOrders(true);
+    }
+
     if (connTo->method == "ETH")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
+        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connTo.get());
 
         std::vector<unsigned char> redeemParams = connEth->createRedeemData(xtx->oHashedSecret, xtx->xPubKey);
 
         TXLOG() << "B redeem params " << HexStr(redeemParams) << " to " << connEth->fromXAddr(xtx->to);
 
-        //we can't calc estimate gas for methods that write anything into eth blockchain so just pass 0
-        //call redeem contract method
+        uint256 estimateGas;
+        if (!connEth->getEstimateGas(xtx->to, redeemParams, 0, estimateGas))
+        {
+            LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
+
+        uint256 gasPrice;
+        if (!connEth->getGasPrice(gasPrice))
+        {
+            LOG() << "can't process without gas price, process packet later" << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
+
+        uint256 totalValue = estimateGas * gasPrice;
+
+        uint256 avaliableAmount;
+        if (!connEth->getBalance(xtx->from, avaliableAmount))
+        {
+            LOG() << "can't process without balance, process packet later" << __FUNCTION__;
+            xapp.processLater(txid, packet);
+            return true;
+        }
+
+        if (avaliableAmount < totalValue)
+        {
+            LOG() << "client doesn't have enough amount on account, transaction canceled" << __FUNCTION__;
+            sendCancelTransaction(xtx, crNoMoney);
+            return true;
+        }
+
+        // call redeem contract method
         uint256 trHash;
-        if(!connEth->callContractMethod(xtx->to, redeemParams, 0, 0, trHash))
+        if (!connEth->callContractMethod(xtx->to, redeemParams, 0, estimateGas, trHash))
         {
             LOG() << "deposit tx not send, transaction canceled " << __FUNCTION__;
             sendCancelTransaction(xtx, crRpcError);
@@ -3577,7 +3702,8 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         // payTx
         {
             int32_t errCode = 0;
-            if (!redeemOrderCounterpartyDeposit(xtx, errCode)) {
+            if (!redeemOrderCounterpartyDeposit(xtx, errCode)) 
+            {
                 xapp.processLater(txid, packet); // trying again on failure
                 return true;
             }
@@ -3660,8 +3786,8 @@ bool Session::Impl::processEthVerifyTransactionConfirmB(XBridgePacketPtr packet)
     // send reply
     XBridgePacketPtr reply(new XBridgePacket(xbcTransactionConfirmedB));
     reply->append(hubAddress);
-    reply->append(thisAddress);
     reply->append(txid.begin(), 32);
+    reply->append(xtx->payTxId);
 
     reply->sign(xtx->mPubKey, xtx->mPrivKey);
 
@@ -4562,31 +4688,8 @@ bool Session::Impl::redeemOrderCounterpartyDeposit(const TransactionDescrPtr & x
     // Try and find the secret
     if (!xtx->hasSecret()) 
     {
-        std::vector<unsigned char> x;
-        bool isGood = false;
-        if (!connFrom->getSecretFromPaymentTransaction(xtx->otherPayTxId(), xtx->binTxId, xtx->binTxVout, xtx->oHashedSecret, x, isGood))
-        {
-            // Keep looking for the maker pay tx, move packet to pending
-            return false;
-        }
-        else if (!isGood)
-        {
-            UniValue log_obj(UniValue::VOBJ);
-            log_obj.pushKV("orderid", xtx->id.GetHex());
-            log_obj.pushKV("currency", xtx->fromCurrency);
-            log_obj.pushKV("counterparty_p2sh_txid", xtx->otherPayTxId());
-            log_obj.pushKV("my_spent_p2sh_deposit_txid", xtx->binTxId);
-            log_obj.pushKV("my_spent_p2sh_deposit_vout", static_cast<int>(xtx->binTxVout));
-            LogOrderMsg(log_obj, "secret not found in counterparty's pay tx on <" + xtx->fromCurrency + "> , counterparty could be misbehaving", __FUNCTION__);
-            return false;
-        }
-
-        // assign the secret
-        xtx->setSecret(x);
-        // done watching for spent pay tx
-        xtx->doneWatching();
-        xapp.unwatchSpentDeposit(xtx);
-        xapp.saveOrders(true);
+        // Keep looking for the maker pay tx, move packet to pending
+        return false;
     }
 
     auto fromAddr = connFrom->fromXAddr(xtx->from);
