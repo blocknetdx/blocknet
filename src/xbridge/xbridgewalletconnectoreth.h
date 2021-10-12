@@ -17,6 +17,7 @@ public:
     ~EthWalletConnector() { delete m_cp; }
 
     bool init();
+
 public:
     // reimplement for currency
     std::string fromXAddr(const std::vector<unsigned char> & xaddr) const;
@@ -200,19 +201,13 @@ public:
     bool isRedeemed(const bytes& hashedSecret, const bytes & recipientAddress, const uint256 value) const;
 
 protected:
-    BtcCryptoProvider* m_cp;
+    BtcCryptoProvider * m_cp;
 
 private:
-    enum NetwortType
-    {
-        MAINNET,
-        TESTNET
-    };
-
-    NetwortType m_networkType;
     uint64_t m_fromBlock;
-    const std::string m_contractAddress = "0x078fb70CA9A3077cDF1cA32b4a9Cb74898963DA8";
-    const std::string m_contractAddressTestnet = "0x078fb70CA9A3077cDF1cA32b4a9Cb74898963DA8";
+
+    uint32_t    m_networkId = 0;
+    std::string m_contractAddress;
 };
 
 }

@@ -3,6 +3,7 @@
 
 #include "xbridgewalletconnectoreth.h"
 #include "xbridgewalletconnectorbtc.h"
+#include "util/settings.h"
 
 #include "json/json_spirit_reader_template.h"
 #include "json/json_spirit_writer_template.h"
@@ -768,6 +769,10 @@ bool getLogs(const std::string & rpcip,
 //*****************************************************************************
 bool EthWalletConnector::init()
 {
+    boost::property_tree::ptree section = settings().getSection(currency);
+    m_networkId       = section.get<uint32_t>   ("NetworkId", 0);
+    m_contractAddress = section.get<std::string>("ContractAddress", "");
+
     if (!rpc::getBlockNumber(m_ip, m_port, m_fromBlock))
     {
         return false;
@@ -779,7 +784,17 @@ bool EthWalletConnector::init()
         return false;
     }
 
-    m_networkType = netVersion == 1 ? MAINNET : TESTNET;
+    if (m_networkId != netVersion)
+    {
+        LOG() << "wrong network settings, network id in config " << m_networkId << " vs node reply " << netVersion << __FUNCTION__;
+        return false;
+    }
+
+    if (m_contractAddress.empty())
+    {
+        LOG() << "empty contract address " << __FUNCTION__;
+        return false;
+    }
 
     return true;
 }
@@ -1066,7 +1081,7 @@ bool EthWalletConnector::getEstimateGas(const bytes & myAddress,
 {
     if(!rpc::getEstimateGas(m_ip, m_port,
                             uint160(HexStr(myAddress)),
-                            uint160(m_networkType == MAINNET ? m_contractAddress : m_contractAddressTestnet),
+                            uint160(m_contractAddress),
                             value, data,
                             estimateGas))
     {
@@ -1180,7 +1195,7 @@ bool EthWalletConnector::callContractMethod(const bytes & myAddress,
 {
     if(!rpc::sendTransaction(m_ip, m_port,
                              uint160(HexStr(myAddress)),
-                             uint160(m_networkType == MAINNET ? m_contractAddress : m_contractAddressTestnet),
+                             uint160(m_contractAddress),
                              gas, value, data,
                              transactionHash))
     {
@@ -1203,7 +1218,7 @@ bool EthWalletConnector::isInitiated(const bytes & hashedSecret,
     std::vector<std::string> events;
     std::vector<std::string> data;
     if(!rpc::getLogs(m_ip, m_port,
-                     uint160(m_networkType == MAINNET ? m_contractAddress : m_contractAddressTestnet),
+                     uint160(m_contractAddress),
                      m_fromBlock,
                      HexStr(EthEncoder::encode(hashedSecret, false)),
                      events, data))
@@ -1255,7 +1270,7 @@ bool EthWalletConnector::isResponded(const bytes & hashedSecret,
     std::vector<std::string> events;
     std::vector<std::string> data;
     if(!rpc::getLogs(m_ip, m_port,
-                     uint160(m_networkType == MAINNET ? m_contractAddress : m_contractAddressTestnet),
+                     uint160(m_contractAddress),
                      m_fromBlock,
                      HexStr(EthEncoder::encode(hashedSecret, false)),
                      events, data))
@@ -1306,7 +1321,7 @@ bool EthWalletConnector::isRefunded(const bytes & hashedSecret,
     std::vector<std::string> events;
     std::vector<std::string> data;
     if(!rpc::getLogs(m_ip, m_port,
-                     uint160(m_networkType == MAINNET ? m_contractAddress : m_contractAddressTestnet),
+                     uint160(m_contractAddress),
                      m_fromBlock,
                      HexStr(EthEncoder::encode(hashedSecret, false)),
                      events, data))
@@ -1356,7 +1371,7 @@ bool EthWalletConnector::isRedeemed(const bytes& hashedSecret,
     std::vector<std::string> events;
     std::vector<std::string> data;
     if(!rpc::getLogs(m_ip, m_port,
-                     uint160(m_networkType == MAINNET ? m_contractAddress : m_contractAddressTestnet),
+                     uint160(m_contractAddress),
                      m_fromBlock,
                      HexStr(EthEncoder::encode(hashedSecret, false)),
                      events, data))
