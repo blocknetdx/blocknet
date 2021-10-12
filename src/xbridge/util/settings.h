@@ -65,6 +65,8 @@ public:
         { return get<std::string>("Rpc.SslCiphers", def); }
 
 public:
+    boost::property_tree::ptree getSection(const std::string sectionName) const;
+    
     template <class _T>
     _T get(const std::string & param, _T def = _T())
     {

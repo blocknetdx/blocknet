@@ -112,6 +112,13 @@ bool Settings::write(const char * fileName)
 
 //******************************************************************************
 //******************************************************************************
+boost::property_tree::ptree Settings::getSection(const std::string sectionName) const
+{
+    return m_pt.get_child(sectionName);
+}
+
+//******************************************************************************
+//******************************************************************************
 std::string Settings::logPath() const
 {
 //    try { return m_pt.get<std::string>("Main.LogPath"); }

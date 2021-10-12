@@ -983,32 +983,34 @@ void App::updateActiveWallets()
             }
         }
 
+        boost::property_tree::ptree section = s.getSection(*i);
+
         WalletParam wp;
         wp.currency                    = *i;
-        wp.title                       = s.get<std::string>(*i + ".Title");
-        wp.address                     = s.get<std::string>(*i + ".Address");
-        wp.m_ip                        = s.get<std::string>(*i + ".Ip");
-        wp.m_port                      = s.get<std::string>(*i + ".Port");
-        wp.m_user                      = s.get<std::string>(*i + ".Username");
-        wp.m_passwd                    = s.get<std::string>(*i + ".Password");
-        wp.addrPrefix                  = s.get<std::string>(*i + ".AddressPrefix");
-        wp.scriptPrefix                = s.get<std::string>(*i + ".ScriptPrefix");
-        wp.secretPrefix                = s.get<std::string>(*i + ".SecretPrefix");
-        wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
-        wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
-        wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
-        wp.feePerByte                  = s.get<uint64_t>   (*i + ".FeePerByte", 0);
-        wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
-        wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
-//        wp.blockSize                   = s.get<int>        (*i + ".BlockSize", 0);
-        wp.requiredConfirmations       = s.get<int>        (*i + ".Confirmations", 0);
-        wp.txWithTimeField             = s.get<bool>       (*i + ".TxWithTimeField", false);
-        wp.isLockCoinsSupported        = s.get<bool>       (*i + ".LockCoinsSupported", false);
-        wp.jsonver                     = s.get<std::string>(*i + ".JSONVersion", "");
-        wp.contenttype                 = s.get<std::string>(*i + ".ContentType", "");
-        wp.cashAddrPrefix              = s.get<std::string>(*i + ".CashAddrPrefix", "");
+        wp.title                       = section.get<std::string>("Title");
+        wp.address                     = section.get<std::string>("Address");
+        wp.m_ip                        = section.get<std::string>("Ip");
+        wp.m_port                      = section.get<std::string>("Port");
+        wp.m_user                      = section.get<std::string>("Username");
+        wp.m_passwd                    = section.get<std::string>("Password");
+        wp.addrPrefix                  = section.get<std::string>("AddressPrefix");
+        wp.scriptPrefix                = section.get<std::string>("ScriptPrefix");
+        wp.secretPrefix                = section.get<std::string>("SecretPrefix");
+        wp.COIN                        = section.get<uint64_t>   ("COIN", 0);
+        wp.txVersion                   = section.get<uint32_t>   ("TxVersion", 1);
+        wp.minTxFee                    = section.get<uint64_t>   ("MinTxFee", 0);
+        wp.feePerByte                  = section.get<uint64_t>   ("FeePerByte", 0);
+        wp.method                      = section.get<std::string>("CreateTxMethod");
+        wp.blockTime                   = section.get<int>        ("BlockTime", 0);
+//        wp.blockSize                   = section.get<int>        ("BlockSize", 0);
+        wp.requiredConfirmations       = section.get<int>        ("Confirmations", 0);
+        wp.txWithTimeField             = section.get<bool>       ("TxWithTimeField", false);
+        wp.isLockCoinsSupported        = section.get<bool>       ("LockCoinsSupported", false);
+        wp.jsonver                     = section.get<std::string>("JSONVersion", "");
+        wp.contenttype                 = section.get<std::string>("ContentType", "");
+        wp.cashAddrPrefix              = section.get<std::string>("CashAddrPrefix", "");
 
-        std::string walletName         = s.get<std::string>(*i + ".WalletName", "");
+        std::string walletName         = section.get<std::string>("WalletName", "");
         if (walletName != wp.walletName)
         {
             wp.walletName              = walletName;
