@@ -1028,14 +1028,14 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
             connDest->getBlockHash(destinationHeight, destinationBlockHashCounterparty))
         {
             // make sure source height is within 2 blocks
-            if (abs((int)sourceBlockHeightSnode - (int)sourceHeight) > 1) 
+            if (abs((int)sourceBlockHeightSnode - (int)sourceHeight) > 3) 
             {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + scurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
                 return true;
             }
             // make sure destination height is within 2 blocks
-            else if (abs((int)destinationBlockHeightSnode - (int)destinationHeight) > 1) 
+            else if (abs((int)destinationBlockHeightSnode - (int)destinationHeight) > 3) 
             {
                 xbridge::LogOrderMsg(id.GetHex(), "order accept rejected, taker counterparty has out of bounds block height for <" + dcurrency + ">", __FUNCTION__);
                 sendRejectTransaction(id, crNotAccepted);
