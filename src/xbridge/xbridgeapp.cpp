@@ -983,150 +983,157 @@ void App::updateActiveWallets()
             }
         }
 
-        boost::property_tree::ptree section = s.getSection(*i);
+        try
+        {
+            boost::property_tree::ptree section = s.getSection(*i);
 
-        WalletParam wp;
-        wp.currency                    = *i;
-        wp.title                       = section.get<std::string>("Title");
-        wp.address                     = section.get<std::string>("Address");
-        wp.m_ip                        = section.get<std::string>("Ip");
-        wp.m_port                      = section.get<std::string>("Port");
-        wp.m_user                      = section.get<std::string>("Username");
-        wp.m_passwd                    = section.get<std::string>("Password");
-        wp.addrPrefix                  = section.get<std::string>("AddressPrefix");
-        wp.scriptPrefix                = section.get<std::string>("ScriptPrefix");
-        wp.secretPrefix                = section.get<std::string>("SecretPrefix");
-        wp.COIN                        = section.get<uint64_t>   ("COIN", 0);
-        wp.txVersion                   = section.get<uint32_t>   ("TxVersion", 1);
-        wp.minTxFee                    = section.get<uint64_t>   ("MinTxFee", 0);
-        wp.feePerByte                  = section.get<uint64_t>   ("FeePerByte", 0);
-        wp.method                      = section.get<std::string>("CreateTxMethod");
-        wp.blockTime                   = section.get<int>        ("BlockTime", 0);
-//        wp.blockSize                   = section.get<int>        ("BlockSize", 0);
-        wp.requiredConfirmations       = section.get<int>        ("Confirmations", 0);
-        wp.txWithTimeField             = section.get<bool>       ("TxWithTimeField", false);
-        wp.isLockCoinsSupported        = section.get<bool>       ("LockCoinsSupported", false);
-        wp.jsonver                     = section.get<std::string>("JSONVersion", "");
-        wp.contenttype                 = section.get<std::string>("ContentType", "");
-        wp.cashAddrPrefix              = section.get<std::string>("CashAddrPrefix", "");
+            WalletParam wp;
+            wp.currency                    = *i;
+            wp.title                       = section.get<std::string>("Title");
+            wp.address                     = section.get<std::string>("Address");
+            wp.m_ip                        = section.get<std::string>("Ip");
+            wp.m_port                      = section.get<std::string>("Port");
+            wp.m_user                      = section.get<std::string>("Username");
+            wp.m_passwd                    = section.get<std::string>("Password");
+            wp.addrPrefix                  = section.get<std::string>("AddressPrefix");
+            wp.scriptPrefix                = section.get<std::string>("ScriptPrefix");
+            wp.secretPrefix                = section.get<std::string>("SecretPrefix");
+            wp.COIN                        = section.get<uint64_t>   ("COIN", 0);
+            wp.txVersion                   = section.get<uint32_t>   ("TxVersion", 1);
+            wp.minTxFee                    = section.get<uint64_t>   ("MinTxFee", 0);
+            wp.feePerByte                  = section.get<uint64_t>   ("FeePerByte", 0);
+            wp.method                      = section.get<std::string>("CreateTxMethod");
+            wp.blockTime                   = section.get<int>        ("BlockTime", 0);
+    //        wp.blockSize                   = section.get<int>        ("BlockSize", 0);
+            wp.requiredConfirmations       = section.get<int>        ("Confirmations", 0);
+            wp.txWithTimeField             = section.get<bool>       ("TxWithTimeField", false);
+            wp.isLockCoinsSupported        = section.get<bool>       ("LockCoinsSupported", false);
+            wp.jsonver                     = section.get<std::string>("JSONVersion", "");
+            wp.contenttype                 = section.get<std::string>("ContentType", "");
+            wp.cashAddrPrefix              = section.get<std::string>("CashAddrPrefix", "");
 
-        std::string walletName         = section.get<std::string>("WalletName", "");
-        if (walletName != wp.walletName)
-        {
-            wp.walletName              = walletName;
-        } 
+            std::string walletName         = section.get<std::string>("WalletName", "");
+            if (walletName != wp.walletName)
+            {
+                wp.walletName              = walletName;
+            } 
 
-        if (wp.m_user.empty() || wp.m_passwd.empty())
-        {
-            WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
-        }
+            if (wp.m_user.empty() || wp.m_passwd.empty())
+            {
+                WARN() << wp.currency << " \"" << wp.title << "\"" << " has empty credentials";
+            }
 
-        if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) 
-        {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
-            removeConnector(wp.currency);
-            continue;
-        }
+            if (wp.m_ip.empty() || wp.m_port.empty() || wp.COIN == 0 || wp.blockTime == 0) 
+            {
+                ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+                removeConnector(wp.currency);
+                continue;
+            }
 
-        // Check maker locktime reqs
-        if (wp.blockTime * XMIN_LOCKTIME_BLOCKS > XMAKER_LOCKTIME_TARGET_SECONDS) 
-        {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed maker locktime requirements";
-            removeConnector(wp.currency);
-            continue;
-        }
-        // Check taker locktime reqs (non-slow chains)
-        if (wp.blockTime < XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XTAKER_LOCKTIME_TARGET_SECONDS) 
-        {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
-            removeConnector(wp.currency);
-            continue;
-        }
-        // If this coin is a slow blockchain check to make sure locktime drift checks
-        // are compatible with this chain. If not then ignore loading the token.
-        // locktime calc should be less than taker locktime target
-        if (wp.blockTime >= XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XSLOW_TAKER_LOCKTIME_TARGET_SECONDS) 
-        {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
-            removeConnector(wp.currency);
-            continue;
-        }
+            // Check maker locktime reqs
+            if (wp.blockTime * XMIN_LOCKTIME_BLOCKS > XMAKER_LOCKTIME_TARGET_SECONDS) 
+            {
+                ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed maker locktime requirements";
+                removeConnector(wp.currency);
+                continue;
+            }
+            // Check taker locktime reqs (non-slow chains)
+            if (wp.blockTime < XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XTAKER_LOCKTIME_TARGET_SECONDS) 
+            {
+                ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
+                removeConnector(wp.currency);
+                continue;
+            }
+            // If this coin is a slow blockchain check to make sure locktime drift checks
+            // are compatible with this chain. If not then ignore loading the token.
+            // locktime calc should be less than taker locktime target
+            if (wp.blockTime >= XSLOW_BLOCKTIME_SECONDS && wp.blockTime * XMIN_LOCKTIME_BLOCKS > XSLOW_TAKER_LOCKTIME_TARGET_SECONDS) 
+            {
+                ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed taker locktime requirements";
+                removeConnector(wp.currency);
+                continue;
+            }
 
-        // Confirmation compatibility check
-        const auto maxConfirmations = std::max<uint32_t>(XLOCKTIME_DRIFT_SECONDS/wp.blockTime, XMAX_LOCKTIME_DRIFT_BLOCKS);
-        if (wp.requiredConfirmations > maxConfirmations) 
-        {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed confirmation check, max allowed for this token is " << maxConfirmations;
-            removeConnector(wp.currency);
-            continue;
-        }
+            // Confirmation compatibility check
+            const auto maxConfirmations = std::max<uint32_t>(XLOCKTIME_DRIFT_SECONDS/wp.blockTime, XMAX_LOCKTIME_DRIFT_BLOCKS);
+            if (wp.requiredConfirmations > maxConfirmations) 
+            {
+                ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed confirmation check, max allowed for this token is " << maxConfirmations;
+                removeConnector(wp.currency);
+                continue;
+            }
 
-        if (wp.blockSize < 1024) 
-        {
-            wp.blockSize = 1024;
-            WARN() << wp.currency << " \"" << wp.title << "\"" << " Minimum block size required is 1024 kb";
-        }
+            if (wp.blockSize < 1024) 
+            {
+                wp.blockSize = 1024;
+                WARN() << wp.currency << " \"" << wp.title << "\"" << " Minimum block size required is 1024 kb";
+            }
 
-        xbridge::WalletConnectorPtr conn;
-        if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM" || wp.method == "ERC20") 
-        {
-            conn.reset(new EthWalletConnector);
-            *conn = wp;
-        }
-        else if (wp.method == "BTC" || wp.method == "SYS")
-        {
-            conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
-            *conn = wp;
-        }
-        else if (wp.method == "BCD")
-        {
-            conn.reset(new BCDWalletConnector);
-            *conn = wp;
-        }
-        else if (wp.method == "BCH")
-        {
-            conn.reset(new BchWalletConnector);
-            *conn = wp;
-        }
-        else if (wp.method == "DGB")
-        {
-            conn.reset(new DgbWalletConnector);
-            *conn = wp;
-        }
-        else if (wp.method == "BTG")
-        {
-            conn.reset(new BTGWalletConnector);
-            *conn = wp;
-        }
-        else if (wp.method == "DEVAULT")
-        {
-            conn.reset(new DevaultWalletConnector);
-            *conn = wp;
-        }
-        else if (wp.method == "STEALTH" || wp.method == "XST")
-        {
-            conn.reset(new StealthWalletConnector);
-            *conn = wp;
-        }
-        else if (wp.method == "PART")
-        {
-            conn.reset(new PartWalletConnector);
-            *conn = wp;
-        }
-        else
-        {
-            ERR() << "unknown session type " << __FUNCTION__;
-        }
+            xbridge::WalletConnectorPtr conn;
+            if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM" || wp.method == "ERC20") 
+            {
+                conn.reset(new EthWalletConnector);
+                *conn = wp;
+            }
+            else if (wp.method == "BTC" || wp.method == "SYS")
+            {
+                conn.reset(new BtcWalletConnector<BtcCryptoProvider>);
+                *conn = wp;
+            }
+            else if (wp.method == "BCD")
+            {
+                conn.reset(new BCDWalletConnector);
+                *conn = wp;
+            }
+            else if (wp.method == "BCH")
+            {
+                conn.reset(new BchWalletConnector);
+                *conn = wp;
+            }
+            else if (wp.method == "DGB")
+            {
+                conn.reset(new DgbWalletConnector);
+                *conn = wp;
+            }
+            else if (wp.method == "BTG")
+            {
+                conn.reset(new BTGWalletConnector);
+                *conn = wp;
+            }
+            else if (wp.method == "DEVAULT")
+            {
+                conn.reset(new DevaultWalletConnector);
+                *conn = wp;
+            }
+            else if (wp.method == "STEALTH" || wp.method == "XST")
+            {
+                conn.reset(new StealthWalletConnector);
+                *conn = wp;
+            }
+            else if (wp.method == "PART")
+            {
+                conn.reset(new PartWalletConnector);
+                *conn = wp;
+            }
+            else
+            {
+                ERR() << "unknown session type " << __FUNCTION__;
+            }
 
-        // If the wallet is invalid, remove it from the list
-        if (!conn)
-        {
-            ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
-            removeConnector(wp.currency);
-            continue;
-        }
+            // If the wallet is invalid, remove it from the list
+            if (!conn)
+            {
+                ERR() << wp.currency << " \"" << wp.title << "\"" << " Failed to connect, check the config";
+                removeConnector(wp.currency);
+                continue;
+            }
 
-        conns.push_back(conn);
+            conns.push_back(conn);
+        }
+        catch (const std::exception & e)
+        {
+            LOG() << "EXCEPTION " << e.what() << __FUNCTION__;
+        }
     }
 
     // Valid connections
