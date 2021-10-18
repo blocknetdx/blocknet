@@ -49,13 +49,14 @@ public:
 
 public:
     bool hasValidAddressPrefix(const std::string & /*addr*/) const { return true; }
-    bool isValidAddress(const std::string & /*addr*/) const  
-    {
-        // TODO validate address 
-        return true; 
-    }
+    bool isValidAddress(const std::string & /*addr*/) const;
+
+    // amount > 0 && !isDustAmount
+    bool isValidAmount(const amount_t & amount) const;
 
     bool isDustAmount(const amount_t & /*amount*/) const { return false; }
+
+    bool canAcceptTransactions() const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
 
@@ -204,7 +205,7 @@ protected:
     BtcCryptoProvider * m_cp;
 
 private:
-    uint64_t m_fromBlock;
+    uint64_t    m_fromBlock;
 
     uint32_t    m_networkId = 0;
     std::string m_contractAddress;

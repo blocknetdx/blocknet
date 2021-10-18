@@ -2176,11 +2176,29 @@ bool BtcWalletConnector<CryptoProvider>::isValidAddress(const std::string & addr
 //******************************************************************************
 //******************************************************************************
 template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::isValidAmount(const amount_t & amount) const
+{
+    // TODO check wallet balance?
+    // TODO check maximum?
+    return !isDustAmount(amount);
+}
+
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::isDustAmount(const amount_t & amount) const
 {
     return amount.Get64() < dustAmount;
 }
 
+//******************************************************************************
+//******************************************************************************
+template <class CryptoProvider>
+bool BtcWalletConnector<CryptoProvider>::canAcceptTransactions() const
+{
+    // always possible
+    return true;
+}
 
 //******************************************************************************
 //******************************************************************************

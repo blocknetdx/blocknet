@@ -852,38 +852,17 @@ bool EthWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry
 
 //*****************************************************************************
 //*****************************************************************************
-amount_t EthWalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr) const
+amount_t EthWalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string & addr) const
 {
-    uint256 balance;
-
-    if(addr.empty())
+    // if addr is empty - use only address from settings
+    // TODO check for other addresses
+    uint256 amount = 0;
+    if (!rpc::getBalance(m_ip, m_port, addr.empty() ? uint160(address) : uint160(addr), amount))
     {
-        std::vector<std::string> accounts;
-        if(!rpc::getAccounts(m_ip, m_port, accounts))
-        {
-            return 0;
-        }
-
-        for(const std::string & account : accounts)
-        {
-            uint256 accountBalance;
-            if(!rpc::getBalance(m_ip, m_port, uint160(account), accountBalance))
-            {
-                return 0;
-            }
-
-            balance += accountBalance;
-        }
-    }
-    else
-    {
-        if(!rpc::getBalance(m_ip, m_port, uint160(addr), balance))
-        {
-            return 0;
-        }
+        return 0;
     }
 
-    return balance;
+    return amount;
 }
 
 //******************************************************************************
@@ -915,6 +894,38 @@ bool EthWalletConnector::getBlockCount(uint32_t & blockCount) const
 
     blockCount = static_cast<uint32_t>(count);
     return true;
+}
+
+//******************************************************************************
+//******************************************************************************
+bool EthWalletConnector::isValidAddress(const std::string & /*addr*/) const  
+{
+    // TODO validate address 
+    return true; 
+}
+
+//******************************************************************************
+//******************************************************************************
+bool EthWalletConnector::isValidAmount(const amount_t & amount) const
+{
+    // TODO check wallet balance?
+    // TODO check maximum?
+    return !isDustAmount(amount);
+}
+
+//******************************************************************************
+//******************************************************************************
+bool EthWalletConnector::canAcceptTransactions() const
+{
+    // need to pay gas
+    uint256 amount = 0;
+    if (!rpc::getBalance(m_ip, m_port, uint160(address), amount))
+    {
+        return false;
+    }
+
+    // simple check
+    return amount > 0;
 }
 
 //******************************************************************************

@@ -348,14 +348,6 @@ public:
     void cancelMyXBridgeTransactions();
 
     /**
-     * @brief isValidAddress checks the correctness of the address
-     * @param address checked address
-     * @param wallet connection to check against
-     * @return true, if address valid
-     */
-    bool isValidAddress(const std::string &address, WalletConnectorPtr &conn) const;
-
-    /**
      * @brief checkAcceptParams checks that the token wallet has enough to cover the balance.
      * @param fromCurrency - token to be taken
      * @param fromAmount - amount to be taken

@@ -257,7 +257,12 @@ public:
     bool hasValidAddressPrefix(const std::string & addr) const;
     bool isValidAddress(const std::string & addr) const;
 
+    // amount > 0 && !isDustAmount
+    bool isValidAmount(const amount_t & amount) const; 
+
     bool isDustAmount(const amount_t & amount) const;
+
+    bool canAcceptTransactions() const;
 
     bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey);
 

@@ -1042,13 +1042,15 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     std::string type             = params[6].get_str();
 
     // Validate the order type
-    if (type != "exact") {
+    if (type != "exact") 
+    {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "Only the exact type is supported at this time."));
     }
 
     // Check that addresses are not the same
-    if (fromAddress == toAddress) {
+    if (fromAddress == toAddress) 
+    {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "The maker_address and taker_address cannot be the same: " + fromAddress));
     }
@@ -1063,86 +1065,88 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     // Check lower limits
     // TODO update minimum check
     // TODO use dust
-    if (fromAmount <= 0 || toAmount <= 0) {
+    if (!connFrom->isValidAmount(fromAmount)) 
+    {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The minimum supported size is " + connFrom->dustAmount));
+                               "Invalid maker_size, must be greater than " + connFrom->dustAmount));
+    }
+    if (!connTo->isValidAmount(toAmount)) 
+    {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
+                               "Invalid taker_size must be greater than " + connTo->dustAmount));
     }
 
     // Validate addresses
     xbridge::App &app = xbridge::App::instance();
-    if (!app.isValidAddress(fromAddress, connFrom)) 
+    if (!connFrom->isValidAddress(fromAddress)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress));
     }
-    if (!app.isValidAddress(toAddress, connTo)) 
+    if (!connTo->isValidAddress(toAddress)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress));
-    }
-    if(fromAmount <= .0) 
-    {
-        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The maker_size must be greater than 0."));
-    }
-    if(toAmount <= .0) 
-    {
-        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "The taker_size must be greater than 0."));
     }
 
     bool useAllFunds = true;
     if (request.params.size() >= 8)
+    {
         useAllFunds = request.params[7].get_bool();
+    }
 
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
-    if (params.size() == 9) {
+    if (params.size() == 9) 
+    {
         std::string dryrunParam = params[8].get_str();
-        if (dryrunParam != "dryrun") {
+        if (dryrunParam != "dryrun") 
+        {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
         dryrun = true;
     }
 
-
+    // TODO move utxo lists to connector and remove this fn
     Object result;
     auto statusCode = app.checkCreateParams(fromCurrency, toCurrency, fromAmount, fromAddress);
     switch (statusCode) 
     {
-    case xbridge::SUCCESS:
-    {
-        // If dryrun
-        if (dryrun) {
-            result.emplace_back(Pair("id", uint256().GetHex()));
-            result.emplace_back(Pair("maker", fromCurrency));
-            result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(fromAmount)));
-            result.emplace_back(Pair("maker_address", fromAddress));
-            result.emplace_back(Pair("taker", toCurrency));
-            result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(toAmount)));
-            result.emplace_back(Pair("taker_address", toAddress));
-            result.emplace_back(Pair("order_type", "exact"));
-            result.emplace_back(Pair("partial_minimum","0"));
-            result.emplace_back(Pair("partial_orig_maker_size", "0"));
-            result.emplace_back(Pair("partial_orig_taker_size", "0"));
-            result.emplace_back(Pair("partial_repost", false));
-            result.emplace_back(Pair("partial_parent_id", parseParentId(uint256())));
-            result.emplace_back(Pair("status", "created"));
-            return uret(result);
+        case xbridge::SUCCESS:
+        {
+            // If dryrun
+            if (dryrun) 
+            {
+                result.emplace_back(Pair("id", uint256().GetHex()));
+                result.emplace_back(Pair("maker", fromCurrency));
+                result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(fromAmount)));
+                result.emplace_back(Pair("maker_address", fromAddress));
+                result.emplace_back(Pair("taker", toCurrency));
+                result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(toAmount)));
+                result.emplace_back(Pair("taker_address", toAddress));
+                result.emplace_back(Pair("order_type", "exact"));
+                result.emplace_back(Pair("partial_minimum","0"));
+                result.emplace_back(Pair("partial_orig_maker_size", "0"));
+                result.emplace_back(Pair("partial_orig_taker_size", "0"));
+                result.emplace_back(Pair("partial_repost", false));
+                result.emplace_back(Pair("partial_parent_id", parseParentId(uint256())));
+                result.emplace_back(Pair("status", "created"));
+                return uret(result);
+            }
+            break;
         }
-        break;
-    }
-
-    case xbridge::INVALID_CURRENCY: {
-        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
-    }
-    case xbridge::NO_SESSION:{
-        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
-    }
-    case xbridge::INSUFFICIENT_FUNDS:{
-        return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
-    }
-
-    default:
-        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+        case xbridge::INVALID_CURRENCY: 
+        {
+            return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
+        }
+        case xbridge::NO_SESSION:
+        {
+            return uret(xbridge::makeError(statusCode, __FUNCTION__, fromCurrency));
+        }
+        case xbridge::INSUFFICIENT_FUNDS:
+        {
+            return uret(xbridge::makeError(statusCode, __FUNCTION__, fromAddress));
+        }
+        default:
+            return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
 
     uint256 id = uint256();
@@ -1181,7 +1185,8 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     }
 }
 
-UniValue dxTakeOrder(const JSONRPCRequest& request) {
+UniValue dxTakeOrder(const JSONRPCRequest& request) 
+{
     if (request.fHelp || request.params.size() < 3 || request.params.size() > 5)
         throw std::runtime_error(
             RPCHelpMan{"dxTakeOrder",
@@ -1251,17 +1256,21 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
     xbridge::App &app = xbridge::App::instance();
 
     // Check that addresses are not the same
-    if (fromAddress == toAddress) {
+    if (fromAddress == toAddress) 
+    {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                                "The from_address and to_address cannot be the same: " + fromAddress));
     }
 
-    double amount{0};
-    if (request.params.size() >= 4) {
+    double amount = 0;
+    if (request.params.size() >= 4) 
+    {
         const auto amountStr = request.params[3].get_str();
-        if (!amountStr.empty()) {
+        if (!amountStr.empty()) 
+        {
             amount = boost::lexical_cast<double>(amountStr);
-            if (amount <= 0) {
+            if (amount <= 0) 
+            {
                 return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
                         "The amount cannot be less than or equal to 0: " + request.params[3].get_str()));
             }
@@ -1270,9 +1279,11 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
 
     // Perform explicit check on dryrun to avoid executing order on bad spelling
     bool dryrun = false;
-    if (request.params.size() == 5) {
+    if (request.params.size() == 5) 
+    {
         std::string dryrunParam = request.params[4].get_str();
-        if (dryrunParam != "dryrun") {
+        if (dryrunParam != "dryrun") 
+        {
             return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, dryrunParam));
         }
         dryrun = true;
@@ -1292,7 +1303,7 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
 
     // If no amount is specified on a partial order by default use the full
     // order sizes (will result in the entire partial order being taken).
-    if (txDescr->isPartialOrderAllowed() && amount > xbridge::amount_t(uint64_t(0))) 
+    if (txDescr->isPartialOrderAllowed() && amount > 0)
     {
         if (amount < txDescr->minFromAmount) 
         {
@@ -1316,67 +1327,81 @@ UniValue dxTakeOrder(const JSONRPCRequest& request) {
         return uret(xbridge::makeError(xbridge::INVALID_PARTIAL_ORDER, __FUNCTION__));
     }
 
+    // taker [to] will match order [from] currency (due to pair swap happening later)
+    // taker [from] will match order [to] currency (due to pair swap happening later)
+    xbridge::WalletConnectorPtr connTo = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
+    xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
+    if (!connFrom)
+    {
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->toCurrency));
+    }
+    if (!connTo) 
+    {
+        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->fromCurrency));
+    }
+
+    if (!connTo->canAcceptTransactions())
+    {
+        return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "The transaction cannot be accepted, there may not be enough gas fees, etc."));
+    }
+
     // Check taker sending coin balance (toCurrency here because the swap frame of reference hasn't occurred yet)
     statusCode = app.checkAcceptParams(txDescr->toCurrency, fromSize);
 
     switch (statusCode)
     {
-    case xbridge::SUCCESS: {
-        if (txDescr->isLocal()) // no self trades
-            return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "Unable to accept your own order."));
+        case xbridge::SUCCESS: 
+        {
+            if (txDescr->isLocal())
+            {
+                // no self trades
+                return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__, "Unable to accept your own order."));
+            }
 
-        // taker [to] will match order [from] currency (due to pair swap happening later)
-        xbridge::WalletConnectorPtr connTo = xbridge::App::instance().connectorByCurrency(txDescr->fromCurrency);
-        // taker [from] will match order [to] currency (due to pair swap happening later)
-        xbridge::WalletConnectorPtr connFrom = xbridge::App::instance().connectorByCurrency(txDescr->toCurrency);
-        if (!connFrom) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->toCurrency));
-        if (!connTo) return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, "Unable to connect to wallet: " + txDescr->fromCurrency));
-        // Check for valid toAddress
-        if (!app.isValidAddress(toAddress, connTo))
-            return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                                   ": " + txDescr->fromCurrency + " address is bad. Are you using the correct address?"));
-        // Check for valid fromAddress
-        if (!app.isValidAddress(fromAddress, connFrom))
-            return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
-                                   ": " + txDescr->toCurrency + " address is bad. Are you using the correct address?"));
+            // Check for valid toAddress
+            if (!connTo->isValidAddress(toAddress))
+                return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
+                                    ": " + txDescr->fromCurrency + " address is bad. Are you using the correct address?"));
+            // Check for valid fromAddress
+            if (!connFrom->isValidAddress(fromAddress))
+                return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__,
+                                    ": " + txDescr->toCurrency + " address is bad. Are you using the correct address?"));
 
-        if (dryrun) {
-            result.emplace_back(Pair("id", uint256().GetHex()));
-            result.emplace_back(Pair("maker", txDescr->fromCurrency));
-            result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(fromSize)));
-            result.emplace_back(Pair("taker", txDescr->toCurrency));
-            result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(toSize)));
-            result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
-            result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
-            result.emplace_back(Pair("order_type", txDescr->orderType()));
-            result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
-            result.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origFromAmount)));
-            result.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origToAmount)));
-            result.emplace_back(Pair("partial_repost", txDescr->repostOrder));
-            result.emplace_back(Pair("partial_parent_id", parseParentId(txDescr->getParentOrder())));
-            result.emplace_back(Pair("status", "filled"));
-            return uret(result);
+            if (dryrun) 
+            {
+                result.emplace_back(Pair("id", uint256().GetHex()));
+                result.emplace_back(Pair("maker", txDescr->fromCurrency));
+                result.emplace_back(Pair("maker_size", xbridge::xBridgeStringValueFromAmount(fromSize)));
+                result.emplace_back(Pair("taker", txDescr->toCurrency));
+                result.emplace_back(Pair("taker_size", xbridge::xBridgeStringValueFromAmount(toSize)));
+                result.emplace_back(Pair("updated_at", xbridge::iso8601(boost::posix_time::microsec_clock::universal_time())));
+                result.emplace_back(Pair("created_at", xbridge::iso8601(txDescr->created)));
+                result.emplace_back(Pair("order_type", txDescr->orderType()));
+                result.emplace_back(Pair("partial_minimum", xbridge::xBridgeStringValueFromAmount(txDescr->minFromAmount)));
+                result.emplace_back(Pair("partial_orig_maker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origFromAmount)));
+                result.emplace_back(Pair("partial_orig_taker_size", xbridge::xBridgeStringValueFromAmount(txDescr->origToAmount)));
+                result.emplace_back(Pair("partial_repost", txDescr->repostOrder));
+                result.emplace_back(Pair("partial_parent_id", parseParentId(txDescr->getParentOrder())));
+                result.emplace_back(Pair("status", "filled"));
+                return uret(result);
+            }
+
+            break;
         }
-
-        break;
-    }
-    case xbridge::TRANSACTION_NOT_FOUND:
-    {
-        return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString()));
-    }
-
-    case xbridge::NO_SESSION:
-    {
-        return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, txDescr->toCurrency));
-    }
-
-    case xbridge::INSUFFICIENT_FUNDS:
-    {
-        return uret(xbridge::makeError(xbridge::INSUFFICIENT_FUNDS, __FUNCTION__, fromAddress));
-    }
-
-    default:
-        return uret(xbridge::makeError(statusCode, __FUNCTION__));
+        case xbridge::TRANSACTION_NOT_FOUND:
+        {
+            return uret(xbridge::makeError(xbridge::TRANSACTION_NOT_FOUND, __FUNCTION__, id.ToString()));
+        }
+        case xbridge::NO_SESSION:
+        {
+            return uret(xbridge::makeError(xbridge::NO_SESSION, __FUNCTION__, txDescr->toCurrency));
+        }
+        case xbridge::INSUFFICIENT_FUNDS:
+        {
+            return uret(xbridge::makeError(xbridge::INSUFFICIENT_FUNDS, __FUNCTION__, fromAddress));
+        }
+        default:
+            return uret(xbridge::makeError(statusCode, __FUNCTION__));
     }
 
     // TODO swap is destructive on state (also complicates historical data)
@@ -3202,11 +3227,11 @@ UniValue dxMakePartialOrder(const JSONRPCRequest& request)
 
     // Validate addresses
     xbridge::App &app = xbridge::App::instance();
-    if (!app.isValidAddress(fromAddress, connFrom)) 
+    if (!connFrom->isValidAddress(fromAddress)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, fromAddress));
     }
-    if (!app.isValidAddress(toAddress, connTo)) 
+    if (!connTo->isValidAddress(toAddress)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_ADDRESS, __FUNCTION__, toAddress));
     }

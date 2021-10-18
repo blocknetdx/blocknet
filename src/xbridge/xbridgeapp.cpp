@@ -2660,13 +2660,6 @@ void App::cancelMyXBridgeTransactions()
 
 //******************************************************************************
 //******************************************************************************
-bool App::isValidAddress(const std::string & address, WalletConnectorPtr & conn) const
-{
-    return (address.size() >= 32 && conn->isValidAddress(address));
-}
-
-//******************************************************************************
-//******************************************************************************
 Error App::checkAcceptParams(const std::string fromCurrency, const amount_t fromAmount) 
 {
     return checkAmount(fromCurrency, fromAmount, "");
@@ -2685,7 +2678,9 @@ Error App::checkCreateParams(const std::string & fromCurrency,
         WARN() << "invalid currency " << __FUNCTION__;
         return xbridge::INVALID_CURRENCY;
     }
-    return checkAmount(fromCurrency, fromAmount, ""); // TODO enforce by address after improving addressbook
+    
+    // TODO enforce by address after improving addressbook
+    return checkAmount(fromCurrency, fromAmount, "");
 }
 
 //******************************************************************************

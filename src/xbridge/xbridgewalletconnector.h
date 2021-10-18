@@ -101,7 +101,7 @@ public:
 
     virtual bool requestAddressBook(std::vector<wallet::AddressBookEntry> & entries) = 0;
 
-    virtual amount_t getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string &addr = "") const = 0;
+    virtual amount_t getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string & addr = "") const = 0;
 
     virtual bool getInfo(rpc::WalletInfo & info) const = 0;
 
@@ -132,7 +132,12 @@ public:
     virtual bool hasValidAddressPrefix(const std::string & addr) const = 0;
     virtual bool isValidAddress(const std::string & addr) const = 0;
 
+    // amount > 0 && !isDustAmount
+    virtual bool isValidAmount(const amount_t & amount) const = 0;
+
     virtual bool isDustAmount(const amount_t & amount) const = 0;
+
+    virtual bool canAcceptTransactions() const = 0;
 
     virtual bool newKeyPair(std::vector<unsigned char> & pubkey, std::vector<unsigned char> & privkey) = 0;
 
