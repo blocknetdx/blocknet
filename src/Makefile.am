@@ -298,6 +298,7 @@ BITCOIN_CORE_H += \
   xbridge/xbridgewalletconnectorbch.h \
   xbridge/xbridgewalletconnectorbtc.h \
   xbridge/xbridgewalletconnectoreth.h \
+  xbridge/xbridgewalletconnectorerc20.h \
   xbridge/xbridgewalletconnectordgb.h \
   xbridge/xbridgewalletconnectorbtg.h \
   xbridge/xbridgewalletconnectordevault.h \
@@ -635,6 +636,7 @@ xbridge_libxbridge_a_SOURCES = \
   xbridge/xbridgewalletconnectorbch.cpp \
   xbridge/xbridgewalletconnectorbtc.cpp \
   xbridge/xbridgewalletconnectoreth.cpp \
+  xbridge/xbridgewalletconnectorerc20.cpp \
   xbridge/xbridgewalletconnectordgb.cpp \
   xbridge/xbridgewalletconnectorbtg.cpp \
   xbridge/xbridgewalletconnectordevault.cpp \

@@ -574,7 +574,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
         }
     }
 
-    if (sconn->method != "ETH")
+    if (sconn->method != "ETH" && sconn->method != "ERC20")
     {
         if (utxoItems.empty())
         {
@@ -597,7 +597,7 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
             return true;
         }
     }
-    else if(dconn->currency != "ETH")
+    else if(dconn->method != "ETH" && dconn->method != "ERC20")
     {
         // check dust amount
         if (dconn->isDustAmount(damount))
@@ -1130,7 +1130,7 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     // utxo items
     std::vector<wallet::UtxoEntry> utxoItems;
 
-    if (conn->method != "ETH")
+    if (conn->method != "ETH" && conn->method != "ERC20")
     {
         // array size
         uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
@@ -2061,7 +2061,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
 
     std::vector<wallet::UtxoEntry> usedInTx;
 
-    if (connFrom->method == "ETH")
+    if (connFrom->method == "ETH" || connFrom->method == "ERC20")
     {
         inAmount = xtx->fromAmount;
     }
@@ -2173,14 +2173,20 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
     bool hasChange = false;
     std::string changeAddr;
 
-    if (connFrom->method == "ETH")
+    if (connFrom->method == "ETH" || connFrom->method == "ERC20")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
+        EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(connFrom.get());
+        if (!connEth)
+        {
+            ERR() << "bad connector pointer " << __FUNCTION__;
+            sendCancelTransaction(xtx, crInternalError);
+            return true;
+        }
 
-        std::vector<unsigned char> initiateParams = connEth->createInitiateData(xtx->oHashedSecret, destAddress, xtx->lockTime);
+        std::vector<unsigned char> initiateParams = connEth->createInitiateData(xtx->fromAmount, xtx->oHashedSecret, destAddress, xtx->lockTime);
 
         uint256 estimateGas;
-        if(!connEth->getEstimateGas(xtx->from, initiateParams, xtx->fromAmount, estimateGas))
+        if (!connEth->getEstimateGas(xtx->from, initiateParams, xtx->fromAmount, estimateGas))
         {
             LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
             xapp.processLater(txid, packet);
@@ -2188,7 +2194,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         }
 
         uint256 gasPrice;
-        if(!connEth->getGasPrice(gasPrice))
+        if (!connEth->getGasPrice(gasPrice))
         {
             LOG() << "can't process without gas price, process packet later" << __FUNCTION__;
             xapp.processLater(txid, packet);
@@ -2198,23 +2204,31 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         uint256 totalValue = estimateGas * gasPrice + xtx->fromAmount;
 
         uint256 avaliableAmount;
-        if(!connEth->getBalance(xtx->from, avaliableAmount))
+        if (!connEth->getBalance(xtx->from, avaliableAmount))
         {
             LOG() << "can't process without balance, process packet later" << __FUNCTION__;
             xapp.processLater(txid, packet);
             return true;
         }
 
-        if(avaliableAmount < totalValue)
+        if (avaliableAmount < totalValue)
         {
             LOG() << "client doesn't have enough amount on account, transaction canceled" << __FUNCTION__;
             sendCancelTransaction(xtx, crNoMoney);
             return true;
         }
 
+        // approve
+        if (!connEth->approve())
+        {
+            LOG() << "not approved, transaction canceled" << __FUNCTION__;
+            sendCancelTransaction(xtx, crNoMoney);
+            return true;
+        }
+
         //send money to contract
         uint256 trHash;
-        if(!connEth->callContractMethod(xtx->from, initiateParams, xtx->fromAmount, estimateGas, trHash))
+        if (!connEth->callContractMethod(xtx->from, initiateParams, xtx->fromAmount, estimateGas, trHash))
         {
             LOG() << "deposit tx not send, transaction canceled " << __FUNCTION__;
             sendCancelTransaction(xtx, crRpcError);
@@ -2690,9 +2704,15 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
-        if (connTo->method == "ETH")
+        if (connTo->method == "ETH" || connTo->method == "ERC20")
         {
-            EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connTo.get());
+            EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(connTo.get());
+            if (!connEth)
+            {
+                ERR() << "bad connector pointer " << __FUNCTION__;
+                sendCancelTransaction(xtx, crInternalError);
+                return true;
+            }
 
             if(!connEth->isInitiated(xtx->oHashedSecret, xtx->from, xtx->to, xtx->toAmount))
             {
@@ -2780,11 +2800,17 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
     }
 #endif
 
-    if (connFrom->method == "ETH")
+    if (connFrom->method == "ETH" || connFrom->method == "ERC20")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
+        EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(connFrom.get());
+        if (!connEth)
+        {
+            ERR() << "bad connector pointer " << __FUNCTION__;
+            sendCancelTransaction(xtx, crInternalError);
+            return true;
+        }
 
-        std::vector<unsigned char> respondParams = connEth->createRespondData(xtx->oHashedSecret, destAddress, xtx->lockTime);
+        std::vector<unsigned char> respondParams = connEth->createRespondData(xtx->fromAmount, xtx->oHashedSecret, destAddress, xtx->lockTime);
 
         uint256 estimateGas;
         if(!connEth->getEstimateGas(xtx->from, respondParams, xtx->fromAmount, estimateGas))
@@ -3226,9 +3252,15 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
             xtx->oBinTxP2SHAmount = p2shAmount;
         }
 
-        if (connTo->method == "ETH")
+        if (connTo->method == "ETH" || connTo->method == "ERC20")
         {
-            EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connTo.get());
+            EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(connTo.get());
+            if (!connEth)
+            {
+                ERR() << "bad connector pointer " << __FUNCTION__;
+                sendCancelTransaction(xtx, crInternalError);
+                return true;
+            }
 
             if(!connEth->isResponded(xtx->oHashedSecret, xtx->to, xtx->from, xtx->toAmount))
             {
@@ -3279,13 +3311,19 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
         xapp.saveOrders(true);
     }
 
-    if (connTo->method == "ETH")
+    if (connTo->method == "ETH" || connTo->method == "ERC20")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connFrom.get());
+        EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(connFrom.get());
+        if (!connEth)
+        {
+            ERR() << "bad connector pointer " << __FUNCTION__;
+            sendCancelTransaction(xtx, crInternalError);
+            return true;
+        }
 
         std::vector<unsigned char> redeemParams = connEth->createRedeemData(xtx->oHashedSecret, xtx->xPubKey);
 
-        TXLOG() << "A redeem params " << HexStr(redeemParams) << " to " << connEth->fromXAddr(xtx->to);
+        TXLOG() << "A redeem params " << HexStr(redeemParams) << " to " << connFrom->fromXAddr(xtx->to);
 
         uint256 estimateGas;
         if (!connEth->getEstimateGas(xtx->to, redeemParams, 0, estimateGas))
@@ -3414,9 +3452,15 @@ bool Session::Impl::processEthVerifyTransactionConfirmA(XBridgePacketPtr packet)
         return true;
     }
 
-    if (conn->method == "ETH")
+    if (conn->method == "ETH" || conn->method == "ERC20")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(conn.get());
+        EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(conn.get());
+        if (!connEth)
+        {
+            ERR() << "bad connector pointer " << __FUNCTION__;
+            sendCancelTransaction(xtx, crInternalError);
+            return true;
+        }
 
         if(!connEth->isRedeemed(xtx->oHashedSecret, xtx->to, xtx->toAmount))
         {
@@ -3639,13 +3683,19 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
         xapp.saveOrders(true);
     }
 
-    if (connTo->method == "ETH")
+    if (connTo->method == "ETH" || connTo->method == "ERC20")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(connTo.get());
+        EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(connTo.get());
+        if (!connEth)
+        {
+            ERR() << "bad connector pointer " << __FUNCTION__;
+            sendCancelTransaction(xtx, crInternalError);
+            return true;
+        }
 
         std::vector<unsigned char> redeemParams = connEth->createRedeemData(xtx->oHashedSecret, xtx->xPubKey);
 
-        TXLOG() << "B redeem params " << HexStr(redeemParams) << " to " << connEth->fromXAddr(xtx->to);
+        TXLOG() << "B redeem params " << HexStr(redeemParams) << " to " << connTo->fromXAddr(xtx->to);
 
         uint256 estimateGas;
         if (!connEth->getEstimateGas(xtx->to, redeemParams, 0, estimateGas))
@@ -3763,9 +3813,15 @@ bool Session::Impl::processEthVerifyTransactionConfirmB(XBridgePacketPtr packet)
         return true;
     }
 
-    if (conn->method == "ETH")
+    if (conn->method == "ETH" || conn->method == "ERC20")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(conn.get());
+        EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(conn.get());
+        if (!connEth)
+        {
+            ERR() << "bad connector pointer " << __FUNCTION__;
+            sendCancelTransaction(xtx, crInternalError);
+            return true;
+        }
 
         if(!connEth->isRedeemed(xtx->oHashedSecret, xtx->to, xtx->toAmount))
         {
@@ -4024,13 +4080,19 @@ bool Session::Impl::processTransactionCancel(XBridgePacketPtr packet) const
     // remove from pending packets (if added)
     xapp.removePackets(txid);
 
-    if (conn->method == "ETH")
+    if (conn->method == "ETH" || conn->method == "ERC20")
     {
-        EthWalletConnector * connEth = static_cast<EthWalletConnector *>(conn.get());
+        EthWalletInterface * connEth = dynamic_cast<EthWalletInterface *>(conn.get());
+        if (!connEth)
+        {
+            ERR() << "bad connector pointer " << __FUNCTION__;
+            sendCancelTransaction(xtx, crInternalError);
+            return true;
+        }
 
         std::vector<unsigned char> refundParams = connEth->createRefundData(xtx->oHashedSecret);
 
-        TXLOG() << "A refund params " << HexStr(refundParams) << " to " << connEth->fromXAddr(xtx->from);
+        TXLOG() << "A refund params " << HexStr(refundParams) << " to " << conn->fromXAddr(xtx->from);
 
         uint256 lastBlockTime;
         if(!connEth->getLastBlockTime(lastBlockTime))

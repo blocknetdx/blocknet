@@ -1,8 +1,8 @@
 //******************************************************************************
 //******************************************************************************
 
-#ifndef XBRIDGEWALLETCONNECTORETH_H
-#define XBRIDGEWALLETCONNECTORETH_H
+#ifndef XBRIDGEWALLETCONNECTORERC20_H
+#define XBRIDGEWALLETCONNECTORERC20_H
 
 #include "xbridgewalletconnector.h"
 #include "xbridgeethencoder.h"
@@ -16,13 +16,13 @@ namespace xbridge
 
 //******************************************************************************
 //******************************************************************************
-class EthWalletConnector : public WalletConnector, public EthWalletInterface
+class ERC20WalletConnector : public WalletConnector, public EthWalletInterface
 {
     class Impl;
 
 public:
-    EthWalletConnector() { m_cp = new BtcCryptoProvider; };
-    ~EthWalletConnector() { delete m_cp; }
+    ERC20WalletConnector() { m_cp = new BtcCryptoProvider; };
+    ~ERC20WalletConnector() { delete m_cp; }
 
     bool init();
 
@@ -60,7 +60,7 @@ public:
     bool isValidAddress(const std::string & /*addr*/) const;
 
     // amount > 0 && !isDustAmount
-    bool isValidAmount(const amount_t & amount) const;
+    bool isValidAmount(const amount_t & addr) const;
 
     bool isDustAmount(const amount_t & /*amount*/) const { return false; }
 
@@ -184,7 +184,7 @@ public:
     // EthWalletInterface implementation
 
     bool getGasPrice(uint256 & gasPrice) const;
-    
+
     bool getEstimateGas(const bytes & myAddress,
                         const bytes & data,
                         const uint256 & value,
@@ -205,7 +205,7 @@ public:
                             const uint256 & refundDuration) const;
 
     bytes createRefundData(const bytes & hashedSecret) const;
-    
+
     bytes createRedeemData(const bytes & hashedSecret, const bytes & secret) const;
 
     bool approve(const uint256 & amount) const;
@@ -229,8 +229,9 @@ private:
 
     uint32_t    m_networkId = 0;
     std::string m_contractAddress;
+    std::string m_erc20contractAddress;
 };
 
 }
 
-#endif // XBRIDGEWALLETCONNECTORETH_H
+#endif // XBRIDGEWALLETCONNECTORERC20_H

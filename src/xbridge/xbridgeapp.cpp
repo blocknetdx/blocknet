@@ -24,6 +24,7 @@
 #include <xbridge/xbridgewalletconnectordgb.h>
 #include <xbridge/xbridgewalletconnectorbtg.h>
 #include <xbridge/xbridgewalletconnectoreth.h>
+#include <xbridge/xbridgewalletconnectorerc20.h>
 #include <xbridge/xbridgewalletconnectorstealth.h>
 #include <xbridge/xbridgewalletconnectorpart.h>
 #include <xbridge/xbridgepacket.h>
@@ -1070,9 +1071,14 @@ void App::updateActiveWallets()
             }
 
             xbridge::WalletConnectorPtr conn;
-            if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM" || wp.method == "ERC20") 
+            if (wp.method == "ETH" || wp.method == "ETHER" || wp.method == "ETHEREUM") 
             {
                 conn.reset(new EthWalletConnector);
+                *conn = wp;
+            }
+            if (wp.method == "ERC20") 
+            {
+                conn.reset(new ERC20WalletConnector);
                 *conn = wp;
             }
             else if (wp.method == "BTC" || wp.method == "SYS")
@@ -1684,7 +1690,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     TransactionDescrPtr ptr(new TransactionDescr);
     std::vector<wallet::UtxoEntry> outputsForUse;
 
-    if (connFrom->method != "ETH")
+    if (connFrom->method != "ETH" && connFrom->method != "ERC20")
     {
         // Utxo selection only if supplied utxos are empty
         if (utxos.empty()) 
@@ -1859,7 +1865,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     ptr->id = id; // overwritten by partial order designation below
     ptr->setParentOrder(parentid);
 
-    if (connFrom->method != "ETH")
+    if (connFrom->method != "ETH" && connFrom->method != "ERC20")
     {
         // Create partial order utxos
         if (partialOrder) 
@@ -2264,7 +2270,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
         return xbridge::NO_SESSION;
     }
 
-    if (connFrom->method != "ETH")
+    if (connFrom->method != "ETH" && connFrom->method != "ERC20")
     {
         // check dust
         if (connFrom->isDustAmount(ptr->fromAmount))
@@ -2480,7 +2486,7 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
             }
         }
     }
-    else if (connFrom->method != "ETH")
+    else if (connFrom->method != "ETH" && connFrom->method != "ERC20")
     {
         if (connTo->isDustAmount(ptr->toAmount))
         {

@@ -1,7 +1,7 @@
 //*****************************************************************************
 //*****************************************************************************
 
-#include "xbridgewalletconnectoreth.h"
+#include "xbridgewalletconnectorerc20.h"
 #include "xbridgewalletconnectorbtc.h"
 #include "util/settings.h"
 
@@ -36,6 +36,8 @@
 namespace xbridge
 {
 
+using namespace json_spirit;
+
 //*****************************************************************************
 //*****************************************************************************
 struct Block
@@ -43,107 +45,15 @@ struct Block
     uint256  hash;
     uint64_t timestamp;
 };
-
+                            
 //*****************************************************************************
 //*****************************************************************************
 namespace rpc
 {
 
-using namespace json_spirit;
 using namespace std;
 using namespace boost;
 using namespace boost::asio;
-
-// int readHTTPEth(std::basic_istream<char>& stream, map<string, string>& mapHeadersRet, string& strMessageRet)
-// {
-//     mapHeadersRet.clear();
-//     strMessageRet = "";
-
-//     // Read status
-//     int nProto = 0;
-//     int nStatus = ReadHTTPStatus(stream, nProto);
-
-//     // Read header
-//     int nLen = ReadHTTPHeader(stream, mapHeadersRet);
-//     if (nLen < 0 || nLen > (int)MAX_SIZE)
-//         return HTTP_INTERNAL_SERVER_ERROR;
-
-//     // Read message
-//     if (nLen > 0)
-//     {
-//         vector<char> vch(nLen);
-//         stream.read(&vch[0], nLen);
-//         strMessageRet = string(vch.begin(), vch.end());
-//     }
-//     else
-//     {
-//         nLen = ReadHTTPChunk(stream);
-//         while (nLen)
-//         {
-//             vector<char> vch(nLen);
-//             stream.read(&vch[0], nLen);
-//             strMessageRet += string(vch.begin(), vch.end());
-
-//             nLen = ReadHTTPChunk(stream);
-//         }
-//     }
-
-//     string sConHdr = mapHeadersRet["connection"];
-
-//     if ((sConHdr != "close") && (sConHdr != "keep-alive"))
-//     {
-//         if (nProto >= 1)
-//             mapHeadersRet["connection"] = "keep-alive";
-//         else
-//             mapHeadersRet["connection"] = "close";
-//     }
-
-//     return nStatus;
-// }
-
-// Object CallRPC(const std::string & rpcip, const std::string & rpcport,
-//                const std::string & strMethod, const Array & params)
-// {
-//     // Connect to localhost
-//     bool fUseSSL = false;
-//     asio::io_service io_service;
-//     ssl::context context(io_service, ssl::context::sslv23);
-//     context.set_options(ssl::context::no_sslv2);
-//     asio::ssl::stream<asio::ip::tcp::socket> sslStream(io_service, context);
-//     SSLIOStreamDevice<asio::ip::tcp> d(sslStream, fUseSSL);
-//     iostreams::stream< SSLIOStreamDevice<asio::ip::tcp> > stream(d);
-//     if (!d.connect(rpcip, rpcport))
-//         throw runtime_error("couldn't connect to server");
-
-//     // Send request
-//     string strRequest = JSONRPCRequest(strMethod, params, 1);
-//     map<string, string> mapRequestHeaders;
-
-//     string strPost = HTTPPost(strRequest, mapRequestHeaders);
-//     stream << strPost << std::flush;
-
-//     // Receive reply
-//     map<string, string> mapHeaders;
-//     string strReply;
-//     int nStatus = readHTTPEth(stream, mapHeaders, strReply);
-
-//     if (nStatus == HTTP_UNAUTHORIZED)
-//         throw runtime_error("incorrect rpcuser or rpcpassword (authorization failed)");
-//     else if (nStatus >= 400 && nStatus != HTTP_BAD_REQUEST && nStatus != HTTP_NOT_FOUND && nStatus != HTTP_INTERNAL_SERVER_ERROR)
-//         throw runtime_error(strprintf("server returned HTTP error %d", nStatus));
-//     else if (strReply.empty())
-//         throw runtime_error("no response from server");
-
-//     // Parse reply
-//     Value valReply;
-//     if (!read_string(strReply, valReply))
-//         throw runtime_error("couldn't parse reply from server");
-//     const Object& reply = valReply.get_obj();
-//     if (reply.empty())
-//         throw runtime_error("expected reply to have result, error and id properties");
-
-//     return reply;
-// }
 
 //*****************************************************************************
 //*****************************************************************************
@@ -741,17 +651,68 @@ bool getLogs(const std::string & rpcip,
     return true;
 }
 
+//*****************************************************************************
+//*****************************************************************************
+bool eth_call(const std::string & rpcip, const std::string & rpcport,
+              const uint160 & contractAddress, 
+              const uint256 & gas,
+              const uint256 & value,
+              const bytes & data,
+              Value & result)
+{
+    try
+    {
+        LOG() << "rpc call <eth_call>";
+
+        Array params;
+
+        Object transaction;
+        transaction.push_back(Pair("to",   as0xString(contractAddress)));
+        transaction.push_back(Pair("data", as0xString(data)));
+        if(!gas.IsNull())
+            transaction.push_back(Pair("gas", as0xStringNumber(gas)));
+        if(!value.IsNull())
+            transaction.push_back(Pair("value", as0xStringNumber(value)));
+
+        params.push_back(transaction);
+        params.push_back("latest");
+
+        Object reply = CallRPC(rpcip, rpcport,
+                               "eth_call", params);
+
+        // Parse reply
+        const Value & error  = find_value(reply, "error");
+
+        if (error.type() != null_type)
+        {
+            // Error
+            LOG() << "error: " << write_string(error, false);
+            return false;
+        }
+
+        result = find_value(reply, "result");
+    }
+    catch (std::exception & e)
+    {
+        LOG() << "eth_call exception " << e.what();
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace
 
 } // namespace rpc
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::init()
+bool ERC20WalletConnector::init()
 {
     boost::property_tree::ptree section = settings().getSection(currency);
-    m_networkId       = section.get<uint32_t>   ("NetworkId", 0);
-    m_contractAddress = section.get<std::string>("ContractAddress", "");
+    m_networkId            = section.get<uint32_t>   ("NetworkId", 0);
+    m_contractAddress      = section.get<std::string>("ContractAddress", "");
+    m_erc20contractAddress = section.get<std::string>("ERC20ContractAddress", "");
 
     if (!rpc::getBlockNumber(m_ip, m_port, m_fromBlock))
     {
@@ -776,12 +737,18 @@ bool EthWalletConnector::init()
         return false;
     }
 
+    if (m_erc20contractAddress.empty())
+    {
+        LOG() << "empty contract address " << __FUNCTION__;
+        return false;
+    }
+
     return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-std::string EthWalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const
+std::string ERC20WalletConnector::fromXAddr(const std::vector<unsigned char> & xaddr) const
 {
     std::string result("0x");
     result.append(HexStr(xaddr));
@@ -790,7 +757,7 @@ std::string EthWalletConnector::fromXAddr(const std::vector<unsigned char> & xad
 
 //*****************************************************************************
 //*****************************************************************************
-std::vector<unsigned char> EthWalletConnector::toXAddr(const std::string & addr) const
+std::vector<unsigned char> ERC20WalletConnector::toXAddr(const std::string & addr) const
 {
     std::string addressWithout0x(addr.begin() + 2, addr.end());
     std::vector<unsigned char> vch = ParseHex(addressWithout0x);
@@ -799,7 +766,7 @@ std::vector<unsigned char> EthWalletConnector::toXAddr(const std::string & addr)
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::getNewAddress(std::string & addr, const std::string & /*type*/) 
+bool ERC20WalletConnector::getNewAddress(std::string & addr, const std::string & /*type*/) 
 { 
     std::vector<std::string> accounts;
     if (!rpc::getAccounts(m_ip, m_port, accounts))
@@ -819,7 +786,7 @@ bool EthWalletConnector::getNewAddress(std::string & addr, const std::string & /
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry> & entries)
+bool ERC20WalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry> & entries)
 {
     std::vector<std::string> accounts;
     if (!rpc::getAccounts(m_ip, m_port, accounts))
@@ -832,12 +799,12 @@ bool EthWalletConnector::requestAddressBook(std::vector<wallet::AddressBookEntry
 
 //*****************************************************************************
 //*****************************************************************************
-amount_t EthWalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & excluded, const std::string & addr) const
+amount_t ERC20WalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> & /*excluded*/, const std::string & addr) const
 {
     // if addr is empty - use only address from settings
     // TODO check for other addresses
-    uint256 amount = 0;
-    if (!rpc::getBalance(m_ip, m_port, addr.empty() ? uint160(address) : uint160(addr), amount))
+    amount_t amount = 0;
+    if (!getBalance(toXAddr(addr.empty() ? address : addr), amount))
     {
         return 0;
     }
@@ -847,7 +814,7 @@ amount_t EthWalletConnector::getWalletBalance(const std::set<wallet::UtxoEntry> 
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::getBlockHash(const uint32_t & blockNumber, std::string & blockHash)
+bool ERC20WalletConnector::getBlockHash(const uint32_t & blockNumber, std::string & blockHash)
 {
     Block block;
     if (!rpc::getBlock(m_ip, m_port, blockNumber, block))
@@ -862,7 +829,7 @@ bool EthWalletConnector::getBlockHash(const uint32_t & blockNumber, std::string 
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::getBlockCount(uint32_t & blockCount) const
+bool ERC20WalletConnector::getBlockCount(uint32_t & blockCount) const
 {
     // TODO make uint64 in param
     uint64_t count = 0;
@@ -878,7 +845,7 @@ bool EthWalletConnector::getBlockCount(uint32_t & blockCount) const
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::isValidAddress(const std::string & /*addr*/) const  
+bool ERC20WalletConnector::isValidAddress(const std::string & /*addr*/) const  
 {
     // TODO validate address 
     return true; 
@@ -886,7 +853,7 @@ bool EthWalletConnector::isValidAddress(const std::string & /*addr*/) const
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::isValidAmount(const amount_t & amount) const
+bool ERC20WalletConnector::isValidAmount(const amount_t & amount) const
 {
     // TODO check wallet balance?
     // TODO check maximum?
@@ -895,7 +862,7 @@ bool EthWalletConnector::isValidAmount(const amount_t & amount) const
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::canAcceptTransactions() const
+bool ERC20WalletConnector::canAcceptTransactions() const
 {
     // need to pay gas
     uint256 amount = 0;
@@ -910,7 +877,7 @@ bool EthWalletConnector::canAcceptTransactions() const
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::newKeyPair(std::vector<unsigned char> & pubkey,
+bool ERC20WalletConnector::newKeyPair(std::vector<unsigned char> & pubkey,
                                     std::vector<unsigned char> & privkey)
 {
     m_cp->makeNewKey(privkey);
@@ -919,7 +886,7 @@ bool EthWalletConnector::newKeyPair(std::vector<unsigned char> & pubkey,
 
 //******************************************************************************
 //******************************************************************************
-std::vector<unsigned char> EthWalletConnector::getKeyId(const std::vector<unsigned char> & pubkey)
+std::vector<unsigned char> ERC20WalletConnector::getKeyId(const std::vector<unsigned char> & pubkey)
 {
     uint160 id = Hash160(&pubkey[0], &pubkey[0] + pubkey.size());
     return std::vector<unsigned char>(id.begin(), id.end());
@@ -930,7 +897,7 @@ std::vector<unsigned char> EthWalletConnector::getKeyId(const std::vector<unsign
 // true if tx found and checked
 // isGood == true id depost tx is OK
 //******************************************************************************
-bool EthWalletConnector::checkDepositTransaction(const std::string& depositTxId, 
+bool ERC20WalletConnector::checkDepositTransaction(const std::string& depositTxId, 
                                                  const std::string&, 
                                                  amount_t & amount, 
                                                  amount_t & p2shAmount,
@@ -970,7 +937,7 @@ bool EthWalletConnector::checkDepositTransaction(const std::string& depositTxId,
 
 //******************************************************************************
 //******************************************************************************
-uint32_t EthWalletConnector::lockTime(const char role) const
+uint32_t ERC20WalletConnector::lockTime(const char role) const
 {
     uint32_t blockCount = 0;
     if (!getBlockCount(blockCount))
@@ -1005,7 +972,7 @@ uint32_t EthWalletConnector::lockTime(const char role) const
 
 //******************************************************************************
 //******************************************************************************
-bool EthWalletConnector::acceptableLockTimeDrift(const char role, const uint32_t lckTime) const
+bool ERC20WalletConnector::acceptableLockTimeDrift(const char role, const uint32_t lckTime) const
 {
     auto lt = lockTime(role);
     if (lt == 0 || lt >= LOCKTIME_THRESHOLD || lckTime >= LOCKTIME_THRESHOLD)
@@ -1026,7 +993,7 @@ bool EthWalletConnector::acceptableLockTimeDrift(const char role, const uint32_t
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::getAccounts(std::vector<std::string> & accounts)
+bool ERC20WalletConnector::getAccounts(std::vector<std::string> & accounts)
 {
     if(!rpc::getAccounts(m_ip, m_port, accounts))
     {
@@ -1039,20 +1006,33 @@ bool EthWalletConnector::getAccounts(std::vector<std::string> & accounts)
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::getBalance(const bytes & account, uint256 & balance) const
+bool ERC20WalletConnector::getBalance(const bytes & account, uint256 & balance) const
 {
-    if(!rpc::getBalance(m_ip, m_port, uint160(HexStr(account)), balance))
+    bytes methodSignature = EthEncoder::encodeSig("balanceOf(address)");
+    bytes data = methodSignature + EthEncoder::encode(account);
+
+    Value result;
+    if (!rpc::eth_call(m_ip, m_port, uint160(m_contractAddress), uint256(), uint256(), data, result))
     {
-        LOG() << "can't get balance" << __FUNCTION__;
+        LOG() << "can't get balance for address " << HexStr(account) << " " << __FUNCTION__;
         return false;
     }
+
+    if (result.type() != str_type)
+    {
+        // Result
+        LOG() << "result not a string ";
+        return false;
+    }
+
+    balance = uint256(result.get_str());
 
     return true;
 }
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::getGasPrice(uint256 & gasPrice) const
+bool ERC20WalletConnector::getGasPrice(uint256 & gasPrice) const
 {
     if(!rpc::getGasPrice(m_ip, m_port, gasPrice))
     {
@@ -1065,10 +1045,10 @@ bool EthWalletConnector::getGasPrice(uint256 & gasPrice) const
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::getEstimateGas(const bytes & myAddress,
-                                        const bytes & data,
-                                        const uint256 & value,
-                                        uint256 & estimateGas) const
+bool ERC20WalletConnector::getEstimateGas(const bytes & myAddress,
+                                          const bytes & data,
+                                          const uint256 & value,
+                                          uint256 & estimateGas) const
 {
     if(!rpc::getEstimateGas(m_ip, m_port,
                             uint160(HexStr(myAddress)),
@@ -1076,7 +1056,7 @@ bool EthWalletConnector::getEstimateGas(const bytes & myAddress,
                             value, data,
                             estimateGas))
     {
-        LOG() << "can't get estimate gas" << __FUNCTION__;
+        LOG() << "can't get estimate gas " << __FUNCTION__;
         return false;
     }
 
@@ -1085,7 +1065,7 @@ bool EthWalletConnector::getEstimateGas(const bytes & myAddress,
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::getLastBlockTime(uint256 & blockTime) const
+bool ERC20WalletConnector::getLastBlockTime(uint256 & blockTime) const
 {
     if (!rpc::getLastBlockTime(m_ip, m_port, blockTime))
     {
@@ -1098,38 +1078,18 @@ bool EthWalletConnector::getLastBlockTime(uint256 & blockTime) const
 
 //*****************************************************************************
 //*****************************************************************************
-bool splitEventParams(const std::string & paramsString, std::vector<std::string> & paramsVector)
-{
-    const unsigned int paramSize = 64;
-
-    if(paramsString.size() < paramSize)
-    {
-        return false;
-    }
-
-    if((paramsString.size() - 2) % paramSize != 0)
-    {
-        return false;
-    }
-
-    //first 2 chars is 0x, so skip it
-    for(unsigned int i = 2; i < paramsString.size(); i += paramSize)
-    {
-        paramsVector.emplace_back(paramsString.substr(i, paramSize));
-    }
-
-    return true;
-}
+bool splitEventParams(const std::string & paramsString, std::vector<std::string> & paramsVector);
 
 //*****************************************************************************
 //*****************************************************************************
-bytes EthWalletConnector::createInitiateData(const uint256 & /*amount*/,
-                                             const bytes & hashedSecret,
-                                             const bytes & responderAddress,
-                                             const uint256 & refundDuration) const
+bytes ERC20WalletConnector::createInitiateData(const uint256 & amount,
+                                               const bytes & hashedSecret,
+                                               const bytes & responderAddress,
+                                               const uint256 & refundDuration) const
 {
-    bytes initiateMethodSignature = EthEncoder::encodeSig("initiate(bytes20,address,uint256)");
+    bytes initiateMethodSignature = EthEncoder::encodeSig("initiate(uint256,bytes20,address,uint256)");
     bytes data = initiateMethodSignature +
+            EthEncoder::encode(amount) +
             EthEncoder::encode(hashedSecret, false) +
             EthEncoder::encode(responderAddress) +
             EthEncoder::encode(refundDuration);
@@ -1139,13 +1099,14 @@ bytes EthWalletConnector::createInitiateData(const uint256 & /*amount*/,
 
 //*****************************************************************************
 //*****************************************************************************
-bytes EthWalletConnector::createRespondData(const uint256 & /*amount*/,
-                                            const bytes & hashedSecret,
-                                            const bytes & initiatorAddress,
-                                            const uint256 & refundDuration) const
+bytes ERC20WalletConnector::createRespondData(const uint256 & amount,
+                                              const bytes & hashedSecret,
+                                              const bytes & initiatorAddress,
+                                              const uint256 & refundDuration) const
 {
-    bytes respondMethodSignature = EthEncoder::encodeSig("respond(bytes20,address,uint256)");
+    bytes respondMethodSignature = EthEncoder::encodeSig("respond(uint256,bytes20,address,uint256)");
     bytes data = respondMethodSignature +
+            EthEncoder::encode(amount) +
             EthEncoder::encode(hashedSecret, false) +
             EthEncoder::encode(initiatorAddress) +
             EthEncoder::encode(refundDuration);
@@ -1155,7 +1116,7 @@ bytes EthWalletConnector::createRespondData(const uint256 & /*amount*/,
 
 //*****************************************************************************
 //*****************************************************************************
-bytes EthWalletConnector::createRefundData(const bytes & hashedSecret) const
+bytes ERC20WalletConnector::createRefundData(const bytes & hashedSecret) const
 {
     bytes refundMethodSignature = EthEncoder::encodeSig("refund(bytes20)");
     bytes data = refundMethodSignature +
@@ -1166,7 +1127,7 @@ bytes EthWalletConnector::createRefundData(const bytes & hashedSecret) const
 
 //*****************************************************************************
 //*****************************************************************************
-bytes EthWalletConnector::createRedeemData(const bytes & hashedSecret, const bytes & secret) const
+bytes ERC20WalletConnector::createRedeemData(const bytes & hashedSecret, const bytes & secret) const
 {
     bytes redeemMethodSignature = EthEncoder::encodeSig("redeem(bytes20,bytes)");
     bytes data = redeemMethodSignature +
@@ -1180,26 +1141,38 @@ bytes EthWalletConnector::createRedeemData(const bytes & hashedSecret, const byt
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::approve(const uint256 & /*amount*/) const
+bool ERC20WalletConnector::approve(const uint256 & amount) const
 {
-    return true;
-}
+    bytes methodSignature = EthEncoder::encodeSig("approve(address,uint256)");
+    bytes data = methodSignature +
+            EthEncoder::encode(toXAddr(m_erc20contractAddress)) +
+            EthEncoder::encode(amount);
 
-//*****************************************************************************
-//*****************************************************************************
-bool EthWalletConnector::callContractMethod(const bytes & myAddress,
-                                            const bytes & data,
-                                            const uint256 & value,
-                                            const uint256 & gas,
-                                            uint256 & transactionHash) const
-{
-    if(!rpc::sendTransaction(m_ip, m_port,
-                             uint160(HexStr(myAddress)),
-                             uint160(m_contractAddress),
-                             gas, value, data,
-                             transactionHash))
+    uint256 estimateGas;
+    if (!getEstimateGas(toXAddr(address), data, 0, estimateGas))
+    {
+        LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
+        return false;
+    }
+
+    // uint256 gasPrice;
+    // if (!getGasPrice(gasPrice))
+    // {
+    //     LOG() << "can't process without gas price, process packet later" << __FUNCTION__;
+    //     return false;
+    // }
+
+    Value result;
+    if (!rpc::eth_call(m_ip, m_port, uint160(m_erc20contractAddress), estimateGas, 0, data, result))
     {
         LOG() << "can't call contract method" << __FUNCTION__;
+        return false;
+    }
+
+    if (result.type() != str_type)
+    {
+        // Result
+        LOG() << "result not a string ";
         return false;
     }
 
@@ -1208,7 +1181,34 @@ bool EthWalletConnector::callContractMethod(const bytes & myAddress,
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::isInitiated(const bytes & hashedSecret,
+bool ERC20WalletConnector::callContractMethod(const bytes & myAddress,
+                                            const bytes & data,
+                                            const uint256 & value,
+                                            const uint256 & gas,
+                                            uint256 & transactionHash) const
+{
+    Value result;
+    if (!rpc::eth_call(m_ip, m_port, uint160(m_contractAddress), gas, uint256(), data, result))
+    {
+        LOG() << "can't call contract method" << __FUNCTION__;
+        return false;
+    }
+
+    if (result.type() != str_type)
+    {
+        // Result
+        LOG() << "result not a string ";
+        return false;
+    }
+
+    transactionHash = uint256(result.get_str());
+
+    return true;
+}
+
+//*****************************************************************************
+//*****************************************************************************
+bool ERC20WalletConnector::isInitiated(const bytes & hashedSecret,
                                      bytes & initiatorAddress,
                                      const bytes & responderAddress,
                                      const uint256 value) const
@@ -1260,7 +1260,7 @@ bool EthWalletConnector::isInitiated(const bytes & hashedSecret,
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::isResponded(const bytes & hashedSecret,
+bool ERC20WalletConnector::isResponded(const bytes & hashedSecret,
                                      const bytes & initiatorAddress,
                                      bytes & responderAddress,
                                      const uint256 value) const
@@ -1312,7 +1312,7 @@ bool EthWalletConnector::isResponded(const bytes & hashedSecret,
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::isRefunded(const bytes & hashedSecret,
+bool ERC20WalletConnector::isRefunded(const bytes & hashedSecret,
                                     const bytes & recipientAddress,
                                     const uint256 value) const
 {
@@ -1362,7 +1362,7 @@ bool EthWalletConnector::isRefunded(const bytes & hashedSecret,
 
 //*****************************************************************************
 //*****************************************************************************
-bool EthWalletConnector::isRedeemed(const bytes& hashedSecret,
+bool ERC20WalletConnector::isRedeemed(const bytes& hashedSecret,
                                     const bytes & recipientAddress,
                                     const uint256 value) const
 {
