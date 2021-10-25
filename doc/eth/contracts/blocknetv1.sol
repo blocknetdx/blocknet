@@ -20,12 +20,17 @@ contract BlocknetDXv1 is ACCTBase
         isEmpty(hashedSecret)
     {
         require(msg.value > 0);
-        Swap storage swap = swaps[hashedSecret];
-        swap.swapType = SwapType.Initiated;
-        swap.initiator = msg.sender;
-        swap.responder = responder;
-        swap.value = msg.value;
+        
+        // TODO check minimal value for escrowDurationn
+        require(escrowDuration > 0);
+        
+        Swap storage swap    = swaps[hashedSecret];
+        swap.swapType        = SwapType.Initiated;
+        swap.initiator       = msg.sender;
+        swap.responder       = responder;
+        swap.value           = msg.value;
         swap.refundTimePoint = now + escrowDuration;
+        
         emit Initiated(hashedSecret, swap.initiator, swap.responder, swap.value, swap.refundTimePoint);
     }
 
@@ -35,15 +40,23 @@ contract BlocknetDXv1 is ACCTBase
      * \param initiator      Address of the initiator on this blockchain
      * \param escrowDuration Escrow period, in seconds (from now)
      */
-    function respond(bytes20 hashedSecret, address initiator, uint256 escrowDuration) public payable isEmpty(hashedSecret)
+    function respond(bytes20 hashedSecret, address initiator, uint256 escrowDuration) 
+        public 
+        payable 
+        isEmpty(hashedSecret)
     {
         require(msg.value > 0);
-        Swap storage swap = swaps[hashedSecret];
-        swap.swapType = SwapType.Responded;
-        swap.initiator = initiator;
-        swap.responder = msg.sender;
-        swap.value = msg.value;
+        
+        // TODO check minimal value for escrowDurationn
+        require(escrowDuration > 0);
+
+        Swap storage swap    = swaps[hashedSecret];
+        swap.swapType        = SwapType.Responded;
+        swap.initiator       = initiator;
+        swap.responder       = msg.sender;
+        swap.value           = msg.value;
         swap.refundTimePoint = now + escrowDuration;
+        
         emit Responded(hashedSecret, swap.initiator, swap.responder, swap.value, swap.refundTimePoint);
     }
 
@@ -51,12 +64,18 @@ contract BlocknetDXv1 is ACCTBase
      *
      * \param hashedSecret Hash of initiator's secret
      */
-    function refund(bytes20 hashedSecret) public isRefundable(hashedSecret) {
+    function refund(bytes20 hashedSecret) 
+        public
+        payable
+        isRefundable(hashedSecret) 
+    {
         Swap storage swap = swaps[hashedSecret];
-        uint256 value = swap.value;
-        swap.value = 0;
-        swap.swapType = SwapType.None;
+        uint256 value     = swap.value;
+        swap.value        = 0;
+        swap.swapType     = SwapType.None;
+        
         msg.sender.transfer(value);
+        
         emit Refunded(hashedSecret, msg.sender, value);
     }
 
@@ -65,12 +84,18 @@ contract BlocknetDXv1 is ACCTBase
      * \param hashedSecret Hash of initiator's secret
      * \param secret       Initiator's secret
      */
-    function redeem(bytes20 hashedSecret, bytes memory secret) public isRedeemable(hashedSecret, secret) {
+    function redeem(bytes20 hashedSecret, bytes memory secret) 
+        public 
+        payable
+        isRedeemable(hashedSecret, secret) 
+    {
         Swap storage swap = swaps[hashedSecret];
-        uint256 value = swap.value;
-        swap.value = 0;
-        swap.swapType = SwapType.None;
+        uint256 value     = swap.value;
+        swap.value        = 0;
+        swap.swapType     = SwapType.None;
+        
         msg.sender.transfer(value);
+        
         emit Redeemed(hashedSecret, secret, msg.sender, value);
     }
 }
