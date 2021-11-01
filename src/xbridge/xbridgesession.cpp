@@ -2183,6 +2183,21 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             return true;
         }
 
+        // approve 
+        if (!xtx->isApproved)
+        {
+            if (connEth->approve(xtx->fromAmount))
+            {
+                xtx->isApproved = true;
+            }
+            else
+            {
+                LOG() << "not approved, transaction canceled" << __FUNCTION__;
+                sendCancelTransaction(xtx, crNoMoney);
+                return true;
+            }
+        }
+
         std::vector<unsigned char> initiateParams = connEth->createInitiateData(xtx->fromAmount, xtx->oHashedSecret, destAddress, xtx->lockTime);
 
         uint256 estimateGas;
@@ -2201,6 +2216,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             return true;
         }
 
+        // TODO totalValue is wrong for coins, need check 
         uint256 totalValue = estimateGas * gasPrice + xtx->fromAmount;
 
         uint256 avaliableAmount;
@@ -2214,14 +2230,6 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         if (avaliableAmount < totalValue)
         {
             LOG() << "client doesn't have enough amount on account, transaction canceled" << __FUNCTION__;
-            sendCancelTransaction(xtx, crNoMoney);
-            return true;
-        }
-
-        // approve
-        if (!connEth->approve())
-        {
-            LOG() << "not approved, transaction canceled" << __FUNCTION__;
             sendCancelTransaction(xtx, crNoMoney);
             return true;
         }

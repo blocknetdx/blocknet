@@ -151,6 +151,12 @@ struct TransactionDescr
         READWRITE(logPayTx1);
         READWRITE(logPayTx2);
         READWRITE(parentOrder);
+
+        // TODO define version
+        // if (nVersion > CLIENT_VERSION_WITH_approved_flag)
+        // {
+        //    READWRITE(isApproved);
+        // }
     }
 
     void SetNull() {
@@ -222,6 +228,7 @@ struct TransactionDescr
         historical = false;
         logPayTx1 = false;
         logPayTx2 = false;
+        isApproved = false;
         parentOrder.SetNull();
     }
 
@@ -331,7 +338,11 @@ struct TransactionDescr
     bool logPayTx1{false};
     bool logPayTx2{false};
 
-    uint256 parentOrder; // Parent order id of a partial order
+    // allowed flag, used in erc20 coins
+    bool isApproved = false;
+
+    // Parent order id of a partial order
+    uint256 parentOrder;
 
     // keep track of excluded servicenodes (snodes can be excluded if they fail to post)
     std::set<CPubKey> _excludedSnodes;

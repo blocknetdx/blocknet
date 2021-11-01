@@ -654,6 +654,7 @@ bool getLogs(const std::string & rpcip,
 //*****************************************************************************
 //*****************************************************************************
 bool eth_call(const std::string & rpcip, const std::string & rpcport,
+              const uint160 & fromAddress,
               const uint160 & contractAddress, 
               const uint256 & gas,
               const uint256 & value,
@@ -667,12 +668,20 @@ bool eth_call(const std::string & rpcip, const std::string & rpcport,
         Array params;
 
         Object transaction;
+        if (!fromAddress.IsNull())
+        {
+            transaction.push_back(Pair("from", as0xString(fromAddress)));
+        }
         transaction.push_back(Pair("to",   as0xString(contractAddress)));
         transaction.push_back(Pair("data", as0xString(data)));
         if(!gas.IsNull())
+        {
             transaction.push_back(Pair("gas", as0xStringNumber(gas)));
+        }
         if(!value.IsNull())
+        {
             transaction.push_back(Pair("value", as0xStringNumber(value)));
+        }
 
         params.push_back(transaction);
         params.push_back("latest");
@@ -1012,7 +1021,7 @@ bool ERC20WalletConnector::getBalance(const bytes & account, uint256 & balance) 
     bytes data = methodSignature + EthEncoder::encode(account);
 
     Value result;
-    if (!rpc::eth_call(m_ip, m_port, uint160(m_contractAddress), uint256(), uint256(), data, result))
+    if (!rpc::eth_call(m_ip, m_port, uint160(), uint160(m_contractAddress), uint256(), uint256(), data, result))
     {
         LOG() << "can't get balance for address " << HexStr(account) << " " << __FUNCTION__;
         return false;
@@ -1145,11 +1154,15 @@ bool ERC20WalletConnector::approve(const uint256 & amount) const
 {
     bytes methodSignature = EthEncoder::encodeSig("approve(address,uint256)");
     bytes data = methodSignature +
-            EthEncoder::encode(toXAddr(m_erc20contractAddress)) +
+            EthEncoder::encode(toXAddr(m_contractAddress)) +
             EthEncoder::encode(amount);
 
     uint256 estimateGas;
-    if (!getEstimateGas(toXAddr(address), data, 0, estimateGas))
+    if (!rpc::getEstimateGas(m_ip, m_port,
+                             uint160(address),
+                             uint160(m_erc20contractAddress),
+                             0, data,
+                             estimateGas))
     {
         LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
         return false;
@@ -1162,19 +1175,23 @@ bool ERC20WalletConnector::approve(const uint256 & amount) const
     //     return false;
     // }
 
-    Value result;
-    if (!rpc::eth_call(m_ip, m_port, uint160(m_erc20contractAddress), estimateGas, 0, data, result))
+    // Value result;
+    uint256 result;
+    if (!rpc::sendTransaction(m_ip, m_port, 
+                       uint160(address), 
+                       uint160(m_erc20contractAddress), 
+                       estimateGas, 0, data, result))
     {
         LOG() << "can't call contract method" << __FUNCTION__;
         return false;
     }
 
-    if (result.type() != str_type)
-    {
-        // Result
-        LOG() << "result not a string ";
-        return false;
-    }
+    // if (result.type() != str_type)
+    // {
+    //     // Result
+    //     LOG() << "result not a string ";
+    //     return false;
+    // }
 
     return true;
 }
@@ -1187,21 +1204,23 @@ bool ERC20WalletConnector::callContractMethod(const bytes & myAddress,
                                             const uint256 & gas,
                                             uint256 & transactionHash) const
 {
-    Value result;
-    if (!rpc::eth_call(m_ip, m_port, uint160(m_contractAddress), gas, uint256(), data, result))
+    // Value result;
+    uint256 result;
+    if (!rpc::sendTransaction(m_ip, m_port, uint160(address), uint160(m_contractAddress), gas, uint256(), data, result))
     {
         LOG() << "can't call contract method" << __FUNCTION__;
         return false;
     }
 
-    if (result.type() != str_type)
-    {
-        // Result
-        LOG() << "result not a string ";
-        return false;
-    }
+    // if (result.type() != str_type)
+    // {
+    //     // Result
+    //     LOG() << "result not a string ";
+    //     return false;
+    // }
 
-    transactionHash = uint256(result.get_str());
+    // transactionHash = uint256(result.get_str());
+    transactionHash = result;
 
     return true;
 }
