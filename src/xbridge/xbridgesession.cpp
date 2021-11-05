@@ -2192,7 +2192,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             }
             else
             {
-                LOG() << "not approved, transaction canceled" << __FUNCTION__;
+                LOG() << "not approved, no allowance " << __FUNCTION__;
                 sendCancelTransaction(xtx, crNoMoney);
                 return true;
             }
@@ -2201,7 +2201,7 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         std::vector<unsigned char> initiateParams = connEth->createInitiateData(xtx->fromAmount, xtx->oHashedSecret, destAddress, xtx->lockTime);
 
         uint256 estimateGas;
-        if (!connEth->getEstimateGas(xtx->from, initiateParams, xtx->fromAmount, estimateGas))
+        if (!connEth->getEstimateGas(xtx->from, initiateParams, 0, estimateGas))
         {
             LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
             xapp.processLater(txid, packet);

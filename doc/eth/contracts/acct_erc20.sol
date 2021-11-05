@@ -24,21 +24,25 @@ contract ACCT_ERC20 is ACCTBase
     {
         return erc20Instance.balanceOf(accountAddress);
     }
-
+    
+    function allowance(address initiator) public constant returns (uint256 amount)
+    {
+        return erc20Instance.allowance(initiator, address(this));
+    }
 
     function initiate(uint256 value, bytes20 hashedSecret, address responder, uint256 escrowDuration)
         public
-        payable
         isEmpty(hashedSecret)
     {
-        require(value > 0);
+        require(value > 0, "bad value");
         
         // TODO check minimal value for escrowDurationn
-        require(escrowDuration > 0);
+        require(escrowDuration > 0, "bad escrowDuration");
 
         // require(balanceOf(msg.sender) >= value);
-        require(erc20Instance.allowance(msg.sender, address(this)) >= value);
-        require(erc20Instance.transferFrom(msg.sender, address(this), value));
+        require(erc20Instance.allowance(msg.sender, address(this)) >= value, "amount not approved");
+        
+        erc20Instance.transferFrom(msg.sender, address(this), value);
         
         Swap storage swap    = swaps[hashedSecret];
         swap.swapType        = SwapType.Initiated;
@@ -52,23 +56,23 @@ contract ACCT_ERC20 is ACCTBase
 
     function respond(uint256 value, bytes20 hashedSecret, address initiator, uint256 escrowDuration)
         public
-        payable
         isEmpty(hashedSecret)
     {
-        require(value > 0);
+        require(value > 0, "value less than zero");
 
         // TODO check minimal value for escrowDurationn
-        require(escrowDuration > 0);
+        require(escrowDuration > 0, "bad escrowDuration");
 
         // require(balanceOf(msg.sender) >= value);
-        require(erc20Instance.allowance(msg.sender, address(this)) >= value);
-        require(erc20Instance.transferFrom(msg.sender, address(this), value));
+        require(erc20Instance.allowance(msg.sender, address(this)) >= value, "amount not approved");
+        
+        erc20Instance.transferFrom(msg.sender, address(this), value);
         
         Swap storage swap    = swaps[hashedSecret];
         swap.swapType        = SwapType.Responded;
         swap.initiator       = initiator;
         swap.responder       = msg.sender;
-        swap.value           = msg.value;
+        swap.value           = value;
         swap.refundTimePoint = now + escrowDuration;
 
         emit Responded(hashedSecret, swap.initiator, swap.responder, swap.value, swap.refundTimePoint);
@@ -79,7 +83,6 @@ contract ACCT_ERC20 is ACCTBase
 
     function refund(bytes20 hashedSecret) 
         public 
-        payable
         isRefundable(hashedSecret) 
     {
         Swap storage swap = swaps[hashedSecret];
@@ -97,7 +100,6 @@ contract ACCT_ERC20 is ACCTBase
      */
     function redeem(bytes20 hashedSecret, bytes memory secret) 
         public
-        payable
         isRedeemable(hashedSecret, secret) 
     {
         Swap storage swap = swaps[hashedSecret];

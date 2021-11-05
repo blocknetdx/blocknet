@@ -132,12 +132,12 @@ contract ACCTBase is Mortal
      *
      * \param hashedSecret Hash of initiator's secret
      */
-    function refund(bytes20 hashedSecret) public payable;
+    function refund(bytes20 hashedSecret) public;
 
     /** The initiator/responder wants to execute the deal
      *
      * \param hashedSecret Hash of initiator's secret
      * \param secret       Initiator's secret
      */
-    function redeem(bytes20 hashedSecret, bytes memory secret) public payable;
+    function redeem(bytes20 hashedSecret, bytes memory secret) public;
 }

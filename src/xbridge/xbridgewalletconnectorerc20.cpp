@@ -1152,6 +1152,46 @@ bytes ERC20WalletConnector::createRedeemData(const bytes & hashedSecret, const b
 //*****************************************************************************
 bool ERC20WalletConnector::approve(const uint256 & amount) const
 {
+    // check allowance
+    {
+        bytes sig = EthEncoder::encodeSig("allowance(address,address)");
+        bytes data = sig +
+                     EthEncoder::encode(toXAddr(address)) +
+                     EthEncoder::encode(toXAddr(m_contractAddress));         
+
+        Value result;
+        if (!rpc::eth_call(m_ip, m_port,
+                             uint160(address),
+                             uint160(m_erc20contractAddress),
+                             uint256(), uint256(), data, result))
+        {
+            WARN() << "failed check allowance, try without " << __FUNCTION__;
+        }
+        else if (result.type() != str_type)
+        {
+            WARN() << "allowance, result not a string " << __FUNCTION__;
+        }
+        else
+        {
+            uint256 allowed = uint256(result.get_str());
+
+            if (allowed > 0)
+            {
+                if (amount > allowed)
+                {
+                    LOG() << "amount not allowed " << __FUNCTION__;
+                    return false;
+                }
+                else
+                {
+                    // already approved
+                    LOG() << "amount already approved " << __FUNCTION__;
+                    return true;
+                }
+            }
+        }
+    }
+
     bytes methodSignature = EthEncoder::encodeSig("approve(address,uint256)");
     bytes data = methodSignature +
             EthEncoder::encode(toXAddr(m_contractAddress)) +
@@ -1164,14 +1204,14 @@ bool ERC20WalletConnector::approve(const uint256 & amount) const
                              0, data,
                              estimateGas))
     {
-        LOG() << "can't process without estimate gas, process packet later" << __FUNCTION__;
+        LOG() << "can't process without estimate gas " << __FUNCTION__;
         return false;
     }
 
     // uint256 gasPrice;
     // if (!getGasPrice(gasPrice))
     // {
-    //     LOG() << "can't process without gas price, process packet later" << __FUNCTION__;
+    //     LOG() << "can't process without gas price " << __FUNCTION__;
     //     return false;
     // }
 

@@ -66,7 +66,6 @@ contract BlocknetDXv1 is ACCTBase
      */
     function refund(bytes20 hashedSecret) 
         public
-        payable
         isRefundable(hashedSecret) 
     {
         Swap storage swap = swaps[hashedSecret];
@@ -86,7 +85,6 @@ contract BlocknetDXv1 is ACCTBase
      */
     function redeem(bytes20 hashedSecret, bytes memory secret) 
         public 
-        payable
         isRedeemable(hashedSecret, secret) 
     {
         Swap storage swap = swaps[hashedSecret];
