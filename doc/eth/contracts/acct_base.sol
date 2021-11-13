@@ -77,16 +77,16 @@ contract ACCTBase is Mortal
     modifier isRefundable(bytes20 hashedSecret) 
     {
         Swap memory swap = swaps[hashedSecret];
-        require(swap.swapType != SwapType.None);
+        require(swap.swapType != SwapType.None, "wrong state");
         if (swap.swapType == SwapType.Initiated) 
         {
-            require(msg.sender == swap.initiator);
+            require(msg.sender == swap.initiator, "initiator address mismatch");
         } 
         else 
         {
-            require(msg.sender == swap.responder);
+            require(msg.sender == swap.responder, "responder address mismatch");
         }
-        require(now > swap.refundTimePoint);
+        require(now > swap.refundTimePoint, "wrong date");
         _;
     }
 
@@ -97,18 +97,18 @@ contract ACCTBase is Mortal
         bytes memory sha256hashEnc = abi.encodePacked(sha256hash);
         bytes20 ripemd160hash = ripemd160(sha256hashEnc);
 
-        require(ripemd160hash == hashedSecret);
+        require(ripemd160hash == hashedSecret, "wrong secret");
         Swap memory swap = swaps[hashedSecret];
-        require(swap.swapType != SwapType.None);
+        require(swap.swapType != SwapType.None, "wrong state");
         if (swap.swapType == SwapType.Initiated) 
         {
-            require(msg.sender == swap.responder);
+            require(msg.sender == swap.responder, "responder address mismatch");
         } 
         else 
         {
-            require(msg.sender == swap.initiator);
+            require(msg.sender == swap.initiator, "initiator address mismatch");
         }
-        require(now < swap.refundTimePoint);
+        require(now < swap.refundTimePoint, "wrong date");
         _;
     }
 

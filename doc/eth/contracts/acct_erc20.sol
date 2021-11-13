@@ -13,11 +13,18 @@ contract ERC20Interface
 contract ACCT_ERC20 is ACCTBase
 {
     ERC20Interface erc20Instance;
+    address erc20address;
 
 
-    constructor (address erc20address) public
+    constructor (address addressOfErc20Contract) public
     {
-        erc20Instance = ERC20Interface(erc20address);
+        erc20address = addressOfErc20Contract;
+        erc20Instance = ERC20Interface(addressOfErc20Contract);
+    }
+    
+    function erc20Address() public constant returns (address)
+    {
+        return erc20address;    
     }
     
     function balanceOf(address accountAddress) public constant returns (uint256 balance)
@@ -42,7 +49,7 @@ contract ACCT_ERC20 is ACCTBase
         // require(balanceOf(msg.sender) >= value);
         require(erc20Instance.allowance(msg.sender, address(this)) >= value, "amount not approved");
         
-        erc20Instance.transferFrom(msg.sender, address(this), value);
+        require(erc20Instance.transferFrom(msg.sender, address(this), value), "transferFrom failed");
         
         Swap storage swap    = swaps[hashedSecret];
         swap.swapType        = SwapType.Initiated;
@@ -66,7 +73,7 @@ contract ACCT_ERC20 is ACCTBase
         // require(balanceOf(msg.sender) >= value);
         require(erc20Instance.allowance(msg.sender, address(this)) >= value, "amount not approved");
         
-        erc20Instance.transferFrom(msg.sender, address(this), value);
+        require(erc20Instance.transferFrom(msg.sender, address(this), value), "transferFrom failed");
         
         Swap storage swap    = swaps[hashedSecret];
         swap.swapType        = SwapType.Responded;
@@ -78,9 +85,6 @@ contract ACCT_ERC20 is ACCTBase
         emit Responded(hashedSecret, swap.initiator, swap.responder, swap.value, swap.refundTimePoint);
     }
 
-
-
-
     function refund(bytes20 hashedSecret) 
         public 
         isRefundable(hashedSecret) 
@@ -89,7 +93,9 @@ contract ACCT_ERC20 is ACCTBase
         uint256 value = swap.value;
         swap.value = 0;
         swap.swapType = SwapType.None;
-        msg.sender.transfer(value);
+        
+        require(erc20Instance.transfer(msg.sender, value), "transfer failed");
+        
         emit Refunded(hashedSecret, msg.sender, value);
     }
 
@@ -106,7 +112,9 @@ contract ACCT_ERC20 is ACCTBase
         uint256 value = swap.value;
         swap.value = 0;
         swap.swapType = SwapType.None;
-        msg.sender.transfer(value);
+        
+        require(erc20Instance.transfer(msg.sender, value), "transfer failed");
+        
         emit Redeemed(hashedSecret, secret, msg.sender, value);
     }
 
