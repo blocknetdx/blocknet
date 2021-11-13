@@ -2208,6 +2208,9 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
             return true;
         }
 
+        // temporary for ERC20 connector
+        estimateGas *= 2;
+
         uint256 gasPrice;
         if (!connEth->getGasPrice(gasPrice))
         {
@@ -2828,6 +2831,9 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
             return true;
         }
 
+        // temporary for ERC20 connector
+        estimateGas *= 2;
+
         uint256 gasPrice;
         if(!connEth->getGasPrice(gasPrice))
         {
@@ -3341,6 +3347,9 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
             return true;
         }
 
+        // temporary for ERC20 connector
+        estimateGas *= 2;
+
         uint256 gasPrice;
         if (!connEth->getGasPrice(gasPrice))
         {
@@ -3712,6 +3721,9 @@ bool Session::Impl::processTransactionConfirmB(XBridgePacketPtr packet) const
             xapp.processLater(txid, packet);
             return true;
         }
+
+        // temporary for ERC20 connector
+        estimateGas *= 2;
 
         uint256 gasPrice;
         if (!connEth->getGasPrice(gasPrice))
