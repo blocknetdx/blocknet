@@ -2247,6 +2247,16 @@ bool Session::Impl::processTransactionCreateA(XBridgePacketPtr packet) const
         }
 
         xtx->binTxId = trHash.ToString();
+
+        TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using personal_sendTransaction) "
+                << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << connFrom->fromXAddr(xtx->from) << ") / "
+                << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << connTo->fromXAddr(xtx->to) << ") "
+                << "using locktime " << xtx->lockTime << std::endl
+                << "contract address " << connEth->contractAddress()
+                << "transaction data " << HexStr(initiateParams);
+
+        std::vector<unsigned char> refundParams = connEth->createRefundData(xtx->oHashedSecret);
+        TXLOG() << "refund transaction data " << HexStr(refundParams) << " to " << connFrom->fromXAddr(xtx->from);
     }
     else
     {
@@ -2869,6 +2879,16 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
         }
 
         xtx->binTxId = trHash.ToString();
+
+        TXLOG() << "deposit transaction for order " << xtx->id.ToString() << " (submit manually using personal_sendTransaction) "
+                << xtx->fromCurrency << "(" << xbridge::xBridgeStringValueFromAmount(xtx->fromAmount) << " - " << connFrom->fromXAddr(xtx->from) << ") / "
+                << xtx->toCurrency   << "(" << xbridge::xBridgeStringValueFromAmount(xtx->toAmount)   << " - " << connTo->fromXAddr(xtx->to) << ") "
+                << "using locktime " << xtx->lockTime << std::endl
+                << "contract address " << connEth->contractAddress()
+                << "transaction data " << HexStr(respondParams);
+
+        std::vector<unsigned char> refundParams = connEth->createRefundData(xtx->oHashedSecret);
+        TXLOG() << "refund transaction data " << HexStr(refundParams) << " to " << connFrom->fromXAddr(xtx->from);
     }
     else
     {

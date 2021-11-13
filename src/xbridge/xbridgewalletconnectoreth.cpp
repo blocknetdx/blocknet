@@ -1052,6 +1052,13 @@ bool EthWalletConnector::getBalance(const bytes & account, uint256 & balance) co
 
 //*****************************************************************************
 //*****************************************************************************
+std::string EthWalletConnector::contractAddress() const
+{
+    return m_contractAddress;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool EthWalletConnector::getGasPrice(uint256 & gasPrice) const
 {
     if(!rpc::getGasPrice(m_ip, m_port, gasPrice))

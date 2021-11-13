@@ -183,6 +183,8 @@ public:
 public:
     // EthWalletInterface implementation
 
+    std::string contractAddress() const;
+
     bool getGasPrice(uint256 & gasPrice) const;
     
     bool getEstimateGas(const bytes & myAddress,

@@ -19,6 +19,8 @@ namespace xbridge
 class EthWalletInterface
 {
 public:
+    virtual std::string contractAddress() const = 0;
+
     virtual bool getGasPrice(uint256 & gasPrice) const = 0;
 
     virtual bool getEstimateGas(const bytes & myAddress,

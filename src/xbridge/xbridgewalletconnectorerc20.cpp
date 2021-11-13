@@ -1041,6 +1041,13 @@ bool ERC20WalletConnector::getBalance(const bytes & account, uint256 & balance) 
 
 //*****************************************************************************
 //*****************************************************************************
+std::string ERC20WalletConnector::contractAddress() const
+{
+    return m_contractAddress;
+}
+
+//*****************************************************************************
+//*****************************************************************************
 bool ERC20WalletConnector::getGasPrice(uint256 & gasPrice) const
 {
     if(!rpc::getGasPrice(m_ip, m_port, gasPrice))
