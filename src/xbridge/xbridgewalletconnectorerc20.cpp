@@ -581,7 +581,7 @@ bool getLogs(const std::string & rpcip,
         filter.push_back(Pair("fromBlock", as0xString(fromBlock)));
         filter.push_back(Pair("toBlock", "latest"));
         filter.push_back(Pair("address", as0xString(address)));
-        filter.push_back(Pair("topics", Array{Value(), as0xString(topic)}));
+        // filter.push_back(Pair("topics", Array{Value(), as0xString(topic)}));
 
         params.push_back(filter);
 
