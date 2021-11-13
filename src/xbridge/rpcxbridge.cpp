@@ -1068,12 +1068,12 @@ UniValue dxMakeOrder(const JSONRPCRequest& request)
     if (!connFrom->isValidAmount(fromAmount)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Invalid maker_size, must be greater than " + connFrom->dustAmount));
+                               "Invalid maker_size, must be greater than " + std::to_string(connFrom->dustAmount)));
     }
     if (!connTo->isValidAmount(toAmount)) 
     {
         return uret(xbridge::makeError(xbridge::INVALID_PARAMETERS, __FUNCTION__,
-                               "Invalid taker_size must be greater than " + connTo->dustAmount));
+                               "Invalid taker_size must be greater than " + std::to_string(connTo->dustAmount)));
     }
 
     // Validate addresses
