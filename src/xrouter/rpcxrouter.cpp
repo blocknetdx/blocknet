@@ -100,9 +100,9 @@ static UniValue xrGetBlockCount(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 2) {
         consensus = request.params[1].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -169,9 +169,9 @@ static UniValue xrGetBlockHash(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 3) {
         consensus = request.params[2].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -287,9 +287,9 @@ static UniValue xrGetBlock(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 3) {
         consensus = request.params[2].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -417,9 +417,9 @@ static UniValue xrGetTransaction(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 3) {
         consensus = request.params[2].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -546,9 +546,9 @@ static UniValue xrDecodeRawTransaction(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 3) {
         consensus = request.params[2].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -673,9 +673,9 @@ static UniValue xrGetBlocks(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 3) {
         consensus = request.params[2].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -818,9 +818,9 @@ static UniValue xrGetTransactions(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 3) {
         consensus = request.params[2].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -879,9 +879,9 @@ static UniValue xrGetTxBloomFilter(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 4) {
         consensus = request.params[3].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -1097,9 +1097,9 @@ static UniValue xrServiceConsensus(const JSONRPCRequest& request)
     const auto & consensus = request.params[0].get_int();
     const auto & service = request.params[1].get_str();
 
-    if (consensus < 1) {
+    if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
         UniValue error(UniValue::VOBJ);
-        error.pushKV("error", "node_count must be an integer >= 1");
+        error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
         error.pushKV("code", xrouter::INVALID_PARAMETERS);
         return error;
     }
@@ -1166,9 +1166,9 @@ static UniValue xrSendTransaction(const JSONRPCRequest& request)
     int consensus{0};
     if (request.params.size() >= 3) {
         consensus = request.params[2].get_int();
-        if (consensus < 1) {
+        if (consensus < 1 || consensus > XROUTER_MAX_CONNECTION_COUNT) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
@@ -1573,7 +1573,7 @@ static UniValue xrConnect(const JSONRPCRequest& request)
         nodeCount = request.params[1].get_int();
         if (nodeCount < 1) {
             UniValue error(UniValue::VOBJ);
-            error.pushKV("error", "node_count must be an integer >= 1");
+            error.pushKV("error", "node_count must be an integer between 1 and " + std::to_string(XROUTER_MAX_CONNECTION_COUNT));
             error.pushKV("code", xrouter::INVALID_PARAMETERS);
             return error;
         }
