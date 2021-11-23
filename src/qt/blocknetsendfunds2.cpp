@@ -174,11 +174,20 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     changeAddrTi->setObjectName("changeAddress");
     changeAddrTi->setFixedWidth(BGU::spi(350));
     changeAddrTi->setPlaceholderText(tr("Enter change address..."));
+    changeLbl = new QLabel();
+    changeLbl->setObjectName("sectionSubtitle");
+    auto *changeAddrLayout = new QHBoxLayout;
+    changeAddrLayout->setSizeConstraint(QLayout::SetMaximumSize);
+    changeAddrLayout->setContentsMargins(QMargins());
+    changeAddrLayout->setSpacing(0);
+    changeAddrLayout->addWidget(changeAddrTi);
+    changeAddrLayout->addSpacing(BGU::spi(28));
+    changeAddrLayout->addWidget(changeLbl);
     changeBoxLayout->addWidget(changeAddrLbl);
     changeBoxLayout->addSpacing(BGU::spi(2));
     changeBoxLayout->addWidget(changeAddrSubtitleLbl);
     changeBoxLayout->addSpacing(BGU::spi(15));
-    changeBoxLayout->addWidget(changeAddrTi);
+    changeBoxLayout->addLayout(changeAddrLayout);
 
     // Coin control options
     auto *ccBox = new QFrame;

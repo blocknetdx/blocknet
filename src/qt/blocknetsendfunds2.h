@@ -77,6 +77,7 @@ private:
     QVBoxLayout *contentLayout;
     QLabel *titleLbl;
     BlocknetLineEdit *changeAddrTi;
+    QLabel *changeLbl;
     QFrame *ccManualBox;
     QFrame *fundList;
     BlocknetFormBtn *continueBtn;
