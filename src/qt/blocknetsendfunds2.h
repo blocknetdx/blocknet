@@ -57,7 +57,7 @@ public:
 
 private Q_SLOTS:
     void onCoinControl();
-    void onChangeAddress();
+    void onChangeAddress(const QString& text);
     void ccAccepted();
     void onSplitChanged();
     void onAmount(QString addr, QString amount);
