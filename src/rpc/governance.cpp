@@ -39,13 +39,13 @@ static UniValue createproposal(const JSONRPCRequest& request)
                 "  \"superblock\": n,                      (numeric) Upcoming Superblock to receive payment. Obtain the next Superblock with \"nextsuperblock\" rpc call.\n"
                 "  \"amount\": n,                          (numeric) Amount of BLOCK being requested in the proposal\n"
                 "  \"address\":\"blocknet address\",       (string) Blocknet payment address\n"
-                "  \"url\":\"https://forum.blocknet.co\",  (string) Url where voters can read more details\n"
+                "  \"url\":\"https://forum.blocknet.org\",  (string) Url where voters can read more details\n"
                 "  \"description\":\"xxxx\"                (string) Brief description. Note, if description is too long the proposal submission will fail\n"
                 "}\n"
                 },
                 RPCExamples{
-                    HelpExampleCli("createproposal", R"("Dev Proposal" 43200 750 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "https://forum.blocknet.co" "Dev proposal for building xyz")")
-                  + HelpExampleRpc("createproposal", R"("Dev Proposal", 43200, 750, "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa", "https://forum.blocknet.co", "Dev proposal for building xyz")")
+                    HelpExampleCli("createproposal", R"("Dev Proposal" 43200 750 "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa" "https://forum.blocknet.org" "Dev proposal for building xyz")")
+                  + HelpExampleRpc("createproposal", R"("Dev Proposal", 43200, 750, "Bdu16u6WPBkDh5f23Zhqo5k8Dp6DS4ffJa", "https://forum.blocknet.org", "Dev proposal for building xyz")")
                 },
             }.ToString());
 
@@ -206,7 +206,7 @@ static UniValue vote(const JSONRPCRequest& request)
                 "  \"superblock\": n,                      (numeric) Upcoming Superblock to receive payment. Obtain the next Superblock with \"nextsuperblock\" rpc call.\n"
                 "  \"amount\": n,                          (numeric) Amount of BLOCK being requested in the proposal\n"
                 "  \"address\":\"blocknet address\",       (string) Blocknet payment address\n"
-                "  \"url\":\"https://forum.blocknet.co\",  (string) Url where voters can read more details\n"
+                "  \"url\":\"https://forum.blocknet.org\",  (string) Url where voters can read more details\n"
                 "  \"description\":\"xxxx\"                (string) Brief description. Note, if description is too long the proposal submission will fail\n"
                 "  \"vote\": \"vote cast\",                (string) Vote that was cast\n"
                 "  \"txids\":[\"...\"],                    (array<txid>) Array of hex strings (tx hashes submitting the votes to the network)\n"
