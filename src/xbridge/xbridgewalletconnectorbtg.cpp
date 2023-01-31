@@ -216,7 +216,7 @@ uint256 SignatureHash(const CScript & scriptCode, const CTransactionPtr & tx,
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
 xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> > & outputs,
-                                           const uint64_t COIN,
+                                           const int64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField);
@@ -231,7 +231,7 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
-                                           const uint64_t COIN,
+                                           const int64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField = false);

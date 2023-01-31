@@ -445,19 +445,19 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string scurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t samount = *static_cast<boost::uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t samount = *static_cast<boost::int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
     // destination
     std::vector<unsigned char> daddr(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
     offset += XBridgePacket::addressSize;
     std::string dcurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t damount = *static_cast<int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
-    uint64_t timestamp = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t timestamp = *static_cast<int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
     std::vector<unsigned char> sblockhash(packet->data()+offset, packet->data()+offset+XBridgePacket::hashSize);
     uint256 blockHash(sblockhash);
@@ -474,8 +474,8 @@ bool Session::Impl::processTransaction(XBridgePacketPtr packet) const
     bool isPartialOrder = *static_cast<uint16_t *>(static_cast<void *>(packet->data()+offset)) == 1;
     offset += sizeof(uint16_t);
 
-    uint64_t minFromAmount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t minFromAmount = *static_cast<int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
     // utxos count
     uint32_t utxoItemsCount = *static_cast<uint32_t *>(static_cast<void *>(packet->data()+offset));
@@ -705,13 +705,13 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
 
     std::string scurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t samount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    int64_t samount = *reinterpret_cast<boost::int64_t *>(packet->data()+offset);
+    offset += sizeof(int64_t);
 
     std::string dcurrency = std::string(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t damount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
-    offset += sizeof(uint64_t);
+    int64_t damount = *reinterpret_cast<boost::int64_t *>(packet->data()+offset);
+    offset += sizeof(int64_t);
 
     auto hubAddress = std::vector<unsigned char>(packet->data()+offset, packet->data()+offset+XBridgePacket::addressSize);
 
@@ -765,7 +765,7 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         }
 
         offset += XBridgePacket::addressSize; // hub address
-        offset += sizeof(uint64_t);           // created time
+        offset += sizeof(int64_t);           // created time
         offset += XBridgePacket::hashSize;    // block hash
 
         bool isPartialOrderAllowed = *reinterpret_cast<boost::uint16_t *>(packet->data()+offset) == 1;
@@ -773,9 +773,9 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
             ptr->allowPartialOrders();
         offset += sizeof(uint16_t);
 
-        uint64_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+        int64_t minFromAmount = *reinterpret_cast<boost::int64_t *>(packet->data()+offset);
         ptr->minFromAmount = minFromAmount;
-        offset += sizeof(uint64_t);
+        offset += sizeof(int64_t);
 
         // update timestamp
         ptr->updateTimestamp();
@@ -804,8 +804,8 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
     ptr->hubAddress   = hubAddress;
     offset += XBridgePacket::addressSize;
 
-    ptr->created      = xbridge::intToTime(*reinterpret_cast<boost::uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    ptr->created      = xbridge::intToTime(*reinterpret_cast<boost::int64_t *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
     ptr->state        = TransactionDescr::trPending;
     ptr->sPubKey      = spubkey;
@@ -819,9 +819,9 @@ bool Session::Impl::processPendingTransaction(XBridgePacketPtr packet) const
         ptr->allowPartialOrders();
     offset += sizeof(uint16_t);
 
-    uint64_t minFromAmount = *reinterpret_cast<boost::uint64_t *>(packet->data()+offset);
+    int64_t minFromAmount = *reinterpret_cast<boost::int64_t *>(packet->data()+offset);
     ptr->minFromAmount = minFromAmount;
-    offset += sizeof(uint64_t);
+    offset += sizeof(int64_t);
 
     xapp.appendTransaction(ptr);
 
@@ -916,8 +916,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string scurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t samount = *static_cast<int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
     uint32_t sourceHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
     offset += sizeof(uint32_t);
     std::vector<unsigned char> sourceHashRaw(packet->data() + offset, packet->data() + offset + 8);
@@ -929,8 +929,8 @@ bool Session::Impl::processTransactionAccepting(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string dcurrency((const char *)packet->data()+offset);
     offset += 8;
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t damount = *static_cast<int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
     uint32_t destinationHeight = *static_cast<uint32_t *>(static_cast<void *>(packet->data() + offset));
     offset += sizeof(uint32_t);
     std::vector<unsigned char> destinationHashRaw(packet->data() + offset, packet->data() + offset + 8);
@@ -1349,10 +1349,10 @@ bool Session::Impl::processTransactionHold(XBridgePacketPtr packet) const
     std::vector<unsigned char> spubkey(packet->pubkey(), packet->pubkey()+XBridgePacket::pubkeySize);
 
     // requested amounts (taker from and to amounts)
-    uint64_t samount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
-    uint64_t damount = *static_cast<uint64_t *>(static_cast<void *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t samount = *static_cast<int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
+    int64_t damount = *static_cast<int64_t *>(static_cast<void *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
     TransactionDescrPtr xtx = xapp.transaction(id);
     if (!xtx)
@@ -1736,16 +1736,16 @@ bool Session::Impl::processTransactionInit(XBridgePacketPtr packet) const
     offset += XBridgePacket::addressSize;
     std::string   fromCurrency(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t      fromAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t      fromAmount(*reinterpret_cast<int64_t *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
     std::vector<unsigned char> to(packet->data()+offset,
                                   packet->data()+offset+XBridgePacket::addressSize);
     offset += XBridgePacket::addressSize;
     std::string   toCurrency(reinterpret_cast<const char *>(packet->data()+offset));
     offset += 8;
-    uint64_t      toAmount(*reinterpret_cast<uint64_t *>(packet->data()+offset));
-    offset += sizeof(uint64_t);
+    int64_t      toAmount(*reinterpret_cast<int64_t *>(packet->data()+offset));
+    offset += sizeof(int64_t);
 
     if(xtx->id           != txid &&
        xtx->from         != from &&
@@ -2458,7 +2458,7 @@ bool Session::Impl::processTransactionCreateB(XBridgePacketPtr packet) const
 
     // check A deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
-        uint64_t p2shAmount{0};
+        int64_t p2shAmount{0};
         bool isGood = false;
         if (!connTo->checkDepositTransaction(binATxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
         {
@@ -2920,7 +2920,7 @@ bool Session::Impl::processTransactionConfirmA(XBridgePacketPtr packet) const
 
     // check B deposit tx and check that counterparty script is valid in counterparty deposit tx
     {
-        uint64_t p2shAmount{0};
+        int64_t p2shAmount{0};
         bool isGood = false;
         if (!connTo->checkDepositTransaction(binTxId, std::string(), checkAmount, p2shAmount, counterPartyVoutN, counterPartyScriptHex, xtx->oOverpayment, isGood))
         {

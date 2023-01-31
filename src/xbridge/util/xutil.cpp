@@ -213,7 +213,7 @@ std::string xBridgeStringValueFromPrice(double price)
     return ss.str();
 }
 
-std::string xBridgeStringValueFromPrice(double price, uint64_t denomination)
+std::string xBridgeStringValueFromPrice(double price, int64_t denomination)
 {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(xBridgeSignificantDigits(denomination)) << price;
@@ -273,16 +273,16 @@ unsigned int xBridgeSignificantDigits(const int64_t amount)
     return n;
 }
 
-uint64_t timeToInt(const boost::posix_time::ptime& time)
+int64_t timeToInt(const boost::posix_time::ptime& time)
 {
     boost::posix_time::ptime start(boost::gregorian::date(1970,1,1));
     boost::posix_time::time_duration timeFromEpoch = time - start;
     boost::int64_t res = timeFromEpoch.total_microseconds();
 
-    return static_cast<uint64_t>(res);
+    return static_cast<int64_t>(res);
 }
 
-boost::posix_time::ptime intToTime(const uint64_t& number)
+boost::posix_time::ptime intToTime(const int64_t& number)
 {
     boost::posix_time::ptime start(boost::gregorian::date(1970,1,1));
     boost::posix_time::ptime res = start + boost::posix_time::microseconds(static_cast<int64_t>(number));

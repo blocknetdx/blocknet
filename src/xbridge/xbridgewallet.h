@@ -176,10 +176,10 @@ public:
     std::string                  scriptPrefix;
     std::string                  secretPrefix;
     uint32_t                     txVersion;
-    uint64_t                     COIN;
-    uint64_t                     minTxFee;
-    uint64_t                     feePerByte;
-    uint64_t                     dustAmount;
+    int64_t                     COIN;
+    int64_t                     minTxFee;
+    int64_t                     feePerByte;
+    int64_t                     dustAmount;
     std::string                  method;
 
     // block time in seconds

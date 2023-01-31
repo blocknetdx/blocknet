@@ -569,9 +569,9 @@ void App::Impl::onSend(const std::vector<unsigned char> & id, const std::vector<
 
     // timestamp
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
-    uint64_t timestampValue = timeToInt(timestamp);
+    int64_t timestampValue = timeToInt(timestamp);
     unsigned char * ptr = reinterpret_cast<unsigned char *>(&timestampValue);
-    msg.insert(msg.end(), ptr, ptr + sizeof(uint64_t));
+    msg.insert(msg.end(), ptr, ptr + sizeof(int64_t));
 
     // body
     msg.insert(msg.end(), message.begin(), message.end());
@@ -982,10 +982,10 @@ void App::updateActiveWallets()
         wp.addrPrefix                  = s.get<std::string>(*i + ".AddressPrefix");
         wp.scriptPrefix                = s.get<std::string>(*i + ".ScriptPrefix");
         wp.secretPrefix                = s.get<std::string>(*i + ".SecretPrefix");
-        wp.COIN                        = s.get<uint64_t>   (*i + ".COIN", 0);
+        wp.COIN                        = s.get<int64_t>   (*i + ".COIN", 0);
         wp.txVersion                   = s.get<uint32_t>   (*i + ".TxVersion", 1);
-        wp.minTxFee                    = s.get<uint64_t>   (*i + ".MinTxFee", 0);
-        wp.feePerByte                  = s.get<uint64_t>   (*i + ".FeePerByte", 0);
+        wp.minTxFee                    = s.get<int64_t>   (*i + ".MinTxFee", 0);
+        wp.feePerByte                  = s.get<int64_t>   (*i + ".FeePerByte", 0);
         wp.method                      = s.get<std::string>(*i + ".CreateTxMethod");
         wp.blockTime                   = s.get<int>        (*i + ".BlockTime", 0);
 //        wp.blockSize                   = s.get<int>        (*i + ".BlockSize", 0);
@@ -1422,7 +1422,7 @@ void App::moveTransactionToHistory(const uint256 & id)
 //******************************************************************************
 xbridge::Error App::repostXBridgeTransaction(const std::string from, const std::string fromCurrency,
         const std::string to, const std::string toCurrency, const CAmount makerAmount, const CAmount takerAmount,
-        const uint64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
+        const int64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos, const uint256 parentid)
 {
     double repostAmount{0};
     for (const auto & utxo : utxos)
@@ -1627,9 +1627,9 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
             }
 
         } else {
-            uint64_t utxoAmount = 0;
-            uint64_t fee1 = 0;
-            uint64_t fee2 = 0;
+            int64_t utxoAmount = 0;
+            int64_t fee1 = 0;
+            int64_t fee2 = 0;
 
             // fee calcs should incorporate partial order splitting (i.e. number of splits * fee for single order)
             auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
@@ -1701,7 +1701,7 @@ xbridge::Error App::sendXBridgeTransaction(const std::string & from,
     }
 
     boost::posix_time::ptime timestamp = boost::posix_time::microsec_clock::universal_time();
-    uint64_t timestampValue = timeToInt(timestamp);
+    int64_t timestampValue = timeToInt(timestamp);
 
     {
         LOCK(cs_main);
@@ -2038,7 +2038,7 @@ bool App::Impl::sendPendingTransaction(const TransactionDescrPtr & ptr)
 //******************************************************************************
 //******************************************************************************
 Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from, const std::string & to,
-                                    const uint64_t fromSize, const uint64_t toSize)
+                                    const int64_t fromSize, const int64_t toSize)
 {
     TransactionDescrPtr ptr;
 
@@ -2215,9 +2215,9 @@ Error App::acceptXBridgeTransaction(const uint256 & id, const std::string & from
 //        for (const auto & utxo : outputs)
 //            std::cout << "    After: " << utxo.txId << " " << utxo.vout << std::endl;
 
-        uint64_t utxoAmount = 0;
-        uint64_t fee1       = 0;
-        uint64_t fee2       = 0;
+        int64_t utxoAmount = 0;
+        int64_t fee1       = 0;
+        int64_t fee2       = 0;
 
         auto minTxFee1 = [&connFrom](const uint32_t & inputs, const uint32_t & outputs) -> double {
             return connFrom->minTxFee1(inputs, outputs);
@@ -2469,7 +2469,7 @@ bool App::isValidAddress(const std::string & address, WalletConnectorPtr & conn)
 
 //******************************************************************************
 //******************************************************************************
-Error App::checkAcceptParams(const std::string fromCurrency, const uint64_t fromAmount) {
+Error App::checkAcceptParams(const std::string fromCurrency, const int64_t fromAmount) {
     return checkAmount(fromCurrency, fromAmount, "");
 }
 
@@ -2477,7 +2477,7 @@ Error App::checkAcceptParams(const std::string fromCurrency, const uint64_t from
 //******************************************************************************
 Error App::checkCreateParams(const std::string & fromCurrency,
                              const std::string & toCurrency,
-                             const uint64_t    & fromAmount,
+                             const int64_t    & fromAmount,
                              const std::string & /*fromAddress*/)
 {
     // TODO need refactoring
@@ -2492,7 +2492,7 @@ Error App::checkCreateParams(const std::string & fromCurrency,
 //******************************************************************************
 //******************************************************************************
 Error App::checkAmount(const std::string & currency,
-                       const uint64_t    & amount,
+                       const int64_t    & amount,
                        const std::string & address)
 {
     // check amount
@@ -2905,9 +2905,9 @@ T random_element(T begin, T end)
 bool App::selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
                       const std::function<double(uint32_t, uint32_t)> &minTxFee1,
                       const std::function<double(uint32_t, uint32_t)> &minTxFee2,
-                      const uint64_t &requiredAmount, const int64_t &coinDenomination,
+                      const int64_t &requiredAmount, const int64_t &coinDenomination,
                       std::vector<wallet::UtxoEntry> &outputsForUse,
-                      uint64_t &utxoAmount, uint64_t &fee1, uint64_t &fee2) const
+                      int64_t &utxoAmount, int64_t &fee1, int64_t &fee2) const
 {
     auto feeAmount = [&minTxFee1,&minTxFee2](const double amt, const uint32_t inputs, const uint32_t outputs) -> double {
         return amt + minTxFee1(inputs, outputs) + minTxFee2(1, 1);

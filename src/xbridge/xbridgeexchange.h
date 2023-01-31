@@ -125,17 +125,17 @@ public:
     bool createTransaction(const uint256                        & id,
                            const std::vector<unsigned char>     & sourceAddr,
                            const std::string                    & sourceCurrency,
-                           const uint64_t                       & sourceAmount,
+                           const int64_t                       & sourceAmount,
                            const std::vector<unsigned char>     & destAddr,
                            const std::string                    & destCurrency,
-                           const uint64_t                       & destAmount,
-                           const uint64_t                       & timestamp,
+                           const int64_t                       & destAmount,
+                           const int64_t                       & timestamp,
                            const std::vector<unsigned char>     & mpubkey,
                            const std::vector<wallet::UtxoEntry> & items,
                            uint256                              & blockHash,
                            bool                                 & isCreated,
                            bool                                   isPartialOrder,
-                           uint64_t                               minFromAmount);
+                           int64_t                               minFromAmount);
 
     /**
      * @brief acceptTransaction - accept xbridge transaction
@@ -154,10 +154,10 @@ public:
     bool acceptTransaction(const uint256                        & id,
                            const std::vector<unsigned char>     & sourceAddr,
                            const std::string                    & sourceCurrency,
-                           const uint64_t                       & sourceAmount,
+                           const int64_t                       & sourceAmount,
                            const std::vector<unsigned char>     & destAddr,
                            const std::string                    & destCurrency,
-                           const uint64_t                       & destAmount,
+                           const int64_t                       & destAmount,
                            const std::vector<unsigned char>     & mpubkey,
                            const std::vector<wallet::UtxoEntry> & items,
                            bool                                   isPartialOrderAllowed);

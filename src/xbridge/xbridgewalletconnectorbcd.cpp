@@ -405,7 +405,7 @@ BCDTransaction createTransaction() {
 BCDTransaction createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
-                                           const uint64_t COIN,
+                                           const int64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const uint256 preBlockHash)

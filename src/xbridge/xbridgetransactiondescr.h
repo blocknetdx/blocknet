@@ -24,8 +24,8 @@
 namespace xbridge
 {
 
-boost::uint64_t timeToInt(const boost::posix_time::ptime &time);
-boost::posix_time::ptime intToTime(const uint64_t& number);
+boost::int64_t timeToInt(const boost::posix_time::ptime &time);
+boost::posix_time::ptime intToTime(const int64_t& number);
 
 //******************************************************************************
 //******************************************************************************
@@ -93,8 +93,8 @@ struct TransactionDescr
             READWRITE(reasonT);
             state = static_cast<State>(stateT);
             reason = static_cast<TxCancelReason>(stateT);
-            uint64_t createdT;
-            uint64_t txtimeT;
+            int64_t createdT;
+            int64_t txtimeT;
             READWRITE(createdT);
             READWRITE(txtimeT);
             created = intToTime(createdT);
@@ -102,8 +102,8 @@ struct TransactionDescr
         } else {
             READWRITE(static_cast<int>(state));
             READWRITE(static_cast<int>(reason));
-            uint64_t createdT = timeToInt(created);
-            uint64_t txtimeT = timeToInt(txtime);
+            int64_t createdT = timeToInt(created);
+            int64_t txtimeT = timeToInt(txtime);
             READWRITE(createdT);
             READWRITE(txtimeT);
         }
@@ -234,17 +234,17 @@ struct TransactionDescr
 
     std::vector<unsigned char> from;
     std::string                fromCurrency;
-    uint64_t                   fromAmount;
+    int64_t                   fromAmount;
     std::string                fromAddr;
     std::vector<unsigned char> to;
     std::string                toCurrency;
-    uint64_t                   toAmount;
+    int64_t                   toAmount;
     std::string                toAddr;
 
     std::string                origFromCurrency;
-    uint64_t                   origFromAmount{0};
+    int64_t                   origFromAmount{0};
     std::string                origToCurrency;
-    uint64_t                   origToAmount{0};
+    int64_t                   origToAmount{0};
 
     uint32_t                   lockTime;
     uint32_t                   opponentLockTime;
@@ -269,7 +269,7 @@ struct TransactionDescr
     // counterparty info
     std::string                oBinTxId;
     uint32_t                   oBinTxVout{0};
-    uint64_t                   oBinTxP2SHAmount{0};
+    int64_t                   oBinTxP2SHAmount{0};
     std::vector<unsigned char> oHashedSecret;
     std::string                oPayTxId;
     uint32_t                   oPayTxTries{0};
@@ -318,7 +318,7 @@ struct TransactionDescr
     // repost partial order after completion
     bool     repostOrder{false};
     // partial order amounts
-    uint64_t minFromAmount{0};
+    int64_t minFromAmount{0};
 
     // Track if tx is historical tx
     bool historical{false};

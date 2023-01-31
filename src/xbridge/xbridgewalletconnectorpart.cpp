@@ -84,7 +84,7 @@ uint256 GetOutputsHash(const T& txTo)
 inline void SetAmount(std::vector<uint8_t> &v, int64_t amount)
 {
     v.resize(8);
-    amount = (int64_t) htole64((uint64_t)amount);
+    amount = (int64_t) htole64((int64_t)amount);
     memcpy(v.data(), &amount, 8);
 }
 
@@ -314,7 +314,7 @@ XParticlTransaction createTransaction(const bool txWithTimeField)
 XParticlTransaction createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
-                                           const uint64_t COIN,
+                                           const int64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField)

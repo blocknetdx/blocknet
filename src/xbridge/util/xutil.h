@@ -74,8 +74,8 @@ namespace xbridge
      */
     double priceBid(const xbridge::TransactionDescrPtr ptr);
 
-    boost::uint64_t timeToInt(const boost::posix_time::ptime &time);
-    boost::posix_time::ptime intToTime(const uint64_t& number);
+    boost::int64_t timeToInt(const boost::posix_time::ptime &time);
+    boost::posix_time::ptime intToTime(const int64_t& number);
 
     constexpr double xBridgeMaxPriceDeviation = 1.0 / 100000000.0;
     constexpr int xBridgePartialOrderMaxUtxos = 10;
@@ -83,7 +83,7 @@ namespace xbridge
     CAmount xBridgeIntFromReal(double val);
     CAmount xBridgeAmountFromReal(double val);
     std::string xBridgeStringValueFromPrice(double price);
-    std::string xBridgeStringValueFromPrice(double price, uint64_t denomination);
+    std::string xBridgeStringValueFromPrice(double price, int64_t denomination);
     std::string xBridgeStringValueFromAmount(CAmount amount);
 
     /**

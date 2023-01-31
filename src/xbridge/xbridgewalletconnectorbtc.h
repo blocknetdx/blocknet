@@ -251,7 +251,7 @@ public:
     bool checkDepositTransaction(const std::string & depositTxId,
                                  const std::string & /*destination*/,
                                  double & amount,
-                                 uint64_t & p2shAmount,
+                                 int64_t & p2shAmount,
                                  uint32_t & depositTxVout,
                                  const std::string & expectedScript,
                                  double & excessAmount,

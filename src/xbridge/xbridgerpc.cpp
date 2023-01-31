@@ -390,7 +390,7 @@ bool createRawTransaction(const std::string & rpcuser,
         // locktime
         if (lockTime > 0)
         {
-            params.push_back(uint64_t(lockTime));
+            params.push_back(int64_t(lockTime));
         }
 
         Object reply = xbridge::CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "createrawtransaction", params);
@@ -979,7 +979,7 @@ bool getTransaction(const std::string & rpcuser,
 //*****************************************************************************
 bool eth_gasPrice(const std::string & rpcip,
                   const std::string & rpcport,
-                  uint64_t & gasPrice)
+                  int64_t & gasPrice)
 {
     try
     {
@@ -1084,7 +1084,7 @@ bool eth_accounts(const std::string   & rpcip,
 bool eth_getBalance(const std::string & rpcip,
                     const std::string & rpcport,
                     const std::string & account,
-                    uint64_t & amount)
+                    int64_t & amount)
 {
     try
     {
@@ -1142,8 +1142,8 @@ bool eth_sendTransaction(const std::string & rpcip,
                          const std::string & rpcport,
                          const std::string & from,
                          const std::string & to,
-                         const uint64_t & amount,
-                         const uint64_t & /*fee*/)
+                         const int64_t & amount,
+                         const int64_t & /*fee*/)
 {
     try
     {

@@ -965,7 +965,7 @@ bool createRawTransaction(const std::string & rpcuser,
         // locktime
         if (lockTime > 0)
         {
-            params.push_back(uint64_t(lockTime));
+            params.push_back(int64_t(lockTime));
         }
 
         Object reply = CallRPC(rpcuser, rpcpasswd, rpcip, rpcport, "createrawtransaction", params);
@@ -1948,7 +1948,7 @@ std::string BtcWalletConnector<CryptoProvider>::scriptIdToString(const std::vect
 template <class CryptoProvider>
 double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const
 {
-    uint64_t fee = (192*inputCount + 34*outputCount) * feePerByte;
+    int64_t fee = (192*inputCount + 34*outputCount) * feePerByte;
     if (fee < minTxFee)
     {
         fee = minTxFee;
@@ -1963,7 +1963,7 @@ double BtcWalletConnector<CryptoProvider>::minTxFee1(const uint32_t inputCount, 
 template <class CryptoProvider>
 double BtcWalletConnector<CryptoProvider>::minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const
 {
-    uint64_t fee = (192*inputCount + 34*outputCount) * feePerByte;
+    int64_t fee = (192*inputCount + 34*outputCount) * feePerByte;
     if (fee < minTxFee)
     {
         fee = minTxFee;
@@ -1981,7 +1981,7 @@ template <class CryptoProvider>
 bool BtcWalletConnector<CryptoProvider>::checkDepositTransaction(const std::string & depositTxId,
                                                                  const std::string & /*destination*/,
                                                                  double & amount,
-                                                                 uint64_t & p2shAmount,
+                                                                 int64_t & p2shAmount,
                                                                  uint32_t & depositTxVout,
                                                                  const std::string & expectedScript,
                                                                  double & excessAmount,
@@ -2425,7 +2425,7 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField)
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
-                                           const uint64_t COIN,
+                                           const int64_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField)

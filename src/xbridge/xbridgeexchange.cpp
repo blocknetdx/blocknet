@@ -121,7 +121,7 @@ bool Exchange::loadWallets(std::set<std::string> & wallets)
         std::string port       = s.get<std::string>(*i + ".Port");
         std::string user       = s.get<std::string>(*i + ".Username");
         std::string passwd     = s.get<std::string>(*i + ".Password");
-        uint64_t    minAmount  = s.get<uint64_t>(*i + ".MinimumAmount", 0);
+        int64_t    minAmount  = s.get<int64_t>(*i + ".MinimumAmount", 0);
         uint32_t    txVersion  = s.get<uint32_t>(*i + ".TxVersion", 1);
         std::string jsonver    = s.get<std::string>(*i + ".JSONVersion", "");
         std::string contenttype = s.get<std::string>(*i + ".ContentType", "");
@@ -300,17 +300,17 @@ bool Exchange::getUtxoItems(const uint256 & txid, std::vector<wallet::UtxoEntry>
 bool Exchange::createTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & sourceAddr,
                                  const std::string                    & sourceCurrency,
-                                 const uint64_t                       & sourceAmount,
+                                 const int64_t                       & sourceAmount,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
-                                 const uint64_t                       & destAmount,
-                                 const uint64_t                       & timestamp,
+                                 const int64_t                       & destAmount,
+                                 const int64_t                       & timestamp,
                                  const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items,
                                  uint256                              & blockHash,
                                  bool                                 & isCreated,
                                  const bool                             isPartialOrder = false,
-                                 const uint64_t                         minFromAmount = 0)
+                                 const int64_t                         minFromAmount = 0)
 {
     DEBUG_TRACE();
 
@@ -416,10 +416,10 @@ bool Exchange::createTransaction(const uint256                        & txid,
 bool Exchange::acceptTransaction(const uint256                        & txid,
                                  const std::vector<unsigned char>     & sourceAddr,
                                  const std::string                    & sourceCurrency,
-                                 const uint64_t                       & sourceAmount,
+                                 const int64_t                       & sourceAmount,
                                  const std::vector<unsigned char>     & destAddr,
                                  const std::string                    & destCurrency,
-                                 const uint64_t                       & destAmount,
+                                 const int64_t                       & destAmount,
                                  const std::vector<unsigned char>     & mpubkey,
                                  const std::vector<wallet::UtxoEntry> & items,
                                  const bool                             isPartialOrderAllowed = false)
