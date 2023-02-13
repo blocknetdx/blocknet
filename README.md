@@ -3,29 +3,29 @@ Blocknet
 
 [![Build Status](https://travis-ci.org/blocknetdx/blocknet.svg?branch=4.0.0)](https://travis-ci.org/blocknetdx/blocknet)
 
-https://blocknet.co
+https://blocknet.org
 
 Welcome to the Blocknet repository. This repo is for the Blocknet Protocol, a 2nd layer blockchain interoperability protocol that enables communication, interaction, and exchange between different blockchains. This allows for the development of multi-chain applications and blockchain microservices, creating exponentially more capabilities and possibilities for the blockchain ecosystem.
 
 [Contributors are welcome!](https://github.com/blocknetdx/blocknet/blob/master/CONTRIBUTING.md)
 
-[Website](https://blocknet.co) | [API](https://api.blocknet.co) | [Documentation](https://docs.blocknet.co) | [Discord](https://discord.gg/2e6s7H8)
+[Website](https://blocknet.org) | [API](https://api.blocknet.org) | [Documentation](https://docs.blocknet.org) | [Discord](https://discord.gg/2e6s7H8)
 -------------|-------------|-------------|-------------
 
 Blocknet
 -------
 
-Started in 2014, [Blocknet](https://docs.blocknet.co/project/introduction) is a decentralized, community-governed, self-funded, open-source project that serves as a connector between different blockchains, markets, and communities. 
+Started in 2014, [Blocknet](https://docs.blocknet.org/project/introduction) is a decentralized, community-governed, self-funded, open-source project that serves as a connector between different blockchains, markets, and communities. 
 
 The Blocknet Protocol
 -------
 
-The Blocknet Protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network ([Service Nodes](https://docs.blocknet.co/service-nodes/introduction)) to host the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
+The Blocknet Protocol enables decentralized communication and exchange between different blockchains in a permissionless and trustless manner through the use of the TCP/IP networking layer for communication, P2P atomic swaps using BIP65 for exchange, and a DHT overlay network ([Service Nodes](https://docs.blocknet.org/service-nodes/introduction)) to host the full nodes of compatible blockchains, host microservices, audit interactions, and perform anti-spam and anti-DOS measures for the network. 
 
 Block DX
 -------
 
-[Block DX](https://docs.blocknet.co/blockdx/introduction) is a completely decentralized and trustless exchange built on the Blocknet Protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/block-dx]
+[Block DX](https://docs.blocknet.org/blockdx/introduction) is a completely decentralized and trustless exchange built on the Blocknet Protocol that mimics a centralized exchange experience and enables traders to conduct exchanges directly from the wallets of the coins being traded. View Repo: [https://github.com/BlocknetDX/block-dx]
 
 Blocknet Specifications:
 -------
@@ -43,7 +43,7 @@ Difficulty              | Adjusted per block
 Staking Requirement     | No minimum
 Service Node Requirement| 5000 BLOCK (SPV)
 Circulation             | [View on explorer](https://chainz.cryptoid.info/block/)
-Max Supply              | No maximum supply (PoS), but there is a maximum to [inflation](https://docs.blocknet.co/blockchain/introduction/#inflation)
+Max Supply              | No maximum supply (PoS), but there is a maximum to [inflation](https://docs.blocknet.org/blockchain/introduction/#inflation)
 
 
 Decentralized Atomic Swap Algo Summary
