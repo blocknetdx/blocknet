@@ -9,7 +9,7 @@ Welcome to the Blocknet repository. This repo is for the Blocknet Protocol, a 2n
 
 [Contributors are welcome!](https://github.com/blocknetdx/blocknet/blob/master/CONTRIBUTING.md)
 
-[Website](https://blocknet.org) | [API](https://api.blocknet.org) | [Documentation](https://docs.blocknet.org) | [Discord](https://discord.gg/2e6s7H8)
+[Website](https://blocknet.org) | [API](https://api.blocknet.org) | [Documentation](https://docs.blocknet.org) | [Discord](https://discord.gg/mZ6pTneMx3)
 -------------|-------------|-------------|-------------
 
 Blocknet
