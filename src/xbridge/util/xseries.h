@@ -73,8 +73,8 @@ public:
     xQuery(const std::string& fromSymbol,
            const std::string& toSymbol,
            int g,
-           int64_t start_time,
-           int64_t end_time,
+           int256_t start_time,
+           int256_t end_time,
            WithTxids with_txids,
            WithInverse with_inverse,
            IntervalLimit limit,
@@ -128,14 +128,14 @@ private:
         constexpr auto s = supported_seconds();
         return s.end() != std::find(s.begin(), s.end(), td.total_seconds());
     }
-    static inline boost::posix_time::ptime get_start_time(int64_t start_secs, boost::posix_time::time_duration period) {
-        const int64_t psec = period.total_seconds();
+    static inline boost::posix_time::ptime get_start_time(int256_t start_secs, boost::posix_time::time_duration period) {
+        const int256_t psec = period.total_seconds();
         if (start_secs < 0 || psec < 1)
             return boost::posix_time::from_time_t(0);
         return boost::posix_time::from_time_t( (start_secs / psec) * psec );
     }
-    static inline boost::posix_time::ptime get_end_time(int64_t end_secs, boost::posix_time::time_duration period) {
-        const int64_t psec = period.total_seconds();
+    static inline boost::posix_time::ptime get_end_time(int256_t end_secs, boost::posix_time::time_duration period) {
+        const int256_t psec = period.total_seconds();
         if (end_secs < 0 || psec < 1)
             return boost::posix_time::from_time_t(0);
         return boost::posix_time::from_time_t(((end_secs + psec - 1) / psec) * psec);

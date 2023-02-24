@@ -81,10 +81,10 @@ uint256 GetOutputsHash(const T& txTo)
 }
 
 // Reference: https://github.com/particl/particl-core/blob/d45e8ecf75646142c2d8525ccc18eaa4f73673e1/src/serialize.h#L1177
-inline void SetAmount(std::vector<uint8_t> &v, int64_t amount)
+inline void SetAmount(std::vector<uint8_t> &v, int256_t amount)
 {
     v.resize(8);
-    amount = (int64_t) htole64((int64_t)amount);
+    amount = (int256_t) htole64((int256_t)amount);
     memcpy(v.data(), &amount, 8);
 }
 
@@ -314,7 +314,7 @@ XParticlTransaction createTransaction(const bool txWithTimeField)
 XParticlTransaction createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
-                                           const int64_t COIN,
+                                           const int256_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField)

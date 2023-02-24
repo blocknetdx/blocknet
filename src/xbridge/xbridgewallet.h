@@ -176,10 +176,10 @@ public:
     std::string                  scriptPrefix;
     std::string                  secretPrefix;
     uint32_t                     txVersion;
-    int64_t                     COIN;
-    int64_t                     minTxFee;
-    int64_t                     feePerByte;
-    int64_t                     dustAmount;
+    int256_t                     COIN;
+    int256_t                     minTxFee;
+    int256_t                     feePerByte;
+    int256_t                     dustAmount;
     std::string                  method;
 
     // block time in seconds
@@ -208,7 +208,7 @@ public:
     std::string                  contenttype;
 
     // median time
-    int64_t                      mediantime{0};
+    int256_t                      mediantime{0};
     // cash address prefix
     std::string                  cashAddrPrefix;
 };

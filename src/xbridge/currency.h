@@ -60,8 +60,8 @@ namespace ccy {
         }
     };
 
-    using Amount = int64_t;
-    using Basis  = int64_t;
+    using Amount = int256_t;
+    using Basis  = int256_t;
 
     template<typename T> constexpr T pow10(size_t x) {
         return x ? 10*pow10<T>(x-1) : 1;

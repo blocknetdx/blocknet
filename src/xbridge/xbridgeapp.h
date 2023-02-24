@@ -299,7 +299,7 @@ public:
      * @return xbridge::SUCCESS if success, else error code
      */
     Error repostXBridgeTransaction(std::string from, std::string fromCurrency, std::string to, std::string toCurrency,
-            CAmount makerAmount, CAmount takerAmount, int64_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos,
+            CAmount makerAmount, CAmount takerAmount, int256_t minFromAmount, const std::vector<wallet::UtxoEntry> utxos,
             const uint256 parentid=uint256());
 
     // TODO make protected
@@ -320,7 +320,7 @@ public:
      * @return xbridge::SUCCESS, if transaction success accepted
      */
     Error acceptXBridgeTransaction(const uint256 & id, const std::string & from, const std::string & to,
-                                   int64_t fromSize, int64_t toSize);
+                                   int256_t fromSize, int256_t toSize);
 
     /**
      * @brief cancelXBridgeTransaction - cancel xbridge transaction
@@ -349,7 +349,7 @@ public:
      * @param fromAmount - amount to be taken
      * @return xbridge::SUCCESS, if all parameters valid
      */
-    xbridge::Error checkAcceptParams(std::string fromCurrency, int64_t fromAmount);
+    xbridge::Error checkAcceptParams(std::string fromCurrency, int256_t fromAmount);
 
     /**
      * @brief checkCreateParams - checks parameter needs to success created transaction
@@ -359,7 +359,7 @@ public:
      * @param fromAddress - address to pull utxo's from
      * @return xbridge::SUCCES, if all parameters valid
      */
-    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const int64_t &fromAmount, const std::string &fromAddress);
+    xbridge::Error checkCreateParams(const std::string &fromCurrency, const std::string &toCurrency, const int256_t &fromAmount, const std::string &fromAddress);
 
     /**
      * @brief checkAmount - checks wallet balance
@@ -369,7 +369,7 @@ public:
      * @return xbridge::SUCCES, if  the session currency is open and
      * on account has sufficient funds for operations
      */
-    xbridge::Error checkAmount(const std::string &currency, const int64_t &amount, const std::string &address = "");
+    xbridge::Error checkAmount(const std::string &currency, const int256_t &amount, const std::string &address = "");
 
     /**
      * Store list of orders to watch for counterparty spent deposit.
@@ -646,7 +646,7 @@ public:
      * @param minTxFee1 - function calculating fee1
      * @param minTxFee2 - function calculating fee2
      * @param requiredAmount - amount of required coins
-     * @param coinDenomination - int64_t coin denomination
+     * @param coinDenomination - int256_t coin denomination
      * @param outputsForUse - selected outputs for use
      * @param utxoAmount - total utxoAmount of selected outputs
      * @param fee1 - min tx fee for outputs
@@ -655,9 +655,9 @@ public:
     bool selectUtxos(const std::string &addr, const std::vector<wallet::UtxoEntry> &outputs,
             const std::function<double(uint32_t, uint32_t)> &minTxFee1,
             const std::function<double(uint32_t, uint32_t)> &minTxFee2,
-            const int64_t &requiredAmount, const int64_t &coinDenomination,
+            const int256_t &requiredAmount, const int256_t &coinDenomination,
             std::vector<wallet::UtxoEntry> &outputsForUse,
-            int64_t &utxoAmount, int64_t &fee1, int64_t &fee2) const;
+            int256_t &utxoAmount, int256_t &fee1, int256_t &fee2) const;
 
     /**
      * selectPartialUtxos - Selects utxos for use with the partial order.

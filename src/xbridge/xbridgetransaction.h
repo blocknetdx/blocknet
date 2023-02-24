@@ -73,15 +73,15 @@ public:
     Transaction(const uint256                    & id,
                 const std::vector<unsigned char> & sourceAddr,
                 const std::string                & sourceCurrency,
-                const int64_t                   & sourceAmount,
+                const int256_t                   & sourceAmount,
                 const std::vector<unsigned char> & destAddr,
                 const std::string                & destCurrency,
-                const int64_t                   & destAmount,
-                const int64_t                   & created,
+                const int256_t                   & destAmount,
+                const int256_t                   & created,
                 const uint256                    & blockHash,
                 const std::vector<unsigned char> & mpubkey,
                 bool                               partialAllowed,
-                int64_t                           minFromAmount);
+                int256_t                           minFromAmount);
 
     ~Transaction();
 
@@ -203,7 +203,7 @@ public:
     std::vector<unsigned char> a_address() const;
     std::vector<unsigned char> a_destination() const;
     std::string                a_currency() const;
-    int64_t                   a_amount() const;
+    int256_t                   a_amount() const;
     std::string                a_payTx() const;
     std::string                a_refTx() const { LOCK(m_lock); return m_a.refTx(); }
     std::string                a_bintxid() const;
@@ -211,7 +211,7 @@ public:
     std::string                a_payTxId() const;
     bool                       a_refunded() const { LOCK(m_lock); return m_a_refunded; }
     const std::vector<wallet::UtxoEntry> a_utxos() const { LOCK(m_lock); return m_a.utxos(); }
-    int64_t                   a_initial_amount() const { LOCK(m_lock); return m_sourceInitialAmount; }
+    int256_t                   a_initial_amount() const { LOCK(m_lock); return m_sourceInitialAmount; }
 
     std::vector<unsigned char> a_pk1() const;
 
@@ -219,7 +219,7 @@ public:
     std::vector<unsigned char> b_address() const;
     std::vector<unsigned char> b_destination() const;
     std::string                b_currency() const;
-    int64_t                   b_amount() const;
+    int256_t                   b_amount() const;
     std::string                b_payTx() const;
     std::string                b_refTx() const { LOCK(m_lock); return m_b.refTx(); }
     std::string                b_bintxid() const;
@@ -227,9 +227,9 @@ public:
     std::string                b_payTxId() const;
     bool                       b_refunded() const { LOCK(m_lock); return m_b_refunded; }
     const std::vector<wallet::UtxoEntry> b_utxos() const { LOCK(m_lock); return m_b.utxos(); }
-    int64_t                   b_initial_amount() const { LOCK(m_lock); return m_destInitialAmount; }
+    int256_t                   b_initial_amount() const { LOCK(m_lock); return m_destInitialAmount; }
 
-    int64_t                   min_partial_amount() const { LOCK(m_lock); return m_minPartialAmount; }
+    int256_t                   min_partial_amount() const { LOCK(m_lock); return m_minPartialAmount; }
 
     std::vector<unsigned char> b_pk1() const;
 
@@ -269,7 +269,7 @@ public:
      * @param takerPartialSource
      * @param takerPartialDest
      */
-    void joinPartialAmounts(const int64_t takerPartialSource, const int64_t takerPartialDest) {
+    void joinPartialAmounts(const int256_t takerPartialSource, const int256_t takerPartialDest) {
         LOCK(m_lock);
         m_sourceAmount = takerPartialDest; // maker matches taker's size
         m_destAmount = takerPartialSource; // maker matches taker's size
@@ -310,12 +310,12 @@ private:
     std::string                m_sourceCurrency;
     std::string                m_destCurrency;
 
-    int64_t                   m_sourceAmount;
-    int64_t                   m_destAmount;
-    int64_t                   m_sourceInitialAmount;
-    int64_t                   m_destInitialAmount;
+    int256_t                   m_sourceAmount;
+    int256_t                   m_destAmount;
+    int256_t                   m_sourceInitialAmount;
+    int256_t                   m_destInitialAmount;
 
-    int64_t                   m_minPartialAmount;
+    int256_t                   m_minPartialAmount;
 
     std::string                m_bintxid1;
     std::string                m_bintxid2;

@@ -290,7 +290,7 @@ uint256 SignatureHash(const CScript &scriptCode, const CTransactionPtr & tx,
 xbridge::CTransactionPtr createTransaction(const bool txWithTimeField);
 xbridge::CTransactionPtr createTransaction(const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> > & outputs,
-                                           const int64_t COIN,
+                                           const int256_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField);
@@ -364,7 +364,7 @@ xbridge::CTransactionPtr createTransaction(const bool txWithTimeField = false);
 xbridge::CTransactionPtr createTransaction(const WalletConnector & conn,
                                            const std::vector<XTxIn> & inputs,
                                            const std::vector<std::pair<std::string, double> >  & outputs,
-                                           const int64_t COIN,
+                                           const int256_t COIN,
                                            const uint32_t txversion,
                                            const uint32_t lockTime,
                                            const bool txWithTimeField = false);
@@ -494,7 +494,7 @@ bool BchWalletConnector::createPaymentTransaction(const std::vector<XTxIn> & inp
 }
 
 // https://github.com/Bitcoin-ABC/bitcoin-abc/blob/019603ed8d7227ce2d813d5c8cf6f46015349a82/src/chainparams.cpp#L177
-bool BchWalletConnector::replayProtectionEnabled(int64_t medianBlockTime) {
+bool BchWalletConnector::replayProtectionEnabled(int256_t medianBlockTime) {
     return medianBlockTime >= 1605441600;
 }
 

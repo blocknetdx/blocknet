@@ -85,8 +85,8 @@ namespace {
         return records;
     }
 
-    boost::posix_time::ptime get_end_time(int64_t end_secs, boost::posix_time::time_duration cache_granularity) {
-        const int64_t psec = cache_granularity.total_seconds();
+    boost::posix_time::ptime get_end_time(int256_t end_secs, boost::posix_time::time_duration cache_granularity) {
+        const int256_t psec = cache_granularity.total_seconds();
         if (end_secs < 0 || psec < 1)
             return boost::posix_time::from_time_t(0);
         return boost::posix_time::from_time_t(((end_secs + psec - 1) / psec) * psec);

@@ -50,7 +50,7 @@ public:
                                   std::string & rawTx) override;
 
 protected:
-    bool replayProtectionEnabled(int64_t medianBlockTime);
+    bool replayProtectionEnabled(int256_t medianBlockTime);
     bool checkReplayProtectionEnabled();
 
 protected:

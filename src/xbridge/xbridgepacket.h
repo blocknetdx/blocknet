@@ -442,7 +442,7 @@ public:
         __oldSizeField() = sizeField()+__headerDifference;
     }
 
-    void append(const int64_t data)
+    void append(const int256_t data)
     {
         m_body.reserve(m_body.size() + sizeof(data));
         unsigned char * ptr = (unsigned char *)&data;

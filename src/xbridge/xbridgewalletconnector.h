@@ -44,7 +44,7 @@ struct WalletInfo
 {
     double   relayFee;
     uint32_t blocks;
-    int64_t mediantime;
+    int256_t mediantime;
     uint256 bestblockhash;
 
     WalletInfo()
@@ -133,7 +133,7 @@ public:
     virtual bool checkDepositTransaction(const std::string & depositTxId,
                                          const std::string & /*destination*/,
                                          double & amount,
-                                         int64_t & p2shAmount,
+                                         int256_t & p2shAmount,
                                          uint32_t & depositTxVout,
                                          const std::string & expectedScript,
                                          double & excessAmount,

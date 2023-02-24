@@ -46,15 +46,15 @@ Transaction::Transaction()
 Transaction::Transaction(const uint256                    & id,
                          const std::vector<unsigned char> & sourceAddr,
                          const std::string                & sourceCurrency,
-                         const int64_t                   & sourceAmount,
+                         const int256_t                   & sourceAmount,
                          const std::vector<unsigned char> & destAddr,
                          const std::string                & destCurrency,
-                         const int64_t                   & destAmount,
-                         const int64_t                   & created,
+                         const int256_t                   & destAmount,
+                         const int256_t                   & created,
                          const uint256                    & blockHash,
                          const std::vector<unsigned char> & mpubkey,
                          const bool                         partialAllowed = false,
-                         const int64_t                     minFromAmount = 0)
+                         const int256_t                     minFromAmount = 0)
     : m_id(id)
     , m_created(xbridge::intToTime(created))
     , m_last(boost::posix_time::microsec_clock::universal_time())
@@ -370,7 +370,7 @@ std::string Transaction::a_currency() const
 
 //*****************************************************************************
 //*****************************************************************************
-int64_t Transaction::a_amount() const
+int256_t Transaction::a_amount() const
 {
     LOCK(m_lock);
     return m_sourceAmount;
@@ -440,7 +440,7 @@ std::string Transaction::b_currency() const
 
 //*****************************************************************************
 //*****************************************************************************
-int64_t Transaction::b_amount() const
+int256_t Transaction::b_amount() const
 {
     LOCK(m_lock);
     return m_destAmount;

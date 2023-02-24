@@ -1696,7 +1696,7 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
                     const auto bidPrice = xbridge::priceBid(tr);
                     bids.emplace_back(Array{xbridge::xBridgeStringValueFromPrice(bidPrice),
                                             xbridge::xBridgeStringValueFromAmount(tr->toAmount),
-                                            static_cast<int64_t>(bidsCount)});
+                                            static_cast<int256_t>(bidsCount)});
                 }
             }
 
@@ -1745,7 +1745,7 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
                     const auto askPrice = xbridge::price(tr);
                     asks.emplace_back(Array{xbridge::xBridgeStringValueFromPrice(askPrice),
                                             xbridge::xBridgeStringValueFromAmount(tr->fromAmount),
-                                            static_cast<int64_t>(asksCount)});
+                                            static_cast<int256_t>(asksCount)});
                 }
             }
 
@@ -1789,7 +1789,7 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
                 }
                 bid.emplace_back(xbridge::xBridgeStringValueFromPrice(bidPrice));
                 bid.emplace_back(xbridge::xBridgeStringValueFromAmount(bidSize));
-                bid.emplace_back(static_cast<int64_t>(bidsCount));
+                bid.emplace_back(static_cast<int256_t>(bidsCount));
                 bids.emplace_back(bid);
             }
 
@@ -1824,7 +1824,7 @@ UniValue dxGetOrderBook(const JSONRPCRequest& request)
                 }
                 ask.emplace_back(xbridge::xBridgeStringValueFromPrice(askPrice));
                 ask.emplace_back(xbridge::xBridgeStringValueFromAmount(askSize));
-                ask.emplace_back(static_cast<int64_t>(asksCount));
+                ask.emplace_back(static_cast<int256_t>(asksCount));
                 asks.emplace_back(ask);
             }
 
@@ -2432,7 +2432,7 @@ UniValue dxPartialOrderChainDetails(const JSONRPCRequest& request) {
     const auto takerOrigSize = xbridge::xBridgeStringValueFromAmount(firstOrder->origToAmount);
     const auto firstOrderTime = xbridge::iso8601(firstOrder->created);
     const auto lastOrderTime = xbridge::iso8601(lastOrder->txtime);
-    int64_t totalSent{0}, totalReceived{0}, totalNotSent{0}, totalNotReceived{0};
+    int256_t totalSent{0}, totalReceived{0}, totalNotSent{0}, totalNotReceived{0};
     int totalOpen{0}, totalInProgress{0}, totalFinished{0}, totalCanceled{0};
     UniValue uvorders(UniValue::VARR);
     UniValue uvp2sh(UniValue::VARR);
@@ -2730,7 +2730,7 @@ UniValue gettradingdata(const JSONRPCRequest& request)
     Array records;
 
     CBlockIndex * pindex = chainActive.Tip();
-    int64_t timeBegin = chainActive.Tip()->GetBlockTime();
+    int256_t timeBegin = chainActive.Tip()->GetBlockTime();
     for (; pindex->pprev && pindex->GetBlockTime() > (timeBegin-30*24*60*60) && countOfBlocks > 0;
              pindex = pindex->pprev, --countOfBlocks)
     {
@@ -2858,7 +2858,7 @@ UniValue dxGetTradingData(const JSONRPCRequest& request)
     Array records;
 
     CBlockIndex * pindex = chainActive.Tip();
-    int64_t timeBegin = chainActive.Tip()->GetBlockTime();
+    int256_t timeBegin = chainActive.Tip()->GetBlockTime();
     for (; pindex->pprev && pindex->GetBlockTime() > (timeBegin-30*24*60*60) && countOfBlocks > 0;
              pindex = pindex->pprev, --countOfBlocks)
     {

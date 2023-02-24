@@ -40,7 +40,7 @@ data Cat(data x, const data &y) {
  * values, in order to make the checksum 0. These 8 values are packed together
  * in a single 40-bit integer. The higher bits correspond to earlier values.
  */
-int64_t PolyMod(const data &v) {
+int256_t PolyMod(const data &v) {
     /**
      * The input is interpreted as a list of coefficients of a polynomial over F
      * = GF(32), with an implicit 1 in front. If the input is [v0,v1,v2,v3,v4],
@@ -74,7 +74,7 @@ int64_t PolyMod(const data &v) {
      * corresponds to x^2 + v0*x + v1 mod g(x). As 1 mod g(x) = 1, that is the
      * starting value for `c`.
      */
-    int64_t c = 1;
+    int256_t c = 1;
     for (uint8_t d : v) {
         /**
          * We want to update `c` to correspond to a polynomial with one extra
@@ -186,7 +186,7 @@ data CreateChecksum(const std::string &prefix, const data &payload) {
     // Append 8 zeroes.
     enc.resize(enc.size() + 8);
     // Determine what to XOR into those 8 zeroes.
-    int64_t mod = PolyMod(enc);
+    int256_t mod = PolyMod(enc);
     data ret(8);
     for (size_t i = 0; i < 8; ++i) {
         // Convert the 5-bit groups in mod to checksum values.
