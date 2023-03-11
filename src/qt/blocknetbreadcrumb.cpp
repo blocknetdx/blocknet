@@ -7,6 +7,7 @@
 #include <qt/blocknetguiutil.h>
 
 #include <QPainter>
+#include <QPainterPath>
 #include <QPushButton>
 #include <QtGlobal>
 

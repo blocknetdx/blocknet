@@ -13,6 +13,7 @@
 #include <QTextDocumentFragment>
 #include <QTextFragment>
 #include <QXmlStreamReader>
+#include <QPainterPath>
 
 /**
  * @brief The requirement for this Text Edit widget is that it utilizes html to display the

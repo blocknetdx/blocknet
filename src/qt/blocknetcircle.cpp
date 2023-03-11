@@ -5,6 +5,7 @@
 #include <qt/blocknetcircle.h>
 
 #include <QPainter>
+#include <QPainterPath>
 
 BlocknetCircle::BlocknetCircle(qreal w, qreal h, QColor color1,
                                QColor color2, QWidget *parent) : QWidget(parent),

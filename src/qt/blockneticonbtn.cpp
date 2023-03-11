@@ -9,6 +9,7 @@
 #include <QApplication>
 #include <QMouseEvent>
 #include <QPainter>
+#include <QPainterPath>
 
 BlocknetIconBtn::BlocknetIconBtn(const QString &title, const QString &img, QFrame *parent) : QFrame(parent),
                                                                                              circlew(BGU::spi(84)),

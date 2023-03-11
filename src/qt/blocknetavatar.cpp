@@ -6,6 +6,7 @@
 
 #include <QLabel>
 #include <QPainter>
+#include <QPainterPath>
 
 BlocknetAvatar::BlocknetAvatar(QString title, qreal w, qreal h, QColor color1,
                                QColor color2, QWidget *parent) : QFrame(parent),
