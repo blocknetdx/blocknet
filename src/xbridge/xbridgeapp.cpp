@@ -85,10 +85,7 @@ class App::Impl
 {
     friend class App;
 
-    enum
-    {
-        TIMER_INTERVAL = 15
-    };
+    const static int TIMER_INTERVAL = 15;
 
 protected:
     /**

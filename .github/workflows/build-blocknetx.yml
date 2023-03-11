@@ -15,4 +15,4 @@ jobs:
       - name: run autogen
         run: |
           chmod +x ./autogen.sh; sync
-          /autogen.sh
+          ./autogen.sh
