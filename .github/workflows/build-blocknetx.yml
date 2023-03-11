@@ -1,0 +1,18 @@
+name: build-blocknetx
+run-name: build-blocknetx
+on: [push]
+
+env: 
+  BASEPREFIX: depends
+  BASEPREFIX_CACHE: depends-cache
+  DISTDIR: dist
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: run autogen
+        run: |
+          chmod +x ./autogen.sh; sync
+          /autogen.sh
