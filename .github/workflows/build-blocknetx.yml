@@ -8,10 +8,34 @@ env:
   DISTDIR: dist
 
 jobs:
-  build:
+  build-blocknet:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: install deps for bitcoin reproducible build
+        run: |
+          sudo add-apt-repository ppa:bitcoin/bitcoin && \
+          sudo apt update && \ 
+          sudo apt install -y --no-install-recommends \
+            build-essential libtool autotools-dev bsdmainutils \
+            libevent-dev autoconf automake pkg-config libssl-dev \
+            libdb4.8-dev libdb4.8++-dev \
+      - name: install gcc8 deps
+        run: |
+          sudo apt update &&\
+          sudo apt install -y --no-install-recommends \
+            g++-8-multilib gcc-8-multilib binutils-gold
+      - name: install gcc8 deps
+        run: |
+          sudo apt update &&\
+          sudo apt install -y --no-install-recommends \
+            g++-8-multilib gcc-8-multilib binutils-gold
+      - name: install unix platform dedicated dependencies
+        run: |
+          sudo apt update &&\
+          sudo apt install -y --no-install-recommends \
+            libssl-dev libevent-dev \
+            libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-test-dev libboost-thread-dev
       - name: run autogen
         run: |
           chmod +x ./autogen.sh; sync
