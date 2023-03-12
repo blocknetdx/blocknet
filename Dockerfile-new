@@ -1,0 +1,96 @@
+FROM ubuntu:bionic as deps
+
+ENV DEBIAN_FRONTEND noninteractive
+
+# general reqs
+RUN apt update &&\
+    apt install -y \
+      software-properties-common \
+      ca-certificates \
+      wget curl git python vim \
+      gcc g++ binutils
+
+# bitcoin specific, install from bitcoin repo to avoid depends/ build
+# RUN add-apt-repository ppa:bitcoin/bitcoin \
+RUN apt update &&\
+    apt install -y \
+      build-essential libtool autotools-dev bsdmainutils \
+      libevent-dev autoconf automake pkg-config libssl-dev \
+      python-setuptools cmake libcap-dev
+      # libdb4.8-dev libdb4.8++-dev
+
+# libboost
+RUN apt update && \
+    apt install -y \
+      libssl-dev libevent-dev libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-test-dev libboost-thread-dev
+
+# gcc 8
+# RUN add-apt-repository ppa:ubuntu-toolchain-r/test \
+#   && apt update \
+#   && apt install -y --no-install-recommends \
+#         g++-8-multilib gcc-8-multilib binutils-gold
+
+# extra deps
+RUN apt update &&\
+    apt-get install -y \
+      libminiupnpc-dev \
+      libzmq3-dev \
+      libqrencode-dev
+
+# qt5 deps
+RUN apt update &&\
+    apt-get install -y --no-install-recommends \
+      libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+
+
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+ENV PROJECTDIR=/opt/blocknetdx/blocknet
+ENV BASEPREFIX=$PROJECTDIR/depends
+ENV DISTDIR=/opt/blocknetdx/dist
+ENV HOST=x86_64-pc-linux-gnu
+
+WORKDIR /opt/blocknetdx/blocknet
+
+FROM deps as db4_build
+
+COPY contrib ./contrib
+RUN ./contrib/install_db4.sh .
+
+ENV BDB_PREFIX=${PROJECTDIR}/db4
+
+
+FROM db4_build as build
+
+COPY autogen.sh configure.ac Makefile.am ./
+COPY libbitcoinconsensus.pc.in ./
+COPY src ./src
+COPY doc ./doc
+COPY share ./share
+COPY test ./test
+COPY build-aux ./build-aux
+
+RUN chmod +x ./autogen.sh && ./autogen.sh
+# RUN ./configure CC=gcc-8 CXX=g++-8 CFLAGS="-g3 -O0" CXXFLAGS="-g3 -O0" --disable-tests --disable-bench -enable-debug --with-gui=no
+
+RUN ./configure \
+      BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I/${BDB_PREFIX}/include" \
+      --disable-tests --disable-bench --enable-cxx --disable-shared --with-pic 
+
+ARG cores=8
+ENV ecores=$cores
+
+RUN echo "Building with cores: $ecores" && \
+    make -j$ecores
+
+FROM build as deploy
+
+RUN echo "Deploy artifacts" && \
+    make install DESTDIR=$DISTDIR
+
+FROM deploy as run
+
+WORKDIR /opt/blocknetdx/dist
+
+# Port, RPC, Test Port, Test RPC
+EXPOSE 41412 41414 41474 41419
