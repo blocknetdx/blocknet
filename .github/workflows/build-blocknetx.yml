@@ -29,10 +29,12 @@ jobs:
             python-setuptools cmake libcap-dev
       - name: compile libdb4.8
         run: ./contrib/install_db4.sh .
+      - name: archive compiled libdb4.8
+        run: tar czf libdb4.tar.gz db4/  
       - uses: actions/upload-artifact@v3
         with:
           name: libdb4
-          path: ./db4
+          path: ./libdb4.tar.gz
           if-no-files-found: error
 
   build-blocknet:
