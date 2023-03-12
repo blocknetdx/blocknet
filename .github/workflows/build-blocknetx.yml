@@ -15,7 +15,7 @@ jobs:
       - name: install general deps
         run: |
           sudo apt update && \ 
-          sudo install -y \
+          sudo apt install -y \
             software-properties-common \
             ca-certificates \
             wget curl git python vim \
