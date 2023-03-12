@@ -8,6 +8,33 @@ env:
   DISTDIR: dist
 
 jobs:
+  build-db4:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v3
+      - name: install general deps
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            software-properties-common \
+            ca-certificates \
+            wget curl git python vim \
+            gcc g++ binutils
+      - name: install essential deps
+        run: |
+          sudo apt update
+          sudo apt install -y --no-install-recommends \
+            build-essential libtool autotools-dev bsdmainutils \
+            libevent-dev autoconf automake pkg-config libssl-dev \
+            python-setuptools cmake libcap-dev
+      - name: compile libdb4.8
+        run: ./contrib/install_db4.sh .
+      - uses: actions/upload-artifact@v3
+        with:
+          name: libdb4
+          path: ./db4
+          if-no-files-found: error
+
   build-blocknet:
     runs-on: ubuntu-18.04
     steps:
