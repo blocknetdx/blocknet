@@ -3,9 +3,11 @@ run-name: build-blocknetx
 on: [push]
 
 env: 
-  BASEPREFIX: depends
-  BASEPREFIX_CACHE: depends-cache
-  DISTDIR: dist
+  PROJECTDIR: ${{ github.workspace }}
+  BDB_PREFIX: ${{ github.workspace }}/db4
+  BASEPREFIX: ${{ github.workspace }}/depends
+  BASEPREFIX_CACHE: ${{ github.workspace }}/depends-cache
+  DISTDIR: ${{ github.workspace }}/dist
 
 jobs:
   build-db4:
@@ -94,8 +96,11 @@ jobs:
           ./configure \
             BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I/${BDB_PREFIX}/include" \
             --disable-tests --disable-bench --enable-cxx --disable-shared --with-pic 
-        env:
-          PROJECTDIR: ${{ github.workspace }}
-          BDB_PREFIX: ${{ github.workspace }}/db4
-          BASEPREFIX: ${{ github.workspace }}/depends
-          DISTDIR: ${{ github.workspace }}/dist
+      - name: build blocknet
+        run: make
+      - name: deploy blocknet
+        run: make install DESTDIR=$DISTDIR
+      - uses: actions/upload-artifact@v3
+        with:
+          name: blocknet
+          path: ${DISTDIR}/usr/local/bin
