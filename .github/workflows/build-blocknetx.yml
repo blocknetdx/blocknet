@@ -77,7 +77,25 @@ jobs:
             libqt5gui5 libqt5core5a libqt5dbus5 \
             qttools5-dev qttools5-dev-tools \
             libprotobuf-dev protobuf-compiler
+      - uses: actions/download-artifact@master
+        with:
+          name: libdb4
+          path: ./libdb4.tar.gz
+      - name: extract bundled libdb4
+        run: |
+          tar xzvf libdb4.tar.gz
+          rm libdb4.tar.gz
       - name: run autogen
         run: |
           chmod +x ./autogen.sh; sync
           ./autogen.sh
+      - name: run configure
+        run: |
+          /configure \
+            BDB_LIBS="-L${BDB_PREFIX}/lib -ldb_cxx-4.8" BDB_CFLAGS="-I/${BDB_PREFIX}/include" \
+            --disable-tests --disable-bench --enable-cxx --disable-shared --with-pic 
+        env:
+          PROJECTDIR: ${{ vars.GITHUB_WORKSPACE}}
+          BDB_PREFIX: ${{ vars.PROJECTDIR }}/db4
+          BASEPREFIX: ${{ vars.PROJECTDIR }}/depends
+          DISTDIR: ${{ vars.PROJECTDIR }}/dist
