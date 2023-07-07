@@ -31,8 +31,8 @@ build_linux:
     expire_in: 3 weeks
     paths:
       - _artifact.tar.gz
-  tags:
-    - hosted-linux
+  # tags:
+  #   - hosted-linux
 
 build_win:
   stage: windows
@@ -63,8 +63,8 @@ build_win:
     expire_in: 3 weeks
     paths:
       - _artifact.tar.gz
-  tags:
-    - hosted-linux
+  # tags:
+  #   - hosted-linux
 
 build_mac:
   stage: mac
@@ -94,8 +94,8 @@ build_mac:
     expire_in: 3 weeks
     paths:
       - _artifact.tar.gz
-  tags:
-    - hosted-linux
+  # tags:
+  #   - hosted-linux
 
 test_artifacts:
   stage: test
