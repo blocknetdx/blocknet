@@ -332,7 +332,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
     // Check proposal copy constructor
     {
         gov::Proposal proposal1("Test proposal-1", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                         EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                         EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         gov::Proposal proposal2;
         proposal2 = proposal1;
         BOOST_CHECK_MESSAGE(proposal1 == proposal2, "Proposal copy constructor should work");
@@ -340,17 +340,17 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
 
     // Check normal proposal
     gov::Proposal p1("Test proposal-1", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-            EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+            EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(p1.isValid(consensus), "Basic proposal should be valid");
 
     // Proposal with underscores should pass
     gov::Proposal p2("Test proposal_2", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-            EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+            EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(p2.isValid(consensus), "Basic proposal should be valid");
 
     // Proposal with empty description should pass
     gov::Proposal p2a("Test proposal 2", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-            EncodeDestination(dest), "https://forum.blocknet.co", "");
+            EncodeDestination(dest), "https://forum.blocknet.org", "");
     BOOST_CHECK_MESSAGE(p2a.isValid(consensus), "Proposal should be valid with empty description");
 
     // Proposal with empty url should pass
@@ -360,69 +360,69 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
 
     // Proposal with empty name should fail
     gov::Proposal p2c("", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-            EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+            EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p2c.isValid(consensus), "Proposal should fail with empty name");
 
     // Proposal with minimum size name should pass
     gov::Proposal p2d("ab", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-            EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+            EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(p2d.isValid(consensus), "Proposal should be valid with minimal name");
 
     // Proposal with maxed out size should pass (157 bytes is the max size of a proposal)
     gov::Proposal p2m("Test proposal max", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "This description is the maximum allowed for this particular prp");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "This description is the maximum allowed for this particular prp");
     BOOST_CHECK_MESSAGE(p2m.isValid(consensus), "Proposal at max description should pass");
 
     // Proposal with maxed out size + 1 should fail
     gov::Proposal p2n("Test proposal max", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", p2m.getDescription() + "1");
+                     EncodeDestination(dest), "https://forum.blocknet.org", p2m.getDescription() + "1");
     BOOST_CHECK_MESSAGE(!p2n.isValid(consensus), "Proposal with max description + 1 should fail");
 
     // Proposal should fail if description is too long
     gov::Proposal p3("Test proposal-3", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "This is a long description that causes the proposal to fail. Proposals are limited by the OP_RETURN size");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "This is a long description that causes the proposal to fail. Proposals are limited by the OP_RETURN size");
     BOOST_CHECK_MESSAGE(!p3.isValid(consensus), "Proposal should fail if its serialized size is too large");
 
     // Should fail if amount is too high
     gov::Proposal p4("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 100000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p4.isValid(consensus), "Proposal should fail if amount is too large");
 
     // Should fail if amount is too low
     gov::Proposal p4a("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), consensus.proposalMinAmount-1,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p4a.isValid(consensus), "Proposal should fail if amount is too small");
 
     // Should fail if proposal address is bad
     gov::Proposal p5("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     "fjdskjfksdafjksdajfkdsajfkasjdfk", "https://forum.blocknet.co", "Short description");
+                     "fjdskjfksdafjksdajfkdsajfkasjdfk", "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p5.isValid(consensus), "Proposal should fail on bad proposal address");
 
     // Should fail on bad superblock height
     gov::Proposal p6("Test proposal", 17, 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p6.isValid(consensus), "Proposal should fail on bad superblock height");
 
     // Should fail on bad proposal name (special chars)
     gov::Proposal p7("Test $proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p7.isValid(consensus), "Proposal should fail on bad proposal name (special chars)");
 
     // Should fail on bad proposal name (starts with spaces)
     gov::Proposal p8(" Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p8.isValid(consensus), "Proposal should be invalid if name starts with whitespace");
 
     // Should fail on bad proposal name (ends with spaces)
     gov::Proposal p9("Test proposal ", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(!p9.isValid(consensus), "Proposal should be invalid if name ends with whitespace");
 
     // Check that proposal submission tx is added to mempool
     {
         const auto resetBlocks = chainActive.Height();
         gov::Proposal psubmit("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                              EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                              EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(psubmit, {wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -477,7 +477,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_proposals, TestChainPoS)
 
         // Create and submit proposal
         gov::Proposal pp1("Test -proposaladdress", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                              EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                              EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef pp1_tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(pp1, {wallet}, consensus, pp1_tx, g_connman.get(), &failReason);
@@ -541,7 +541,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes, TestChainPoS)
 
     // Check normal proposal
     gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(proposal.isValid(consensus), "Basic proposal should be valid");
 
     // Check YES vote is valid
@@ -790,7 +790,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_undo, TestChainPoS)
 
     // Check normal proposal
     gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(proposal.isValid(consensus), "Basic proposal should be valid");
 
     // Voting with spent utxo should fail
@@ -894,7 +894,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_votes_changescutoff, TestChainPoS)
 
     // Check normal proposal
     gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     BOOST_CHECK_MESSAGE(proposal.isValid(consensus), "Basic proposal should be valid");
 
     // Casting change votes inside voting cutoff period should not influence the tally
@@ -975,7 +975,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_undo_submissions, TestChainPoS)
 
     // Check normal proposal
     gov::Proposal proposal("Test Proposal Undo", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                     EncodeDestination(dest), "https://forum.blocknet.co", "");
+                     EncodeDestination(dest), "https://forum.blocknet.org", "");
     BOOST_REQUIRE_MESSAGE(proposal.isValid(consensus), "Proposal should be valid");
     CTransactionRef ptx; // proposal tx
     gov::SubmitProposal(proposal, {wallet}, consensus, ptx, g_connman.get(), &failReason);
@@ -1042,7 +1042,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_undo_submissions, TestChainPoS)
 
         // Submit proposal for testing proposal invalidation
         gov::Proposal prop("Test Proposal Undo 2", nextSuperblock(chainActive.Height(), consensus.superblock), 1500*COIN,
-                EncodeDestination(dest), "https://forum.blocknet.co", "2");
+                EncodeDestination(dest), "https://forum.blocknet.org", "2");
         BOOST_CHECK_MESSAGE(prop.isValid(consensus), "Proposal should be valid");
         {
             CTransactionRef proptx; // proposal tx
@@ -1243,7 +1243,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_votereplayattacks)
     }
 
     gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                           EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                           EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
     gov::Vote firstVote;
     COutPoint firstVoteVinPrevout;
     std::string failReason;
@@ -1392,7 +1392,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
     {
         const auto resetBlocks = chainActive.Height();
         gov::Proposal proposal("Test proposal 1", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -1409,7 +1409,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
     {
         const auto resetBlocks = chainActive.Height();
         gov::Proposal proposal("Test proposal 2", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -1428,7 +1428,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
     {
         const auto resetBlocks = chainActive.Height();
         gov::Proposal proposal("Test proposal addrs", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -1494,7 +1494,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_submissions, TestChainPoS)
 
         // Create and submit proposal
         gov::Proposal proposal("Test proposal 3", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         auto success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
         BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
@@ -1624,7 +1624,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
         // Create and submit proposal
         gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
         BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
@@ -1675,7 +1675,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
         // Create and submit proposal
         gov::Proposal proposal("Test proposal vote balance", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
         BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
@@ -1711,7 +1711,7 @@ BOOST_FIXTURE_TEST_CASE(governance_tests_vote_limits, TestChainPoS)
 
         // Create and submit proposal
         gov::Proposal proposal("Test proposal vote tally", nextSuperblock(chainActive.Height(), consensus.superblock), 3000 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         success = gov::SubmitProposal(proposal, {wallet}, consensus, tx, g_connman.get(), &failReason);
         BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
@@ -1912,7 +1912,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             std::set<gov::Proposal> proposals;
             std::set<gov::Vote> votes;
             for (int i = 0; i < 16; ++i) {
-                const gov::Proposal proposal{strprintf("Test Proposal A%d", i), gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+                const gov::Proposal proposal{strprintf("Test Proposal A%d", i), gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.org", "Short description"};
                 proposals.insert(proposal);
                 CTransactionRef tx;
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -1989,7 +1989,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             std::set<gov::Proposal> proposals;
             std::set<gov::Vote> votes;
             for (int i = 0; i < 5; ++i) {
-                const gov::Proposal proposal{strprintf("Test Proposal B%d", i), gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+                const gov::Proposal proposal{strprintf("Test Proposal B%d", i), gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.org", "Short description"};
                 proposals.insert(proposal);
                 CTransactionRef tx;
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -2136,7 +2136,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
         }
 
         // Create this proposal before proposal cutoff test
-        const gov::Proposal voteCutoffProposal{"Test Vote Cutoff", gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+        const gov::Proposal voteCutoffProposal{"Test Vote Cutoff", gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.org", "Short description"};
         proposalsB.insert(voteCutoffProposal);
         {
             CTransactionRef tx;
@@ -2151,7 +2151,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockresults)
             const auto nextSb = gov::NextSuperblock(consensus);
             const auto blks = nextSb - chainActive.Height() - consensus.proposalCutoff;
             pos.StakeBlocks(blks), SyncWithValidationInterfaceQueue();
-            const gov::Proposal proposal{"Test Proposal Cutoff", gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+            const gov::Proposal proposal{"Test Proposal Cutoff", gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.org", "Short description"};
             CTransactionRef tx;
             auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
             BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
@@ -2334,7 +2334,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_superblockstakes)
         // Test single superblock
         {
             for (int i = 0; i < 5; ++i) {
-                const gov::Proposal proposal{strprintf("Test Proposal A%d", i), gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+                const gov::Proposal proposal{strprintf("Test Proposal A%d", i), gov::NextSuperblock(consensus), 250*COIN, saddr, "https://forum.blocknet.org", "Short description"};
                 proposals.insert(proposal);
                 CTransactionRef tx;
                 auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -2554,7 +2554,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstake)
 
         // Create proposal
         gov::Proposal proposal("Test proposal", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         BOOST_CHECK_MESSAGE(proposal.isValid(consensus), "Basic proposal should be valid");
         CTransactionRef ptx; // proposal tx
         std::string failReason;
@@ -2723,10 +2723,10 @@ BOOST_AUTO_TEST_CASE(governance_tests_voteonstakeproposals)
 
         // Create proposals
         gov::Proposal proposal1("Test proposal 1", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         BOOST_CHECK_MESSAGE(proposal1.isValid(consensus), "Proposal 1 should be valid");
         gov::Proposal proposal2("Test proposal 2", nextSuperblock(chainActive.Height(), consensus.superblock), 3000*COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         BOOST_CHECK_MESSAGE(proposal2.isValid(consensus), "Proposal 2 should be valid");
         CTransactionRef ptx; // proposal tx
         std::string failReason;
@@ -2929,7 +2929,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_proposals)
     // Create some proposals
     for (int i = 0; i < proposalCount; ++i) {
         gov::Proposal proposal(strprintf("Test proposal %d", i), nextSuperblock(chainActive.Height(), consensus.superblock), 250 * COIN,
-                               EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                               EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
         CTransactionRef tx = nullptr;
         auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
         BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
@@ -3014,7 +3014,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
 
         {
             gov::Proposal proposal("Test proposal 1", nextSuperblock(chainActive.Height(), consensus.superblock), 250 * COIN,
-                                   EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                                   EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
             sproposals.push_back(proposal);
             CTransactionRef tx = nullptr;
             auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -3047,7 +3047,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_loadgovernancedata_votes)
         // Submit additional votes on new superblock
         {
             gov::Proposal proposal("Test proposal 2", nextSuperblock(chainActive.Height(), consensus.superblock), 250 * COIN,
-                                   EncodeDestination(dest), "https://forum.blocknet.co", "Short description");
+                                   EncodeDestination(dest), "https://forum.blocknet.org", "Short description");
             sproposals.push_back(proposal);
             CTransactionRef tx = nullptr;
             auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -3211,7 +3211,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
             nextSuperblock(chainActive.Height(), consensus.superblock),  // superblock
             250,                                                         // amount
             saddr,                                                       // address
-            "https://forum.blocknet.co",                                 // url
+            "https://forum.blocknet.org",                                 // url
             "Short description"                                          // description
         });
         UniValue result;
@@ -3247,31 +3247,31 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         // Fail on bad name
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal $", nextSB, 250, saddr, "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal $", nextSB, 250, saddr, "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
         }
         // Fail on bad superblock
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", nextSB + 1, 250, saddr, "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal 1", nextSB + 1, 250, saddr, "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
         }
         // Fail on bad amount (too small)
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", nextSB, consensus.proposalMinAmount - 1, saddr, "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal 1", nextSB, consensus.proposalMinAmount - 1, saddr, "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
         }
         // Fail on bad amount (too large)
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", nextSB, consensus.proposalMaxAmount + 1, saddr, "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal 1", nextSB, consensus.proposalMaxAmount + 1, saddr, "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
         }
         // Fail on bad address
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", nextSB, 250, "bvkbvkbvkbvkbkvkbkvkbkbvkvkkbkvk", "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, "bvkbvkbvkbvkbkvkbkvkbkbvkvkkbkvk", "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
         }
         // Succeed on empty url
@@ -3283,7 +3283,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         // Succeed on omitted description
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr, "https://forum.blocknet.co" });
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr, "https://forum.blocknet.org" });
             BOOST_CHECK_NO_THROW(CallRPC2("createproposal", rpcparams));
         }
         // Succeed on omitted url + description
@@ -3295,25 +3295,25 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         // Succeed on default superblock
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", 0, 250, saddr, "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal 1", 0, 250, saddr, "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_NO_THROW(CallRPC2("createproposal", rpcparams));
         }
         // Fail on string amount
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", nextSB, "250", saddr, "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal 1", nextSB, "250", saddr, "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
         }
         // Fail on string superblock
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", strprintf("%d", nextSB), 250, saddr, "https://forum.blocknet.co", "Short description" });
+            rpcparams.push_backV({"Test proposal 1", strprintf("%d", nextSB), 250, saddr, "https://forum.blocknet.org", "Short description" });
             BOOST_CHECK_THROW(CallRPC2("createproposal", rpcparams), std::runtime_error);
         }
         // Fail on long description
         {
             UniValue rpcparams(UniValue::VARR);
-            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr, "https://forum.blocknet.co", "Long description Long description Long description Long description Long description Long "
+            rpcparams.push_backV({"Test proposal 1", nextSB, 250, saddr, "https://forum.blocknet.org", "Long description Long description Long description Long description Long description Long "
                                                                                                       "Long description Long description Long description Long description Long description Long "
                                                                                                       "Long description Long description Long description Long description Long description Long "
                                                                                                       "Long description Long description Long description Long description Long description Long "
@@ -3329,7 +3329,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
         const auto nextSB = nextSuperblock(chainActive.Height(), consensus.superblock);
 
-        const gov::Proposal proposal{"Test proposal 2", nextSB, 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+        const gov::Proposal proposal{"Test proposal 2", nextSB, 250*COIN, saddr, "https://forum.blocknet.org", "Short description"};
         CTransactionRef tx;
         std::string failReason;
         auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
@@ -3441,7 +3441,7 @@ BOOST_AUTO_TEST_CASE(governance_tests_rpc)
         CKey key; key.MakeNewKey(true);
         const auto & saddr = EncodeDestination(GetDestinationForKey(key.GetPubKey(), OutputType::LEGACY));
         const int nextSB = gov::NextSuperblock(consensus);
-        const gov::Proposal proposal{"Test proposal 3", nextSB, 250*COIN, saddr, "https://forum.blocknet.co", "Short description"};
+        const gov::Proposal proposal{"Test proposal 3", nextSB, 250*COIN, saddr, "https://forum.blocknet.org", "Short description"};
         CTransactionRef tx;
         auto success = gov::SubmitProposal(proposal, {pos.wallet}, consensus, tx, g_connman.get(), &failReason);
         BOOST_REQUIRE_MESSAGE(success, strprintf("Proposal submission failed: %s", failReason));
