@@ -31,8 +31,6 @@ build_linux:
     expire_in: 3 weeks
     paths:
       - _artifact_linux.tar.gz
-  tags:
-    - hosted-linux
 
 build_win:
   stage: windows
@@ -63,8 +61,6 @@ build_win:
     expire_in: 3 weeks
     paths:
       - _artifact_win.tar.gz
-  tags:
-    - hosted-linux
 
 build_mac:
   stage: mac
@@ -94,8 +90,6 @@ build_mac:
     expire_in: 3 weeks
     paths:
       - _artifact_mac.tar.gz
-  tags:
-    - hosted-linux
 
 test_artifacts:
   stage: test
@@ -128,5 +122,4 @@ test_artifacts:
     - "[ -f \"dist/bin/blocknet-wallet\" ];"
     - "[ -f \"dist/bin/test_blocknet\" ];"
     - "[ -f \"dist/bin/test_blocknet-qt\" ];"
-  tags:
-    - hosted-linux
+
