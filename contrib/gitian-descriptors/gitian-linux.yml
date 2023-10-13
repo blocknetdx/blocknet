@@ -11,10 +11,6 @@ packages:
 - "g++-8-aarch64-linux-gnu"
 - "gcc-8-aarch64-linux-gnu"
 - "binutils-aarch64-linux-gnu"
-- "g++-arm-linux-gnueabihf"
-- "g++-8-arm-linux-gnueabihf"
-- "gcc-8-arm-linux-gnueabihf"
-- "binutils-arm-linux-gnueabihf"
 - "g++-riscv64-linux-gnu"
 - "g++-8-riscv64-linux-gnu"
 - "gcc-8-riscv64-linux-gnu"
@@ -39,7 +35,7 @@ script: |
   set -e -o pipefail
 
   WRAP_DIR=$HOME/wrapped
-  HOSTS="x86_64-linux-gnu arm-linux-gnueabihf aarch64-linux-gnu riscv64-linux-gnu"
+  HOSTS="x86_64-linux-gnu aarch64-linux-gnu riscv64-linux-gnu"
   CONFIGFLAGS="--enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-gui-tests"
   FAKETIME_HOST_PROGS="gcc g++"
   FAKETIME_PROGS="date ar ranlib nm"
