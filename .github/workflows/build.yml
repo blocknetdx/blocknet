@@ -1,0 +1,143 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+    branches:
+      - master
+      - dev
+
+permissions:
+  contents: write
+
+env:
+  BASEPREFIX: /opt/blocknetdx/blocknet/depends
+  DEPENDS_CACHE: /proj/depends-cache
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    container: blocknetdx/devbuilds:gitlab-linux
+    env:
+      HOST: x86_64-pc-linux-gnu
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event.pull_request.draft == false
+
+      - name: Setup depends
+        run: |
+          rm -rf $BASEPREFIX
+          mv $DEPENDS_CACHE $BASEPREFIX
+
+      - name: Build
+        run: |
+          chmod +x ./autogen.sh; sync
+          ./autogen.sh
+          CONFIG_SITE="$BASEPREFIX/$HOST/share/config.site" ./configure CC=gcc-8 CXX=g++-8 CFLAGS="-g3 -O0" CXXFLAGS="-g3 -O0" --enable-debug --prefix=/
+          make clean
+          make -j $(nproc)
+
+      - name: Gather binaries
+        run: |
+          export DISTDIR=$PWD/dist
+          mkdir -p $DISTDIR
+          make install DESTDIR=$DISTDIR
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifacts-linux
+          path: |
+            dist/bin/blocknet-cli
+            dist/bin/blocknetd
+            dist/bin/blocknet-qt
+            dist/bin/blocknet-tx
+            dist/bin/blocknet-wallet
+            dist/bin/test_blocknet
+            dist/bin/test_blocknet-qt
+
+  build-win:
+    runs-on: ubuntu-latest
+    container: blocknetdx/devbuilds:gitlab-win
+    env:
+      HOST: x86_64-w64-mingw32
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event.pull_request.draft == false
+
+      - name: Setup depends
+        run: |
+          rm -rf $BASEPREFIX
+          mv $DEPENDS_CACHE $BASEPREFIX
+
+      - name: Build
+        run: |
+          chmod +x ./autogen.sh; sync
+          ./autogen.sh
+          CONFIG_SITE="$BASEPREFIX/$HOST/share/config.site" ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking --enable-reduce-exports --disable-bench --disable-gui-tests
+          make clean
+          make -j $(nproc)
+          make deploy
+
+      - name: Gather binaries
+        run: |
+          export DISTDIR=$PWD/dist
+          mkdir -p $DISTDIR
+          make install DESTDIR=$DISTDIR
+          cp *win64-setup.exe $DISTDIR/bin/blocknet-win64-setup.exe
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifacts-win
+          path: |
+            dist/bin/blocknet-cli.exe
+            dist/bin/blocknetd.exe
+            dist/bin/blocknet-qt.exe
+            dist/bin/blocknet-tx.exe
+            dist/bin/blocknet-wallet.exe
+            dist/bin/test_blocknet.exe
+            dist/bin/blocknet-win64-setup.exe
+
+  build-mac:
+    runs-on: ubuntu-latest
+    container: blocknetdx/devbuilds:gitlab-mac
+    env:
+      HOST: x86_64-apple-darwin14
+    steps:
+      - uses: actions/checkout@v3
+        if: github.event.pull_request.draft == false
+
+      - name: Setup depends
+        run: |
+          rm -rf $BASEPREFIX
+          mv $DEPENDS_CACHE $BASEPREFIX
+
+      - name: Build
+        run: |
+          chmod +x ./autogen.sh; sync
+          ./autogen.sh
+          CONFIG_SITE="$BASEPREFIX/$HOST/share/config.site" ./configure CFLAGS="-g3 -O0" CXXFLAGS="-g3 -O0" --with-gui=qt5 --enable-debug --prefix=/
+          make clean
+          make -j $(nproc)
+
+      - name: Gather binaries
+        run: |
+          export DISTDIR=$PWD/dist
+          mkdir -p $DISTDIR
+          mkdir -p $DISTDIR/bin && llvm-dsymutil-6.0 src/qt/blocknet-qt -o $DISTDIR/bin/blocknet-qt.dSYM
+          make install DESTDIR=$DISTDIR
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: artifacts-mac
+          path: |
+            dist/bin/blocknet-cli
+            dist/bin/blocknetd
+            dist/bin/blocknet-qt
+            dist/bin/blocknet-qt.dSYM
+            dist/bin/blocknet-tx
+            dist/bin/blocknet-wallet
+            dist/bin/test_blocknet
+            dist/bin/test_blocknet-qt
