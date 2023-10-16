@@ -1,0 +1,199 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: blocknet
+
+      - name: Checkout Gitian builder
+        uses: actions/checkout@v4
+        with:
+          repository: devrandom/gitian-builder
+          path: gitian-builder
+
+      - name: Checkout detached sigs
+        uses: actions/checkout@v4
+        with:
+          repository: blocknetdx/blocknet-detached-sigs
+          path: blocknet-detached-sigs
+
+      - name: Checkout gitian sigs
+        uses: actions/checkout@v4
+        with:
+          repository: blocknetdx/gitian.sigs
+          path: gitian.sigs
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: blocknetdx/blocknet
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Install apt-cacher-ng
+        run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-cacher-ng
+
+      - name: Prepare Gitian
+        run: blocknet/contrib/gitian-build.py --setup --docker --commit dummy ${{ github.ref_name }}
+
+      - name: Run Gitian build
+        run: |
+          export GPG_TTY=$(tty)
+          blocknet/contrib/gitian-build.py --build --docker --detach-sign --no-commit --os l --jobs $(nproc) --memory `awk '/^Mem/ {print $7}' <(free -m)` --commit dummy ${{ github.ref_name }}
+
+      - name: Release to Github
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Blocknet Core ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          generate_release_notes: true
+          files: |
+            blocknet-binaries/**/blocknet-*linux-gnu.tar.gz
+            gitian-builder/result/blocknet-linux-*-res.yml
+
+      - name: Set up QEMU to run multi-arch builds
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: linux/amd64,linux/arm64
+
+      - name: Set up Docker BuildX
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          version: v0.11.2
+          install: true
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.ORG_BLOCKNETDXIMG_USERNAME }}
+          password: ${{ secrets.ORG_BLOCKNETDXIMG_PASSWORD }}
+
+      - name: Build and push Docker image
+        id: docker_build
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ github.workspace }}
+          file: ./blocknet/contrib/containers/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64,linux/arm64
+
+  build-win:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: blocknet
+
+      - name: Checkout Gitian builder
+        uses: actions/checkout@v4
+        with:
+          repository: devrandom/gitian-builder
+          path: gitian-builder
+
+      - name: Checkout detached sigs
+        uses: actions/checkout@v4
+        with:
+          repository: blocknetdx/blocknet-detached-sigs
+          path: blocknet-detached-sigs
+
+      - name: Checkout gitian sigs
+        uses: actions/checkout@v4
+        with:
+          repository: blocknetdx/gitian.sigs
+          path: gitian.sigs
+
+      - name: Install apt-cacher-ng
+        run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-cacher-ng
+
+      - name: Prepare Gitian
+        run: blocknet/contrib/gitian-build.py --setup --docker --commit dummy ${{ github.ref_name }}
+
+      - name: Run Gitian build
+        run: |
+          export GPG_TTY=$(tty)
+          blocknet/contrib/gitian-build.py --build --docker --detach-sign --no-commit --os w --jobs $(nproc) --memory `awk '/^Mem/ {print $7}' <(free -m)` --commit dummy ${{ github.ref_name }}
+
+      - name: Release to Github
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Blocknet Core ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          generate_release_notes: true
+          files: |
+            blocknet-binaries/**/blocknet-*win64.zip
+            blocknet-binaries/**/blocknet-*.exe
+            gitian-builder/result/blocknet-win-*-res.yml
+
+  build-mac:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: blocknet
+
+      - name: Checkout Gitian builder
+        uses: actions/checkout@v4
+        with:
+          repository: devrandom/gitian-builder
+          path: gitian-builder
+
+      - name: Checkout detached sigs
+        uses: actions/checkout@v4
+        with:
+          repository: blocknetdx/blocknet-detached-sigs
+          path: blocknet-detached-sigs
+
+      - name: Checkout gitian sigs
+        uses: actions/checkout@v4
+        with:
+          repository: blocknetdx/gitian.sigs
+          path: gitian.sigs
+
+      - name: Install apt-cacher-ng
+        run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-cacher-ng
+
+      - name: Download macOS Xcode dependencies
+        run: wget -P gitian-builder/inputs https://bitcoincore.org/depends-sources/sdks/MacOSX10.11.sdk.tar.gz
+
+      - name: Prepare Gitian
+        run: blocknet/contrib/gitian-build.py --setup --docker --commit dummy ${{ github.ref_name }}
+
+      - name: Run Gitian build
+        run: |
+          export GPG_TTY=$(tty)
+          blocknet/contrib/gitian-build.py --build --docker --detach-sign --no-commit --os m --jobs $(nproc) --memory `awk '/^Mem/ {print $7}' <(free -m)` --commit dummy ${{ github.ref_name }}
+
+      - name: Release to Github
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Blocknet Core ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'alpha') || contains(github.ref_name, 'beta') || contains(github.ref_name, 'rc') }}
+          generate_release_notes: true
+          files: |
+            blocknet-binaries/**/blocknet-*osx64.tar.gz
+            blocknet-binaries/**/blocknet-*.dmg
+            gitian-builder/result/blocknet-osx-*-res.yml
