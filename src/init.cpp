@@ -593,9 +593,9 @@ void SetupServerArgs()
 std::string LicenseInfo()
 {
     const std::string URL_SOURCE_CODE = "<https://github.com/blocknetdx/blocknet>";
-    const std::string URL_WEBSITE = "<https://blocknet.co>";
+    const std::string URL_WEBSITE = "<https://blocknet.org>";
     const std::string copyrightText = "Copyright (c) 2009-2019 The Bitcoin Core developers\n"
-                                      "Copyright (c) 2014-2020 The Blocknet developers";
+                                      "Copyright (c) 2014-2023 The Blocknet developers";
 
     return copyrightText + "\n" +
            "\n" +
