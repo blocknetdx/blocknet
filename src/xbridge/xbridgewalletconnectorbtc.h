@@ -245,6 +245,8 @@ public:
     std::vector<unsigned char> getScriptId(const std::vector<unsigned char> & script);
     std::string scriptIdToString(const std::vector<unsigned char> & id) const;
 
+    // minTxFee* are assumed to be fairly cheap calls (no rpc query).
+    // Repeatedly called in loops during utxo selection.
     double minTxFee1(const uint32_t inputCount, const uint32_t outputCount) const;
     double minTxFee2(const uint32_t inputCount, const uint32_t outputCount) const;
 
