@@ -174,11 +174,20 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     changeAddrTi->setObjectName("changeAddress");
     changeAddrTi->setFixedWidth(BGU::spi(350));
     changeAddrTi->setPlaceholderText(tr("Enter change address..."));
+    changeLbl = new QLabel();
+    changeLbl->setObjectName("sectionSubtitle");
+    auto *changeAddrLayout = new QHBoxLayout;
+    changeAddrLayout->setSizeConstraint(QLayout::SetMaximumSize);
+    changeAddrLayout->setContentsMargins(QMargins());
+    changeAddrLayout->setSpacing(0);
+    changeAddrLayout->addWidget(changeAddrTi);
+    changeAddrLayout->addSpacing(BGU::spi(28));
+    changeAddrLayout->addWidget(changeLbl);
     changeBoxLayout->addWidget(changeAddrLbl);
     changeBoxLayout->addSpacing(BGU::spi(2));
     changeBoxLayout->addWidget(changeAddrSubtitleLbl);
     changeBoxLayout->addSpacing(BGU::spi(15));
-    changeBoxLayout->addWidget(changeAddrTi);
+    changeBoxLayout->addLayout(changeAddrLayout);
 
     // Coin control options
     auto *ccBox = new QFrame;
@@ -346,7 +355,7 @@ BlocknetSendFunds2::BlocknetSendFunds2(WalletModel *w, int id, QFrame *parent) :
     connect(continueBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onNext);
     connect(cancelBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onCancel);
     connect(backBtn, &BlocknetFormBtn::clicked, this, &BlocknetSendFunds2::onBack);
-    connect(changeAddrTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds2::onChangeAddress);
+    connect(changeAddrTi, &BlocknetLineEdit::textEdited, this, &BlocknetSendFunds2::onChangeAddress);
 //    connect(ccSplitOutputCb, &QCheckBox::toggled, this, &BlocknetSendFunds2::onSplitChanged);
 //    connect(ccSplitOutputTi, &BlocknetLineEdit::editingFinished, this, &BlocknetSendFunds2::onSplitChanged);
     connect(ccInputsBtn, &QPushButton::clicked, this, [this]() {
@@ -570,12 +579,56 @@ void BlocknetSendFunds2::onCoinControl() {
 /**
  * @brief Assigns the change address to the fund model if it's valid.
  */
-void BlocknetSendFunds2::onChangeAddress() {
+void BlocknetSendFunds2::onChangeAddress(const QString& text) {
     if (!walletModel || !model)
         return;
 
-    if (!changeAddrTi->text().isEmpty() && walletModel->validateAddress(changeAddrTi->text()))
-        this->model->setChangeAddress(changeAddrTi->text());
+    // Default to no change address until verified
+    this->model->setChangeAddress("");
+    changeLbl->setStyleSheet("QLabel{color:red;}");
+
+    const CTxDestination dest = DecodeDestination(text.toStdString());
+
+    if (text.isEmpty()) // Nothing entered
+    {
+        changeLbl->setText("");
+    }
+    else if (!IsValidDestination(dest)) // Invalid address
+    {
+        changeLbl->setText(tr("Warning: Invalid address"));
+    }
+    else // Valid address
+    {
+        if (!walletModel->wallet().isSpendable(dest)) {
+            changeLbl->setText(tr("Warning: Unknown change address (not part of this wallet)"));
+
+            // confirmation dialog
+            QMessageBox::StandardButton btnRetVal = QMessageBox::question(this, tr("Confirm custom change address"), tr("The address you selected for change is not part of this wallet. Any or all funds in your wallet may be sent to this address. Are you sure?"),
+                QMessageBox::Yes | QMessageBox::Cancel, QMessageBox::Cancel);
+
+            if(btnRetVal == QMessageBox::Yes)
+                this->model->setChangeAddress(text);
+            else
+            {
+                changeAddrTi->setText("");
+                changeLbl->setStyleSheet("");
+                changeLbl->setText("");
+            }
+        }
+        else // Known change address
+        {
+            changeLbl->setStyleSheet("");
+
+            // Query label
+            auto associatedLabel = walletModel->getAddressTableModel()->labelForAddress(text);
+            if (!associatedLabel.isEmpty())
+                changeLbl->setText(associatedLabel);
+            else
+                changeLbl->setText(tr("(no label)"));
+
+            this->model->setChangeAddress(text);
+        }
+    }
 }
 
 /**

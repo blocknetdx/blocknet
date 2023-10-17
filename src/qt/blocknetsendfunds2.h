@@ -57,7 +57,7 @@ public:
 
 private Q_SLOTS:
     void onCoinControl();
-    void onChangeAddress();
+    void onChangeAddress(const QString& text);
     void ccAccepted();
     void onSplitChanged();
     void onAmount(QString addr, QString amount);
@@ -77,6 +77,7 @@ private:
     QVBoxLayout *contentLayout;
     QLabel *titleLbl;
     BlocknetLineEdit *changeAddrTi;
+    QLabel *changeLbl;
     QFrame *ccManualBox;
     QFrame *fundList;
     BlocknetFormBtn *continueBtn;
