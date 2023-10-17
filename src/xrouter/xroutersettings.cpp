@@ -778,7 +778,7 @@ bool createConf(const boost::filesystem::path & confDir, const bool & skipPlugin
                      "#! 0 means you only want free calls"                                                               + eol +
                      "maxfee=0"                                                                                          + eol +
                      ""                                                                                                  + eol +
-                     "#! consensus is the minimum number of nodes you want your xrouter calls to query (1 or more)"      + eol +
+                     "#! consensus is the minimum number of nodes you want your xrouter calls to query (min=1, max=50)"  + eol +
                      "#! Paid calls will send a payment to each selected service node."                                  + eol +
                      "consensus=1"                                                                                       + eol +
                      ""                                                                                                  + eol +

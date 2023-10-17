@@ -214,9 +214,10 @@ bool App::openConnections(enum XRouterCommand command, const std::string & servi
 
     if (fqServiceAdjusted.empty())
         return false;
-    if (count < 1 || count > 50) {
-        WARN() << "Cannot open less than 1 connection or more than 50, attempted: " << std::to_string(count) << " "
-               << fqService;
+    if (count < 1 || count > XROUTER_MAX_CONNECTION_COUNT) {
+        WARN() << "Cannot open less than 1 connection or more than " << XROUTER_MAX_CONNECTION_COUNT
+               << ", attempted: " << std::to_string(count)
+               << " " << fqService;
         return false;
     }
 

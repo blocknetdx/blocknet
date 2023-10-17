@@ -16,4 +16,7 @@
 #define XROUTER_DEFAULT_CONFIRMATIONS 1
 #define XROUTER_TIMER_SECONDS 15
 
+// Note: also puts an upper limit on the number of requests per xrouter call (consensus)
+const uint32_t XROUTER_MAX_CONNECTION_COUNT = 50;
+
 #endif // BLOCKNET_XROUTER_XROUTERDEF_H
