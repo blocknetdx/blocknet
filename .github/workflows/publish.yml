@@ -46,9 +46,6 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Install apt-cacher-ng
-        run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-cacher-ng
-
       - name: Prepare Gitian
         run: blocknet/contrib/gitian-build.py --setup --docker --commit dummy ${{ github.ref_name }}
 
@@ -123,9 +120,6 @@ jobs:
           repository: blocknetdx/gitian.sigs
           path: gitian.sigs
 
-      - name: Install apt-cacher-ng
-        run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-cacher-ng
-
       - name: Prepare Gitian
         run: blocknet/contrib/gitian-build.py --setup --docker --commit dummy ${{ github.ref_name }}
 
@@ -171,9 +165,6 @@ jobs:
         with:
           repository: blocknetdx/gitian.sigs
           path: gitian.sigs
-
-      - name: Install apt-cacher-ng
-        run: sudo DEBIAN_FRONTEND=noninteractive apt-get install -yq apt-cacher-ng
 
       - name: Download macOS Xcode dependencies
         run: wget -P gitian-builder/inputs https://bitcoincore.org/depends-sources/sdks/MacOSX10.11.sdk.tar.gz
