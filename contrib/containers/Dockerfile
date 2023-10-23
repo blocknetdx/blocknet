@@ -11,8 +11,7 @@ RUN apt-get update && \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /root/.blocknet && \
-    mkdir -p /opt/blockchain && \
+RUN mkdir -p /opt/blockchain && \
     mkdir -p /opt/blockchain/data && \
     mkdir -p /opt/blockchain/config && \
     ln -s /opt/blockchain/config /root/.blocknet
