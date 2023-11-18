@@ -9,6 +9,44 @@ Welcome to the Blocknet repository. This repo is for the Blocknet Protocol, a 2n
 
 [Contributors are welcome!](https://github.com/blocknetdx/blocknet/blob/master/CONTRIBUTING.md)
 
+####Contribution Workflow Summary (applies to all blocknetdx repos)
+1. push or merge pull_request to dev branch. This builds debug artifacts.
+1. after testing/debugging debug artifacts, create an appropriately named tag starting with a "v" for the latest commit in the dev branch. (Use semantic versioning https://semver.org/). pushing or merging this tag builds and publishes a release with optimized binaries which can then be tested by the community. The tag can be created on the Github website, or it can be created from the CLI on a local clone of the repo something like this:
+
+	```shell
+	# switch branch to 'dev'
+	git checkout dev
+
+	# ensure we have the latest changes from the remote branch
+	git pull
+
+	# create a new tag
+	git tag v4.4.1-rc.2
+
+	# push the tag to github (triggers build/publish)
+	git push -u origin v4.4.1-rc.2
+	```
+
+1. Community/testers test release. If issues are found and iterations through the above steps are required, increment the last digit of the tag on each iteration (e.g. v4.4.1-rc.2, v4.4.1-rc.3, v4.4.1-rc.4, etc...)
+1. When all testing is complete, merge the dev branch to the master/main branch, then create an appropriately named tag starting with a "v" for the latest commit in the master/main branch. This builds and publishes the final release binaries. In the case of blocknet core, it additionally creates docker images (the "latest" tag is assigned automatically, if a version tag located on the default branch is pushed). The tag can be created on the Github website, or it can be created from the CLI on a local clone of the repo something like this:
+
+	```shell
+	# switch branch to 'master'
+	git checkout master
+
+	# ensure we have the latest changes from the remote branch
+	git pull
+
+	# create a new tag
+	git tag v4.4.1
+
+	# push the tag to github (triggers build/publish)
+	git push -u origin v4.4.1
+	```
+1. **never:** rename or delete an existing tag or release, that will create a huge mess
+
+
+
 [Website](https://blocknet.org) | [API](https://api.blocknet.org) | [Documentation](https://docs.blocknet.org) | [Discord](https://discord.gg/mZ6pTneMx3)
 -------------|-------------|-------------|-------------
 
